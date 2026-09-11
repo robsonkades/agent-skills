@@ -16,6 +16,12 @@ The pinned JDK 25 annotation contract specifies:
 - Class annotation does not cover newly declared subclass fields. Superclass groups retain
   their effect, but the same tag in parent and child does not combine those groups.
 
+HotSpot 25's field-layout implementation ignores `@Contended` on static fields, even when the
+annotation is in the class file and restrictions are relaxed. On a reference field it separates
+the reference slot, not the referenced object's fields or array elements. Choose and verify the
+actual instance/element layout rather than expecting annotation effects to propagate through a
+reference.
+
 Partial application layout example, compiled with the target JDK's internal annotation export:
 
 ```java
@@ -53,9 +59,10 @@ Application compilation referencing `jdk.internal.vm.annotation.Contended` commo
 javac --add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED ...
 ```
 
-For named modules, export to the actual module rather than `ALL-UNNAMED`. Runtime `--add-exports` is
-needed if application code/reflection resolves/accesses the internal annotation type at runtime; do
-not add it solely by folklore when the VM only consumes annotation metadata. In all cases,
+For named modules, export to the actual module rather than `ALL-UNNAMED`. Runtime access depends on
+the operation: direct use of the internal type or reflective invocation of its members requires
+appropriate module access. Merely enumerating annotations and reading their type names need not
+export the annotation package; VM layout recognition also does not require that export. In all cases,
 `-XX:-RestrictContended` may be required for application classes on HotSpot. Verify startup/effective
 flags because internal options can change or disappear.
 
@@ -91,9 +98,11 @@ exact-build test and explain why internal annotation/array/ownership alternative
 
 For primitive array slots, determine array base offset, index scale, line size and base alignment.
 Padding between logical counters can be represented by stride, but an unfortunate base can make a
-slot cross a line. Test several allocations/GC states or use a layout mechanism offering required
-alignment. Avoid using arbitrary Java thread IDs directly as dense indices without bounds/stable
-owner mapping.
+slot cross a line. Compare all lines touched by each access, not only its starting line. This
+depends on the actual element/access alignment; it is not a claim that ordinary aligned Java
+`long[]` slots straddle a 64-byte line. Test several allocations/GC states or use a layout
+mechanism offering required alignment. Avoid using arbitrary Java thread IDs directly as dense
+indices without bounds/stable owner mapping.
 
 ## Memory cost
 
@@ -117,5 +126,6 @@ allocated footprint, not only shallow size.
 - [JEP 142](https://openjdk.org/jeps/142)
 - [OpenJDK 25 `Contended` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java) — grouping contract; inspect the target build as well.
 - [OpenJDK 25 VM flags](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/globals.hpp) — enable/restriction/padding controls.
-- [OpenJDK class layout source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/classfile)
+- [OpenJDK 25 field layout source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/classfile/fieldLayoutBuilder.cpp) — static fields bypass contention groups; instance reference slots and padding are laid out here.
+- [Java 25 reflection access rules](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/AccessibleObject.html) — member access checks are separate from annotation discovery.
 - [JOL project](https://github.com/openjdk/jol)

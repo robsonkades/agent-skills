@@ -62,8 +62,9 @@ use an external communication tool only within explicit authorization for that a
 - Do not present an unverified claim as verified. Say which it is: "reported by the owner", "inferred from the
   logs", "I am assuming". Confidence claimed and then withdrawn costs more credibility than
   uncertainty stated up front.
-- "I don't know" is a complete and professional answer when followed by how you would find out
-  and how long that takes.
+- When the answer is unknown, state what would resolve it and the next useful action.
+  Give a duration only when supported; otherwise keep it unknown. An agreed next-update
+  time is not a promise that the question or incident will be resolved then.
 - Say no to the request, not to the person, and pair it with what you can do. "Not by Friday at
   this scope; the read path alone is achievable by Friday" is a usable answer;
   "that's not possible" ends a conversation that needed to continue.

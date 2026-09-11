@@ -3,7 +3,8 @@
 ## The record
 
 Six useful fields; reuse existing issue/decision records. Add evidence or acceptance details
-only when the risk warrants them. Review can happen during routine planning too.
+only when the risk warrants them. Review can happen during routine planning too. The example's
+numbers are illustrative; use observed or explicitly estimated local values, or mark them unknown.
 
 ```
 WHAT      Exports reject more than 50,000 rows, with measured byte/runtime guardrails.
@@ -14,22 +15,22 @@ UNDO      Validate bounded async export, migrate callers, then lift MAX_EXPORT_R
 OWNER     Billing team.
 ```
 
-**UNDO** is the field people leave out and the one that decides whether repayment ever happens.
-Written at the moment of the decision, it takes thirty seconds because you are holding the whole
-design in your head. Reconstructed a year later it is an afternoon of archaeology, which is
-usually enough friction to prevent it starting.
+**UNDO** records the current removal/replacement idea and its uncertainty when repayment is an
+option. Capturing known constraints while context is available can help later work, but a credible
+plan may require investigation. Do not invent effort estimates or a repayment plan for a design
+deliberately retained until retirement.
 
 ## Where the record lives
 
 It needs to be found by two different people: the one planning work, and the one reading the
 code.
 
-- **A ticket** in the normal backlog, tagged, so it competes for time like everything else. A
-  separate "tech debt board" is a place things go to be not prioritised.
-- **A comment at the site**, pointing at the ticket:
+- **An owned issue/record** in the team's actual prioritization process. An actively triaged
+  maintenance board can work; an ignored main backlog cannot. Reuse an adequate existing record.
+- **A pointer at the relevant site**, when a code reader needs it:
   `// Capped at 50,000 rows; async export is BILL-4471`. This is the version that reaches the
-  person who is about to build on the shortcut, and it is why the comment must name the ticket
-  rather than saying "temporary".
+  person who is about to build on the shortcut. Use the team's discoverable record identifier
+  rather than only saying "temporary"; not every small decision needs all three record forms.
 - **A decision record**, when the shortcut shaped an architectural boundary
   (architecture-decision-making).
 
@@ -39,7 +40,8 @@ untriggered and disconnected from prioritization across repositories. A
 
 ## Triggers that actually fire
 
-A trigger must be an event someone will observe without looking for it.
+A trigger needs an observer and agreed response; scheduled inspection or review can supply
+both. It may initiate reassessment, retirement or repayment rather than require automatic repair.
 
 | Weak trigger            | Strong trigger                                        |
 | ----------------------- | ----------------------------------------------------- |
@@ -54,11 +56,12 @@ or a ten-minute estimate is unnecessary. A trigger nobody observes is unreliable
 
 ## Estimating carrying cost
 
-Prioritise by what the debt costs to carry, not by how much it bothers you. Three sources,
-roughly in order of reliability:
+Prioritise by what the debt costs to carry, not by how much it bothers you. Choose relevant
+evidence rather than assuming a fixed reliability ranking among these sources:
 
 1. **Time added to changes that touch it.** If every change in this module takes an extra half
-   day of care, that is measurable from the history and is the strongest argument available.
+   day of care, investigate examples and competing causes; history can support an estimate,
+   not isolate a causal half-day by itself.
 2. **Incidents or defects attributable to it.** Price severity, frequency, detection and recovery;
    one incident does not imply a universal priority over accumulated delivery delay.
 3. **Blocked work.** Estimate the opportunity cost of the attributable delay using the value
@@ -72,10 +75,9 @@ precision or double-count the same incident as both lost delivery and support co
 
 ## Repayment strategies
 
-**Opportunistic** — improve it when you are already changing that code. Cheapest, because the
-context is loaded and the tests are already being run. Bounded by the diff a reviewer can hold
-in their head; the moment it stops being reviewable it has become a project and needs to be
-one (code-review).
+**Opportunistic** — improve it within an authorized change when shared context and checks reduce
+the added cost. Coupling, release risk or displaced work may make a separate repair cheaper.
+Keep the change reviewable, splitting necessary work into coherent steps when useful (code-review).
 
 **Scheduled** — a named piece of work with an estimate, competing with features. Correct when
 the debt is too large for opportunistic repayment and its carrying cost is demonstrable.
@@ -106,9 +108,9 @@ A legitimate and under-used outcome. Close the ticket with the reason:
 That record also needs the assessed exposure/recovery risks and revisit condition below;
 without them, it is insufficient evidence for declining repayment.
 
-This is better than leaving it open for ever, because an unrepaid backlog item is
-indistinguishable from a forgotten one, and a backlog full of forgotten items is why nobody
-reads the backlog.
+Closing with a reason can be clearer than leaving an item with no disposition. An actively
+reviewed deferred item can also be useful; distinguish accepted retention or deferral from
+forgotten work through its recorded status and owner.
 
 Closing rather than deferring requires evidence that repayment is not worthwhile under the
 accepted risk/horizon, including exposure and recovery burden, plus a revisit condition.
@@ -120,7 +122,7 @@ not a reason to declare the cost zero.
 - Report the shortcut you took in the summary of your work, not only in a code comment. "I
   implemented the cap rather than the async job; here is what that does not support" is
   information the user can act on; discovering it later is not.
-- Do not take a shortcut that touches the never-tradeable list to satisfy a request for speed.
+- Do not bypass an applicable non-exceptionable control to satisfy a request for speed.
   Say what it would cost and offer the smaller scope instead (engineering-communication).
 - Stay within authorized scope, including necessary prerequisite fixes and explicitly delegated
   cleanup. Record unrelated opportunities without expanding the task; keep behavioral changes

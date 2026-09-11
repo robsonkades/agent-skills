@@ -6,7 +6,8 @@ Example A contains **partial snippets**, not standalone compilation units: suppl
 `UserRepository` and a caller for top-level statements. Its dependency set is four coordinates —
 `org.springframework.security:spring-security-crypto:7.1.1`,
 `org.bouncycastle:bcprov-jdk18on:1.85.2`, plus `org.springframework:spring-core` and
-`commons-logging:commons-logging`. The last two are not optional and the crypto POM declares
+`commons-logging:commons-logging` (use the project's dependency management; isolated checks
+used `spring-core:7.0.4` and `commons-logging:1.3.5`). The last two are not optional and the crypto POM declares
 neither: without `spring-core` the first `matches` call dies with
 `NoClassDefFoundError: org/springframework/util/StringUtils`, and every encoder holds a
 `LogFactory.getLog(...)` field.
@@ -70,22 +71,23 @@ rather than a hand-rolled hash; a per-user 16-byte salt from `SecureRandom`; the
 alongside the hash; the KDF behind one named collaborator so the parameters live in a single
 place; and the framing of password storage as a _design_ decision rather than a library call.
 
-**Superseded or wrong, precisely:**
+**Decisions to review today:**
 
-1. `Arrays.equals` on a hash **short-circuits on the first differing byte** — a timing side
-   channel whose exploitability depends on the observation boundary and noise.
+1. `Arrays.equals` does not promise content-independent timing. A comparison timing channel's
+   exploitability depends on the implementation, observation boundary and noise.
    `MessageDigest.isEqual` is the correct fixed-width digest comparison. This is the single most
    instructive line in the chapter for a 2026 reader: a codebase that picked the right KDF and
    the wrong comparison proves that "used a good library" is not "did it correctly".
 2. `SCRYPT_COST = 16384` is `N=2^14`, which the current OWASP table pairs with **`p=5`**; the
-   book uses `p=1`, below every row of the table. In 2019 it matched then-current guidance —
-   this is drift, not an authorial error, and it is exactly what an undated parameter does.
-3. `KEY_LENGTH = 20` (160 bits). Modern defaults are 256 bits.
+   book uses `p=1`, below every row of the current table; that does not establish what guidance
+   applied when the book was written.
+3. `KEY_LENGTH = 20` (160 bits) differs from Spring's 32-byte Argon2 default. That difference
+   alone is not a demonstrated weakness; assess KDF cost and the credential contract.
 4. `getBytes(UTF_16)` doubles the byte length of ASCII passwords and emits a BOM. UTF-8 is
-   conventional and is what every modern encoder uses.
+   conventional for new byte encodings, but existing verification must preserve the old bytes.
 5. `User` exposes `byte[] getPassword()` and `byte[] getSalt()` — mutable arrays handed out of
-   the aggregate (_Effective Java_ Item 50), which also puts the verification decision in
-   `Twootr` rather than in `User`. Same shape as authorisation living in the controller, §B.
+   the aggregate (_Effective Java_ Item 50). Protect the stored value from alias mutation;
+   verification can remain in a dedicated credential service with controlled access.
 6. OWASP now leads with Argon2id and lists scrypt as the fallback "if Argon2id is not
    available".
 
@@ -111,6 +113,14 @@ irrelevant; for variable-length secrets, length still leaks. It is a `byte[]` AP
 The interesting moves are not "use `PasswordEncoder`" (an agent does that already). They are
 overriding the Spring default up to OWASP's parameters, using `upgradeEncoding` as the rehash
 path, and doing the same work when the user does not exist.
+
+**Precondition:** this fragment reads encoded Argon2 credentials. It is not a drop-in
+migration of the preceding raw scrypt hashes. During that migration retain a versioned legacy
+verifier with the exact salt, `N/r/p`, output length and UTF-16+BOM encoding; select it from
+trusted stored format metadata. Rehash with the new policy only after successful old-format
+verification and replace the credential conditionally. Test non-ASCII legacy passwords,
+failed logins and a concurrent reset; retire old verification only under an explicit recovery
+policy. Prefixing raw legacy bytes with a standard encoder id does not adapt their format.
 
 ```java
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
@@ -158,12 +168,12 @@ indistinguishable: repository/cache paths and downstream work can remain statist
 so use a common response and rate limiting as well. Spring's own `DaoAuthenticationProvider`
 lost the dummy-hash mitigation once
 (CVE-2025-22234), which is how routine a regression it is. `upgradeEncoding` is what makes a
-future parameter increase, or a bcrypt→Argon2id move behind `DelegatingPasswordEncoder`, a
-config change instead of a project — see `password-storage.md` §3 for the one encoder that does
-not implement it, and for the bcrypt re-encode that now throws.
+future parameter increase detectable. An algorithm migration also needs compatible format
+routing and rollout/recovery decisions — see `password-storage.md` §3 for the encoder that
+does not implement this hook, and for the bcrypt re-encode that now throws.
 
 `User::passwordHash` returns the encoded `String`, not a `byte[]` the caller can mutate — and
-`User` is the only type that knows the hash exists.
+the credential repository/verifier own access to it; keep it out of public user DTOs and logs.
 
 ---
 
@@ -198,7 +208,15 @@ it on, and it stays there.
 ### After
 
 ```java
-public record Actor(String id, Set<Role> roles) {}
+import java.util.Objects;
+import java.util.Set;
+
+public record Actor(String id, Set<Role> roles) {
+    public Actor {
+        Objects.requireNonNull(id, "id");
+        roles = Set.copyOf(roles);
+    }
+}
 
 public final class Order {
     private final String id;
@@ -222,6 +240,10 @@ must supply an `Actor`, so a scheduler must use an explicit system identity and 
 auditable at one site. The inbound adapter must construct it from a trusted authentication
 context; accepting roles or tenant from request JSON defeats the design. The controller keeps
 `@PreAuthorize` as cheap early rejection — it is simply no longer the only check.
+The role copy prevents later mutation through a caller-owned set. It is a request-scoped
+snapshot, not proof that a role remains current indefinitely. This example assumes globally
+unique subject ids and a global SUPPORT permission; tenant-scoped support needs an explicit
+tenant predicate, even when a role matches.
 `NotPermittedException` must be mapped to the same external shape as absence if resource
 enumeration matters; internal audit records may retain the real reason under access control.
 
@@ -232,16 +254,17 @@ expected version and expected state. The domain `if` alone cannot close a datast
 
 **The trade-off, stated honestly.** `Actor` now threads through the domain API and the domain
 has acquired an authorisation concept it did not have. That is the price. It is worth paying
-for operations with per-instance ownership rules. It is **not** worth paying for a read of
-public reference data, and a skill demanding it everywhere would be the over-application
-counter-example in the body.
+when the domain operation owns that rule. An existing application-service guard can be
+adequate if every relevant entry path necessarily passes it and the write enforces the checked
+state. Preserve that boundary when demonstrated. Public reference reads need no ownership
+concept merely to resemble this example.
 
 ## How to tell it worked
 
-- Write the test that calls the domain operation directly, with a foreign actor, and asserts
-  refusal. Before the change that test cannot be written without standing up the web layer.
-- Grep for other callers of the service method. If they exist and did not previously check,
-  the change found a live defect, not a hypothetical one.
+- Call the protected operation directly with a foreign actor and assert refusal without a web
+  layer. Mutate the source role set after actor creation and assert it grants no new authority.
+- Trace other callers of the service method and their applicable policies. A reachable path
+  missing a required check is a defect; an explicit authorised system operation is not.
 - Compare login latency distributions for known-absent and known-present users across warm and
   cold repository paths. If one class omits a KDF run, the dummy hash is missing or misplaced;
   small residual differences are not proof of an exploitable oracle or of its absence.
@@ -249,6 +272,7 @@ counter-example in the body.
 ## Sources for the claims in this example
 
 - [Java SE 25 `MessageDigest.isEqual`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/security/MessageDigest.html#isEqual(byte%5B%5D,byte%5B%5D)>)
+- [Java SE 21 `Set.copyOf`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Set.html#copyOf(java.util.Collection)>) — collection changes do not change the returned set.
 - [Spring Security advisory CVE-2025-22234](https://spring.io/security/cve-2025-22234/)
 - [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 - [OWASP Insecure Direct Object Reference prevention](https://cheatsheetseries.owasp.org/cheatsheets/Insecure_Direct_Object_Reference_Prevention_Cheat_Sheet.html)

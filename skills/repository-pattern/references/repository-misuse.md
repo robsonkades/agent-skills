@@ -45,8 +45,9 @@ public interface GenericRepository<T, ID> {
 while hiding meaningful domain queries behind another mechanism. A narrow internal generic
 base can still reduce real duplication; judge what consumers can call, not the type parameters.
 
-**Worse:** `findAll()` on an aggregate with a million rows is now a published, callable
-method, and `delete` bypasses whatever the domain says about deletion.
+**Inspect:** reachable `findAll()` can permit an unbounded read, and `delete` can bypass
+domain deletion rules. Check the actual authorized caller, population bounds and mutation
+contract; intentionally bounded CRUD/admin capabilities are not automatically defects.
 
 **Fix:** narrow the exposed interfaces to required capabilities; retain a shared implementation
 only if it earns its cost. There is no correct universal number of repository methods.
@@ -87,8 +88,9 @@ adapter needs its explicit write path. Define concurrent eligibility/version che
 persist outgoing event intent atomically where required; do not perform irreversible remote
 effects merely because an annotation appears on this method.
 
-**When the bulk statement is nevertheless right:** millions of rows, where loading is not
-viable. Then a bulk gateway must enforce the required eligibility/invariants, concurrency
+**When the bulk statement is appropriate:** set-shaped work whose explicit contract and
+measured cost favor supported JPQL/Criteria/SQL or another bulk API. There is no minimum row
+count that decides this. The adapter must enforce the required eligibility/invariants, concurrency
 and event/audit semantics by an equivalent mechanism. Documenting bypassed rules is not a
 substitute for enforcing them. Flush relevant pending changes before bulk DML and reconcile
 the stale persistence context/cache afterward; JPQL bulk does not automatically version rows
@@ -121,13 +123,14 @@ public interface Orders {
 }
 ```
 
-The abstraction is decorative: every caller imports Spring Data, and swapping the
-implementation would break all of them.
+This interface couples its callers to Spring Data. That violates a promised
+framework-independent domain boundary, but does not by itself make every other contract
+decorative or mean every adapter replacement changes callers.
 
-**Fix:** if the interface is domain-owned, express paging and criteria in domain terms (a
-query object, a simple `PageRequest` record of your own). If that feels like pointless
-translation, the honest conclusion is that this module does not need a domain-owned
-interface — use Spring Data directly (`repository-boundaries.md`).
+**Fix when independence is required:** express paging and criteria in domain/application
+types (a query object or a suitable paging value). If coupling is intentionally accepted,
+retain any useful error/testing/lifecycle seam; direct Spring Data is another candidate when
+no distinct contract remains (`repository-boundaries.md`).
 
 ## Leaked managed entities
 
@@ -140,8 +143,10 @@ Possible consequences: an uninitialized association fails after context closure,
 changes are not tracked, or later flush persists unintended managed changes. Inspect the
 actual context lifetime and flush/write policy; these are risks, not inevitable outcomes.
 
-**Fix:** map to a DTO or projection inside the transaction
-(`remote-facade-and-dto`), or return a detached domain object from the adapter.
+**Fix:** obtain required lazy state while its owning context is usable, then map an explicit
+DTO/projection (`remote-facade-and-dto`), or return a suitable detached domain object.
+Mapping already-materialized independent values can happen after context/transaction
+completion; an annotation's location alone does not establish loaded state or safe lifetime.
 
 ## Check-then-act
 
@@ -151,8 +156,14 @@ if (!customers.existsByEmail(email)) {      // ← another transaction can inser
 }
 ```
 
-**Fix:** use a database constraint with the required normalization/collation and null policy;
-the precheck is only advisory. The failure may occur on save, flush or transaction commit.
+Without effective serialization of all relevant contenders, this precheck can become stale
+before the insert. Inspect the actual protocol, transaction isolation, key scope and retry
+behavior; an annotation or one process's lock is not proof that other writers are excluded.
+
+**Fix when the check is unprotected:** use a database constraint with the required
+normalization/collation and null policy; prefer that durable safeguard even when another
+protocol also serializes contenders. The precheck alone is advisory. A uniqueness or
+serialization failure may occur on save, flush or transaction commit.
 
 ```java
 try {
@@ -175,19 +186,21 @@ transaction, commit occurs outside this catch and translation belongs at that ou
    internal gateways and read-only projections before judging counts.
 2. **Any business verb in a repository method name?** Inspect whether it hides policy or
    implements an explicit domain-defined operation with equivalent safeguards.
-3. **Any framework type in a domain-owned interface?** Each makes the abstraction
-   decorative.
+3. **Any framework type in a domain-owned interface?** Compare it with the intended
+   independence/capability contract; document intentional coupling.
 4. **Any layer that only forwards?** Check its contract, dependencies and interception before deletion.
-5. **Any `existsBy` immediately followed by a `save`?** Each is a race.
+5. **Any `existsBy` immediately followed by a `save`?** Inspect complete contender
+   serialization, constraints and commit/retry scope before calling it a race.
 6. **Are reads slow?** Inspect SQL, fetch volume and hydration; consider a projection/query path.
-7. **Is `deleteAll` / `findAll` reachable from a controller?** The surface is wider than
-   anyone intended.
+7. **Is `deleteAll` / `findAll` reachable from a controller?** Verify intended authorization,
+   population/cost bounds and domain mutation rules before narrowing the surface.
 
-Each finding has a small, safe fix. Do them one at a time with tests, not as a "data layer
-refactor" (`architecture-refactoring-paths`).
+For a confirmed defect, give the evidence, consequence and smallest justified correction,
+with checks for the affected contract. Preserve adequate designs; some questions need only
+a supported no-change conclusion or a named evidence gap (`architecture-refactoring-paths`).
 
 ## Sources
 
-- [Spring Data JPA transaction boundaries](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
-- [Spring Data JPA lock metadata](https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html)
+- [Spring Data JPA 4.1.1 transaction boundaries](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)
+- [Spring Data JPA 4.1.1 lock metadata](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/locking.adoc)
 - [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle, flush and bulk-update semantics.

@@ -27,6 +27,9 @@ Inspect compiler/toolchain, runtime image, resolved libraries and effective cont
 The virtual-thread example requires Java 21+ without preview; platform-pool APIs also work on
 Java 17. Java 24/25 diagnostics and APIs below are conditional on the deployed build. Do not
 upgrade the project or enable preview merely to apply this skill.
+Start with the requested decision, existing configuration and success criteria. Reuse available
+evidence; ask only for missing facts that change safety, feasibility or the choice. Retain an
+adequate executor when the expected benefit does not justify changing its contracts and operations.
 
 1. Describe tasks by CPU time, blocking/wait time, allocation/retained state, service-time variance,
    cancellation and external resources—not only “I/O-bound.”
@@ -35,10 +38,13 @@ upgrade the project or enable preview merely to apply this skill.
 3. Select virtual thread per task for large numbers of independent blocking lifetimes; select bounded
    platform execution for CPU parallelism, affinity/priority, incompatible native code or controlled
    thread reuse.
-4. Inventory every limit the old pool/queue supplied accidentally. Reintroduce intentional admission
-   at each scarce resource before migration.
-5. Test representative peak, slow dependency, cancellation, shutdown, rollout and resource
-   exhaustion on the deployed JDK/container limits.
+4. Inventory the limits and correctness guarantees the old executor supplied: sequential execution,
+   state confinement, context propagation and task ownership as well as capacity. A virtual thread
+   per task does not preserve a single-worker executor's serialization. Preserve required contracts
+   and intentional admission at each scarce resource before migration.
+5. Test the relevant peak, sustained overload/recovery, slow dependency, cancellation, shutdown,
+   rollout and resource-exhaustion cases on the deployed JDK/container limits. Define acceptable
+   rejection/expiry and resource/backlog recovery before comparing results.
 6. Validate useful throughput, tail latency, CPU, native/heap memory, live/queued tasks and downstream
    health. Revert/adjust from predicted signals, not ideology.
 
@@ -64,6 +70,8 @@ near the effective CPU quota/affinity and sweep parallelism; SMT, allocation/GC,
 NUMA and throttling change the optimum. For blocking platform tasks, use measured wait/service ratio
 only as a hypothesis under stable independent work, then cap by native-thread memory/OS limits and
 downstream capacity.
+Distinguish actual blocking from runnable time waiting for CPU or quota replenishment; subtracting
+CPU time from wall time alone does not identify I/O wait or justify additional workers.
 
 Little's Law relates average in-system concurrency, throughput and residence time in a stable
 population. Required average `λW` is not a safe pool size by itself: service variance and bursts need
@@ -112,8 +120,10 @@ latency-sensitive request work.
 - Java 24 JEP 491 removes pinning caused by monitor acquisition/holding and `Object.wait`; choosing
   `ReentrantLock` merely to avoid monitor-only pinning is obsolete on 24+. Blocking with a
   native/foreign frame still on the stack can remain pinned, including callbacks into Java.
-- Native methods and foreign functions can still pin. A pin event must be correlated with scheduler
-  queue/latency before it is called a bottleneck.
+- Native methods, foreign functions and residual VM-frame paths can still pin. On HotSpot 25,
+  class initialization can expose VM-frame pinning without application JNI. Inspect the event's
+  reason/operation and exact build; correlate with scheduler queue/latency before calling it a
+  bottleneck. Detailed mechanisms belong to `virtual-threads-internals`.
 - Java 24 adds `VirtualThreadSchedulerMXBean`: target parallelism, scheduler platform-thread
   pool size, and estimates of mounted and queued virtual threads.
 - Scoped values are final in Java 25 (JEP 506). Structured concurrency remains preview in Java 25;
@@ -128,6 +138,8 @@ Virtual threads support `ThreadLocal`; the problem is multiplication and lifetim
 Classify each use:
 
 - immutable request context: prefer lexically bounded `ScopedValue` when its one-way binding fits;
+  ordinary executor submission does not inherit that binding, so establish it in the executing
+  task or use a supported propagation mechanism (`scoped-values`);
 - mutable context: redesign ownership or ensure `try/finally remove`, especially on pooled platform
   threads;
 - expensive reusable cache: share an immutable/thread-safe object, use an explicit bounded pool, or
@@ -164,9 +176,9 @@ resource-local wait/in-flight. Thread count alone does not reveal useful concurr
 ## Review checklist
 
 - [ ] Work is characterized by CPU, wait, variance, retained state and resources.
-- [ ] Platform pool parallelism was measured under actual CPU quota/hardware.
+- [ ] A proposed pool size is supported by measurements or clearly labelled as an experiment.
 - [ ] Queue/admission/rejection and shutdown are explicit.
-- [ ] Virtual-thread migration inventory covers every implicit old-pool bound.
+- [ ] Virtual-thread migration preserves required ordering, confinement, context and old-pool bounds.
 - [ ] CPU phases and each scarce dependency have deliberate limits.
 - [ ] ThreadLocal/inheritance uses are safe at projected thread cardinality.
 - [ ] Java 21/24/25 feature and diagnostic boundaries are accurate for deployment.
@@ -182,5 +194,7 @@ resource-local wait/in-flight. Thread count alone does not reveal useful concurr
 - [Java 25 virtual-thread guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 
 Return the measured workload/CPU budget, selected execution/admission limits and their scope,
-evidence supporting the choice, and peak/failure checks run versus pending. Without usable
-measurements, give a bounded experiment and conditional starting range, not an optimal size.
+evidence supporting the choice, and relevant peak/failure/recovery checks run versus pending.
+For a narrow feasibility or review question, return the supported conclusion and material gaps;
+do not require a full migration experiment. Without usable sizing measurements, give a bounded
+experiment and conditional starting range, not an optimal size; name what would change the choice.

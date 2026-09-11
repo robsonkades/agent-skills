@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: distribution-boundaries
-version: 1.2.1
+version: 1.2.2
 description: >-
   Deciding whether a boundary should be a process boundary, and designing it when it must
   be: what distribution actually costs (latency, serialisation, partial failure, lost
-  atomicity, independent deployment), why a remote interface must be coarser than a local
-  one, and choosing between synchronous call, messaging and replication. Use when a module
+  atomicity, independent deployment), caller-driven remote granularity, and choosing between
+  synchronous call, messaging and replication. Use when a module
   is proposed for extraction into a service, when microservices are being adopted without a
   named driver, when a service call sits inside a transaction, when one request fans out to
   a dozen downstream calls, when two services share a database, when a "service" cannot be

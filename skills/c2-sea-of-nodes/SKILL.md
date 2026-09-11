@@ -19,9 +19,8 @@ description: >
 
 Decide _why_ a compilation came out the way it did, from the mechanism rather than from
 folklore. The failure this prevents is the confident non-fix: a runbook that sets
-`-XX:CompileThreshold` under tiered compilation and changes nothing at all, or a
-refactoring done because "the JIT will optimise it" when the JIT never performs
-algorithmic changes.
+`-XX:CompileThreshold` in the default C1/C2 tiered mode and changes no compilation
+threshold, or a refactoring that relies on the JIT to redesign an unsuitable algorithm.
 
 Start with tier/version, call-site inlining and escape state, then follow the failing
 transformation: type/profile stability, alias/memory dependencies, loop/range checks,
@@ -39,12 +38,15 @@ Do not upgrade the target runtime or enable preview features to match this basel
 For another release, check `java -Xlog:help` and flag availability first; unavailable
 diagnostics require an alternative evidence source, not an assumed result.
 
-1. **Establish the compilation history before anything else.** Run
-   `-Xlog:jit+compilation=debug`/`PrintCompilation` and correlate compilation ID, level, OSR,
+1. **Establish the question and reuse existing evidence.** For a method-specific diagnosis,
+   correlate existing `-Xlog:jit+compilation`/`PrintCompilation` records by compilation ID, level, OSR,
    invalidation and timestamp. One tier-1/3 line does not prove the method's final/current
-   state; later versions can coexist or be made non-entrant.
-2. **If it is stuck in tier 3, compare real counters against the tier-4 thresholds**
-   (`Tier4InvocationThreshold`, `Tier4CompileThreshold`) rather than assuming a compiler bug.
+   state; later versions can coexist or be made non-entrant. A method may execute inlined
+   in callers without a standalone nmethod. Capture missing evidence only when it can change
+   the diagnosis; an explanatory question need not trigger a new JVM run.
+2. **If it is stuck in tier 3, inspect policy eligibility and compiler capacity.** Compare
+   counters with effective tier-4 thresholds, including queue feedback, and check compilation
+   exclusions/failures and CPU/code-cache constraints before assuming a compiler bug.
 3. **If it reached tier 4, check inlining on the hot call site** with `-XX:+PrintInlining`,
    reading the **tier-4** tree, not the tier-3 one above it. C2 names the limit it applied:
    `too big` is `MaxInlineSize` at a cold site, `hot method too big` is `FreqInlineSize`,
@@ -53,14 +55,16 @@ diagnostics require an alternative evidence source, not an assumed result.
 4. **If an allocation appears to survive, get the escape evidence before theorising.** On a **debug
    build**, `-XX:+PrintEscapeAnalysis` with `-XX:+PrintEliminateAllocations` answers two
    different questions; both are `develop` flags, so a product JVM refuses to start on
-   them. On a shipping runtime use differential checks instead — allocation profiles are
-   sampled and absence is not proof. Compare normalized allocated bytes/events under
+   them. A product C2 `LogCompilation` task can record `eliminate_allocation`: match its
+   method/BCI and inline context to the installed compilation ID. `escape-analysis-internals`
+   owns this analysis; absence of that entry is inconclusive. Compare normalized allocated bytes/events under
    controlled compilation and use generated code/IR where justified. `ArgEscape` — passed to a call that was
    not inlined — normally remains heap-allocated even when the callee never stores the
    reference.
 5. **If `made not entrant: uncommon trap` recurs on the same method, treat it as
-   deoptimisation**, not as a threshold to tune. `made not entrant: not used` is the tier-3
-   code being retired by the tier-4 version and is normal. Investigate with
+   deoptimisation**, not as a threshold to tune; route recurring invalidation to `deoptimization`.
+   `made not entrant: not used` commonly accompanies replacement, including tier-3 to tier-4
+   promotion, but is not proof of that transition. Correlate the replacement/history. Investigate with
    `-Xlog:deoptimization=debug` where supported or the JFR `jdk.Deoptimization` event first;
    verify event availability and recording settings on the target runtime.
 6. **Isolate one factor at a time in a disposable experiment** before attributing a cost:
@@ -68,23 +72,28 @@ diagnostics require an alternative evidence source, not an assumed result.
    `-XX:TieredStopAtLevel=1` radically change compilation and are not production fixes. See
    `references/jit-diagnosis-recipes.md`.
 7. **Confirm every number against the runtime you are actually on** with
-   `-XX:+PrintFlagsFinal -version`, then measure any change with JMH — never with an
-   isolated `System.nanoTime()`.
+   `-XX:+PrintFlagsFinal -version`. For a proposed change, use representative application
+   validation and JMH when a microbenchmark isolates the question. A single timed invocation
+   is insufficient. Keep adequate code when the refusal has no material measured cost;
+   compare a scoped source change or diagnostic directive only when evidence warrants it.
 
 ## Rules
 
-- Tiered compilation is the default on every supported release including JDK 25. Under it
-  `-XX:CompileThreshold` is accepted **without error and without effect**. Never prescribe
-  it. Treat tier-specific thresholds and `CompileThresholdScaling` as broad diagnostic
+- In the default HotSpot C1/C2 tiered mode on the inspected JDK 25 build,
+  `-XX:CompileThreshold` does not control compilation eligibility. Do not infer this from
+  `TieredCompilation=true` alone: C1-only modes such as `TieredStopAtLevel=1` honor legacy
+  thresholds on this build. Check effective mode/flags and target source. Treat tier-specific
+  thresholds and `CompileThresholdScaling` as broad diagnostic
   experiments whose profile quality, compile CPU/queue and code-cache costs must be measured.
 - There are five numbered levels (0-4). A common hot path is 0 → 3 → 4, while policy can use
   levels 1/2 and OSR separately. Thresholds scale with queue pressure (`Tier3LoadFeedback`, `Tier4LoadFeedback`),
   so under a start-up burst a method can sit below a threshold that its counters would have
   cleared on an idle JVM.
-- The JIT does inlining, constant folding, escape analysis and vectorisation. It does **not**
-  change algorithms (O(n²) stays O(n²)), does not swap a `List` for a `Map`, and does not
-  remove I/O or a query. Do not assume repeated string concatenation, collection choice or
-  asymptotic complexity will be redesigned across loop iterations.
+- The JIT does inlining, constant folding, escape analysis and vectorisation; legal loop
+  elimination can change the amount of executed work. Do not rely on it to replace a poor
+  algorithm or collection choice, eliminate required I/O, or combine application queries.
+  Validate complexity and observable behavior rather than assuming either universal
+  algorithm redesign or that every source-level iteration must remain in machine code.
 - Escape analysis has three states — `NoEscape`, `ArgEscape`, `GlobalEscape` — not a binary.
   `NoEscape` is necessary for C2's scalar replacement of an allocation, not sufficient:
   scalar replaceability and elimination must also succeed. A surviving allocation does
@@ -146,6 +155,6 @@ the semantic constraints and before/after metric; say explicitly when it remains
   for tier, inlining and escape diagnosis, the factor-isolation runs, and the correct threshold
   tuning flags. Read when you are about to run the JVM to answer one of these questions.
 
-Authoritative sources: [OpenJDK C2 sources](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/opto),
-[HotSpot compiler control](https://docs.oracle.com/en/java/javase/25/vm/compiler-control.html),
+Authoritative sources: [OpenJDK 25.0.3+9 C2 sources](https://github.com/openjdk/jdk25u/tree/jdk-25.0.3%2B9/src/hotspot/share/opto),
+[HotSpot compiler control](https://docs.oracle.com/en/java/javase/25/vm/compiler-control1.html),
 and [JEP 165: Compiler Control](https://openjdk.org/jeps/165).

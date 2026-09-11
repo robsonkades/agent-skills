@@ -9,9 +9,10 @@ not make a racy publication protocol good engineering: a reader can still observ
 holder reference, and later mutable state needs its own happens-before edges. Class initialization,
 volatile handoff, locks, thread start/join and concurrent collections provide explicit publication.
 
-The guarantee has one condition: **`this` must not escape before the constructor
-completes.** If it does, another thread can observe the object mid-construction and all
-bets are off.
+The simple final-field proof requires that readers cannot obtain `this` before construction
+completes. Early escape can expose incomplete state; inspect the actual callback, reads and
+handoff rather than asserting that every field must be wrong. A later properly synchronized
+handoff has its own visibility argument and does not undo effects of earlier premature access.
 
 ```java
 final class Auditor {
@@ -77,9 +78,10 @@ private int hash;                       // deliberately non-final, non-volatile
 Here `digest` must itself be defensively copied and never mutated; otherwise equal/hash behaviour
 can change regardless of the cache race.
 
-Redundant computation under contention is the cost; it is a benign race, not a bug. In
-review, a non-final field in an otherwise immutable class is a finding **unless** it
-matches this idiom point for point — then it is a documented technique, not a smell.
+Redundant computation under contention is the cost; under these conditions it is a benign race.
+In review, non-final derived state requires a visibility and value-semantics argument, not an
+automatic finding. This idiom is one valid option; correctly synchronized lazy computation
+can also preserve observational immutability without matching a racy integer cache.
 If redundant computation is unacceptable, consider eager final computation or synchronized
 initialization (correct double-checked locking additionally needs volatile publication).
 These establish initialization/visibility, not the safety of later mutation. A cached mutable

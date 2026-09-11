@@ -9,17 +9,20 @@ already speaks it.
 Not Feathers's sense of the term: his interception point _observes_ the effect of a change so a
 test can see it (`java-legacy-code-testing`). This one _diverts_ traffic.
 
-| Interception point           | Fits when                                               | Cost                                                  |
-| ---------------------------- | ------------------------------------------------------- | ----------------------------------------------------- |
-| HTTP reverse proxy / gateway | The legacy exposes HTTP                                 | Cheapest; routing per path or per header              |
-| A facade service in front    | Routing needs business logic (per tenant, per customer) | A component to build and operate                      |
-| Message broker topic         | The boundary is already asynchronous                    | Cheapest of all where it applies                      |
-| Inside the monolith          | No external boundary exists at the seam                 | Requires the seam to exist in code first              |
-| Database triggers / CDC      | Nothing else is available                               | Last resort: invisible coupling, hard to reason about |
+| Interception point           | Fits when                                               | Check before choosing                                |
+| ---------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
+| HTTP reverse proxy / gateway | The legacy exposes HTTP                                 | Routing key, state compatibility and proxy operation |
+| A facade service in front    | Routing needs business logic (per tenant, per customer) | Ownership and cost of another component              |
+| Message broker topic         | The boundary is already asynchronous                    | Consumer routing, ordering and delivery contracts    |
+| Inside the monolith          | A code seam can isolate the affected functionality      | Dependency breaking and release coupling             |
 
-The in-monolith case is worth stating because it is the common one: the first strangler step
-is frequently _inside_ the legacy application — introduce the interface, implement it twice,
-route by flag — with no infrastructure at all.
+CDC is a data propagation seam, not by itself a per-request router. It can support a
+database migration when capture, ordering, replay and catch-up contracts are available.
+Trigger-based propagation adds effects to database writes; inspect its transaction and
+failure coupling. Neither is universally a last resort or a cheapest option.
+
+An in-monolith extraction can introduce an interface, implement it twice and route by flag
+without adding infrastructure. Choose the seam from the actual contract and migration cost.
 
 ## Routing a slice
 
@@ -77,13 +80,16 @@ public Money priceFor(OrderId orderId) {
 
 Before switching this on, decide and write down:
 
-1. **Who wins on disagreement** during the shadow period (the legacy, until proven
-   otherwise).
+1. **Which path owns responses and effects** during shadowing (the legacy in this sketch).
+   This does not make every legacy result the desired contract: record approved changes
+   separately from unexplained differences.
 2. **Who investigates a divergence**, and within what time.
-3. **What divergence rate is acceptable** to proceed — it is rarely zero, because legacy
-   behaviour includes rounding quirks and data anomalies.
-4. **How long the shadow runs**, and over which cases — including month-end and other
-   periodic paths, which are exactly where a legacy system's oddest rules live.
+3. **Which invariants and differences permit cutover.** Set acceptance by consequence and
+   coverage; money or integrity contracts may require zero unexplained differences. Test
+   approved rounding or policy changes against their intended results, not an arbitrary
+   allowable error rate.
+4. **Which cases and observation period cover the affected contract**, including relevant
+   periodic paths through observation or controlled replay.
 
 Without those four, parallel run produces a stream of alerts nobody actions, and the
 migration stalls because nobody will sign off the switch.
@@ -97,9 +103,12 @@ inputs/state and control clocks/randomness before interpreting divergences as de
 
 ## The anti-corruption layer
 
-Its purpose is to stop the legacy model's concepts from entering the new one. It is not a
-mapper: it may drop fields, merge records, reinterpret codes and invent concepts the legacy
-does not have.
+Use an ACL when the connected models have meaningful semantic differences. It may combine
+mapping, validation and interpretation to preserve the consuming model's contract. When
+concepts already match, a gateway or projection may suffice. The example assumes that only
+master records belong to the lookup contract, the shown status-to-tier mapping is agreed,
+and the gateway rejects master records with unknown required status codes. That validation
+is an explicit precondition of this partial sketch, not supplied by the mapping below.
 
 ```java
 // Legacy: one table, 140 columns, three record types distinguished by TIPO_REG,
@@ -126,6 +135,8 @@ class LegacyCustomerAcl implements CustomerDirectory {
     }
 
     private CustomerTier tierFrom(String situationCode, long limitCents) {
+        // Precondition: the gateway validated this code against the source contract.
+        // Only agreed non-AT statuses may reach the INACTIVE fallback.
         // The legacy has no "tier". It is derivable, and this is the only place
         // that knows how. Documented, tested, and contained.
         if ("AT".equals(situationCode) && limitCents > 10_000_00) return CustomerTier.PREMIUM;
@@ -138,7 +149,8 @@ class LegacyCustomerAcl implements CustomerDirectory {
 ### What belongs in it
 
 - Translation of vocabulary, codes, formats and units.
-- Filtering out records the new model does not recognise.
+- Filtering records deliberately outside the agreed contract. Surface unknown required
+  records/codes for handling rather than silently losing them.
 - **Deriving concepts the legacy lacks**, in one place, with tests.
 - Translating failures into the new model's terms.
 
@@ -147,19 +159,19 @@ class LegacyCustomerAcl implements CustomerDirectory {
 - Business rules the new model should own. The ACL derives a `tier` from legacy data; it
   does not decide what a premium customer may do.
 - Caching decisions (that is a separate concern with its own trade-offs).
-- Writes back into the legacy without an explicit, separate decision — a two-way ACL is two
-  layers, and the write direction usually needs the legacy's own validation to run.
+- Writes back into the legacy without an explicit decision. Define the write direction's
+  authority, validation and failure contract separately; two directions do not require two
+  deployed components.
 
-### It will be ugly, and that is correct
+### Contain the mismatch and own its lifecycle
 
-The ACL holds the mismatch. Left out, the mismatch is distributed through the new code as
-special cases forever. Concentrating the ugliness in one tested, documented class is the
-pattern's entire value — and it is also what makes the ACL deletable on the day the legacy
-goes.
+Keep the necessary translation tested and local to the boundary. Retire it when its callers
+and semantic dependency disappear; if it remains a supported integration contract, retain
+an owner and account for its maintenance cost.
 
 ## Decommissioning
 
-The step that realises the benefit, and the one that gets postponed.
+Use these gates when retirement is part of the slice's intended outcome.
 
 ```text
 1. Establish disuse   Combine instrumented traffic with caller/owner and
@@ -189,15 +201,20 @@ controlled replay and owner/contract evidence for rare paths not observed live.
 ## Sequencing the whole programme
 
 ```text
-Slice selection, in order of preference:
+Slice selection factors, weighed against business deadlines and risk:
     1. Changes often (the pain is real and recurring)
     2. Reasonably self-contained (few writers to its data)
-    3. Failure is survivable (not the payment path first)
+    3. Failure and recovery are containable
     4. Has an existing boundary (an endpoint, a queue, a file)
 
-NOT: the most technically interesting, the most broken, or the largest.
+Technical interest, code ugliness or size alone do not establish value.
 ```
 
-Prove at least one representative slice end to end—including decommissioning—before scaling the
-pattern broadly. Parallel slices can be justified for independent teams or business deadlines, but
+Prove at least one representative slice end to end—including retirement where intended—before
+scaling the pattern broadly. Parallel slices can be justified for independent teams or business deadlines, but
 cap work in progress and account for every coexistence path operationally.
+
+## Primary references
+
+- [Azure anti-corruption layer](https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer) — semantic mismatch, implementation scope and retained integration layers.
+- [Azure Strangler Fig](https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig) — bounded replacement alternatives, retained facades and CDC during database migration.

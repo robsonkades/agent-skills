@@ -4,8 +4,8 @@ Read at step 5, **before** the first JOL run — not after the first stack trace
 four failure modes below are hit on the very first attempt at the most likely subject of a
 modern layout question, which is a record.
 
-**Environment.** `org.openjdk.jol:jol-core:0.17`, the version used for this audit. Recheck
-Maven Central/OpenJDK JOL before reuse rather than assuming it remains latest. Run against
+**Historical environment.** `org.openjdk.jol:jol-core:0.17`, the version used for the recorded audit. Recheck
+Maven Central/OpenJDK JOL before reuse rather than assuming it remains latest. It was run against
 Temurin **25.0.3+9** (Windows x64) and
 **26.0.2+10** (Linux x64) `[executed]`.
 
@@ -22,25 +22,30 @@ Error: Could not create the Java Virtual Machine.
 
 — it does not appear in `-XX:+PrintFlagsFinal` even with both unlock flags, and `-Xlog:help`
 on 25.0.3 lists no `fieldlayout` or `layout` tag `[executed]`. It is promoted to a diagnostic
-product flag on `openjdk/jdk` master (JDK 28-dev) `[source-only]`, which has shipped nowhere.
+product flag in [OpenJDK development commit 0441ac72](https://github.com/openjdk/jdk/blob/0441ac72d7c3184b0c426d0b42042ab8e34312c3/src/hotspot/share/runtime/globals.hpp)
+`[source-only, checked 2026-09-11]`. This is not evidence that an installed JDK has it;
+inspect the exact target build before using it.
 
-## 1. The invocation that works
+## 1. Match the invocation to the requested inspection
+
+This record-capable classpath example uses JOL 0.17; ordinary application classes need not
+use the record-offset workaround. Add module opens only for packages the inspection actually
+accesses reflectively, such as `java.util` when manually reading `HashMap.table`.
 
 ```bash
 java -cp "yourclasses:jol-core-0.17.jar" \
      -Djol.magicFieldOffset=true \
-     --add-opens java.base/java.util=ALL-UNNAMED \
      YourMain
 ```
 
-On Windows use `;` as the classpath separator. Every element of that line is load-bearing:
+On Windows use `;` as the classpath separator. The prerequisites have different scopes:
 
-| Element                                 | Without it                                                                    |
-| --------------------------------------- | ----------------------------------------------------------------------------- |
-| `-Djol.magicFieldOffset=true`           | JOL throws on the first **record** (§2.1)                                     |
-| `--add-opens java.base/java.util=…`     | Reflecting into JDK internals (e.g. `HashMap.table` to reach a `Node`) throws |
-| Real `.class` files on disk             | `toPrintable()` cannot find the class (§2.3)                                  |
-| The flags under test, recorded verbatim | The listing is unusable (§3)                                                  |
+| Element                                     | Without it                                                                                         |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `-Djol.magicFieldOffset=true`               | The tested record-layout path throws without the workaround (§2.1)                                 |
+| `--add-opens java.base/java.util=…`         | Needed when reflectively reading `HashMap.table`, not every application class                      |
+| Classes accessible to the reporting path    | The tested source-launch `toPrintable()` path fails (§2.3); size-only inspection can still work    |
+| Effective layout inputs and requested flags | Unknown inputs limit comparison; visible evidence can still support a conditional explanation (§3) |
 
 To measure the **shape decision**, add `-Xmx` large enough for the population and use
 `GraphLayout`:
@@ -108,8 +113,8 @@ On Linux JOL additionally prints `Unable to attach Serviceability Agent` and the
 `Compressed references base/shifts are guessed by the experiment! … computed addresses are
 just guesses, and ARE NOT RELIABLE` `[executed]`, 21.0.12 and 26.0.2 in Docker. That warning
 is about **addresses**, not sizes: every `instanceSize()` on those runs matched the Windows
-figures exactly. Do not discard a size measurement because of it, and do not trust an address
-from it.
+figures exactly. Evaluate size evidence separately, using the target layout inputs and relevant
+cross-check; do not trust an address from it.
 
 ### 2.3 `toPrintable()` cannot find a class launched from source
 
@@ -137,12 +142,14 @@ verify the configured cache range and identities; for production sizing, preserv
 Values above 100,000 used in the historical tables avoid the default cache, not every possible
 configured cache.
 
-## 3. A listing without its command line is unusable
+## 3. A listing needs enough context for its claim
 
 The same class is 32 bytes or 24; the same array is 24 bytes or 16 — on one JVM, decided by
-one flag. **And `-Xmx` is one of the deciders**: at 32 GB of heap and above ergonomics turns
-compressed oops off, a reference becomes 8 bytes, and any class holding one changes size
-without a single flag being touched. Always capture the heap size alongside the flags:
+one flag. **And `-Xmx` is one of the deciders**, alongside alignment, collector and explicit
+compression settings. When effective oops widen to 8 bytes, recompute reference fields and
+arrays; some instance totals stay unchanged because of padding. Missing command-line context
+does not erase visible offsets or a separately validated size, but limits transfer to another
+target. For a new comparable run, capture the relevant effective settings:
 
 ```text
 java -version                                        -> the build, verbatim
@@ -151,7 +158,7 @@ java <same flags> -XX:+PrintFlagsFinal -version | grep -E \
 java <same flags> -Xlog:gc+init -version | grep 'Compressed Oops'   -> Enabled (32-bit) / Disabled
 ```
 
-Read `UseCompressedOops` by value, not by origin: past the 32 GB boundary it prints
+Read `UseCompressedOops` by value, not by origin: past the historical alignment-8 boundary it prints
 `false {default}` — ergonomics turned it off and left no `{ergonomic}` tag `[executed]`,
 25.0.3. The `gc+init` line is unambiguous and is the one to paste
 (`production-footprint-checks.md` §2).
@@ -161,27 +168,30 @@ any listing you hand to someone else:
 
 ```text
 # VM mode: 64 bits                          # Lilliput VM detected (experimental)   <- COH on
-# Compressed references (oops): 3-bit shift # Compressed references (oops): disabled <- 32 GB+
+# Compressed references (oops): 3-bit shift # Compressed references (oops): disabled <- wide oops
 # Object alignment: 8 bytes
 # Field sizes:          4, ...              # Field sizes:          8, ...   <- ref is 8 bytes
 # Array base offsets:  16, 16, ... 16       # Array base offsets: 12, ... 12, 16, 16 <- COH on
 ```
 
 `Lilliput VM detected` and the `12,…,12,16,16` base-offset row are the two tells that compact
-object headers are in force. Their absence, with the flag on the command line, is one of the
-two silent-disable conditions — `compact-object-headers.md` §4. The **first entry of each row**
+object headers were in force in these runs. If they are absent despite a requested flag,
+inspect the effective state and the tool's support before diagnosing one of
+the override conditions in `compact-object-headers.md` §4. The **first entry of each row**
 is the tell for oop size: `Field sizes` starting `4` means every reference-holding figure in
 the listing is a compressed-oops figure, and under compact headers the first `Array base
 offsets` entry reads `12` while oops are on and `16` once they are off — at which point
 `Object[]` has stopped shrinking entirely.
 
-## 4. Cross-check JOL rather than trusting it
+## 4. Cross-check when the size claim needs stronger evidence
 
 Without an agent, JOL **derives** instance size from `Unsafe` field offsets; it does not ask
 the VM. JOL 0.17 predates JEP 519 and labels the compact mode "experimental". That is reason
-enough to verify before publishing a number that a design decision rests on.
+to verify a consequential unsupported layout claim or tool/model disagreement. Reuse an
+adequate same-target cross-check; a narrow API explanation does not require a new agent run.
 
-`Instrumentation.getObjectSize` asks the VM directly. The whole cross-check is two files:
+`Instrumentation.getObjectSize` asks the VM for its implementation-specific shallow estimate;
+the API does not promise a portable layout. The whole cross-check is two files:
 
 ```java
 // SizeAgent.java  -> package sizeagent;
@@ -207,7 +217,8 @@ java -javaagent:sizeagent.jar -cp "classes:sizeagent.jar" YourMain
 
 `[executed]`, 25.0.3, both header modes: **44 objects — 12 classes and all 32 array sizes —
 and the two mechanisms agreed on every one.** That is 44 data points, not a proof; it is
-enough to publish a number and cheap enough that there is no excuse for not doing it.
+evidence for those objects and configurations. It does not certify unrelated layouts or
+require every applying agent to repeat the historical matrix.
 
 `getObjectSize` is shallow, like `ClassLayout`. There is no `Instrumentation` deep-size API.
 `GraphLayout.totalSize()` is the JOL option used here for a bounded reachable graph, and it

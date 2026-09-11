@@ -21,25 +21,31 @@ description: >
 ## Purpose
 
 Decide what a consumer does with work it cannot complete, and make that decision from the
-**failure type** rather than from an attempt counter. The classification decides everything
-downstream: payload-intrinsic rejection will recur under the same supported contract until
+**failure type and recovery contract**, not an attempt counter alone. Payload-intrinsic
+rejection will recur under the same supported contract until
 the defect is repaired or the work is terminally rejected. Retrying burns capacity and can
 stop an ordered partition. Quarantining valid work during a dependency outage moves recovery
 into an operational backlog; without ownership and sufficient retention it can become loss.
 
 A retry count cannot distinguish those two. Five failures means "five failures"; it does not
 say whether the sixth would succeed. The failure this skill prevents is the DLQ used as a
-bin: a queue that fills during every incident, that nobody alerts on, that has no redrive
-tooling, and whose contents are therefore lost — data loss with extra steps and a dashboard
-that says the consumer is healthy.
+bin: unresolved work accumulates without an owned recovery/disposition path until its
+deadline or retention expires, while a dashboard says the consumer is healthy.
+
+Keep cause separate from storage disposition. A queue named DLQ may intentionally hold
+exhausted transient or unknown work under a durable recovery contract; a native attempt
+threshold bounds delivery attempts, not the truth of a poison classification.
 
 ## Workflow
 
 Inspect the project's Java release, resolved client/framework versions, broker type/version,
 acknowledgement settings, transaction boundaries and retention before prescribing APIs or
 configuration. The conceptual record uses Java 17 source; adapt to the existing baseline
-without upgrading the project. Return the evidence-based classification, routing/ordering
-decision, durable transfer boundary, owner/redrive conditions and checks still required.
+without upgrading the project. Use the steps relevant to the actual classification, review,
+implementation or replay. Preserve adequate existing controls; a narrow explanation need
+not redesign the DLQ or run every integration fixture. Return the supported decision and
+material uncertainty; for a change, include its affected transfer/ordering boundary,
+recovery owner and checks actually run or still required.
 
 1. **Classify from evidence and context, not count or exception name alone.** Distinguish
    payload-intrinsic rejection, environment/version incompatibility, transient dependency,
@@ -49,8 +55,9 @@ decision, durable transfer boundary, owner/redrive conditions and checks still r
    are `rpc-and-api-contracts`.
 2. **Route each class according to recovery.** Proven payload-intrinsic defects can quarantine
    immediately; transient/overload work waits or retries within budgets; ambiguous effects
-   require status lookup/idempotency/reconciliation; environment-wide failures stop admission
-   and repair the consumer. The table is `references/classification-and-routing.md`.
+   require status lookup/idempotency/reconciliation; environment failures contain admission
+   in the affected scope while its cause is investigated and repaired. The table is
+   `references/classification-and-routing.md`.
 3. **Decide the ordered-log case explicitly** — block dispatch, accept a permitted gap,
    durably park the key, or resynchronize under a compatible projection contract. The
    reference explains their costs; none follows from an attempt count alone.
@@ -58,12 +65,13 @@ decision, durable transfer boundary, owner/redrive conditions and checks still r
    bytes or a secure blob reference, origin/identity, schema, failure evidence and operation
    history. Publishing the DLQ record and advancing the source must be atomic where the broker
    supports it, or repeat-safe/reconciled otherwise. Schema in `references/dlq-operations.md`.
-5. **Name an owner and an alert.** A DLQ with no owning team, no arrival-rate alert and no
-   age alert is a data-loss mechanism.
-6. **Build redrive before you need it**, with its preconditions written down: the defect is
+5. **Verify owned, actionable monitoring.** Detect failed/unresolved work early enough to
+   meet its recovery and retention budget; reuse adequate existing signals and routing.
+6. **Establish the recovery/disposition path when designing or changing it**, with redrive
+   preconditions written down: the cause is
    repaired in the active environment, the downstream still accepts the record, and replay is repeat-safe
    (`idempotency`).
-7. **Test the poison path end to end** — quarantine a failing record with complete evidence;
+7. **Validate the affected poison-path contract** — for a transfer/replay change, quarantine a failing record with complete evidence;
    after demonstrated repair, redrive and assert one logical effect despite redelivery.
    Irreparable records instead receive an auditable terminal rejection.
 
@@ -73,22 +81,25 @@ decision, durable transfer boundary, owner/redrive conditions and checks still r
   stream to the DLQ during a dependency outage, because every message reaches five attempts.
   Counts/deadlines bound transient and ambiguous retries to protect capacity, but exhausting a
   bound does not turn a dependency outage into poison; route to durable delayed work, pause or
-  escalate according to the recovery contract.
+  escalate according to the recovery contract. A DLQ can be that durable holding path when
+  cause, recovery ownership, retention and repeat-safe replay remain explicit; do not remove
+  a useful native attempt threshold merely because it is not a classifier.
 - Never classify on `e.getMessage().contains(...)`. Typed failures still need context: a
   deserialization error can be corrupt bytes, unknown schema, missing decryption key or a bad
   deployment. Preserve raw bytes before deserialization and compare failure rate/build/schema
-  compatibility before deciding record-local quarantine versus stopping the fleet.
-- **A DLQ nobody alerts on is a data-loss mechanism with extra steps.** Two alerts, not one:
-  arrival rate (something started failing) and age of the oldest unresolved record.
-  Alert design and thresholds are `slo-and-alerting`.
+  compatibility before deciding record-local quarantine versus containing an affected environment.
+- Unobserved unresolved work risks missed recovery or expiry; missing a particular alert does
+  not establish actual loss. Arrival/failure rate and unresolved age are useful signals;
+  assess equivalent business-completeness, backlog/drain and retention controls against the
+  response budget. Alert design and thresholds are `slo-and-alerting`.
 - The DLQ record must carry enough to diagnose without the source: protected raw payload/blob
   reference and safe headers, failure code/evidence, attempt history, source topic/partition/
   offset or queue and stable message ID, original key, first- and last-failure timestamps, consumer group and
   build/schema version, and correlation/trace IDs (`distributed-tracing-design`). Redact
   credentials and bound stack/payload size; DLQs often become long-lived PII stores.
-- Give the DLQ a retention longer than the time it takes a human to act on the alert, and know
-  what that retention is, including when its clock starts. Budget queue residence, detection,
-  investigation and recovery; broker-specific expiry can consume the budget before transfer.
+- Give the DLQ enough remaining retention for detection, investigation and recovery,
+  including human response delay when applicable. Verify when its clock starts and budget
+  source residence too; broker-specific expiry can consume the budget before transfer.
 - **Skipping leaves a gap in the complete effect sequence**, even if remaining records
   retain their relative order. Stopping commits alone does not stop already dispatched or
   buffered work. Gate dispatch and account for in-flight effects when preserving order, or
@@ -103,7 +114,8 @@ decision, durable transfer boundary, owner/redrive conditions and checks still r
   intent as if it were current. Distinguish commands from historical facts: a valid old fact
   may still be required to rebuild a projection. Check the consumer contract before replaying,
   and prefer replaying through the normal consumer over a bespoke script.
-- Redrive at full rate can re-create the incident. Use an isolated, rate-limited replay lane
+- Redrive can re-create overload. Bound replay rate/concurrency from combined live and replay
+  capacity with stop conditions; an isolated replay lane is one option. Replay must go
   through the production validation/handler contract. Reinjecting the original topic is one
   option but changes order and may loop into the same DLQ; an admin replay endpoint/job can be
   safer if it shares code, authorization, idempotency and observability.
@@ -113,8 +125,10 @@ decision, durable transfer boundary, owner/redrive conditions and checks still r
   but replay does not restore their original position among live effects.
 - Never acknowledge/commit past failed work unless its durable disposition is proven. With Kafka, use a
   consume-transform-produce transaction when its scope/configuration fits, or make DLQ publish
-  idempotent and reconcile before advancing. If quarantine storage is unavailable, pause/stop;
-  a best-effort `send()` followed by commit is silent loss.
+  idempotent and reconcile before advancing. If quarantine cannot be made durable through
+  the configured path or a proven fallback, pause the affected scope and retain source
+  recoverability. Independent healthy work may continue when ownership/order permit;
+  a best-effort `send()` followed by commit can lose work.
 
 ## Anti-patterns
 

@@ -8,22 +8,28 @@ before choosing a mechanism; the wrong row is the defect.
 | Scope           | Mechanism that provides it                                                                  | What defeats it                                                                                   |
 | --------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | Thread          | ThreadLocal binding; ScopedValue binds dynamic context, not uniqueness                      | Work handed to another thread; a pooled thread not cleaned up                                     |
-| Class loader    | `static final` field                                                                        | A second class loader — app servers, plugin systems, hot reload, some test runners                |
+| Class loader    | One field per defining Class; inspect other construction paths                              | Independent definitions in app servers, plugins, hot reload or test runners                       |
 | Process (JVM)   | One defining class/static, or one bean definition per container                             | A second application context (common in tests); a child class loader                              |
-| Container / pod | The process, restated                                                                       | A sidecar or second JVM in the same pod                                                           |
-| Node / host     | OS-enforced lock/socket; pid file alone is not a lock                                       | Containers with separate mount namespaces; the lock file surviving a crash                        |
+| Container / pod | No additional guarantee; inspect actual processes/containers                                | A sidecar or second JVM in the same pod                                                           |
+| Node / host     | OS-enforced lock/socket; pid file alone is not a lock                                       | Separate namespaces; file existence alone does not establish active lock ownership                |
 | Cluster         | Leader election (`leader-election`) or a lock with a lease (`distributed-locks-and-leases`) | Lease expiry under GC pause or network partition — stale actors may overlap without a fixed bound |
 | Region / global | Consensus across zones, or a single-writer design                                           | Partitions between regions; latency making the design unusable                                    |
-| "The system"    | Not a primitive. Designed, and usually replaced by idempotency                              | The assumption that it exists                                                                     |
+| "The system"    | Explicit authority/effect protocol; repeated effects may permit idempotency                 | Treating instance identity or repeat suppression as universal effect exclusion                    |
 
 Two rows deserve emphasis.
 
-**Class loader, not JVM.** A `static` field is unique per class loader, and the same class loaded
+**Class loader, not JVM.** A static field belongs to its defining Class; other creation paths can
+still make objects. The same binary name defined
 by two loaders yields two independent "singletons" whose `instanceof` checks against each other
 fail. This is a live concern for application servers, OSGi-style plugin systems, and test
 frameworks that isolate class paths. It is also why an enum singleton's identity can surprise:
 the enum constant is unique per loader, and serialisation across loaders does not preserve
 identity.
+
+Parent delegation to the same definition shares that Class; merely having two child loaders does
+not prove two definitions. A leftover file likewise does not prove an active OS lock: a
+[Java FileLock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/channels/FileLock.html)
+has its own held/released lifetime, separate from the file's existence.
 
 **Election is not effect exclusion by itself.** Elections may use terms/quorums rather than
 leases. A paused or partitioned former leader can continue acting on stale authority, with no
@@ -42,29 +48,30 @@ effects outside the replicated state machine still needs its own authority bound
 | "Only one connection pool"              | Pool per owned datasource/credentials/lifecycle; budget all pools and peak replicas    |
 | "Rate limit to 100 req/s"               | Shared enforcement or allocated budgets accounting for bursts, skew and changing N     |
 | "Cache must be consistent"              | Explicit consistency/invalidation policy; TTL alone is not coherence                   |
-| "Configuration loaded once"             | One bean; injection                                                                    |
+| "Configuration loaded once"             | Owned loading/snapshot/reload policy; inspect actual definitions and lifecycle         |
 | "The scheduler must not overlap itself" | Local exclusion or distributed lease as scoped; expiry does not stop running work      |
 
 The pattern in the right-hand column: **the requirement is about an effect, not an instance.**
-Once restated as an effect, most of these dissolve into either idempotency or a per-replica
-budget, both of which scale and neither of which needs a leader.
+Once restated as an effect, compare scoped ownership, per-replica budgets and safe repeat handling
+with any actual exclusive-writer requirement. Idempotency alone does not eliminate that requirement.
 
 ## Per-replica budgets — the arithmetic that gets forgotten
 
-A process-local singleton multiplied by replicas is the most frequent production consequence of
-this pattern:
+For independent instances with equal limits, these are configured aggregate ceilings or potential
+concurrency, not measured demand:
 
 ```text
-maxPoolSize: 20    ×  8 replicas  = 160 connections
-database max_connections: 100     → refused connections after a scale-up
+maxPoolSize: 20    ×  8 replicas  = capacity for up to 160 connections
+database max_connections: 100     → possible refusal if actual aggregate demand exceeds headroom
 
-rate limiter: 100 rps (in-process)  ×  8 replicas = 800 rps at the dependency
+rate limiter: 100 rps (in-process)  ×  8 replicas = aggregate allowance 800 rps
 
-warm-up job on startup (singleton per process) × 8 = 8 concurrent warm-ups
+warm-up job on startup (singleton per process) × 8 = up to 8 overlapping warm-ups
 ```
 
-None of these fail in a single-replica environment, which is why they reach production. Whenever
-a limit is configured in a process-local object, write the multiplied figure next to it.
+State the limiter's window/burst semantics, skew, rollout overlap and other clients before using
+these figures as a resource budget. A single replica can also exceed available capacity; compare
+actual usage and rejected work with configured ceilings before diagnosing a failure.
 
 ## Choosing a distributed mechanism
 
@@ -100,10 +107,11 @@ Consequences worth knowing:
 
 - Two definitions of one class can produce two instances even in one context. Child contexts may
   inherit a parent's instance or define another; inspect actual registration and lookup.
-- The container controls creation order and destruction, so initialisation-order questions have
-  an owner — unlike a static holder.
+- For container-managed creation/destruction, lifecycle configuration gives initialization an
+  owner. Still establish who closes the context/resource and whether an injected object is borrowed;
+  injection alone does not transfer lifetime ownership.
 - Injecting it avoids a global accessor; a static ApplicationContext/service locator reintroduces
   global access despite the bean scope. Inspect callers rather than inferring this from annotations.
-- A singleton-scoped bean holding mutable request state is still a bug — the scope says nothing
-  about thread safety, and one bean serves every concurrent request
+- Mutable request state needs correct isolation, ownership and synchronization as applicable;
+  singleton scope alone does not protect concurrent or successive requests
   (`java-dependency-inversion`).

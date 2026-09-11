@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: gof-bridge
-version: 1.2.1
+version: 1.2.2
 description: >-
   Bridge in modern Java: separating an abstraction hierarchy from an implementation hierarchy so
   the two vary independently instead of multiplying into N×M classes. Covers the two-axis test
-  that distinguishes it from Strategy, what to do when the matrix has illegal combinations, why
-  the implementor interface must be designed for its slowest and least reliable implementation,
+  that distinguishes it from Strategy, what to do when the matrix has illegal combinations, how
+  implementor contracts account for backend cost and failure without losing required capabilities,
   and the thread-safety contract that belongs to the interface rather than to each implementation.
   Use when class names start combining two adjectives, when adding either a variant or a backend
   requires editing the other side, when a transport or storage backend must be swappable, when one
@@ -47,8 +47,11 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - gof-abstract-factory
   - gof-pattern-thinking
+  - gof-patterns-and-distribution
   - gof-proxy
+  - java-composition-over-inheritance
   - java-exception-design
   - java-test-design
   - jit-inlining-and-escape-analysis

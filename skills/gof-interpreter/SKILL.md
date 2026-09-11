@@ -2,7 +2,7 @@
 name: gof-interpreter
 description: >
   Interpreter in modern Java: representing a small language as a typed tree and evaluating it,
-  expressed today as a sealed AST with an exhaustive switch rather than an eval() method per node.
+  using per-node interpretation or a sealed AST with an exhaustive switch according to the extension contract.
   Covers parsing as a separate problem the pattern does not solve, when an existing expression
   language beats writing one, how general expression engines become code-execution surfaces when
   exposed with unsafe capabilities,
@@ -28,6 +28,11 @@ normally needs it. And the GoF class-per-production approach fits small grammars
 user functions, recursion, optimization or strict isolation may justify a mature runtime, bytecode
 VM, or existing language rather than an ever-growing `switch`.
 
+Start with actual consumer expressions, existing configuration/query APIs and accepted language
+semantics. Identify who authors rules, which inputs and capabilities they may use, and whether
+rules must also be explained, stored or translated. Resolve material type/error/authorization gaps
+before prescribing a language; retain an adequate existing mechanism when no new grammar is needed.
+
 The sealed AST plus pattern-switch examples require Java 21 or later without preview features.
 Inspect the target compiler/runtime and engine versions; adopting Interpreter does not authorize
 an upgrade. On older baselines use supported per-node dispatch or an existing evaluator.
@@ -37,10 +42,11 @@ an upgrade. On older baselines use supported per-node dispatch or an existing ev
 ```text
 Users must express conditions you cannot enumerate at compile time,
 in a language you control and can keep small
-        → Interpreter, with a sealed AST.
+        → consider Interpreter; choose dispatch from the extension contract.
 
 Rules change more often than releases and must be stored as data
-        → Interpreter, with the AST persisted or parsed from stored text.
+        → compare fixed configuration with a language; version stored syntax/AST
+          and semantic configuration if interpretation is needed.
 
 Expressions must be inspected as well as evaluated — explained,
 optimised, translated to SQL, shown in a UI
@@ -50,12 +56,12 @@ optimised, translated to SQL, shown in a UI
 
 ## When it is not
 
-- **The conditions are known and few.** A sealed set of named rules, or configuration with a
-  fixed shape, is simpler than a language and cannot express nonsense.
+- **The conditions are known and few.** Named rules or configuration with a fixed shape can
+  be simpler than a language. They still need validation of values and combinations.
 - **A suitable language already exists.** CEL, JSONLogic, a rules engine or a query DSL is
   usually cheaper than designing, documenting, versioning and securing your own.
-- **The grammar is non-trivial.** Precedence, associativity, error recovery and position tracking
-  are what parser generators and combinator libraries do properly.
+- **Parsing is the unresolved problem.** Choose recursive descent, combinators or a generator
+  for the grammar and maintenance needs; Interpreter alone does not supply that parser.
 - **The expression comes from an untrusted source and the chosen engine exposes constructors,
   reflection, bean/type access or host functions.** That can become arbitrary code execution.
   Prefer a purpose-built restricted language or isolation. SpEL `SimpleEvaluationContext` limits
@@ -73,7 +79,7 @@ abstract class Expression            sealed interface Expr
 
 one interpret() per node class       one exhaustive switch — the whole
                                      evaluator readable in one place, and
-                                     a new node breaks it at compile time
+                                     rebuilding exposes missing exhaustive coverage
 
 Context as a mutable map             an immutable context record, or a
                                      Function<String, Value> resolver
@@ -82,10 +88,12 @@ evaluation only                      several folds over the same AST:
                                      evaluate, describe, toSql, validate
 ```
 
-The `switch` form is preferable while you own every node type: the evaluator is one function
-rather than scattered across the node classes, and adding a node type produces a compile error at
-every fold. Keep `interpret()` on the nodes only when third parties contribute node types
-(`java-composition-over-inheritance`).
+Compare a central fold with per-node `interpret()` using the actual changing axis and existing API.
+A stable operation with growing node types can suit polymorphism even when you own every type;
+closed node sets with independent operations can suit folds (`java-composition-over-inheritance`).
+Adding a node exposes missing coverage only in recompiled exhaustive switches without a covering
+fallback. Old binaries can encounter `MatchException`; neither sealing nor a fallback establishes
+semantic compatibility.
 
 ## Decision rules
 
@@ -119,9 +127,9 @@ IF an expression must run in more than one process or version
 THEN the grammar is a contract: version it, and decide what an older
      evaluator does with a node it does not know.
 
-IF nodes hold evaluation state
-THEN the AST is not shareable. Keep nodes immutable and pass the
-     context as a parameter.
+IF nodes hold caller-specific mutable evaluation state
+THEN do not share that state across calls. Prefer immutable nodes and a per-call context;
+     any shared cache needs its own synchronization and complete input/key contract.
 
 IF the language grows scoping, user functions, loops or recursion
 THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
@@ -130,8 +138,9 @@ THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
 
 ## Cross-cutting checks
 
-- **Concurrency.** An immutable AST is safe to share across threads and to cache; that is the
-  design to hold. The failure is a node that caches its last result or holds a reference to the
+- **Concurrency.** A deeply immutable, safely published AST can be shared; context values and
+  resolvers must still obey their own ownership and capability contracts. The failure is a node
+  that caches its last caller's result or holds a reference to the
   context — then the same expression evaluated concurrently for two users can return one user's
   answer to the other. Evaluation state belongs in a per-call context
   (`java-immutability`).
@@ -155,13 +164,13 @@ THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
 - [ ] An existing expression language was considered and rejected for a stated reason
 - [ ] Any user-influenced engine input runs with an audited allowlist/capability model or isolation
 - [ ] Text/token sizes, AST depth/nodes, expensive primitive work and result sizes have enforced bounds
-- [ ] Evaluation has no side effects and no access to the host environment
+- [ ] Evaluation exposes only authorized, bounded capabilities; the pure filter design excludes I/O, reflection and ambient host access
 - [ ] Parsing is separated; any AST cache is measured, bounded and resistant to key-cardinality abuse
 - [ ] AST nodes are immutable; evaluation state lives in a per-call context
 - [ ] An unknown node type from a newer producer is rejected, not ignored
 - [ ] Performance claims about compilation are backed by a benchmark
 
-Deliver the language's type/null/error/short-circuit contract, capability and resource limits,
+Deliver the justified language or no-change decision, type/null/error/short-circuit contract, capability and resource limits,
 validated execution boundary, and relevant checks. Label missing parser, SQL dialect or engine
 validation explicitly; AST immutability and a sealed hierarchy alone do not establish safety.
 

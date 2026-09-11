@@ -41,14 +41,16 @@ absence throughout the system.
    layering, persistence, messaging, configuration, security, observability, testing, delivery.
    Relevant concerns get a finding, bounded "not found", "not examined" or "unavailable".
 3. **Cite everything.** `path:line`, a dependency coordinate with its version, or the command
-   and what it printed. A finding with no citation goes in as an assumption or not at all.
+   and what it printed. A material claim not established by evidence remains unknown; label it
+   an assumption only when provisionally adopted, with its basis and falsifier.
 4. **Close the unknowns it can close.** Walk the discovery ledger and mark each unknown this
    sweep answered, with the evidence. This is the phase's main product.
 5. **List reusable components** by name and location, with what each would have to change.
 6. **List the conflicts** — anything in the request that the codebase makes awkward, expensive
    or impossible, and what the code says about why.
-7. **Label every technology finding as observed**, never as required. That distinction is the
-   whole reason the report is trustworthy.
+7. **Separate observed technologies from required constraints.** A technology mandate needs
+   an applicable policy, contract or accepted decision with source and authority; presence in
+   the implementation does not supply that authority.
 8. **Preserve traceability.** Assign or reuse `F-*` for evidence and resolve `U-*` by appending the
    fact/source; name the input feature revision so later baseline changes can invalidate findings.
    Reuse the existing ledger when present; otherwise concise inline IDs/unknowns are enough.
@@ -104,7 +106,7 @@ Existing architecture      <shape, with the paths that show it>
 Input revisions            <Product/Engineering or Tech Feature revision IDs>
 Relevant modules           <path -> what it owns>
 Relevant components        <name, path, what it does>
-Existing patterns          <pattern, count, counter-examples>
+Existing patterns          <pattern, count within inspected scope, counter-examples>
 Existing technologies      <name, version, where used, observed>
 Reusable components        <name -> what it would need>
 Potential conflicts        <request item vs what the code makes hard, with evidence>
@@ -116,3 +118,6 @@ Still unknown              <U-nn, search limits/access gaps, smallest next evide
 Scale the report to the feature: omit irrelevant rows and reuse existing artifacts. Before handing
 off, verify cited paths match the current revision and each resolved unknown is actually supported.
 Do not mark a product decision answered merely because one implementation was found.
+End the sweep when material questions in scope have supported answers or bounded evidence/access
+gaps with the next check or accountable role identified. Expand only when further inspection could
+change the feature decision or resolve a material gap; unrelated unread modules do not prevent handoff.

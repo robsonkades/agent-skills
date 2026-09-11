@@ -39,7 +39,8 @@ egress and query scans. Application overhead also depends on enabled checks, arg
 construction, caller location, stack traces, JSON serialization, locks, allocations and
 transport.
 
-Benchmark representative event mixes, including failures and disabled levels. Avoid
+For a logging-cost claim, measure representative event mixes, including relevant failures
+and disabled levels; reuse adequate measurements for unchanged paths. Avoid
 constructing expensive arguments before the level decision; parameterization does not avoid
 work already performed by application code.
 
@@ -52,11 +53,18 @@ Choose per event class:
 - sample/coalesce repetitive diagnostics;
 - spill to bounded local durable storage;
 - route audit/security to a separate durable channel;
-- fail the operation only when compliance/integrity contract requires it.
+- reject/fail at the defined boundary when the business, security or compliance contract
+  requires an observable durable record as a condition of accepting the operation.
 
 These are design alternatives, not options every appender implements. Verify the selected
 implementation supports the required timeout/spill behavior; a bounded queue does not itself
 bound how long producers block.
+
+Keep best-effort diagnostic logging separate from a required business-event protocol. If a
+record must be atomic with business state, use the actual transactional mechanism; synchronous
+appender completion alone does not establish that invariant. A failure after an ambiguous
+commit/acknowledgement is not proof that the operation did not happen; reconcile outcome and
+replay semantics before retrying.
 
 Make every loss/block/fallback observable without recursively logging the failure into the
 same broken path.
@@ -64,7 +72,8 @@ same broken path.
 ## Shutdown and crash
 
 Graceful shutdown can flush within a deadline; SIGKILL, OOM or host loss can lose in-memory
-events. Test orchestrator grace periods and appender lifecycle. Do not claim crash-safe
+events. For shutdown/delivery changes, verify relevant orchestrator grace periods and appender
+lifecycle. Do not claim crash-safe
 delivery without a durable acknowledgement design.
 
 ## Container output

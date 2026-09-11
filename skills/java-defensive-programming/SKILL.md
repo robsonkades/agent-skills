@@ -39,8 +39,10 @@ means check removal remains conditional, not proven safe.
 2. **Bound before expensive work.** Limit bytes, nesting, collection counts and decompressed
    expansion; decode strictly; then apply only contract-defined canonicalization and validate
    semantics. Preserve raw input separately only when audit/legal needs justify its risk.
-3. **Make the validated state a type.** Parse raw input into a record whose compact
-   constructor enforces the checks. A non-null `CustomerId` can carry its component's
+3. **Carry validated state across trusted calls.** Retain an adequate validated class or
+   local check; introduce a value type when it makes invariant ownership clearer than passing
+   raw values. A record with a validating compact constructor is one option, not a required
+   API migration. A non-null `CustomerId` can carry its component's
    format invariant across trusted calls. The variable holding that record can still be
    null; mutable components and unverified construction paths need separate evidence.
 4. **Delete only proven-redundant checks.** Keep constructor invariants, authorization,
@@ -50,13 +52,17 @@ means check removal remains conditional, not proven safe.
 
 ## Rules
 
-- Preconditions identify the field/expectation with a stable error code. Include actual values only
-  when they are bounded and non-sensitive; otherwise redact/hash and retain a correlation id.
+- Preconditions identify the field/expectation while preserving the published failure contract.
+  Use stable codes where callers consume them; do not replace an established exception API merely
+  to add codes. Include values only when bounded and non-sensitive; otherwise omit/redact them
+  and use a safe correlation id. Hashing a secret does not by itself make it safe to expose.
 - Fail fast before irreversible effects for one invalid operation. Batch/stream boundaries may
   isolate bad items and return an aggregate report, but must not acknowledge invalid work as
   successful or continue with corrupted shared state.
-- Do not silently change meaning. Defaults, clamping and migration coercions are acceptable only as
-  an explicit, versioned compatibility policy with telemetry and a removal/ownership decision.
+- Do not silently change meaning. Defaults and clamping may be permanent, explicit domain/API
+  behavior. Distinguish them from undocumented repairs and temporary migration coercions; the
+  latter need an owned compatibility policy and evidence for any planned retirement. Changing
+  accepted input or failure behavior requires a deliberate consumer-compatible transition.
   Representation normalization is likewise contract-specific: case, whitespace and Unicode changes
   can alter identifiers, signatures or user-visible text.
 - `assert` is disabled by default (enabled with `-ea`) and must have no required side effects. Use it

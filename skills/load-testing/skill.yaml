@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: load-testing
-version: 1.4.1
+version: 1.4.2
 description: >-
   Designing valid service load experiments: choosing open or closed workload models,
   defining offered, admitted and successful work, controlling generator and environment
@@ -45,6 +45,10 @@ dependencies:
     version: ^1.0.0
   - name: coordinated-omission
     version: ^1.0.0
+
+suggests:
+  - capacity-planning
+  - load-testing-advanced
 
 capabilities:
   - reads-source

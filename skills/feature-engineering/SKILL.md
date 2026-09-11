@@ -117,7 +117,9 @@ THEN use evidenced authority/delegation from the session and project; identify a
      role only where the consequence requires one. Do not demand approval already supplied.
 
 IF feasibility is unknown and pass/fail changes a decision
-THEN run feature-feasibility-experiment before selecting or recording the option.
+THEN use feature-feasibility-experiment to resolve it; record proposals and missing evidence
+     meanwhile. A planned or inconclusive experiment does not establish feasibility;
+     accepting uncertainty still requires the GAP-* authority and readiness rules.
 
 IF a boundary crossing has no accepted contract and owner
 THEN return to engineering; a DTO or file shape in the plan is not a contract.

@@ -10,6 +10,31 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-09-11
+
+### Added
+
+- Interactive CLI and skill update notifications with update, reminder and skip choices,
+  registry-aware version selection, and explicit approval for major skill upgrades.
+- CLI self-update for identified npm installations, with instructions for other installation
+  methods and opt-outs for automated or non-interactive use.
+- Permanent registry-builder tests for single-word skill references and documented routing
+  exceptions.
+
+### Changed
+
+- Reviewed and revised all 275 skills, with individual version bumps, updated dependencies
+  and suggestions, corrected references, and regenerated registry integrity hashes.
+- Recorded per-skill evidence and 2,438 graded responses, preserving partial results and
+  distinguishing example checks from agent behavior and comparative improvement claims.
+
+### Fixed
+
+- Registry validation now detects undeclared single-word catalog references in routing tables
+  and prose, while preserving depth-ladder and reverse-dependency exceptions.
+- Corrected version-sensitive API and JVM guidance, concurrency and resource lifecycles,
+  diagnostic failure handling, measurement assumptions, and skill evaluation boundaries.
+
 ## [1.5.1] — 2026-09-05
 
 ### Fixed

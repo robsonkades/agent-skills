@@ -34,12 +34,13 @@ advice about being careful.
    (`references/verification.md`).
 2. **Run repository-required checks and those the change's risk warrants** and read the output
    rather than the exit code alone. Some runners can exit successfully with zero relevant tests.
+   Continue available required checks; disclosing that they were not run does not finish them.
 3. **Compare the diff against the request.** Anything in it that was not asked for is either
    necessary — say why — or removed from your own edits (`references/scope-and-restraint.md`).
    Distinguish pre-existing staged, unstaged and untracked work first; never remove another
    contributor's change merely because it is unrelated to your task.
-4. **Report failures and gaps first**, before the summary of what worked. What failed, what you
-   could not run, what you assumed.
+4. **Make material failures and gaps prominent.** State their effect on the result alongside
+   what worked; match detail to impact rather than burying the outcome in a command log.
 5. **State what remains.** A partial result described accurately is useful; a partial result
    described as complete is worse than nothing.
 
@@ -48,9 +49,9 @@ advice about being careful.
 - Never state a result you did not observe. "Tests pass" requires having run them and seen them
   pass. If you did not run them, the sentence is "I have not run the tests" — which is a
   perfectly acceptable thing to say, and the only acceptable alternative.
-- Never present inference as observation. "This should work", "this will fix it" and "the build
-  is green" are three different confidence levels and only the last is checkable. Say which one
-  you mean.
+- Never present inference as observation. A successful build establishes the checked build
+  result; a bug-fix claim needs evidence that the reported symptom is resolved. Say what you
+  expect separately from what the available evidence establishes.
 - Report what you could not verify, explicitly and unprompted. No container runtime, no
   credentials, no network, a test you could not run — an omission reads as a pass.
 - Never weaken, delete, disable or narrow a test merely to make it pass. A failing test is either

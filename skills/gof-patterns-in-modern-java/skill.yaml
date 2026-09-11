@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-patterns-in-modern-java
-version: 1.3.1
+version: 1.3.2
 description: >-
   Which Gang-of-Four patterns modern Java and Spring already implement, which they only
   change the expression of, and which still need writing by hand. Covers records, sealed
@@ -46,16 +46,20 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - flame-graph-analysis
   - gof-memento
   - gof-composite
   - gof-factory-method
   - gof-iterator
   - gof-observer
+  - gof-pattern-selection
+  - idempotency
   - java-composition-over-inheritance
   - java-dependency-inversion
   - java-immutability
   - java-null-safety
   - java-optional
+  - patterns-and-modern-frameworks
   - scoped-values
   - structured-concurrency
   - thread-sizing-and-virtual-threads

@@ -37,8 +37,9 @@ through the same harness and the real build tool:
 -Xlint:deprecation -Xlint:removal -Werror
 ```
 
-`deny` in a test environment is the highest-yield single step in this whole pass, because the
-usage is almost always in a dependency and almost never in code you would think to grep.
+Use `deny` when exercised code or dependencies may use Unsafe memory access; `debug` can first
+identify callers without forcing failure. A clean run covers only the paths exercised, not every
+dependency or production configuration. Other breakage classes still need their own checks.
 
 ## What to measure, and against what
 
@@ -47,16 +48,17 @@ rerun the preserved old image/artifact in a comparable isolated environment alon
 one. Label that reconstructed baseline and its workload/data/environment differences. Without
 a valid comparison, report that performance impact is unproven; do not invent a speedup.
 
-| If the upgrade was justified by   | Measure                                            | Owned by                  |
-| --------------------------------- | -------------------------------------------------- | ------------------------- |
-| Lower footprint                   | RSS and heap after a settled period under load     | `jvm-memory-regions`      |
-| Shorter pauses                    | Pause distribution, p99 and max — never the mean   | `gc-log-analysis`         |
-| Faster startup                    | Time to first good response, not time to port open | `startup-cds-crac-leyden` |
-| Throughput                        | A load test whose validity conditions hold         | `load-testing`            |
-| Nothing — it was security support | That nothing regressed                             | the pre-upgrade baseline  |
+| If the upgrade was justified by | Measure                                                  | Owned by                  |
+| ------------------------------- | -------------------------------------------------------- | ------------------------- |
+| Lower footprint                 | RSS and heap after a settled period under load           | `jvm-memory-regions`      |
+| Shorter pauses                  | Pause distribution and the agreed tail/aggregate metrics | `gc-log-analysis`         |
+| Faster startup                  | Time to first good response, not time to port open       | `startup-cds-crac-leyden` |
+| Throughput                      | A load test whose validity conditions hold               | `load-testing`            |
+| Security or vendor support      | Agreed compatibility and performance gates               | the pre-upgrade baseline  |
 
-The last row is the most common and the most often skipped. An upgrade taken for support reasons
-still needs a before-and-after, because "no change expected" is a prediction that can be wrong.
+An upgrade taken for support reasons still needs a before-and-after against those gates, because
+"no change expected" is a prediction that can be wrong. Passing the exercised gates supports the
+tested scope; it cannot establish that nothing anywhere regressed.
 
 **Change one variable.** The temptation during an upgrade is to also switch collector, resize the
 heap or clean up unrelated code. Separate optional tuning from the runtime comparison, while

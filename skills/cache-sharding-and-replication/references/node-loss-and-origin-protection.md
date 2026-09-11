@@ -51,8 +51,8 @@ Two derived numbers worth writing down next to the cache's configuration:
 - **Approximately `R` at cold start — the initial full storm.** `R × (1 − h)` is the warm
   baseline, not the cold-cache load. This is the number for a regional
   failure, a `FLUSHALL`, or a cache-tier redeploy that does not warm. If nothing in the
-  system can serve it, the origin cannot be brought up behind an empty cache at all, and cold
-  start needs a plan of its own.
+  system can serve that full rate, cold start needs an admission/ramp plan before accepting
+  the full offered load; an empty cache does not by itself make recovery impossible.
 
 ## The levers
 
@@ -65,9 +65,12 @@ Two derived numbers worth writing down next to the cache's configuration:
 | **Gradual warming**          | Bounds the _rate_ of misses a returning node produces       | Longer period of reduced hit rate                                   |
 | **Staggered restarts**       | Turns N simultaneous losses into N sequential ones          | A slower rollout                                                    |
 
-Coalescing and admission control are the two that protect the origin regardless of _why_ the
-misses arrived — node loss, cold start, a TTL wave — which makes them worth having before
-any of the others.
+Coalescing helps repeated concurrent misses for the same key within its scope; it does not
+cap a storm of distinct-key misses. Origin admission must cover the aggregate work from
+request misses, retries and warming, with bounded queues and tenant fairness where required.
+Compare that budget with measured origin capacity. Local limits need a bounded aggregate
+across all active instances; a per-instance coalescer alone supplies no such bound. Use the
+protection the failure estimate requires, rather than introducing every lever.
 
 ## Warming a returning node
 
@@ -81,9 +84,13 @@ the actual readiness and routing protocol. For an empty ownership target, option
    admission control in place; stages with a hot key can still exceed origin capacity.
 2. **Pre-warm before advertising.** Fill the node from the origin, or from a peer, and only
    then add it to the membership. The correctness hazard is warming with values that go
-   stale during the warm. Coordinate updates with version checks or replay invalidations before
-   serving; a short TTL is only acceptable when the resulting stale window meets the contract
-   and expiry reloads fresh data. Bound warming traffic and abort on lost origin headroom.
+   stale during the warm. Establish a cutover condition covering concurrent updates, deletes
+   and late fills. If using version/tombstone checks to reject stale fills, cover absent
+   entries too; a one-time invalidation replay followed by unsynchronized fills is
+   insufficient. `caching-strategies` owns that protocol. A short TTL is only acceptable when
+   the resulting source-age window meets the contract and expiry reloads fresh data. Bound
+   warming traffic and abort on lost origin headroom. Rollback routing must preserve the same
+   read contract; the old owner may no longer be current.
 3. **Let it miss, behind coalescing and admission control.** Simplest, and adequate whenever
    the measured request share and query mix fit remaining origin capacity.
 
@@ -105,6 +112,9 @@ the cache. A passing run establishes behavior for its workload and failure scena
 5. Assert: client-visible error rate stays within the SLO, and p99 stays within budget.
 6. Restore the node and assert recovery stays within the same bounds; record time to readiness.
 ```
+
+For a migration, include concurrent updates/deletes and delayed fills across cutover and rollback;
+assert the declared read contract on every still-routable owner, not just successful transfer.
 
 Origin/client bounds are the acceptance evidence. "The cache recovered" or a restored hit rate is
 insufficient: recovery can be slow, fail, or succeed only after the origin violated its SLO.

@@ -26,6 +26,11 @@ objectives may need other semantics.
 
 ## Workflow
 
+Start with the requested decision: define a contract, review an existing one, explain budget
+arithmetic, or change a rule. Use the steps relevant to that decision and reuse adequate
+supplied specifications and checks. A supported review may conclude that no change is needed;
+a narrow explanation does not require a new telemetry inventory or rollout campaign.
+
 ### 1. Start from user journeys and consequences
 
 Identify users (including services), critical journeys, harm from failure/latency/staleness
@@ -70,7 +75,7 @@ Page when:
 
 - impact or a predictive hazard is urgent enough to require action before business hours;
 - a person has a safe action or escalation now;
-- automation cannot handle it fully;
+- urgent human work remains, including containment or required verification while automation runs;
 - ownership, runbook and expected response are explicit.
 
 User symptoms are strong paging signals, but “never page on causes” is unsafe. Impending
@@ -84,16 +89,21 @@ ill-conditioned.
 
 ### 5. Validate the monitoring system
 
-Test recording and alert rules with controlled traffic/faults; verify labels, absent data,
-counter resets, delayed ingestion, partial monitoring outage and alert routing. A page is a
-production interface and needs version control, review and tests.
+For changed rules or an unverified monitoring claim, choose checks that can expose the
+affected failure: labels, absent data, counter resets, delayed ingestion, partial monitoring
+outage or alert routing. Use isolated rule fixtures, replay or authorized controlled
+traffic/faults as needed; retain applicable existing evidence. A page is a production
+interface and needs version control, review and tests.
 
-Inspect the deployed Prometheus/rule evaluator version, scrape/evaluation intervals, exporter
-and Java instrumentation library/configuration before recommending syntax or changing buckets.
+Inspect the relevant Prometheus/rule evaluator version and evaluation settings before
+version-sensitive syntax or timing advice, and exporter/Java instrumentation configuration
+before changing measurement or buckets. Arithmetic-only answers need the population and
+budget assumptions, not unrelated runtime details.
 The examples are Prometheus rule fragments, not Java code or a ready-to-load rule file; no
-Java upgrade or dependency addition is implied. Return the SLI population/query, target/window,
-budget interpretation, actionable alert policy and checks performed. Keep a safety verdict
-conditional when traffic, coverage or rule-evaluation evidence is missing.
+Java upgrade or dependency addition is implied. Return the requested conclusion or adjustment,
+supporting evidence and relevant limitations. A new SLO/alert contract needs its population,
+query, target/window, budget interpretation, action and validation. Keep only conclusions
+that depend on missing traffic, coverage or evaluator evidence conditional.
 
 ### 6. Operate and retire
 
@@ -111,7 +121,7 @@ e_b=1-S,\qquad
 burn=\frac{e_{observed}}{e_b}
 \]
 
-For \(0<S<1\), let \(V_w\) be valid events in alert window \(w\), contained in reporting
+For \(0<S<1\), let \(b\) be the observed burn, \(V_w\) valid events in alert window \(w\), contained in reporting
 period \(T\), and \(V_T\) the valid events in that period. The fraction of that period's
 total allowed bad events consumed in \(w\) is:
 
@@ -158,11 +168,14 @@ counts against availability.
 | Symptom                                  | Likely design defect                                   | Remediation                          |
 | ---------------------------------------- | ------------------------------------------------------ | ------------------------------------ |
 | SLO green during outage                  | wrong boundary, absent traffic/data, excluded failures | add edge/synthetic/business coverage |
-| budget changes after query refactor      | population/classification/schema drift                 | version SLI and dual-run migration   |
-| one request pages low-volume service     | ratio statistically sparse                             | synthetic/group/window/manual policy |
+| budget changes after query refactor      | population/classification/schema drift                 | reconcile meaning and budget history |
+| sparse-ratio page lacks urgent action    | unstable ratio or inappropriate paging policy          | synthetic/group/window/manual policy |
 | page storms across services              | dependency correlation and duplicate routes            | inhibit/group by user journey        |
 | alert clears before responder sees cause | short window/no retained evidence                      | recording rules, incident snapshots  |
 | pages routinely ignored                  | no action, bad severity or ownership                   | automate, ticket, merge or remove    |
+
+A single credible correctness or safety event can require immediate action even at low
+volume; statistical sparsity alone does not invalidate that page.
 
 ## Anti-patterns
 

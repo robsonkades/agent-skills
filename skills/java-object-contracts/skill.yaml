@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-object-contracts
-version: 1.2.1
+version: 1.2.2
 description: >-
   The four contracts every Java object inherits or opts into — equals, hashCode, toString,
   Comparable — plus why clone is not one of them. The equals properties and how inheritance
@@ -40,7 +40,25 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: java-immutability
+    version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - consistency-models
+  - consistent-hashing
+  - gof-prototype
+  - idempotency
+  - java-composition-over-inheritance
+  - java-null-safety
+  - java-serialization-hardening
+  - message-ordering-and-partitioning
+  - orm-structural-mapping
+  - repository-pattern
+  - rpc-and-api-contracts
+  - serialization-performance
+  - structured-logging
 
 capabilities:
   - reads-source

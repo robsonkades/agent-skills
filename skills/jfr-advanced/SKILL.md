@@ -34,7 +34,8 @@ target build. Examples here are patterns, not a frozen JDK event catalogue.
 
 ## Evidence contract
 
-Before changing settings, write:
+Before changing settings, reuse established facts and record the material parts of this
+contract for the proposed change:
 
 ```text
 hypothesis and decision:
@@ -134,9 +135,11 @@ recording can make custom event work execute for all application calls.
 ## Custom event decision
 
 Use a custom event when application semantics are required to correlate JVM/resource events and
-ordinary metrics/traces cannot supply the relationship cheaply. Do not copy request bodies,
-credentials, raw URLs, arbitrary tenant IDs, trace IDs on every event, or high-cardinality
-objects into JFR.
+ordinary metrics/traces cannot supply the relationship cheaply. Exclude request bodies,
+credentials and arbitrary payload objects. Add identifiers only for a required relationship,
+with explicit namespace, privacy, rate, payload-size and retention limits. A bounded window may
+need a token on every selected event to preserve its join contract; sampling is a choice, not a
+substitute for required coverage. Do not capture raw URLs or tenant/trace IDs by default.
 
 Design:
 
@@ -159,7 +162,7 @@ integrity.
 `Event.isEnabled()` is an instance method; `MyEvent.isEnabled()` is not a valid static guard.
 Options:
 
-1. allocate the event and rely on JIT elimination when disabled, as the JFR API documents;
+1. allocate the event directly and defer expensive payload work until `shouldCommit()`;
 2. cache/use `EventType.getEventType(MyEvent.class).isEnabled()` as a coarse precheck before
    expensive payload construction, while still using `shouldCommit()` for duration threshold;
 3. restructure to collect expensive fields only after the event's duration qualifies.
@@ -185,9 +188,10 @@ try {
 the operation or event allocation free, and concurrent settings can change dynamically. Use a
 static `EventType` check only as an optimization proven safe with class registration and tests.
 
-Do not quote nanoseconds/cycles or an event-rate threshold as universal. Benchmark disabled,
-enabled-without-stack, enabled-with-stack, burst, concurrent recording, and exporter-failure
-arms on the target JVM/workload.
+Do not quote nanoseconds/cycles or an event-rate threshold as universal. Before making an
+overhead claim, measure the relevant disabled, stack, burst, concurrent-recording or
+exporter-failure conditions on the target JVM/workload. A schema-only question does not require
+an unrelated benchmark matrix.
 
 The snippet is partial application instrumentation: payload helpers must be bounded and safe
 on success and failure, without masking the business exception. See
@@ -261,16 +265,21 @@ before applying newer features, without implicitly upgrading Java or enabling ex
 
 ## Definition of done
 
-- [ ] Target event/schema/settings were discovered from the deployed JDK and saved by epoch.
-- [ ] Threshold/period/throttle/stack/filter choices trace to a minimum observable effect.
-- [ ] Positive/negative controls prove event population, fields, weight, and censoring.
-- [ ] CPU, allocation, tail latency, file/chunk/repository, loss, and consumer lag stay in budget.
-- [ ] Concurrent recordings and dynamic custom-event enablement are tested.
-- [ ] Custom fields are bounded, unit-annotated, privacy-reviewed, and schema-versioned.
-- [ ] Consumer backpressure, exception, shutdown, disk full, restart, and malformed input paths
-      are exercised.
-- [ ] Raw recording, effective configuration, commands, versions, checksum, and extraction
-      assertions survive.
+Resolve the requested configuration, schema or consumer question with the smallest adequate
+evidence. Reuse matching recordings, metadata and fixture results. Apply the checks below only
+to the paths changed or claims made; do not introduce custom events, a live consumer or a new
+capture merely to fill this list. Report necessary checks that remain unexecuted.
+
+- [ ] Relevant target event/schema/settings and their build or recording provenance are known.
+- [ ] Changed threshold/period/throttle/stack/filter choices trace to the observable effect.
+- [ ] Applicable controls establish the claimed population, fields, weight or censoring.
+- [ ] Claimed overhead/retention/loss/lag budgets have representative measurements.
+- [ ] Recording changes account for overlap; custom-event changes check dynamic enablement.
+- [ ] Added custom fields meet unit, schema, correlation and privacy contracts.
+- [ ] Changed consumer/storage paths exercise relevant backpressure, exception, shutdown,
+      disk-full, restart or malformed-input conditions.
+- [ ] Relevant raw artifacts, settings, commands, versions, checksums and extraction assertions
+      are retained; completion claims distinguish observed results from remaining limits.
 
 ## References
 

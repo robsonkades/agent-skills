@@ -23,11 +23,12 @@ checked-in configuration.
 Tests are necessary and, at this scale, not sufficient. Global coverage does not establish
 coverage of changed behavior, nor assertion quality. Add evidence suited to the change:
 
-- **Bytecode or API-surface diff.** For a change that should be semantically null — a
-  rename with no visible surface, a formatting pass, an import reorganisation — compile
-  before and after and compare. `japicmp` or `revapi` over the two jars reports public API
-  differences; an empty report is real evidence. For a rename, expect exactly the renamed
-  symbols and nothing else.
+- **API-surface versus bytecode evidence.** `japicmp` or `revapi` compares the configured
+  API surface of two artifacts; an empty report does not establish unchanged method bodies
+  or private implementation behavior. For a formatting/import-only change, compile with
+  matched toolchains/options and compare class output or disassembly, explaining debug metadata
+  differences. A rename may legitimately change symbolic references; neither kind of diff
+  replaces tests of affected runtime contracts.
 - **Test source and binary compatibility separately.** Recompile consumer sources against
   the new artifact for source compatibility; execute previously compiled consumers with the
   replacement artifact for binary linkage, complemented by API analysis. Neither alone proves
@@ -40,10 +41,10 @@ coverage of changed behavior, nor assertion quality. Add evidence suited to the 
 
 ## Stage it
 
-Land a large change in slices that each build, test and ship on their own — one module, or
-one package at a time — rather than as one commit that must be all-or-nothing. A slice that
-turns out wrong is reverted alone, and the migration survives being paused for a sprint,
-which it will be.
+Prefer slices that each build, test and can be integrated independently. A module or package
+boundary is useful only if it satisfies those conditions; keep coupled changes together when
+splitting them would produce a broken intermediate state. Reverting one slice also requires
+checking consumers and any later slices that depend on it.
 
 Where the old and new forms must coexist across slices, make the intermediate state
 legitimate rather than broken: the old form delegating to the new one, with the delegation

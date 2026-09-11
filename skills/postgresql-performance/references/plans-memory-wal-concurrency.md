@@ -32,18 +32,27 @@ or copy “SSD values.”
 ## Memory and connections
 
 Count simultaneous sort/hash nodes, parallel workers, and sessions when modeling `work_mem`; hashes
-may use `hash_mem_multiplier`. Prefer scoped `SET LOCAL` for a known job over raising the global value
-for every connection.
+may use `hash_mem_multiplier`. Private sorts or nonparallel hash tables can be replicated among
+participants, while Parallel Hash builds shared state and can combine participant allowances before
+batching. Count that shared allowance once, not once per worker again. Account for overlapping
+lifetimes, actual workers/leader participation and concurrent queries; not every plan node is live
+at the same time. This allowance is neither a per-connection reservation nor a hard process-RSS cap;
+include other memory/overhead. A justified scoped `SET LOCAL` experiment may avoid changing every job.
 
-Each connection has a backend process and contributes private/shared bookkeeping and snapshot work.
-Use a pool and a fleet-wide budget; raising `max_connections` expands memory and coordination capacity
-requirements rather than database throughput.
+Each direct server connection has a backend process and associated private/shared bookkeeping;
+active transaction/snapshot work depends on what it does. Distinguish these from pooler client
+connections. Keep a fleet-wide admission/resource budget. Raising `max_connections` increases
+allocated server resources and may help a demonstrated admission bottleneck with database headroom;
+it does not itself establish higher safe execution capacity. Retain an adequate limit or pool design.
 
 ## WAL and checkpoints
 
 Measure WAL bytes/rate, checkpoint requested versus timed, write/sync duration, full-page images,
 archive/replica lag, and storage latency. A larger WAL budget can absorb bursts and reduce requested
-checkpoints but lengthens recovery and uses disk; it does not increase sustained I/O capacity.
+checkpoints when WAL volume triggers them; it can increase replay work/recovery time and disk use,
+not necessarily every observed recovery. `max_wal_size` is a soft checkpoint-related limit, not a
+hard disk cap; retention, archiving and replication can keep more WAL. It does not increase sustained
+I/O capacity. Compare the actual checkpoint causes and recovery/storage contract before changing it.
 
 PostgreSQL 18 changes I/O defaults/capabilities, so validate `io_method`, effective I/O concurrency,
 filesystem/device behavior, and version before applying older tuning guidance.
@@ -67,3 +76,8 @@ high plan cost with short OLTP execution can cross the threshold and regress lat
 Sources: [Using EXPLAIN](https://www.postgresql.org/docs/18/using-explain.html),
 [EXPLAIN execution semantics](https://www.postgresql.org/docs/18/sql-explain.html), and
 [serialization failure handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html).
+Memory scope: [parallel plans](https://www.postgresql.org/docs/17/parallel-plans.html),
+[resource settings](https://www.postgresql.org/docs/18/runtime-config-resource.html) and
+[PostgreSQL 18.0 hash sizing](https://github.com/postgres/postgres/blob/REL_18_0/src/backend/executor/nodeHash.c).
+For instance changes, check [connection settings](https://www.postgresql.org/docs/18/runtime-config-connection.html)
+and [WAL settings](https://www.postgresql.org/docs/18/runtime-config-wal.html) on the target version.

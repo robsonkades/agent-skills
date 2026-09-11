@@ -90,8 +90,9 @@ public final class RefundPolicy {
 }
 ```
 
-The processor orchestrates and switches exhaustively — no `default`, so a new
-decision variant is a compile error at every switch, which is the point:
+The processor orchestrates and covers both decision variants explicitly. Adding a newly
+uncovered variant makes this switch fail when recompiled; broader type-pattern or `default`
+arms elsewhere need separate policy review:
 
 ```java
 public final class RefundProcessor {
@@ -128,19 +129,21 @@ is justified is the java-dependency-inversion skill.
 The snippets use Java 21-final pattern matching (no unnamed `_` pattern, which became final in
 Java 22). They still abbreviate a production workflow: use a caller-stable refund idempotency key,
 model currency and remaining refundable amount, and do not assume `@Transactional` makes the
-gateway call and database/event write atomic. Persist intent/result and publish via an outbox or
-reconcile ambiguous gateway outcomes before retrying; notification failure must not repeat a
-completed refund.
+gateway call and database/event write atomic. Reuse the participants' actual idempotency and
+recovery contracts; a key alone does not establish repeat-effect safety. The idempotency skill
+owns that protocol. Persist intent/result or reconcile ambiguous outcomes as required by the
+recovery contract; use an outbox when durable publication is required. Notification failure
+must not repeat a completed refund.
 
 ## Trade-offs
 
 - Policy, decision types and notifier roles add navigation; a reader following a refund visits policy, then
   processor. The navigation cost is paid for by the three change streams landing
   in three files.
-- Sealing `RefundDecision` closes the variant set deliberately: a new variant
-  breaks every switch at compile time instead of slotting in silently. That is
-  OCP traded away for exhaustiveness — the correct trade here because the variant
-  set is owned by this module.
+- Sealing `RefundDecision` closes the variant set deliberately. This processor requires
+  explicit handling of a new variant on recompilation; old binaries and consumers with
+  broader coverage need their own compatibility checks. That trade serves this example's
+  coverage requirement, not every module that owns its variants.
 - Gateway failure stayed an exception rather than a `Reject` variant: rejection is
   a business answer, gateway failure is an operational fault with retry semantics.
   Merging them would hide that difference from callers.
@@ -153,7 +156,7 @@ completed refund.
   on approval, gateway failure preventing notification, and notification failure not causing
   an internal refund retry. This last check does not establish safe caller retries: the
   production idempotency/reconciliation path still needs its own tests.
-- Re-run the history check after a quarter: CX commits should now touch only the
-  notifier adapter, payments commits only `RefundPolicy`.
-- Delete a `case` arm and compile: the build must fail. That failure is the
-  regression guard the `boolean` version never had.
+- When relevant changes arrive, check whether eligibility and wording can change at their
+  intended seams; a fixed quarter or zero cross-file edits is not a correctness oracle.
+- Delete a required `case` arm from this exact processor and recompile: the build must fail.
+  This checks source coverage, not refund correctness or separately deployed old binaries.

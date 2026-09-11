@@ -15,16 +15,16 @@ presentation → domain → data source
 the domain imports the ORM's annotations, and the data-source layer is a set of
 repositories the domain calls directly.
 
-**Costs:** almost nothing beyond the discipline. There is no mapping tax unless you add
-one.
+**Costs:** dependency discipline and any mapping required by the actual representation
+contracts; accepting persistence coupling can reduce adapters but makes later separation harder.
 
 **Right answer when:** the persistence technology is settled, the domain is not expected to
 outlive it, and the team is small enough that the direction rule is actually followed. This
 covers a large fraction of real enterprise applications, and saying so is not a concession.
 
-**Fails when:** the domain becomes genuinely valuable and independently long-lived, or the
-data source is not a database you control (a mainframe, a vendor API, a partner feed) and
-its shape starts dictating the model.
+**Fails when:** required independence from persistence or an external protocol is not met,
+or that mechanism's shape constrains business rules that must evolve separately. A valuable
+domain alone does not establish that the existing coupling is unacceptable.
 
 ## Hexagonal / ports and adapters
 
@@ -45,9 +45,9 @@ its shape starts dictating the model.
 declared by the inside and implemented outside — dependency inversion applied at the
 boundary rather than the class.
 
-**Costs:** one interface plus one implementation per outward need, plus mapping between the
-domain type and whatever the adapter speaks. This is the real price and it is paid on every
-field.
+**Costs:** port contracts and adapters, plus mapping where representations differ. Group
+operations by the contract they serve; the style does not require a new port per method or
+duplicate types for every field.
 
 **Driver that justifies it:** the domain must be testable without infrastructure, or a
 driven side is genuinely expected to be replaced, or the same use cases are driven from
@@ -69,6 +69,8 @@ operation.
 **Makes explicit:** an application layer of use cases, also possible in hexagonal designs,
 which is useful when transaction and authorisation boundaries need to be visible
 (`service-layer-design`).
+An ordinary application service in classical layering can make those duties explicit too;
+that need alone does not justify adopting concentric rings.
 
 **Costs:** the ring vocabulary and, in most implementations, a request/response object per
 use case, which is a second mapping layer on top of the adapter's.
@@ -124,14 +126,14 @@ option, alongside independently packaged query slices (`pattern-selection-and-co
 
 ## Choosing
 
-| If the driver is…                                         | Style                                                               |
-| --------------------------------------------------------- | ------------------------------------------------------------------- |
-| Nothing in particular; small team; settled stack          | Classical three-layer. Do not apologise for it.                     |
-| Domain must be testable and infrastructure-independent    | Hexagonal, applied at the persistence and integration edges         |
-| Use cases must be explicit for transactions/authorisation | Clean's application ring, on top of hexagonal                       |
-| Independent teams or a credible extraction later          | Modular monolith, layered inside each module                        |
-| Many thin operations, change locality dominates           | Vertical slices, with a shared model only where invariants live     |
-| "Because it is best practice"                             | None of them. Find a driver first (`architecture-decision-making`). |
+| If the driver is…                                         | Style                                                                                              |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Nothing in particular; small team; settled stack          | Classical three-layer. Do not apologise for it.                                                    |
+| Domain must be testable and infrastructure-independent    | Hexagonal, applied at the persistence and integration edges                                        |
+| Use cases must be explicit for transactions/authorisation | Explicit application/use-case boundary in the existing style; rings only with an additional driver |
+| Independent teams or a credible extraction later          | Modular monolith, layered inside each module                                                       |
+| Many thin operations, change locality dominates           | Vertical slices, with a shared model only where invariants live                                    |
+| "Because it is best practice"                             | None of them. Find a driver first (`architecture-decision-making`).                                |
 
 ## What these styles do not decide
 

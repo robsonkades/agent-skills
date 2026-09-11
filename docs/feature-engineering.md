@@ -1,240 +1,204 @@
 # The feature engineering suite
 
-Fourteen packages that make an agent own a feature request the way a senior engineer does:
-understand it, investigate the repository, ask only what the repository cannot answer, price the
-options, record the decisions as they are taken, plan, implement resource by resource, validate
-each one, track state so the work survives a session boundary, and review against what was
-agreed rather than against the build output.
+Seventeen packages cover feature definition, investigation, decisions, contracts, planning,
+implementation and completion. They help an agent establish what is agreed, resolve material
+uncertainty, and produce work another engineer can verify and resume.
 
-This document explains how the pieces fit. Each package explains itself.
+This overview explains the handoffs. Individual packages and the
+[lifecycle artefact contract](../skills/feature-engineering/references/artefact-contract.md)
+define detailed behavior. Use the specialists a task needs; a small change does not need every
+phase or a separate document for every concern.
 
----
-
-## 1. Why fourteen packages and not one
-
-The lifecycle has phases with genuinely different jobs, and an agent that loads all of them for
-every request pays for all of them on a one-line change. Splitting lets the orchestrator load
-only what a given request's depth warrants — which is the mechanism that keeps the process from
-becoming ceremony people route around.
-
-The split also makes the pieces reusable on their own. `feature-progress-tracking` is useful for
-any multi-session work; `feature-decision-analysis` is useful the moment someone says "the
-project already uses X, so we'll use X" about anything.
-
----
-
-## 2. The map
+## Responsibilities and handoffs
 
 ```text
-                        feature-engineering
-                     (depth class, gates, routing)
-                                 |
-   +-------------+---------------+---------------+--------------+
-   |             |               |               |              |
-UNDERSTAND    DECIDE           PLAN           BUILD          CLOSE
-   |             |               |               |              |
-feature-       feature-        feature-       feature-       feature-
-discovery      solution-       decomposition  execution      readiness-
-               analysis                                      review
-feature-       feature-        feature-       feature-
-requirement-   decision-       risk-          progress-
-clarification  analysis        analysis       tracking
-feature-                       feature-
-context-                       implementation-
-analysis                       plan
-feature-
-scope-analysis
-feature-
-architecture-
-analysis
+Collaborative definition
+  Product Definition -> required Engineering Analysis, or Tech Feature
+                       |
+              feature-engineering intake
+                       |
+  discovery -> context -> clarification -> scope -> architecture impact
+                       |
+  solution [-> feasibility experiment] -> decision -> contract
+                       |
+  decomposition -> risk -> implementation plan -> readiness
+                       |
+              execution/progress -> completion review
 ```
 
-| Package                             | Owns                                                                     |
-| ----------------------------------- | ------------------------------------------------------------------------ |
-| `feature-engineering`               | Depth classification, phase order, the two hard gates, routing           |
-| `feature-discovery`                 | The fact / assumption / unknown / decision ledger                        |
-| `feature-requirement-clarification` | What to ask, when, and what blocks — repository first                    |
-| `feature-context-analysis`          | The evidence-cited context report of what the repository already answers |
-| `feature-scope-analysis`            | The five scope buckets and creep detection                               |
-| `feature-architecture-analysis`     | The impact map, with paths and visibility                                |
-| `feature-solution-analysis`         | The option set, including the floor, and the recommendation block        |
-| `feature-decision-analysis`         | The decision log, provenance, and decision authority                     |
-| `feature-decomposition`             | Whether to split, stories, and the resource list                         |
-| `feature-risk-analysis`             | The risk register — detection and fallback, not adjectives               |
-| `feature-implementation-plan`       | The executable plan and its amendments                                   |
-| `feature-execution`                 | The per-resource implement-validate-record loop                          |
-| `feature-progress-tracking`         | The status machine and the resumable artefacts                           |
-| `feature-readiness-review`          | The gate before implementing, and the completion review after            |
+A new finding reopens the affected decision or definition and its traced dependents; it does
+not restart every phase. Missing analysis routes analysis work, rather than preventing that
+investigation from starting.
 
----
+| Package                             | Owns                                                                        |
+| ----------------------------------- | --------------------------------------------------------------------------- |
+| `collaborative-feature-definition`  | Co-authoring an agreed definition through focused rounds and stage handoffs |
+| `feature-engineering`               | Intake, depth, persistence, phase routing and lifecycle gates               |
+| `feature-discovery`                 | Facts, assumptions, unknowns and decisions with their sources               |
+| `feature-context-analysis`          | Targeted repository evidence and its limits                                 |
+| `feature-requirement-clarification` | Material questions, consequences and scoped blockers                        |
+| `feature-scope-analysis`            | Scope classification, exclusions and delivery selection                     |
+| `feature-architecture-analysis`     | Affected elements, owners and boundary crossings                            |
+| `feature-solution-analysis`         | Relevant options, the simplest viable approach and recommendation           |
+| `feature-feasibility-experiment`    | A bounded experiment that can change a decision                             |
+| `feature-decision-analysis`         | Decision provenance, authority, status and rationale                        |
+| `feature-contract-definition`       | Consumer/provider obligations, compatibility and planned conformance checks |
+| `feature-decomposition`             | Valuable child features when useful, and executable resources               |
+| `feature-risk-analysis`             | Failure scenarios, detection, mitigation and fallback                       |
+| `feature-implementation-plan`       | Dependencies, verifiable increments and plan amendments                     |
+| `feature-execution`                 | Implement, validate and record each ready resource                          |
+| `feature-progress-tracking`         | Current state, chronology and resumption context                            |
+| `feature-readiness-review`          | Definition intake, implementation readiness and completion evidence         |
 
-## 3. Where the suite stops and the catalogue starts
+A Product Feature has a product-owned definition and separate Engineering Analysis when
+required. The workshop preserves distinct authorship and an explicit stage handoff; a new chat
+is not required. A Tech Feature is engineering-owned from definition onward. Reuse evidenced
+roles, accepted revisions and delegated authority. Drafting an artefact does not establish its
+acceptance, and a handoff does not itself authorize contacting another person.
 
-The suite owns the **lifecycle of one feature and its artefacts**. It does not re-implement
-methods the catalogue already owns; it hands off to them. This is the boundary that keeps the
-routing unambiguous — each situation still has exactly one owner.
+## Boundaries with other catalog skills
 
-| Concern                                                                   | Owned by                                                      | The suite's part                            |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------- |
-| Restating a requirement without its solution; writing acceptance criteria | `requirements-and-acceptance`                                 | Deciding what to ask and what blocks        |
-| Decision-record format, reversibility, supersession                       | `architecture-decision-making`                                | Provenance and authority before the record  |
-| MECE option sets, qualitative versus quantitative                         | `architecture-trade-off-analysis`                             | Applying it to a feature-level choice       |
-| Order of work for an arbitrary change                                     | `clean-delivery-workflow`                                     | Order of work for a feature, with a dossier |
-| Which automated checks a change must pass                                 | `quality-gates`                                               | Which validation each resource warrants     |
-| What an agent may claim about its work                                    | `coding-agent-discipline`                                     | Requiring a validation line before DONE     |
-| Reviewing a diff for defects and design                                   | `code-review`                                                 | Reviewing a feature against what was agreed |
-| Reading an unfamiliar enterprise codebase                                 | `enterprise-application-architecture`                         | A feature-scoped context report             |
-| Where a responsibility belongs; the deployable boundary                   | `layering-and-boundaries`, `architecture-coupling-and-quanta` | What this change touches                    |
-| Failure-mode taxonomy                                                     | `failure-models`, `distributed-failure-catalogue`             | This feature's risk register                |
-| Dates and sizes                                                           | `estimation-under-uncertainty`                                | Nothing — the plan carries neither          |
+The suite applies specialist methods to one feature. It does not replace those methods.
 
----
+| Concern                                    | Specialist                                                    | Feature-specific use                                    |
+| ------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------- |
+| Observable requirements and acceptance     | `requirements-and-acceptance`                                 | Preserve business and technical criteria across stages  |
+| ADR format, reversibility and supersession | `architecture-decision-making`                                | Record consequential choices under existing conventions |
+| Comparing alternatives                     | `architecture-trade-off-analysis`                             | Decide material feature choices                         |
+| Delivery of an arbitrary change            | `clean-delivery-workflow`                                     | Add the feature lifecycle when applicable               |
+| Appropriate automated checks               | `quality-gates`                                               | Plan relevant resource and integration checks           |
+| Evidence and completion claims             | `coding-agent-discipline`                                     | Match DONE and completion to observed results           |
+| Defects and design in a diff               | `code-review`                                                 | Complement review against accepted scope                |
+| Responsibility and release boundaries      | `layering-and-boundaries`, `architecture-coupling-and-quanta` | Identify impacts and independent parties                |
+| Failure models                             | `failure-models`, `distributed-failure-catalogue`             | Derive concrete feature risks                           |
+| Estimates                                  | `estimation-under-uncertainty`                                | Estimate separately when requested                      |
 
-## 4. Depth: the mechanism that keeps this usable
+## Depth and persistence
 
-The most important decision in the whole suite is the first one. Three classes:
+Classify these separately using [depth and phases](../skills/feature-engineering/references/depth-and-phases.md).
+The highest evidenced risk driver determines depth; uncertain material drivers prevent Light
+classification until resolved.
 
-| Class           | Fits                                                                                   | Dossier    |
-| --------------- | -------------------------------------------------------------------------------------- | ---------- |
-| **Direct**      | Reversible in a day, one module, no new dependency, no contract or schema change       | none       |
-| **Standard**    | Several components, a contract or schema touched, one or two real choices              | no stories |
-| **Significant** | New technology, new integration, migration, breaking change, or work spanning sessions | full       |
+| Depth        | Typical drivers                                                                                                                                                                   |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Light**    | One local outcome, known behavior, one authority domain, reversible, no new dependency or boundary/schema change, no material choice                                              |
+| **Standard** | Several components, compatible shared/internal contract change, meaningful choice, or contained established regulatory obligations                                                |
+| **Deep**     | New technology/integration, public or breaking contract, migration, decision-relevant PoC, material security/compliance consequence, costly reversal or several authority domains |
 
-A Direct-class change runs no checklist, writes no artefact, and produces a three-line report.
-That is the point: uniform ceremony is the failure mode this design is built against, not a
-safety property.
+Use **Inline** for one-session, one-owner work whose intermediate state need not survive.
+Use **Dossier** across sessions or owners, or for Standard/Deep depth. A small handoff can be
+Light/Dossier; crossing a session does not itself make the technical work Deep.
 
-Escalation is cheap and expected — a question that turns out to change the design moves the
-class mid-flight. De-escalation happens only when an answer removes the work that drove the
-classification.
+Apply only relevant phases and checks. Light/Inline work can have a concise baseline, boundary,
+validation and completion report. Reclassify when evidence introduces or removes a driver;
+retain earlier artefacts as history and revisit only newly required or invalidated work.
 
----
+## Artefacts and continuity
 
-## 5. Artefacts
+The [default dossier layout](../skills/feature-engineering/references/dossier-layout.md) is:
 
 ```text
 docs/features/<feature-slug>/
-├── analysis.md        discovery ledger, context report, scope, impact map, options
-├── plan.md            the executable plan, its resources, and its amendments
-├── progress.md        resource status — the only file that must always be current
-├── execution-log.md   append-only chronology
-└── decisions/         one record per decision, superseded rather than rewritten
+├── definition.md      accepted input revisions, owners, criteria and gaps
+├── analysis.md        discovery, context, scope, impact, options and experiments
+├── contracts/         authoritative specifications or links to them
+├── plan.md            resources, dependencies, validation and amendments
+├── progress.md        current state and resumption point
+├── execution-log.md   append-only chronology, including corrections
+└── decisions/         ADRs where a separate record is warranted
 ```
 
-If the repository already has a documentation standard — an ADR directory, an RFC convention, a
-docs site with a fixed shape — that standard wins. The five artefact **roles** are what matter,
-not the file names. `feature-engineering`'s `references/dossier-layout.md` has the adaptation
-table.
+Follow existing repository locations and decision-record conventions. These are artefact roles,
+not a required file count: combine small records, omit unused directories and link to an existing
+contract rather than copying it. Routine decisions can remain in the decision log. Records
+needed to resume must be current or explicitly stale; updating only `progress.md` is insufficient
+when the underlying decision or contract changed.
 
-Resumption is the reason these exist: an agent opening `progress.md` cold gets the status of
-every resource, the open blockers with their questions in full, and one unambiguous "next".
+Use the shared identifier namespace from the artefact contract and preserve existing IDs.
+The applicable trace is:
 
----
+```text
+OBJ/BR -> BAC -> SC -> IMP -> ED/EXP/CT -> TC -> RES -> EV
+                              \-> RISK/GAP
+```
 
-## 6. The rules the suite enforces
+A Tech Feature can trace `OBJ -> TC -> RES -> EV` without inventing product acceptance criteria.
+Before implementation, criteria identify planned validation. At completion, `EV-*` refers to
+observed evidence. A semantic baseline change creates a revision and invalidates affected
+downstream records; unaffected evidence remains usable within its original scope.
 
-These are the behaviours the packages are written to produce. Each is enforced by a specific
-rule in a specific package, not by exhortation.
+## Gates and authority
 
-1. Never invent a requirement, a corporate standard, or a compliance obligation.
-2. Never select a major technology silently.
-3. Never treat an implementation found in the repository as an organisational standard —
-   `PROJECT_EXISTING` does not promote itself.
-4. Ask when a high-impact question cannot be settled from the repository; do not ask what a grep
-   answers.
-5. Prefer the simplest option that satisfies the constraints; the floor is always in the set and
-   wins ties.
-6. Record a decision when it is taken, with its provenance and its authority.
-7. Supersede decisions; never rewrite them.
-8. Every resource has a tracked status, and the status is updated at the transition.
-9. Nothing is DONE without a validation that was run and read.
-10. The plan is a living artefact — deviation is recorded, never silent.
-11. Do not split small features; do not expand scope without a written justification.
-12. The agent owns _how_; the user owns _what_ and _whether_.
+`feature-readiness-review` has three gates:
 
----
+1. **Gate 0: definition intake.** Establish input revisions, accountable stages, authority and
+   remaining analysis. A raw idea returns to collaborative definition; missing engineering
+   analysis can proceed through its authorized lifecycle work.
+2. **Gate 1: implementation readiness.** Check decisions, contracts, dependencies and planned
+   validation for resources being started. Block dependent commitments when material input is
+   missing; continue independent ready work. Implementation evidence is not yet required.
+3. **Gate 2: completion.** Compare the delivered feature with its accepted baseline, changed
+   contracts, Required scope and observed validation. A green build alone cannot establish this.
 
-## 7. A worked request
+Normalize readiness to `PASS`, `PASS WITH ACCEPTED GAPS`, `RETURN TO PRODUCT`,
+`RETURN TO ENGINEERING`, or `DECOMPOSE BEFORE PROCEEDING`. Only the first two advance the stated
+scope. A subset pass does not pass the whole feature or authorize deployment/publication.
+
+Code establishes current behavior; an applicable accepted policy or contract can establish a
+requirement. Preserve that distinction and reuse authorization across handoffs. A missing
+consequential answer stays unresolved even when independent work can continue.
+
+An accepted `GAP-*` names its consequence, accountable owner, expiry/reopen condition and blocked
+work. Acceptance cannot make an unmet Required criterion satisfied, a planned check executed,
+or a failed resource DONE. Amend scope explicitly when an authorized decision changes delivery.
+
+## Worked request
 
 > "Add asynchronous processing to order dispatch."
 
-What the suite does, and — as importantly — what it does not.
+This is an illustrative sequence, not an executed evaluation or facts about this repository.
+Paths, requirements and measurements must come from the actual project.
 
-**It does not** open a broker connection.
+1. **Define the outcome.** Establish whose wait changes, what acknowledgement promises, how the
+   caller learns the eventual outcome, and required failure behavior. Keep a proposed status
+   endpoint distinct from the requirement to observe completion.
+2. **Inspect context.** Cite the API, transaction boundary, consumers and operational support.
+   Finding an existing broker does not mandate reuse; a bounded search finding no retry policy
+   does not prove none exists anywhere.
+3. **Classify and scope.** A public asynchronous contract is a Deep driver. Select Required
+   delivery and justify exclusions from accepted outcomes, including necessary recovery and
+   validation work beyond the initial sentence.
+4. **Compare viable mechanisms.** Depending on the durability and delivery contract, compare
+   a durable database worker with the existing broker. If database changes and publication must
+   agree, examine that consistency boundary for either design; naming a broker does not solve
+   it. Include retaining current behavior only when it can meet the accepted outcome.
+5. **Resolve material uncertainty.** Use an `EXP-*` only if its outcome changes the choice.
+   Record proposals while it is pending. An inconclusive experiment leaves feasibility unresolved;
+   it does not establish production performance or reliability.
+6. **Record and define.** Capture the `ED-*` with authority and rationale; use an ADR when warranted.
+   Define `CT-*` for acknowledgement versus completion, retries after response loss, supported
+   old/new clients, retention and recovery, using the selected mechanism.
+7. **Plan verifiable resources.** Trace `RES-*` to criteria, sequence actual dependencies, and identify
+   migration, rollout and rollback limits where applicable. Split child features only when they
+   can deliver and verify their own value.
+8. **Run scoped gates.** A contract blocker stops dependent resources. Independent ready work can
+   continue. Record checks as they run. At completion, an uncovered Required recovery criterion
+   means the feature remains incomplete even if compilation and unit tests pass.
 
-```text
-1  Depth            Significant: "asynchronous" implies a mechanism the project may not
-                    have, and the API contract changes.        [feature-engineering]
-
-2  Ledger           FACT the dispatch API is synchronous (OrderController.java:41).
-                    ASSM "asynchronous" means acknowledge-then-complete, not polling.
-                    UNK  does the caller need to observe completion? HIGH.
-                                                                [feature-discovery]
-
-3  Context          Kafka present, two consumers, used for shipping (pom.xml:104).
-                    No retry policy anywhere. Flyway, 41 migrations, versioned.
-                    Every controller returns ProblemDetail — 11 of them, no
-                    counter-example.                            [feature-context-analysis]
-
-4  Questions        Round 1: what must happen on failure; must the caller observe
-                    completion. Round 2: "the project runs Kafka for shipping — should
-                    this feature reuse it, or is the transport open?"
-                    Not asked: the error shape. The repository answered it.
-                                              [feature-requirement-clarification]
-
-5  Scope            In: endpoint, dispatch service, transport, status endpoint.
-                    Out: a dispatch dashboard (nobody named an operational question);
-                    out: migrating shipping to the new pattern (X-02, agent).
-                                                                [feature-scope-analysis]
-
-6  Impact           11 elements across api, application, domain, infrastructure and
-                    cross-cutting; two EXTERNAL: the order event payload and a new
-                    column with existing rows.        [feature-architecture-analysis]
-
-7  Options          Floor: an outbox table plus a poller. Alternative: the existing
-                    cluster. Separated by the replay requirement, not by throughput —
-                    4k/day does not separate them.     [feature-solution-analysis]
-
-8  Decision         D-04 reuse the cluster. Provenance USER_MANDATED (round 2).
-                    Authority user-confirmed, confirmed. ADR-002 written now, not later.
-                                                                [feature-decision-analysis]
-
-9  Breakdown        Two user stories, one technical story, 11 resources, each with a
-                    dependency list and a validation.            [feature-decomposition]
-
-10 Risks            K-02 reprocessing after redeploy: HIGH impact, MEDIUM probability,
-                    detected only at next-day reconciliation -> mitigation becomes R-07.
-                                                                [feature-risk-analysis]
-
-11 Plan             Ordered resources, the compatibility window for the new column, and
-                    a rollback story that says which step stops being reversible.
-                                                           [feature-implementation-plan]
-
-12 Gate 1           32 items; 2 open, both blocking. Stops. Asks. Resumes.
-                                                            [feature-readiness-review]
-
-13 Build            R-01 -> validate -> record -> R-03 -> ... R-07 blocks on Q-08;
-                    work continues on R-09 because the arrow was never forced.
-                                                   [feature-execution + tracking]
-
-14 Gate 2           One Required scope item has no resource. Complete: no. That is the
-                    headline of the report.                  [feature-readiness-review]
-```
-
-Step 14 is the one that pays for the other thirteen. The build was green.
-
----
-
-## 8. Using it
+## Using the suite
 
 ```bash
-agent-skills install feature-engineering        # the orchestrator and its closure
-agent-skills install feature-progress-tracking  # or one piece, on its own
+agent-skills install feature-engineering
+agent-skills install collaborative-feature-definition
+agent-skills install feature-progress-tracking
 ```
 
-Installing `feature-engineering` pulls the thirteen specialists and the catalogue skills the
-routing table promises, so every row in it resolves.
+These are alternative entry points, not a required installation sequence. The orchestrator's
+manifest declares its lifecycle dependencies; the initial-definition workshop is a suggestion
+and can be installed explicitly. Invoke a specialist directly when the phase is already clear.
 
-For a single request, invoking the orchestrator is enough — it classifies the depth and loads
-only what that class needs. Invoke a specialist directly when you already know which phase you
-are in.
+Installed packages make guidance available. Activation and resource loading depend on the target
+agent and runtime; installation alone does not prove automatic routing. The orchestrator's
+instructions select applicable guidance, and the
+[written lifecycle cases](../skills/feature-engineering/references/validation-cases.md) describe
+behaviors to evaluate. Written cases are not evidence of executed behavior.

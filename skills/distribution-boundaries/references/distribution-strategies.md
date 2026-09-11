@@ -21,7 +21,7 @@ transport by itself guarantees neither freshness nor atomicity.
 Correct when the answer changes what the caller does next: an authorisation decision, a
 price quote, a validity check.
 
-For the project's actual client/JDK version, configure and verify pool-acquisition,
+For the project's actual runtime and client version, configure and verify pool-acquisition,
 connect and response limits against the remaining end-to-end deadline. Include DNS/TLS
 coverage, retries and queueing; connect/read timeouts alone are not a total call bound.
 Bound concurrency and waiting queues (`concurrency-limiting-and-bulkheads`). A circuit
@@ -46,15 +46,15 @@ synchronous poll, which reintroduces the coupling.
 
 ## Event notification
 
-The producer announces a fact; consumers decide what it means. This is the least coupled
-shape, because the producer names no consumer, and consumers can be added without touching
-it.
+The producer announces a fact; consumers decide what it means. Not naming consumers reduces
+direct coupling, but schema, data and business dependencies remain. Adding a consumer need
+not change the producer; it still adds delivery, access and operational obligations.
 
-Its risk is the inverse: nobody owns the end-to-end behaviour. "Order placed" fires and
-five consumers do something; when one of them silently stops, no single component is
-responsible for noticing. Event-driven systems need explicit end-to-end observability —
-consumer lag, a correlation identifier through every hop, and an alert on a missing
-downstream effect — as part of the design, not afterwards.
+Its risk is a required workflow with no explicit owner. For each required downstream outcome,
+name the owner, completion/freshness bound and evidence of missing or failed work. Preserve
+existing workflow ownership and use appropriate lag, correlation and outcome signals. An
+optional analytics consumer need not become a prerequisite for completing the order; operate
+it under its own contract rather than waiting for every subscriber.
 
 Events must describe facts in the producer's language and must not be commands in disguise.
 `OrderPlaced` is a fact; `SendConfirmationEmail` published as an event is a command with a
@@ -114,7 +114,10 @@ Rules that make sagas survivable:
 - Identify compensable steps and the irreversible pivot. After the pivot, use retryable
   forward recovery or explicitly owned repair; an irreversible step need not be last.
 - Compensations are semantic, not rollbacks: a refund is a new fact, not an undo.
-- Every step and every compensation must be idempotent — they will be retried.
+- Make retried steps and compensations repeat-safe under their actual operation identity.
+  A timed-out step may still commit: use a supported repeat/status/compensation protocol
+  covering unknown outcomes and late execution, or retain an explicitly owned
+  reconciliation/repair state (`distributed-transactions-and-sagas`, `idempotency`).
 - The intermediate state is visible to users and to other systems, and must be a legitimate
   business state with a name ("payment pending"), not an accident.
 - Someone must own timeouts: a saga stuck between steps needs a defined resolution, or it
@@ -141,8 +144,9 @@ One request producing N downstream calls is where remote latency becomes visible
   remote N+1, and it appears in production at a list size no test used.
 - **Partial results.** Decide in advance whether the response degrades or fails when one
   call does. Choose an explicit task lifetime and cancellation policy supported by the
-  project's Java version (`structured-concurrency`). Local cancellation is cooperative and
-  does not prove a remote operation stopped.
+  project's runtime; for Java structured concurrency, consult `structured-concurrency` and
+  its version requirements. Local cancellation is cooperative and does not prove a remote
+  operation stopped.
 
 ## Choosing, in one table
 
@@ -159,3 +163,4 @@ One request producing N downstream calls is where remote latency becomes visible
 
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): dual-write gap and duplicate publication.
 - [Azure saga pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga): compensable, pivot and retryable transactions; lack of global isolation.
+- [Fowler on event-driven patterns](https://martinfowler.com/articles/201701-event-driven.html): notification, hidden workflow coupling and state transfer.

@@ -88,15 +88,17 @@ degrades the whole application; or the transactional architecture is applied for
 
 **Dominant forces:** throughput, restartability, bounded resource use.
 
-**Follows:** bounded chunks with restart checkpoints consistent with committed effects (atomic
+**Follows:** retain one bounded transaction when it meets whole-run atomicity, resource and
+recovery requirements. Use chunks when their progress/visibility contract is acceptable, with
+restart checkpoints consistent with committed effects (atomic
 where supported, otherwise a tested replay/deduplication protocol); stable input selection;
 bulk statements with explicit version handling. Flush intended ORM writes before clearing a
 context, and test rollback/restart. Define intermediate visibility: direct chunk commits can
 expose partial work; staging plus controlled publication can provide whole-run visibility
 when required. Measure completion time and resource bounds.
 
-**Characteristic failure:** one transaction over the whole run — locks held all night, no
-restart point, and a failure at 95% that must start again.
+**Characteristic failure:** a whole-run transaction that exceeds lock/resource or recovery
+budgets, or chunk commits that expose partial work contrary to the business contract.
 
 ## Event-driven
 

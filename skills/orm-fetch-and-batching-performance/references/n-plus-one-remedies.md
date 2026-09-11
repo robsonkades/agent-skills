@@ -2,7 +2,8 @@
 
 ## Seeing it
 
-Do not read the SQL log by eye for this. Count.
+For suspected N+1, count scoped statements and inspect their SQL/parameters and triggering
+traversal. Reuse adequate evidence; reading individual lines alone does not establish the total.
 
 ```properties
 # Hibernate statistics — SessionFactory aggregate; diagnostic/test use
@@ -26,9 +27,10 @@ service.renderOrderPage(tenantId, PageRequest.of(0, 50));
 assertThat(stats.getPrepareStatementCount()).isEqualTo(2);
 ```
 
-That assertion is the regression test. `architecture-testing` covers making it a standing gate;
-what matters here is that the number is asserted at all, because N+1 reappears the next time
-someone touches a mapping.
+For an affected fetch regression, pair the count assertion with nonempty fixture and expected
+result checks: returning nothing can satisfy a query budget while breaking the operation.
+`architecture-testing` covers making a relevant query budget a standing gate; a narrow
+contract explanation does not require introducing one.
 
 **Statistics collection has a cost.** Do not enable it globally without evaluating that cost.
 
@@ -68,12 +70,13 @@ selects attributes to fetch, while the provider retains latitude over the SQL st
 SQL instead of assuming that a graph is a textual join-fetch equivalent. Graphs are useful when the
 same query needs named fetch plans without embedding them in JPQL.
 
-Both are per-query. That is the whole point: the mapping stays `LAZY` and each query states what
-it needs.
+Both allow a use-case fetch plan without a global mapping change. Conservative lazy defaults
+often help, but retain an intentional eager obligation when it meets the actual loading and
+cost contract; graph semantics and provider capabilities still apply.
 
 ### The cartesian product
 
-Join-fetching two to-many associations in one query can return the product of their sizes:
+Join-fetching independent sibling to-many associations can return the product of their sizes:
 
 ```java
 // 10 items x 5 shipments = 50 rows, each repeating the order
@@ -82,22 +85,27 @@ select o from Order o join fetch o.items join fetch o.shipments where o.id = :id
 
 Hibernate de-duplicates root identity in supported shapes, so the defect may be invisible in the
 result and visible only in rows transferred. Multiple bags are rejected in common Hibernate
-versions; other collection combinations can still execute with a Cartesian product. **Default to
-one collection per query**, then relax only with bounded cardinalities and measured SQL. For the
-second, use batch or subselect fetching, or a second query.
+versions; other collection combinations can still execute with a Cartesian product. Split
+independent branches when the product exceeds the budget, using eligible batch/subselect
+fetching or another query. Several to-one fetches or one nested chain such as
+orders → lines → adjustments have a different shape: the latter follows each line's own
+children, not every line crossed with all adjustments. Check total rows and supported mappings
+even for that chain; keep an already adequate bounded plan.
 
 ### Paginating a fetch
 
-With a fetched collection, one entity is many rows, so `LIMIT` cannot express "50 orders".
-Hibernate falls back to reading the whole result and paging in memory, and warns:
+With a fetched collection, one entity can occupy many rows, so a simple row `LIMIT` does not
+express "50 orders" with complete collections. Common Hibernate 6.6 collection-fetch query
+shapes read the matching result and page in memory, with this warning:
 
 ```
 HHH90003004: firstResult/maxResults specified with collection fetch; applying in memory
 ```
 
 That warning indicates root pagination is being applied after fetching the matching result.
-For Hibernate 6.6 tests, `hibernate.query.fail_on_pagination_over_collection_fetch=true` can
-turn this fallback into an error. A common alternative is two data queries:
+For Hibernate 6.6 tests requiring SQL pagination,
+`hibernate.query.fail_on_pagination_over_collection_fetch=true` can turn this fallback into an
+error. Verify the actual provider/query behavior. A common alternative is two data queries:
 
 ```java
 // Partial method returning List<Order>; run within the intended read transaction.
@@ -143,17 +151,26 @@ Joins can still multiply/filter rows and query execution may AUTO-flush existing
 Selecting an entity as a constructor argument changes that boundary; keep scalar-only payloads
 when the intended result is detached data.
 
-What you give up: the objects are not managed, so they cannot be modified and flushed, and they
-do not participate in the first- or second-level cache. For a read path that is a feature.
+The scalar DTO results are not managed, so modifying them does not flush changes and they do
+not reuse managed identity or the entity second-level cache. A query-result cache, if used,
+is a separate mechanism. Those trade-offs can suit a detached read model; an already adequate
+entity representation does not require conversion merely because the operation is read-only.
 
 ## Choosing, briefly
 
-- Read-only screen or API response → **projection**, unless you need entity behaviour.
-- One association, entities needed → **join fetch / entity graph**.
-- Two or more associations, or a collection that would multiply → **batch fetching**.
-- The collection is needed for every root of the query anyway → **subselect**.
-- Still slow with the right count → the statement itself, `sql-query-performance`.
+- Selected detached values are needed → consider a **scalar projection** against the current
+  representation's measured cost and cache/identity requirements.
+- Managed associations are needed with acceptable row volume → consider **join fetch / entity
+  graph**, including supported multiple to-one or nested shapes.
+- Independent collection products are excessive → compare separate queries and eligible
+  **batch fetching**; association count alone does not choose the mechanism.
+- Most owners need one collection role → consider **subselect**, verifying its secondary owner
+  set and cache/access behavior against batching or a join.
+- One statement has excessive cost → `sql-query-performance`, even if amplification also exists.
 
-Sources: [Jakarta Persistence graph semantics](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+Sources: [Jakarta Persistence 3.1 graph semantics](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1),
 [Hibernate 6.6 fetching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#fetching)
 and [Statistics scope and counters](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/stat/Statistics.html).
+The [6.6.33 fetch-join guidance](https://github.com/hibernate/hibernate-orm/blob/6.6.33/documentation/src/main/asciidoc/querylanguage/From.adoc)
+distinguishes nested chains from parallel collections; this does not guarantee every mapping
+or paged query is supported.

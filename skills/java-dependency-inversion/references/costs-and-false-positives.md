@@ -65,11 +65,13 @@ Do not flag these; each has a genuine seam despite the count:
   authorization, transactions, caching, telemetry, release compatibility or capability
   restriction; those are behavior even when the happy-path body is one line.
 - **Adapters wrapping adapters.** A port over your HTTP client that is itself a
-  port over the JDK client — one translation boundary per foreign system, not per
-  library.
+  port over the JDK client may repeat translation without adding a seam. Check whether
+  each boundary owns distinct policy, vendor, security or lifecycle semantics before
+  collapsing it; one foreign system does not imply exactly one useful adapter.
 - **Ports for peers.** Two policy classes in the same module usually call directly. A real team,
   release or cyclic-dependency boundary can still justify a contract; "same layer" neither
   proves nor disproves a seam.
-- **Abstracting the domain model.** `OrderLike` interfaces over entities so that
-  "the domain stays flexible". The domain model is the stable thing everything else
-  depends on; abstracting it inverts the wrong way.
+- **Speculative domain interfaces.** `OrderLike` merely so that "the domain stays flexible"
+  names no consumer benefit. A real read-only role, capability restriction or independently
+  owned policy contract can justify an interface over domain objects; the model is not
+  necessarily the most stable component.

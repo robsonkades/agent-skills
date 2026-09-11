@@ -3,14 +3,14 @@ name: gof-abstract-factory
 description: >
   Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects
   mutually consistent when the family varies, not to centralise construction. Covers the family
-  invariant that justifies it, why dependency injection already resolves the deployment-time
+  invariant that justifies it, when existing composition resolves the deployment-time
   case, when per-request or per-tenant selection benefits from a family provider, and how to
   express it as a record of suppliers or a sealed provider rather than a four-level interface
   hierarchy. Use when a factory interface is proposed, when profile-specific object graphs are
   being built by hand, when a family of parser/renderer/validator types must never be mixed
   across formats, when a plugin SPI must supply several related types at once, or when reviewing
-  a factory whose products have nothing to do with each other. Does not cover single-product
-  creation (gof-factory-method), assembling one complex object (gof-builder), copying an
+  a factory whose products have nothing to do with each other. Does not cover subclass creation
+  hooks (gof-factory-method), assembling one complex object (gof-builder), copying an
   existing instance (gof-prototype), or wiring policy in general (java-dependency-inversion).
 ---
 
@@ -28,15 +28,20 @@ transaction/session instance, not merely the same vendor or format.
 If there is no invariant binding the products to each other, this is not Abstract Factory. It
 is a bag of factory methods, and it should be several separate providers or none at all.
 
+Start with ordinary consumer calls, a relevant advanced use (such as a plugin or session-owned
+family), and likely misuse. Inspect callers, wiring, supported keys and resource ownership before
+asking about missing constraints; ask only where the answer changes compatibility or selection.
+Compare the existing composition, a prebuilt bundle and a provider where creation actually varies.
+
 ## When it is the answer
 
 ```text
 There are 2+ product types that must agree with each other
         AND creation or selection needs a coherent family boundary
-                → Abstract Factory
+                → consider Abstract Factory or a prebuilt coherent family.
 
 The family is selected once per deployment (profile, environment)
-                → dependency injection: one @Configuration per family.
+                → existing composition root; in Spring, one @Configuration per family.
                   Verify coherent wiring; profiles and qualifiers do not prove compatibility.
 
 The family is selected per request / tenant / document / region
@@ -50,8 +55,9 @@ Third-party code must contribute a whole family
 
 ## When it is not
 
-- **One product type.** That is Factory Method or a `Supplier`; the "abstract" in the name is
-  precisely the multi-product part.
+- **One product type.** A constructor, named factory or `Supplier` may suffice
+  (`java-object-construction`). GoF Factory Method applies when an inherited algorithm delegates
+  creation to a subclass hook; not every creation method is that pattern.
 - **The products are unrelated** — `createRepository`, `createHttpClient`, `createClock`. This
   is a service locator with a factory's name, and it re-couples every caller to one type that
   knows everything (`gof-pattern-antipatterns`).
@@ -62,7 +68,8 @@ Third-party code must contribute a whole family
   seam, or a stable port. Record that reason; otherwise defer the abstraction until a second
   family reveals the real common contract.
 - **Testing was the only motivation.** First prefer substituting collaborators at an existing
-  boundary (`@MockitoBean` in Spring Framework 6.2+, or a test `@Configuration`). A production
+  boundary (plain injection, `@MockitoBean` for singleton beans in Spring Framework 6.2+, or a test
+  `@Configuration`). A production
   family abstraction can still be warranted when the coherent in-memory family is itself a
   useful contract, not merely a test hook.
 
@@ -103,20 +110,22 @@ IF the products can be used in any combination without breaking
 THEN there is no family. Inject each product independently.
 
 IF the family is fixed at startup by profile or property
-THEN dependency injection. Do not add a factory the container calls once.
+THEN prefer existing composition, with or without a container. A factory called once
+     still needs assessment of its SPI, compatibility or lifecycle responsibility.
 
 IF the family key arrives from a request, a tenant or a document
-THEN Abstract Factory keyed by that value, with an explicit failure for
-     an unknown key — never a silent default family.
+THEN select a compatible prebuilt family or provider where creation varies, with
+     an explicit failure for an unsupported key — never a silent default family.
 
 IF the key comes from outside the process
 THEN validate it against the supported registry before selection. Never turn an
      untrusted class name into reflective loading; an extensible plugin key need not
      be a compile-time closed enum, but it still needs authorization and failure policy.
 
-IF a new product is added to the family
-THEN every implementation must change. If that is unacceptable, the
-     family is not stable enough for this pattern — reconsider.
+IF a newly required product has no compatible default
+THEN providers must supply it before consumers rely on it. Assess source, binary and
+     semantic compatibility; a valid default or separate capability can sometimes avoid
+     changing every provider. Do not invent a default merely to keep old plugins loading.
 
 IF the factory starts caching what it creates
 THEN define sharing, eviction, closure and thread safety. A cache alone is neither Flyweight
@@ -125,10 +134,10 @@ THEN define sharing, eviction, closure and thread safety. A cache alone is neith
 
 ## Cross-cutting checks
 
-- **Concurrency.** A factory is normally a stateless immutable value shared by all threads —
-  keep it that way. The moment it holds mutable state (a cache, a counter, a "current family"
-  field) it needs a memory model argument, and a mutable `currentFamily` field is a race that
-  hands out mixed families under load.
+- **Concurrency.** Share stateless providers when their products permit it; confine session-owned
+  families or define synchronization where state is needed. Select one stable family for the whole
+  operation: separately reading a mutable `currentFamily` for each product can mix families even
+  if each read is thread-safe. Supplier calls are not an atomic multi-resource acquisition.
 - **Distribution.** The pattern is process-local. A "remote factory" that returns handles to
   objects living elsewhere is a Proxy problem with the failure semantics that implies
   (`gof-proxy`). Where families correspond to protocol or schema versions, the selection is
@@ -151,7 +160,11 @@ THEN define sharing, eviction, closure and thread safety. A cache alone is neith
 - [ ] Multiple families exist, or a concrete SPI/module boundary justifies the abstraction
 - [ ] Mutable factory, supplier and product state has an explicit concurrency/lifetime contract
 - [ ] The products differ in behaviour, not only in configuration values
-- [ ] Adding a product to the family is an acceptable change to every implementation
+- [ ] Provider/consumer evolution preserves the required contract or has an explicit migration
+
+Report the family invariant, chosen consumer API and why it fits better than the relevant simpler
+alternative, enforcement/ownership boundary and actual checks. Keep adequate construction or wiring;
+unresolved lifecycle or compatibility evidence makes the recommendation conditional.
 
 ## References
 
@@ -160,6 +173,6 @@ THEN define sharing, eviction, closure and thread safety. A cache alone is neith
   configuration, and how it differs from Factory Method and Builder. Read before introducing or
   removing a factory interface.
 - [Worked example](references/worked-example.md) — a report-export family selected per request,
-  built first as a classical hierarchy and then as a record of suppliers, with the tenant-scoped
+  built first as a classical hierarchy and then as a prebuilt record bundle, with the tenant-scoped
   variant, the failure path for an unknown format, and what each version costs. Read when
   implementing.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: tcp-tuning
-version: 1.2.1
+version: 1.2.2
 description: >-
   The network stack under a JVM service: listen backlog and accept queues, Nagle and delayed
   ACK, socket buffer sizing against bandwidth-delay product, congestion control choice,
@@ -12,7 +12,7 @@ description: >-
   throughput plateaus far below a high bandwidth-delay link, when somaxconn was raised and
   nothing changed, when TIME_WAIT sockets accumulate, or when someone proposes switching to
   BBR or DCTCP. Does not cover host memory, CPU and signals (linux-for-jvm), the
-  data-movement path itself (io-uring-and-zero-copy), or application-level connection reuse
+  data-movement path itself (io-uring-and-zero-copy), or JDBC pool sizing and lifetimes
   (connection-pool-sizing).
 
 license: Apache-2.0
@@ -46,6 +46,8 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - connection-pool-sizing
+  - io-uring-and-zero-copy
   - timeouts-and-deadlines
 
 capabilities:

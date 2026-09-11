@@ -18,8 +18,8 @@ immutable observation about something that happened in the publisher's domain
 (`ShipOrder`); request/response can carry a command or a query and returns an outcome. An
 asynchronous command can return outcome later through status, callback or event. This
 is a coupling decision, not a technology one, and the honest answer is often
-request/response — a broker between two parties that each need the other's outcome buys a
-new failure domain, added latency and no answer.
+request/response. A broker can carry request/reply, but it retains the outcome dependency
+and adds transport, correlation, timeout and reply-recovery costs that need justification.
 
 The failure this prevents is the distributed monolith: services that talk only over a broker
 yet cannot be released independently, because one team's event is another team's function
@@ -28,6 +28,12 @@ the sequence is emergent, and answering "why did this order never ship" means re
 it from logs.
 
 ## Workflow
+
+Reuse the user/business outcome, existing interaction and accepted delivery, latency,
+ownership and recovery constraints before asking questions. Ask only for unresolved facts
+that change the choice or next check. Keep an adequate existing interaction; a migration or
+new broker is not implied by this skill. During repair, preserve authorized mitigation and
+its recovery window rather than restarting architecture discovery.
 
 1. **Name the semantic contract, not just the tense.** Past tense is a useful event smell;
    imperative naming suggests a command. Verify ownership, recipient, whether rejection is
@@ -51,25 +57,31 @@ it from logs.
    burst shape and whether a partition assignment must be held.
 
 Inspect broker/client, serializer and Java/framework versions plus retention, replay and retry
-configuration before implementation advice. The envelope reference uses Java 16+ record syntax;
-preserve the target rather than upgrading it. Deliver the interaction choice, outcome/recovery
-owner, commit boundary, reader/writer horizon and one confirming failure/compatibility case.
-If these facts are missing, state a conditional choice and the smallest contract/configuration
-evidence needed to resolve it.
+configuration before implementation advice. Integration events do not require an authoritative
+event store; adopting that storage model is a separate `event-sourcing` decision. The envelope reference uses Java 16+ record syntax;
+preserve the target rather than upgrading it. For an architecture change, deliver the interaction
+choice, outcome/recovery owner, commit boundary, reader/writer horizon and a confirming
+failure/compatibility case. A narrow naming or contract review needs only the relevant subset.
+If material facts are missing, state a conditional choice and the smallest contract/configuration
+evidence needed to resolve it. Retaining the existing design is a valid result. Record
+consequential changes through the project's ADR convention; a routine choice needs only a
+concise rationale. Distinguish proposed verification from executed results.
 
 ## Decision block
 
 ```text
 Publish an event when:
-- the producer completes its own work without the consumer's outcome
-- the consumer set is open: a new reader must be addable without changing the producer
-- consumer unavailability must not bound producer availability, and a backlog is acceptable
-- fan-out or replay from retained history is a requirement, not a nice-to-have
+- the producer completes this work without requiring the consumer's immediate outcome
+- the message records a fact in the producer's authority and consumers decide how to react
+Reasons an asynchronous event path may pay for itself (not a mandatory conjunction):
+- independent consumer availability with an acceptable backlog
+- adding readers without changing the producer
+- required fan-out, retained replay or independent scaling
 Avoid events when:
-- the caller must answer its own caller with the result (any synchronous read path)
+- a required immediate consumer outcome is being hidden behind fact-shaped messages
 - there is one known recipient, the message is semantically a command, and no buffering,
   replay or asynchronous completion requirement justifies the broker
-- the producer needs to know the work was rejected, and the rejection is a business outcome
+- the message asks a recipient to accept or reject work: model that command and its outcome
 - the boundary has no independent lifecycle/scaling/resilience driver and the broker only
   obscures a synchronous dependency
 Prefer request/response instead when:
@@ -77,6 +89,7 @@ Prefer request/response instead when:
   interaction requiring correlation, timeout and reply lifecycle; model it as such
 - the outcome must be surfaced to a user inside the current request
 - the consumer count is one and stable, and the added broker is pure operational surface
+One consumer does not make a fact a command; asynchronous availability can still justify it.
 ```
 
 ## Rules
@@ -108,8 +121,8 @@ Prefer request/response instead when:
   commit publishes facts that may never become true; a `send()` after the commit loses them on
   a crash. For independent sends, these are dual-write windows: select an atomic publication
   intent (such as outbox/CDC) or an explicitly supported transaction boundary, then test
-  relay/retry recovery and duplicates
-  (`distributed-transactions-and-sagas`).
+  relay/retry recovery and duplicates (`delivery-semantics`). Atomic publication intent does
+  not atomically apply the remote consumer's effect.
 - End-to-end redelivery is common but product/configuration boundaries differ: at-most-once,
   at-least-once and transactional broker-local processing all exist. Handlers that may see a
   duplicate must be repeat-safe:
@@ -118,9 +131,10 @@ Prefer request/response instead when:
 - Choreography needs durable observability: event ID, causation ID, trace context and business
   correlation identity have different roles. Propagate them with bounded cardinality and
   retain a queryable event/workflow view where the business must answer current status.
-- Orchestration's cost is a component that knows every step. That is acceptable; a coordinator
-  that also holds business rules for each participant is not — it has become the monolith the
-  events were meant to split.
+- Orchestration's cost is a component that knows the flow and its workflow policy. Keep
+  participant-local invariants with their actual owners; duplicating those rules in the
+  coordinator creates drift. Judge the responsibility boundary, not the presence of business
+  rules in an orchestrator.
 - **FaaS is a placement/runtime decision, not an architecture.** Pricing, cold starts,
   concurrency, batching, retry/partial-batch behavior, maximum duration, connection reuse and
   ordering are provider/event-source specific. Execution environments may reuse pools, while

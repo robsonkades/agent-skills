@@ -2,20 +2,20 @@
 
 ## Before writing a language
 
-| Option                               | Fits when                                                        | Cost                                                   |
-| ------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------ |
-| Named rules in a sealed set          | The conditions are enumerable and change with releases           | None; cannot express what you did not foresee          |
-| Structured configuration             | Conditions are conjunctions of fixed fields                      | Grows awkward past two levels of nesting               |
-| **CEL** (Common Expression Language) | Sandboxed boolean/arithmetic expressions over a supplied context | A dependency; a grammar you do not control             |
-| **JSONLogic**                        | Rules authored by non-programmers, transported as JSON           | Verbose; limited                                       |
-| A rules engine (Drools et al.)       | Many interacting rules with conflict resolution                  | Substantial; its own runtime and operational model     |
-| Your own interpreter                 | A small, stable, domain-specific grammar you must control        | Design, parser, docs, versioning, security — all yours |
+| Option                               | Fits when                                                         | Cost                                                   |
+| ------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
+| Named rules                          | The conditions are enumerable and change with releases            | Limited vocabulary; additions may require releases     |
+| Structured configuration             | A fixed schema expresses the required conditions                  | Validate combinations; assess actual expressiveness    |
+| **CEL** (Common Expression Language) | Restricted boolean/arithmetic expressions over a supplied context | A dependency; a grammar you do not control             |
+| **JSONLogic**                        | Rules authored by non-programmers, transported as JSON            | Verbose; limited                                       |
+| A rules engine (Drools et al.)       | Many interacting rules with conflict resolution                   | Substantial; its own runtime and operational model     |
+| Your own interpreter                 | A small, stable, domain-specific grammar you must control         | Design, parser, docs, versioning, security — all yours |
 
 Compare fixed configuration, relevant existing languages and the cost of owning your grammar.
 CEL is a useful candidate for restricted expressions; actual cost bounds depend on input sizes,
-runtime configuration and registered functions. Write your own when the grammar is domain-shaped, when the AST must be
-translated (to SQL, to a UI, to another service's dialect), or when the dependency is
-unacceptable.
+runtime configuration and registered functions. Owning a small grammar may be justified by
+domain syntax, translation needs or dependency constraints; check whether an existing language's
+AST and semantics already meet them before treating those requirements as automatic exclusions.
 
 ## The expression-language RCE class
 
@@ -53,14 +53,15 @@ text ──parse──► AST ──interpret──► value
 
 Options, roughly in order of grammar complexity:
 
-- **A closed set of forms** — key, operator, value triples parsed by a regular expression or a
-  split. Correct for `status eq ACTIVE`, and it stops being correct the moment nesting appears.
+- **A closed set of forms** — key, operator, value triples can use a small recognizer when token
+  boundaries and quoting/escaping are unambiguous. Consume all input; a bare split is not a parser
+  for arbitrary quoted values or nesting.
 - **Hand-written recursive descent** — reasonable for a grammar you can write on one page, with
   precedence climbing for operators. Budget for error messages with positions; that is most of
   the work.
 - **Parser combinators** — good ergonomics, keeps the grammar readable in Java.
-- **A parser generator (ANTLR, JavaCC)** — the right answer once precedence, associativity and
-  error recovery matter, and it gives a grammar file that documents the language.
+- **A parser generator (ANTLR, JavaCC)** — useful when grammar size, maintenance or error recovery
+  justify generated machinery and a grammar artifact. Precedence alone does not require one.
 
 The failure mode is a hand-rolled parser that grows: each new operator adds a special case, error
 messages degrade to "invalid expression", and the grammar exists only as the code's behaviour.
@@ -88,8 +89,10 @@ if (++nodes > MAX_NODES) throw new ExpressionTooLarge(MAX_NODES);
   a collection scan. Count work inside expensive primitives and bound operand/result sizes;
   one step per node cannot bound a catastrophic regex or huge numeric operation. Deadlines are
   cooperative checks, not preemption of non-cooperative host calls.
-- **No side effects and no host access.** Nodes evaluate over a supplied context and nothing else:
-  no I/O, no reflection, no clock unless it is passed in.
+- **Pure filter capabilities.** This design evaluates supplied data and approved bounded
+  functions: no I/O, reflection or clock unless time is passed in. A language that intentionally
+  performs effects needs a separate explicit authorization, resource and failure/lifetime contract;
+  parsing or a callable host function does not grant that authority.
 
 Add one more if expressions can contain regular expressions: those have their own catastrophic
 backtracking behaviour, and passing a user pattern to `Pattern.compile` reintroduces the DoS the
@@ -147,11 +150,11 @@ validate     Expr → List<Issue>         unknown fields, type errors
 optimise     Expr → Expr                constant folding, reordering
 ```
 
-Each is a `switch` over the same closed set, so adding a node type produces five compile errors —
-exactly the sites that must be considered. This is the expression problem's favourable direction:
-new operations are cheap, new node types are loud. When node types are contributed by others,
-that trade reverses and Visitor or per-node methods become the right shape
-(`gof-visitor`).
+Adding a node exposes missing coverage when these exhaustive switches are recompiled; catch-all
+cases and old binaries need separate review. New external operations are easy to add to a closed
+model. When types grow while operations stay stable, per-node methods may fit better. Classical
+Visitor does not automatically handle arbitrary plugin types; use it when the actual operation
+and extension contract justify it (`gof-visitor`).
 
 `toSql` deserves emphasis: it is often the reason to have a typed AST at all, because it lets the
 same user expression filter in the database rather than in memory

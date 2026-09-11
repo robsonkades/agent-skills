@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: escape-analysis-internals
-version: 2.0.1
+version: 2.0.2
 description: >-
   C2 escape-analysis internals: connection graphs, escape-state propagation, flow
   insensitivity, bytecode escape summaries, scalar replacement and allocation merges,

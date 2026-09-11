@@ -123,6 +123,12 @@ final class DataSourceFactory {
 }
 ```
 
+The method above must actually be invoked by the runtime lifecycle. Framework AOT code or a
+build-time initializer calling it can still capture state or perform effects during the build.
+Trace the creation path and image-heap reachability; a lazy holder, DI annotation or method name
+is not evidence of timing. Keep connection/client acquisition, initialization failure and closing
+with the actual runtime owner; returning a borrowed resource does not transfer its close obligation.
+
 If internal substitution is unavoidable, pin the GraalVM release and regression-test it. This
 partial example demonstrates field reset only, not a complete configuration repair:
 

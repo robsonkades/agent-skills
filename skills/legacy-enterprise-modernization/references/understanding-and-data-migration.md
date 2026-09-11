@@ -2,7 +2,8 @@
 
 ## Discovering the system from production
 
-Documentation is aspirational and memory is selective. Production is evidence.
+Reconcile production observations, documentation and operator knowledge for the affected
+boundary. Each has blind spots; recent traffic alone cannot disprove rare recovery contracts.
 
 | Question                           | Where the answer is                                                                                                         |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -11,10 +12,10 @@ Documentation is aspirational and memory is selective. Production is evidence.
 | Which jobs run?                    | The scheduler, the crontabs, and the operations team                                                                        |
 | What rules exist outside the code? | `information_schema.routines`, `triggers`, column defaults, check constraints                                               |
 | What is actually slow?             | Query Store / `pg_stat_statements` totals identify aggregate cost; per-call distributions and traces identify request delay |
-| Which code is dead?                | Coverage from a production-shadow run, or logging on entry to suspects                                                      |
+| Which code might be dead?          | Coverage or entry logging identifies candidates; confirm caller, periodic and recovery contracts before removal             |
 
 ```sql
--- Rules living in the database. Run this before believing any module inventory.
+-- Discovery fragments: scope results to the affected schemas/tables and their callers.
 SELECT routine_schema, routine_name, routine_type
   FROM information_schema.routines
  WHERE routine_schema NOT IN ('pg_catalog','information_schema');
@@ -33,8 +34,14 @@ does not identify which application wrote it.
 
 ## Characterisation tests without a specification
 
-The goal is not to assert correct behaviour — nobody knows what that is — but to detect
-**change**.
+Characterisation records observed behaviour so a migration can detect **change**. Keep
+existing assertions of known invariants; a legacy baseline does not establish that every
+observed result is desired behaviour.
+
+Partial test sketch: it needs JUnit Jupiter parameterized tests, the project's JSON assertion
+library, parser and pricing fixture. Use the project's resolved versions. JUnit Jupiter
+5.11.4 closes streams returned by `@MethodSource`; callers outside that lifecycle must own
+the file stream's closure.
 
 ```java
 @ParameterizedTest
@@ -44,7 +51,7 @@ void pricing_output_is_unchanged(PricingInput input, String expectedJson) {
 }
 
 static Stream<Arguments> productionSamples() throws IOException {
-    // Captured from production over a period covering a month-end.
+    // Safely captured samples covering this boundary's relevant business cycles.
     return Files.lines(Path.of("src/test/resources/pricing-samples.jsonl"))
         .map(CharacterisationSamples::parse);
 }
@@ -55,13 +62,14 @@ Practices that make this work:
 - **Sample from production, including the tails.** The interesting cases are the odd ones:
   the customer with a 40-year-old contract, the order with 900 lines, the negative quantity
   that exists because of a 2011 data fix.
-- **Cover the periodic paths.** Month-end, year-end and the annual index run contain the
-  rules nobody remembers.
-- **Capture behaviour you believe is a bug**, and mark it. Do not fix it in the same change:
-  downstream systems may depend on it, and mixing a fix with a migration makes failures
-  unattributable.
-- **Golden-file style comparisons** beat hand-written assertions here, because you are
-  pinning a shape you do not understand yet.
+- **Cover relevant periodic paths.** Include month-end or rare recovery cases that affect
+  this contract, using controlled replay when live observation is impractical.
+- **Capture suspected bugs**, and mark them. Preserve compatibility unless a behaviour
+  change is explicitly intended; give an approved fix separate expected results and
+  downstream compatibility evidence so the change remains attributable.
+- **Use golden files for representative output shapes** where they help reveal unknown
+  differences, alongside targeted invariant assertions. Normalize only irrelevant
+  nondeterministic fields, without hiding meaningful changes.
 
 ## Establishing table ownership
 
@@ -107,9 +115,9 @@ SELECT id AS cod_cli, cgc, nome AS nome_cli, ... FROM customer;
 Partial SQL (`...` is an omitted column list), not a deployable migration. Verify locks,
 privileges, constraints, triggers, ORM metadata, writes and rollback on the target database.
 It can preserve selected legacy reads across a rename. Limits worth knowing before relying
-on it: updatable views have restrictions in every engine; performance can differ from the
-base table; and it is a compatibility layer that must eventually be removed, so it needs its
-own decommissioning date.
+on it: update support, security and performance depend on the engine and view definition.
+A temporary view needs an owner and removal gates; an intentionally supported compatibility
+view can remain with a tested contract and an accounted support cost.
 
 ### Dual write with reconciliation
 
@@ -170,19 +178,22 @@ delivery without relay progress, retry and retention controls.
 
 ## Rules in stored procedures and triggers
 
-Three options, in order of preference:
+Choose placement from the rule's integrity contract and actual write authority:
 
-1. **Leave it and route around it.** The new path does not write the table the trigger is
-   on. Cheapest, and it works while the legacy still writes.
-2. **Replicate it in application code and disable the trigger** for the new path — only
-   possible if the trigger can be made conditional, and it must be verified with a
-   characterisation test of the trigger's own behaviour.
-3. **Move it, at the moment ownership transfers.** The right end state, and only safe once
-   one writer owns the table.
+1. **Retain the database rule** when it remains the owner of a shared integrity contract.
+   A path that avoids that table must still preserve any effects its contract requires.
+2. **Move enforcement into the owning application** when all relevant writers must pass
+   through it and the new transaction/failure behaviour meets the contract. Transferring
+   ownership does not itself require moving every rule out of the database.
+3. **Use a controlled transition** when old and new paths coexist. Characterise the rule,
+   define which path enforces it, and verify trigger conditions and permissions on the
+   target engine before disabling anything. Prevent bypasses and duplicate application
+   of non-idempotent effects.
 
-What must not happen is a new application writing a table that still has a trigger nobody
-inventoried. The trigger will fire, it will apply a rule from a different era, and the
-resulting data will look like a bug in the new code.
+Inventory triggers before new writes to the affected table. In PostgreSQL 17, trigger
+execution shares the triggering statement's transaction; timing, conditions and cascades
+affect which rules run. Moving effects into an asynchronous path changes that failure and
+atomicity contract and needs its own justification.
 
 ## Signals that the modernisation is failing
 
@@ -190,14 +201,18 @@ resulting data will look like a bug in the new code.
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | Nothing decommissioned across the planned first-slice window | Benefits may be deferred while coexistence cost grows; review scope and removal blockers                |
 | Parallel runs with no divergence policy                      | Alerts nobody actions; the switch will not be signed                                                    |
-| The new system also reads legacy tables directly             | Check whether an ACL contains the dependency or legacy concepts leak into the new model                 |
+| The new system also reads legacy tables directly             | Inspect the read contract; contain semantic differences where needed, without inventing an ACL          |
 | Feature work has moved entirely to the new system            | Verify that legacy maintenance and operational support remain funded while it still serves traffic      |
-| Nobody can say which system served a given request           | Routing is not observable; incidents will be unresolvable                                               |
+| Nobody can say which system served a given request           | Routing evidence is missing, making incidents harder to attribute                                       |
 | The first slice is not finished and a second started         | Check whether independent scope justifies parallelism and whether unresolved risks are being replicated |
-| The team cannot name the next decommissioning date           | There is no plan, only construction                                                                     |
+| A temporary coexistence path has no removal owner or gates   | Establish accountability and blocking decisions; set a credible window when dependencies are known      |
 
 ## Primary references
 
 - [PostgreSQL 17 cumulative statistics](https://www.postgresql.org/docs/17/monitoring-stats.html) — per-table counters and visibility limits.
+- [PostgreSQL 17 trigger behaviour](https://www.postgresql.org/docs/17/trigger-definition.html) — transaction, timing and cascading effects.
+- [PostgreSQL 17 views](https://www.postgresql.org/docs/17/sql-createview.html) — update and security conditions for compatibility views.
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html) — atomic source intent and duplicate handling.
 - [Fowler, Strangler Fig](https://martinfowler.com/bliki/StranglerFigApplication.html) — incremental replacement and coexistence.
+- [JUnit 5.11.4 MethodSource](https://docs.junit.org/5.11.4/api/org.junit.jupiter.params/org/junit/jupiter/params/provider/MethodSource.html) — parameter sources; its [parameterized-test implementation](https://github.com/junit-team/junit5/blob/r5.11.4/junit-jupiter-params/src/main/java/org/junit/jupiter/params/ParameterizedTestExtension.java) consumes argument streams through `flatMap`, which closes them.
+- [Java 16 Stream.toList](<https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/util/stream/Stream.html#toList()>) — API availability and unmodifiable result.

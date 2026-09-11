@@ -1,19 +1,16 @@
 schemaVersion: 1
 
 name: rate-limiting-and-load-shedding
-version: 1.3.1
+version: 1.3.2
 description: >-
-  Two mechanisms kept apart: rate limiting as a fairness and quota policy enforced per
-  client whether or not you are busy, and load shedding as self-protection that refuses work
-  you cannot complete, from your own saturation. Covers token versus leaky bucket, fixed
-  versus sliding windows, burst capacity, distributed limits and local-plus-shared
-  reconciliation, the 429 and Retry-After contract, saturation signals, deadline-aware
-  rejection. Use when a limit is enforced per replica and multiplies by replica count, when
-  a fixed window lets through double the rate intended, when a limiter returns 500 or omits
-  Retry-After, when a service collapses under traffic that broke no limit, or when shed rate
-  alerts as an error. Not queue arithmetic (littles-law-and-queueing), system-wide spread
-  (cascading-failures), the client-side complement (circuit-breakers), the retry side of a
-  429 (retries-and-backoff), replica spread (load-balancing-and-routing), error budgets
+  Choose policy quotas and saturation-based admission: limit identity, charged work, burst
+  and window semantics, distributed budgets, early rejection, fairness, deadlines and
+  recovery. Use when replica-local limits multiply a quota, window-boundary bursts break
+  the contract, rejection amplifies retries, or a service overloads while clients remain
+  within quota. Covers token/leaky buckets, fixed/sliding windows, 429/503 and meaningful
+  Retry-After guidance. Not queue arithmetic (littles-law-and-queueing), system-wide spread
+  (cascading-failures), circuit-breaker behavior (circuit-breakers), client retry design
+  (retries-and-backoff), replica routing (load-balancing-and-routing), error budgets
   (slo-and-alerting), or load generation (load-testing).
 
 license: Apache-2.0
@@ -44,14 +41,16 @@ files:
 dependencies:
   - name: failure-models
     version: ^1.0.0
-  - name: java-performance
-    version: ^2.0.0
 
 suggests:
   - caching-strategies
   - cascading-failures
+  - circuit-breakers
+  - concurrency-limiting-and-bulkheads
   - coordinated-omission
+  - java-performance
   - littles-law-and-queueing
+  - load-balancing-and-routing
   - load-testing
   - retries-and-backoff
   - rpc-and-api-contracts

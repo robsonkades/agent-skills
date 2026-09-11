@@ -12,7 +12,8 @@
 | startup/readiness           | class loading, JIT/AOT, cache/connection/data init, probes                      | JFR from start + readiness phase markers                            | compilation/class/I/O owners need targeted data |
 | one pod/tenant/operation    | traffic/data/host/version/lifecycle skew                                        | segmented metrics/traces and compatible control                     | context-aware profile is safe and bounded       |
 
-The table chooses an evidence set, not a fix.
+The table identifies potentially discriminating evidence, not a required bundle or a fix. Reuse
+adequate supplied evidence and add a source only for a consequential unresolved hypothesis.
 
 ## Which clock or event?
 
@@ -68,7 +69,7 @@ When zero appears:
 3. Was it enabled with the intended threshold/period/throttle/stack/filter?
 4. Did the parser/view include the right event and schema?
 5. Did buffers/rate/memory/disk lose or suppress it?
-6. Does a synthetic positive control appear?
+6. Does an applicable existing positive control validate coverage, or is a bounded new control needed?
 7. Only then report no qualifying observed events, bounded to this window/configuration.
 
 `jfr summary` validates actual file event counts; metadata validates schemas. Neither alone

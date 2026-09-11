@@ -4,8 +4,8 @@ description: >
   Reasoning from a design problem to a design, where a Gang-of-Four pattern is one possible
   outcome and "no pattern" is an equally valid one: naming the forces, identifying what
   varies and along how many axes, walking the alternatives ladder from language feature up
-  to architecture, and pricing the indirection before adopting it. The first of two stages —
-  run this, then gof-pattern-selection maps the result to a shortlist. Use when a pattern
+  to architecture, and pricing the indirection before adopting it. Use gof-pattern-selection
+  to shortlist unresolved choices once the forces are understood. Use when a pattern
   name is proposed before the problem is stated, when a review must judge whether an
   abstraction earns its place, when factories and strategies have accumulated that trace to
   no requirement, when an indirection needs pricing, or when a design is starting and the
@@ -21,9 +21,9 @@ description: >
 
 Produce the simplest design that survives the change the system will actually see. A pattern is
 a named set of _consequences_, not a named structure — adopting one means accepting its costs
-because a force demands them. The two failures this exists to prevent are opposite and equally
-common: the design that names a pattern before it has a problem, and the design that reinvents
-one badly because the vocabulary was refused.
+because a force demands them. The two failures this exists to prevent are the design that names
+a pattern before it has a problem, and the design that reinvents one badly because the vocabulary
+was refused.
 
 The output of this reasoning is frequently **no pattern**. That is a result, not a failure to
 find one.
@@ -53,16 +53,25 @@ Adapters and facades can earn their place through compatibility or a stable subs
 without forecasts of new variants.
 
 Java compatibility is a decision constraint: inspect compiler release/toolchains and dependencies.
-Records/sealed types are final in Java 17; pattern switch is final in Java 21. Do not introduce
+[Records became final in Java 16](https://openjdk.org/jeps/395),
+[sealed types in Java 17](https://openjdk.org/jeps/409), and
+[pattern switch in Java 21](https://openjdk.org/jeps/441). Do not introduce
 preview features or upgrade a project to fit an example. On older targets, compare supported
 language features and ordinary method dispatch. Missing evidence keeps a forecast or performance
 benefit conditional, rather than turning it into an assumed requirement.
 
 ## Workflow
 
+Reuse the request, caller code, tests, wiring and change history before asking for context.
+Inspect ordinary use, relevant extension/lifecycle use and misuse or failure behavior before
+choosing implementation structure. Separate required contracts and project conventions from
+preferences and forecasts. Ask only about unresolved constraints that could change the decision;
+state minor reversible assumptions and continue independent investigation.
+
 1. **State the problem with no pattern name in it.** "Adding a payment provider touches five
    classes and a `switch` in each" is a problem. "We need a Strategy" is a conclusion wearing a
-   problem's clothes. If the first sentence cannot be written, there is nothing to design yet.
+   problem's clothes. If the problem is unclear, investigate the observed behavior and intended
+   outcome; keep a recommendation conditional on material missing evidence.
 2. **Name the forces and material tension.** Patterns can resolve competing forces, but may also
    encode a stable collaboration or safety boundary. If the direct implementation already satisfies
    the forces with lower lifecycle/debugging cost, keep it.
@@ -71,13 +80,16 @@ benefit conditional, rather than turning it into an assumed requirement.
    boundary. Price forecast variation explicitly (`java-dry-kiss-yagni`).
 4. **Compare relevant alternatives** below, starting with the direct implementation. The ladder
    is a search aid, not a universal cost ranking: configuration, DI and function values can compose.
+   Include materially different ownership, extension or lifecycle choices even when a lower rung
+   works. A focused caller sketch or contract check can resolve uncertainty without a full redesign.
    Read [references/alternatives-ladder.md](references/alternatives-ladder.md) for the rung
    definitions and worked eliminations.
 5. **If a pattern is selected, name its consequences out loud** — the indirection, the extra
    lifecycle, the dispatch site that moved out of sight, the thing that got harder to read. If
    none can be named, the pattern is not yet understood well enough to adopt.
 6. **Deliver a proportionate decision:** problem, evidence, chosen mechanism, relevant alternative,
-   consequence and verification. “No change” needs no catalogue-wide elimination report.
+   consequence and verification. State any remaining assumption and what would change the choice.
+   Stop when the evidence supports a decision; “no change” needs no catalogue-wide elimination report.
 7. **Re-check the boundary.** If the collaboration crosses a process, the local pattern's
    guarantees do not travel with it (`gof-patterns-and-distribution`).
 
@@ -117,7 +129,9 @@ THEN do not claim runtime variability. Still retain a structural pattern
      narrows authority or creates an intentional failure-injection seam.
 
 IF variation is one axis and each variant is one behaviour
-THEN rung 3 — a function value — before Strategy classes.
+THEN compare a function value with a named role object. Preserve public contracts,
+     metadata, stable identity and resource lifecycle; one method alone does not
+     establish that a lambda supplies the same contract.
 
 IF variation is along two or more independent axes
 THEN compare composition to a subclass cross-product. Keep a small hierarchy when
@@ -132,7 +146,9 @@ THEN define an extension contract and discovery/selection/lifecycle policy.
      An injected implementation or registry may suffice; a factory is not mandatory.
 
 IF the "variation" is data — rates, limits, endpoints, flags
-THEN configuration. Class-per-value is the commonest false pattern.
+THEN compare a value/table/enum or validated configuration with the existing design.
+     Choose from actual identity, validation and change-approval requirements;
+     data alone does not require external configuration or runtime reload.
 
 IF the pattern is being adopted for performance
 THEN state the proposed mechanism and measure against a baseline; a pattern name
@@ -174,7 +190,7 @@ THEN first remove hidden ambient dependencies where possible. A seam over
 - [ ] Relevant simpler alternatives were compared; mechanisms can combine without visiting every rung
 - [ ] The pattern's consequences are written down, including what got worse
 - [ ] Every one-implementation interface has a concrete boundary, authority or testability reason
-- [ ] Data-only variation uses validated configuration when appropriate; behavior and invariants stay explicit
+- [ ] Data-only variation preserves identity, validation and change controls; configuration is an option
 - [ ] Any performance claim rests on a measurement, not on structure
 - [ ] If the collaboration crosses a process, failure semantics are designed, not inherited
 

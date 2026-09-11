@@ -6,13 +6,13 @@ bundled here. Compile and execute adapted examples against the project's pinned 
 
 ## The taxonomy, in terms of what each proves
 
-| Double | What it is                               | What a passing test then proves                         | Cost when the design changes         |
-| ------ | ---------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
-| Dummy  | A value passed but never used            | Nothing about the collaborator                          | None                                 |
-| Stub   | Canned answers to queries                | The code handles _that_ answer                          | Breaks when the query signature does |
-| Fake   | A working implementation, simplified     | The code works against realistic behaviour              | Breaks when the interface does       |
-| Spy    | The real object, some calls recorded     | Whatever the real object proves, plus the recorded call | Fragile — half real, half not        |
-| Mock   | An object programmed with expected calls | The code made those calls in that shape                 | Breaks on every refactoring of _how_ |
+| Double | What it is                                                  | What a passing test then proves                       | Cost when the design changes                           |
+| ------ | ----------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
+| Dummy  | A value passed but never used                               | Nothing about the collaborator                        | None                                                   |
+| Stub   | Canned answers to queries                                   | The code handles _that_ answer                        | Breaks when the query signature does                   |
+| Fake   | A working implementation, simplified                        | Behavior under the fake's implemented semantics       | Contract/semantic changes may require maintenance      |
+| Spy    | Real behavior with recorded calls and optional substitution | The exercised real behavior and recorded interactions | Mixed real/stubbed behavior needs care                 |
+| Mock   | An object programmed with expected calls                    | The code made those calls in that shape               | Over-specific assertions pin incidental implementation |
 
 The distinction that matters in practice is narrower than the taxonomy: **a stub or fake lets
 you assert on a result; a mock makes you assert on a call.** Assertions on results survive
@@ -33,20 +33,22 @@ final class InMemoryOrderRepository implements OrderRepository {
 }
 ```
 
-Ten lines, written once per port, reused by every test in the module. Compare with the mock
-equivalent: `when(orders.findById("ord-1")).thenReturn(Optional.of(order))` — repeated in every
-test, and silently wrong the day the service saves before it reads, because a mock has no
-memory that a save happened.
+A small implementation can be reused where tests need these state transitions. The stub
+`when(orders.findById("ord-1")).thenReturn(Optional.of(order))` can be correct for one known
+answer, but does not itself model a preceding save. Choose according to the scenario; avoid
+growing the fake merely because the real collaborator is stateful.
 
-Keep the fake in test sources next to the port. When the port gains a method, the compiler
-finds the fake; a mock just returns `null` and the test fails somewhere else.
+Keep the fake in test sources next to the port. Adding a required abstract method makes an
+incomplete concrete fake fail compilation; adding a default method need not. A mock uses its
+configured default answer for unstubbed calls — often zero, null or an empty value — which may
+conceal missing setup or be exactly what the test intends.
 
 This fake stores object references and overwrites duplicate ids. It models neither database
 copy/isolation semantics nor constraints, transactions or query behavior. Prefer immutable
 values and encode only required port semantics; test duplicate ids, missing values and mutation
 where those matter against both implementations. Do not grow a miniature database in the fake.
 
-## Mock only what the fake cannot be
+## Mix doubles according to the scenario
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -68,9 +70,9 @@ class CheckoutServiceTest {
     }
 ```
 
-Note what is _not_ verified: that `findById` was called. It obviously was — the test got the
-right answer. Verifying it adds a second way for the test to break and no way for a defect to
-be caught.
+Note what is _not_ verified: that `findById` was called. The result assertion does not prove
+that interaction occurred, but this test promises the returned reference, not a repository
+call count. Keep a separate interaction assertion only when it protects a relevant contract.
 
 ## Verify only when the call is the outcome
 
@@ -117,21 +119,23 @@ gateway query does not break the test. Neither assertion proves the external pro
 A fake drifts: it accepts an id the real repository rejects, or returns rows the real query
 would not. Two defences, in order of cost:
 
-1. **One integration test per query**, against the real engine, asserting the same behaviour
-   the fake implements. The fake is then a documented simplification, not a guess.
+1. **Representative real-adapter checks** for the relevant query, write and constraint
+   semantics. Reuse existing evidence; one passing query does not cover every fake assumption.
 2. **A shared contract test**: an abstract JUnit class with the behaviour every implementation
    must satisfy, extended once by the fake and once by the real adapter (the latter tagged so
    it runs only where the engine is available). Worth it when the port has several
    implementations or a long life.
 
-Without one of these, a fake is a mock with extra steps — you still encoded your belief about
-the collaborator, you just spread it over more lines.
+Without real-boundary evidence, the fake can still test consumer behavior, but its agreement
+with the real collaborator remains an assumption. Record the material gap instead of presenting
+fake success as integration proof.
 
-## When a double is not justified
+## Before adding or rejecting a double
 
-- The collaborator is a pure function or a value object → construct it.
-- The collaborator is fast, deterministic and yours → use it; the test then covers both, and
-  that is a feature (java-testing-strategy calls this a sociable unit test).
-- You are mocking the class under test's own private behaviour via a spy → the class has two
-  responsibilities; split it (java-cohesion-coupling).
-- You are mocking a library type → wrap it first (java-dependency-inversion).
+- The collaborator is a cheap pure function or value object → normally use the real instance.
+- The collaborator is fast and deterministic, with no needed isolation → use it; the test
+  covers the exercised behavior of both (java-testing-strategy calls this a sociable unit test).
+- A spy suppresses a real method → inspect why. It may expose misplaced responsibility or be
+  an adequate constrained test seam; the spy alone proves neither (java-cohesion-coupling).
+- A library type is mocked → compare its existing public seam with an owned consumer adapter;
+  a wrapper needs an actual boundary benefit (java-dependency-inversion).

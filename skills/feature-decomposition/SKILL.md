@@ -1,17 +1,13 @@
 ---
 name: feature-decomposition
 description: >
-  Deciding whether a feature should be split at all and, when it should, into what: child features only
-  where they carry independent value someone can state, Tech Features for independently useful
-  engineering outcomes, and below both a flat list of implementation resources with identifiers,
-  dependencies and their own validation. Use when a feature is about to be implemented as one
-  undifferentiated lump, when a small change is being ceremonially split into items nobody
-  needs, when work has to be ordered because parts depend on each other, when two people or two
-  sessions will share the work, or when progress cannot be reported because there is nothing to
-  report progress against. Does not write the plan around the breakdown
-  (feature-implementation-plan), does not track the resulting statuses
-  (feature-progress-tracking), and does not estimate any of it
-  (estimation-under-uncertainty).
+  Deciding whether a feature should split and, when useful, defining independently valuable Product
+  or Tech child features. During definition, stays at outcomes, owners and acceptance; during
+  engineering delivery preparation, defines implementation resources with stable identifiers,
+  dependencies and validation. Use when several outcomes are bundled together, a small change is
+  being over-split, dependencies or shared work need a breakdown, or progress lacks meaningful units.
+  Does not approve scope or acceptance, write the implementation plan (feature-implementation-plan),
+  track delivery statuses (feature-progress-tracking), or estimate effort (estimation-under-uncertainty).
 ---
 
 # Feature Decomposition
@@ -23,21 +19,39 @@ independently**, work that must be **ordered** because of a real dependency, and
 be **shared** across people or sessions. Outside those, a breakdown is a table of contents for a
 change that would have been easier to read as a diff.
 
-The output that always matters is the **resource list**. Child Product/Tech Features above it are
-optional and must remain valuable, independently decidable/deliverable, and testable; resources are
-what gets implemented, validated and tracked.
+Child Product/Tech Features must remain valuable, independently decidable/deliverable, and testable.
+During delivery preparation, **resources** are what gets implemented, validated and tracked.
+The calling stage determines which of these outputs is needed.
 
-## Workflow
+## Choose the current stage
+
+Inspect the request, current definition/analysis revision, accepted scope and any existing breakdown
+before adding items. Reuse supplied IDs and authorization. If the requested stage is materially
+unclear, resolve that boundary before creating a delivery breakdown.
+
+- **Definition:** decide whether child features earn their cost. Return `PF-*` or `TF-*` with value,
+  beneficiary, independently checkable acceptance, dependencies and the reason for the split, or
+  a concise reason to keep one feature. Product owns Product Feature intent and `BAC-*`; Engineering
+  owns Tech Features and technical criteria. Within a product-owned definition, flag technical
+  enablement for the engineering handoff instead of deciding its solution or `TC-*`. Preserve
+  proposed versus accepted status. Do not create delivery `RES-*`, file tasks or status ledgers
+  merely because `collaborative-feature-definition` invoked this skill.
+- **Delivery preparation or revision:** use the resource workflow below against the applicable
+  scope and acceptance baseline. Carry criteria from their owning stage; missing or changed
+  acceptance is a question for that owner, not permission to invent intent in the breakdown.
+
+## Delivery resource workflow
 
 1. **Test whether to decompose at all.** If the feature is one resource, say so and produce a
    one-line list. That is a complete answer.
-2. **Produce the resource list first**, from the impact map. Each element in the map becomes a
-   resource or joins one; nothing in the map is unaccounted for.
+2. **Produce the resource list first**, from the impact map. Account for each entry as scoped work,
+   validation coverage or an evidenced unchanged dependency. A `READ` entry need not become an edit:
+   link the resource that verifies its relied-on behavior or cite applicable existing evidence.
    Reuse the current map/scope revision. If none exists, record a minimal source-to-resource
    mapping for the known work; leave material unknowns open rather than inventing files or scope.
-3. **Give each resource a `RES-*` identifier, a dependency list and a validation** — the fields are in
-   `references/resource-catalogue.md`. A resource with no stated validation is not finished
-   being defined.
+3. **Reuse each resource's `RES-*` identifier or assign one to new work**, with dependencies and
+   validation. Read `references/resource-catalogue.md` for fields, examples and revision rules.
+   A resource with no stated validation is not finished being defined.
 4. **Create child features only when the grouping adds an independently valuable outcome.** A Product
    Feature uses `PF-*`; a Tech Feature uses `TF-*` and names measurable engineering value.
 5. **Keep enabling work as resources by default.** A migration, component, infrastructure change, or
@@ -61,15 +75,18 @@ what gets implemented, validated and tracked.
 | The split would be by layer for its own sake                  | No         |
 | The parts are only separable on paper                         | No         |
 
-Splitting one behaviour across a controller story, a service story and a repository story
-produces three items none of which can be validated alone. That is not decomposition; it is
-transcription of the layer diagram.
+These signals justify considering a split at the current stage, not a fixed item count. Shared
+work or a dependency alone does not establish independent child-feature value. Splitting one behavior
+into controller, service and repository stories usually leaves incomplete outcomes. Layer-specific
+delivery resources can still be useful for a real handoff or staged contract, with validation and
+integration prerequisites explicit; they do not become child features merely by being testable.
 
 ## Decision rules
 
 ```text
 IF a child cannot state independent product or engineering value and its own acceptance
-THEN it is not a child feature; keep its work as RES-* under the parent.
+THEN it is not a child feature. At definition, record any enabling need for the owning stage;
+     during delivery breakdown, keep its work as RES-* under the parent.
 
 IF a resource has many dependencies
 THEN verify each necessary input and distinguish implementation, validation and release order.
@@ -89,7 +106,7 @@ IF a resource is "write the tests"
 THEN it is misplaced: tests belong to the resource whose behaviour they establish.
      A separate test resource is legitimate only for shared harness or fixture work.
 
-IF the feature is Light
+IF preparing a delivery breakdown for a Light feature
 THEN return one concise resource with its validation when it remains one local outcome.
      If material dependencies or boundaries emerge, report the changed driver for reclassification;
      this analysis does not itself authorize implementation.
@@ -109,7 +126,11 @@ THEN return one concise resource with its validation when it remains one local o
 
 ## Output
 
+At definition, return only the child-feature decision and its stage-owned evidence described above.
+For delivery preparation, use a proportionate version of this breakdown:
+
 ```text
+Baseline        <scope and acceptance revision/source>
 Decomposition   child features and resources | resources only | none
 Because         <the signal that decided it>
 
@@ -132,3 +153,4 @@ Execution consumes resource scope, acceptance, ownership and dependencies togeth
 in the graph permits parallel planning only when shared-file/resource ownership is also resolved.
 Before handoff, check scope coverage, unique/stable IDs, an acyclic dependency graph and validation
 for each resource; report unresolved dependencies rather than claiming the breakdown ready.
+A defined breakdown does not establish accepted scope, implementation or observed validation.

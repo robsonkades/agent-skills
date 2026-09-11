@@ -52,7 +52,8 @@ as well as JDK internals; record the target package, consuming library and compa
 
 ## What the module system changes in delegation
 
-Parent-first delegation is the classpath rule. In the module system a built-in loader first
+Parent-first delegation is the default `ClassLoader.loadClass` policy; custom loaders can override
+it even on the classpath. In the module system a built-in loader first
 maps the **package** to a module: if the package belongs to a module defined to this loader
 or a loader below it in the boot layer's mapping, that module's loader loads it directly;
 only otherwise does the loader delegate to its parent. Three consequences:

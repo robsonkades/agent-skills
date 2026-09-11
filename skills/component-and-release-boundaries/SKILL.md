@@ -36,7 +36,13 @@ the project or add modules/dependencies just to reproduce their syntax.
 
 ## Workflow
 
-1. **Ask what is released, not what is grouped.** If two candidate components have never been
+Start from the outcome at risk: consumer upgrade burden, delivery delay, compatibility or
+ownership. Reuse supplied release histories, consumer inventories and accepted decisions.
+Distinguish binding release/approval policy and its owner from habitual batching; technical
+compatibility does not authorize bypassing that policy. Ask only for missing constraints
+that could change the recommendation, and continue independent graph or contract checks.
+
+1. **Identify what is released, not what is grouped.** If two candidate components have never been
    released on different schedules, investigate why. A release train or shared parent version
    can coordinate independently buildable components without requiring that coordination.
    Preserve justified encapsulation/build boundaries even when publication stays combined.
@@ -44,9 +50,9 @@ the project or add modules/dependencies just to reproduce their syntax.
    plugin isolation, optional deployment, security boundaries and build ownership can justify it.
    Independent consumers upgrading at different times create the strongest compatibility duty
    (`java-api-design`).
-3. **Resolve the cohesion tension deliberately** — reuse, common closure and common reuse
-   pull in different directions and cannot all be satisfied. Decide which one this component
-   optimises for, and record it.
+3. **Assess the cohesion tension deliberately** — reuse, common closure and common reuse
+   can pull in different directions. Identify the actual consumer/change conflict before
+   choosing which cost to accept; aligned needs can justify keeping the component.
 4. **Prevent source/build cycles and investigate release cycles.** Maven/JPMS reject cycles in the
    current build graph. Published artifacts can sometimes evolve against previous versions, but a
    mutually breaking change then requires coordination and exposes that independent evolution is
@@ -57,17 +63,17 @@ the project or add modules/dependencies just to reproduce their syntax.
    from habitual batching; with missing history or consumer evidence, report a hypothesis
    and the compatibility experiment needed rather than a proven boundary failure.
 
-## The tension you must resolve, not solve
+## Assessing the cohesion tension
 
-Three cohesion principles pull in different directions and cannot all be satisfied: **reuse /
+Three cohesion principles can pull in different directions: **reuse /
 release** pulls components larger, **common closure** groups by reason to change, and **common
 reuse** pulls them smaller because depending on a component means depending on all of it. The
 derivation and the trade-off diagram are in `references/component-principles.md`.
 
-The trajectory is the part to act on. **Early, favour common closure**: a component that is
-easy to change is worth more than one that is easy to reuse, because there are no external
-reusers yet. As reusers appear the cost shifts onto them and common reuse starts to win — that
-is the moment to split, not before.
+When there are no independent reusers, **favour common closure** to keep changes local.
+As reusers appear, assess their cost from unrelated changes and dependencies against the
+support cost of another release unit. Split when that evidence justifies it; a new consumer
+alone does not make the existing boundary wrong.
 
 A catch-all `commons` jar can violate common reuse: one helper may pull in unrelated
 libraries and release obligations. Inspect actual resolved dependencies, scopes, exclusions
@@ -146,11 +152,14 @@ Nothing outside this repository consumes it
 
 ## Minimum result
 
-State the proposed release unit, consumers/owners, current versus proposed dependency
-edges, compatibility/support policy and evidence for keeping, merging or splitting it.
-Include migration order, old-consumer retention and a focused old/new compatibility check.
-Mark assumptions and runtime compatibility not exercised; a clean build alone does not
-prove independently deployable services.
+State the retained or proposed release unit, protected outcome, consumers/owners, relevant
+dependency edges, compatibility/support policy and evidence for keeping, merging or splitting it.
+For a change, include migration order, old-consumer retention, recovery and a focused old/new
+compatibility check. Mark assumptions and checks not exercised; a clean build alone does not
+prove independently deployable services. Stop when the scoped decision is supported or its
+material unknown and resolving check are explicit; state what would warrant reconsideration.
+Use the repository's ADR convention for consequential choices (`architecture-decision-making`);
+routine boundary reviews need only a concise rationale.
 
 ## References
 
@@ -161,7 +170,7 @@ prove independently deployable services.
   measured and how the measurement misleads. Read when designing a module structure or arguing
   about a specific split.
 - [Shared code across a service fleet](references/shared-code-in-a-fleet.md) — why a shared
-  library is a synchronous coupling, the four kinds of shared code and which are safe, the
-  shared-DTO and shared-entity traps, choosing between duplication and a library, and
-  migrating off a `commons` jar without a fleet-wide release. Read when extracting or
+  library creates compatibility and release obligations, the four kinds of shared code and
+  their conditions, the shared-DTO and shared-entity traps, choosing between duplication and
+  a library, and staging a `commons` migration. Read when extracting or
   untangling code shared between services.

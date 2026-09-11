@@ -58,7 +58,8 @@ own interface:
 ```java
 public interface AmountStep { DebtorStep amount(Money amount); }
 public interface DebtorStep { BeneficiaryStep debtor(AccountId debtor); }
-public interface BeneficiaryStep { OptionalStep beneficiary(Beneficiary b); }
+public interface BeneficiaryStep { DateStep beneficiary(Beneficiary b); }
+public interface DateStep { OptionalStep valueDate(Instant date); }
 public interface OptionalStep {
     OptionalStep reference(String reference);
     PaymentInstruction build();
@@ -75,6 +76,12 @@ a type that is awkward to construct partially in tests. Use it when the object i
 required set is stable, and it is constructed by people who did not write it — a public SDK, a
 domain command used across modules. For an internal type with three required fields, a
 `build()` that names the missing ones is cheaper and nearly as good.
+
+For a published API, adding/reordering a required stage or changing a chaining return type can
+break existing callers. Check retained constructors, entrypoints and stage types against the
+compatibility policy; compile old consumer source and run previously compiled clients against
+the changed library. If builders support inheritance, include base/subtype chains and inspect
+generated bridges instead of assuming covariant source calls establish binary compatibility.
 
 ## Lombok `@Builder` — the three failure modes
 
@@ -132,6 +139,8 @@ The safe default: create the builder, build, discard, within one method.
 
 - [JLS 17 record constructors](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.4):
   canonical-constructor invariant placement; inspect framework-specific reconstruction separately.
+- [JLS 17 method result types](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.4.15):
+  changing return types can remove the method descriptor used by compiled callers.
 - [List.copyOf, Java 17](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>):
   unmodifiable snapshot semantics, null rejection and mutable-element limitations.
 - [Lombok Builder](https://projectlombok.org/features/Builder): constructor/method targets,

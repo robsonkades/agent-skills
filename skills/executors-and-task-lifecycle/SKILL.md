@@ -17,6 +17,11 @@ Make each task transition—created, admitted, queued, started, completed/failed
 and drained—owned and observable. An executor schedules Java work; it is not automatically a durable
 queue, downstream limiter, supervisor, retry engine, context carrier or graceful-shutdown policy.
 
+Reuse the supplied executor configuration, task contract and existing test/operational evidence.
+Keep an adequate design, including a factory pool whose producer bounds are established. Execution
+model and worker-count selection belong to `thread-sizing-and-virtual-threads`; this skill owns
+what happens to accepted and rejected work across that executor's lifetime.
+
 Inspect compiler/runtime and executor implementation before applying examples. The references use
 standard platform-executor APIs available on Java 17; `ExecutorService.close` is available since
 19, and virtual-thread-per-task executors since 21. Preserve the target; do not upgrade to fit a
@@ -129,12 +134,19 @@ free. Shutdown can wait on uncooperative tasks.
 
 ## Shutdown and drain
 
+Only the executor's lifecycle owner shuts it down. Receiving an injected/shared executor does not
+transfer that authority; inspect the ownership contract before adding per-request `close()`.
+
 `shutdown` rejects new work and allows accepted work to complete; `shutdownNow` is best effort,
 typically interrupts started tasks and returns queued tasks not begun. Neither makes work durable or
 guarantees termination. Since Java 19, default `ExecutorService.close` waits for termination; on
 interruption it attempts `shutdownNow`, continues waiting and restores interrupt status before
 return. It is not a bounded shutdown API, and must not be called by a task whose own completion
 is required for that executor to terminate. Check implementation overrides.
+
+Executor termination does not prove that every retained submitted Future is terminal. Interrupted
+default `close()` can leave never-started Future wrappers unsettled; keep result/recovery ownership
+as described in `references/shutdown-and-rejection.md`.
 
 Use a bounded two-phase protocol:
 
@@ -189,7 +201,12 @@ transitions when decisions need accuracy. Metrics are not “free.”
 - [ ] Context/thread-affinity and blocking policy are safe.
 - [ ] Shutdown coordinates ingress, grace, residual work, durability and resources.
 - [ ] Virtual-thread designs restore resource bounds explicitly.
-- [ ] Saturation, failure, cancellation, periodic and deployment tests pass with useful metrics.
+- [ ] Applicable saturation, failure, cancellation, periodic and deployment checks are reported
+      with actual results; omitted or unavailable checks are explicit.
+
+Return the relevant ownership boundary, supported finding or design choice, and the evidence and
+remaining checks for that contract. A narrow explanation or supported no-change decision can
+complete the task without a capacity experiment or a full lifecycle redesign.
 
 ## References
 

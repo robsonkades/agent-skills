@@ -45,8 +45,11 @@ Real output for one caller, Temurin 25.0.3 — first the tier-3 tree, then the t
 tier-3 tree as C2's verdict is the most common misdiagnosis this output invites: **find the
 compilation line the tree hangs from and read its tier first**. A bimorphic site prints one
 `@ bci` line per receiver type and the `TypeProfile` counts that justified it; indentation is
-nesting depth. `-Xlog:jit+inlining=debug` prints the same lines, undecorated, and without the
-`jit+compilation` tag alongside it there is no header to tell one tree from the next.
+nesting depth. `-Xlog:jit+inlining=debug` emits inlining records with the selected unified-log
+decorations and sink; default tags can be padded, such as `[jit,inlining   ]`. Include
+`jit+compilation` for compilation headers, but do not assign concurrent, interleaved records
+to a caller by adjacency alone. Preserve the complete capture; when identity is ambiguous,
+use a bounded caller-scoped capture or the explicit task identities in JFR/LogCompilation.
 
 ## The verdict strings
 
@@ -55,24 +58,24 @@ C2's strings come from `bytecodeInfo.cpp`, C1's from `c1_GraphBuilder.cpp`; the 
 implementation detail and confirm it on the exact runtime before automating. The
 limit-to-flag mapping in depth is `c2-sea-of-nodes`'s; this is the reading list.
 
-| Printed                                                 | Compiler | Meaning                                                                   |
-| ------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
-| `inline`                                                | C1       | Inlined under `C1MaxInlineSize` (35)                                      |
-| `inline (hot)`                                          | C2       | Inlined; the site was hot enough for `FreqInlineSize`                     |
-| `intrinsic`                                             | both     | Replaced by an intrinsic, no bytecode inlined                             |
-| `failed to inline: callee is too large`                 | C1       | Over `C1MaxInlineSize`. **Says nothing about C2**                         |
-| `failed to inline: too big`                             | C2       | Over `MaxInlineSize` (35) at a site that was not hot                      |
-| `failed to inline: hot method too big`                  | C2       | Over `FreqInlineSize` (325) even though the site was hot                  |
-| `failed to inline: already compiled into a big method`  | C2       | Callee's own nmethod exceeds `InlineSmallCode` (2500 machine-code bytes)  |
-| `failed to inline: inlining too deep`                   | C2       | `MaxInlineLevel` (15 since JDK 14, JDK-8234863) reached                   |
-| `failed to inline: recursive inlining is too deep`      | C2       | `MaxRecursiveInlineLevel` (1)                                             |
-| `failed to inline: virtual call`                        | C2       | No profitable/safe speculative target was selected at this virtual site   |
-| `failed to inline: no static binding`                   | both     | Interface/virtual target was not statically bindable at this compilation  |
-| `failed to inline: not inlineable` after `(not loaded)` | both     | Callee class not loaded or resolved at compile time; usual for cold paths |
-| `failed to inline: native method`                       | both     | JNI target                                                                |
-| `failed to inline: disallowed by CompileCommand`        | both     | `dontinline` or `exclude`, from a `CompileCommand` **or a directive**     |
-| `force inline by CompileCommand`                        | both     | `inline` from a `CompileCommand` or a directive `inline` list             |
-| `failed to inline: callee uses too much stack`          | C2       | C2's stack-size guard; rare outside deep recursion                        |
+| Printed                                                 | Compiler | Meaning                                                                                    |
+| ------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `inline`                                                | C1       | Inlined under the applicable C1 policy                                                     |
+| `inline (hot)`                                          | C2       | Inlined; generic success text, not proof the larger size allowance was needed              |
+| `intrinsic`                                             | both     | Replaced by an intrinsic, no bytecode inlined                                              |
+| `failed to inline: callee is too large`                 | C1       | Over the applicable C1 size allowance. **Says nothing about C2**                           |
+| `failed to inline: too big`                             | C2       | Over the base size allowance (`MaxInlineSize`, default 35)                                 |
+| `failed to inline: hot method too big`                  | C2       | Over the selected larger allowance (`FreqInlineSize`, default 325)                         |
+| `failed to inline: already compiled into a big method`  | C2       | Callee's adjusted compiled instruction size exceeds `InlineSmallCode` (2500 on this build) |
+| `failed to inline: inlining too deep`                   | C2       | `MaxInlineLevel` (15 since JDK 14, JDK-8234863) reached                                    |
+| `failed to inline: recursive inlining is too deep`      | C2       | `MaxRecursiveInlineLevel` (1)                                                              |
+| `failed to inline: virtual call`                        | C2       | No profitable/safe speculative target was selected at this virtual site                    |
+| `failed to inline: no static binding`                   | both     | Interface/virtual target was not statically bindable at this compilation                   |
+| `failed to inline: not inlineable` after `(not loaded)` | both     | Callee class not loaded or resolved at compile time; usual for cold paths                  |
+| `failed to inline: native method`                       | both     | JNI target                                                                                 |
+| `failed to inline: disallowed by CompileCommand`        | both     | `dontinline` or `exclude`, from a `CompileCommand` **or a directive**                      |
+| `force inline by CompileCommand`                        | both     | `inline` from a `CompileCommand` or a directive `inline` list                              |
+| `failed to inline: callee uses too much stack`          | C1       | Non-recursive callee exceeds the `C1InlineStackLimit` heuristic                            |
 
 The strings are exact on 25.0.3 and safe to grep for **on that build**; confirm them on the
 runtime you are reading with a two-minute run of a lab before a script depends on one.
@@ -82,12 +85,14 @@ runtime you are reading with a two-minute run of a lab before a script depends o
 | Callee bytecode size on this JDK 25 build | C2 size/hotness allowance                    | Governing flag              |
 | ----------------------------------------- | -------------------------------------------- | --------------------------- |
 | ≤ 35 bytes                                | Does not require the hot-site size allowance | `-XX:MaxInlineSize`         |
-| 36-325 bytes                              | Only if the call site is hot                 | `-XX:FreqInlineSize`        |
+| 36-325 bytes                              | Requires the larger size allowance           | `-XX:FreqInlineSize`        |
 | > 325 bytes                               | Never on the normal path, hot or not         | ceiling of `FreqInlineSize` |
 
 These are default size gates, not promises. Below 35 bytecodes no hot-site allowance is needed;
-in the middle band it matters; above 325 the normal size policy rejects the callee. Independent
-legality, profitability, profile, depth, recursion, code-size, intrinsic, and directive checks
+in the middle band the larger allowance matters; above 325 the normal size policy rejects the callee.
+On this build C2 can select that allowance for a frequent site, unboxing, or an eligible constructor
+under escape analysis. Neither `inline (hot)` nor `hot method too big` alone proves site frequency.
+Independent legality, profitability, profile, depth, recursion, code-size, intrinsic, and directive checks
 still decide. C1 uses its own limits, so a tier-3 refusal does not predict C2. Read actual flag
 values from the target runtime rather than carrying these numbers across vendors/releases.
 
@@ -98,26 +103,30 @@ Other gates to inspect independently of the size band (not a complete compiler e
   multiple targets remain profitable. “Three receiver classes means megamorphic” is a useful lab
   observation, not a universal Java rule.
 - **Nesting depth**, `MaxInlineLevel` — 15 on JDK 14 and later (JDK-8234863), 9 before.
-- **Existing code size**, `InlineSmallCode` — measured in machine-code bytes of the callee's
-  own nmethod, so a callee compiled first and grown large by unrolling blocks its own
-  inlining later. It is the limit people forget, and it explains "it inlined on Monday".
+- **Existing code size**, `InlineSmallCode` — uses `ciMethod::inline_instructions_size()`:
+  on this build, the eligible nmethod's instruction end minus its verified entry and skipped
+  instructions. A larger compiled callee can block later inlining; the total nmethod or
+  `Compiler.codelist` address span is not this metric.
 
 ## Refusal categories
 
-| Category                            | Printed                                | What to do                                                                                 |
-| ----------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Above `FreqInlineSize`, hot         | `hot method too big`                   | Extract the rare part out of the common path                                               |
-| Above `MaxInlineSize`, cold         | `too big`                              | Wait for warm-up, or check the path is executed                                            |
-| Unloaded/unresolved at this attempt | `not inlineable` after `(not loaded)`  | Correlate later class loading, invocation and compilation; not proof it never executes     |
-| No selected inline target           | `virtual call`                         | Inspect receiver profile and unresolved targets; change dispatch only with causal evidence |
-| Depth exceeded                      | `inlining too deep`                    | Rarely worth changing; usually a symptom of something else                                 |
-| Callee already large                | `already compiled into a big method`   | Shrink the callee, or accept; raising `InlineSmallCode` is global                          |
-| Excluded                            | `disallowed by CompileCommand`         | Find the `CompileCommand` or directive; `Compiler.directives_print`                        |
-| Refused by C1 only                  | `callee is too large` on a tier-3 tree | Nothing — read the tier-4 tree                                                             |
+| Category                            | Printed                               | What to do                                                                                 |
+| ----------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Above `FreqInlineSize`              | `hot method too big`                  | If the cost matters, consider extracting rare work while preserving semantics              |
+| Above `MaxInlineSize`               | `too big`                             | Inspect frequency and compilation maturity; a cold, immaterial call may need no change     |
+| Unloaded/unresolved at this attempt | `not inlineable` after `(not loaded)` | Correlate later class loading, invocation and compilation; not proof it never executes     |
+| No selected inline target           | `virtual call`                        | Inspect receiver profile and unresolved targets; change dispatch only with causal evidence |
+| Depth exceeded                      | `inlining too deep`                   | Rarely worth changing; usually a symptom of something else                                 |
+| Callee already large                | `already compiled into a big method`  | Shrink the callee, or accept; raising `InlineSmallCode` is global                          |
+| Excluded                            | `disallowed by CompileCommand`        | Find the `CompileCommand` or directive; `Compiler.directives_print`                        |
+| Refused by C1 only                  | `callee is too large` on a C1 tree    | Inspect C2 only if it is the relevant enabled compiler; otherwise investigate C1 policy    |
 
 ## Two decision flows
 
 **Did the method reach the level it should?**
+
+The trees below assume normal C1/C2 tiering and a C2-specific question. For C1-only or
+non-tiered operation, use the actual enabled compiler and format; a missing tier 4 is not a defect.
 
 ```
 Suspect method
@@ -127,7 +136,7 @@ Suspect method
 │      tier 3 only        → inspect thresholds/counters, queues, directives, failures and code-cache state
 │      tier 2             → inspect C2 queue and load-feedback scaling; do not assume threshold alone
 │      tier 1 after COMPILE SKIPPED → C2 bailed out; jdk.CompilationFailure has the message
-│      recurring "made not entrant: uncommon trap" → deoptimisation loop; a different investigation
+│      recurring "made not entrant: uncommon trap" → correlate successor compilations and workload changes
 ├── 3. Never appears at any level?
 │      > 8000 bytecodes              → check DontCompileHugeMethods plus version/mode (JDK-8366118)
 │      "excluded by CompileCommand"  → someone excluded it; directives_print, CompileCommand flags
@@ -149,14 +158,16 @@ Tier-4 tree shows a refusal for a hot call
 │      disallowed by CompileCommand  → a flag or directive, not the compiler
 ├── 2. Is it really the tier-4 tree?
 │      "callee is too large" → that is C1; find the tier-4 compilation of the same caller
-└── 3. Refactor the common path to fit, then re-measure with PrintInlining
-       before raising any global flag.
+└── 3. If the refusal has material measured cost, compare a common-path refactor
+       or scoped diagnostic directive; confirm the decision and workload result.
+       Keep adequate code when no change is warranted.
 ```
 
 ## Changing limits, in order of preference
 
 | Option                                                               | Effect                                                               | When                                                      |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------- |
+| Keep existing code and compiler policy                               | Avoids unnecessary compiler/design changes                           | Refusal has no material cost for the required workload    |
 | Refactor the hot/cold boundary, preserving semantics                 | Can reduce size and expose optimization; may harm locality or design | When profile and benchmark identify a real causal limit   |
 | `@CompilerControl(Mode.INLINE)` in JMH, or a directive `inline` list | Changes matching method/caller policy, not necessarily one call site | Isolating a hypothesis in a benchmark; rare in production |
 | `-XX:CompileCommand=inline,C::m`                                     | Same, process-wide for that callee                                   | Confirming a hypothesis, one run                          |
@@ -222,6 +233,12 @@ with `&apos;` escaping — `<uncommon_trap>`, `<make_not_entrant … reason='not
 thread. In the small lab it produced materially more output than `PrintCompilation`; size it on
 the real workload because call-tree shape and compiler activity dominate volume.
 
+Product C2 logs can also contain `<eliminate_allocation>` with a type and nested `<jvms>`
+method/BCI context. Correlate the enclosing task with its installed `<nmethod>` and resolve
+identities within that task. A positive entry supports elimination in that compilation;
+absence does not prove escape, and neither proves an allocation rate or behavior in every
+execution. Broader elimination diagnosis belongs to `c2-sea-of-nodes`.
+
 **JITWatch** ([AdoptOpenJDK/jitwatch](https://github.com/AdoptOpenJDK/jitwatch), `mvn clean package && java -jar
 ui/target/jitwatch-ui-shaded.jar`) rebuilds the compilation timeline, the inlining tree with
 reasons, and bytecode next to assembly when `-XX:+PrintAssembly` and `hsdis` were present. Its
@@ -255,6 +272,8 @@ are tabulated in `directives-and-production-logging.md`.
 
 ## Primary references
 
-- [HotSpot C2 inlining policy (`bytecodeInfo.cpp`)](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/opto/bytecodeInfo.cpp)
-- [HotSpot C1 graph builder](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/c1/c1_GraphBuilder.cpp)
+- [JDK 25.0.3+9 C2 inlining policy (`bytecodeInfo.cpp`)](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp)
+- [JDK 25.0.3+9 C1 graph builder](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/c1/c1_GraphBuilder.cpp)
+- [Compiled instruction-size metric](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/ci/ciMethod.cpp)
+- [Product C2 allocation-elimination logging](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/macro.cpp)
 - [JDK Flight Recorder command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)

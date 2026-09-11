@@ -20,11 +20,17 @@ cancelled tasks depending executor/policy. Inspect exact implementation and purg
 | abort            | immediate explicit overload   | caller must map/recover                          | request path can reject                               |
 | caller-runs      | potential synchronous slowing | event-loop/lock/thread-affinity/reentrancy       | submitter safely performs task and is causal producer |
 | discard          | low overhead                  | silent loss/order/awaiting caller hangs          | loss is contract and observed                         |
-| discard-oldest   | admits new at old expense     | priority queues semantics surprising, starvation | old work explicitly less valuable                     |
+| discard-oldest   | retries after dropping a head | priority queues semantics surprising, starvation | old work explicitly less valuable; retry can progress |
 | durable fallback | survives process              | storage can saturate/fail/duplicate              | job has durable/idempotent representation             |
 
 Test shutdown rejection separately from saturation. Map `RejectedExecutionException` to business/API
 semantics without automatically retrying into overload.
+
+Stock `DiscardOldestPolicy` polls the queue and calls `execute` again; admission is not guaranteed.
+A saturated `SynchronousQueue` has no buffered head to free, so unchanged saturation can cause
+recursive rejection and stack overflow (reproduced on JDK 25.0.3). Prefer visible refusal or a
+bounded replacement/coalescing policy whose queue contract, race handling and result settlement
+are explicit; an unbounded resubmission loop is not recovery.
 
 ## Failure-supervising wrapper
 
@@ -91,6 +97,12 @@ drained list durably or in an owned recovery handoff before a fallible helper ca
 tasks can continue after interruption: do not close their dependencies merely because grace expired.
 After the second grace, process/container escalation may be the remaining bound.
 
+The JDK 25 default `ExecutorService.close()` discards the list returned by `shutdownNow()` on
+interruption. With `ThreadPoolExecutor`, queued submitted Futures can therefore remain incomplete
+even after the executor terminates. If those results matter, retain their logical-task/Future
+mapping or use an explicit drain protocol that settles never-started work. Termination, result
+settlement and durable recovery are separate checks; inspect overrides before generalizing.
+
 ## Deployment sequence
 
 Coordinate:
@@ -114,4 +126,6 @@ that fails during drain can trigger premature kill; readiness and liveness have 
 
 - [`ThreadPoolExecutor` queue/rejection hooks](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [`ExecutorService` shutdown](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+- [JDK 25.0.3 default close implementation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/java/util/concurrent/ExecutorService.java)
+- [`DiscardOldestPolicy` retry contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.DiscardOldestPolicy.html)
 - [Kubernetes pod termination](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination)

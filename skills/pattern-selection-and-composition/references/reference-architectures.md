@@ -1,5 +1,11 @@
 # Reference Architectures and the Relationship Graph
 
+These are conceptual compositions, not mandatory stacks or executable configurations.
+Select the relevant path and preserve an adequate existing owner/contract. Inspect the
+target Java, framework, persistence and protocol versions before implementing a mechanism.
+Where a diagram says response record, an ordinary immutable DTO class can serve the same
+boundary on older Java; [records became a standard feature in Java 16](https://openjdk.org/jeps/395).
+
 ## Composition 1 — rich domain, one process
 
 ```text
@@ -48,17 +54,20 @@ not simply a business term appearing in three files.
 Client
   └── Remote Facade                  one coarse operation per interaction
       ├── DTO in                     validated, versioned, tolerant
-      ├── Idempotency                key → dedup store, replay the response
-      ├── Application service        TRANSACTION; orchestration
+      ├── Retry contract             repeat-safe effects or authoritative deduplication
+      ├── Application service        orchestration; transaction where required
       │     └── Domain / scripts
-      └── DTO out                    assembled INSIDE the transaction
+      └── DTO out                    materialize required state before its context closes
 ```
 
 **Consequences:** fewer required client round trips; the wire contract can evolve
 separately from the model. Safe retries require atomic deduplication relative to effects,
-stable operation identity and defined replay/retention; a key and separate cache alone are
+stable operation identity and defined replay/retention when effects are not already repeat-safe;
+a key and separate cache alone are
 insufficient, especially when the existing system is remote. The facade holds no domain rules, so a job or a
 consumer can invoke the same use case.
+Pure response mapping can happen after state is materialized; a remote facade does not
+by itself require a local database transaction or holding one across the remote call.
 
 **Where it fails:** leaving fine-grained remote calls in the client interaction or behind
 the facade can retain network cost. Fine-grained local calls are a valid implementation;
@@ -82,12 +91,15 @@ but a read replica may lag. State the freshness/isolation contract rather than i
 from the absence of a projection pipeline.
 
 **Where it fails:** treating it as a licence to write through the read path. The read side
-is read-only, and enforcing that (no entities, no repository) is what keeps it simple.
+needs enforceable write restrictions and actor/tenant/field authorization. A projection or
+query repository can be suitable; having no entity or repository types does not prevent
+raw SQL writes or unauthorized reads. Check actual capabilities and affected bypass paths.
 
 **When to go further** — a separate read store, maintained asynchronously — is a much bigger
-decision, and its driver is a read load or a query shape the write store genuinely cannot
-serve. It buys that, and costs eventual consistency, a projection pipeline to operate, and a
-rebuild procedure (`consistency-models`).
+decision. Read load, query shape, workload isolation or independently owned access/lifecycle
+requirements may justify it; the primary need not be incapable of running the query.
+Compare the actual benefit with asynchronous lag and its freshness/consistency contract,
+a projection pipeline to operate, and a rebuild procedure (`consistency-models`).
 
 ## The relationship graph
 
@@ -109,7 +121,8 @@ Domain Model
 Transaction Script
   → Table Data Gateway / Row Data Gateway
   → Service Layer           (transaction/policy/orchestration or stable caller boundary)
-  ↛ conflicts with a half-built domain model (two homes for a rule)
+  ↛ duplicated ownership of a rule or bypassed model invariants;
+    scripts invoking the rule owner and separate simple operations can coexist
 
 Table Module
   → set-based SQL
@@ -123,8 +136,8 @@ Data Mapper
 Active Record
   → Identity Field
   → simplest transaction boundary
-  ↛ conflicts with a divergent domain model, a foreign-owned schema,
-    and with using the same type as the API payload
+  ↛ investigate coupling when domain/schema semantics diverge or the type leaks into the API;
+    an independently justified boundary adapter is compatible
 
 Repository
   → collection-like domain-object access
@@ -133,29 +146,33 @@ Repository
   → a separate read model   (for everything it should not serve)
 
 Remote Facade
-  → DTO                     (always)
-  → Idempotency             (writes, because clients retry)
+  → explicit wire contract  (DTO, generated schema type or an adequate existing boundary type)
+  → Idempotency             (assess intended effects; keys are one mechanism)
   → Gateway                 (on the calling side)
   ↛ remote chattiness left in the operation; local fine-grained calls are compatible
 
 Optimistic Offline Lock
-  → Identity Field, version column
-  → Coarse-Grained Lock     (usually, at the aggregate)
+  → stable target identity and atomic expected-state validation
+                            (version/revision or adequate original-value comparison)
+  → Coarse-Grained Lock     (when the invariant requires coordinated validation)
   → a conflict experience   (the half that gets skipped)
-  ↛ conflicts with bulk updates that do not increment the version
+  ↛ relevant writers bypassing the chosen conflict protocol
 
 Pessimistic Offline Lock
-  → a lock record with owner, acquisition time, EXPIRY, override
-  ↛ conflicts with holding a database transaction across requests
+  → authoritative ownership, stale-owner rejection and abandonment recovery
+  → lease expiry/renewal OR durable checkout with explicit release and audited recovery
+  ↛ expiry without preventing stale owners from writing; database transactions held
+    across thinking time retain resources and need a separate bounded justification
 
 Front Controller
   → Page Controllers behind it
   → Application Controller  (only for state-dependent flows)
-  → one error shape
+  → error shape governed by the public protocol/compatibility contract
 
 Distribution
-  → Remote Facade + DTO
-  → Idempotency, timeouts, retries, circuit breaking
+  → explicit communication contract: coarse RPC/wire types, events or another justified form
+  → assess repeat safety, deadlines and failure isolation for the actual interaction;
+    retries and circuit breaking are conditional choices
   → assess cross-resource atomicity; saga/outbox only for the actual coordination need
   ↛ shared database/schema or DTO release coupling; synchronous chains exceeding
     measured latency/availability budgets (no universal hop-count threshold)
@@ -172,7 +189,7 @@ and concurrency instead; those named mechanisms are not mandatory.
 **Backward** — seeing a pattern in code, check that its prerequisites are present. A
 Repository should provide collection-like domain access; check aggregate-root boundaries
 when the model uses DDD aggregates. A Remote Facade with no explicit wire contract risks model leakage; an
-Optimistic Offline Lock with no conflict handling is a version column that produces 500s.
+Optimistic Offline Lock with no conflict handling turns a detected conflict into an unusable failure.
 
 For aggregate versioning, verify every relevant child mutation participates in the root's
 conflict protocol; placing `@Version` only on the root does not establish that automatically.
@@ -184,18 +201,24 @@ Primary definitions: [Remote Facade](https://martinfowler.com/eaaCatalog/remoteF
 [Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html), and
 [Repository](https://martinfowler.com/eaaCatalog/repository.html), plus
 [Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html).
+The [optimistic](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html) and
+[pessimistic](https://martinfowler.com/eaaCatalog/pessimisticOfflineLock.html) offline-lock
+definitions describe coordination responsibilities; expiry and a version column are
+implementation choices. [Authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
+supports least privilege and checks on every access path, independently of pattern names.
 
 ## Explaining an existing architecture
 
-To describe a system you did not design, in a form others can act on:
+For a broad explanation of a system you did not design, inspect the relevant items below;
+a narrow composition question needs only the affected contracts:
 
 1. Name the logic organisation per module (script, model, table module).
 2. Name the data-source pattern and who owns the schema.
 3. Name where the transaction boundary is, in practice, not by annotation.
-4. Name the aggregates, if any, and what versioning they have.
+4. Name the aggregates, if any, and their actual conflict protocol.
 5. Name the read paths and whether they go through the write model.
 6. Name every boundary and what crosses it.
 7. Name the compositions that conflict, from the list in the skill body.
 
-Seven answers describe an enterprise application well enough to reason about, and the gaps in
-them are usually the findings (`enterprise-architecture-smells`).
+Use the evidence to identify a real conflict, a consequential unknown or an adequate design;
+an absent pattern is not by itself a finding (`enterprise-architecture-smells`).

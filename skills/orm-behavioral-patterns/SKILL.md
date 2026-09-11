@@ -18,9 +18,9 @@ description: >
 ## Purpose
 
 Make the ORM's runtime behaviour visible and predictable. Unit of Work, Identity Map and
-Lazy Load are not implementation details — they change what your code does, and almost every
-surprising persistence bug in an enterprise application is one of them behaving exactly as
-designed while the developer expected something else.
+Lazy Load change what code does. These patterns explain common surprises about tracked
+changes, repeated identities and deferred reads; establish the actual mechanism before
+attributing a persistence failure to one of them.
 
 ## The three patterns
 
@@ -42,29 +42,35 @@ Lazy Load       defers data access using proxies, collections or enhancement on
                 once per row of a loop.
 ```
 
-In JPA these are the persistence context, the first-level cache, and lazy proxies. They are
-the same patterns; knowing the pattern name makes the behaviour predictable rather than
-magical.
+JPA providers realize these patterns through persistence-context tracking, managed identity
+and their lazy-loading mechanisms. The pattern explains the responsibility; the provider,
+mapping and runtime settings determine how it is implemented.
 
 ## Workflow
+
+Use the steps relevant to the state, lifecycle or query question. Reuse adequate evidence;
+a narrow explanation or supported no-change review does not require new logging, a full
+fetch comparison or a persistence-context redesign.
 
 1. **Establish the runtime and unit of work.** Inspect JPA/Hibernate, Spring and Java versions,
    mappings, flush mode and context ownership. A transaction-scoped persistence context
    commonly ends at commit; extended/application-managed contexts or OSIV can outlive it.
 2. **Know which objects are managed.** Managed (tracked, changes flushed), detached (not
-   tracked; changes silently lost), transient (never persisted), removed. Most "the change
-   did not save" bugs are an object in the wrong state.
-3. **Predict the flush points.** Commit, an explicit flush, and — the one people miss — a
-   query whose results might be affected by pending changes.
+   tracked; changes remain in memory but are not automatically synchronized), transient
+   (not yet managed/persisted), removed. Check actual state and transaction outcome.
+3. **Predict the applicable synchronization points.** Explicit flush, commit, and queries
+   under the target provider's flush mode. Hibernate AUTO commonly flushes before an
+   overlapping entity query; this is not a promise that every query issues writes.
 4. **Budget the queries.** Lazy traversal can issue queries depending on loaded state,
    cache and batch/fetch configuration
-   (`architecture-and-performance`). Decide the fetch strategy per use case, not per
-   mapping.
+   (`architecture-and-performance`). Choose the fetch plan for actual use-case requirements;
+   detailed query-count and batching tuning belongs to `orm-fetch-and-batching-performance`.
 5. **Bound the context's size.** Long-running units of work retain entities and snapshots; flush
    cost generally grows with managed state and can become worse through cascades/collections. Measure
    rather than assuming quadratic complexity.
-6. **Verify against the statement log**, not against expectation. These behaviours are
-   invisible in the source; the SQL log is the ground truth.
+6. **Confirm the disputed behavior with relevant evidence.** Statement logs show SQL execution;
+   state inspection, transaction outcome and fresh-context reads answer different questions.
+   Add only the missing observation needed to distinguish plausible causes.
 
 ## Decision rules
 
@@ -80,19 +86,21 @@ An entity's persistence context ended or it was detached, then modified
 
 A collection is traversed once per row of a result set
         → inspect for N+1. Consider a join fetch, an entity graph, batch fetching, or
-          a projection. Do not fix it by making the association eager —
-          that moves the cost to every other use case.
+          a projection. Eager mapping alone does not establish a bounded query plan;
+          inspect its effect on the other entity-loading paths.
 
 An association is needed by only some callers
-        → keep it lazy and fetch explicitly where needed. Eager mapping
-          is a global decision made for a local reason.
+        → prefer a conservative mapping and fetch explicitly where needed. Retain
+          an adequate eager requirement when its loading/cost contract is intentional.
 
-LazyInitializationException outside a transaction
-        → the fetch was not planned. Fetch what the caller needs inside
-          the boundary, or map to a DTO there. Turning on Open Session In
+LazyInitializationException on access to uninitialized state
+        → inspect that proxy/collection's session and loaded state: detached,
+          closed or disconnected is not the same as merely "no transaction".
+          Fetch what the caller needs in its owning context, reload in the proper
+          unit of work, or map a loaded result there. Turning on Open Session In
           View may hide it while allowing unplanned queries during serialisation.
 
-A batch processes more than a few thousand entities
+A batch's retained context or flush work exceeds its budget
         → measure retained state and flush cost; flush/clear bounded chunks
           or assess stateless semantics. Context size is not the only transaction cost.
 
@@ -101,9 +109,10 @@ A bulk UPDATE/DELETE via JPQL or SQL ran in this transaction
           Flush required pending changes before bulk work, then clear/refresh deliberately, and mind
           optimistic locking (offline-concurrency-control).
 
-The same row must be seen as two independent objects
-        → not possible within one unit of work; that is the identity
-          map's contract. Use a projection or a separate context.
+The same row must be represented by two independent managed instances
+        → not within the same persistence context. Independent projections or
+          detached snapshots can coexist; use a separate context when managed identity
+          really must be independent, accounting for consistency and write ownership.
 ```
 
 ## Rules
@@ -116,44 +125,50 @@ The same row must be seen as two independent objects
   invokes persist/merge according to its new-entity detection; `merge` copies state into a managed
   instance and may require a SELECT depending on identity/version/context. Use the returned instance
   and verify SQL for the provider/version instead of relying on a universal call shape.
-- Flush order is the ORM's, not your statement order. Inserts, updates and deletes are
-  reordered by type, which breaks the mental model that a delete-then-insert of the same
-  key will work. Force it with an explicit flush between them, or design the key not to
-  collide.
+- Hibernate 6.6 queues entity actions in its own order; JPA does not promise source-order SQL.
+  A delete-then-insert of a conflicting unique key can therefore insert first and fail.
+  Consider updating the existing row, or flush the deletion before the insertion where
+  that ordering satisfies the transaction and constraint contract.
 - **A query can flush.** With applicable AUTO flush behavior, Hibernate flushes before a query that might read tables
-  with pending changes, so a write inside a loop that also queries produces a flush per
-  iteration — a common cause of a batch job that is inexplicably slow.
+  with pending changes, so a write/query loop can flush each iteration. Check overlap,
+  effective mode and actual work before attributing batch cost to it.
 - The identity map belongs to the persistence context. Separate contexts have independent
   managed instances; an extended context can span transactions without becoming a second-level
   cache. A second-level cache has separate invalidation and staleness concerns
   (`caching-strategies`).
-- Because the identity map returns the same instance, entity `equals`/`hashCode` matter
-  more than they appear to. Use a business key or the identifier with care; the default
-  identity semantics break when an entity moves between contexts, and generated identifiers
-  make `hashCode` change after persist if the identifier is used naively.
+- Choose entity equality for the required identity contract. Default reference equality is
+  valid when independent instances should differ; it does not equate separate instances of
+  the same persistent row across contexts. If value/persistent identity is required, design
+  `equals`/`hashCode` together and keep hashes stable while objects are in hashed collections;
+  naively using a generated identifier can change the hash after persist.
 - Lazy loading is a performance/availability decision paid at access time. Prefer explicit use-case
   fetch plans and conservative default graphs; note that JPA defaults to eager for to-one mappings
   and `LAZY` can be a provider hint depending on mapping/provider capabilities.
-- `LazyInitializationException` is evidence that the fetch/lifetime contract was violated. Open
+- `LazyInitializationException` identifies uninitialized state without a usable initialization
+  context; inspect the actual session association and lifecycle. Open
   Session In View extends persistence-context lifetime through rendering; it can trigger unplanned
   queries and connection churn outside the service transaction. It does not necessarily hold one
   database transaction or connection for the entire request—connection handling/provider settings
   matter
   (`architecture-and-performance`).
-- Bulk statements bypass managed entity change tracking. They do not update loaded state, do not
-  run entity lifecycle callbacks, and do not increment version columns unless you write it.
+- JPQL bulk statements bypass managed entity change tracking. They do not update loaded state
+  or run per-entity lifecycle callbacks; ordinary bulk updates do not automatically check or
+  increment versions. Explicit assignments, provider extensions or database triggers can alter
+  version behavior, so inspect the actual operation.
   They remain useful for set-shaped work; reconcile pending changes and stale managed state,
   and handle optimistic locking explicitly. A fresh context or selective refresh can avoid
   clearing unrelated managed work.
-- Never put a managed entity into a cache, a session or an HTTP response. It carries
-  proxies that fail outside the context and a lifecycle that the consumer does not expect
+- Do not give independently owned cache/session consumers a live mutable managed graph.
+  For a response or detached snapshot, define required loaded state, mutation ownership,
+  serialization exposure/cycles and compatibility. DTOs/projections often make that contract
+  explicit; an already adequate bounded representation needs no automatic conversion
   (`session-state-strategies`, `remote-facade-and-dto`).
 
 ## References
 
 Return the observed state/SQL behavior, its likely mechanism and confirming evidence, the
-smallest correction, and validation gaps. SQL shows execution, not proof of commit; verify
-persisted results from a fresh context after transaction completion. Examples are partial
+smallest correction or supported no-change verdict, and validation gaps. SQL shows execution,
+not proof of commit; verify a disputed persistence result from a fresh context after transaction completion. Examples are partial
 JPA/Hibernate/Spring snippets; adapt to resolved versions, without upgrading to use this skill.
 
 - [Unit of Work and Identity Map](references/unit-of-work-and-identity-map.md) — entity
@@ -163,6 +178,6 @@ JPA/Hibernate/Spring snippets; adapt to resolved versions, without upgrading to 
   a batch is slow.
 - [Lazy Load](references/lazy-load.md) — proxy mechanics and what triggers a fetch, the
   four fetch strategies with their query counts and their failure shapes, pagination with
-  fetch joins, the exception outside the boundary and the three correct fixes, and lazy
+  fetch joins, initialization-context failures and context-dependent remedies, and lazy
   loading across a serialisation or a network boundary. Read when diagnosing N+1 or a lazy
   initialisation failure.

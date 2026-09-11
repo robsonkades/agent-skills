@@ -28,8 +28,8 @@ That sentence is answerable. "It'll be about two weeks" is not.
 
 > "This should take about three days, right?"
 
-Do not answer the question as asked, and do not simply refuse it. Give your estimate, name the
-difference, and make the gap a decision:
+Separate the target from a supported forecast, or explain what evidence is missing. When a
+forecast is available, name the difference and make the gap a decision:
 
 > "My provisional scenario range is 6–9 working days, not a calibrated probability. The
 > main unknowns are the migration and backfill on 4 million rows. A read-only first release
@@ -42,16 +42,18 @@ same conversation to day four, when it is more expensive and you have less credi
 
 ## Negotiating the four variables
 
-A schedule has scope, time, people and quality. Three of them are negotiable.
+A schedule has scope, time, people and quality constraints. Identify which changes are
+permitted and who can accept the trade.
 
 - **Scope** — identify a smaller independently useful slice and verify its dependencies;
   there is no universal 80% slice (requirements-and-acceptance).
 - **Time** — moving the date, when the date is not externally fixed.
 - **People** — assess parallelizable work, expertise, onboarding and coordination. Added
   capacity can help, but does not divide elapsed time by headcount.
-- **Quality** — not negotiable in the sense people mean it. You can defer specific,
-  named, scoped work with a plan to pay it back (technical-debt-decisions); you cannot "test
-  less" as a schedule strategy without the cost arriving during the release, with interest.
+- **Quality** — preserve required contracts and validation. Removing redundant checks differs
+  from losing the only evidence for a failure path. Make any deferred assurance and its risk
+  explicit, with the appropriate decision owner (technical-debt-decisions); fewer tests alone
+  prove neither saved delivery time nor acceptable quality.
 
 When asked to commit to something you believe is not achievable, the answer names the lever:
 "not at this scope; here is what fits" is a yes to something.
@@ -62,6 +64,9 @@ Report material slip risk promptly and distinguish risk from a confirmed missed 
 Earlier updates leave more options; a missed date still needs a revised plan and impact update.
 
 Structure (engineering-communication has the general form):
+
+When a revised date has no support, state that it is unknown and give the next evidence or
+agreed update trigger. An update time is not a promise of completion. With supported inputs:
 
 1. **Fact.** "The migration will not be ready for the 12th."
 2. **Why, specifically.** "The backfill takes 6 hours against production volume; it was 20
@@ -93,8 +98,8 @@ Repeated slips warrant investigating calibration, scope churn, dependencies and 
 - Inspect any supplied or accessible team history, capacity, review/deployment cadence and
   calendars. If these are missing, say elapsed time is conditional or unavailable. File/line
   counts do not establish effort; describe concrete work and uncertainty without inventing counts.
-- Prefer decomposition to a number: listing the pieces, their risks and what is unknown gives
-  useful inputs for calibration. Provide a justified forecast when the required evidence is
+- Use decomposition where it exposes work, risks or unknowns; existing comparable evidence may
+  already support the decision. Provide a justified forecast when the required evidence is
   available; do not refuse every elapsed-time estimate merely because an agent is producing it.
 - Flag the parts you cannot see: unfamiliar internal systems, undocumented behaviour, data you
   cannot inspect. Those are where the estimate will be wrong, and naming them is more useful

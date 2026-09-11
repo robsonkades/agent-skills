@@ -85,8 +85,10 @@ required limit = concurrent peak(heap resident + native/non-heap + charged mappi
                + uncertainty margin
 ```
 
-Test startup, steady state, burst, concurrent GC/relocation, thread surge, direct-buffer pressure,
-classloading/redeploy, profiler/heap-dump path, graceful shutdown, and restart overlap.
+Select the phases relevant to the proposed envelope change: startup, steady state, burst,
+concurrent GC/relocation, thread surge, direct-buffer pressure, classloading/redeploy,
+profiler/heap-dump path, graceful shutdown and restart overlap. Use adequate existing lifecycle
+evidence; a narrow static finding need not wait for every scenario.
 
 ## OOM diagnostic tree
 
@@ -116,7 +118,11 @@ the JVM/subsystems on the target release. Test the exact update workflow. Captur
 after and determine which pools/ergonomics remain initialized from startup. A mutable cgroup file
 does not prove an already-sized executor or collector adapted.
 
-## Production failure tests
+## Failure checks for the affected resource contract
+
+Use this as a menu for validating a changed limit, failure policy or rollout, not a mandatory
+suite on every review. Run destructive pressure/kill tests only in isolated or explicitly
+authorized environments; production diagnosis can use retained evidence and bounded observations.
 
 - memory pressure approaching high/max and actual cgroup kill;
 - heap/native/direct/metaspace/thread pressure separately;

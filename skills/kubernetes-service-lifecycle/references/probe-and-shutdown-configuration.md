@@ -5,12 +5,12 @@
 ```yaml
 # Conceptual: only the lifecycle-relevant fields.
 spec:
-  terminationGracePeriodSeconds: 45 # must exceed preStop + app drain, with margin
+  terminationGracePeriodSeconds: 45 # budget hook + app + any sidecar shutdown + margin
   containers:
     - name: api
       lifecycle:
         preStop:
-          sleep: { seconds: 10 } # Kubernetes 1.29+; see the note below
+          sleep: { seconds: 10 } # requires enabled PodLifecycleSleepAction; GA in 1.34
       startupProbe:
         httpGet: { path: /actuator/health/liveness, port: 8081 }
         periodSeconds: 5
@@ -47,8 +47,9 @@ throttling and pauses plus margin; an unbounded worst case is not a usable timeo
 
 ## Version-dependent pieces
 
-- **`sleep` preStop action** — added in 1.29, enabled by default from 1.30. Before that, the
-  portable form is `exec: { command: ["/bin/sleep", "10"] }`, which requires the referenced
+- **`sleep` preStop action** — alpha in 1.29 with `PodLifecycleSleepAction` enabled explicitly,
+  beta and enabled by default in 1.30, stable in 1.34. Where the native action is unavailable,
+  an alternative is `exec: { command: ["/bin/sleep", "10"] }`, which requires the referenced
   binary in the image. Distroless and scratch images commonly lack it. A failing hook does
   not block termination, but kubelet records a `FailedPreStopHook` event when retained.
 - **`grpc` probe** — a first-class probe type, stable since 1.27. On older clusters use
@@ -58,9 +59,11 @@ throttling and pauses plus margin; an unbounded worst case is not a usable timeo
   killed faster than a normal rollout drains.
 - **Native sidecars** — an init container with `restartPolicy: Always` runs for the whole pod
   lifetime, starts before the app containers and terminates after them. Introduced as alpha
-  in 1.28 and enabled by default from 1.29, stable in 1.33. This is what stops a mesh proxy
-  from exiting while the application is still draining; on an older cluster that ordering
-  does not exist and must be worked around in the proxy's own configuration.
+  in 1.28 and enabled by default from 1.29, stable in 1.33. Check the enabled gate and target
+  release's termination behavior, especially the initial alpha implementation. Supported
+  ordering keeps a native proxy sidecar running while app containers stop, but it does not add
+  grace time: a slow app can leave the sidecar little or no time before forced termination.
+  A proxy declared as a regular app container does not receive native-sidecar ordering.
 
 Verify the cluster version before relying on any of these. Assume nothing from a blog post.
 
@@ -75,7 +78,8 @@ The countdown starts when the pod is marked for deletion. `preStop` runs inside 
 runtime stop signal is requested after the hook returns. If a hook is still running at grace
 expiry, kubelet currently requests a small one-off extension; this is emergency behavior,
 not budget. The application shares the remainder across all sequential lifecycle phases,
-bean destruction and other shutdown hooks. A 20 s timeout per phase does not bound the whole
+bean destruction, other shutdown hooks and required sidecar cleanup. The example has no
+additional sidecar allowance; add one when the pod needs it. A 20 s timeout per phase does not bound the whole
 application to 20 s: enumerate phases, dependencies and other waits before using this example.
 Get the inequality backwards and forced
 termination can cut a request without giving the JVM a final logging opportunity.
@@ -152,10 +156,15 @@ Notes that decide correctness:
   API, so a compliant drain retries until capacity appears or its own timeout expires. Run
   enough replicas for the availability objective or explicitly accept/bypass the disruption.
 - A PDB whose pods are already unhealthy can block the very drain that would fix them.
-  `unhealthyPodEvictionPolicy: AlwaysAllow` (beta since 1.27) exists for that case.
+  `unhealthyPodEvictionPolicy: AlwaysAllow` (beta in 1.27, stable in 1.31) permits eviction of
+  running-but-unready pods even when the healthy budget is not met. Healthy pods remain subject
+  to the PDB; choose the policy deliberately because an evicted starting pod may have recovered.
 
 ## Sources
 
 - [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/): scheduling, thresholds and probe-level grace.
+- [Kubernetes 1.34 feature gates](https://v1-34.docs.kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/): sleep-action and native-sidecar release/gate conditions.
+- [Kubernetes sidecar lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/): termination ordering and the shared grace budget.
+- [Kubernetes disruption budgets](https://kubernetes.io/docs/tasks/run-application/configure-pdb/): unhealthy-pod eviction policy and its availability tradeoff.
 - [Boot 3.4 release notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes): graceful shutdown default.
 - [Boot Actuator probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes): main-port health groups and management-port blind spots. Match properties to the deployed Boot line.

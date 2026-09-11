@@ -16,6 +16,7 @@ export interface GlobalOptions {
   readonly json?: boolean;
   readonly verbose?: boolean;
   readonly quiet?: boolean;
+  readonly updateCheck?: boolean;
 }
 
 /**

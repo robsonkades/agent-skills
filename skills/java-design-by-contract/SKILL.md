@@ -50,9 +50,10 @@ state the assumed contract and what must be verified before changing it.
 1. **Write the contract before touching code**: for the method or class, the
    preconditions, postconditions and invariants in one sentence each. What you cannot
    state, callers are currently guessing.
-2. **Push each invariant into a type** where one can carry it: a validating record
+2. **Use a type when its invariant travels or prevents meaningful misuse**: a validating record
    (`Quantity` that cannot be zero or negative) removes the shape precondition from every
-   ordinary construction path. A class invariant is established by construction and preserved
+   ordinary construction path. An existing stable entry check may be adequate; weigh consumer
+   compatibility and mapping costs before changing signatures. A class invariant is established by construction and preserved
    by operations. Flexible constructor bodies (final in Java 25, JEP 513) can validate arguments
    before `super(...)`; they do not prevent a superclass constructor from publishing `this` or
    invoking overridable methods on a partially initialised subclass.
@@ -64,7 +65,9 @@ state the assumed contract and what must be verified before changing it.
    money, cross a security boundary or make recovery harder.
 5. **Check subtypes and sealed variants**: every override against the subtyping rules
    below; every sealed hierarchy's variants for their individual contracts, with
-   exhaustive `switch` (no `default`) as a source totality check when consumers are recompiled.
+   exhaustive `switch` as a source coverage check when consumers are recompiled. A `default`
+   or covering type pattern can handle later variants without individual review; judge that
+   fallback against the consumer's policy, not the absence of a literal `default`.
 
 ## Rules
 
@@ -78,10 +81,11 @@ state the assumed contract and what must be verified before changing it.
   contract accepted, returns null where the supertype promised non-null, or narrows
   accepted states, breaks every caller programmed against the supertype — it compiles;
   only contract review catches it.
-- `assert` runs only under `-ea` and is for the code's own promises: postconditions,
-  unreachable branches, loop invariants. A precondition on data from another component
-  is validation and must throw unconditionally. If an `assert` guards input, either
-  promote it to a throw or delete it — as it stands it is a comment that sometimes runs.
+- Assertions are disabled by default and controlled by assertion status (commonly `-ea`/`-da`).
+  Public/trust-boundary preconditions and required corruption-prevention checks must enforce
+  the failure contract even when assertions are disabled. A side-effect-free assertion of a
+  private helper's precondition can remain diagnostic when the owning boundary already
+  enforces it. Do not duplicate that guard merely because the helper takes an argument.
 - Avoid redundant checks inside one trusted object graph, but revalidate at genuine trust and
   persistence boundaries. Legacy rows, deserializers, reflection, ORM hydration, version skew
   and corruption can bypass the constructor path. A defense before an irreversible write should

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: false-sharing-and-contended
-version: 1.1.1
+version: 1.1.2
 description: >-
   Proving and mitigating cache-line false sharing between independent locations with hot writes.
   Covers ownership and address/layout hypotheses, coherence/HITM evidence limits, JMH topology,

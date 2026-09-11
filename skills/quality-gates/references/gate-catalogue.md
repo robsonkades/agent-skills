@@ -1,25 +1,25 @@
 # The gate catalogue
 
-Runtimes are order-of-magnitude for a mid-sized Java service; measure your own. "Noise" is the
-rate at which the gate flags things that are not defects — the property that decides whether
-people keep it on.
+Placement below is a starting point within the required-check policy. Measure elapsed and queue
+time, cold/warm runs, scope and versions before comparing cost. Classify actual reports as defects,
+policy violations, false positives or invalid runs; neither runtime nor noise is a tool constant.
 
-| Gate                     | Catches                                              | Runtime  | Noise            | Belongs on                           |
-| ------------------------ | ---------------------------------------------------- | -------- | ---------------- | ------------------------------------ |
-| Compile                  | Everything the type system encodes                   | seconds  | none             | pre-commit                           |
-| `-Xlint:all -Werror`     | Raw types, unchecked casts, deprecation, fallthrough | seconds  | low              | pre-commit                           |
-| Format check             | Formatting drift                                     | seconds  | none             | pre-commit                           |
-| Unit tests               | Logic defects in changed code                        | < 1 min  | low              | pre-commit / PR                      |
-| Error Prone              | Known bug patterns at compile time                   | +20–50%  | low              | PR                                   |
-| NullAway                 | Nullability contract violations                      | small    | medium initially | PR                                   |
-| SpotBugs                 | Bytecode-level bug patterns                          | 1–3 min  | medium           | PR / main                            |
-| Architecture tests       | Layer and dependency rule violations                 | seconds  | none             | PR                                   |
-| Integration tests        | Schema, SQL, wiring, transactions                    | 2–10 min | low              | PR                                   |
-| Dependency vulnerability | Known CVEs in the dependency tree                    | 1–3 min  | high             | main / scheduled                     |
-| Contract verification    | Breaking a consumer's expectations                   | 1–2 min  | low              | PR (producer side)                   |
-| Performance regression   | Latency or throughput regressions                    | long     | high             | main (see performance-regression-ci) |
-| Reproducible build check | Non-deterministic build output                       | 2× build | none             | release                              |
-| SBOM generation          | Nothing — it produces an artefact for later          | seconds  | none             | release                              |
+| Gate                     | Evidence provided                                                  | Candidate placement                                |
+| ------------------------ | ------------------------------------------------------------------ | -------------------------------------------------- |
+| Compile                  | Syntax/type errors in compiled sources for the selected toolchain  | Local / PR                                         |
+| `-Xlint:all -Werror`     | Enabled javac warnings, promoted to errors                         | Local / PR after adoption review                   |
+| Format check             | Drift from configured formatting                                   | Local / PR                                         |
+| Unit tests               | Violations of exercised assertions and contracts                   | Local fast subset / PR                             |
+| Error Prone              | Configured source-level bug-pattern findings                       | PR                                                 |
+| NullAway                 | Nullness findings within configured analysis scope                 | PR                                                 |
+| SpotBugs                 | Configured bytecode-level bug-pattern findings                     | PR / main according to risk                        |
+| Architecture tests       | Violations of encoded rules over imported classes                  | PR                                                 |
+| Integration tests        | Exercised schema, SQL, wiring and transaction behavior             | PR                                                 |
+| Dependency vulnerability | Inventory matches against a vulnerability feed, requiring triage   | Changed dependencies on PR / scheduled inventories |
+| Contract verification    | Violations of exercised consumer expectations                      | PR (producer side)                                 |
+| Performance regression   | Changes in measured metrics under the gate's comparison protocol   | Calibrated PR / main (performance-regression-ci)   |
+| Reproducible build check | Byte differences across specified builds                           | Release                                            |
+| SBOM generation          | Inventory artifact; generation alone establishes no safety verdict | Release                                            |
 
 ## Compiler-level gates
 
@@ -34,8 +34,8 @@ per module as each is cleaned, or enable specific categories (`-Xlint:rawtypes,u
 and add categories over time.
 
 **Error Prone** hooks into javac and adds several hundred bug patterns — `==` on boxed types,
-format-string mismatches, misused `Optional`, ignored return values. Its findings are usually
-real; its cost is compile time and the initial cleanup. **NullAway** rides on it and enforces
+format-string mismatches, misused `Optional`, ignored return values. Triage a representative sample
+and measure compile cost before rollout. **NullAway** rides on it and enforces
 nullability contracts, including JSpecify with appropriate version/configuration. Other checkers
 also enforce nullness; annotations alone do not. Inspect supported javac/annotation versions and
 configured analysis scope before adoption (java-null-safety).
@@ -44,8 +44,8 @@ configured analysis scope before adoption (java-null-safety).
 
 **SpotBugs** analyses bytecode and finds a different class of defect from Error Prone — unclosed
 resources on exception paths, inconsistent synchronisation, exposure of internal
-representation. It is slower and noisier; run it on the pull request or on main, not
-pre-commit, and use an exclusion file that is reviewed like code.
+representation. Select placement from measured cost and when the risk must be caught; a check
+run only on main cannot block the original merge. Review exclusion files like code.
 
 **Checkstyle** and **PMD** overlap with formatting and with the smell catalogue. Keep only the
 rules that encode a decision the team actually made — a default rule set produces exactly the
@@ -57,9 +57,10 @@ never a discussion.
 
 ## Test gates
 
-Unit tests belong pre-commit — if they are not fast enough for that, that is the finding
-(java-testing-strategy). Integration tests belong on the pull request with the real engine via
-Testcontainers or an equivalent isolated engine. They exercise selected schema/SQL behavior,
+Use a fast relevant subset locally when it helps feedback; required CI must independently run
+the selected checks because local hooks may not execute. Choose broader unit/integration coverage
+from risk and measured cost (java-testing-strategy). For database integration checks, use the real
+engine via Testcontainers or an equivalent isolated engine. They exercise selected schema/SQL behavior,
 not every migration state, query or production configuration.
 
 Two failure modes specific to test gates:
@@ -73,8 +74,8 @@ Two failure modes specific to test gates:
 
 ## Dependency and supply-chain gates
 
-Vulnerability scanning is the noisiest gate in most pipelines: a CVE in a transitive dependency
-on a path you never call may still require investigation. Scan changed dependencies on PRs as
+A CVE in a transitive dependency on a path you never call may still require investigation.
+Separate feed matches from applicability and exploitability. Scan changed dependencies on PRs as
 required by risk/policy and scan deployed/main inventories on a schedule for newly disclosed
 issues. Triage severity, reachability, environment and fix availability with an owner, and record accepted risks with an expiry date so
 "accepted" does not silently become "forgotten".
@@ -106,10 +107,13 @@ runtime classpath, nor does satisfying it prove binary compatibility.
    an urgent exploitable defect merely because it predates the change.
 3. Give the baseline an owner and a direction — findings removed when a file is touched
    anyway. A baseline nobody shrinks is a permanent exemption with extra steps.
-4. Never fix hundreds of findings in one commit. It is unreviewable, it will contain a
-   behaviour change, and it will be blamed for the next incident whether or not it caused it
-   (java-refactoring).
+4. Batch fixes by independent behavior and verification. A deterministic mechanical rewrite may
+   be reviewable at scale; separate semantic repairs and preserve generated-change provenance
+   rather than deciding solely by finding count (java-refactoring).
 
 Primary references: [Maven dependency convergence](https://maven.apache.org/enforcer/enforcer-rules/dependencyConvergence.html),
 [Maven reproducible builds](https://maven.apache.org/guides/mini/guide-reproducible-builds.html), and
-[NullAway](https://github.com/uber/NullAway). Tool compatibility and configured scope require local verification.
+[NullAway](https://github.com/uber/NullAway), [Error Prone installation](https://errorprone.info/docs/installation),
+and the [JDK 25 javac manual](https://docs.oracle.com/en/java/javase/25/docs/specs/man/javac.html).
+Tool compatibility and configured scope require local verification; the compiler's runtime and
+the application's target release are separate constraints.

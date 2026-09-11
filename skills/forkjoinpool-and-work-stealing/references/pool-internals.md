@@ -26,6 +26,11 @@ safe. A child waiting for an unrelated future, lock, socket or another pool can 
 starve. Draw wait-for edges across executors and synchronizers rather than assuming work stealing
 breaks them.
 
+`awaitQuiescence` is also a helping operation: an external caller may execute queued tasks, with
+that caller's thread context rather than a pool worker's. A task it starts can run beyond the
+specified wait timeout; that timeout does not cancel or preempt the body. Keep task handles and
+actual completion ownership rather than using quiescence as a barrier against new submissions.
+
 The classic binary pattern is this partial snippet inside a task with access to child computation:
 
 ```java
@@ -41,6 +46,11 @@ speed.
 If direct `compute()` or combination fails, the forked sibling is still owned work. Define how its
 outcome and actual exit are observed before shared resources are released; cancellation alone does
 not wait for that exit. `invokeAll` also does not promise that all siblings have stopped on failure.
+
+The default task's `cancel(true)` does not interrupt its worker. By contrast,
+`adaptInterruptible(Callable)` (Java 19+) and its `Runnable` overloads (Java 22+) attempt to interrupt
+the executing thread when cancelled with `true`. Check the actual task/adapter and release;
+interruption is still a request, and a cancelled Future can precede body exit and cleanup.
 
 ## Memory visibility and task state
 
@@ -108,9 +118,12 @@ operations; older LTS releases do not have that surface. The extended constructo
 but parameter behavior is version-sensitive (`corePoolSize` is documented ignored in Java 25).
 `setParallelism` exists since Java 19 and may be unsupported for a property-configured common pool.
 
-The common pool ignores shutdown requests and uses daemon workers. A dedicated pool has normal
-executor lifecycle. `shutdownNow()` for a fork/join pool always returns an empty list in Java 25; do
-not infer that there was no queued work.
+The common pool ignores shutdown requests and uses daemon workers. Its `awaitTermination` helps/
+waits for quiescence but always returns `false`; that result does not say whether a particular task
+succeeded. Its `close()` does not wait or take ownership of shared work. A dedicated pool has normal
+executor lifecycle: call its waiting `close()` from an owner outside the tasks whose completion it
+awaits, otherwise the caller can wait for itself. `shutdownNow()` for a fork/join pool always returns
+an empty list in Java 25; do not infer that there was no queued work.
 On Java 17 use `shutdown()` and bounded `awaitTermination` with an explicit failure policy instead
 of `close()`. On Java 25 scheduled delayed tasks can extend orderly shutdown; inspect ownership and
 the documented `cancelDelayedTasksOnShutdown()` policy before changing it.

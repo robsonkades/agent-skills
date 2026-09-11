@@ -5,15 +5,15 @@ illustrative snippet was executed. Check the exact deployed build and recording 
 
 ## Which tool for which need
 
-| Need                                                          | Tool                                                                                        |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Continuous production monitoring, low overhead                | JFR `jdk.Deoptimization` — on in `default.jfc`, with stack traces in `profile.jfc`          |
-| Investigation session, one line per trap with `cid` and `bci` | `-Xlog:deoptimization=debug`                                                                |
-| Dependency invalidation (class loading, `RedefineClasses`)    | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
-| Was the invalidation a safepoint or a handshake, and how long | `-Xlog:handshake=info`, `-Xlog:safepoint=info`                                              |
-| Frame reconstruction in detail, rematerialised objects        | `-XX:+UnlockDiagnosticVMOptions -XX:+TraceDeoptimization`, one-off only                     |
-| What tier a method is at right now, without a restart         | `jcmd <pid> Compiler.codelist`                                                              |
-| Machine-readable trap history for JITWatch                    | `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation`                                        |
+| Need                                                            | Tool                                                                                        |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Continuous production monitoring, low overhead                  | JFR `jdk.Deoptimization` — on in `default.jfc`, with stack traces in `profile.jfc`          |
+| Investigation session, one line per trap with `cid` and `bci`   | `-Xlog:deoptimization=debug`                                                                |
+| Dependency invalidation (class loading, `RedefineClasses`)      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
+| Was the invalidation a safepoint or a handshake, and how long   | `-Xlog:handshake=info`, `-Xlog:safepoint=info`                                              |
+| Frame reconstruction in detail, rematerialised objects          | `-XX:+UnlockDiagnosticVMOptions -XX:+TraceDeoptimization`, one-off only                     |
+| Installed compiled versions and their states, without a restart | `jcmd <pid> Compiler.codelist`                                                              |
+| Machine-readable trap history for JITWatch                      | `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation`                                        |
 
 The first two see **uncommon traps only**. A CHA invalidation or a class redefinition
 produces no `jdk.Deoptimization` event and no `-Xlog:deoptimization` line; a production
@@ -71,7 +71,8 @@ java -Xlog:jit+compilation=debug,dependencies=debug,class+load=info:file=jit.log
 ```
 
 `dependee` is the class whose loading broke the assumption; `context` is the type the
-assumption was about. The `class+load` line for the dependee immediately precedes the block.
+assumption was about. In this observation its load preceded the block; concurrent log lines
+can interleave. Match the named failed dependency and class rather than assuming adjacency.
 `-Xlog:handshake=info` shows the mechanism and its cost:
 
 ```
@@ -79,6 +80,11 @@ assumption was about. The `class+load` line for the dependee immediately precede
 ```
 
 ## JFR
+
+Reuse an adequate existing recording. For a new capture, choose duration, event settings,
+output size/location and stop conditions within the incident's time, disk and overhead budget.
+The following is a bounded example, not a required 60-second wait or a reason to enable every
+profile event. The shell examples use `head`/`grep`; use equivalent filtering if unavailable.
 
 ```bash
 jcmd <pid> JFR.start duration=60s filename=deopt.jfr settings=profile
@@ -149,9 +155,9 @@ same-named classes in this recording; descriptors separate overloads. For fleet/
 analysis include JVM identity, time buckets and compile ID as additional dimensions. Counts alone
 do not prove decay, and IDs are not stable identities across JVM restarts.
 
-Group by site (method **and** bci), not by method: a method that traps once at each of forty
-sites during warm-up is converging; one that traps forty times at one site with `action`
-`none` is not. Verify every path against a real recording before the script ships — it fails
+Group by site (method **and** bci), not by method: forty sites trapping once and one site
+trapping forty times need different histories. Neither count alone proves convergence,
+recurrence or service impact. Verify every path against a real recording before the script ships — it fails
 loudly, but only on the first run against real data.
 
 ## PrintCompilation and the compilation log
@@ -170,11 +176,14 @@ JDK 25 prints the reason after `made not entrant:`. The set on 25.0.3:
 made not compilable on level 4  DeoptLab::dispatch (7 bytes)   give up compiling
 ```
 
-`not used` and `OSR invalidation of lower level` are the tier-3 code being retired by the
-tier-4 version — normal. `uncommon trap` is a trap that invalidated the code and has a
+`not used` is the replacement path for an existing entry; promotion is common but its tier
+is not encoded in that reason. `OSR invalidation of lower level` retires lower-level OSR
+code at the same bci, not necessarily tier 3 for tier 4. Inspect predecessor and successor
+compilations. `uncommon trap` is a trap that invalidated the code and has a
 matching `-Xlog:deoptimization` line with the same `cid`. `marked for deoptimization` is a
-dependency invalidation and has **no** matching line there. The `made not compilable` line
-is the recompilation cutoff; the next line for the method is a C1 compile.
+dependency invalidation in this sample and has **no** matching line there. The shown
+`give up compiling` line is the recompilation cutoff. Other `made not compilable` reasons
+need their own failure text; subsequent C1 compilation depends on available tiers and policy.
 
 `made zombie` no longer exists: the sweeper and the zombie state were removed in JDK 20
 (JDK-8290025). A not-entrant nmethod is unloaded by the GC once no frame references it.
@@ -209,7 +218,8 @@ jcmd <pid> Compiler.codelist | grep 'Hold.dispatch'
 Columns are compile id, tier, state (`0` in use, `1` not entrant), method. Two not-entrant
 tier-4 versions and one live tier-1 version is the picture of a method that hit the cutoff
 (this process was run with `-XX:PerBytecodeRecompilationCutoff=0` to force it). No restart,
-no flag, and the answer to "what is this method running as right now".
+no startup flag is needed for this snapshot. It identifies installed code, not which version
+every current frame executes; OSR and already-active frames require execution context.
 
 ## TraceDeoptimization
 
@@ -242,13 +252,13 @@ deep-dive session and never to continuous production.
 Defaults from `-XX:+PrintFlagsFinal -version` on Temurin 25.0.3; enforcement points from the
 JDK 25 source.
 
-| Flag                             | Default             | Enforced in                                                                          | Effect when reached                                                                                   |
-| -------------------------------- | ------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `PerBytecodeTrapLimit`           | 4                   | `uncommon_trap_inner`, `deoptimization.cpp`                                          | A `maybe_recompile` trap at a bci with prior traps makes the nmethod not entrant                      |
-| `PerMethodTrapLimit`             | 100                 | `Compile::too_many_traps`, `compile.cpp`                                             | C2 stops speculating on that reason anywhere in the method                                            |
-| `PerMethodSpecTrapLimit`         | 5000 (experimental) | same                                                                                 | The same for `speculate_*` reasons                                                                    |
-| `PerBytecodeRecompilationCutoff` | 200                 | `uncommon_trap_inner`; `/8` in `too_many_recompiles`                                 | At 25 overflow recompiles of one bci C2 emits `Action_none`; at 200 the method is not C2-compilable   |
-| `PerMethodRecompilationCutoff`   | 400                 | `MethodData::inc_decompile_count`, `methodData.hpp`; `/2+1` in `too_many_recompiles` | At 201 decompilations C2 emits `Action_none` at trapped sites; at 400 the method is not C2-compilable |
+| Flag                             | Default             | Enforced in                                                                          | Effect when reached                                                                                                                         |
+| -------------------------------- | ------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PerBytecodeTrapLimit`           | 4                   | `uncommon_trap_inner`, `deoptimization.cpp`                                          | A `maybe_recompile` trap at a bci with prior traps makes the nmethod not entrant                                                            |
+| `PerMethodTrapLimit`             | 100                 | `Compile::too_many_traps`, `compile.cpp`                                             | C2 stops speculating on that reason anywhere in the method                                                                                  |
+| `PerMethodSpecTrapLimit`         | 5000 (experimental) | same                                                                                 | The same for `speculate_*` reasons                                                                                                          |
+| `PerBytecodeRecompilationCutoff` | 200                 | `uncommon_trap_inner`; `/8` in `too_many_recompiles`                                 | Earlier `Action_none` decision at MethodData overflow count ≥25 with prior site history; C2 exclusion when that count >200                  |
+| `PerMethodRecompilationCutoff`   | 400                 | `MethodData::inc_decompile_count`, `methodData.hpp`; `/2+1` in `too_many_recompiles` | Earlier `Action_none` decision at cumulative decompile count ≥201 with prior reason history; loaded-method C2 exclusion when its count >400 |
 
 `PerBytecodeTrapLimit` is not what makes C2 stop speculating at a bci: `too_many_traps`
 treats any recorded trap as enough ("Assume PerBytecodeTrapLimit==0"). The limit only
@@ -258,6 +268,11 @@ trap, so the limit is "in effect a little smaller than it looks" (comment in
 `deoptimization.cpp`) — a `null_check` site was invalidated on the third hit, a
 `class_check` site on the fourth.
 
+`too_many_recompiles` combines MethodData counters with prior trap/recompiled-site information;
+the overflow count is not an independent exact counter at each bci. Runtime exclusion tests
+strictly `>` the configured cutoff (201 and 401 for the respective default counters), unlike
+the earlier `>=` tests. Neither flag value can be reconstructed by counting JFR events alone.
+
 ## Correlating deoptimisations with latency spikes
 
 Extract trap timestamps from the log, extract spike timestamps from the request log, and
@@ -266,8 +281,8 @@ state, not an impression from scrolling the log. Include the `marked for deoptim
 lines from the compilation log, or the correlation misses every class-loading event.
 
 ```python
-# Illustrative — adapt the request-log regex, and assert both timestamp lists are
-# non-empty before trusting the ratio. Log files written with the `uptime` decorator.
+# Illustrative counts, not a causal test. Normalize request ts to this JVM's uptime
+# in seconds first; verify parser/recording coverage separately, including valid zero events.
 import re
 
 def correlate(deopt_log, comp_log, request_log, window_s=2.0, spike_threshold_ms=500):
@@ -295,25 +310,31 @@ def correlate(deopt_log, comp_log, request_log, window_s=2.0, spike_threshold_ms
     print(f"spikes={len(spikes)} deopts={len(deopt_times)} correlated={hit}")
 ```
 
-A trap costs the trapping thread one frame reconstruction and an interpreted stretch; it
-does not stop the process. A latency spike across all threads that coincides with a trap is
-more likely the recompilation burst or the `Handshake "Deoptimize"` fan-out than the trap
-itself — read `-Xlog:safepoint` and `-Xlog:handshake` for the same window before attributing
-it.
+The defaults are illustrative, not an SLO or significance threshold. Define whether request
+timestamps mark start or completion and, for attribution, relate events to request intervals.
+Align clocks, JVM identity, coverage and workload; two seconds of symmetric overlap can
+include unrelated events or events after a request finished. Compare against ordinary windows
+and plausible alternatives before attributing latency. These counts establish neither causality
+nor the fraction of fleet latency caused by deoptimisation.
+
+An uncommon trap reconstructs the trapping thread's frame and does not itself imply a
+process-wide stop. A fleet or process-wide spike warrants checking recompilation CPU,
+dependency handshakes, safepoints and other concurrent load as relevant. Mechanism logs and
+request/service evidence, not timestamp coincidence, decide which contributed.
 
 ## Session checklist
 
 - [ ] Tag/level, time window and collection coverage confirmed; zero events distinguished from missing data
-- [ ] `jit+compilation=debug` and `dependencies=debug` collected in the same session, or
-      class-loading invalidations are invisible
+- [ ] If dependency invalidation matters, compilation/dependency evidence examined;
+      absent coverage remains an explicit limitation rather than forcing another capture
 - [ ] JFR field names and reason strings confirmed with `jfr print` on this runtime —
       including the `_or_` suffixed names
-- [ ] Each `class_check` classified as a per-invocation guard (trap lines, `instruction`) or
-      a CHA invalidation (`marked for deoptimization`, no trap line)
+- [ ] Receiver-guard traps distinguished from dependency invalidations; CHA attribution
+      backed by failed-dependency evidence, not just `marked for deoptimization` timing
 - [ ] Events grouped by method **and** bci, reason and action, over a stated time window
 - [ ] Any `action=none` site identified, and the method's decompile history explained
-- [ ] Rate confirmed to fall to its floor after the recompilation burst, not merely that a
-      recompilation occurred
+- [ ] Site rate and service outcome checked under continued representative demand;
+      unresolved attribution has a bounded next check, not an assumed fix
 - [ ] If the fix narrowed a static type or made a class `final`, no other code path depended
       on subclassing it
 - [ ] Temporary diagnostics restored to the prior configuration after the investigation
@@ -321,6 +342,8 @@ it.
 ## Authoritative sources
 
 - [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
+- [JDK 25 compilation installation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/ci/ciEnv.cpp) — replacement can retire an existing entry without identifying a tier transition.
+- [JDK 25 OSR installation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/oops/instanceKlass.cpp) — lower-level OSR invalidation at the same bci.
 - [JDK 25 JFR event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)
 - [JDK 25 `jcmd` documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [RecordingFile API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html) — streaming traversal and static `readAllEvents(Path)`.

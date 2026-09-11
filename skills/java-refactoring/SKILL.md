@@ -40,7 +40,8 @@ classes and domain helpers; they are illustrations rather than standalone compil
    a worked example. No net, no refactoring. The one exception is the step that makes the
    net possible at all: when the class cannot be constructed or the method cannot be
    reached, breaking that dependency is done without tests, under the constraints in
-   `java-legacy-code-testing`.
+   `java-legacy-code-testing`. Reuse an adequate existing harness or the first meaningful
+   assertion from that handoff; successful construction alone is not the net.
 2. **Classify the boundary.** Private or package scope lowers source-compatibility risk, but
    does not remove concurrency, reflection, persistence or serialization contracts. If a
    framework reaches the name at runtime (JPA field access, Jackson, JPQL, reflective config), in
@@ -54,7 +55,8 @@ classes and domain helpers; they are illustrations rather than standalone compil
    transaction boundary, emitted SQL or events, iteration order, memory visibility —
    and which proof each of those dimensions demands. Selecting the dimensions is what
    makes step 5's "run tests" mean something.
-4. **Choose the technique** from the catalogue, routed by what is being reshaped:
+4. **Choose the smallest useful technique**, retaining the current design when it already meets
+   the objective. Use the catalogue, routed by what is being reshaped:
    `references/techniques.md` for the core moves and the design choices,
    `references/catalogue-statements-and-data.md` for statements, loops and locals,
    `references/catalogue-conditionals.md` for branching,
@@ -65,12 +67,16 @@ classes and domain helpers; they are illustrations rather than standalone compil
    explicitly requested; the small-step discipline also applies to uncommitted work. Where an IDE
    refactoring is available, use it: it resolves references the compiler will not report.
    Editing by hand — which is the agent's case — the substitute is the compiler plus an
-   explicit caller enumeration: make the old symbol inaccessible and compile, then search
-   the old name as a string across resources, XML, JPQL and annotations. Grep alone is
-   not the enumeration. Automating the step across many files is
+   explicit caller inventory: making the old symbol inaccessible and compiling exposes some
+   callers, but overload or inherited-member fallback can still compile with different behavior.
+   Inspect resolved calls and search the old name across resources, XML, JPQL and annotations;
+   include generated sources and external consumers as applicable. Neither compile success nor
+   string search closes the inventory alone. Automating the step across many files is
    refactoring-automation's.
 6. **Repeat until done, then re-run the detection pass** (java-code-smells) to confirm
-   the finding that motivated the work is actually gone.
+   the finding that motivated the work is resolved or explicitly accepted. Report the changes,
+   preserved contracts, checks actually run, and remaining limitations without implying a
+   plan or untested boundary is completed implementation.
 
 ## Rules
 

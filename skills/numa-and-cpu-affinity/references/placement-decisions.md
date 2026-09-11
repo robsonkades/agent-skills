@@ -2,21 +2,31 @@
 
 ## Does `UseNUMA` do anything on this collector?
 
-| Collector       | Effect                                         | Mechanism                                                                                                         |
-| --------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Parallel GC** | Yes — the original, most mature implementation | TLABs allocated on the requesting thread's local node; young gen split per node                                   |
-| **G1**          | Yes, since JDK 14 (JEP 345, Linux only)        | Regions used for young allocation get preferred nodes; this is awareness, not hard physical partitioning          |
-| **Serial**      | Accepted, no effect                            | Single-threaded; no parallelism to distribute                                                                     |
-| **ZGC**         | Yes on Linux JDK 25; inspect effective support | ZNUMA consumes UseNUMA; ZArguments enables its default when unset, subject to platform checks                     |
-| **Shenandoah**  | Accepted                                       | Exact JDK 25 behaviour unconfirmed — do not presume parity with G1; check `PrintFlagsFinal` and the release notes |
+| Collector       | Effect                                         | Mechanism                                                                                                     |
+| --------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Parallel GC** | Collector-local NUMA allocation                | Young-generation Eden allocation can use per-node areas; verify target settings and constraints               |
+| **G1**          | Yes, since JDK 14 (JEP 345, Linux only)        | Regions used for young allocation get preferred nodes; this is awareness, not hard physical partitioning      |
+| **Serial**      | Inspect common OS allocation policy            | Single-threaded collection does not prove no effect: Linux shared NUMA initialization can enable interleaving |
+| **ZGC**         | Yes on Linux JDK 25; inspect effective support | ZNUMA consumes UseNUMA; ZArguments enables its default when unset, subject to platform checks                 |
+| **Shenandoah**  | Defaults UseNUMA on in JDK 25 initialization   | Enables NUMA-aware storage allocation; this is not G1/Parallel-style collector-local placement                |
 
 Defaults depend on collector initialization and OS/topology. In JDK 25 ZArguments sets
 UseNUMA to true when still default and ZFakeNUMA is not configured; subsequent platform checks
 can disable it. Inspect the running JVM or reproduce its full options, not an unrelated
 `java -version` using a different collector.
 
+JDK 25 ShenandoahArguments explicitly enables the default for storage allocation while noting
+that the collector is not itself NUMA-aware. The common Linux initialization can enable
+`UseNUMAInterleaving` for allocations without a collector-specific policy when `UseNUMA`
+remains enabled; the common commit path consumes that setting. Inspect both flags and
+effective topology/masks rather than inferring no effect from Serial's thread count.
+
 Sources: [ZArguments JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zArguments.cpp)
-and [Linux ZNUMA](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp).
+and [Linux ZNUMA](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp),
+[ShenandoahArguments](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shenandoah/shenandoahArguments.cpp),
+and [shared Linux NUMA initialization/commit](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/os_linux.cpp).
+For the collector-local distinction, see [Parallel young-generation allocation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/parallel/psYoungGen.cpp)
+and [JEP 345's delivered G1 design](https://openjdk.org/jeps/345); inspect the deployed build for exact behavior.
 
 ## What `UseNUMA` does not fix
 
@@ -29,9 +39,10 @@ It primarily changes allocation placement for supported collectors; do not assum
 - **GC worker scheduling** — workers are still Linux tasks unless the collector implements
   additional NUMA-aware work placement.
 
-This does not imply one mandatory production combination. Compare unbound first-touch,
-collector NUMA support, CPU-node binding, preferred/fallback memory, interleave, and one JVM
-per node under the same workload.
+This does not imply one mandatory production combination. Select relevant alternatives from
+unbound effective policy, collector NUMA support, CPU-node binding, preferred/fallback memory,
+interleave and one JVM per node. Compare them under matching conditions only when the decision
+needs new evidence; an adequate existing placement can remain unchanged.
 
 ## Strategy matrix
 
@@ -39,24 +50,27 @@ per node under the same workload.
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | Whole local footprint fits with headroom                     | `--cpunodebind=N --membind=N`                                                | Candidate for locality; node pressure and lost CPU/memory capacity may dominate                     |
 | Heap larger than a node, collector supports `UseNUMA`        | `-XX:+UseNUMA`, no restrictive `numactl`                                     | Partial locality; threads still migrate between nodes without CPU affinity                          |
-| Heap larger than a node, collector support is absent/unclear | Compare interleave, preferred fallback and unbound first-touch               | Interleave spreads allocation with fallback; locality and overall capacity still require validation |
+| Heap larger than a node, collector support is absent/unclear | Compare interleave, preferred fallback and unbound effective policy          | Interleave spreads allocation with fallback; locality and overall capacity still require validation |
 | Application tolerates multiple instances                     | One JVM per node, each `--cpunodebind=N --membind=N`, behind a load balancer | Potential locality; duplicated caches, load skew and operational cost of N processes                |
 
 Working order of questions: how many nodes → does heap plus native/runtime headroom fit on allowed nodes → does
 the collector implement `UseNUMA` → does the application tolerate multiple instances.
 
-## NUMA by deploy architecture
+## Topology by deployment context
 
-| Platform                                        | Typically NUMA?     | How to confirm                                  |
-| ----------------------------------------------- | ------------------- | ----------------------------------------------- |
-| Xeon, 2+ sockets (on-prem, bare-metal cloud)    | Yes                 | `numactl --hardware`                            |
-| AMD EPYC (even one socket, under NPS2/NPS4)     | Depends on the BIOS | `numactl --hardware` — never infer from sockets |
-| AWS Graviton, Ampere Altra (standard instances) | Typically not       | `numactl --hardware` → `available: 1 nodes`     |
-| Apple Silicon                                   | No (unified memory) | Not a server deploy target                      |
+| Context                         | What can change the visible topology                   | Evidence to inspect                                          |
+| ------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------ |
+| Bare-metal x86 or Arm host      | CPU model, firmware partitioning, memory configuration | Reported node IDs, CPU membership, memory and distances      |
+| Cloud instance or virtual guest | Instance shape and hypervisor exposure                 | Guest-visible topology plus provider/host evidence if needed |
+| Container or restricted process | Allowed CPU and memory-node masks                      | Process masks and effective cpusets alongside host topology  |
+| Non-Linux target                | OS topology APIs and JVM implementation                | Platform-native evidence; these Linux commands do not apply  |
 
-Intel Xeon uses QPI or UPI interconnect and typically maps one socket to one node. AMD EPYC
-uses Infinity Fabric both between sockets and between chiplets inside one socket; the BIOS
-NPS setting presents the socket as 1, 2 or 4 logical nodes.
+Socket count, processor family and a “unified memory” label do not establish the target's
+allowed placement topology. For example, EPYC firmware can partition a socket into multiple
+nodes, as documented in the [EPYC 9004 BIOS guide, section 2.12](https://docs.amd.com/api/khub/documents/goX~9ubv8i5r60A_Qrp3Rw/content).
+Inspect the actual model/configuration; do not assume a cloud family is single-node or
+exclude a deployment because of its hardware brand. One visible node still leaves affinity
+and hidden host-placement questions; firmware distance values are not measured latency.
 
 ## Sizing the CPU set
 
@@ -67,7 +81,17 @@ activity and sibling/SMT topology. `--cpunodebind` chooses node CPUs;
 detected processor count differs from the intended capacity, set `ActiveProcessorCount`
 explicitly and revalidate ergonomics.
 
+`ActiveProcessorCount` changes the JVM's ergonomic processor count; it does not itself bind
+threads or pages. Verify OS placement separately from JVM worker sizing.
+
+See the [JDK 25 java launcher specification](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-runtime-options)
+for the processor-count override; confirm behavior on the deployed build.
+
 ## Validation checklist
+
+Select checks that can resolve the requested claim and reuse matching evidence. A narrow
+interpretation or adequate no-change decision does not require this entire campaign. Choose
+outcome gates from the actual locality/capacity/isolation objective and accepted costs.
 
 Before investigating:
 
@@ -80,8 +104,8 @@ While observing:
 
 - [ ] Systemic `numastat` collected as allocator/host-pressure context, not remote accesses
 - [ ] `numastat -p <pid>` collected for process residence; heap mappings identified separately
-- [ ] `perf stat -e node-loads,node-load-misses,node-stores,node-store-misses -p <pid>` run —
-      not `-e numa_miss`
+- [ ] Relevant supported PMU events and access checked when the claim needs them; full
+      output/status retained, unsupported or denied capture recorded as missing evidence
 - [ ] Hardware, code, workload and placement changes separated as competing explanations
 
 While measuring:
@@ -94,6 +118,7 @@ While measuring:
 
 While validating:
 
-- [ ] Predicted placement/access evidence changed **and** business metrics improved
+- [ ] Claimed placement/access behavior observed and declared objective/cost bounds met;
+      an isolation goal need not improve this JVM's throughput
 - [ ] No allocation failure, OOM kill or excessive reclaim introduced by restrictive membind
-- [ ] Change documented as a single variable with a before/after baseline
+- [ ] Justified change or no-change documented; a change includes the matching baseline

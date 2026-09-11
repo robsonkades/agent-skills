@@ -2,33 +2,39 @@
 
 ## The two mechanisms, side by side
 
-|                       | Rate limiting                                 | Load shedding                                              |
-| --------------------- | --------------------------------------------- | ---------------------------------------------------------- |
-| Input to the decision | Policy key/cost and recent or reserved usage  | Current bottleneck, deadline slack and available capacity  |
-| Active when idle      | Yes — the quota is enforced regardless        | No — nothing is shed while there is headroom               |
-| Protects              | Other clients, from one client                | The service, from all clients together                     |
-| Typical response      | 429; optional meaningful `Retry-After`        | 503/overload result; optional meaningful `Retry-After`     |
-| Fails to help when    | Aggregate legitimate traffic exceeds capacity | The problem is one abusive client inside a large aggregate |
-| Tuned from            | The contract or the fair share                | Measured capacity and queue behaviour                      |
+|                       | Rate limiting                                       | Load shedding                                                   |
+| --------------------- | --------------------------------------------------- | --------------------------------------------------------------- |
+| Input to the decision | Policy key/cost and recent or reserved usage        | Current bottleneck, deadline slack and available capacity       |
+| Active when idle      | Yes — the quota is enforced regardless              | Saturation-driven; expired work can still be rejected           |
+| Protects              | Quota, fairness or spend policy                     | The service, from work beyond usable capacity                   |
+| Typical response      | 429; optional meaningful `Retry-After`              | 503/overload result; optional meaningful `Retry-After`          |
+| Missing protection    | Per-client quotas need not bound aggregate capacity | A capacity-only gate need not enforce independent tenant quotas |
+| Tuned from            | The contract or the fair share                      | Measured capacity and queue behaviour                           |
 
-A service with only limits collapses under legitimate traffic. A service with only shedding
-lets one client consume everybody's capacity right up to the point of shedding. They are
-complements, never substitutes.
+Distinguish the contracts rather than requiring two products/components: a global rate bound
+can protect a stable workload, and a capacity gate can partition tenant shares. Add another
+control when an actual quota or overload requirement remains uncovered.
 
 ## Rate-limiting algorithms
 
-| Algorithm              | Burst behaviour                                                                                                   | Memory per key                                                     | The failure it has                                                                                    |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| Fixed window           | Up to **2× the rate** across a boundary — a full window at the end of one, a full window at the start of the next | One counter + window stamp                                         | The boundary. Invisible in any test that does not straddle one                                        |
-| Sliding window log     | Exact accepted-count window with atomic prune/check/insert                                                        | One timestamp per retained accepted request; bound keys separately | Storage/operation cost grows with limit and active keys; logging rejected attempts can grow unbounded |
-| Sliding window counter | Approximate; smooths the boundary by weighting the previous window                                                | Two counters                                                       | Error depends on within-window clustering; not necessarily small                                      |
-| Token bucket           | Explicit burst = capacity, then the sustained refill rate                                                         | Two numbers                                                        | Capacity left equal to the rate, i.e. burst policy never actually chosen                              |
-| Leaky bucket (queue)   | No burst out; bursts are queued and smoothed                                                                      | Queue                                                              | It **adds latency by design**, and the queue is a place requests wait past their deadline             |
+| Algorithm              | Burst behaviour                                                                                     | Memory per key                                                     | The failure it has                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Fixed window           | Up to **2N requests** around a boundary for an N-per-T quota; instantaneous rate can be much higher | One counter + window stamp                                         | Does not enforce N in every rolling T                                                                 |
+| Sliding window log     | Exact accepted-count window with atomic prune/check/insert                                          | One timestamp per retained accepted request; bound keys separately | Storage/operation cost grows with limit and active keys; logging rejected attempts can grow unbounded |
+| Sliding window counter | Approximate; smooths the boundary by weighting the previous window                                  | Two counters                                                       | Error depends on within-window clustering; not necessarily small                                      |
+| Token bucket           | Explicit burst = capacity, then the sustained refill rate                                           | Two numbers                                                        | A burst/refill envelope is not an exact rolling-window quota                                          |
+| Leaky bucket (queue)   | No burst out; bursts are queued and smoothed                                                        | Queue                                                              | It **adds latency by design**, and the queue is a place requests wait past their deadline             |
 
-Defaults that hold up: **token bucket** for client quotas, because bursts are legitimate and
-capacity states the policy; **sliding window counter** when you need a simple approximation
+Use **token bucket** when accumulated bursts are part of the quota contract;
+**sliding window counter** when you need a simple approximation
 with tiny state; **leaky bucket** only when a downstream genuinely requires smooth arrivals,
 and then bound the queue and give it a deadline check.
+
+For example, capacity 100 and refill 100 per minute allow 100 now and another 50 after
+30 seconds: 150 within one minute. That meets the bucket envelope, not a strict
+100-in-any-60-seconds contract. Capacity equal to one second's refill is a legitimate
+policy too. State which requests/costs are charged and whether later admission failure
+changes that charge; a capacity permit and a quota debit have different lifetimes.
 
 ## Distributed limits, and what each gets wrong
 
@@ -57,7 +63,7 @@ alone.
 
 | Signal                                    | Leads or lags      | Use it when                                      | Why it misleads                                                                                      |
 | ----------------------------------------- | ------------------ | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Time waiting in queue                     | Leads              | Almost always — the best single signal           | Only if the queue you measure is the real one                                                        |
+| Time waiting in queue                     | Can lead           | Waiting at the protected resource is material    | The visible queue may not be the bottleneck; workload mix can change delay                           |
 | Queue depth                               | Leads              | Cheap to expose; pair it with wait time          | Depth without service time says nothing about delay                                                  |
 | In-flight concurrency vs a measured limit | Leads              | Cost varies by orders of magnitude               | The limit has to be measured, not guessed                                                            |
 | CPU utilisation                           | Workload-dependent | CPU-bound bottleneck and throttling are measured | It misses I/O saturation and can be distorted by cgroup throttling/steal; it may lead or lag latency |
@@ -71,8 +77,9 @@ worker pool alone neither relocates all waiting nor guarantees observability.
 
 ## Priority classes
 
-Uniform shedding degrades everything a little, including the traffic whose failure costs most.
-Classify, then shed from the bottom:
+Use business criticality and trusted identity to choose classes, not operation labels alone.
+The following is an example ordering; required batch/recovery work may need a different
+reservation or starvation bound:
 
 1. **Control/lifecycle plane** — health, readiness and bounded recovery/admin operations.
    Reserve separate small capacity and authenticate it; even this class needs abuse and
@@ -84,9 +91,10 @@ Classify, then shed from the bottom:
 - Priority must come from something trustworthy. A client-supplied header is a request, not a
   fact: an authenticated tenant tier or an internal call path is a fact. Otherwise every
   client is high priority within a week.
-- Retries deserve their own class. A retried request has already consumed capacity once; under
-  overload, shedding retries before first attempts limits amplification — the amplification
-  itself is `retries-and-backoff` and its system-wide form is `cascading-failures`.
+- Retry classification needs trustworthy attempt evidence and business context: an earlier
+  attempt may have been rejected before execution, or may have left an unresolved effect.
+  Bound retry amplification without automatically starving required recovery or trusting a
+  caller-controlled first-attempt marker (`retries-and-backoff`, `cascading-failures`).
 
 ## Deadline-aware rejection
 

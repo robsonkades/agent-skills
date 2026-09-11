@@ -24,6 +24,13 @@ inspect matching implementation sources and reproduce on the target build.
 
 ## Workflow
 
+Start with the requested claim: syntax/source interpretation, evidence from an existing run,
+an output or live-configuration change, or a cost/reliability decision. Apply the relevant
+steps only. Use sufficient supplied evidence and preserve an adequate configuration; a narrow
+explanation can close with its limits without launching a workload, changing flags or running
+a saturation campaign. Missing runtime evidence limits runtime claims, not independent
+source-backed conclusions.
+
 ### 1. Pin and discover
 
 Record vendor/build/version and startup option sources. Run:
@@ -36,7 +43,9 @@ java -Xlog:<selection> -version
 Use the target executable, not an unrelated java on PATH. Run probes with disposable output
 paths and controlled child-process option injection: even -version can create or rotate files.
 The first exposes syntax/tags/decorators/output options for that build. The second checks
-parsing; inspect warnings even after exit zero. Neither proves workload event coverage.
+parsing; inspect warnings even after exit zero. If it emits matching startup records, those
+records also establish that observed startup coverage. Neither establishes coverage of an
+application path that was not executed.
 
 ### 2. Select tag sets correctly
 
@@ -62,10 +71,11 @@ Examples:
 | gc,safepoint            | exact gc OR exact safepoint, not their combined tag set |
 | gc*=info,safepoint*=off | gc supersets except sets disabled by safepoint wildcard |
 
-### 3. Prove content on a representative workload
+### 3. Validate the coverage being claimed
 
-Attach the intended output and decorators, execute behavior that triggers the subsystem, and
-assert semantic content/tag sets. Exit zero and a nonempty file are insufficient; unrelated
+For an application coverage claim, use the intended output/decorators and behavior that
+triggers the subsystem, and assert semantic content/tag sets. Reuse adequate existing captures;
+a syntax/source question need not run the application. Exit zero and a nonempty file are insufficient; unrelated
 warning lines can satisfy them. Conversely, a valid selection can be empty because no
 matching call site executed or its level was below threshold.
 
@@ -75,9 +85,11 @@ by build and launcher environment.
 ### 4. Design output and retention
 
 Choose stdout/stderr versus file from the platform collection and evidence-survival
-contract. For files, define directory ownership, unique names, rotation size/count, disk
-budget, restart/crash-loop behavior and collection lag. Filename placeholders such as pid,
-start time and host are build-documented features.
+contract. For files, define directory ownership, names, rotation size/count, disk
+budget, restart/crash-loop behavior and collection lag. JDK 25 documents filename placeholders
+`%p` (PID), `%t` (startup timestamp) and `%hn` (host name); these are distinct from decorator
+names and do not by themselves guarantee uniqueness or retention. See the output reference
+for quoting and collision limits.
 
 Defaults are not retention requirements. On JDK 25 documentation, files rotate by default
 with up to five rotated files around 20 MB; filecount zero disables rotation and may
@@ -92,8 +104,9 @@ Synchronous logging can block at log sites. Current JDK 25 supports global async
 
 This is not a lock-free or bounded-latency guarantee: JDK 25 uses producer/consumer locks
 and has synchronous fallback paths. Stall does not guarantee durable or lossless output.
-Size/test buffer and sink throughput, monitor drop notices,
-and test shutdown/crash behavior. Do not extrapolate overhead from a different selection or
+When choosing or changing the mode, validate relevant buffer, sink and termination behavior
+against the required loss/latency contract; source-only explanations need no sink-stress test.
+Observe drop notices where applicable. Do not extrapolate overhead from a different selection or
 workload.
 
 ### 6. Reconfigure safely
@@ -109,13 +122,17 @@ Within existing operational authorization, snapshot before/after effective confi
 make the smallest change, trigger a known event and restore only owned changes after checking
 for intervening edits. Runtime reconfiguration cannot be assumed equivalent to every startup
 directive; test async/global behavior on the exact JDK.
+Help/list are read-only discovery; they do not authorize configuring, disabling or rotating
+outputs. Respect existing authorization for the specific inspection or change without adding
+a new approval gate merely because it uses jcmd.
 
 ### 7. Migrate legacy flags from official mapping
 
 Classify each old option for the target JDK:
 
 - removed/unrecognized: replace with documented -Xlog selection;
-- deprecated compatibility alias: replace proactively and compare output semantics;
+- deprecated compatibility alias: retain when supported and adequate under the target/upgrade
+  policy; when migration is needed, compare the affected output semantics;
 - obsolete/accepted-but-ignored: warning plus successful startup is not an applied setting;
 - still-live non-unified flag: do not translate merely because it prints diagnostics.
 
@@ -139,6 +156,9 @@ For containers:
 - ephemeral container storage is not incident retention.
 
 ### Minimal decision record
+
+Return only fields material to the request. A source explanation may need the selector,
+version scope and conclusion; a production change may need the complete record below.
 
 ```text
 JDK vendor/build:
@@ -173,8 +193,9 @@ and call-site levels. Validate on target.
 **Exact benchmark percentage as product fact:** a local 7% or 25% result is an experiment,
 not transferable knowledge.
 
-**Tags from OpenJDK source instead of product help:** product/debug builds and versions
-differ.
+**Treating a source snapshot as product evidence:** product/debug builds and versions
+differ. Matching implementation sources can resolve call-site or semantic ambiguity; they
+do not establish that the deployed product enabled or executed that path.
 
 **File exists therefore logging works:** validate expected tag/content under a trigger.
 

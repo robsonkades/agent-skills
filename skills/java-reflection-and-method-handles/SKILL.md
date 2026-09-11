@@ -1,9 +1,9 @@
 ---
 name: java-reflection-and-method-handles
 description: >
-  Runtime access to code the compiler cannot check: what reflection costs beyond speed — no
-  compile-time checking, invisible to refactoring and dead-code analysis, blocked by module
-  encapsulation, and constrained by closed-world native-image analysis — the
+  Runtime access to code through dynamic names: what reflection costs beyond speed — weaker
+  ordinary compile-time/refactoring checks, module access requirements,
+  and closed-world native-image constraints — the
   alternatives that keep the checking (interfaces, ServiceLoader, annotation processing,
   code generation), MethodHandles and VarHandles for genuinely dynamic access, and the
   security boundary around resolving a name that came from outside. Use when reflection
@@ -57,12 +57,14 @@ which becomes an execution primitive once initialization, construction or invoca
   construction; every call afterwards goes through the interface, checked by the compiler.
 - Prefer `ServiceLoader` to hand-rolled classpath scanning for plugin discovery: it is
   declarative (`META-INF/services` or `provides … with` in a module), the JDK's own mechanism,
-  and visible to the module system. It does not provide ordering, dependency injection, failure
-  isolation or unload lifecycle, and native-image support must still be verified for the toolchain.
-- Prefer build-time to run-time. An annotation processor or code generator produces code you
-  can read, debug, and that the compiler checks; runtime reflection produces behaviour nobody
-  can grep for. This is why modern frameworks moved mapping, validation and injection metadata
-  towards build time — see java-annotations.
+  and visible to the module system. It does not provide a general priority order, dependency
+  injection, failure isolation or unload lifecycle, and native-image support must still be
+  verified for the toolchain.
+- Prefer build-time generation when the needed inputs are available then, it preserves the
+  supported discovery/reload contract, and its build/debugging cost is justified. Post-build
+  providers or runtime schemas may need dynamic discovery with a typed boundary. Keep adequate
+  existing startup reflection; generated source improves visibility but does not by itself prove
+  equivalent behavior or lower cost — see java-annotations.
 - Reflection loses more than performance: no ordinary compile-time type checking, incomplete
   rename/find-usage/dead-code results unless specialized tooling understands the metadata, and
   less direct stack traces. Those costs apply even when invocation happens once at startup.
@@ -88,10 +90,11 @@ which becomes an execution primitive once initialization, construction or invoca
 - Use `VarHandle` rather than `sun.misc.Unsafe` or reflection for low-level field access with
   explicit memory-ordering semantics. Query `isAccessModeSupported`; final fields support reads,
   not arbitrary writes. `varhandles-and-memory-ordering` covers the access modes.
-- Do not use reflection to bypass a design you control. Reaching into a private field to test a
-  class, to mutate an immutable object, or to "just get this working" makes the private surface
-  a de facto API that the next refactor breaks. In tests, prefer constructing the object
-  through its real API — java-test-design.
+- Avoid reflection that bypasses a supported API or object invariant. Private access couples
+  callers to representation; in tests, prefer the real API or an explicit seam. Bounded legacy
+  characterization/tooling can justify reflection when compatibility prevents a better seam;
+  retain its access/lifecycle contract, with retirement or review conditions for temporary or
+  unsupported seams — java-test-design.
 - Native interop is a different boundary: foreign code can crash or corrupt the process,
   although Java-side checks may throw. FFM became final in Java 22; API support and native-access
   configuration depend on the target release. It is not a replacement for ordinary reflection;

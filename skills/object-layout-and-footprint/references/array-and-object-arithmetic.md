@@ -2,19 +2,19 @@
 
 Read at step 2, whenever a size is being computed rather than measured.
 
-**Environment for every executed figure on this page.** Temurin **25.0.3+9** (Windows x64),
+**Historical environment for every executed figure on this page.** Temurin **25.0.3+9** (Windows x64),
 **26.0.2+10** (Linux x64, `eclipse-temurin:26-jdk`) and **21.0.12+8** (Linux x64,
 `eclipse-temurin:21-jdk`); JOL `org.openjdk.jol:jol-core:0.17`, `ClassLayout.instanceSize()`;
 every value in the classic-header column reproduced identically on all three builds, and
 every compact-header value on 25.0.3 and 26.0.2. All 32 array sizes in §3 were independently
 confirmed by an `Instrumentation.getObjectSize` agent on 25.0.3 in both modes — the two
-mechanisms never disagreed. JDK 21 has no compact-header mode at all: `-XX:+UseCompactObjectHeaders`
+mechanisms never disagreed. This tested Temurin 21 build has no compact-header mode: `-XX:+UseCompactObjectHeaders`
 gives `Unrecognized VM option 'UseCompactObjectHeaders'` and the JVM refuses to start
 `[executed]`. **JDK 27 is not installed and nothing here was executed on it.**
 
 ## 1. Header composition
 
-Classic layout, the default on JDK 21, 25 and 26 `[executed]` — from
+Classic layout, the default on the tested Temurin 21, 25 and 26 builds `[executed]` — from
 `ClassLayout.parseInstance(new byte[1]).toPrintable()` on 25.0.3:
 
 ```text
@@ -44,8 +44,8 @@ So: instance header **12 → 8**, and the array length field stays 4 bytes and s
 offsets **20** for ≤4-byte elements and **24** for 8-byte elements. It also emits
 `Option UseCompressedClassPointers was deprecated in version 25.0` and
 `CDS will be disabled` `[executed]`, and it forces compact headers off (see
-`compact-object-headers.md` §4). It is not a configuration to design for; it is a
-configuration to recognise in someone else's artefact — by these sizes, all `[executed]` on
+`compact-object-headers.md` §4). Interpret the target's constraints and actual widths
+using these sizes, all `[executed]` on
 25.0.3, JOL and `Instrumentation.getObjectSize` agreeing:
 
 | Object         | Default | `-UseCompressedClassPointers` |
@@ -77,8 +77,9 @@ Identical output on 26.0.2 `[executed]`. This single line is the whole compact-h
 asymmetry: **12 for every element of 4 bytes or less, 16 for every 8-byte element.** The four
 bytes freed from the header are spent on a pad that keeps 8-byte elements 8-byte aligned.
 
-**`ref` is only a 4-byte element while compressed oops are on.** At 32 GB and above it
-is 8 bytes and `Object[]` moves into the second group. JOL's report at `-Xmx40g` with compact
+**`ref` is only a 4-byte element while compressed oops are on.** With them disabled it
+is 8 bytes and `Object[]` moves into the second group. Heap size alone does not decide this:
+alignment, collector and explicit flags matter. JOL's historical report at `-Xmx40g` with compact
 headers `[executed]`, 25.0.3 and 26.0.2:
 
 ```text
@@ -88,7 +89,7 @@ headers `[executed]`, 25.0.3 and 26.0.2:
                         ref  bool  byte  char  shrt   int   flt   lng   dbl
 ```
 
-So at 32 GB and above **`Object[]` behaves exactly like `long[]` and shrinks by nothing at any
+Under these 8-byte-oop, compressed-klass, alignment-8 conditions, **`Object[]` behaves like `long[]` and shrinks by nothing at any
 length** — measured `Object[0..8]` = 16/24/32/40/48/56/64/72/80, identical in both header
 modes. Every bolded `Object[n]` saving in §3 is a compressed-oops figure.
 
@@ -96,8 +97,9 @@ modes. Every bolded `Object[n]` saving in §3 is a compressed-oops figure.
 
 `ClassLayout.instanceSize()`, both modes, **at `-Xmx6g` with compressed oops on**, reproduced
 identically on 25.0.3 (Windows x64) and 26.0.2 (Linux x64), and cross-checked by
-`Instrumentation.getObjectSize` on 25.0.3 `[executed]`. `dflt` is the JDK 21/25/26 default;
-`COH` is the JDK 27 default. The three primitive columns hold at any heap size; the
+`Instrumentation.getObjectSize` on 25.0.3 `[executed]`. `dflt` is the tested Temurin 21/25/26 default;
+`COH` is the upstream JDK 27 default (source-only). The primitive columns require the stated
+header/class-pointer modes and alignment 8 even when heap size changes; the
 `Object[n]` column holds only under compressed oops — see §2.
 
 | n   | `byte[n]` dflt/COH | `int[n]` dflt/COH | `long[n]` dflt/COH | `Object[n]` dflt/COH |
@@ -113,7 +115,7 @@ identically on 25.0.3 (Windows x64) and 26.0.2 (Linux x64), and cross-checked by
 
 Three consequences:
 
-1. **No array of 8-byte elements ever shrinks under compact object headers, at any length.**
+1. **In these measured layouts, arrays of 8-byte elements do not shrink under compact headers.**
    Not "shrinks less" — by zero, from n = 0 upward. That is `long[]` and `double[]` always,
    and `Object[]` too once compressed oops are off. This is the fact that reverses the
    record-versus-array comparison (SKILL.md headline).
@@ -124,8 +126,8 @@ Three consequences:
    4 — and 0 otherwise. Note this is the **complement** of the rule for a plain instance;
    see `compact-object-headers.md` §1.
 3. **`byte[1]` through `byte[8]` all cost 24 bytes** by default. Seven of the 24 bytes of a
-   one-byte array are padding. A field-level `byte[]` per record is almost always the wrong
-   shape for that reason alone.
+   one-byte array are padding. For a proposed per-record `byte[]`, compare actual lengths,
+   sharing, mutability and required headroom before choosing a different representation.
 
 ## 4. Field ordering, measured
 
@@ -175,7 +177,7 @@ For the ordinary HotSpot classes in this experiment, you can predict a **size** 
 you cannot infer a portable **offset** from source. Treat the result as a model to verify,
 not a guarantee of the JVMS.
 If an offset matters — it does for cache-line contention, which is
-`false-sharing-and-contended` — it must be read from a JOL listing.
+`false-sharing-and-contended` — use verified target offsets, from JOL or direct VM tooling.
 
 The algorithm producing these offsets is `FieldLayoutBuilder`
 (`hotspot/share/classfile/fieldLayoutBuilder.cpp`), introduced by JDK-8237767 "Field layout
@@ -183,7 +185,7 @@ computation overhaul", fix version 15 (JBS, confirmed). Everything measured here
 size groups, references last, the 4-byte field hoisted into the classic header gap, subclass
 fields filling superclass holes (§5) — is that builder's output; layouts from a pre-15 JDK
 follow a different algorithm and must not be carried forward (not verified here — no pre-15
-build available). The offsets above were reproduced this pass with
+build available). The offsets above were reproduced in the historical audit with
 `Unsafe.objectFieldOffset` on 25.0.3, JOL-free: `int i @ 12` under classic headers,
 `long l @ 8` under compact ones.
 
@@ -243,8 +245,9 @@ column, which is smaller than either flag achieves alone.
 What alignment 16 does to the small arrays and boxes that dominate a real heap, `[executed]`
 25.0.3, agent and JOL agreeing: `Long` 24 → **32**, `byte[1..8]` 24 → **32**, `int[1]`
 24 → **32**, `long[1]` 24 → **32**, `String` object 24 → **32**, `ArrayList` 24 → **32**;
-`Integer`, `Object`, `HashMap$Node` and `Rec4` unchanged. Every object whose default size is
-`≡ 8 (mod 16)` pays 8 bytes; roughly half a typical heap does. The accepted range is
+`Integer`, `Object`, `HashMap$Node` and `Rec4` unchanged. In this comparison, objects whose
+alignment-8 size is `≡ 8 (mod 16)` pay 8 bytes; the affected share depends on the class mix.
+The accepted range is
 `[8 … 256]` and a power of two — 4 and 512 are refused at start-up `[executed]`; the
 compressed-oops boundary it buys is `4 GB × alignment`, measured at 16 as `-Xmx60g` on and
 `-Xmx64g` off (`production-footprint-checks.md` §2). Under compact headers the narrow klass
@@ -267,12 +270,13 @@ For the tested ordinary classes, the holes were unnecessary to predict total siz
 modes `[executed]`, with no hole term. Re-measure special/VM-injected, `@Contended`, preview
 value-class and future-release layouts. Holes matter for **offsets**, which is §4.
 
-Confirm before believing it: `ClassLayout.parseInstance(new Txn(1,1,1,1)).instanceSize()`
-must return 40, and `GraphLayout.parseInstance((Object) array).totalSize()` must return the total
-for a fully populated array of distinct records. The cast includes the reference array itself;
+For a decision requiring target measurement, a bounded fixture can check the predicted
+40-byte instance before any full population is allocated. A fully populated array of distinct
+records under these assumptions should give the calculated reachable total with
+`GraphLayout.parseInstance((Object) array).totalSize()`. The cast includes the reference array itself;
 without it, Java passes its elements as varargs roots and omits the array's own footprint.
-The prediction is what transfers to the next class; the measurement is what stops the
-prediction being wrong. Do both.
+Label a calculation as a model until the relevant target evidence supports it; reuse an
+adequate cross-check instead of allocating 40 million records merely to explain the arithmetic.
 
 Under compact headers the same record is `alignUp(8 + 24, 8)` = **32 bytes**, and the total
 falls to ≈ 1.34 GiB — a real 18% saving, because this record's fields happen to leave no hole

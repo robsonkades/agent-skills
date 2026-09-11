@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: estimation-under-uncertainty
-version: 1.1.1
+version: 1.1.2
 description: >-
   Producing a software estimate that carries its own uncertainty instead of hiding it: a range
   with explicit probability assumptions when supported, decomposition, PERT and the limits
@@ -40,6 +40,12 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - coding-agent-discipline
+  - engineering-communication
+  - requirements-and-acceptance
+  - technical-debt-decisions
 
 capabilities: []
 

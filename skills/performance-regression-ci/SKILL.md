@@ -41,20 +41,26 @@ This skill owns the automated **decision protocol** around performance evidence.
 
 ## Gate contract
 
-Write this contract before implementing the comparator:
+Start with the requested decision: constructing/calibrating a gate, reviewing its operating
+characteristics, or answering a narrow shell, result-format or statistical question. Reuse
+applicable contracts and evidence; retain an adequate gate. For a narrow review, return the
+finding or supported no-change conclusion, its evidence, and any material missing check.
+Do not require a new calibration or end-to-end campaign unless the claim needs one.
 
-| Field         | Required decision                                                        |
-| ------------- | ------------------------------------------------------------------------ |
-| Decision      | What merge, release, or investigation action follows each status?        |
-| Metric        | Exact JMH result/parameter tuple, unit, mode, direction, and aggregation |
-| Scope         | Critical benchmarks that block; diagnostic benchmarks that only report   |
-| MPIR          | Smallest practically important regression, in product-relevant units     |
-| Guardrail     | Absolute budget or SLO proxy that must not be crossed                    |
-| Evidence      | Independent unit, repetitions, pairing/blocking, interval or test        |
-| Errors        | Target false-block rate, desired detection power, multiplicity policy    |
-| Compatibility | Code, data, JDK, JVM flags, host, and harness fields that must match     |
-| Baseline      | Selection, retention, provenance, expiry, and promotion authority        |
-| Failure       | Meanings and exit codes for pass, regression, inconclusive, invalid      |
+For a new or materially changed comparator, define the applicable contract before implementation:
+
+| Field         | Required decision                                                                     |
+| ------------- | ------------------------------------------------------------------------------------- |
+| Decision      | What merge, release, or investigation action follows each status?                     |
+| Metric        | Benchmark/workload identity, population, parameters, unit, direction, and aggregation |
+| Scope         | Critical benchmarks that block; diagnostic benchmarks that only report                |
+| MPIR          | Smallest practically important regression, in product-relevant units                  |
+| Guardrail     | Any required absolute budget/SLO proxy; explicit limits of a relative-only decision   |
+| Evidence      | Independent unit, repetitions, pairing/blocking, interval or test                     |
+| Errors        | Target false-block rate, desired detection power, multiplicity policy                 |
+| Compatibility | Code, data, JDK, JVM flags, host, and harness fields that must match                  |
+| Baseline      | Selection, retention, provenance, expiry, and promotion authority                     |
+| Failure       | Meanings and exit codes for pass, regression, inconclusive, invalid                   |
 
 `MPIR` is a product/architecture decision, not the observed noise multiplied by a constant.
 Noise determines whether the available design can resolve that MPIR. If it cannot, improve
@@ -72,7 +78,7 @@ M = smallest practically important regression
 upper bound < M                 -> no material regression detected
 lower bound >= M                -> material regression detected
 otherwise                       -> inconclusive
-absolute guardrail breached     -> regression, independently of relative baseline
+configured guardrail breached  -> regression, independently of relative baseline
 ```
 
 Apply these rules only to valid, comparable measurements. Define whether an absolute
@@ -84,7 +90,8 @@ not a high-power alternative. Declare the above-M effect at which useful detecti
 This is a non-inferiority-style framing. It prevents “not statistically significant” from
 being translated into “the versions are equivalent.” A team may instead use a calibrated
 tolerance interval, control chart, Bayesian decision rule, or sequential test; document its
-assumptions and simulate its error behavior before enabling merge blocking.
+assumptions and calibrate its error behavior before enabling merge blocking. Reuse adequate
+existing calibration when the rule, population and operating conditions still match.
 
 For a lower-is-better metric:
 
@@ -104,6 +111,9 @@ Translate the product margin consistently: a 5% throughput decrease corresponds 
 `1 / 0.95 - 1`, about 5.263% on the inverse-ratio scale, not 5%.
 Never compare values until benchmark identity, parameter tuple, score unit, mode, and
 direction are compatible.
+For log-ratio inference, compare a log interval with a log margin, or back-transform both
+interval endpoints and the estimate to the declared relative scale. Never compare a raw
+log effect directly with a percentage margin.
 
 ## Experimental design
 
@@ -146,7 +156,9 @@ a false-positive rate or power.
 
 ## Environment compatibility
 
-Capture an environment/configuration fingerprint with every result:
+Capture the environment/configuration fields needed by the declared comparison with every
+result; use JMH-specific fields for JMH and the corresponding workload/harness fields for
+system trials:
 
 - benchmark artifact and source commits, dependency lock/checksum, dataset checksum;
 - JMH version, benchmark mode, unit, parameters, threads, forks, warm-up and measurement;
@@ -166,8 +178,11 @@ Compatibility is a policy, not exact string equality for every field. Classify c
 - new calibration epoch;
 - invalid comparison.
 
-A JDK, hardware, collector, dependency, harness, or dataset change usually starts a new
-epoch. Do not label that discontinuity a code regression.
+Separate intended treatment differences from uncontrolled drift. A declared release-bundle
+comparison may deliberately change JDK, flags or dependencies and estimate their combined
+effect; it does not isolate the application-code effect. Unplanned or incompatible changes
+may require a new calibration epoch. Use additional controls or a factorial design only when
+separating those effects is part of the decision. Do not label infrastructure drift a code regression.
 
 ## Multi-benchmark decisions
 
@@ -198,7 +213,8 @@ Useful policies:
 - **Recent compatible distribution:** detects deviations from current trunk; handles ordinary
   evolution but can ratchet gradual degradation.
 - **Both:** block against an absolute guardrail and compare with both champion and recent
-  history; usually the most informative production policy.
+  history when cumulative budget and local drift are both decision concerns. The extra
+  comparisons need an explicit joint policy; they are not mandatory for every gate.
 
 Only a trusted workflow may promote. Untrusted pull-request code may read an explicitly
 non-secret baseline but must not overwrite it, publish a trusted result, or execute with
@@ -206,6 +222,8 @@ privileged credentials. A missing, expired, malformed, or incompatible baseline 
 `inconclusive`/`invalid`, never a fabricated first-run pass.
 
 ## Pipeline architecture
+
+One useful design separates a cheap screen from controlled confirmation:
 
 ```text
 cheap PR screen
@@ -222,8 +240,9 @@ trusted trunk workflow
   -> promote baseline according to policy
 ```
 
-This two-stage design keeps feedback affordable without pretending a noisy executor can
-resolve small effects. A blocking gate needs a bounded policy for infrastructure failure and
+Use two stages when their cost and resolution serve the decision. An already trusted,
+controlled single-stage gate can be adequate; neither dedicated hardware nor an extra screen
+is required by its shape alone. A blocking gate needs a bounded policy for infrastructure failure and
 inconclusive results; silently retrying until green introduces optional-stopping bias.
 
 ## Failure protocol
@@ -266,7 +285,7 @@ predeclared decision plus empirical operating-characteristic study.
 
 **Anti-pattern: non-overlapping JMH `scoreError` intervals as a two-version test.** It happens
 because JSON exposes `scoreError`. That field describes JMH's aggregate estimate (for AVG,
-current JMH source uses a 99.9% mean-error calculation); interval overlap is not a general
+JMH 1.37 uses a 99.9% mean-error calculation); interval overlap is not a general
 paired or independent two-sample test and ignores run blocking. Keep the field for reporting,
 but analyze retained independent-unit observations using the declared design.
 
@@ -280,13 +299,16 @@ shared screen plus controlled confirmation when that meets the decision need.
 
 ## Review checklist
 
-- [ ] Metric, direction, unit, parameters, MPIR, and absolute guardrail are explicit.
+Apply the items relevant to the claimed gate behavior, reusing adequate evidence. A narrow
+explanation need not implement or rerun the full protocol.
+
+- [ ] Metric, direction, unit, parameters, MPIR, and any required absolute guardrail are explicit.
 - [ ] Independent experimental unit and pairing/blocking are explicit.
 - [ ] False-block rate, power, inconclusive rate, and runtime were calibrated.
 - [ ] Comparator rejects incompatible fingerprints and missing entries.
 - [ ] Multiplicity and retries have predeclared policies.
 - [ ] Baselines are immutable, attributable, epoch-aware, and promoted only by trust.
-- [ ] Pipeline preserves report artifacts and exact comparator status on every path.
+- [ ] Pipeline preserves comparator/logging status and evidence, or classifies their loss explicitly.
 - [ ] Injected regressions, no-change controls, malformed input, missing baseline, and
       infrastructure failure were tested end to end.
 - [ ] A green result is worded as bounded evidence, not proof of equal performance.
@@ -294,12 +316,12 @@ shared screen plus controlled confirmation when that meets the decision need.
 ## References
 
 - [Calibrating the gate](references/calibrating-the-gate.md) — experimental design,
-  calibration, inference choices, and baseline drift.
+  calibration, inference choices, and baseline drift. Read when those properties affect the requested decision.
 - [Pipeline construction](references/ci-pipeline.md) — result contract, safe shell status
-  capture, workflow trust boundaries, and end-to-end tests.
+  capture, workflow trust boundaries, and end-to-end tests. Read for pipeline or evidence-transport changes.
 - [OpenJDK JMH project](https://github.com/openjdk/jmh) — authoritative harness source and
   samples; pin the version used by the repository.
-- [JMH `Result` source](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java) — current definitions of score,
-  `scoreError`, confidence, and sample count; verify against the pinned JMH tag.
+- [JMH 1.37 `Result` source](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java) — source-review baseline for score,
+  `scoreError`, confidence, and sample count; verify the project's resolved version without upgrading it.
 - [GitHub Actions workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax) — documented shell invocation and fail-fast behavior.
 - [GitHub Actions dependency-cache reference](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching) — cache scope and low-trust security model.

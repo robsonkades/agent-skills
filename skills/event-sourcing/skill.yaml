@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: event-sourcing
-version: 1.2.1
+version: 1.2.2
 description: >-
   Event streams as authoritative state: adoption criteria, stream boundaries, expected-version
   appends, command idempotency, snapshots, projection correctness/rebuild, temporal replay,
@@ -45,6 +45,7 @@ suggests:
   - delivery-semantics
   - distributed-tracing-design
   - distributed-transactions-and-sagas
+  - domain-logic-organization
   - enterprise-transactions
   - humble-objects-and-functional-core
   - idempotency

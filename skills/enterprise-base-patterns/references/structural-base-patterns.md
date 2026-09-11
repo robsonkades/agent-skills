@@ -39,7 +39,8 @@ collaborator to inject.
 
 ## Separated Interface
 
-Declare the interface in the package that **uses** it; implement it elsewhere.
+Separate the interface from its implementation. Caller-owned placement is useful when
+inverting a dependency:
 
 ```text
 com.acme.orders.domain
@@ -48,9 +49,10 @@ com.acme.orders.persistence
     JpaOrders.java           ← implementation, depends on the domain
 ```
 
-The dependency now points from persistence to domain, not the reverse. This one placement
-rule is most of what ports and adapters means, and stating it as a small pattern
-demystifies the style (`layering-and-boundaries`).
+The dependency now points from persistence to domain, not the reverse. An independently owned
+contract module is another valid location when several consumers/providers share a stable API.
+Check the actual dependency graph and compatibility obligations before moving it
+(`layering-and-boundaries`).
 
 **Cost:** the implementation is not discoverable from the interface without tooling, and
 wiring must be explicit, through manual construction or configuration. Both are acceptable at a real
@@ -69,20 +71,22 @@ public final class ServiceRegistry {
 }
 ```
 
-**Costs:** dependencies vanish from constructors, so a class's real requirements are
+**Costs of this static locator:** dependencies vanish from constructors, so a class's real requirements are
 invisible; tests become order-dependent and must remember to reset it; and concurrent access
 needs care. In an application with dependency injection, almost every use is avoidable.
 
-**The remaining legitimate uses:** a static utility that genuinely cannot be injected;
-rehydrating a serialised object that must reconnect to services; and a plugin lookup at
-startup. In those cases keep it thread-safe, make it replaceable in tests, and keep it small.
+**Distinguish scoped lookup:** an injected plugin registry can legitimately select by a runtime
+key while keeping the lookup dependency visible. Prefer direct injection for fixed collaborators;
+where ambient lookup is unavoidable, keep it narrow and replaceable in tests. For either form,
+define key/tenant scope, missing-entry behavior, mutation and who closes providers. Protect actual
+compound operations when shared; `ConcurrentHashMap` alone does not define lifecycle or isolation.
 
 `ApplicationContext.getBean()` inside business code is the same pattern with the framework's
 name on it, and carries the same costs (`layering-and-boundaries`).
 
 ## Special Case
 
-A subclass providing behaviour for a particular case, so callers stop branching.
+A type providing behaviour for a particular case, so callers stop branching.
 
 ```java
 public sealed interface Customer permits RegisteredCustomer, GuestCustomer {
@@ -102,11 +106,14 @@ Twenty callers stop writing `if (customer == null || !customer.isRegistered())`.
 caller**. When callers need to know it is special — different messages, different flows,
 different authorisation — Special Case makes things worse: they will test with `instanceof`,
 which is worse than an explicit `Optional`.
+Establish the case first: a known guest is different from an unresolved customer lookup.
+Do not convert a failure into guest privileges or silently change authorization behavior.
 
 ```text
 Optional<T>     at a boundary, where the caller must decide what absence means.
 Special Case    inside the model, where absence has uniform, real behaviour.
-Null            never.
+Null            only where the existing interop contract requires it;
+                handle it explicitly before business use.
 ```
 
 A modern refinement: a sealed interface plus exhaustive `switch` gives Special Case's
@@ -127,17 +134,18 @@ class BrazilTaxCalculator implements TaxCalculator { ... }
 class PortugalTaxCalculator implements TaxCalculator { ... }
 ```
 
-**The condition that justifies it:** more than one implementation exists, or one is
-scheduled. With a single implementation you have bought an interface, a factory, a
-configuration key, a wiring test and a runtime failure mode (misconfiguration), in exchange
-for nothing.
+**The condition that justifies it:** a concrete configuration-time variation or supported
+external extension contract. One bundled implementation can be enough for a public SPI whose
+providers are deployed independently. A private switch with no such requirement may simply add
+wiring and misconfiguration costs; compare direct construction and preserve published contracts.
 
 **Costs even when justified:** the actual behaviour is not determinable from the code alone;
 a misconfiguration fails at startup if you are lucky and at first use if you are not; and
 every implementation needs its own tests plus a test that the selection works.
 
-Fail fast on an unknown value — a plugin mechanism that silently falls back to a default is
-how a production deployment quietly runs the wrong tax rules.
+For this tax selector, reject an unknown region rather than silently changing tax rules.
+Test supported, missing and ambiguous selection against the declared contract, including any
+explicit default, and identify provider initialization and cleanup ownership.
 
 ## Record Set and Value Object in modern Java
 
@@ -170,17 +178,19 @@ claiming a valid tax identifier
 
 ## Choosing, quickly
 
-| You are about to…               | Ask                                                             |
-| ------------------------------- | --------------------------------------------------------------- |
-| Add a base class                | Does _every_ subtype need every member?                         |
-| Add an interface                | Is there an inversion, test seam or runtime variation?          |
-| Add a registry or static holder | Can this be injected instead?                                   |
-| Add a null object               | Is the behaviour identical for every caller?                    |
-| Add a plugin point              | Does a second implementation exist or is one scheduled?         |
-| Add a mapper                    | Must both sides remain ignorant of each other?                  |
-| Wrap an external system         | Yes — and translate its types and its errors, not just its URL. |
+| You are about to…               | Ask                                                         |
+| ------------------------------- | ----------------------------------------------------------- |
+| Add a base class                | Does _every_ subtype need every member?                     |
+| Add an interface                | What dependency, API or extension contract does it protect? |
+| Add a registry or static holder | Is lookup required, and what owns its scope and lifetime?   |
+| Add a null object               | Is the behaviour identical for every caller?                |
+| Add a plugin point              | Is there a concrete variation or supported external SPI?    |
+| Add a mapper                    | Must both sides remain ignorant of each other?              |
+| Wrap an external system         | What isolation or policy is missing from the existing seam? |
 
 ## Sources
 
+- [Separated Interface](https://martinfowler.com/eaaCatalog/separatedInterface.html): separating contract from implementation; caller-package placement is not universal.
+- [Java 25 ServiceLoader](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ServiceLoader.html): independently deployed providers, selection with zero/one/many providers and configuration failures; not a requirement to adopt this loader.
 - [Java 17 CachedRowSet](https://docs.oracle.com/en/java/javase/17/docs/api/java.sql.rowset/javax/sql/rowset/CachedRowSet.html): disconnected tabular data support.
 - [Java 17 Record](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): shallow immutability and component-derived equality.

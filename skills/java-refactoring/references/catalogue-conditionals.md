@@ -4,9 +4,9 @@ Conditionals are where refactorings change behaviour without changing a single v
 almost always through operand order, short-circuit evaluation, or null. Each entry names
 the precondition that keeps the step honest.
 
-Order matters when several apply to one method: guard clauses first, then extract the
-remaining conditions into named predicates, then consolidate what duplicates. Consolidating
-before extracting hides the duplication you were trying to see.
+A useful sequence when several apply is guard clauses, then named predicates, then consolidation.
+Choose the order from the actual control flow and preconditions; an already clear conditional
+need not be reshaped to follow this sequence.
 
 The technique not here is Replace Conditional with Polymorphism and its sealed-switch
 alternative: that is a design choice with two defensible answers, and it lives in
@@ -76,10 +76,10 @@ sealed interface, or a named constant instance.
 
 **Preconditions, both required.** The default must be statable as a rule by someone who
 does not read the code ("an unknown customer pays list price"). And the special-case type
-must have a defined answer for _every_ method on the interface — if any method has to no-op
-or return a dummy, the absence is not a special case and the `NullPointerException` was
-telling the truth. A special case that absorbs operations turns a loud failure into quiet
-wrong data, discovered later and further from the cause.
+must have a contractual answer for every supported operation. A no-op can be correct when it
+is the declared absence policy; an invented dummy or silently swallowed required effect is not.
+Preserve distinct failures and do not infer from an existing `NullPointerException` that failure
+was the intended business rule.
 
 **Prefer `Optional` at method-return boundaries**; a special-case type pays when the value
 flows through many collaborators that would each otherwise unwrap it. Optional fields/components
@@ -88,26 +88,25 @@ decision. Preserve distinct failure/unknown/not-loaded states rather than flatte
 
 ## Introduce Assertion
 
-**In Java this is two different changes, and only one is a refactoring.**
+**Distinguish a verified invariant from a new runtime check.**
 
-`assert` is a no-op unless the JVM starts with `-ea`, and both mainstream build tools turn
-it on for tests: Maven Surefire's `enableAssertions` defaults to `true` (since 2.3.1) and
-Gradle's `Test` task sets it in its constructor. Gradle's `JavaExec`, `bootRun`, a plain
-`main` and a container entrypoint do **not** — which is exactly the asymmetry being relied
-on. Verify rather than assume only where a project has overridden it.
+An assertion normally has no effect when disabled; when enabled, a false condition throws
+`AssertionError`. Inspect the actual test and deployment launchers, package/class assertion
+settings and class-loader policy; build-tool defaults do not establish production behavior.
+Use explicit `-ea`/`-da` controls where those modes are supported, without changing real configuration.
 
 **Precondition:** the asserted expression reads only — no mutation, no I/O, no iterator
-advance, no collection copy on a hot path. Under `-ea` it runs and in production it does
-not, so a side-effecting assertion makes test and production genuinely different programs,
-and the divergence only ever surfaces in production. Check the expression and every method
-it calls for writes.
+advance, no collection copy on a hot path. Check both the condition and detail expression and
+their callees for effects or failures. Read-only is necessary but insufficient for preservation:
+an assertion that rejects previously supported input changes behavior whenever enabled.
 
-A newly red test is then information — the assumption was already false — not a regression
-to patch away, and never a reason to disable assertions.
+A newly red test disproves the asserted assumption for that input. Resolve the intended
+contract separately rather than disabling the assertion or relabeling the new failure as a
+behavior-preserving refactoring.
 
-Adding a **throwing** check (`Objects.requireNonNull`, an explicit `throw`) is the other
-change: inputs that previously worked by accident now fail. That is the other hat, and it
-gets its own commit whose message says the contract was tightened.
+Adding an always-active **throwing** check (`Objects.requireNonNull`, an explicit `throw`)
+also needs the old input/failure contract checked. If it newly rejects accepted input or
+changes failure timing/type, keep that contract change separate from the refactoring.
 
 ## Replace Conditional Chain with Pattern Matching
 

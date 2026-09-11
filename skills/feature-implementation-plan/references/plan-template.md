@@ -73,8 +73,9 @@ and what existing callers or consumers must tolerate.>
 
 ## Observability changes
 
-<Metrics with their names, log fields, spans, and the alert that would catch the HIGH
-risks in the register.>
+<Accepted metric, log and span changes; detection or reconciliation controls linked to RISK-*.
+Carry their owner, response and planned validation. Preserve missing detection as unresolved
+work or an explicitly accepted gap; do not invent an alert or imply coverage is verified.>
 
 ## Testing strategy
 

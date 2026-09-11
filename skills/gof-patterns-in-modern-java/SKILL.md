@@ -33,8 +33,11 @@ Implementation      interface + N classes + a selector
 mechanism           → optional; a lambda expresses the same intent
 ```
 
-Refusing the vocabulary because the mechanism changed is as costly as building the 1994 mechanism.
-Say "Strategy, as a function" and the design stays legible.
+Name the intent when useful ("Strategy, as a function"); keep established consumer-facing names.
+Before replacing a mechanism, inspect ordinary calls, public extension use and failure/misuse
+behavior. Reuse known forces and project evidence; ask only for missing identity, ownership,
+lifecycle or compatibility requirements that could change the choice. Retaining an adequate
+implementation is a valid result; state what evidence would justify changing it.
 
 Inspect compiler release/toolchains, resolved framework versions, CI/runtime and existing extension
 contracts before suggesting a replacement. Records/sealed types fit Java 17; record patterns and
@@ -49,20 +52,20 @@ this skill. Missing environment evidence makes a version-sensitive recommendatio
 COMMON MECHANISMS PROVIDED — reuse them when their guarantees match
     Iterator          Iterable / Iterator / Spliterator (Stream is a pipeline, not a replacement)
     Singleton-like lifecycle  the container's singleton scope (not global uniqueness)
-    Proxy             @Transactional, @Cacheable, JPA lazy loading
-    Decorator         servlet filters, interceptors, client builders
+    Proxy             configured proxy advice; JPA proxy/enhancement depends on mapping/provider
+    Decorator         filters/interceptors when their wrapping contract fits
     Observer          application events; reactive streams; brokers
     Chain of Resp.    filter chains, interceptor chains
 
 ALTERNATIVE EXPRESSIONS — compare with the existing contract
     Strategy          a lambda or a domain functional interface
     Command           a record; often a Runnable/Callable
-    Factory Method    an injected Supplier or a keyed map
+    Factory Method    Supplier/keyed map only when existing creation-hook contracts permit
     Visitor           sealed interface + exhaustive switch
     State             sealed states + one transition function
-    Prototype         a copy factory; usually immutability instead
-    Memento           an immutable state behind one reference
-    Template Method   a final class taking composed steps
+    Prototype         copy factory or immutable sharing, preserving required identity/ownership
+    Memento           immutable captures can preserve opaque restoration handles
+    Template Method   composed steps can retain intent; subtype hooks remain a distinct mechanism
     Builder           compare records/factories with staged construction needs
 
 DOMAIN DESIGN STILL REQUIRED — libraries may supply mechanisms;
@@ -135,9 +138,9 @@ THEN consider ScopedValue on Java 25+. ThreadLocal remains appropriate for
 - **The cost of indirection.** A lambda hides a dispatch site exactly as a class does.
 - **Naming.** "Strategy", "Adapter", "Mediator" still tell a reader what to expect, and the
   expectations differ.
-- **The high-risk set.** Singleton, Observer, Mediator, Proxy, Flyweight and Prototype are risky
-  for reasons the language does not address — global state, unspecified ordering, god objects,
-  hidden network calls, shared mutation, and broken copying.
+- **Unresolved risks.** Language features do not establish global-state isolation, event ordering,
+  cohesive coordination, remote call costs, safe sharing or copy semantics. Inspect which risks
+  the actual Singleton, Observer, Mediator, Proxy, Flyweight or Prototype implementation has.
 - **"No pattern" as an answer.** Modern features make it easier to reach, not less legitimate.
 
 ## References

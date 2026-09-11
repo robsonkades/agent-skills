@@ -19,13 +19,13 @@ service's availability, while distributed contracts need deployment and recovery
 | Proxy          | API gateway               | A deployment, TLS termination, authentication, rate limiting, its own outage |
 | Facade         | Backend-for-frontend      | A release cycle, a team, its own scaling and failure surface                 |
 | Observer       | Event-driven architecture | Explicit schema, delivery, ordering and recovery policies                    |
-| Mediator       | Orchestration / saga      | Required durable progress, deadlines and applicable compensation             |
-| Memento        | Event sourcing            | An append-only log, projections, replay, and the answer to "why"             |
-| Flyweight      | Distributed cache         | Invalidation, staleness policy, a network hop, a stampede on cold start      |
+| Mediator       | Orchestration / saga      | Persistence when recovery requires it, deadlines and applicable compensation |
+| Memento        | Event sourcing            | Recorded events and replay; reasons only when captured                       |
+| Flyweight      | Distributed cache         | Identity/freshness, capacity, access and recovery policies                   |
 | Command        | Message-driven design     | Chosen delivery/ordering scope, compatibility and terminal failure policy    |
 | Adapter        | Anti-corruption layer     | A module boundary, a team agreement, and a model — not a method signature    |
-| Chain          | Workflow engine           | Persistence, retries per step, visibility, human tasks                       |
-| Singleton      | Leader election           | Consensus, leases, fencing, split-brain behaviour                            |
+| Chain          | Workflow engine           | Step/progress/failure contracts; persistence and human tasks when needed     |
+| Singleton      | Leader election           | Grant and effect-authority contracts, failover and stale-owner handling      |
 
 The pattern in every row is a legitimate way to _implement part of_ the architectural thing. The
 error is treating them as the same decision, because the pattern's cost is a class and the
@@ -59,19 +59,19 @@ Hexagonal / ports and adapters
     the domain inside uses whatever patterns it needs
 
 CQRS
-    a command is Command; its handler is a use case
+    a command may use GoF Command; its handler carries out the write use case
     a projection may fold events; a fold is not automatically GoF Visitor
     read and write models may use different data-source patterns
 
 Event sourcing
     each event is a value; the aggregate's replay is a fold
-    a snapshot is Memento's durable relative
+    a snapshot may also serve as a memento; opacity and persistence are separate properties
     command validation may use a state machine; GoF State is one implementation choice
 
 Saga / process manager
-    an orchestrator is Mediator's distributed form
-    each step is Command; compensation is a separate Command
-    the saga's position is State, persisted
+    an orchestrator can use Mediator to own its interaction protocol
+    steps and applicable compensation can be represented by Command
+    progress required across restart must be recoverable; GoF State is one representation option
 
 Layered / clean architecture
     boundaries between layers are Facades or ports
@@ -96,8 +96,9 @@ constraint enforced by module structure and an architecture test, not by a class
       release cycle and an outage surface. Say which.
 
 "The Mediator will coordinate the services"
-    → an in-process hub, or a deployed orchestrator with durable state?
-      Establish required persistence, deadlines and compensation for effects needing undo.
+    → an in-process hub, or an orchestrator spanning remote participants?
+      Establish whether progress must survive restart, deadlines and the policy for effects
+      needing undo; compensation may be unavailable, requiring reconciliation or rejection.
 
 "Observer will decouple the modules"
     → inspect dispatch: synchronous local callbacks couple latency/failure; asynchronous dispatch

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: deoptimization
-version: 2.1.1
+version: 2.1.2
 description: >-
   Deoptimisation and recompilation on HotSpot: uncommon traps and their reason codes, the
   none / maybe_recompile / reinterpret / make_not_entrant / make_not_compilable actions,
@@ -47,6 +47,8 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - c2-sea-of-nodes
+  - compilation-and-inlining-logs
   - jit-inlining-and-escape-analysis
   - jvm-class-loading
   - safepoints

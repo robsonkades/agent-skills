@@ -13,9 +13,9 @@ per-pipeline executor API. Three facts follow:
    low-CPU container, splitting and coordination can easily cost more than they save
    (container-awareness).
 2. **Blocking work occupies those threads.** An HTTP call, a JDBC query, a lock or a
-   `Thread.sleep` inside a parallel pipeline holds a common-pool thread for its whole duration.
-   With a handful of threads, a few blocking pipelines starve every other parallel stream in
-   the process, including ones in code you did not write.
+   `Thread.sleep` inside a parallel pipeline can occupy a common-pool worker (or the helping
+   caller). Unmanaged blocking can exhaust useful workers and delay unrelated work; compensation
+   depends on the operation/runtime and is not an isolation or downstream-capacity guarantee.
 3. **Order and identity of threads are not yours to control.** The stream API has no per-pipeline
    executor, deadline or structured cancellation policy. Wrapping a pipeline in a custom
    `ForkJoinPool` is not a specified ownership mechanism and still leaves failure/cancellation
@@ -59,9 +59,9 @@ list of pointer-heavy domain objects.
   at a synchronization/throughput cost that must be measured.
 - **Worse throughput on a bigger machine**, because more common-pool threads contend on the
   same downstream dependency or lock.
-- **A parallel stream inside a request handler on a virtual thread.** The pipeline still runs
-  on common-pool platform threads, so the "cheap threads" property does not apply, and the
-  request now depends on a shared resource with workload coupling outside the request scope.
+- **A parallel stream inside a request handler on a virtual thread.** Forked work commonly uses
+  common-pool platform threads while the caller can help; a virtual caller does not make every
+  callback virtual or remove coupling to work outside the request scope.
 
 ## Gatherers: the supported extension point
 
@@ -91,7 +91,9 @@ List<Detail> details = ids.stream()
 `mapConcurrent` is the one that replaces most bad uses of `parallelStream()`: the work is
 I/O-bound, the concurrency limit is explicit and local to this call site, the threads are
 virtual, and encounter order is preserved. Note what it still does not give you: a per-element
-timeout, a retry policy, or partial-failure handling — one failing mapper fails the stream. For
+timeout, a retry policy, or partial-failure handling. A mapper failure encountered while delivering
+its result downstream fails traversal; a speculative result never consumed need not report its
+failure. For
 fan-out where those matter, use structured concurrency (structured-concurrency) and keep the
 policy explicit; concurrency-limiting-and-bulkheads covers choosing the limit.
 
@@ -102,24 +104,31 @@ encounter-ordered results do not imply ordered mapper effects. Set client timeou
 Fixed windows include a final short batch, and both window gatherers produce unmodifiable lists;
 verify that the batch consumer accepts those contracts.
 
-Writing a custom `Gatherer` is worthwhile for a genuinely reusable stream transformation
-(deduplicate-consecutive or chunk-by-predicate). Prefer it to a custom `Spliterator`,
-which is far harder to get right, and prefer both to a `peek`-plus-external-state hack, which
-is neither.
+On Java 24+, consider a custom `Gatherer` for a reusable stream transformation
+(deduplicate-consecutive or chunk-by-predicate). A `Spliterator` still fits source traversal or
+an adequate compatible implementation; a loop may be simpler for one use. Do not replace either
+with a `peek`-plus-external-state scheme whose required callbacks can be skipped.
 
 ## Checklist before merging a `parallel()`
 
-- [ ] The work is CPU-bound; no I/O, no locks, no blocking calls anywhere in the pipeline —
-      including inside library calls it makes.
-- [ ] The source splits cheaply and is sized.
-- [ ] There is a benchmark on realistic data showing the improvement, and it was run on
-      hardware resembling production (including the container CPU limit).
-- [ ] Nothing in the pipeline mutates shared state; collector identity/associativity and
-      accumulator-combiner compatibility hold. `CONCURRENT` is declared only when accumulation
-      into one result container really is thread-safe.
+- [ ] Useful parallel work outweighs overhead; inspect blocking/lock behavior in callbacks and
+      libraries. Concurrent I/O usually needs an explicit bounded execution/lifetime policy.
+- [ ] The source splits usefully; size characteristics are accurate when present, not mandatory.
+- [ ] Representative evidence supports the performance and shared-resource budget under relevant
+      load/CPU limits. Reuse adequate existing measurements; fill material gaps before claiming benefit.
+- [ ] No unsafe or interfering external mutation; intentional shared terminal actions have
+      the required synchronization/ordering contract. Collector identity/associativity and
+      accumulator-combiner compatibility hold; `CONCURRENT` requires safe accumulation into
+      one result container.
 - [ ] The result does not depend on encounter order, or `forEachOrdered`/`toList` is used
       deliberately.
-- [ ] The call site is not on a request path where common-pool contention would couple
-      unrelated requests together.
+- [ ] Any request-path/common-pool coupling is acceptable under the actual load and latency
+      contract; otherwise use an appropriate isolated execution design.
 - [ ] If the motivation was concurrent I/O, `Gatherers.mapConcurrent` or structured concurrency
       was considered first.
+
+## Primary references
+
+- [Java 25 Gatherers](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Gatherers.html)
+- [JEP 485: Stream Gatherers, final in Java 24](https://openjdk.org/jeps/485)
+- [Java 25 ForkJoinPool](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)

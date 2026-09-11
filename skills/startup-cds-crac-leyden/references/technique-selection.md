@@ -11,59 +11,65 @@
 | Portability                   | Bound to compatible JDK/runtime/image/platform | CRaC build, engine, OS/kernel/CPU/container compatibility     | Bound to compatible application, JDK, OS and CPU architecture       |
 | External state                | Process starts normally                        | Must close/recreate or explicitly handle every resource       | Process starts normally                                             |
 
-The last two rows decide most real cases before the second-to-last one gets a vote.
+Use compatibility and external-state requirements to exclude infeasible choices, then compare
+the work each remaining mechanism can actually remove. Existing adequate behavior can stay.
 
 ## Decision tree, constraints first
 
 ```
-Is slow startup a real, measured problem?
+Is there a measured startup cost that the current adequate default/CDS setup leaves unresolved?
+  no -> retain it; answer the narrow capability/review question without an adoption campaign
+  yes -> attribute the remaining cost and evaluate feasible candidates below
 |
-+- Linux, control over which JDK build ships, and the operational cost of a
-|  checkpoint image plus external-resource coordination is justified?
-|     yes -> CRaC, or a managed equivalent such as AWS Lambda SnapStart
-|     no  -> continue
++- Is substantial initialization/warm-up reusable as process state, with an accepted
+|  checkpoint lifecycle and supported runtime/engine/platform (or managed SnapStart contract)?
+|     yes -> evaluate CRaC/managed restore against simpler adequate alternatives
+|     no  -> exclude checkpoint/restore
 |
-+- Can a cache be produced in build/CI and used by every production instance
-|  without breaking reproducible builds?
-|     yes -> JDK 25 AOT cache (JEP 514 one-command flow): reuses selected loaded/linked
-|            state and profiles; requires a supporting HotSpot distribution/platform,
-|            but not a CRaC build or CRIU
-|     no  -> continue
++- Does supported class-loading/linking/profile coverage address the measured cost,
+|  and can exact compatible cache artifacts be produced and consumed under the release contract?
+|     yes -> compare supported AOT or AppCDS; JDK 25's one-command flow is an option,
+|            not a reason to upgrade or discard an adequate older/two-phase recipe
+|     no  -> retain default CDS and address the dominant uncached work
 |
 +- Repeated short-lived local/CI process with writable persistent path?
 |     yes -> dynamic AppCDS/AutoCreate may amortize creation; validate clean exit
-|     no  -> build AppCDS explicitly with the immutable runtime image if measured value remains
+|     no  -> explicit AppCDS creation is another option if measured value remains
 |
-+- Otherwise use the default archive actually present in the runtime image and optimize the
-   measured dominant phase rather than adding another startup artifact.
++- Adopt only a candidate whose measured benefit and lifecycle/compatibility costs justify it.
 ```
 
 ## JEP status at the JDK 25 baseline
 
-Status checked against OpenJDK on 2026-09-05: 514 is Closed/Delivered for 25 and 516 for 26.
+The earlier 2026-09-05 status check recorded 514 Closed/Delivered for 25 and 516 for 26;
+the 2026-09-11 source check retains those statuses.
 These are release integration facts, not a promise about installed/vendor builds or GA artifacts
-on a target platform. Verify vendor release availability separately. Leyden's project page still
-lists native-code AOT compilation as proposed work; the JDK 25 column above remains profile-based.
+on a target platform. Verify vendor release availability separately. On 2026-09-11, JEP 544
+lists AOT code compilation as Candidate with no release row, while Leyden's overview still
+labels it in progress/TBD. The JDK 25 column above remains profile-based.
 
-| JEP / issue | What it delivers                                                  | Status                                                                                                     |
-| ----------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| 310         | Application classes in the shared archive (AppCDS)                | Delivered, JDK 10                                                                                          |
-| 341         | Default CDS archives; `-Xshare:auto` is the factory behaviour     | Delivered, JDK 12                                                                                          |
-| 350         | Dynamic CDS: `-XX:ArchiveClassesAtExit`                           | Delivered, JDK 13                                                                                          |
-| JDK-8261455 | `-XX:+AutoCreateSharedArchive` (an enhancement, not a formal JEP) | Delivered, JDK 19                                                                                          |
-| 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview                                                                         |
-| 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                                                                                          |
-| 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                                                                                          |
-| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)                                                                              |
-| JDK-8377932 | Affected AOT-cache builds accepted a modified application JAR     | Corretto develop changelog lists the fix under 25.0.4.7.1; qualify the exact vendor build, not just 25.0.x |
+| JEP / issue | What it delivers                                                  | Status                                                                                                                                     |
+| ----------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 310         | Application classes in the shared archive (AppCDS)                | Delivered, JDK 10                                                                                                                          |
+| 341         | Default CDS archives; `-Xshare:auto` is the factory behaviour     | Delivered, JDK 12                                                                                                                          |
+| 350         | Dynamic CDS: `-XX:ArchiveClassesAtExit`                           | Delivered, JDK 13                                                                                                                          |
+| JDK-8261455 | `-XX:+AutoCreateSharedArchive` (an enhancement, not a formal JEP) | Delivered, JDK 19                                                                                                                          |
+| 483         | AOT class loading and linking; three-step `record`/`create` flow  | **Delivered, JDK 24**, not preview                                                                                                         |
+| 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                                                                                                                          |
+| 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                                                                                                                          |
+| 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)                                                                                                              |
+| 544         | Native application code in an AOT cache                           | Candidate, no target release listed on 2026-09-11; not a JDK 25 capability                                                                 |
+| JDK-8377932 | Affected AOT-cache builds accepted a modified application JAR     | Current Corretto develop capture lists it under 25.0.3.9.1; earlier record differed. See validation reference; qualify actual vendor build |
 
 ## Measurement contract
 
-There is no transferable percentage. Report cold-process cohorts for at least: process spawn,
-application-ready, first successful representative transaction, first transaction meeting the
-latency SLO, and time/requests to stable throughput. Record CPU quota, memory limit, storage/cache
-state, JDK build/flags, image digest and training coverage. Compare p50/p95/p99 and failures under
-concurrent scale-out; randomized interleaving avoids attributing host warming to one technique.
+There is no transferable percentage. For a claimed speedup, compare cold-process cohorts at
+the relevant boundary: useful command/job completion for finite work; application readiness,
+representative success, latency target and stable throughput for service claims that depend on
+those phases. Record relevant CPU/memory limits, storage/cache state, JDK build/flags, image
+identity and training coverage. Report failures and distributions the sample count can support;
+exercise concurrent scale-out when that is the claimed use. Interleave comparable runs to
+control host warming. A source-only explanation or adequate unchanged setup needs no new benchmark.
 
 ## AOT coverage is observed, not inferred from `<clinit>` shape
 
@@ -90,3 +96,4 @@ rather than eliminating it.
 - [JEP 514: Ahead-of-Time Command-Line Ergonomics](https://openjdk.org/jeps/514)
 - [JEP 515: Ahead-of-Time Method Profiling](https://openjdk.org/jeps/515)
 - [JEP 516: Ahead-of-Time Object Caching with Any GC](https://openjdk.org/jeps/516)
+- [JEP 544: Ahead-of-Time Code Compilation](https://openjdk.org/jeps/544)

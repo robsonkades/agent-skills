@@ -36,32 +36,37 @@ serve before the proxy is up, and the proxy can exit while the app is still drai
 Inspect cluster/API/kubelet versions, feature gates, injected containers, controller rollout
 policy and effective resources. Preserve the deployed Java baseline (the HttpClient sketch
 requires Java 11+) and cluster policy; the skill does not authorize upgrades. Missing probe,
-resource or traffic evidence is unknown. Return the selected placement, lifecycle/failure
-contract, peak resource cost, validation performed and remaining operational checks.
+resource or traffic evidence is unknown. Use the steps needed for the question and reuse adequate
+evidence. A narrow API/lifecycle explanation or an adequate existing boundary need not trigger a
+new placement campaign. Return the supported keep/change conclusion and material limits; for a
+placement or lifecycle change, include the relevant capability, failure and resource contracts.
 
 ## Workflow
 
-1. **Name the capability and why the application cannot carry it.** "A library exists in our
-   language and we own the code" is the lower-operational-cost baseline; compare isolation,
-   rollout, language coverage and failure containment before rejecting it. Read
-   `references/sidecar-or-node-agent.md` before continuing.
+1. **Name the capability and its ownership.** When application changes are possible, compare a
+   maintained library with required process isolation, rollout, language coverage and failure
+   containment. Owning the code does not settle placement. Read
+   `references/sidecar-or-node-agent.md` when choosing or reconsidering placement.
 2. **Choose the unit of deployment**: per pod (sidecar), per node (DaemonSet), or in process.
-   Per-pod cost is paid once per replica; per-node cost once per node. That ratio is usually
-   the decision, not elegance.
+   Per-pod cost is paid once per replica; per-node cost once per node. Compare that cost only
+   after capability, security, hard capacity and failure constraints are satisfied.
 3. **When the cluster supports it, prefer a native sidecar** — an init container with
    `restartPolicy: Always` — when startup, termination or Job completion ordering matters, so
    the kubelet starts it before the app containers and terminates it after them. Alpha in
-   Kubernetes 1.28, on by default from 1.29, stable in 1.33. Check the cluster version before
-   relying on it; feature-gate and API compatibility must be verified during admission and
-   rollout on mixed-version clusters.
-4. **Give it `requests` and `limits`.** They are per container, but the QoS class and node
-   pressure eviction are per pod, so an unbounded sidecar degrades the app's scheduling.
-5. **Write down the coupling surface** — which `localhost` port, which shared volume, and
-   nothing else. Filesystems and the PID namespace are not shared unless you ask for it.
+   Kubernetes 1.28, on by default from 1.29, stable in 1.33. The shutdown ordering described
+   here applies from 1.29; 1.28 alpha had different termination behavior but can support a
+   startup-only requirement with its gate enabled. Verify effective node and API versions,
+   feature gates and admission compatibility, especially during mixed-version rollouts.
+4. **Set resources from demand and cluster policy.** Account for requests, enforced memory/CPU
+   bounds, burst needs and effective QoS. A deliberate policy can omit CPU limits to avoid
+   throttling while accepting the resulting QoS; do not impose Guaranteed at any cost.
+5. **Write down the coupling surface** — listener/protocol, shared mounts and any deliberately
+   exposed management/agent or process-namespace interface. Specify identity, permissions and
+   lifetime. Filesystems and the PID namespace are not shared unless configured.
 6. **Decide what the app does when the sidecar is up and answering wrongly.** A crash loop is
    visible to Kubernetes; a gray failure needs meaningful probes and request-path telemetry.
-7. **Instrument per container**, not per pod: restarts, memory and CPU broken out by
-   container name, or the sidecar's regression stays invisible inside the pod's totals.
+7. **Retain container identity alongside Pod totals** for relevant restarts, memory, CPU and
+   request-path evidence, so an aggregate does not hide the responsible process.
 
 ## Decision block
 
@@ -72,16 +77,16 @@ Use a sidecar when:
 - the workload is a vendor or legacy image you cannot rebuild;
 - the policy must ship on its own cadence, independent of the application release.
 Avoid a sidecar when:
-- one language, code you own, and a library already does it — you are paying a container, a
-  loopback hop, a memory floor per replica and a lifecycle problem to avoid a dependency;
-- the sidecar must see the app's in-process state — heap, threads, session objects — which
-  no volume or socket exposes;
-- the added memory times the replica count is a bigger number than the problem: 128 MiB
-  across 300 replicas is roughly 37 GiB of cluster memory for one capability.
+- an adequate library meets the isolation/ownership and latency contract with less total cost;
+- required application state has no supported, authorized exposure. Deliberate JMX/JVMTI,
+  agent or shared-PID integration can expose selected state, with its own security/lifecycle cost;
+- the peak resource budget cannot fit or is not justified. Illustratively, 128 MiB across
+  300 replicas is 37.5 GiB; requests, limits and observed working set are different quantities.
 Prefer a node agent (DaemonSet) instead when:
 - the input is already at the node boundary — stdout, node metrics, host network — so one
   process per node replaces N per pod;
-- the fleet is large and the capability is uniform and read-only.
+- the agent can enforce required workload identity, isolation and policy within node capacity;
+  fleet size or a read-only capability alone does not establish that.
 Prefer changing the application instead when:
 - you own the code, the capability sits on the request path, and the latency budget is tight
   enough that a loopback hop is measurable against it.
@@ -97,22 +102,24 @@ Prefer changing the application instead when:
   collide; different addresses or protocols can coexist. Allocate listeners explicitly.
 - Ordinary containers have **no ordering guarantee**. The kubelet does not wait for one app
   container to become ready before starting the next, and gives no defined termination order
-  between them. Every "start the proxy first" hack — a sleep, a retry loop, an init container
-  that polls — is a workaround for that missing guarantee, not a fix for it.
-- A native sidecar guarantees **ordering relative to the app containers**: started first,
+  between them. An explicit bounded application readiness/retry and shutdown protocol can
+  satisfy the dependency contract; it does not add kubelet ordering. A fixed sleep is not
+  readiness evidence. An ordinary init step cannot wait for a regular app container that
+  only starts after init completion.
+- A supported native sidecar on Kubernetes 1.29+ provides **ordering relative to the app containers**: started first,
   stopped after app containers during graceful termination, and restarted independently even when the pod's `restartPolicy` is `Never`
   or `OnFailure`. Without a startupProbe, started means its process is running, not that it
   can serve. Readiness affects Pod readiness, not initial startup ordering. Termination shares
   the Pod grace budget; node failure or force-kill cannot guarantee an ordered graceful drain.
-- In a `Job`, an ordinary sidecar that never exits keeps the pod `Running` forever and the
-  Job never completes. This is the most common reason a batch pod hangs at 1/2 containers
-  ready. A native sidecar is terminated by the kubelet once the last app container exits,
-  which is the fix.
+- In a `Job`, a running ordinary helper can prevent successful completion after the main
+  containers finish. A native sidecar does not block
+  completion after app containers finish. An ordinary helper can also terminate through a
+  supported completion/failure protocol; inspect all containers and effective Job policy.
 - Under traditional container-level resources, adding a container without matching non-zero
   CPU and memory requests/limits drops the pod out of **Guaranteed** QoS. Kubernetes 1.34+
   can instead classify from Pod-level resources when that beta feature is enabled. Verify the
-  effective cluster policy; QoS influences node-pressure eviction preference but is not an
-  absolute eviction order independent of requests, priority and actual usage.
+  effective cluster policy. QoS can help estimate memory-pressure eviction risk; the kubelet
+  ranks using requests, priority and actual usage, not the QoS label itself.
 - A container-cgroup OOM is often localized, but inspect killed processes, cgroup level and
   node evidence. Pod-level limits, node OOM or eviction can affect the app too. Restart follows
   the effective container policy; native sidecars use Always during Pod life. Sizing the JVM
@@ -128,9 +135,9 @@ Prefer changing the application instead when:
 - Use `kubectl logs -c <container>` explicitly to select the peer; defaults/annotations may
   otherwise select a container. Inspect metric identity and aggregation: a missing container
   label does not itself imply summation or identify which process was measured.
-- Never justify a sidecar as "transparent to the application". It adds latency, a startup
-  dependency and a new failure mode. If you cannot say which of the three you measured, the
-  claim is unfalsifiable.
+- Qualify "transparent": unchanged application code or API does not establish zero resource,
+  latency or failure cost. Identify the actual interface, dependency and degradation policy;
+  measure the relevant cost before claiming a performance benefit.
 
 ## References
 

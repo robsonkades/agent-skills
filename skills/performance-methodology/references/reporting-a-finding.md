@@ -4,15 +4,18 @@ A performance investigation ends in a claim someone else will act on — a chang
 change refused, or a budget spent. The claim is only as good as what is attached to it, and the
 attachments are the part routinely omitted.
 
-## The five things a finding must carry
+## The evidence a finding needs
 
-| Part                                | Why it is not optional                                                                                                                       |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **The claim**                       | One sentence, falsifiable. "Deserialisation is 40% of request CPU", not "serialisation is slow".                                             |
-| **The measurement**                 | What was measured, with which tool, under which load, on which JDK and hardware. A number with no method is an opinion with a decimal point. |
-| **The uncertainty**                 | An interval/distribution tied to the experimental unit and analysis; sample count alone is context, not an uncertainty estimate.             |
-| **The mechanism**                   | What explains the effect, and which parts remain hypotheses. A controlled treatment effect can be established before its detailed mechanism. |
-| **The falsification you attempted** | What you did to try to make the finding wrong, and what happened. This is the part that separates a finding from a first plausible story.    |
+Scale the detail to the decision. An observation or a missing-measurement finding need not invent
+a causal mechanism or numerical interval; explain the available support and its actual limits.
+
+| Part                                | Contribution                                                                                                                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The claim**                       | One sentence, falsifiable. "Deserialisation is 40% of request CPU", not "serialisation is slow".                                                        |
+| **The measurement**                 | What was measured, with which tool, under which load, on the relevant runtime and hardware. A number with no method is an opinion with a decimal point. |
+| **The uncertainty**                 | Coverage/measurement limits; numerical estimates need uncertainty tied to their experimental unit and analysis. Sample count alone is context.          |
+| **The mechanism**                   | What explains the effect, and which parts remain hypotheses. A controlled treatment effect can be established before its detailed mechanism.            |
+| **The falsification you attempted** | What you did to try to make the finding wrong, and what happened. This is the part that separates a finding from a first plausible story.               |
 
 The fifth is the one that gets left out and the one a reviewer should ask for first. An
 investigation that never tried to break its own conclusion has not tested it.
@@ -70,8 +73,9 @@ Three outcomes that people hesitate to write down and should:
 - **"The bottleneck is elsewhere."** Amdahl's Law applies before the work, not after: a component
   that is 4% of comparable fixed-work elapsed time can save at most 4% if the remainder
   stays unchanged. This is not a bound on endpoint p99 or queueing amplification.
-- **"There is no measurement yet."** The honest deliverable is the measurement to take, not a
-  ranked list of plausible causes. `jvm-performance-review` treats this as a first-class output
+- **"There is no measurement yet."** The honest deliverable is the measurement to take.
+  Existing code or incident evidence may prioritize hypotheses and discriminating checks, but does
+  not turn them into measured causes. `jvm-performance-review` treats this as a first-class output
   rather than a failure, and so should a report.
 
 ## What not to put in
@@ -106,6 +110,6 @@ The technical reader wants the mechanism. The person approving the work wants th
 served by the same order, which is the one `engineering-communication` sets out: what is true,
 what follows from it, what is still uncertain, the options, and a recommendation.
 
-What this skill adds to that order is the evidence discipline: every "what is true" carries its
-method, every "what follows" carries its mechanism, and "what is still uncertain" is the section
-that must not be empty. If it is empty, the investigation stopped at the first plausible answer.
+What this skill adds is evidence discipline: each claim carries its method, each causal inference
+states its support, and remaining uncertainty names a real limitation or follow-up. Do not invent
+uncertainty or additional findings merely to fill a section; keep conclusions within tested scope.

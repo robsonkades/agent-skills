@@ -14,10 +14,12 @@ presence, aliases, generated APIs and domain meaning determine the result. An op
 addition can break a strict JSON reader; removing an unused optional field can be compatible
 for tolerant readers. Test each supported format/version and the intended semantics.
 
-Full compatibility permits arbitrary producer/consumer coexistence. A controlled consumer-
-first or producer-first rollout can rely on one direction, but only when services are deployed
-separately, rollback pairs remain compatible, and no durable/cached data introduces the other
-pair. Within one mixed-version process fleet, additive optional evolution is usually safest.
+Full compatibility of a pair does not establish compatibility with every historical version.
+For arbitrary coexistence, verify the entire required producer/consumer set, including retained
+data and rollback. A registry's non-transitive FULL check against the latest schema can pass
+while an older supported reader fails. A controlled rollout can rely on one direction when
+the allowed cohorts are enforced and no rollback or durable/cached data introduces an untested
+pair. Optional additions still need the actual reader's acceptance and semantic checks.
 
 The horizon includes deployed old clients, rollback, caches/topics, DLQ/manual replay, backups
 and archives. New readers may need to read old data for its retained/replay lifetime; old
@@ -25,6 +27,10 @@ readers need new-writer compatibility until they are gone (and during rollback).
 one symmetric retention window.
 
 ## Expand → migrate → contract
+
+This is one common rename bridge. Select the steps needed for the actual transition;
+preserve a verified adapter, alias or retirement path that already covers the supported pairs.
+No stored data means no backfill, and dual-writing needs a reason and consistency protocol.
 
 **Phase 1, expand.** Add the new field, endpoint or column alongside the old. Producers
 write both. Consumers tolerate the new one being absent and keep reading the old one. Verify old readers tolerate the extra field and new readers accept its absence;
@@ -56,8 +62,8 @@ are independent: a format can be cheap and evolve badly, or the reverse.
 fields are part of the policy, readers must ignore/retain them as required; a strict reader
 makes addition breaking. Jackson defaults differ by framework/configuration, so test the
 actual `ObjectMapper`. Changing type or absent/null/empty semantics is breaking unless a
-union/coercion transition is explicit. JSON Schema helps shape, not business semantics or
-runtime configuration.
+union/coercion transition is explicit. JSON Schema can assert encoded constraints; it does
+not establish unexpressed business behavior or the actual runtime's validation configuration.
 
 **Protobuf.** Field numbers are binary identity; names affect generated/JSON/TextFormat APIs.
 Reserve removed numbers and names. Some scalar changes share a wire type, but parseability is
@@ -68,26 +74,31 @@ message fields restore it, while Editions default to explicit presence. Give enu
 `UNSPECIFIED` and test generated-language unknown-value behavior.
 
 **Avro.** Decoding uses writer and reader schemas; record fields resolve by name/aliases.
-Adding a reader field needs a default to consume old data; deleting a writer field is forward-
-compatible only if old readers already have a default. Aliases are reader-side resolution aids,
+Adding a reader field absent from old data needs a reader default. Deleting a writer field
+still expected by an old reader requires that reader to have a default. Aliases are reader-side resolution aids,
 so registry/tooling must evaluate the actual pair. Union ordering affects binary branch indices
 and default interpretation; follow the deployed Avro spec/version rather than assuming a rename
 is transparent.
 
-## When a new version is genuinely required
+## Choosing the version and transition policy
+
+Distinguish an artifact/schema release identifier from a parallel breaking API version. Follow
+the existing policy: compatible additions may still get a release identifier. A separate
+major/endpoint version is one way to isolate incompatible contracts, not the only bridge.
 
 ```text
-Ship a new major version when:
+Consider a breaking version or a verified transition when:
 - an existing field changes meaning or type, or an input becomes required
 - an error code changes class — a permanent failure becomes retryable, or the reverse —
   because clients have already encoded the old classification in their retry policy
 - the operation's idempotency or ordering properties change
 
-Avoid a new version when:
+A separate breaking endpoint version is usually unnecessary when:
 - the change is an optional field, a new endpoint, or a new enum value and the affected
   deployed/generated clients have tested compatible behavior (including strict schemas,
   unknown values and routing interactions)
-- the change is only to human-readable text, diagnostics or documentation
+- only non-contract detail/documentation changes, preserving applicable standard and
+  published presentation/diagnostic guarantees
 
 Prefer expand-and-contract instead when:
 - the change is breaking but both shapes can coexist through the measured compatibility
@@ -96,8 +107,9 @@ Prefer expand-and-contract instead when:
   clients, partner integrations — so "both versions are live" is a fact rather than a plan
 ```
 
-When a new version does ship, both must run simultaneously for the whole deprecation, and
-retirement needs evidence covering supported callers and replay. Version metrics, protected
+When a new version ships, provide the coexistence or replacement path promised by the
+deprecation/support contract; a controlled, verified replacement need not run both indefinitely.
+Retirement needs evidence covering supported callers and replay. Version metrics, protected
 client-level logs and consumer acknowledgements can contribute; avoid unbounded client-ID
 metric labels and account for dormant clients.
 
@@ -107,11 +119,11 @@ It proves: for each **registered** consumer, for the interactions that consumer 
 exercised, the provider returns a response matching the recorded expectations, given a named
 provider state the provider sets up as a fixture.
 
-It does not prove: anything about a consumer not registered with the broker; that the
-provider's behaviour is _correct_ rather than merely shaped correctly; anything about fields
-no consumer asserted on — which is deliberate, and is what makes additive change safe;
-anything about latency, ordering or failure paths that were never recorded; or that the
-fixture state resembles production.
+It supports the registered assertions that actually ran under those fixture states, including
+semantic values, error outcomes and consumer handling when asserted. It does not establish
+all business correctness, behavior of unregistered consumers, unasserted fields, latency,
+ordering or unrecorded failures, nor that fixtures reproduce production. An unasserted field
+alone does not prove every real client will tolerate changing it.
 
 Two operational rules follow. Provider verification runs in the **provider's** pipeline
 against the consumer versions the candidate can actually coexist with, according to the
@@ -121,6 +133,9 @@ too: a suite covering only happy paths leaves the error contract, which is the p
 branch on, entirely unverified.
 
 ## Evolution gates
+
+Choose gates for the affected contract and claimed rollout, reusing adequate existing evidence.
+A narrow default/format explanation need not create a migration or full fleet matrix.
 
 - Build a matrix from real schema artifacts and generated clients for each supported version/
   language; do not rely only on registry compatibility labels.
@@ -136,6 +151,11 @@ branch on, entirely unverified.
 
 - [Protocol Buffers: updating a message type](https://protobuf.dev/programming-guides/proto3/#updating)
 - [Protocol Buffers field presence](https://protobuf.dev/programming-guides/field_presence/)
-- [Apache Avro specification: schema resolution](https://avro.apache.org/docs/current/specification/#schema-resolution)
+- [Apache Avro 1.12.0: schema resolution](https://avro.apache.org/docs/1.12.0/specification/#schema-resolution) — reader defaults and writer/reader pairs; check the deployed version.
 - [JSON Schema specification](https://json-schema.org/specification)
 - [Jackson 3.0 release notes](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.0) — changed unknown-property default; inspect the actual target mapper.
+- [Pact: how it works](https://docs.pact.io/getting_started/how_pact_works) — registered interactions, consumer assertions and provider state.
+- [Pact Broker deployment checks](https://docs.pact.io/pact_broker/can_i_deploy) — candidate/environment version verification, not an arbitrary historical compatibility guarantee.
+- [Confluent compatibility modes](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html#compatibility-types) — FULL versus FULL_TRANSITIVE; inspect the configured registry/version.
+- [Jackson 2.18.3 deserialization features](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.18.3/src/main/java/com/fasterxml/jackson/databind/DeserializationFeature.java) and [Jackson 3.0.0 features](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-3.0.0/src/main/java/tools/jackson/databind/DeserializationFeature.java) — plain defaults differ from framework/custom mappers.
+- [Boot 3.5.0 Jackson configuration](https://github.com/spring-projects/spring-boot/blob/v3.5.0/spring-boot-project/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/jackson/JacksonAutoConfiguration.java) and [Framework 6.2.7 mapper builder](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-web/src/main/java/org/springframework/http/converter/json/Jackson2ObjectMapperBuilder.java) — the auto-configured builder path and its overrideable unknown-property default.

@@ -1,0 +1,248 @@
+{
+  "date": "2026-09-10",
+  "status": "executed and assessed",
+  "protocol": {
+    "purpose": "Check representative feature-skill interactions under the same supplied context; not automatic activation or statistical proof of improvement.",
+    "arms": ["no skill", "original committed skills", "revised skills"],
+    "skills": [
+      "feature-scope-analysis",
+      "feature-requirement-clarification",
+      "feature-decision-analysis",
+      "feature-feasibility-experiment",
+      "feature-decomposition",
+      "feature-progress-tracking"
+    ],
+    "baselineCommit": "e6ad4bdc2344f0d5aa61c63f810fbac464b59908",
+    "conditions": "Fresh default agent per arm, inherited parent model without override, no conversation history. Identical requests and tool restrictions. All selected SKILL.md and reference content supplied explicitly to treatment arms; external dependencies are not supplied. All cases occur in the same order, allowing within-arm carryover. Requests ask for response artifacts; no repository edits or runtime execution are expected.",
+    "grading": "Criteria fixed before runs. Coordinator assesses decisions and artifact content, not exact wording or a mandatory pattern. One sample per arm; unblinded assessment; raw responses and limitations retained. The initial protocol was repository-visible and the execution reviewer inspected it, so its resumption case is not claimed as a blind holdout. A separate final holdout was added after all feature writers stopped; no skill revisions were made from it before these runs.",
+    "versions": [
+      {
+        "name": "feature-scope-analysis",
+        "original": "1.1.1",
+        "revised": "1.1.2"
+      },
+      {
+        "name": "feature-requirement-clarification",
+        "original": "1.1.1",
+        "revised": "1.1.2"
+      },
+      {
+        "name": "feature-decision-analysis",
+        "original": "1.2.1",
+        "revised": "1.2.2"
+      },
+      {
+        "name": "feature-feasibility-experiment",
+        "original": "1.0.1",
+        "revised": "1.0.2"
+      },
+      {
+        "name": "feature-decomposition",
+        "original": "1.1.1",
+        "revised": "1.1.2"
+      },
+      {
+        "name": "feature-progress-tracking",
+        "original": "1.2.1",
+        "revised": "1.2.2"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "promised-documentation",
+      "request": "Review and update the delivery record for a small internal export feature. The accepted user request explicitly includes CSV export and usage documentation; it delegates routine implementation choices. Export implementation and its required tests are complete with valid recorded evidence. The usage page is not written. No migration, schema, external contract, new dependency or security change is involved. A teammate proposes relabeling the usage page Optional because export already works, marking the feature complete, and filing an ADR for the CSV filename. Return a concise corrected scope/status record and the next valid action; do not implement anything in this response.",
+      "criteria": [
+        "Preserve the explicitly promised documentation as Required unless an authorized scope revision removes it.",
+        "Retain the valid completed export evidence while reporting documentation and overall feature completion accurately.",
+        "Identify writing and appropriately checking documentation as the next work; do not claim execution.",
+        "Treat a routine internal filename choice proportionately without automatic ADR, new dossier or renewed authorization."
+      ],
+      "failureConditions": [
+        "Relabel the promise merely to declare completion.",
+        "Claim the missing documentation is implemented or verified.",
+        "Discard unaffected passing export evidence."
+      ]
+    },
+    {
+      "id": "scoped-compatibility-experiment",
+      "request": "Prepare the next-step handoff for an event-reader compatibility experiment. The accepted question is whether the deployed old reader can decode proposed-writer bytes with their intended meaning. Captured bytes, exact schemas, and the real old reader configuration are available locally; no broker is available. Broker delivery and production capacity are explicitly outside this experiment. No run has occurred. A proposed schema choice awaits this result. Separately, collection of new audit data depends on an unresolved retention obligation; no interim policy or waiver exists. An already authorized, independent tooltip correction is ready. Return the experiment state, decision state, scoped blockers and valid next work. Do not execute anything.",
+      "criteria": [
+        "Plan the available local real-reader decoding and semantic check with a scoped result; do not require a broker for this stated question.",
+        "Keep experiment execution not run and schema selection proposed/pending; a plan does not establish compatibility.",
+        "Distinguish decoder compatibility from delivery, live integration and production performance.",
+        "Preserve the retention unknown and stop dependent collection without adopting a guessed policy.",
+        "Allow the independent authorized tooltip work and local experiment preparation without renewed permission or a whole-feature freeze."
+      ],
+      "failureConditions": [
+        "Report unexecuted compatibility as passed.",
+        "Require unavailable infrastructure unrelated to the accepted question.",
+        "Treat nonblocking for the tooltip as authority to decide retention."
+      ]
+    },
+    {
+      "id": "resume-limited-evidence",
+      "request": "Reconcile this existing feature tracker after a handoff; do not invent execution. RES-10 is marked DONE for a parser change, but its attached command log says '0 tests', and there is no other acceptance evidence. RES-11 is a separate documentation update marked DONE with valid recorded review evidence. RES-12 is IN_PROGRESS because a large input case remains to implement and verify; it has spanned three short sessions interrupted by meetings. All three remain within accepted scope, and no external dependency blocks them. Existing stable IDs and a current plan are available. A teammate suggests keeping RES-10 DONE with a caveat, reopening every row because the author changed, and splitting RES-12 automatically after three sessions. Return a corrected status summary and the next investigation or validation steps.",
+      "criteria": [
+        "Reject unsupported DONE for RES-10 and identify the missing relevant validation without inventing a code defect or successful run.",
+        "Preserve RES-11's valid evidence and DONE status despite the author handoff.",
+        "Keep RES-12's unfinished implementation and validation explicit; session count alone is not evidence of an external blocker or a necessary split.",
+        "Reuse stable IDs, reconcile actual evidence and record the correction rather than fabricate historical transitions.",
+        "Offer proportionate next work and distinguish independent resource completion from overall feature completion."
+      ],
+      "failureConditions": [
+        "Qualified DONE without supporting acceptance evidence.",
+        "Invalidate all work solely due to ownership change.",
+        "Automatically split or mark BLOCKED based on session count."
+      ]
+    },
+    {
+      "id": "holdout-reader-substitution",
+      "request": "Update an experiment and decision handoff from supplied observations. EXP-07 tests the accepted requirement that deployed reader v2 can interpret proposed writer v3 data without a reader rollout. The original valid fixture and real v2 reader reproducibly reject a newly required field. An engineer modifies the reader to v3; the same bytes now pass decoding and semantic assertions in that modified reader. Nothing invalidates the original fixture, and no owner has revised the no-reader-rollout requirement. The proposed writer choice remains pending. A teammate wants to replace EXP-07's failed result with the new pass and accept the writer choice. Return the corrected experiment conclusion, decision status and next valid investigation; do not execute or change production systems.",
+      "criteria": [
+        "Preserve the original valid v2 result as refuting the exercised compatibility premise, with its precise fixture/version scope.",
+        "Record the modified-reader success as separate evidence for a different claim; do not overwrite the original experiment or infer v2 compatibility.",
+        "Keep the proposed writer choice unaccepted under the unchanged no-rollout constraint and avoid inventing authority to waive it.",
+        "Offer a focused next comparison or experiment within the constraint, or an explicit requirement-change handoff, without inventing a new successful result."
+      ],
+      "failureConditions": [
+        "Replace the original failure with a pass from a different reader.",
+        "Treat the modified-reader success as meeting the no-reader-rollout requirement.",
+        "Accept the pending choice or claim new execution without evidence."
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "a",
+      "arm": "no skill",
+      "status": "executed",
+      "bundle": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq\\a.json",
+      "bundleSha256": "b884fb3c7b4c71b9ad7b47bffc02bcf77394baa000b5a421278c260502ce7915",
+      "agent": "feature_sample_a",
+      "responseFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq\\a-response.md",
+      "response": "**promised-documentation**\n\n- Scope: CSV export and usage documentation are both required by the accepted user request. The usage page remains required.\n- Status: export implementation and required tests are complete, with valid recorded evidence. Usage documentation is outstanding; the feature remains IN_PROGRESS.\n- Next action: write and review the usage page against the implemented export behavior, attach the evidence, then reassess completion. Choose the CSV filename under the delegated implementation authority and record it in the usage page; a separate ADR is unnecessary for this routine choice.\n\n**scoped-compatibility-experiment**\n\n- Experiment: NOT_RUN and ready for a local test. Use the captured proposed-writer bytes, exact schemas and real deployed old reader configuration; check both decoding and intended meaning. Record fixture identity, configuration, assertions and results.\n- Decision: the proposed schema choice remains PENDING until the experiment supplies evidence.\n- Blockers: none identified for this experiment. Broker delivery and production capacity are outside its scope; broker availability does not block the local run. New audit-data collection is BLOCKED by the unresolved retention obligation and must await its resolution.\n- Next work: run the local compatibility experiment and use its result to inform the schema decision. Resolve the retention obligation before collecting new audit data. The independently authorized tooltip correction can proceed now.\n\n**resume-limited-evidence**\n\n- RES-10: reopen as IN_PROGRESS, with acceptance unverified. The attached log executed zero tests and cannot support DONE; it does not establish that the parser is defective. Inspect test discovery and selection, identify the acceptance checks, then run the relevant tests and confirm that they actually execute. Attach sufficient passing evidence before restoring DONE.\n- RES-11: retain DONE. Its valid review evidence remains applicable after the handoff.\n- RES-12: retain IN_PROGRESS. Implement and verify the remaining large-input case using the current plan and stable ID. Three meeting-interrupted sessions do not justify an automatic split; consider decomposition only if the work reveals a useful independent boundary.\n- Scope and blockers: all three remain within accepted scope, with no identified external blocker. Preserve existing valid evidence and update the affected tracker rows as new evidence arrives.\n\n**holdout-reader-substitution**\n\n- EXP-07: retain FAILED for the accepted requirement. The valid fixture reproducibly fails with the real deployed v2 reader, demonstrating incompatibility for the tested proposal without a reader rollout.\n- The modified v3 reader's decoding and semantic pass is a separate observation. Preserve it with its reader version and configuration; it does not satisfy EXP-07's v2 requirement or invalidate the original failure.\n- Decision: keep the proposed writer choice PENDING, recording that the tested proposal fails the current compatibility requirement. Acceptance is unsupported, and the no-reader-rollout requirement remains in force.\n- Next investigation: examine the required-field rejection and develop a writer/schema revision that preserves the intended meaning for the deployed v2 reader. Test that candidate with the real v2 configuration, retaining the original failing fixture as regression evidence. If compatibility cannot be achieved, reject or redesign the proposal; changing the reader-rollout requirement requires an explicit owner revision.\n",
+      "responseSha256": "aa719086e52824bfab7f2b6de5daef605d341150914352f1a912235baa419313",
+      "results": {
+        "promised-documentation": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4],
+          "unmet": [],
+          "reason": "Retains promised docs as Required, preserves valid export completion, reports incomplete feature, names documentation work/checks and treats filename without an ADR or renewed authorization."
+        },
+        "scoped-compatibility-experiment": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Permits scoped local old-reader check without broker; preserves NOT RUN/pending choice, excludes delivery/capacity claims, blocks unresolved retention collection and continues independent tooltip work."
+        },
+        "resume-limited-evidence": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Reopens unsupported parser DONE without inventing a defect, preserves documented DONE, keeps unfinished work IN_PROGRESS, retains IDs/history and rejects session-count-only splitting."
+        },
+        "holdout-reader-substitution": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4],
+          "unmet": [],
+          "reason": "Preserves original v2 failure, separates v3 success as a different claim, keeps writer pending under unchanged constraint, and proposes a new compatible candidate or authorized requirement revision."
+        }
+      }
+    },
+    {
+      "id": "b",
+      "arm": "original committed skills",
+      "status": "executed",
+      "bundle": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq\\b.json",
+      "bundleSha256": "75f2a83ee9daacd19644d05c6b94ca6b854b99b875aba6bef63884aeafdfadcf",
+      "agent": "feature_sample_b",
+      "responseFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq\\b-response.md",
+      "response": "**promised-documentation**\n\nBoundary: deliver CSV export and usage documentation, as explicitly required by the accepted user request.\n\n| Item | Scope | Status and basis |\n| --- | --- | --- |\n| CSV export and required tests | Required | DONE; preserve the valid recorded evidence. |\n| Usage page | Required | TODO; unwritten, so accepted delivery remains incomplete. |\n| Separate ADR for the CSV filename | Optional proposal, not selected | No consequential decision requiring an ADR is established; routine naming is covered by the user's delegation. |\n\nFeature status: IN_PROGRESS. The teammate's proposed documentation downgrade does not amend the accepted request.\n\nNext: write the usage page, review it against the implemented export behavior, and record that evidence. Complete the feature once this remaining obligation is satisfied. Retain the implemented filename or settle any remaining naming choice within the existing delegation; no additional approval round is needed.\n\n**scoped-compatibility-experiment**\n\nExecution: NOT RUN; ready for a local experiment. Conclusion: PENDING. The absent broker does not block the accepted decoding-and-meaning question; broker delivery and production capacity were explicitly excluded by the accepted experiment scope.\n\nNext experiment: pin the proposed-writer bytes, exact schemas and unchanged deployed old reader configuration. Before running, state the expected decoded values and meaning for the captured cases. Exercise those bytes through that reader and check both decoding and semantic assertions. A valid matching result supports compatibility for the exercised cases; a reproducible decoding or meaning mismatch refutes it. A setup failure or insufficient representative coverage leaves the relevant claim inconclusive. Preserve configuration, inputs, commands and actual results without extending the conclusion to delivery or capacity.\n\nSchema decision: PENDING, awaiting this evidence. Preserve the existing proposal's provenance and authority; local readiness supplies neither a result nor decision acceptance. A supported result can inform the choice within existing authority; a refutation requires an alternative, and an inconclusive result requires the missing discriminator.\n\nScoped blocker: collection of new audit data is BLOCKED by the unresolved retention obligation. Resolve the applicable retention requirements with the accountable authority before collection; there is no interim policy or waiver to rely on. This blocks neither the independent local compatibility experiment nor the already authorized tooltip correction. Both are valid next work.\n\n**resume-limited-evidence**\n\n| ID | Correct status | Evidence and remaining work |\n| --- | --- | --- |\n| RES-10 | IN_PROGRESS | Correct the unsupported DONE entry: the log reports 0 tests and no other evidence establishes parser acceptance. This does not itself prove a parser defect. |\n| RES-11 | DONE | Preserve the valid documentation review evidence; the handoff does not invalidate it. |\n| RES-12 | IN_PROGRESS | Implement and verify the remaining large input case. Meeting interruptions establish neither an external blocker nor a need to split. |\n\nSummary: 1 DONE, 2 IN_PROGRESS, 0 BLOCKED. Retain the stable IDs and current accepted plan. Append the RES-10 correction with its reason and existing log reference; preserve the original history without inventing past execution.\n\nNext: reconcile the resumed work with the current plan, ownership, code revision and relevant callers/tests. For RES-10, investigate why selection or discovery yielded zero tests, then run the relevant parser acceptance checks and record actual selected/passed/skipped counts, asserted behavior and revision. Return it to DONE only with valid acceptance evidence. Resume RES-12's outstanding case; split only if inspecting the remainder reveals independently useful acceptance or a real handoff. No blanket reopening or rerun of RES-11 is warranted.\n\n**holdout-reader-substitution**\n\nEXP-07 execution: FINISHED. Conclusion: REFUTED. The valid original fixture reproducibly fails in the real deployed v2 reader, contradicting the accepted requirement to interpret proposed writer v3 data without a reader rollout. Preserve that result and its original hypothesis, configuration and evidence.\n\nRecord the modified v3 reader's decoding and semantic pass separately, with the changed reader revision. It supports the different claim that the modified reader handles these bytes; it does not supersede EXP-07 or establish compatibility with deployed v2.\n\nWriter decision: PENDING. The current candidate cannot be accepted against the unchanged requirement. The engineer's reader modification supplies no authority to revise the no-reader-rollout constraint.\n\nNext: investigate whether a writer/schema alternative can preserve the intended meaning while remaining readable by unchanged v2. Record and test that alternative under a new experiment revision, retaining EXP-07's failure. If no compliant alternative is viable, present that evidence and the concrete tradeoff to the requirement's accountable owner. A reader rollout remains outside the accepted requirement unless that owner explicitly revises it.\n",
+      "responseSha256": "8f62b8503e58457565cbbe74c014ba0034181c12c75ed61fa001a2aa7f8d5c8d",
+      "results": {
+        "promised-documentation": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4],
+          "unmet": [],
+          "reason": "Retains promised docs as Required, preserves valid export completion, reports incomplete feature, names documentation work/checks and treats filename without an ADR or renewed authorization."
+        },
+        "scoped-compatibility-experiment": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Permits scoped local old-reader check without broker; preserves NOT RUN/pending choice, excludes delivery/capacity claims, blocks unresolved retention collection and continues independent tooltip work."
+        },
+        "resume-limited-evidence": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Reopens unsupported parser DONE without inventing a defect, preserves documented DONE, keeps unfinished work IN_PROGRESS, retains IDs/history and rejects session-count-only splitting."
+        },
+        "holdout-reader-substitution": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4],
+          "unmet": [],
+          "reason": "Preserves original v2 failure, separates v3 success as a different claim, keeps writer pending under unchanged constraint, and proposes a new compatible candidate or authorized requirement revision."
+        }
+      }
+    },
+    {
+      "id": "c",
+      "arm": "revised skills",
+      "status": "executed",
+      "bundle": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq\\c.json",
+      "bundleSha256": "57d794a8b71f9de7737809700f788697d6942322fb1910e12e4a098fdf924665",
+      "agent": "feature_sample_c",
+      "responseFile": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq\\c-response.md",
+      "response": "**promised-documentation**\n\nBoundary: deliver CSV export and usage documentation, as explicitly required by the accepted user request.\n\n| Item | Scope | Status and basis |\n| --- | --- | --- |\n| CSV export and required tests | Required | DONE; retain the supplied valid evidence. |\n| Usage page | Required | TODO; unwritten, despite being explicitly promised. |\n| Feature overall | Accepted delivery | IN_PROGRESS; documentation remains outstanding. |\n\nThe teammate's proposed Optional label does not revise the accepted commitment. The CSV filename is a routine choice covered by the user's implementation delegation; it does not warrant an ADR on these facts. A short implementation note is sufficient if needed.\n\nNext: write the usage page against the completed export behavior, review its instructions and examples for accuracy, and record that evidence before marking the page and feature complete. No additional approval is needed for this already accepted work.\n\n**scoped-compatibility-experiment**\n\n- Experiment: PLANNED / NOT RUN; conclusion PENDING. The accepted question is decoding and intended meaning in the deployed old reader.\n- Method: use the captured proposed-writer bytes, exact schemas and real old reader configuration locally. Before running, fix the expected meanings and criteria: successful decoding with matching semantics supports compatibility for the exercised cases; a reproducible decoding or semantic failure in the valid configuration refutes it. An invalid setup or insufficient evidence is inconclusive. Preserve inputs, versions/configuration, commands, assertions and raw results.\n- Limits: broker delivery and production capacity are explicitly excluded by the accepted experiment scope. The missing broker does not block this local check, and a pass cannot establish either excluded property.\n- Schema decision: remains PROPOSED/PENDING, dependent on this result. Preserve its existing provenance and authority record; the supplied facts do not establish acceptance. A valid result informs that decision without itself authorizing broader commitments.\n- Scoped blocker: the unresolved retention obligation blocks collection of new audit data. No interim policy or waiver permits proceeding. Resolve the obligation with the accountable retention authority before collection; this does not block the independent local compatibility experiment or tooltip correction.\n\nNext work: run the bounded local compatibility check and evaluate the pending schema choice from its actual result. The already authorized tooltip correction is also ready to proceed independently. Keep retention-dependent collection on hold while obtaining the applicable decision.\n\n**resume-limited-evidence**\n\n| ID | Corrected status | Reason |\n| --- | --- | --- |\n| RES-10 | IN_PROGRESS | The parser change lacks acceptance evidence: the attached log selected zero tests. Correct the unsupported DONE status; this does not establish that the parser is defective. |\n| RES-11 | DONE | Its recorded documentation review remains valid. A change of author does not invalidate it. |\n| RES-12 | IN_PROGRESS | The large input case still needs implementation and verification; meetings interrupted the work, and no external dependency blocks it. |\n\nSummary: one DONE, two IN_PROGRESS, none BLOCKED. Preserve stable IDs, accepted scope, the current plan and previous observations; append the RES-10 correction and its reason to the existing history.\n\nNext: reconcile the relevant plan, handoff entries, current code and tests with acceptance. For RES-10, investigate test discovery/selection and configuration, correct the cause of the empty run, then run the relevant acceptance checks. Record actual selected/passed/skipped counts, results, checked revision and environment before restoring DONE. Reuse RES-11's unaffected evidence.\n\nResume RES-12's large input implementation and validation. Inspect the remaining work and handoff needs before considering decomposition; three short sessions alone do not justify splitting. Retain RES-12 unless a split provides independently useful acceptance or ownership boundaries; any useful split must preserve its obligation and history through explicit ID mappings.\n\n**holdout-reader-substitution**\n\nEXP-07: execution FINISHED; conclusion REFUTED. The valid fixture and real deployed v2 reader reproducibly reject the newly required field, disproving the proposed writer v3's compatibility under the accepted no-reader-rollout requirement.\n\nPreserve that result and its evidence. Record the modified v3 reader's pass separately, identifying the changed reader as a different experiment condition. It supports decoding and semantic correctness for those bytes in that modified reader only; it cannot replace EXP-07's result or satisfy the unchanged v2 requirement.\n\nWriter decision: remains PENDING; acceptance is blocked by the refuted compatibility premise. Neither the engineer's modification nor its passing assertions revises the accepted requirement or supplies decision authority.\n\nNext: inspect the rejected field and schema interaction for a writer/schema alternative compatible with the unchanged v2 reader. Test any candidate in a new recorded experiment revision using its actual bytes, real v2 configuration and the original decoding and meaning criteria. Preserve the original failure. If a reader rollout becomes the proposed solution, obtain an explicit requirement revision from its accountable owner before treating that route as acceptable; none exists in this handoff.\n",
+      "responseSha256": "05d0ace4b94158122fb6503b49fbc1b3969393eac1ff764e5d44d7fbcc8181c4",
+      "results": {
+        "promised-documentation": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4],
+          "unmet": [],
+          "reason": "Retains promised docs as Required, preserves valid export completion, reports incomplete feature, names documentation work/checks and treats filename without an ADR or renewed authorization."
+        },
+        "scoped-compatibility-experiment": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Permits scoped local old-reader check without broker; preserves NOT RUN/pending choice, excludes delivery/capacity claims, blocks unresolved retention collection and continues independent tooltip work."
+        },
+        "resume-limited-evidence": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Reopens unsupported parser DONE without inventing a defect, preserves documented DONE, keeps unfinished work IN_PROGRESS, retains IDs/history and rejects session-count-only splitting."
+        },
+        "holdout-reader-substitution": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4],
+          "unmet": [],
+          "reason": "Preserves original v2 failure, separates v3 success as a different claim, keeps writer pending under unchanged constraint, and proposes a new compatible candidate or authorized requirement revision."
+        }
+      }
+    }
+  ],
+  "artifactDirectory": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-feature-response-6k6Woq",
+  "assessment": {
+    "result": "All three arms met the fixed criteria on all four cases. No regression observed on these responses, and no measured behavioral advantage established for revised guidance.",
+    "observations": [
+      "Original guidance overcame the old missing-broker wording and preserved promised documentation in the supplied contexts.",
+      "Original and revised arms explicitly separated experiment execution state from conclusion; the no-skill arm used FAILED for the unmet requirement while preserving actual observations and their limits. Exact state wording was not required by the rubric.",
+      "All arms rejected erasing valid evidence at handoff and substituting a changed-reader pass for the original compatibility result."
+    ],
+    "limits": [
+      "One response per arm, four ordered cases, possible within-arm carryover; no statistical reliability or causal improvement claim.",
+      "Guidance explicitly supplied in full for six selected skills; metadata and external dependency content omitted. Automatic activation/selective loading and the entire feature suite were not tested.",
+      "Coordinator graded without blinding. Initial protocol was repository-visible and read by an execution reviewer; final reader-substitution holdout was added after all feature writers stopped.",
+      "Responses only; no files from a real feature were changed, no compiler/integration/performance test or actual approval transition was exercised."
+    ]
+  },
+  "accessControls": {
+    "mechanism": "Fresh agents receive selected guidance and requests; judging criteria and unrelated repository artifacts are omitted from their prescribed inputs. Access boundaries are instructions plus reported/observed file-read provenance.",
+    "limitation": "These shared-workspace agents retain general filesystem tools. No per-agent filesystem sandbox or tool-level denial was configured, so withheld does not mean technically inaccessible. No enforced isolation claim is supported. Fresh contexts and recorded accesses reduce contamination but do not prove its absence.",
+    "scope": "Applies to response and coding-action samples in this review. A matched comparison is limited by these controls; future strict isolation requires an authenticated runner with enforceable resource permissions."
+  }
+}

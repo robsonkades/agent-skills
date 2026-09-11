@@ -19,8 +19,9 @@ description: >
 Answer two questions that cause a lot of wasted work: **does the framework already do
 this?**, and **what does this pattern look like in modern Java?**
 
-Both failures are common. Rebuilding a pattern the framework provides produces a wrapper
-that is worse than what it wraps. Assuming a pattern is present when it is only partly
+Two failures need different evidence. Rebuilding an already adequate mechanism can duplicate
+work; a boundary that owns compatibility, lifetime or failure policy can still be justified.
+Assuming a pattern is present when it is only partly
 present produces a design that relies on a guarantee nobody makes — an identity map assumed
 to be a cache, a unit of work assumed to span a request, a repository assumed to protect an
 aggregate.
@@ -28,7 +29,7 @@ aggregate.
 ## The map
 
 ```text
-Mechanism substantially provided — configure before rebuilding
+Mechanism substantially provided — inspect guarantees and extension points
     Front Controller         DispatcherServlet / router
     Unit of Work             JPA persistence context
     Identity Map             first-level cache
@@ -63,13 +64,14 @@ Not provided — you must design it
 ## Workflow
 
 1. **Before implementing a pattern, locate it in the map.** If the mechanism exists, compare its
-   actual guarantees and extension points before wrapping or rebuilding it.
+   actual guarantees and extension points before wrapping or rebuilding it. Retain an adequate
+   implementation and reuse matching evidence; a narrow explanation need not trigger changes.
 2. **For the second group, separate mechanism from decision.** The framework supplies the
    mechanism; the decision is still yours and is where the value is.
 3. **Inspect the actual toolchain, dependencies and configuration:** Java release, provider,
    transaction manager, proxy/weaving mode, context lifetime and enhancement where relevant.
    Do not infer guarantees from annotation names or upgrade to match an example.
-4. **Express the pattern in modern Java** where the language now does the work — records for
+4. **Consider a supported language idiom when it preserves the contract and earns its cost** — records for
    value objects and DTOs, sealed interfaces for closed hierarchies, exhaustive switch for
    dispatch.
 5. **Do not force a modern idiom where it changes the pattern's intent.** A record cannot be
@@ -81,8 +83,10 @@ Not provided — you must design it
 ## Decision rules
 
 ```text
-The framework provides the pattern completely
-        → configure it first; add a wrapper only for a demonstrated semantic boundary.
+The framework provides the required mechanism
+        → compare existing configuration and extension points with the actual boundary duties.
+          A wrapper may own compatibility, lifetime, failure policy or a replacement/test seam;
+          equivalent signatures alone neither justify nor disqualify it.
 
 The framework provides the mechanism, you own the decision
         → make the decision explicitly and write it down. This is where
@@ -98,8 +102,8 @@ The framework does not provide it
           than the answer (pattern-selection-and-composition).
 
 A pattern's classical implementation conflicts with a modern idiom
-        → keep the intent, change the implementation. Immutability,
-          records and sealed types usually express the intent better.
+        → preserve intent and compare compatibility, identity, mutation and extension needs.
+          Keep the existing form if changing it brings no justified benefit.
 
 A pattern appears obsolete
         → check whether it was absorbed rather than refuted. Table
@@ -111,9 +115,10 @@ A pattern appears obsolete
 
 - **Do not mechanically wrap a framework abstraction.** A `CacheService` over the
   caching abstraction, a `TransactionService` over `@Transactional`, an `HttpService` over
-  `RestClient` — each adds a name, removes features, and will not survive replacing the
-  framework anyway unless it narrows capability, owns domain semantics, translates failures or
-  provides a genuine replacement/test seam (`enterprise-architecture-smells`).
+  `RestClient` should have an explicit role: capability restriction, domain or compatibility
+  semantics, resource ownership, failure translation or a replacement/test seam. Assess
+  its actual coupling and costs; a wrapper's shape alone does not prove it redundant
+  (`enterprise-architecture-smells`).
 - **Spring Data does not decide your aggregate boundary.** It generates an implementation.
   Which aggregates exist, what the repository's surface is, and whether reads go through it
   remain design decisions and are the whole content of the pattern
@@ -145,21 +150,22 @@ A pattern appears obsolete
   (`thread-sizing-and-virtual-threads`). A pattern that was chosen to avoid blocking a
   platform thread may be worth revisiting; one chosen for a domain reason is not.
 - **A pattern absorbed by a framework is still worth understanding.** The framework's
-  surprising behaviours are the pattern's classical consequences, and someone who knows the
-  pattern predicts them instead of debugging them.
+  mechanism suggests consequences to investigate; verify the actual provider, configuration
+  and observed behavior instead of assuming the pattern name proves them.
 
 For the proposed implementation, return the framework mechanism and its verified scope,
-the application responsibility it leaves open, and a targeted test of the relevant gap
+the application responsibility it leaves open, and relevant evidence or a targeted check of a real gap
 (for example rollback, context lifetime, stale-client writes or cache interception).
 When configuration evidence is missing, state the assumption and how to verify it; do not
-present the feature as an established guarantee. Keep the response proportional to the task.
+present the feature as an established guarantee. An adequate implementation may need no change
+or additional test. Keep the response proportional to the task.
 
 ## References
 
 - [What the framework already provides](references/framework-equivalents.md) — pattern by
   pattern: what Spring and JPA implement, what they guarantee, the gap between the classical
   pattern and the framework's version, and the wrapper to avoid in each case. Read before
-  implementing any classical pattern in a Spring stack.
+  assessing a framework mechanism, extension point or guarantee in a Spring stack.
 - [Modern Java expression](references/modern-java-idioms.md) — records, sealed types,
   exhaustive switch, immutability and virtual threads applied to the enterprise patterns:
   where they express the intent better, where they conflict with it, and the persistence

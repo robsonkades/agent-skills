@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-tuning-for-slo
-version: 2.1.1
+version: 2.1.2
 description: >-
   Deriving G1 flag values from a latency SLO and proving they helped: what
   `MaxGCPauseMillis` actually controls, the young size bounds, IHOP and adaptive IHOP with
@@ -59,10 +59,8 @@ dependencies:
     version: ^2.0.0
 
 suggests:
-  - allocation-profiling
-  - g1-concurrent-marking
-  - jdk-upgrade-impact
-  - pause-attribution
+  - latency-statistics
+  - load-testing
 
 capabilities:
   - reads-source

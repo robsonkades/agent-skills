@@ -45,10 +45,11 @@ public BigDecimal settle(Settlement settlement) {
 
 Not long by line count, but the reader changes altitude five times: what a settlement _is_
 (gross minus fee, posted to the ledger), the fee _policy_ (tier and volume tiers), and
-_mechanics_ (loop bookkeeping, rounding mode, reference-string assembly). The one-sentence
-test fails: "sums captured entries **and** picks a fee rate **and** rounds **and** formats a
-ledger reference **and** posts". The policy — the part a maintainer will be sent here to
-change — is buried between mechanics.
+_mechanics_ (loop bookkeeping, rounding mode, reference-string assembly). Describing it as
+"sums captured entries **and** picks a fee rate **and** rounds **and** formats a ledger
+reference **and** posts" suggests places to inspect, not proof that each step needs a
+helper. Here the policy — the part a maintainer will be sent here to change — is buried
+between mechanics.
 
 ### After: cohesive settlement flow
 
@@ -87,14 +88,18 @@ inputs, a property the signature alone cannot promise.
 
 ### Trade-offs of extraction
 
-Three new names to trust and three hops for a reader who wants every detail. `feeFor`
-smells of Feature Envy toward `Merchant` — deliberately _not_ moved here: relocating
-behaviour is a java-refactoring move and widens this change's blast radius. Noted, not done.
+Three new names to trust and three hops for a reader who wants every detail. Moving
+`feeFor` toward `Merchant` needs evidence about who owns the fee policy and how it changes;
+reading merchant data alone is not a defect. If warranted, relocating behaviour is a
+java-refactoring move and widens this change's scope.
 
 This is a structure example, not a complete settlement design. Production code must define
-currency/scale, reject invalid amounts, and make ledger posting idempotent or atomic with the
-state transition; extracting `ledger.post` does none of that. A retry after an ambiguous post
-can duplicate money movement even though the method is beautifully readable.
+currency/scale and reject invalid amounts. If the operation may be replayed, establish what
+prevents repeat posting: an atomic conditional transition that permits the effect only once
+may suffice, or the operation needs another enforced idempotency contract (see `idempotency`).
+Merely committing a post and an unconditional state write together does not deduplicate a
+retry. Extracting `ledger.post` adds none of these guarantees; an ambiguous result still
+requires recovery under the actual participant contract.
 
 ### Verification of the settlement refactoring
 

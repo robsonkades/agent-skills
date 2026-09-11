@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: serialization-performance
-version: 1.1.1
+version: 1.1.2
 description: >-
   Engineering serialization cost as a system budget across encode/decode CPU, allocation and
   retention, wire/storage bytes, copies, buffers, compression, schema evolution, compatibility,

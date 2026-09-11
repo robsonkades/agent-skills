@@ -2,9 +2,9 @@
 
 ## The record
 
-A DLQ entry includes diagnostic context alongside preserved payload evidence. Everything below exists
-because someone opening the DLQ three days later cannot get it any other way — the source
-topic's retention has expired, the pod is gone, the logs have rotated.
+A DLQ entry includes diagnostic context alongside preserved payload evidence. Capture what
+recovery needs before source retention, pod replacement or log rotation removes it; choose
+fields and protected references for the actual source and consumer contract.
 
 ```java
 import java.net.URI;
@@ -45,8 +45,8 @@ Preserve any authoritative business sequence/version separately when replay requ
 
 Why each of the less obvious ones:
 
-- **Raw bytes, not the object.** The most common permanent failure is that the payload cannot
-  be turned into an object at all. Storing `payload.toString()` loses the bytes and with them
+- **Raw bytes, not the object.** A payload may fail before it can be turned into an object.
+  Storing `payload.toString()` loses the bytes and with them
   any chance of diagnosing an encoding or schema problem.
 - Bound inline size; for a large payload store an immutable encrypted blob plus digest and
   access-controlled reference. Broker message-size limits apply again on the DLQ path.
@@ -60,9 +60,9 @@ Why each of the less obvious ones:
 - **`failureCode` and classifier version.** They let tooling re-evaluate old decisions after
   rules or deployments change; an exhausted retry budget is recorded separately from cause.
 
-Store the DLQ's retention explicitly and make it longer than the alert-to-action time,
-weekends included. A DLQ inheriting the source topic's retention deletes the evidence on a
-schedule nobody chose.
+Verify the effective DLQ retention against detection, investigation and recovery time,
+weekends included when recovery depends on a human. An inherited retention is acceptable
+only when its remaining lifetime meets that contract; it is not an unexplored default.
 
 Verify the broker's retention clock. SQS standard DLQ expiry uses original enqueue time;
 FIFO resets that timestamp on transfer. An age metric may measure time since DLQ arrival
@@ -104,9 +104,11 @@ Verify destination subscription, retention and recovery behavior in the deployed
 
 ## Redrive
 
-Redrive is a controlled replay of DLQ records back onto the normal path. It is a first-class
-operation, written and tested before the first incident, because the version written under
-pressure skips the preconditions.
+Redrive is a controlled replay of DLQ records back onto the normal path. Establish and
+exercise it as part of a new or changed recovery design; reuse an adequate existing tool.
+During an incident, use existing authority and evidence to contain impact without waiting
+for new redrive tooling. Running replay still requires its safety preconditions; irreparable
+or no-longer-valid work may instead need an auditable terminal rejection.
 
 **Preconditions — all of them, checked before starting:**
 
@@ -129,14 +131,18 @@ pressure skips the preconditions.
 
 **The procedure:**
 
-1. Snapshot or copy the DLQ contents first; redrive that copy. A redrive that fails midway
-   should not have consumed the evidence.
+1. Preserve recoverable evidence and selected-record/disposition tracking through partial
+   failure. A protected snapshot/copy is one option; verified source retention, checkpoints
+   and durable audit can also suffice. Do not duplicate all sensitive payloads when existing
+   controls preserve the needed evidence. Native redrive status alone need not prove each
+   business disposition; retain stable operation identity even if broker IDs change.
 2. Replay through a controlled path that invokes the same validation, authorization,
    idempotency and business handler. Reinjecting the source topic is simple but changes order,
    can loop and may collide with live traffic; a dedicated replay topic/job is valid when it
    shares production code and observability.
-3. Rate-limit it. Full-rate redrive of a backlog accumulated during an outage recreates the
-   outage; a redrive is a load test aimed at a dependency that just recovered.
+3. Bound rate/concurrency using measured downstream headroom together with live work. Start
+   conservatively when capacity is uncertain, then adjust from observed load and outcomes;
+   a supported high rate is not inherently unsafe, and redrive itself is not a load-test result.
 4. Redrive in batches with a stop condition: if the failure rate of the redriven records
    exceeds a threshold, stop and investigate the remaining cause or new load-induced failure.
 5. Reconcile by stable quarantine/operation ID: selected = terminally applied + terminally
@@ -145,11 +151,12 @@ pressure skips the preconditions.
 
 ## Alerting
 
-Two signals, and they answer different questions:
+Choose signals that cover failure discovery and timely resolution under the actual recovery
+contract. Reuse adequate monitoring; these need not be two separate pages:
 
-- **Arrival rate** — `rate(dlq_messages_total[5m])`. Something started failing. A step change
-  matters far more than an absolute value; one poison record a day is normal for many systems,
-  and the same rate arriving in one minute is not.
+- **Arrival rate** — for an instrumented cumulative counter, `rate(dlq_messages_total[5m])`
+  estimates transfers per second. Interpret changes with traffic, classifier and business
+  impact; even one critical record or a sustained absolute backlog can require action.
 - **Age of the oldest unresolved record** — compare with the recovery deadline and retention
   budget. Route a ticket/page to its owning team according to urgency; retained terminal
   audit entries should not keep the actionable-age alarm firing.
@@ -165,16 +172,20 @@ Two more worth having:
 
 ## Testing the poison path
 
-Exercise these failure paths using the target broker and actual handler/transfer boundaries.
-Use existing integration fixtures (Testcontainers where supported); a mocked send/ack does
-not validate broker transactions, retention or rebalances:
+Select failure paths that challenge the new or changed contract. Use the target broker and
+actual handler/transfer boundaries when validating broker behavior; existing integration
+fixtures (Testcontainers where supported) can help. A mocked send/ack does not validate
+transactions, retention or rebalances. Reuse adequate prior evidence for an unchanged design:
 
 - **Genuine poison.** Publish invalid bytes under a supported schema and assert secure raw-byte
   capture, stable source identity and atomic quarantine/offset behavior. Separately make the
-  schema registry/key unavailable and assert the fleet pauses rather than quarantining all data.
-- **Transient failure, not dead-lettered.** Stub the dependency to fail with a connection error
-  for 30 seconds and then recover. Assert the record is processed successfully and the DLQ is
-  empty. This test is what stops "attempts > 5 → DLQ" from being reintroduced.
+  schema registry/key unavailable and assert affected admission is contained rather than
+  classifying all valid data as permanently poison; preserve independent healthy work.
+- **Transient failure and budget exhaustion.** Fail a dependency and recover it within the
+  configured retry budget; assert successful processing without an unresolved disposition.
+  Separately exceed the budget and verify durable holding/pause/escalation, unchanged cause
+  classification and owned recovery. If a native DLQ holds this work, verify its recovery
+  contract instead of asserting that the queue name makes the routing wrong.
 - **Redrive.** Dead-letter a repairable record, repair the cause, redrive twice across a
   restart, and assert one logical side effect and no unresolved disposition. Retain audit
   evidence; test irreparable records as terminal rejection. Run the same handler the production
@@ -191,4 +202,5 @@ not validate broker transactions, retention or rebalances:
 
 - [Kafka 4.1 transactions and delivery semantics](https://kafka.apache.org/41/design/design/#semantics)
 - [AWS SQS dead-letter queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
+- [AWS SQS redrive: rate, ordering and new message identity](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html)
 - [Google Cloud Pub/Sub dead-letter topics](https://cloud.google.com/pubsub/docs/dead-letter-topics)

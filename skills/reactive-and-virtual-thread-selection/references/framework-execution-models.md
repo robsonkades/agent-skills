@@ -17,22 +17,25 @@ beans and executor selection first; the table describes applicable defaults, not
 | `taskScheduler` (`@Scheduled`)       | `ThreadPoolTaskScheduler` (pool of 1 by default)              | `SimpleAsyncTaskScheduler`: separate threads for supported triggers; fixed-delay uses the scheduler thread |
 | Kafka / AMQP listener containers     | platform threads                                              | verify listener-container executor separately; the property is not a blanket switch                        |
 
-Three consequences worth stating out loud before flipping it:
+For a proposed flag change, check the affected components:
 
 - **A servlet worker-pool limit may stop being the admission limit.** Confirm the embedded
   server and Boot version rather than generalising Tomcat behaviour to Jetty or Undertow.
-  Replace any removed bound with limits next to scarce resources and edge shedding.
+  Preserve the required admission/resource properties through existing or new equivalent
+  controls; a redundant worker cap need not gain a duplicate gate.
 - **The auto-configured `@Async` executor is unbounded by default.** A custom executor or
   `@Async` qualifier can select something else. `SimpleAsyncTaskExecutor` starts virtual
-  threads as it is given work. Set `spring.task.execution.simple.concurrency-limit`
-  (and `spring.task.scheduling.simple.concurrency-limit`) unless unbounded is genuinely
-  intended, on Boot versions exposing those properties. The default concurrency-limit
-  policy blocks submitters; do not use it from an event loop as if it were non-blocking
-  rejection. Bound admission/waiters separately.
+  threads as it is given work. Where an executor-level cap is needed, inspect
+  `spring.task.execution.simple.concurrency-limit` (and the scheduling counterpart) on
+  Boot versions exposing them; adequate upstream admission can already bound submission.
+  Spring Framework 6.2.0's concurrency-limit policy blocks submitters; inspect the selected
+  version/policy rather than treating it as non-blocking rejection on an event loop.
+  Bound admission/waiters separately from active execution.
 - **Scheduling semantics need revalidation.** Pool settings are ignored by the simple
   virtual-thread scheduler, and fixed-delay tasks have special handling. Test overlap for
-  each trigger type and add an explicit single-flight guard when the job requires it; do not
-  infer the guarantee from a historical pool size.
+  affected trigger type when evidence is needed. Preserve an adequate serial execution
+  contract; add a single-flight guard only if required non-overlap is otherwise lost. Do not
+  infer the current guarantee from a historical pool size.
 
 Verify rather than assume:
 
@@ -63,8 +66,9 @@ and then decide, separately, whether `boundedElastic` should itself run on virtu
 (`reactor.schedulers.defaultBoundedElasticOnVirtualThreads=true`, Reactor 3.6.0+, Java 21+). The virtual-thread
 implementation still uses the configured thread cap (default `10 × availableProcessors`)
 and bounded deferred-task capacity; it changes the thread-per-task machinery, not the fact
-that the scheduler is bounded. Those defaults are usually far too broad to protect a
-specific database, so keep a resource-local limiter when that is the real constraint.
+that the scheduler is bounded. Compare those defaults with the actual dependency budget;
+they do not establish that it is protected. Use existing equivalent admission or a needed
+resource-local limiter, including aggregate callers and waiting tasks.
 
 ## Quarkus
 
@@ -85,9 +89,10 @@ public Order slow(String id) { … }
 public Uni<Order> fast(String id) { … }
 ```
 
-Because the choice is per method, a service can and will contain all three. That is a feature
-and an obligation: the annotation is the model declaration, and a method with none of them
-inherits a default that depends on its return type.
+These are partial endpoint sketches, not a complete resource class. A service can contain
+all three. For Quarkus REST, inspect return type, method/class/application annotations and
+transactional defaults in the resolved version; absence of a method annotation alone does
+not identify its thread. An annotation states routing intent, not every downstream callback's execution.
 
 ## Jakarta EE and application servers
 
@@ -113,35 +118,78 @@ establish what auxiliary tasks or client callbacks use.
 ## Verifying what actually ran
 
 ```bash
-# Snapshot of tracked live threads, including virtual threads; correlate to requests.
-jcmd <pid> Thread.dump_to_file -format=json /tmp/d.json
+# Bash; set JVM_PID for thread captures and/or RECORDING for a JFR listing.
+# Use an authorized target/capture; an unset input skips that capture group.
+if [ -z "${JVM_PID:-}" ] && [ -z "${RECORDING:-}" ]; then
+    printf 'Set JVM_PID or RECORDING for the relevant capture.\n' >&2
+    exit 1
+fi
+capture_dir=$(mktemp -d) || exit 1
+printf 'Evidence directory: %s\n' "$capture_dir"
+capture() {
+    local label=$1 status
+    shift
+    if "$@" >"$capture_dir/$label.out" 2>"$capture_dir/$label.err"; then
+        status=0
+    else
+        status=$?
+    fi
+    printf '%s\n' "$status" >"$capture_dir/$label.status"
+    return "$status"
+}
 
-# Are known platform worker pools still doing the work? Names are implementation/configuration evidence only.
-jcmd <pid> Thread.print | grep -c 'http-nio-.*exec'
-
-# Inspect captured start events (disabled by default); this is not a per-second rate.
-jfr print --events jdk.VirtualThreadStart recording.jfr | head
+if [ -n "${JVM_PID:-}" ]; then
+    if ! capture dump jcmd "$JVM_PID" Thread.dump_to_file -format=json "$capture_dir/threads.json"; then
+        printf 'Thread dump unavailable; inspect dump.err/dump.out.\n' >&2
+    fi
+    if capture platform jcmd "$JVM_PID" Thread.print; then
+        if capture worker-count grep -c 'http-nio-.*exec' "$capture_dir/platform.out"; then
+            cat "$capture_dir/worker-count.out"
+        elif [ "$(cat "$capture_dir/worker-count.status")" = 1 ]; then
+            printf 'No matching names in this successful capture.\n'
+        else
+            printf 'Worker-name filter failed; count unavailable.\n' >&2
+        fi
+    else
+        printf 'Platform-thread capture unavailable; no count inferred.\n' >&2
+    fi
+fi
+if [ -n "${RECORDING:-}" ]; then
+    if capture starts jfr print --events jdk.VirtualThreadStart "$RECORDING"; then
+        if ! capture preview head -n 20 "$capture_dir/starts.out"; then
+            printf 'Preview failed; retain the full starts.out.\n' >&2
+        fi
+    else
+        printf 'JFR listing unavailable; no event count inferred.\n' >&2
+    fi
+fi
 ```
 
-A configuration change that was supposed to move request handling onto virtual threads and
-did not is common — a wrong property name, a starter that does not honour it, a server
-version that predates support. An empty JFR listing can mean disabled events, recording-window/threshold coverage or no
+Run only the relevant captures; use tooling and output paths accessible in the target's
+environment. Retain raw output and statuses before filtering, and inspect tool diagnostics
+and output validity even after exit zero. The preview is truncated; the full listing remains.
+Names identify implementation/configuration, not request ownership or universal thread type.
+A wrong property, overridden executor or unsupported server can explain a configuration/runtime
+mismatch. An empty successful JFR listing can mean disabled events, recording-window coverage or no
 captured event, not absence of virtual threads or waiting. Compute rates from timestamps and
 a defined capture window. A thread snapshot misses completed threads and requires request
 correlation; profiler and JFR event support depend on the runtime.
 
-Confirm at runtime; the property being present in
-`application.yaml` proves only that the file contains it.
+Use runtime evidence for a claim about actual execution; the property being present in
+`application.yaml` proves only that the file contains it. A source/configuration review can
+finish without a new runtime capture if its conclusion stays within that evidence.
 
 ## Review checklist
 
-- [ ] The model each endpoint runs under is stated somewhere a reader will find it
-- [ ] Enabling virtual threads was accompanied by a replacement for the removed pool bound
-- [ ] `spring.task.execution.simple.concurrency-limit` set, or unbounded chosen deliberately
-- [ ] Jobs requiring single-flight execution have an explicit guard and an overlap test
+Apply the relevant checks to the affected paths, reusing adequate existing evidence:
+
+- [ ] Execution and handoff contracts are discoverable for the reviewed paths
+- [ ] Required properties of removed limits survive through equivalent controls
+- [ ] Active execution, admission and waiting bounds are established, not inferred from a property alone
+- [ ] Required job non-overlap survives through a supported scheduler contract or guard
 - [ ] No blocking call reachable from a WebFlux/Vert.x event-loop thread
-- [ ] `boundedElastic` caps and queues are measured; downstream-specific limits remain local
-- [ ] Runtime verification performed, not just configuration review
+- [ ] Scheduler caps/queues and aggregate downstream budgets fit the claimed workload
+- [ ] Actual-execution claims have relevant runtime evidence; source/configuration claims state their limits
 
 ## Sources
 
@@ -149,3 +197,7 @@ Confirm at runtime; the property being present in
 - [SimpleAsyncTaskScheduler 6.1 API](https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/scheduling/concurrent/SimpleAsyncTaskScheduler.html) — fixed-delay scheduler thread and concurrency limit.
 - [Jakarta Concurrency 3.1 specification](https://jakarta.ee/specifications/concurrency/3.1/jakarta-concurrency-spec-3.1.pdf) — managed context, transaction boundaries and virtual-thread configuration.
 - [JEP 491](https://openjdk.org/jeps/491) — JDK 24 monitor pinning change; not a general absence-of-blocking guarantee.
+- [SimpleAsyncTaskExecutor 6.2.0 source](https://github.com/spring-projects/spring-framework/blob/v6.2.0/spring-core/src/main/java/org/springframework/core/task/SimpleAsyncTaskExecutor.java) — default concurrency and submitting-thread behavior.
+- [Quarkus REST execution model](https://quarkus.io/guides/rest#execution-model-blocking-non-blocking) and [virtual-thread endpoints](https://quarkus.io/guides/rest-virtual-threads) — resolve these against the deployed Quarkus version.
+- [Jakarta Concurrency 3.1 ManagedExecutorDefinition](https://jakarta.ee/specifications/concurrency/3.1/apidocs/jakarta.concurrency/jakarta/enterprise/concurrent/managedexecutordefinition) — virtual request, inline tasks and Java 17 fallback.
+- [Helidon 4 WebServer](https://helidon.io/docs/v4/se/webserver) and [JDK 25 jcmd](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html) — component and tool scope.

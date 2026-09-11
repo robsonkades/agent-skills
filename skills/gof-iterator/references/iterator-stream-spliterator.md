@@ -26,6 +26,10 @@ read [the worked example](worked-example.md); it overrides batching `trySplit` t
 A sequential `limit(10)` needs as many pages as provide ten events, potentially more with empty
 pages or filtering. It does not universally imply one fetch.
 
+For repeated or interleaved passes, provide a fresh traversal with independent cursor state when
+the source supports it. A one-shot iterator cannot be made repeatable just by returning it from
+`Iterable.iterator()`. Reopening a remote traversal may observe a different dataset.
+
 ## Characteristics, and why lying is expensive
 
 | Characteristic | Promise                                                   | What the pipeline does with it                             |
@@ -41,7 +45,9 @@ pages or filtering. It does not universally imply one fetch.
 
 These are optimisations that change **results**, not just speed. A spliterator declaring
 `DISTINCT` over a source with duplicates makes `distinct()` do nothing, and the duplicates
-survive. Declaring `SORTED` incorrectly makes `sorted()` a no-op and the output is unsorted.
+survive. A false `SORTED` claim can cause necessary sorting to be skipped; this depends on the
+source comparator and requested sort. A reverse-sorted source with its correct comparator may
+still need sorting for natural-order `sorted()`.
 Declare only what is true. SORTED also requires ORDERED and a compatible getComparator();
 IMMUTABLE describes structural interference, not deep immutability of element objects.
 
@@ -69,7 +75,7 @@ public Spliterator<T> trySplit() {
 | --------------------- | --------------------------------------------- | ------------------------------------------------------------------- |
 | **Fail-fast**         | `ArrayList`, `HashMap`, most of `java.util`   | Throws `ConcurrentModificationException` on a **best-effort** basis |
 | **Weakly consistent** | `ConcurrentHashMap`, `ConcurrentLinkedQueue`  | No ConcurrentModificationException; may reflect later changes       |
-| **Snapshot**          | `CopyOnWriteArrayList`, `CopyOnWriteArraySet` | Exactly the state at creation; writes copy the array                |
+| **Snapshot**          | `CopyOnWriteArrayList`, `CopyOnWriteArraySet` | Structural state at creation; updates may copy the array            |
 
 Three consequences worth stating plainly:
 
@@ -79,8 +85,9 @@ Three consequences worth stating plainly:
 - **Weakly consistent means `size()` and iteration can disagree.** Aggregating over a concurrent
   map while it is being written may give a number that was never simultaneously true. If that matters,
   the design needs a snapshot or a lock, not a different iterator.
-- **Snapshot costs a copy per write.** Right for listener lists (many reads, rare writes), wrong
-  for anything write-heavy.
+- **Snapshot has an update-copy cost.** Listener lists with many reads and rare writes often fit.
+  Assess actual size, update pattern and latency/allocation cost before replacing an adequate
+  copy-on-write collection; a read/write ratio alone does not decide it.
 
 The common single-threaded `ConcurrentModificationException` is not a concurrency problem at all —
 it is a structural change inside a for-each over the same collection. The fix is
@@ -94,9 +101,10 @@ try (Stream<String> lines = Files.lines(path)) {
 }
 ```
 
-`Files.lines`, `Files.walk`, `Files.find`, JDBC result-set streams and Spring Data's
-`Stream<Entity>` queries all hold a resource. Not closing them leaks file descriptors or database
-connections until the pool is exhausted, and the failure appears far away as a connection timeout.
+`Files.lines`, `Files.walk` and `Files.find` hold open resources. JDBC/Spring Data streams may
+retain a cursor or connection depending on their implementation and execution mode; a stream over
+materialized values need not. Identify acquisition and owner before prescribing cleanup. Leaks
+can exhaust descriptors or a connection pool far from the original traversal.
 
 Two rules for authors: if your stream holds a resource, register the closer with
 `Stream.onClose(...)` so `close()` actually releases it, and say so in the Javadoc — callers cannot
@@ -119,5 +127,7 @@ resource-backed stream. The same stream cannot then run another terminal operati
 [BaseStream 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/BaseStream.html).
 
 Repeated `hasNext()` must not discard the next element. Prefetching and caching it is legitimate
-and may perform I/O; document blocking/failure behavior. `remove()` is optional, and exhaustion
+and may perform I/O; document blocking/failure behavior. An adapter can return that cached element
+later without advancing the source again, so a source deadline check is not a deadline check on
+every caller `next()` or consumer callback. `remove()` is optional, and exhaustion
 requires `next()` to throw `NoSuchElementException`; see [Iterator 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Iterator.html).

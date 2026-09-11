@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-trade-off-analysis
-version: 1.2.1
+version: 1.2.2
 description: >-
   Compare architectural alternatives when quality goals conflict, a scorecard or case study
   is being used as a verdict, options mix abstraction levels, advocates disagree, or a

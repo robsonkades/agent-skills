@@ -2,7 +2,8 @@
 
 ## Evidence timeline
 
-Align, per instance and request where possible:
+For the competing attribution hypotheses, align the relevant signals per instance and request
+where possible; adequate existing evidence need not trigger every source below:
 
 - client arrival/start/timeout/cancel/finish;
 - admission, queue and executor transitions;
@@ -45,11 +46,18 @@ networks differ by configuration/version.
 - Verify event enablement, threshold, stack traces and sampling period.
 - Use stable semantic groups in the skill; keep version-specific names in runbooks tested
   against that runtime.
-- Lower thresholds only in a controlled recording and account for volume/overhead.
+- Lower thresholds when missing coverage matters to the decision, in a controlled recording
+  that accounts for volume/overhead.
 - A JFR absence can mean disabled/thresholded data, not absence of the mechanism.
 
 Use unified logs when they provide the authoritative phase timing, and correlate rather
 than estimating one signal from another.
+
+The OpenJDK `jdk-25+36` [HotSpot metadata](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/jfr/metadata/metadata.xml)
+defines native events; Java-side definitions include
+[SocketReadEvent](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/jdk.jfr/share/classes/jdk/jfr/events/SocketReadEvent.java).
+The `.jfc` files instead configure recording settings. Inspect the actual target's metadata
+and recording; these source examples neither prove enablement nor require a JDK upgrade.
 
 ## Causal checks
 
@@ -66,6 +74,10 @@ Do not tune GC, enlarge pools, add replicas or change kernel parameters from cor
 alone.
 
 ## Troubleshooting path
+
+For an unresolved attribution/intervention task, use the applicable path. Stop when the
+requested conclusion is adequately supported; select reproduction/degradation work for the
+actual proposed change, and state what remains unverified.
 
 ```text
 Tail regression

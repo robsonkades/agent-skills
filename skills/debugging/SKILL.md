@@ -72,7 +72,8 @@ access or reproduction permits an evidence plan, not an invented root cause.
   (`references/production-evidence.md`).
 - Symptom disappearance is evidence of recovery, not proof of cause or durable correction.
 - Question the assumption that the fault is where the symptom is. Corrupted state is written
-  in one place and observed in another, often much later; the write is the bug.
+  in one place and observed in another, often much later. Trace the first contract violation;
+  an incorrect write is one candidate, but valid data can also be misread or misinterpreted.
 - Consider `git bisect` when verified good/bad revisions and a reliable classifier exist.
   It can narrow a monotone change in roughly log₂(n) classifications; build cost, skipped commits
   and intermittent or nonmonotone outcomes affect that benefit. See the reference's exit protocol.

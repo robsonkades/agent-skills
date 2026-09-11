@@ -125,7 +125,8 @@ mean compatibility or filter coverage remains unverified; state the needed evide
 - Serialized data crosses versions in time as well as space. A distributed cache, a session
   store or a queue holds bytes written by the previous release while the new one reads them,
   and vice versa during a rolling deploy. Decide the compatibility policy — and if the answer
-  is "we flush the cache on deploy", write it down and make the flush automatic.
+  is to discard a cache, fence incompatible old writers/readers and verify that loss and bounded
+  repopulation are operationally acceptable. An automatic flush alone does not coordinate rollout.
 
 ## References
 

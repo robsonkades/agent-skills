@@ -21,8 +21,9 @@ new hook or changing overload/super-call resolution is a design change with frag
 **What the pull-up actually changes:** every subclass now inherits the method, including
 ones that never had it and ones outside the module. Enumerate them before, not after — and
 if the class is `public` and extensible, see the closure test under Push Down, because the
-set cannot be enumerated at all. A subclass that still overrides keeps its own behaviour; an
-override the pull-up _removed_ is not a refactoring.
+set cannot be enumerated at all. A subclass that still overrides keeps its own behaviour; a
+removed override must resolve to equivalent inherited behavior, including its hooks and monitor.
+Removing a redundant override is the intended step; removing distinct behavior is not.
 
 ## Pull Up Field / Pull Up Constructor Body
 
@@ -30,8 +31,10 @@ override the pull-up _removed_ is not a refactoring.
 Precondition: the field means the same thing in each — check every write, not just the type.
 A `protected` field is a contract with every subclass forever, so pull it up `private` with
 accessors where the subclasses can be adapted. Under JPA the move has a DDL consequence that
-varies by strategy: free under `SINGLE_TABLE`, a column move across two tables under
-`JOINED`, and add-everywhere-plus-backfill under `TABLE_PER_CLASS`
+depends on access mode, existing columns and strategy: `SINGLE_TABLE` may reuse a column,
+`JOINED` may relocate it to an ancestor table, and `TABLE_PER_CLASS` must account for every
+concrete table. Inspect generated mappings and migration needs rather than inferring no DDL
+or one fixed migration from the strategy name alone
 (inheritance-mapping-strategies).
 
 **Constructor body:** common initialisation moves into a superclass constructor invoked by
@@ -99,14 +102,13 @@ with Subclasses, and right when the variants stopped carrying behaviour.
 the hierarchy, a `Map<Class<?>, …>`, a Spring bean selected by type, a `@JsonSubTypes`
 discriminator, a JPA discriminator column.
 
-**The persistence failure differs per strategy and only one of them is loud.**
-`SINGLE_TABLE`: orphan discriminator values fail to resolve on read. `JOINED` and
-`TABLE_PER_CLASS`: there is no discriminator to orphan — the subtype's table is orphaned and
-its rows silently disappear from every query, with no error anywhere. Either way the collapse
-is a data migration, not a code change. The sharper case is the plain _rename_:
-`@DiscriminatorValue` defaults to the entity name, so renaming a mapped subclass orphans
-every existing row unless the value was pinned (inheritance-mapping-strategies,
-`schema-evolution.md`).
+**Inspect persisted subtype identity before collapsing the hierarchy.** `SINGLE_TABLE` uses
+a discriminator; `JOINED` can use one too. Removed mappings can leave unknown discriminator
+values, unmapped subtype rows or changed query results. Actual failure versus silent omission
+depends on provider, mapping and query; validate existing rows and relevant consumers.
+The collapse can require a data migration. Even a rename can change a default string
+discriminator based on the entity name; explicit entity/discriminator names may preserve it
+(inheritance-mapping-strategies, `schema-evolution.md`).
 
 ## Replace Type Code with Subclasses
 
@@ -124,8 +126,8 @@ The subclass is removed; the parent gains a field holding the variant behaviour,
 instances become plain parent instances holding a delegate.
 
 **What changes:** the subclass _type_ ceases to exist. Callers holding the value as the
-parent — including every collection typed by the parent — are unaffected, which is what
-makes this the cheaper of the two delegate directions. What breaks is every reference to the
+parent may keep their declared type, but dispatched behavior, identity and lifecycle still need
+verification. What breaks directly is every reference to the
 subclass type: declared variables and casts, `instanceof Subclass`, a `switch` case over it,
 a `Map<Class<?>, …>` keyed on it, a Spring bean selected by that type, and any
 `@JsonSubTypes` or JPA discriminator entry naming it — the last needing a data migration, as

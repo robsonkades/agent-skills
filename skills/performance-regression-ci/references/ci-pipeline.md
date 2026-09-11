@@ -28,11 +28,13 @@ diagnostics/               # JVM/OS evidence required by failure policy
 decision.json              # comparator output, not input to later recomputation
 ```
 
-The manifest should include at least benchmark FQCN, parameters, mode, unit, direction,
-threads, forks, warm-up/measurement configuration, JMH and JDK identities, JVM arguments,
-artifact and dataset digests, runner pool, host/CPU/cgroup identity, timestamp, and workflow
-run/attempt. Canonicalize and hash it. Do not compare merely because JSON benchmark names
-match.
+The manifest identifies the workload/benchmark, measurement population, parameters, metric,
+unit, direction, artifact/dataset digests, runner pool, host/CPU/cgroup identity, timestamp
+and workflow run/attempt. Include the
+applicable harness fields: for JMH, benchmark FQCN, mode, threads, forks, warm-up/measurement,
+JMH/JDK identities and JVM arguments; for system trials, their load profile, boundaries,
+outcome accounting and deployment/trial identities. Canonicalize and hash the declared
+manifest fields. Do not compare merely because JSON benchmark names match.
 
 ## Comparator contract
 
@@ -47,7 +49,9 @@ The comparator should:
 6. emit every benchmark result and an aggregate decision;
 7. return a stable process status.
 
-Example decision object:
+Partial decision-object illustration; actual entries, digests and calibrated method details
+must be supplied. Here log-ratio inference has been back-transformed to positive-worse
+relative changes: `mpir`, `effect` and both `interval` bounds share that reported scale.
 
 ```json
 {
@@ -57,6 +61,7 @@ Example decision object:
   "baselineDigest": "sha256:...",
   "currentDigest": "sha256:...",
   "method": "paired-log-ratio-bootstrap-by-session",
+  "effectScale": "signed-relative-change",
   "mpir": 0.05,
   "effect": 0.043,
   "interval": [0.011, 0.071],
@@ -86,8 +91,10 @@ java -jar target/benchmarks.jar \
 ```
 
 Those numbers are examples, not recommended defaults. A target-like profile may deliberately
-retain production heap/collector ergonomics. If two versions use different JDKs or flags,
-that is a factorial experiment or a new epoch—not a clean code-only comparison.
+retain production heap/collector ergonomics. Different JDKs or flags may be a predeclared
+part of the release treatment: measure the whole bundle without attributing the result to
+application code alone. Use a factorial design when separating effects is required; apply
+the compatibility/epoch policy to unplanned differences and invalid controls.
 
 JMH's aggregate `score`, `scoreError`, and `scoreUnit` are useful report fields. They are not
 a substitute for retaining the observations and block identities required by the declared
@@ -234,6 +241,10 @@ enough evidence.
 
 ## End-to-end validation matrix
 
+Select cases that establish the behavior being changed or claimed. An existing adequate gate
+or narrow shell/statistics review may reuse its evidence; local checks cannot establish real
+workflow permission, cancellation or artifact-service behavior.
+
 | Scenario                                                  | Expected result                                             |
 | --------------------------------------------------------- | ----------------------------------------------------------- |
 | Compatible no-change trials                               | Calibrated pass/inconclusive distribution                   |
@@ -252,27 +263,29 @@ enough evidence.
 | PR rewrites comparator/enforcer or forges its JSON result | Diagnostic output cannot satisfy authoritative check        |
 | Gradual series of sub-MPIR changes                        | Champion/guardrail trend detects budget exhaustion          |
 
-Test the real workflow trigger and permissions, not only the comparator locally. Exercise
-cancellation and artifact-upload behavior because “always” does not make a step immune to
-every job termination mode.
+Before claiming deployed enforcement behavior, validate the real trigger and permissions
+under an authorized isolated CI procedure. Exercise relevant cancellation and artifact-upload
+paths: “always” does not make a step immune to every job termination mode. If that execution
+is unavailable or outside scope, report the remaining gap without launching a workflow.
 
 ## Operational review
 
 - Track gate duration, queue wait, cost, invalid/inconclusive rate, false alerts, confirmed
   regressions, and time to diagnosis.
-- Quarantine a demonstrably invalid benchmark with an owner and expiry; do not silently
+- Quarantine a demonstrably invalid benchmark with an owner and policy-defined return/review condition; do not silently
   remove it from the family.
-- Recalibrate after runner/JDK/harness/data changes and periodically challenge the gate with
-  a known injected regression.
+- Reassess calibration after runner/JDK/harness/data changes; repeat it when assumptions or
+  operating characteristics no longer match. Challenge the gate with known injected regressions
+  under its declared monitoring policy.
 - Preserve raw evidence long enough to investigate drift; summaries alone cannot repair a
   flawed model.
-- Make overrides explicit, authorized, expiring, and linked to the accepted performance
-  budget or follow-up work.
+- Make overrides explicit, authorized under existing policy, and linked to the accepted
+  performance budget or follow-up work, including any required expiry or reassessment condition.
 
 ## Authoritative references
 
 - [GitHub Actions workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax) — shell invocation and step semantics.
 - [GitHub Actions secure-use reference](https://docs.github.com/en/actions/reference/security/secure-use) — untrusted checkout, action pinning, and self-hosted runner risks.
 - [GitHub Actions dependency caching](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching) — cache scope and poisoning considerations.
-- [GitHub Actions artifacts](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow) — artifact retention and transport primitives.
+- [GitHub Actions artifacts](https://docs.github.com/en/actions/tutorials/store-and-share-data) — artifact retention and transport primitives.
 - [OpenJDK JMH](https://github.com/openjdk/jmh) — authoritative harness source and samples.

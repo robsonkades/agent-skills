@@ -39,7 +39,8 @@ on the change.
    workflow sets no Java baseline and does not authorize upgrades or preview features.
 2. **Clarify.** Resolve ambiguity from available evidence first. Ask only for missing decisions
    that materially change correctness or scope; record safe assumptions and continue
-   independent work (requirements-and-acceptance). Do not invent product constraints.
+   independent work (requirements-and-acceptance). Establish the observable outcome and
+   how it will be checked, reusing existing acceptance criteria. Do not invent product constraints.
 3. **Establish the risk.** What breaks if this is wrong, how soon would anyone notice, how hard
    is it to undo? This one answer sets the test level, the gate set and the review depth for
    everything that follows.
@@ -50,13 +51,19 @@ on the change.
    preparatory refactoring from behaviour when each is independently valid and testable. When a
    safe refactoring exists only to enable the behaviour, preserve the distinction in the diff or
    commit sequence without manufacturing invalid intermediate states (java-refactoring).
+   For multistep work, use the project's plan convention to record increments, their dependencies
+   and completion checks. Update completed work, evidence and blockers as each increment finishes;
+   revise the remaining sequence when evidence changes. A small change needs no separate plan file.
 6. **Verify.** Run repository-required gates plus checks the risk warrants (quality-gates),
    and read the output. Risk-based selection does not waive a mandatory gate. Not "the
    build should pass" — what it printed.
-7. **Review** at a depth set by the risk, not by the diff size (code-review).
+7. **Review** at a depth set by the risk, not by the diff size (code-review). After review fixes,
+   rerun checks whose results the edits invalidate, plus any gates required for the final state.
 8. **Record what the code cannot say**: assumptions, the trade you took, the decision and its
    alternatives (technical-debt-decisions, architecture-decision-making).
-9. **Deliver**, and say what you did not do — what is out of scope, unverified, or deferred.
+9. **Deliver.** Connect the implemented outcome to observed checks and state what remains
+   unverified or deferred. A completed plan or a green pipeline alone does not establish
+   that the requested behavior was delivered.
 
 ## Rules
 

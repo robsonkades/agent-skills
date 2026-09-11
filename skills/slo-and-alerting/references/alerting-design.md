@@ -5,11 +5,10 @@
 ```text
 Is harm or irreversible risk credible?
   no -> dashboard/investigation
-  yes -> can automation safely contain it?
-           yes -> automate and alert only on automation failure
-           no  -> is action required before business-hours response?
-                    yes -> page
-                    no  -> ticket
+  yes -> run applicable safe automation
+         does urgent human action or verification remain?
+           yes -> page while automation proceeds
+           no  -> ticket if later human work is needed; otherwise observe automation
 ```
 
 Severity depends on urgency, blast radius, confidence and available action—not whether a
@@ -17,7 +16,9 @@ signal is called a symptom or cause.
 
 ## Page contract
 
-Every page names:
+When defining or reviewing a page contract, ensure the following are available directly or
+through maintained context. Reuse an adequate contract; a narrow rule or arithmetic review
+needs only the fields relevant to its conclusion:
 
 - affected user journey and current evidence;
 - SLO/hazard and population;
@@ -47,11 +48,13 @@ Choose:
 5. short window long enough for stable data and short enough to reset promptly.
 
 Canonical Google Workbook values are tested starting points for a 30-day event SLO, not
-laws. Recompute for different periods/policies and validate with replay.
+laws. Recompute for different periods/policies and check changed detection claims with
+representative fixtures or replay.
 
 Both windows above threshold means recent aggregate evidence, not proof the fault is still
 occurring at this instant. Ingestion delay, scrapes, evaluation, any `for`, notification grouping
-and delivery add response latency. Exercise end-to-end notification as well as expression firing.
+and delivery add response latency. A claim about delivered pages needs notification-path
+evidence as well as expression firing; a local rule test alone cannot establish delivery.
 
 ## Low traffic
 

@@ -28,20 +28,27 @@ usually should not expose vendor DTOs or exceptions; a thin interoperability ada
 libraries may deliberately retain shared standard types. State the boundary goal instead of
 assuming every adapter is an anti-corruption layer.
 
+Start with representative consumer calls and the accepted boundary goal: ordinary use, required
+advanced capabilities and misuse/failure behavior. Inspect the actual adaptee and existing tests;
+do not erase a required capability merely to make the port vendor-neutral. Reuse project evidence,
+and ask only for a missing contract detail that could change the mapping or choice. A direct call,
+existing integration or small method reference may already satisfy the need.
+
 ## When it is the answer
 
 ```text
 A third-party or legacy type does the work and its interface is not
 yours to change
-        → Adapter. This is the default and by far the commonest case.
+        → Adapter when the consumer needs a different contract;
+          ownership alone does not require a wrapper.
 
 Two libraries must interoperate and neither knows the other
         → Adapter, owned by the code that composes them, not by either.
 
 Your own port defines what the application needs; several
 implementations exist behind it
-        → Adapter per implementation (this is ports-and-adapters;
-          the GoF pattern is the per-implementation half).
+        → Adapter where an implementation bridges an existing different API.
+          Implementing the port directly need not adapt another object.
 
 A test needs a fake implementation of an external dependency
         → the port exists for this too; the fake is not an adapter but
@@ -56,8 +63,9 @@ A test needs a fake implementation of an external dependency
 - **The mapping is one-to-one with no translation or boundary policy.** A passthrough may be
   removable, but can still own version isolation, telemetry, authorization or replacement
   authority. Name and test that reason; otherwise delete it.
-- **It contains business rules.** Deciding, defaulting, validating against domain policy — that
-  is domain logic in the boundary layer. Move it inward and leave translation behind.
+- **It contains business rules.** Move provider-independent domain policy inward. Protocol
+  defaults and representation validation may belong in the adapter when the provider contract
+  establishes their meaning; do not invent a business fact to fill missing data.
 - **Its purpose is simplifying a subsystem behind a coarse call.** Consider Facade
   (`gof-facade`); collaborator count alone does not classify a wrapper or exclude adaptation.
 - **It adds behaviour while keeping the same interface.** That is a Decorator
@@ -77,11 +85,12 @@ Interface gained a method a legacy  a default method on the interface,
 implementor cannot supply           implemented in terms of the others
 
 Data model mismatch                 a record per boundary type, plus a
-                                    mapper — never the vendor's type in
-                                    the domain (remote-facade-and-dto)
+                                    mapper when model isolation is required;
+                                    preserve intentional shared types and
+                                    semantics (remote-facade-and-dto)
 
-Foreign exception hierarchy         translate at the adapter into your
-                                    own, preserving the cause
+Foreign exception hierarchy         translate to your failure contract
+                                    when isolation requires it; preserve causes
                                     (java-exception-design)
 
 Whole-implementation mismatch       an object adapter: a final class
@@ -158,13 +167,17 @@ THEN its contract must expose or document latency and partial failure. Transport
 ## Review checklist
 
 - [ ] Any foreign type, exception or enum crossing outward is an explicit compatibility choice
-- [ ] Adaptee exceptions are translated with the original preserved as the cause
+- [ ] Failure mapping honors the port's isolation contract and preserves diagnostic causes
 - [ ] The adapter contains no decisions that belong to the domain
 - [ ] Composition is preferred; inheritance has a documented framework/extension constraint
 - [ ] A functional-interface adaptation uses the smallest form that preserves its contract/lifecycle
 - [ ] Remote transport timeouts are configured and end-to-end resilience ownership is explicit
 - [ ] The adapter is covered by authoritative integration/contract evidence at an appropriate cadence
 - [ ] A passthrough has an evidenced boundary, lifecycle or compatibility responsibility, or is removed safely
+
+For a design or review, give the consumer contract, the mismatch being resolved (or why no adapter
+is needed), the chosen form and its tradeoff, and the relevant contract checks. For implementation,
+also report what changed and what actually ran; missing provider evidence remains unverified.
 
 ## References
 

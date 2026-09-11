@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: scatter-gather
-version: 1.3.1
+version: 1.3.2
 description: >-
   Fanning one request out to N workers and combining answers: order-statistic latency,
   choosing N against tail exposure, all-of-N/first-of-N/k-of-N completion, safe hedging,
@@ -48,7 +48,11 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - caching-strategies
   - concurrency-limiting-and-bulkheads
+  - distributed-aggregation-and-barriers
+  - idempotency
+  - latency-statistics
   - retries-and-backoff
   - rpc-and-api-contracts
   - structured-concurrency

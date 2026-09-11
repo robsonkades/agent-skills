@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-optional
-version: 1.2.1
+version: 1.2.2
 description: >-
   Optional as designed: a return type for "no result is a normal outcome". Covers orElse
   versus orElseGet (eager versus lazy), orElseThrow over get, map/flatMap/filter chains
@@ -39,6 +39,9 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-null-safety
 
 capabilities:
   - reads-source

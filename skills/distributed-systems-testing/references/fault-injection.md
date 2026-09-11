@@ -11,13 +11,17 @@ descend only when the claim genuinely requires it.
 | Stub HTTP server                | Delays, error codes, malformed bodies, connection reset             | TCP-level faults, partitions, bandwidth limits | Milliseconds    |
 | TCP proxy between real parties  | Latency, jitter, bandwidth caps, cut connections, one-way blackhole | Node death, scheduler behaviour                | Seconds         |
 | Container/pod manipulation      | Process death, restarts, rolling updates, probe failures            | Cross-region partitions                        | Tens of seconds |
-| Mesh / platform fault injection | Per-route delays and aborts, partitions between real services       | Nothing above, but needs a real environment    | Minutes         |
+| Mesh / platform fault injection | Fault types supported by the chosen platform on selected targets    | Unsupported or bypassed paths and fault types  | Minutes         |
+
+Check actual path coverage and fault behavior, including direction and existing connections.
+A route-level delay/abort is not automatically a packet partition; confirm that the intended
+requests traverse the injector. Cost labels are rough planning categories, not measured durations.
 
 The two most valuable rungs are the second and third, and they are the ones usually skipped in
 favour of a mock.
 
-**Why a mock is not on this ladder.** A mocked client throwing `SocketTimeoutException` proves
-that your `catch` block compiles. It does not exercise the connection pool, the socket
+**Where a mock fits.** A mocked client throwing `SocketTimeoutException` can test policy and
+error translation. It does not exercise the real connection pool, the socket
 timeout, the read timeout, connection release on failure, or what happens to the thread that
 was waiting — which is the entire subject.
 
@@ -52,12 +56,17 @@ network fixture for a connection blackhole; TEST-NET addresses may be rejected i
 or routed differently and are not a reliable test. Also distinguish DNS, TLS, pool acquisition,
 read-idle and end-to-end deadlines. Verify the delayed request actually reached the stub,
 reset its journal between tests, and bound the test process independently of the client timeout.
+Use a healthy-response control to reject fixtures that fail immediately for every request.
+Observe resource release and surviving server work separately from the caller's elapsed time;
+for example, `Socket` read timeout leaves the socket valid until its owner closes it.
 
 ## Retries and the budget
 
 The claim: _retries are bounded, backed off, and only applied to retryable failures._
 
-Count the calls. This is the assertion that catches an accidental multiplication.
+Count the calls. The following fixture assumes its accepted API contract maps 409 to a permanent
+duplicate rejection and 503 to a repeat-safe retry with three total attempts; derive these choices
+from the real contract rather than treating status classes as a universal policy.
 
 ```java
 @Test
@@ -80,10 +89,10 @@ void transientFailureIsRetriedWithinBudget() {
 }
 ```
 
-**Retrying a non-idempotent request is the defect these tests exist to catch.** A retried
-`POST /payments` after a timeout may double-charge: the first request might have succeeded and
-only the response was lost. The correct design carries an idempotency key; the test asserts
-that the retry carries the _same_ key.
+For unknown outcomes, test the actual repeat-safety mechanism: a timeout after a charge may lose
+only the response. Natural or conditional operations, durable operation keys and proven
+non-application have different contracts. In the keyed fixture below, assert the same scoped
+key on retries and verify the protected effect; header equality alone does not prove deduplication.
 
 ```java
 @Test
@@ -116,9 +125,10 @@ Gateway (3 attempts) → Orders (3 attempts) → Payments (3 attempts)
                                           for one user request
 ```
 
-Either write an integration test that counts calls at the last hop, or — more practically —
-adopt the rule that **only one layer retries**, and add an architecture test that no gateway
-below that layer configures a retry policy (`retries-and-backoff`, `cascading-failures`).
+Count calls where the chain is assembled, including configured client/SDK retries. One retrying
+layer is a useful simplification when it meets recovery needs; if several layers are intentional,
+verify their aggregate bound and deadline/admission clipping instead of banning the topology
+(`retries-and-backoff`, `cascading-failures`).
 
 ## Circuit breakers
 
@@ -137,8 +147,9 @@ Caller's own timeout:     10 s
 ```
 
 Then test the transitions, using time you control rather than sleeps. A breaker whose state
-depends on wall-clock sleeps produces slow, flaky tests; inject a `Clock` or use the library's
-test support.
+depends on wall-clock sleeps produces slow, flaky tests; use the library's supported ticker,
+scheduler or test seam. The conceptual `clock` below must actually drive that breaker's state;
+an unrelated `java.time.Clock` cannot advance it.
 
 ```java
 @Test
@@ -160,14 +171,15 @@ void breakerOpensAndThenProbes() {
 }
 ```
 
-The load-bearing assertion is the middle one: **while open, the downstream is not called.** A
-breaker that opens but still forwards is a metric, not a protection (`circuit-breakers`).
+The middle assertion checks that this new rejected call does not reach downstream. Track prior
+admitted work separately: opening need not cancel it, and it may still reach the server. Account
+for permitted half-open probes and the implementation's outcome recording (`circuit-breakers`).
 
 ## Slow-dependency behaviour under load
 
-The single most valuable test in this document, and the rarest. It is the combination that
-causes cascading failure: not a failing dependency, and not high load, but **a slow dependency
-while under load**.
+Use this when the claim concerns held capacity, admission or feedback under a slow dependency.
+A single-call test can miss the interaction with concurrent load; size the workload from the
+actual question rather than making this experiment mandatory for every client policy.
 
 ```text
 1. Drive the system at its normal rate.
@@ -176,7 +188,7 @@ while under load**.
    the caller's p99, and whether unrelated endpoints degrade.
 ```
 
-What this finds, and nothing else does:
+Useful hypotheses this combined experiment can test:
 
 - Unbounded queues in front of a bounded pool — latency grows without limit while throughput
   collapses (`littles-law-and-queueing`).
@@ -186,8 +198,8 @@ What this finds, and nothing else does:
   are removed from the load balancer and the survivors get more traffic
   (`kubernetes-service-lifecycle`).
 
-The last one is the classic self-inflicted outage, and it is only reproducible with latency
-plus load together.
+Verify the shared-resource and probe path rather than assigning the cause from correlated
+degradation alone. A smaller controlled fixture may reproduce the same feedback path.
 
 ## Duplicate delivery
 
@@ -268,18 +280,19 @@ A related pair worth running on the same harness:
 
 ## Partitions
 
-A partition is not "the dependency is down". Both sides are alive and each believes the other
-has failed — which is what produces two leaders, two holders of the same lock, and divergent
-state.
+A partition leaves some communication paths unavailable while participants may remain alive.
+Failure detection and the protocol determine what each side believes and may do; split ownership
+or divergent state is a possibility to test, not an inevitable outcome.
 
-Application-level stubs cannot produce this; it needs a fault at the network level between two
-real instances. What to assert:
+A simulation can explore the modeled protocol. Actual network/client behavior needs a fault on
+the relevant paths between real instances, with direction and coverage verified. What to assert:
 
-- **Lock and lease behaviour** — after a lease expires on one side, does the other acquire it,
-  and does the first stop acting when it cannot renew? A holder that keeps working after
-  losing its lease is the defect (`distributed-locks-and-leases`).
-- **Leader election** — exactly one leader after the partition heals, and no writes accepted
-  by the demoted one (`leader-election`).
+- **Lock and lease behaviour** — distinguish successor grant from its resource claim; verify
+  that a stale holder cannot violate the protected invariant. Cooperative stopping alone is
+  insufficient if an old request remains in flight (`distributed-locks-and-leases`).
+- **Leader election** — authority and accepted effects obey the protocol during the fault;
+  assert convergence within the declared recovery bound after healing, rather than immediate
+  agreement among local leader labels (`leader-election`).
 - **Client-visible consistency** — what a reader sees on the minority side
   (`consistency-models`).
 
@@ -296,3 +309,4 @@ turning it into one of the deterministic tests above (`references/chaos-experime
 ## Source
 
 - [Resilience4j circuit breaker](https://resilience4j.readme.io/docs/circuitbreaker) — shared sliding-window history, minimum recorded calls and concurrent execution; verify the installed library.
+- [JDK 25 Socket read timeout](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/Socket.html) — timeout leaves the socket valid; ownership and close are separate.

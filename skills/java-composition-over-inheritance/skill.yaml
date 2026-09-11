@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-composition-over-inheritance
-version: 1.2.2
+version: 1.2.3
 description: >-
   Choosing between inheritance, composition and sealed hierarchies in Java: fragile base
   classes, self-use of overridable methods, subclass explosion, the costs of delegation and
@@ -39,6 +39,12 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-design-by-contract
+  - java-solid
+  - java-dry-kiss-yagni
+  - java-refactoring
 
 capabilities:
   - reads-source

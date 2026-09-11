@@ -56,10 +56,11 @@ Do not claim the least- or most-cardinal column always belongs first.
 
 When filtering a range on one column and ordering by another:
 
-- an index led by the range minimizes qualifying work but may require a sort;
+- an index led by the range can reduce entries examined but may require a sort;
 - an index led by ordering can stop early under a small `LIMIT`, but may examine many rejected rows;
-- without a tight limit, serving the range often wins;
-- with a tight limit, serving order can win only if target rows occur early enough.
+- without a tight limit, compare range selectivity against sort, lookup and traversal costs;
+- a tight limit favors order when target rows occur early, but skew and residual filters can
+  remove that advantage. Neither key order guarantees the cheapest plan.
 
 Test the most selective and least favorable parameters, not only the median.
 

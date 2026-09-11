@@ -32,8 +32,9 @@ not happened yet — and is then read as "there is nothing to see".
 
 ## Workflow
 
-1. **Decide which question you are asking**, because it picks the tool. When and at which
-   tier a method became native code is `PrintCompilation` or `-Xlog:jit+compilation`; which
+1. **Decide which question you are asking**, and reuse relevant existing captures before
+   collecting more. When and at which tier a method became native code is
+   `PrintCompilation` or `-Xlog:jit+compilation`; which
    calls inside one compilation tree were inlined is `PrintInlining` or
    `-Xlog:jit+inlining=debug`; currently listed nmethods and their tier/state are visible through
    `jcmd <pid> Compiler.codelist`; continuous production monitoring is JFR. A method can execute
@@ -56,11 +57,14 @@ trap`, or at tier 4 with the hot path still slow — each suggests a different n
    accompanies promotion; repeated invalidation still needs correlation with recompilation,
    class loading, directives, and deoptimization evidence. Inlining matters at any active compiler
    tier; interpret C2 verdicts only when C2 is the relevant target and a profile implicates this call.
-5. **Read the verdict on the tier-4 tree, not the tier-3 one above it.** C2 names the limit
-   it applied — `too big`, `hot method too big`, `inlining too deep`, `virtual call`,
+5. **Read the verdict for the relevant compiler and compilation.** When investigating C2,
+   use its tier-4 tree rather than a nearby C1 tree; deliberate C1-only modes need C1 diagnosis.
+   C2 names the limit it applied — `too big`, `hot method too big`, `inlining too deep`, `virtual call`,
    `already compiled into a big method` — and `callee is too large` is C1's verdict, which
    says nothing about C2. See `references/inlining-diagnosis.md`.
-6. **Refactor the common path to fit** rather than raising a global limit. A bigger
+6. **Establish a material cost before changing code or policy.** Keep adequate code when
+   the refusal is immaterial. When evidence implicates it, compare a semantics-preserving
+   common-path refactor or scoped diagnostic directive before raising a global limit. A bigger
    `FreqInlineSize` applies to every call in the process and can cost aggregate throughput
    through code bloat while "fixing" the target method.
 7. **Steer one method, not the process.** A compiler directive or `CompileCommand` scoped
@@ -106,10 +110,12 @@ large` string exists only as C1's `callee is too large`. Grep for the exact stri
   `no static binding` (polymorphic, megamorphic, unresolved, or insufficiently profiled receiver),
   `inlining too deep`, `disallowed by CompileCommand`, `not inlineable` after `(not
 loaded)`, or `already compiled into a big method` all still refuse an 8-byte callee.
-- `-XX:CompileThreshold` is honoured only under `-XX:-TieredCompilation`. Under the default
-  it is accepted and ignored. The real thresholds are per tier
-  (`Tier3InvocationThreshold`, `Tier4InvocationThreshold`); read them with
-  `-XX:+PrintFlagsFinal`, and read the live counters with `-XX:+PrintTieredEvents`.
+- In the examined HotSpot 25.0.3 default C1/C2 tiered mode, `-XX:CompileThreshold` does not
+  control compilation eligibility. C1-only modes such as `TieredStopAtLevel=1` honor legacy
+  thresholds even with `TieredCompilation=true`; non-tiered mode also honors them. Inspect
+  the actual mode and effective per-tier thresholds (`Tier3InvocationThreshold`,
+  `Tier4InvocationThreshold`) with `-XX:+PrintFlagsFinal`; use bounded
+  `-XX:+PrintTieredEvents` captures for policy events and counters.
 - Current HotSpot JFR does expose inlining: `jdk.CompilerInlining` carries caller, callee, `bci`,
   `succeeded` and the same verdict `message` for an inlining attempt; one site can yield multiple
   events. Correlate `compileId` with the compilation's compiler/tier and preserve nested context. It is

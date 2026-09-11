@@ -11,6 +11,12 @@ Read only the sections matching boundary crossings in the impact map.
 - authentication, authorization, rate/capacity limits and sensitive fields;
 - versioning, deprecation, old/new caller compatibility and contract tests.
 
+For operations acknowledged before completion, define how terminal success/failure becomes visible,
+status/result retention, behavior after expiry, and cancellation semantics if cancellation is supported.
+Use the accepted interaction mechanism; route an unresolved mechanism choice back to solution analysis.
+[HTTP 202](https://httpwg.org/specs/rfc9110.html#status.202) indicates acceptance for processing,
+not completed processing or a guarantee of eventual success.
+
 ## Event or message
 
 - event meaning, owner, producer, consumers and schema version;

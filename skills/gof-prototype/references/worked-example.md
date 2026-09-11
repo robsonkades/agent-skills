@@ -43,9 +43,10 @@ Two risks to inspect:
   its invariants; an empty source produced by later mutation stays empty. Independently owned
   final mutable references cannot be repaired by ordinary assignment in the cloned instance.
 
-Under load the first defect is worse than it looks: the shared `ArrayList` is mutated
-concurrently by every request, so the failure is not just wrong output but
-`ConcurrentModificationException` and lost elements.
+If requests mutate the shared `ArrayList` concurrently, they can lose updates or observe
+inconsistent data. Iteration may throw `ConcurrentModificationException`, but
+[fail-fast detection is best-effort](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html);
+absence of that exception does not establish isolation or thread safety.
 
 ## After — a copy factory, with each field decided
 

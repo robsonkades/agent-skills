@@ -77,6 +77,8 @@ and terminate the executor in teardown; an intentionally permanent deadlock need
 
 ## Cancellation/timeout leak
 
+- **Establish ownership first:** an accepted durable/asynchronous job may legitimately outlive
+  its initiating request. Compare its work with the owning lifecycle and budget before calling it leaked.
 - **Symptoms:** caller timed out or scope failed, but operation ID, connection or side effect persists.
 - **Distinguish:** correlate owner deadline/cancel event with provider active request and final outcome.
   Thread interruption alone is not confirmed remote cancellation.
@@ -97,7 +99,8 @@ and terminate the executor in teardown; an intentionally permanent deadlock need
 
 - **Symptoms:** queued virtual-thread estimate and latency rise; useful CPU may be high or low.
 - **Distinguish:** scheduler parallelism/pool/mounted/queued trends; CPU quota/throttling; JFR
-  pin/native/foreign stacks; long CPU-bound virtual-thread work; carrier-capturing I/O.
+  native/VM pin reasons including class initialization; long CPU-bound virtual-thread work;
+  carrier-capturing I/O. Missing pin events do not exclude uninstrumented native blocking.
 - **Remediate:** depends on classification—move/bound CPU work, update pinning dependency, isolate
   problematic native/file operations, or adjust parallelism only after proving CPU headroom.
 - **Route:** `virtual-threads-internals`, `blocking-and-nonblocking-io`.
@@ -129,6 +132,9 @@ from first changed signal to downstream effects and validate the intervention at
 control point.
 
 ## Minimum incident record
+
+Use the fields needed for the incident and preserve existing evidence; a straightforward artifact
+interpretation does not require collecting every item or producing empty sections.
 
 - exact time window, JDK/vendor/build, host/container CPU and deployment version;
 - traffic/completion/rejection/cancellation and queue-age series;

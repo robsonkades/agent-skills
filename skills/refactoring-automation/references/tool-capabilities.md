@@ -7,7 +7,7 @@ that model contains — and what it silently misses is bounded by the same thing
 
 | Tool                                     | Model                                                     | Sees types?                        | Sees the whole repo?  | Blind to                                                                                       |
 | ---------------------------------------- | --------------------------------------------------------- | ---------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------- |
-| IDE refactoring                          | Resolved AST + project index                              | Yes                                | One project/workspace | Strings, most external config, other repositories                                              |
+| IDE refactoring                          | Resolved AST + project index                              | Yes                                | One project/workspace | Unindexed consumers; strings/config outside enabled rename checks or framework support         |
 | OpenRewrite                              | LST — AST with type attribution, formatting, comments     | Yes, if the classpath resolved     | Yes, module by module | Anything outside the source set it was pointed at                                              |
 | Error Prone / Refaster                   | javac AST during compilation                              | Yes                                | Whatever compiles     | Non-compiling code, generated sources excluded from the build                                  |
 | IntelliJ Structural Search/Replace       | Resolved AST, pattern-matched                             | Yes                                | One project           | Same as the IDE; also easy to write an over-broad pattern                                      |
@@ -20,9 +20,11 @@ what it advertises.
 
 ## The IDE
 
-Highest value per unit of risk for a single project, and the right default for Rename,
-Move, Change Signature, Extract and Inline. It updates callers, overrides, Javadoc `@link`
-references and — for the major IDEs — Spring and JPA metadata it has indexed.
+An existing IDE can be a practical choice for Rename, Move, Change Signature, Extract and
+Inline within an indexed project. Inspect its preview for callers, overrides and Javadoc
+references. String/config searches and framework-aware updates depend on options, installed
+integrations, source sets and the specific refactoring; indexed metadata is not a guarantee
+that every framework binding will be updated.
 
 Two limits worth internalising. First, capture the preview/diff and settings; replay/export
 support depends on the tool. Repeated work benefits from a tested transformation artifact.
@@ -98,4 +100,5 @@ do not rewrite unrelated text just to achieve zero hits. Also inspect generated/
 and external consumers: they may have no literal occurrence in this repository.
 
 Primary references: [Error Prone Refaster patch generation and application](https://errorprone.info/docs/refaster),
+[IntelliJ rename scope, options and preview](https://www.jetbrains.com/help/idea/rename-refactorings.html),
 [google-java-format parser and language requirements](https://github.com/google/google-java-format).

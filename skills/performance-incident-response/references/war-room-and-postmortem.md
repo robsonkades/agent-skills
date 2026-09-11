@@ -31,7 +31,7 @@ binary does not undo writes; moving traffic can overload the destination. Name a
 when the obvious rollback is incompatible. Use commands supported by the actual build/deployment
 through `incident-evidence-capture`, rather than copying flags from a previous incident.
 
-Validate with a representative request mix and observation window appropriate to cache warmup,
+Validate with a representative affected workload and observation window appropriate to cache warmup,
 autoscaling, retries and backlog. Count rejected, timed-out and degraded requests in the defined
 SLI population; lower latency after shedding most traffic does not establish recovered service.
 Cancellation is not proof that in-flight work stopped or resources were released. Separate restored
@@ -39,14 +39,16 @@ interactive service from residual replay/backlog recovery, and retain an owner f
 
 ## Postmortem
 
-Include executive impact, sourced timeline, detection and response clocks, a causal graph of
-technical and organizational contributors, why defenses did not detect or contain them, what worked,
-and measurable actions. Distinguish proximate trigger, enabling conditions and systemic controls.
+Include relevant impact, sourced timeline, detection and response clocks, technical and organizational
+contributors, why defenses did not detect or contain them, what worked, and measurable actions.
+Describe the causal relationships and uncertainty; use a graph when it clarifies interacting
+contributors. Distinguish proximate trigger, enabling conditions and systemic controls.
 Calculate incident rates using elapsed exposure time and a declared population; never derive “per
 month” from event count alone.
 
 Review whether the response preserved decisive evidence, whether the mitigation actually moved the
-user SLI, and whether recovery included backlog drain. Test completed actions with a fault injection,
+affected objective, and whether required backlog/replay recovery completed or has an explicit
+remaining state and owner. Test completed actions with a fault injection,
 alert-rule test, runbook exercise or other observable acceptance criterion.
 Keep unconfirmed causal links labeled and action acceptance tied to the mechanism it changes.
 An alert test validates detection, not prevention; an exercise on a simulator is not a production

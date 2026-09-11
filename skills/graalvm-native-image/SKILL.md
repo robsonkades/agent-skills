@@ -49,13 +49,18 @@ startup number is compelling.
 
 ## Workflow
 
+Use the steps relevant to the current decision, diagnosis or artifact change. Reuse supplied
+builds, measurements and established acceptance criteria before repeating work. A justified
+decision to retain the JVM, or a diagnosis from adequate existing evidence, need not create a
+new binary, capture or canary. Test and rollout gates apply when producing or promoting a change.
+
 1. **State the decision and version boundary.** Record GraalVM distribution and release,
    target OS/architecture/libc, framework/plugin versions, required dynamic features, workload
    lifetime, SLO, memory limit, and deployment CPU floor. Recheck flags against the installed
    release; Native Image options and edition-specific features change.
    Inspect the project's compiler release/toolchain and CI image; this skill's GraalVM 25.0/25.1
    examples do not authorize a Java, framework, distribution, or experimental-feature upgrade.
-2. **Build the framework-supported baseline first.** Prefer the framework's AOT integration and
+2. **Reuse or build the framework-supported baseline.** Prefer the framework's AOT integration and
    Native Build Tools over a hand-written command. It may generate substitutions and reachability
    metadata that a raw agent run cannot infer.
 3. **Audit dynamic behavior.** Combine library-provided metadata, framework-generated metadata,
@@ -66,7 +71,8 @@ startup number is compelling.
    at runtime unless proven safe or explicitly configured for build time. Inspect the build report
    or `-H:+PrintClassInitialization`; move environment-, secret-, clock-, filesystem-, network-,
    locale-, or host-dependent work to runtime. Prefer ordinary lazy construction/DI over internal
-   substitutions.
+   substitutions, but verify when construction actually runs; a method or DI boundary alone does
+   not prevent framework/build code from evaluating it into the image heap.
 5. **Select runtime and target deliberately.** Confirm whether the distribution supports the
    desired GC and PGO. Choose a portable `-march` floor for heterogeneous fleets, set a container-
    appropriate heap ceiling, and decide whether glibc, musl, or dynamic linking matches patching
@@ -75,7 +81,8 @@ startup number is compelling.
    retain the build report, effective arguments, SBOM, target CPU, debug-symbol policy, binary
    hash, build time, and peak builder RSS. Treat expert `-H:` flags as release-coupled and prove
    that each is accepted and still needed.
-7. **Test the produced artifact.** Exercise success, invalid input, optional integrations,
+7. **Test the produced artifact against its supported contract.** Exercise relevant success,
+   invalid input, optional integrations,
    reflection/serialization/JNI/FFM, resources, locales/time zones, TLS/security providers,
    shutdown, signals, memory pressure, and the oldest deployment CPU. Run tests in the actual
    container/base image rather than only on the build host.

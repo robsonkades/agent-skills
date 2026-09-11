@@ -32,30 +32,38 @@ Confirm the default in the target runtime before proposing a flag.
 
 ## Workflow
 
-1. **Establish a candidate interval.** Align request/thread progress, GC/safepoint events and
+Use the steps needed for the question. A mechanism explanation or adequate existing capture
+can support a narrow keep/change conclusion without new diagnostics. The executed 25.0.3
+observations below are historical build-specific evidence; inspect the actual target build,
+collector and options before applying them. JDK 25 GA source is identified separately.
+
+1. **Establish a candidate interval when attributing a pause.** Align request/thread progress, GC/safepoint events and
    OS scheduling. A latency value minus summed GC durations is not a valid decomposition when
    requests overlap, queue or wait on dependencies.
-2. **Enable `-Xlog:safepoint=info` with `time` and `uptime`, and inspect every safepoint** in
-   the window — not just the GC ones. `Deoptimize`, thread dump, heap dump and class
-   redefinition are safepoints that no GC log mentions.
+2. **Inspect adequate existing safepoint evidence; collect missing coverage if needed.**
+   `-Xlog:safepoint=info` with a usable clock mapping is one option. Inspect all operations in
+   the relevant window, including non-GC work; exact dump, deoptimisation and class-operation
+   paths determine whether a global safepoint occurs.
 3. **Split the pause.** `Reaching safepoint` is elapsed synchronization time; a late required
    thread can dominate it, but coordination and scheduling also contribute.
    `At safepoint` covers VM work after synchronization; `Leaving` covers release work.
    A high `At` points to the VM operation/cleanup rather than TTSP. Correlate matching GC or
    VM-operation intervals instead of equating their timers or subtracting percentiles.
-4. **Name the slow thread** when sync time dominates:
+4. **Seek late-thread evidence when diagnosing dominant sync time:**
    `-XX:+SafepointTimeout -XX:SafepointTimeoutDelay=<ms>` (default 10000) logs
    `Threads which did not reach the safepoint:` with each late thread's name and state,
    at `-Xlog:safepoint` warning level — **no stack** (executed, 25.0.3). Get the stack
-   from an async-profiler wall-clock profile over the same window, or, in a test
+   from a suitable existing/aligned profile or an async-profiler wall-clock capture, or, in an isolated disposable test
    environment only, `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOnSafepointTimeout`,
    which attempts to write an `hs_err`; fatal-error stacks can be partial or unavailable.
 5. **Classify the cause from aligned evidence** — delayed poll in compiled/interpreted/runtime
    code, transition/critical region, page fault, or a runnable thread not scheduled because of
    host contention/throttling. A stack sample alone is not causal proof.
-6. **Verify the proposed flag is not already the default** in the target binary with
-   `-XX:+PrintFlagsFinal -version` before writing it into a recommendation.
-7. **Change one cause, then repeat the same measurement** with the same procedure.
+6. **Verify effective flag values before recommending a flag change.** Use target process
+   evidence or a successful matching `-XX:+PrintFlagsFinal -version` invocation, preserving
+   producer exit/stdout/stderr. A failed probe or missing match is not a default value.
+7. **For a justified change, isolate the cause and repeat relevant measurements.** Retain an
+   adequate setting/design or report the remaining evidence gap when no change is supported.
 
 ## Rules
 
@@ -82,22 +90,29 @@ Confirm the default in the target runtime before proposing a flag.
   `LoopStripMiningIterShortLoop` was 100 for those three and 0 for Serial/Parallel on this
   build. It is a C2 short-loop heuristic; inspect effective values and generated code, not
   a portable guarantee that every counted loop has that exact poll interval.
-- `-XX:+UseThreadLocalHandshakes` was removed in JDK 15. Passing it produces
-  `Unrecognized VM option` and the JVM does not start (executed, 25.0.3).
+- `-XX:+UseThreadLocalHandshakes` produces `Unrecognized VM option` on the historical
+  25.0.3 run; that rejection does not establish a removal date for this spelling.
+  The original flag was **`ThreadLocalHandshakes`**, without `Use` (JEP 312): it was
+  deprecated in 13, ignored with a warning in 14, and expired in 15. It is not a switch
+  to enable handshakes on JDK 25.
 - `RevokeBias` does not exist on a JDK 18+ runtime. Biased locking was disabled by
   default in JDK 15 (JEP 374) and the code removed in JDK 18 (JDK-8256425) — two
   different dates, routinely conflated. `RevokeBias` in a log means the log came from an
   older JVM.
 - `-XX:GuaranteedSafepointInterval` changed from a 1000 ms default to `0` in JDK 23 and
   is a **diagnostic** flag on 25 — setting it without `-XX:+UnlockDiagnosticVMOptions`
-  refuses to start (executed). A service migrated from an older JDK will show a
-  different periodic safepoint pattern; that alone is not a regression.
-- Global safepoint versus handshake: observed JDK 25 GC pauses, heap inspection and thread-dump
+  refuses to start (historical 25.0.3 observation). In the checked 25.0.3 and JDK 25 GA
+  VMThread implementation it controls a monitor wait; a nonzero value alone does not
+  unconditionally produce periodic safepoints. Inspect actual operation producers and
+  recorded coverage before attributing a cadence change or calling a migration a regression.
+- Global safepoint versus handshake: observed JDK 25 stop-the-world GC phases, heap inspection and thread-dump
   (`jstack`, `jcmd Thread.print`, `ThreadMXBean.dumpAllThreads`) and JVMTI class
-  operations can stop every thread. Single-thread stack sampling (`Thread.getStackTrace()`,
-  the JFR sampler), per-thread deoptimisation, concurrent-collector thread-root scanning
-  use handshakes in the listed implementation paths and leave unrelated threads running.
-  `-Xlog:handshake=info` names each one; the table is in `references/instrumentation.md`.
+  operations can stop Java execution globally. Selected single-thread stack operations use
+  handshakes; JFR Java sampling uses a thread-local cooperative poll path. Native sampling, deoptimisation/nmethod invalidation and
+  collector root processing require their exact paths. A concurrent phase does not establish
+  that every related operation avoids a global stop.
+  `-Xlog:handshake=info` identifies logged HotSpot handshake operations, not every path
+  above; the table is in `references/instrumentation.md`.
 - `jcmd Thread.dump_to_file` is a different dump introduced with JEP 444: it avoids a global
   application pause and has different contents/consistency from `Thread.print`. Do not group
   all thread-dump commands under the same safepoint cost.
@@ -114,21 +129,26 @@ Confirm the default in the target runtime before proposing a flag.
   `-XX:+PrintSafepointStatistics` was deprecated in JDK 11 — where it starts and warns — and is an
   `Unrecognized VM option` from 17 onward, so a runbook still carrying it fails at launch rather
   than degrading. Its output lives on as `-Xlog:safepoint+stats=debug`.
-- On the tested HotSpot build, `Thread.yield()` reaches a runtime path with a safepoint check;
-  this is not a Java API guarantee. `Thread.sleep(0)` and `Thread.onSpinWait()` must not be
+- The historical `Thread.yield()` responsiveness result concerns its complete runtime path,
+  not a Java API guarantee or an explicit poll in `JVM_Yield`: that JDK 25 GA leaf routine
+  calls `os::naked_yield()`. Inspect surrounding native-wrapper/transition checks as well.
+  `Thread.yield()`, `Thread.sleep(0)` and `Thread.onSpinWait()` must not be
   used as correctness mechanisms for safepoint responsiveness.
 
 ## Validation and operational constraints
 
 - Derive timeout thresholds from the service SLO and normal TTSP distribution; overly low
-  `SafepointTimeoutDelay` can flood diagnostics, while abort-on-timeout is test/canary only.
-- Test long compiled loops, CPU throttling/descheduling and relevant JNI critical paths
-  separately. Validate both TTSP and throughput after any code/compiler change.
+  `SafepointTimeoutDelay` can flood diagnostics, while abort-on-timeout belongs only in an
+  isolated disposable test where process termination is intended.
+- Test the suspected loop, scheduling or JNI mechanism when needed to establish a cause or
+  change. Validate TTSP and throughput for a code/compiler performance change; a narrow
+  explanation need not exercise every mechanism.
 - Record build, collector, compiler tier/effective flags and logging/JFR loss. None of these
   mechanics is a Java-language portability guarantee.
-- Return the aligned interval, observed timing fields, candidate late thread, supporting
-  evidence and proposed validation. Missing events/stacks leave attribution unresolved;
-  do not infer absent pauses from a configuration that did not record them.
+- Return the supported conclusion, material evidence and limits. For interval attribution,
+  include observed timing and alignment; add late-thread/cause evidence when available.
+  Missing stacks limit thread/cause attribution, not independently complete timing. Missing
+  events limit the corresponding claim; do not infer absent pauses from disabled/lost capture.
 
 ## References
 
@@ -147,6 +167,7 @@ Authoritative sources: [JEP 312: Thread-Local Handshakes](https://openjdk.org/je
 [JEP 376: ZGC Concurrent Thread-Stack Processing](https://openjdk.org/jeps/376),
 [JEP 518: JFR Cooperative Sampling](https://openjdk.org/jeps/518), and
 [JEP 158: Unified JVM Logging](https://openjdk.org/jeps/158).
+The legacy handshake flag lifecycle is in [JDK 14 argument handling](https://github.com/openjdk/jdk/blob/jdk-14-ga/src/hotspot/share/runtime/arguments.cpp).
 For poll encodings, see [JDK 25 x86 C2 safepoint node](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/x86_64.ad),
 [poll-word/return helpers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/macroAssembler_x86.cpp), and
 [polling page setup](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepointMechanism.cpp).

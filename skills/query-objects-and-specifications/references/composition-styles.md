@@ -1,8 +1,10 @@
 # Composition Styles
 
 One search screen: orders filtered by optional status, optional customer, optional date
-range and optional minimum total. Four mechanisms, same requirement. Examples are partial
-application code: records need Java 16+, `JdbcClient` Spring 6.1+, and JPA metamodel/DSL
+range and optional minimum total. Compare four mechanisms against that requirement; the
+fragments are not four complete equivalent implementations. Examples are partial application
+code: record syntax needs Java 16+, while Spring 6.1 (including `JdbcClient`) requires Java 17+.
+JPA metamodel/DSL
 examples need their configured generators. Inspect the deployed Java, Spring Data, provider
 and database versions; new Specification APIs are not available on every older release.
 
@@ -22,7 +24,7 @@ Derived methods suit a small readable set, but names are not compiler-checked pr
 paths. Verify startup/query parsing after entity changes. Optionality warrants comparing
 composition with explicit statements, not an automatic numerical cutoff.
 
-## 2. Query Object — usually the best answer for one screen
+## 2. Query Object — explicit filter values and translation
 
 ```java
 public record OrderSearch(
@@ -45,7 +47,9 @@ an inclusive `placedTo` that can be advanced by one day, and a documented busine
 must already be bounded and validated. Larger scopes may need an authorization join/EXISTS
 or database policy. The example uses PostgreSQL `timestamptz` columns and JDBC 4.2
 `OffsetDateTime` parameters; adapt and test the actual column/driver semantics. `Money.currency()` below
-is assumed to return the stored currency code.
+is assumed to return the stored currency code. Imports, constructor injection and application
+types are omitted. Check column labels and status/time conversions against the actual JDBC
+driver and row mapper; constructor/property mapping is not guaranteed by the DTO name alone.
 
 ```java
 @Repository
@@ -188,6 +192,12 @@ underlying API and executor (`enterprise-architecture-smells`).
 A generated fluent API over the schema or the entities gives composition **and** compile-time
 checking:
 
+This syntax-only fragment intentionally omits the mandatory tenant/allowed-customer scope,
+tenant-qualified join, complete optional filters, stable `id` tiebreaker and `OrderSummary`'s
+status/column aliases and enum/time conversion. It is not a replacement for the scoped search
+above. A complete translation must supply those contracts, including empty-scope denial,
+allowlisted sorting and an explicitly verified result mapping; `fetchInto` alone does not.
+
 ```java
 var orders = dsl.select(ORDER.ID, ORDER.PLACED_AT, ORDER.TOTAL_AMOUNT, CUSTOMER.NAME)
     .from(ORDER).join(CUSTOMER).on(CUSTOMER.ID.eq(ORDER.CUSTOMER_ID))
@@ -197,21 +207,21 @@ var orders = dsl.select(ORDER.ID, ORDER.PLACED_AT, ORDER.TOTAL_AMOUNT, CUSTOMER.
     .fetchInto(OrderSummary.class);
 ```
 
-The cost is a build-time generation step and a second query technology in the codebase; the
-gain is compile-time checks against the generated model; only regenerated, synchronized
-metadata can expose a schema change, and not every semantic change becomes a compiler error (`metadata-mapping`). Worth it when queries
-are numerous and complex, or when the schema is owned elsewhere.
+The generated-model approach needs synchronized build-time metadata. Adopting a new DSL can
+add another query technology; an adequate existing DSL need not add that cost. Generated
+types catch some structural mistakes, but not every semantic change becomes a compiler error
+(`metadata-mapping`). Choose from actual query complexity, schema ownership and maintainability.
 
 ## Choosing
 
-| Condition                                                      | Mechanism                                 |
-| -------------------------------------------------------------- | ----------------------------------------- |
-| A small readable set of fixed queries                          | Derived methods                           |
-| One screen, several optional filters                           | Query object with one statement           |
-| A business criterion reused across several queries             | Named specification                       |
-| Arbitrary user-composed filtering (admin search, saved search) | Specifications or a type-safe DSL         |
-| Aggregation, window function, recursion, bulk                  | SQL in a gateway                          |
-| Anything returning data for display                            | Projection, whichever mechanism builds it |
+| Condition                                                      | Mechanism                                                          |
+| -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| A small readable set of fixed queries                          | Derived methods, named statements or an adequate existing DSL      |
+| One screen, several optional filters                           | Compare query object, statements and existing DSL translation      |
+| A business criterion reused across several queries             | Named specification                                                |
+| Arbitrary user-composed filtering (admin search, saved search) | Specifications or a type-safe DSL                                  |
+| Aggregation, window function, recursion, bulk                  | Compare supported SQL, DSL and provider APIs                       |
+| Data for display                                               | Projection or bounded entities according to required data/behavior |
 
 Sources: [Spring Data JPA Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html)
 and [Jakarta Persistence query semantics](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).

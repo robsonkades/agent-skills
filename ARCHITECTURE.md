@@ -186,6 +186,13 @@ which is how multi-registry precedence stays invisible to the application servic
 mutate the disk, which is why the security model can make categorical statements about
 writes (§7).
 
+Optional interactive update notices use `ToolUpdater`, `UpdateStateStore`, and
+`SelectionPrompt` ports. `CheckUpdates` owns version comparison, caching, reminders and
+destination identity; `ApplySkillUpdates` sends reviewed releases through the existing
+install pipeline. Node implements npm detection/execution, advisory state persistence and
+terminal input. The CLI owns activation and menu presentation. Importing a library never
+checks the network or prompts; only eligible interactive CLI actions invoke the service.
+
 ---
 
 ## 5. Installation lifecycle

@@ -271,9 +271,10 @@ new candidates, but the inlining decision itself does not consult EA.
 Primary references: Stadler, Würthinger, Mössenböck — "Partial Escape Analysis and Scalar
 Replacement for Java" (CGO 2014); Kotzmann & Mössenböck — "Escape Analysis in the Context of
 Dynamic Compilation and Deoptimization" (VEE 2005), the source of the rematerialisation
-design. The Graal compiler left the JDK with JEP 410; `-XX:+UseJVMCICompiler` on OpenJDK 25
-finds no compiler, so experimenting with partial EA requires the GraalVM distribution and is
-the subject of `graalvm-jit`.
+design. JEP 410 removed the bundled experimental Graal compiler, retaining JVMCI for external
+compilers. Stock OpenJDK 25 does not supply Graal merely by setting `-XX:+UseJVMCICompiler`;
+use a compatible distribution or explicitly configured external compiler, verifying what
+actually compiled the method. Partial-EA setup is the subject of `graalvm-jit`.
 
 Source links:
 

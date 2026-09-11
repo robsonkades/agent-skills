@@ -23,6 +23,12 @@ than upgrading them. Inspect manager validation options when mismatches must be 
 Suspension and savepoints are manager-dependent. JDBC savepoint rollback does not necessarily
 restore a JPA persistence context's in-memory state.
 
+For local JDBC management, verify how each repository obtains its connection. Spring-aware
+access such as `JdbcTemplate`/`DataSourceUtils` can use the bound connection; a raw connection
+from the underlying datasource may execute independently, even against the same database.
+Multiple transaction managers do not automatically combine their resources. Check persisted
+state after a mid-operation failure, not only annotation placement or transaction activity.
+
 ## The silent no-ops
 
 Partial Java illustration (omitted domain methods/imports), assuming Spring proxy mode:
@@ -123,13 +129,14 @@ acted, and your rollback does not reach it.
 ## Batch work
 
 ```java
-// Wrong: one transaction, one lock set, no restart point, undo log grows all night.
+// Potentially costly: one atomic batch; measure its lock/version/resource lifetime.
 @Transactional
 public void reindexAll() {
     for (var row : repository.findAll()) { ... }
 }
 
 // Partial Java 17+ template: imperative Spring TransactionTemplate, domain types omitted.
+// Use only when the business contract permits committed partial progress.
 // No enclosing transaction; template starts and commits one transaction per execute.
 // Repository and checkpoint use the same enlisted database transaction.
 public void reindexAll() {
@@ -146,7 +153,9 @@ public void reindexAll() {
 }
 ```
 
-Chunking replaces one all-or-nothing batch with committed partial progress. Design
+Keep one transaction when atomicity is required and its measured footprint is acceptable.
+Otherwise compare a bounded atomic redesign or staged atomic publication before weakening the
+contract. Chunking replaces one all-or-nothing batch with committed partial progress. Design
 restartability (a durable cursor), safe repetition (including a crash with an unknown
 commit outcome), and a defined intermediate state — other readers will see the batch
 half-applied, and someone must decide that is acceptable. Use stable key ordering and a
@@ -158,7 +167,9 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 
 - `readOnly` effects depend on Spring, provider and driver configuration; inspect flush
   mode and entity read-only state. It is neither automatic replica routing nor portable
-  write prevention, and performance benefit must be measured.
+  write prevention, and performance benefit must be measured. Explicit database enforcement
+  (for example, `DataSourceTransactionManager.setEnforceReadOnly`) is a separate configurable
+  behavior; verify supported statements and database scope rather than assuming a universal hint.
 - Autocommit reads still use connections and database statement transactions. Connection
   reuse depends on the integration. Move incidental long reads before/after the write
   boundary when safe; `NOT_SUPPORTED` alone retains suspended outer resources.
@@ -172,7 +183,7 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 - [ ] External effects moved out or deliberately bounded with failure recovery documented
 - [ ] Rollback rule matches the exceptions actually thrown
 - [ ] No reliance on self-invoked transaction attributes
-- [ ] Batch work chunked, with a restart cursor
+- [ ] Batch atomicity preserved, or partial progress accepted with durable restartability
 - [ ] `REQUIRES_NEW` used only where the inner work must survive an outer rollback, and the
       pool is sized for the extra connection
 - [ ] The non-atomic edge (message, remote call) has a named strategy: outbox, retry or
@@ -183,3 +194,4 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 - [Spring propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html): physical versus logical scope, joining attributes and retained resources.
 - [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html): default rules and overrides.
 - [Spring transaction annotation settings](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html): proxy interception and the 6.2+ global rollback default. Consult the project's version.
+- [Spring 6.2.19 `DataSourceTransactionManager`](https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceTransactionManager.html): bound JDBC connection access and optional database read-only enforcement; verify the target provider.

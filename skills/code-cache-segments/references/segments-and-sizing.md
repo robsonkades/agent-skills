@@ -71,11 +71,10 @@ Only when the fallback heap is full as well does it call
 `CompileBroker::handle_full_code_cache` with the **original** type, which is what the warning
 and the JFR `jdk.CodeCacheFull` event name. The design consequences:
 
-- A `profiled` heap pinned at 100% while `non-profiled` keeps climbing is the signature of the
-  spill: tier-3 code — short-lived by design, replaced by tier 4 within seconds — is now
-  interleaved with C2 code in the heap JEP 197 created to keep it out of. That reintroduces
-  exactly the fragmentation segmentation was meant to prevent, and it is invisible to a
-  dashboard that sums the heaps.
+- A `profiled` heap pinned at 100% while `non-profiled` keeps climbing is consistent with
+  spill, but normal tier-1/C2 growth can produce the same aggregate pattern. Confirm allocation
+  fallback before attributing the growth to it. Profiled code often has a shorter lifetime;
+  mixing it with longer-lived code can increase fragmentation risk, not guarantee a failure.
 - A full `non-nmethods` heap can spill adapters and compiler buffers into `non-profiled`,
   then `profiled` when available. These allocations compete with compiled methods for space;
   if the entire applicable fallback path fails, an adapter allocation failure surfaces in an
@@ -167,7 +166,8 @@ with a comment that segmentation defeats huge pages on small caches). Three ways
 - `-Xint`: `SegmentedCodeCache has no meaningful effect with -Xint` and it is reset.
 
 The `jdk.CodeCacheConfiguration` JFR event records the sizes the JVM actually
-settled on — `profiledSize = 0` is the fingerprint of an unsegmented or C1-only cache.
+settled on — `profiledSize = 0` is not unique to one mode: inspect segmentation and profiling
+flags, including C1-only level 1 or C2-only execution, and confirm the actual heap lines.
 
 This description is deliberately version-scoped. Do not infer that every later HotSpot must
 have exactly these three named heaps: inspect the target release's flags, source and diagnostic

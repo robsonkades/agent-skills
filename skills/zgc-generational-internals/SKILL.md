@@ -21,8 +21,8 @@ description: >
 Decide what a generational ZGC symptom is actually caused by — barrier cost, heap headroom,
 promotion rate, or a measurement that never looked at the right phase — using the mechanism
 rather than a remembered flag list. On JDK 25 there is no non-generational mode to compare
-against, so the generational behaviour _is_ ZGC behaviour, and the tuning surface is small
-enough that every wrong move is a wrong model of the collector.
+against, so the generational behaviour _is_ ZGC behaviour. Establish the actual implementation
+and evidence before selecting a change; a collector regression remains a candidate when supported.
 
 The failure this prevents is the confident no-op: reasserting a flag that was removed or is
 already the default, copying a heap multiplier from another service, or reporting a pause
@@ -31,27 +31,34 @@ leaves the real problem undiagnosed while looking like a fix.
 
 ## Workflow
 
+Use the steps needed for the requested mechanism, parser or operational claim. Reuse adequate
+source, captures and configuration; a narrow explanation or supported no-change conclusion does
+not require a new logging, profiling or load campaign. Inspect the target vendor/build, OS/architecture
+and effective collector support; JDK 25 HotSpot is the source baseline, not authorization to upgrade.
+
 1. **Establish the baseline before anything else.** `-XX:+UseZGC` alone is generational on
-   JDK 25. Confirm ZGC is actually selected with `jcmd <pid> VM.flags -all | grep -i UseZGC`
-   — not that a mode flag is present.
+   JDK 25. Confirm ZGC is actually selected in successful `jcmd <pid> VM.flags -all` output
+   or adequate startup evidence — not merely that a mode flag is present. Preserve producer failures
+   before filtering; unavailable flags are not evidence that an option is false or absent.
 2. **Read the flags off the running JVM, not from memory.** Check `ZCollectionInterval`,
    `ZAllocationSpikeTolerance` and `ZProactive` with `-XX:+PrintFlagsFinal` or
    `jcmd <pid> VM.flags -all` against the build in use; these defaults move between releases.
-3. **Capture every STW phase emitted by the target build.** Log with
+3. **For a complete pause-population claim, capture every relevant STW phase.** Log with
    `-Xlog:gc*,gc+phases=debug`; validate the parser against real young and old cycles and do
    not assume one textual phase list survives releases.
 4. **Separate young and old-cycle evidence.** Frequency is workload/ergonomic, not “continuous
    versus rare.” Correlate promotion/aging, live bytes, allocation and old-cycle triggers;
    temporal overlap alone does not prove promotion pressure.
-5. **Classify allocation stalls from capacity signals.** Join each stall to free/used/soft-max
+5. **Classify allocation stalls from relevant capacity signals.** Correlate available stall intervals with free/used/soft-max
    heap, live set, page/large allocation, concurrent-cycle progress, allocation rate,
    `ConcGCThreads`, CPU throttling and safepoints. Time-of-day clustering is context, not cause.
 6. **Attribute barrier cost from generated code/profile evidence.** Fast paths are commonly
    inlined and may not appear as named frames. Stores execute a barrier path broadly; only
    some require remembered-set work. See `references/barriers-and-remembered-set.md`.
-7. **Choose remediation by the proven bottleneck:** reduce allocation/live set, restore CPU,
+7. **Choose remediation from supported constraints and hypotheses:** reduce allocation/live set, restore CPU,
    add justified hard/soft heap headroom, control bursts/backpressure, or run a scoped
-   heuristic experiment. There is no safe global order of flags.
+   heuristic experiment. There is no safe global order of flags. An authorized bounded mitigation
+   can precede complete causal attribution; state the uncertainty and verify its relevant outcomes.
 
 ## Rules
 
@@ -62,14 +69,17 @@ leaves the real problem undiagnosed while looking like a fix.
   Timeline: JEP 439 (JDK 21, opt-in) → JEP 474 (JDK 23, default) → JEP 490 (JDK 24, only mode).
 - Reasserting default-enabled `ZProactive` is not an allocation-stall fix. Inspect its
   effective value and cycle trigger before considering a change; proactive collection
-  targets idleness/low allocation rather than guaranteeing recovery from sustained peaks.
+  uses build-specific growth/time and estimated collection-cost conditions, not merely an idle-state
+  test, and does not guarantee recovery from sustained peaks.
 - Heap sizing is conditional on measured live set, allocation distribution, relocation
   progress, large pages/objects, concurrent CPU and burst duration. No collector-independent
   live-set multiplier (1.5×, 2.5× or 4×) predicts safety; derive and validate headroom under
-  steady, peak and throttled conditions.
+  the steady, peak or throttled conditions relevant to the sizing claim.
 - A pause script that greps `"Pause Mark"` reports an incomplete population —
   `Pause Relocate Start` is a real STW pause and is commonly omitted from diagrams. Every
-  such script needs a sanity assertion that aborts when the sample count is zero.
+  such script must distinguish failed/missing capture from a successful empty population. With
+  adequate configuration/window evidence, report zero observed pauses and an undefined percentile;
+  zero samples never establish p99=0.
   Omitting a phase can bias a percentile either way. Allocation stalls block allocating
   threads, not necessarily all application threads at a global safepoint; keep them separate.
 - The load-barrier fast path tests **the pointer value** with a bitmask, before any access to
@@ -94,14 +104,17 @@ leaves the real problem undiagnosed while looking like a fix.
 - Distinguish measured overhead/sizing evidence from estimates. Report an actual measurement
   with its build, workload and method; label unmeasured predictions as conditional.
 
-## Production acceptance
+## Validation for the intended claim
 
-- Parse counts must reconcile with actual cycle IDs/generations; fail closed on unknown phase
-  names, truncated/rotated logs and recording loss rather than reporting a perfect percentile.
-- Exercise allocation spikes, old live-set growth, large objects, CPU quota/throttling and
-  `SoftMaxHeapSize` pressure. Verify stalls, achieved throughput and cgroup headroom together.
-- For any barrier/flag change, preserve correctness tests and compare CPU, allocation,
-  throughput and tail latency across repeated runs on the exact JDK build.
+- For complete-population results, reconcile counts with actual cycle IDs/generations and verify
+  phase names, complete rotated inputs and recording loss. An independently verified subset may
+  still support an explicitly limited result; do not label it the whole window or a perfect percentile.
+- For a sizing or stall-remediation decision, exercise relevant allocation/live-set, large-object,
+  CPU quota or soft-target conditions that the evidence does not already cover. Keep tests within
+  authorized operational bounds and verify stalls, achieved throughput and memory headroom together.
+- For a performance claim about a barrier/flag change, preserve relevant correctness tests
+  and compare the affected CPU, allocation, throughput or tail-latency outcomes across
+  representative repeated runs on the exact JDK build. Flag acceptance alone proves no gain.
 
 ## References
 

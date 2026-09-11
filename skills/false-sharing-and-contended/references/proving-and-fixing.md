@@ -69,7 +69,12 @@ Not every environment permits reliable pinning. Record actual placement and repo
 
 ## Result criteria
 
-The claim “false sharing materially caused the regression” requires:
+For a narrow contract/layout question, stop when the relevant guarantee and its target limits
+are established. Reuse comparable existing measurements; new JMH/PMU runs are warranted when
+they resolve an actual attribution or mitigation decision. A negative or inconclusive result
+can justify keeping the baseline or choosing the next discriminator.
+
+The stronger claim “false sharing materially caused the regression” requires:
 
 - verified independent variables and same-line placement in baseline;
 - supported coherence evidence consistent with writer invalidation, or explicit limitation;

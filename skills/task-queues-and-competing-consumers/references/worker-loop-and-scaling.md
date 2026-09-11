@@ -2,9 +2,9 @@
 
 ## The loop
 
-Three properties distinguish a correct competing-consumer loop from the naive one: the
-concurrency permit is acquired **before** the fetch, the ack is after the side effect, and
-shutdown stops the fetch before it stops the work.
+This recipe reserves capacity **before** the fetch, acknowledges after a repeat-safe effect,
+and stops intake before draining work. Other bounded intake mechanisms can be valid; choose
+acknowledgement placement from the required loss/duplicate policy (`delivery-semantics`).
 
 Pseudocode for a pull consumer; receive/renew/ack operations are broker-specific:
 
@@ -26,7 +26,8 @@ handler owns accepted delivery + permit:
   record effect success, then attempt ack/delete
   distinguish effect failure, ack failure/unknown outcome, and renewal cleanup failure
   do not issue a second nack just because cleanup failed after confirmed ack
-  stop/join renewal and release permit in outer finally, even when recovery calls fail
+  stop/join renewal and release permit in the actual handler's outer finally
+  do not release running-work capacity merely because its Future reports cancellation
 
 shutdown:
   atomically close intake through lifecycle gate
@@ -37,19 +38,29 @@ shutdown:
   release delivery early only with old-work overlap covered by the effect contract
 ```
 
+The permit above counts local active work. An unknown receive or failed return can still leave
+broker-side work outstanding after that permit is released. Track that uncertainty under a
+separate finite recovery budget and pause further intake when the budget is exhausted; a
+local permit count alone does not bound all broker-side in-flight deliveries.
+
 Reserve one permit per delivered item for batch receive. For push consumers, align broker
 credit/prefetch with bounded dispatch instead. Serialize ack on its owning channel/session where
 the client requires it; JMS session-wide acknowledgement is not a per-message operation.
+RabbitMQ 4.2 AMQP 0-9-1 QoS prefetch does not limit `basic.get` polling; use the limit that
+actually governs the selected delivery API. Changing prefetch with deliveries already in
+flight can temporarily exceed the new count.
 
 Why each line is the way it is:
 
 - **`tryAcquire` before `receive`.** Fetching first and then blocking on a permit means the
   message is leased while it waits, and the lease clock is already running. The wait is inside
   the timeout budget rather than outside it.
-- **`Semaphore`, not a bounded executor queue.** A bounded `ThreadPoolExecutor` queue also caps
-  the work, but the messages sitting in it are leased and invisible to the broker: depth reads
-  zero while the process holds a backlog. The permit leaves unclaimed work where the depth and
-  age metrics can see it. Sizing the limit is `concurrency-limiting-and-bulkheads`.
+- **Account for local buffering.** A semaphore with no prefetch leaves unclaimed work at the
+  broker. A bounded `ThreadPoolExecutor` queue can also be adequate when running tasks, queued
+  deliveries, unresolved receives and rejection recovery have explicit finite bounds. Queued
+  messages are already leased; include that wait in exposure and report local backlog even
+  when broker visible depth falls. Broker credit/prefetch is another supported control.
+  Sizing the limit is `concurrency-limiting-and-bulkheads`.
 - **Executor choice** follows the deployed baseline and work. Java 21+ virtual threads can
   suit blocking I/O but do not bound demand; platform pools remain valid. CPU-heavy work needs
   bounded execution; `thread-sizing-and-virtual-threads` owns that choice.
@@ -57,7 +68,10 @@ Why each line is the way it is:
   killed mid-handler with leases still running; `kubernetes-service-lifecycle` owns the
   arithmetic and the `preStop` ordering.
 
-`shutdownNow()` requests interruption; handlers may continue and queued tasks may never start.
+`Future.cancel(true)` can report cancellation before the handler exits. `shutdownNow()` requests
+interruption; handlers may continue and queued tasks may never start. Reconcile those queued
+deliveries separately; release running-work capacity on actual termination, including cleanup
+failure paths. `executors-and-task-lifecycle` owns executor task lifecycle.
 No-ack recovery depends on broker durability, retention, channel/lease state and DLQ policy.
 An external effect may already have committed even when its acknowledgement outcome is unknown.
 
@@ -72,23 +86,31 @@ An external effect may already have committed even when its acknowledgement outc
 | In-flight count vs safe limit          | Worker/downstream saturation                             | Prevents scaling beyond the dependency's capacity    |
 | Worker CPU                             | CPU demand only                                          | Useful for CPU-bound tasks, misleading alone for I/O |
 
-No single signal is a stable autoscaler. Age is denominated like the SLO, but can remain high
-after capacity is added, disappear during redelivery, or reflect one poison message. Depth needs
-arrival/drain rate to become catch-up time. Consequences:
+A single normalized metric can be a valid control input with an established workload/capacity
+relationship. AWS's SQS target-tracking example uses visible backlog per InService instance and
+an acceptable backlog estimated from latency divided by mean processing time. This estimate
+does not prove a tail-latency guarantee, account for all hidden work, or establish stability for
+a different task mix. Keep independent diagnostic/SLO signals and startup, scale-in and
+downstream-capacity guards. Age can remain high after capacity is added, disappear during
+redelivery, or reflect one poison message. Depth needs service/rate assumptions to become a
+catch-up estimate. Consequences for a scaling change:
 
-- **Set the scaling target to a fraction of the deadline.** Items due within 60 s with a 5 s
-  handler need a target well below 55 s — the controller needs room to add workers and for
-  those workers to start.
+- **Budget the response delay.** Items due within 60 s with a 5 s handler leave at most 55 s
+  for queueing and other phases. Reserve measured detection, provisioning and startup time
+  where the controller relies on adding workers; the target follows those budgets, not a
+  universal fraction of the deadline.
 - Alert on SLO age and **diagnose** with visible/in-flight depth, redelivery, extension count,
   accepted/completed rate and handler phase. Add scale-up prediction and cooldown/hysteresis;
-  cap replicas at downstream capacity. Test the controller with step, burst, poison-item and
-  dependency-slowdown traces to avoid oscillation or an overload feedback loop.
+  cap replicas at downstream capacity. Select representative step, burst, poison-item or
+  dependency-slowdown controls for the changed assumptions and claimed response. Existing
+  adequate controller evidence need not be replaced by a full new campaign.
 
 ## Priority and ageing
 
-Strict priority is a starvation machine: while high-priority arrivals sustain at or above
-capacity, the low class is never served, and the queue's own metrics look healthy because the
-high class drains fine. Bound it explicitly, and state the bound:
+Strict priority can starve low-priority work when higher-priority eligible work stays
+backlogged. An average arrival rate at or above capacity alone does not prove the absence of
+every service gap. State each class's contract: reserve service when promised, or explicitly
+accept best-effort starvation, expiry/drop and their observability. For service guarantees:
 
 - **Ageing** — promote an item to the next class once its time-in-queue exceeds a stated
   threshold. This bounds promotion time only if the promotion mechanism runs promptly; actual
@@ -103,26 +125,36 @@ high class drains fine. Bound it explicitly, and state the bound:
 
 Use isolated worker processes and test queues; never halt the test runner or an unapproved
 production process. LocalStack emulates SQS and does not establish real SQS guarantees.
+Select cases for the changed delivery/effect/recovery contract; a narrow source explanation or
+adequate existing design can close with relevant evidence and explicit limits.
 
 - **Kill a worker mid-lease.** Use a broker-specific fixture (RabbitMQ/Postgres container, SQS emulator,
   or authorized SQS test queue), stating its fidelity. Block the handler on a latch after its side
   effect but before the ack, then `Runtime.getRuntime().halt(1)` the worker. Assert redelivery
-  through the configured visibility/channel/claim mechanism, using available redelivery evidence and **one** applied side effect
-  downstream. That last assertion is what fails when the handler is not repeat-safe.
+  through the configured visibility/channel/claim mechanism, using available redelivery
+  evidence. Assert **one** applied effect when that is the contract; otherwise check the
+  expressly accepted duplicate/loss policy. A repeated handler invocation is not itself a
+  repeated durable effect.
 - **Overrun the lease deliberately.** In a visibility-based fixture, use timeout 2 s and a
   first handler held for 5 s; explicitly observe a second delivery and control its progress.
-  Assert one durable outcome, not exactly two invocations. This is the duplicate-work window as a
+  For a one-effect contract, assert one durable outcome, not exactly two invocations. This is the duplicate-work window as a
   regression test — it fails the day someone adds an increment.
 
-Also assert shutdown behaviour: send N messages, close the worker while they are in flight, and
+For a shutdown claim, send N messages, close the worker while they are in flight, and
 reconcile logical IDs after bounded recovery across effects, visible/in-flight/delayed deliveries,
 retry queues and DLQ. A temporarily invisible item is not proof of loss or premature ack.
 
-Add broker-specific cases: partial batch-ack/visibility failures, stale receipt handle, duplicate
+Add applicable broker-specific cases: partial batch-ack/visibility failures, stale receipt handle, duplicate
 inside the nominal visibility period where the broker permits it, FIFO group head-of-line
 blocking, extension outage, DLQ transfer and redrive under tenant quotas. Observe eventual state;
 do not assert exactly one handler invocation when the contract only promises one durable effect.
 
-Also inject receive exceptions, submission rejection, shutdown during receive, renewal failure,
+For changed worker ownership paths, inject relevant receive exceptions, submission rejection, shutdown during receive, renewal failure,
 ack-success followed by cleanup failure, and cancellation-resistant handlers. Assert no leaked
 permit, no unowned delivery and no false claim of handler termination.
+
+## Primary references
+
+- [AWS scaling from SQS](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-using-sqs-queue.html) — backlog per InService instance and its workload assumptions.
+- [ThreadPoolExecutor, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html) — bounded queues and rejection behavior.
+- [Future, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html) and [ExecutorService, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html) — cancellation, interruption and termination. Match the deployed JDK; these controls do not require adopting virtual threads.

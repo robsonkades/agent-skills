@@ -39,6 +39,11 @@ configuration finding, not a confirmed incident diagnosis.
 
 ## Workflow
 
+Use the branch relevant to the request and reuse adequate deployment, probe and shutdown
+evidence already supplied. Preserve a configuration that meets its stated service contract;
+a narrow explanation or comment correction does not require a new rollout or every lifecycle
+test. State the smallest missing observation when a diagnosis remains conditional.
+
 1. **Assign each probe its own question.** Liveness = "restart me, I am unrecoverable in
    process". Readiness = "send me traffic now". Startup = "I am still booting, do not judge
    me yet". Distinct semantics need not mean three endpoints: startup may reuse liveness
@@ -50,11 +55,11 @@ configuration finding, not a confirmed incident diagnosis.
    execution/timeout and consecutive thresholds; readiness may run more often while unready.
    Treat `period × threshold` as an approximation, write best/worst expectations, and test
    under throttling and pauses. See `references/probe-and-shutdown-configuration.md`.
-4. **Replace guessed startup delays with a startup probe.** `startupProbe` (GA since
+4. **Consider a startup probe when a delay cannot cover variable boot time.** `startupProbe` (GA since
    Kubernetes 1.20) suspends liveness and readiness until it first succeeds, so a slow boot
    gets a long budget without making crash detection slow forever.
-5. **Budget the shutdown as a sum.** `terminationGracePeriodSeconds` must exceed `preStop`
-   plus the application's own drain, with margin. It is one countdown, not one per stage;
+5. **Budget the shutdown as a sum.** `terminationGracePeriodSeconds` must cover `preStop`,
+   application shutdown and required sidecar cleanup, with margin. It is one countdown, not one per stage;
    overrun means SIGKILL mid-request.
 6. **Enumerate the in-flight work that is not an HTTP request** — Kafka consumers,
    `@Scheduled` jobs, executors, queue leases — and give each an explicit stop. See
@@ -76,9 +81,12 @@ Avoid a liveness probe when:
 Use a readiness probe when:
 - the pod can be temporarily unable to serve while still being worth keeping — warming a
   cache, reconnecting, or shedding under local overload.
-Avoid putting a hard dependency in readiness when:
-- the whole fleet shares it. All replicas leave the endpoint list at once and the Service
-  has no backends, which is worse than serving degraded responses.
+For a shared dependency in readiness:
+- prefer keeping replicas ready when they can still serve correct degraded or fallback
+  responses under the service contract.
+- allow deliberate fail-closed readiness when that dependency is necessary to serve
+  correct traffic. Compare all-unready routing, caller retries and recovery with failures
+  handled by the application; a shared dependency alone does not decide the policy.
 Prefer a startup probe instead when:
 - boot time varies with data volume, cluster load or CPU throttling, i.e. whenever you
   would otherwise have guessed initialDelaySeconds.
@@ -94,8 +102,8 @@ Prefer a startup probe instead when:
 - The probe endpoint must do no business work and have **no side effect**. It runs on every
   pod every `periodSeconds` forever: a query inside it is permanent background load, and a
   write inside it is a bug the kubelet triggers on a schedule.
-- `timeoutSeconds` is part of the failure-detection budget. Derive it from a lightweight
-  local check's measured tail plus jitter, then decide how many consecutive misses justify
+- `timeoutSeconds` is part of the failure-detection budget. Derive it from the chosen
+  bounded check's measured tail plus jitter, then decide how many consecutive misses justify
   action; "greater than worst case" is unusable when the worst case is unbounded.
   `successThreshold` must be 1 for liveness and startup probes.
 - **Local termination and data-plane convergence are concurrent.** Terminating EndpointSlice
@@ -109,7 +117,8 @@ Prefer a startup probe instead when:
   A failed hook is observable through pod events (`FailedPreStopHook`) but termination
   continues, so alerting must not rely on application logs.
 - `preStop` runs **inside** `terminationGracePeriodSeconds`, not before it. A 30 s grace
-  period with a 20 s preStop leaves the application 10 s, then SIGKILL.
+  period with a 20 s preStop leaves about 10 s for the remaining shutdown. Do not budget
+  emergency extensions or assume sidecars get a fresh countdown.
 - Spring Boot enables graceful web shutdown by default from 3.4; earlier supported lines
   require `server.shutdown=graceful`.
   Pin the service's Boot version and verify effective behavior; the window is governed by
@@ -129,15 +138,17 @@ Prefer a startup probe instead when:
   it during rollout. `minAvailable: 1` with one healthy replica blocks compliant eviction;
   operators can still bypass it or time out, so call it unavailable by policy, not immortal.
 - Never claim a rolling update is zero-downtime because the manifest has a readiness probe.
-  Validate the stated SLO with an open-loop client through repeated deploys: record offered
+  When making or verifying that availability claim, validate the stated SLO with an open-loop
+  client through repeated deploys: record offered
   and completed requests, timeouts, resets, unexpected status codes and latency. Zero errors
   in a finite run is evidence for those conditions, not a universal guarantee.
 
 ## Output
 
-Return the observed failure timeline or configuration risk, the smallest justified change,
-the total shutdown budget including sequential phases, and a validation with explicit pass
-criteria. Separate executed checks from rollout or fault tests still needed.
+Return the relevant observation or configuration risk, the justified change or no-change
+decision, and the check that supports it. For shutdown changes, include the total budget and
+sequential phases; for availability claims, state the workload and pass criteria. Keep narrow
+answers short and separate executed checks from rollout or fault tests still needed.
 
 ## References
 

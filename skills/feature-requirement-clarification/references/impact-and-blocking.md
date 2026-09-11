@@ -23,7 +23,8 @@ keep dependent work conditional while continuing independent work.
 A question is BLOCKING for identified work when its missing answer is necessary before that work:
 
 - The next resource to be implemented depends on the answer.
-- Both answers require work that would have to be undone if the other were chosen.
+- Proceeding would make a consequential commitment that cannot be cheaply reversed within existing
+  authority; ordinary delegated choices do not become blockers merely because code could differ.
 - The answer decides a contract that other people or systems will start depending on.
 - The work would commit to an unresolved security, privacy, compliance or data-retention obligation.
 - Proceeding on the wrong answer would write or migrate data.
@@ -40,7 +41,7 @@ Q  Should processing be synchronous or asynchronous?
    Status: BLOCKING — the first resource is the endpoint, whose signature differs.
 
 Q  Should the job history be retained for 30 days or indefinitely?
-   Impact: HIGH — decides whether a retention job and an index exist.
+   Impact: HIGH — changes the retention obligation, available history and potential privacy exposure.
    Status: NON-BLOCKING for isolated schema design only if both choices are supported.
            Resolve before collecting/retaining real data unless an authorized interim policy
            covers it; identical writes do not establish permission to retain data.
@@ -52,8 +53,11 @@ Q  Should the new endpoint be under /api/v1 or /api/v2?
            work independent of the path may proceed.
 
 Q  Should we use Lombok for the new DTOs?
-   Impact: LOW — the project already uses records for DTOs throughout.
-   Status: Not asked. Follow the established pattern and say that you did.
+   Impact: LOW for reusing the existing record convention when it fits the DTO contract,
+           design is delegated and no authoritative requirement mandates Lombok.
+   Status: Not asked for that routine choice. Introducing a dependency or changing DTO
+           construction/serialization contracts needs its own consequence assessment;
+           repeated records alone establish neither policy nor compatibility.
 ```
 
 ## Handling a blocking question

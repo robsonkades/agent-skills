@@ -16,8 +16,10 @@ UPDATE customer_order
 -- affected rows = 0 → stale version, missing row, or another predicate rejected it
 ```
 
-The whole pattern is that `AND version = :expectedVersion` plus the check of the affected
-row count. Everything else is presentation.
+The predicate and affected-row check are the core of this single-row example. The check
+and protected writes must be one atomic operation/transaction; a separate preliminary read
+is insufficient. Related writes and invariant validation need the same authoritative
+coordination, and a conflict must roll back the affected unit of work.
 
 ### In JPA
 
@@ -53,7 +55,7 @@ advance the root version; it does not replace the original-version check.
 
 Over HTTP, the natural carrier is a conditional request: `ETag` on the read,
 `If-Match` on the write, and `412 Precondition Failed` on conflict. That maps the pattern
-onto a standard mechanism intermediaries already understand
+onto a standard precondition enforced by the origin server; intermediaries may ignore it
 (`remote-facade-and-dto`).
 
 ### Presenting the conflict
@@ -62,6 +64,10 @@ Return a stable conflict code and authorized recovery information. Use 412 when 
 `If-Match` precondition fails (strong ETag comparison); a business version supplied in a
 request body may instead use the API's documented 409 conflict contract. Do not map every
 optimistic failure to 409 regardless of the conditional request.
+
+[RFC 9110, section 13.1.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1)
+also permits a success response when the origin verifies that the requested state change
+already succeeded. This narrow already-applied case is not permission to ignore a stale edit.
 
 An exception may not contain the current database version. Roll back first; if useful,
 read it again in a fresh transaction, with normal authorization, and label it as the state
@@ -92,9 +98,10 @@ uncertain commit require idempotency or reconciliation, not blind reapplication
 
 ### When it earns its place
 
-When losing the work is expensive: a long form, a document being edited, a manual
-reconciliation, a case being worked by an agent. Telling the user "this is being edited by
-Ana" at the start is far better than telling them "your changes were lost" at the end.
+Consider checkout when losing the work is expensive: a long form, document, manual
+reconciliation or case. It can expose contention before the work begins. Compare waiting
+and abandonment recovery with validated merge/collaboration; expensive work alone does not
+make exclusive checkout the right experience.
 
 ### The lease protocol
 
@@ -118,6 +125,10 @@ user. The following is a protocol sketch, not portable executable SQL:
    fencing generations. A random acquisition token or a TTL alone is not a monotonic fence;
    generations must not reset when lease rows are deleted.
 
+For a separate coordination service or cross-resource enforcement, use
+`distributed-locks-and-leases`. The row-based protocol here is one implementation; naming
+an owner in another store does not make its check atomic with this database write.
+
 A single `MERGE` is not a portable successful-acquisition guarantee. For example,
 [PostgreSQL 17 MERGE](https://www.postgresql.org/docs/17/sql-merge.html) can raise a uniqueness
 violation for concurrent insertion; its behavior differs from `INSERT ... ON CONFLICT`.
@@ -135,21 +146,28 @@ network loss or browser suspension. Choose the TTL from those conditions, test t
 and tell the old editor that ownership was lost. Neither a long TTL nor renewal removes
 the need to reject stale owners.
 
-### Do not implement it with a held transaction
+### A held database transaction has a different lifetime
 
 `SELECT ... FOR UPDATE` at the start of an interaction and a commit after the user submits
-holds a pooled connection and a row lock for the whole interaction. At 20 concurrent editors
-against a pool of 10, the application stops — including for every unrelated request. The
-lock must be a **row of data** whose lifetime is application-managed, not a database lock
-whose lifetime is a transaction.
+can hold a connection and row lock for the whole interaction. If ten editors occupy all ten
+connections of a shared pool, other operations requiring that pool must wait, time out or
+be rejected; requests using other resources need not stop. Long transactions also affect
+lock contention, snapshot retention and recovery according to the database and workload.
+
+An offline checkout records ownership in an application-managed authority, such as the
+lease row above or a coordination service with enforced protected writes. A deliberately
+long database transaction is a different design choice: justify its bounded lifetime,
+capacity and failure recovery instead of assuming either impossibility or free protection.
 
 `SELECT ... FOR UPDATE` remains correct for its own purpose: serialising a short
 read-then-write **inside a single transaction** (`enterprise-transactions`).
 
 ## Proving it works
 
-Use the deployed provider and database, with independent persistence contexts and real
-transactions. These are integration-test recipes, not an already executed test suite:
+Select the recipe that tests the claimed change; reuse adequate matching results and report
+what remains unverified. For database/provider behavior, use the deployed stack with
+independent persistence contexts and real transactions. A narrow explanation does not
+require all recipes. These are integration-test recipes, not an already executed test suite:
 
 1. **Stale client:** commit B's edit from v7, then submit A's different edit carrying v7.
    Reject A and preserve B. This tests the client-version contract.
@@ -173,3 +191,7 @@ Java 17 projects) and an existing JPA/Spring stack. Inspect the project's actual
 namespace, provider and database versions; no upgrade is implied. The locking and bulk
 operation contracts are documented in
 [Jakarta Persistence 3.2, sections 3.5 and 4.11](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+
+The business/system transaction distinction and atomic validation requirement are described
+by [Optimistic Offline Lock](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html)
+and the coordination trade-off by [Pessimistic Offline Lock](https://martinfowler.com/eaaCatalog/pessimisticOfflineLock.html).

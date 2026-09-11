@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-gc-tuning
-version: 2.5.1
+version: 2.5.2
 description: >-
   Deciding whether GC is the actual bottleneck, then choosing a collector and sizing the
   heap. Use when GC pauses appear on the critical path of a latency profile, when full
@@ -49,5 +49,9 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - allocation-profiling
+  - g1-tuning-for-slo
   - java-performance
+  - java-reference-types-and-leaks
   - linux-for-jvm
+  - zgc-and-shenandoah

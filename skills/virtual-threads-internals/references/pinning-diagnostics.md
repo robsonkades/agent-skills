@@ -95,11 +95,18 @@ inside any frame and native unwinding can be incomplete.
 
 ## Remediation choices
 
-### Native/foreign pin is causal
+### Residual pin is causal
 
 Prefer a newer/non-blocking integration. If unavailable, isolate the exact call on a bounded platform
 executor whose queue, rejection, native memory, timeout and shutdown are owned. Crossing to that pool
 does not cancel native work automatically.
+
+Locate the frame preventing unmount, not just the slow callee. A virtual-thread class initializer
+or native callback that awaits an offloaded result can still pin its own carrier. Move the blocking
+initialization or enclosing native boundary only when initialization, publication and callback
+contracts permit it; verify that the caller can then unmount. A new executor around the inner I/O
+alone is not that proof. Also rule out an offloaded task needing the very class initialization whose
+caller is waiting for it.
 
 ### Carrier capture is causal
 
@@ -121,8 +128,12 @@ ensure timed-out work actually ends. Validate retained heap after equivalent loa
 
 Before changing `jdk.virtualThreadScheduler.parallelism` or `maxPoolSize`, record current values,
 defaults on this build, CPU/native-memory budget, predicted signal and rollback threshold. The maximum
-is not a virtual-thread concurrency cap. Do not compute its cost as exactly `max × 1 MB`; platform
-stack reservation/commit and kernel cost vary by environment.
+property is an initialization input, not a virtual-thread concurrency cap or a permanent platform
+thread ceiling after dynamic tuning. For example, on HotSpot 25 a scheduler started with parallelism
+1 and maximum 1 can run two carriers after `VirtualThreadSchedulerMXBean.setParallelism(2)`.
+Inspect the actual build and runtime target; system-property text need not reflect that change.
+Downward adjustment need not retire carriers or end already mounted work immediately. Do not compute
+cost as exactly `max × 1 MB`; platform stack reservation/commit and kernel cost vary by environment.
 
 ## Checklists
 
@@ -149,3 +160,5 @@ stack reservation/commit and kernel cost vary by environment.
 - [JEP 444 pinning and scheduler compensation boundaries](https://openjdk.org/jeps/444)
 - [JEP 491](https://openjdk.org/jeps/491)
 - [OpenJDK 25 event posting and reasons](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/javaThread.cpp)
+- [OpenJDK 25 scheduler initialization](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/lang/VirtualThread.java)
+- [OpenJDK 25 ForkJoinPool parallelism and compensation bounds](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java)

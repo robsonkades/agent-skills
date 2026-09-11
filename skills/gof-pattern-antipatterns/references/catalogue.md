@@ -1,6 +1,7 @@
 # Catalogue of pattern misuse
 
-Each entry: why it happens, how to detect it, what it costs in production, and the fix.
+Each entry describes a candidate misuse, its possible cost and a corrective option. Establish the
+actual contract/cost before reporting a defect; the listed symptoms do not prove their cause.
 
 ## Speculative interface
 
@@ -10,9 +11,8 @@ like good design, and the second implementation never arrives.
 **Detect.** One production implementor plus a mock. Use `rg` and inspect generated/reflected or
 external implementations; a mock does not prove runtime variability.
 
-**Cost.** Every reader follows an extra hop to find the behaviour. The interface also freezes a
-shape derived from one implementation, so the eventual second one does not fit it and the
-interface is rewritten anyway.
+**Cost.** Readers may follow an unnecessary hop. A shape overfitted to one implementation may not
+fit a later variant; that forecast needs evidence rather than an assumed future rewrite.
 
 **Fix.** Inline only when no present force remains. Dependency direction, ownership, security,
 a deliberate test seam or a narrowed foreign API can justify one implementation (`gof-adapter`).
@@ -24,8 +24,8 @@ smell.
 
 **Detect.** Sibling classes whose bodies differ only in literals.
 
-**Cost.** Changing a rate requires a code change, a review and a deploy. The rates are also spread
-across a package, so nobody can see them together.
+**Cost.** Rates spread across classes can be harder to inspect together. A code table can still
+require review and deployment; release/change control may be a requirement, not a structural defect.
 
 **Fix.** Compare a constant table/enum with validated configuration. Keep required identity,
 metadata and change controls. Configuration still needs a deploy unless a reload path exists.
@@ -76,8 +76,9 @@ required-argument builders need separate assessment. Multiple paths must enforce
 in a suite.
 
 **Cost.** Dependencies invisible to constructors; initialisation order nobody chose; order-dependent
-tests; and the process-local uniqueness silently failing to hold across replicas — a "singleton"
-rate limiter configured at 100/s becomes 800/s at eight replicas.
+tests; and process-local uniqueness failing to hold across replicas. Eight independent 100/s
+limits do not enforce one cluster-wide 100/s budget: their configured rates sum to 800/s before
+traffic distribution and other limits. That arithmetic is not measured throughput.
 
 **Fix.** Explicitly owned instances, injected with the required application/container scope.
 One bean is not process-global or cluster-global uniqueness (`gof-singleton`).
@@ -104,8 +105,8 @@ disposed, acting on stale state.
 **Detect.** Unrelated protocols, tests needing unrelated setup and changes concentrated for unrelated
 reasons. Participant/fake counts alone are not defects.
 
-**Cost.** Every feature edits one class; nobody can hold the protocol in mind; the hub becomes both
-a bottleneck and a merge hazard.
+**Cost.** Unrelated changes and test setup concentrate in one class. Runtime serialization is a
+separate hypothesis: inspect shared state, locks/mailboxes and workload before claiming a bottleneck.
 
 **Fix.** Split unrelated protocol ownership; retain cohesive coordination even when large.
 Some responsibilities may become plain listeners, with no predicted fraction (`gof-mediator`).
@@ -121,8 +122,9 @@ does not establish a defect.
 operation, whether an open breaker prevents retries, whether a cache hit skips the metrics — all
 undecidable by reading (`gof-decorator`).
 
-**Fix.** Document the order and its rationale at the wiring site; add a test that asserts the
-composed behaviour; collapse the fixed part of the stack into one class if it never varies.
+**Fix.** Make the order and rationale discoverable; reuse or add relevant composed-behavior checks.
+Keep a fixed stack that expresses useful contracts. Collapse only when it reduces demonstrated
+cost while preserving order, outcome, lifecycle and framework behavior.
 
 ## Proxy hiding a network
 
@@ -132,12 +134,13 @@ composed behaviour; collapse the fixed part of the stack into one class if it ne
 **Detect.** A getter or a per-item method whose implementation makes a call. A loop over a
 collection calling such a method.
 
-**Cost.** N+1 remote calls from code that looks like field access; latency that does not appear in
-any local reasoning; retries the caller never asked for; a timeout presented as an ordinary
+**Cost.** N per-item remote calls, plus an initial fetch when present, from code that looks like
+field access; latency omitted from local reasoning; retries the caller never asked for; a timeout presented as an ordinary
 exception.
 
-**Fix.** Change the contract, not the implementation: bulk operations, a deadline parameter, a
-named failure vocabulary (`gof-proxy`, `rpc-and-api-contracts`).
+**Fix.** Make remote cost/outcomes explicit and compare justified bulk operations, deadlines and
+failure vocabulary. Per-item calls may remain appropriate; evolve published APIs compatibly rather
+than silently breaking callers (`gof-proxy`, `rpc-and-api-contracts`).
 
 ## Flyweight contention
 
@@ -151,9 +154,11 @@ an expensive mapping function; pooled objects that are short-lived.
 throughput loss nor bin-lock contention follows from the API name. Measure the complete path
 (`gof-flyweight`).
 
-**Fix.** Measure first (heap dump, occurrences ÷ distinct values). Try string deduplication before
-writing code on a supported collector/JDK. Consider a thread-confined boundary map with bounded
-admission or a validated closed domain; short lifetime alone does not bound peak memory.
+**Fix.** Reuse representative retention/construction evidence or obtain the smallest missing check;
+do not require a new heap dump when adequate evidence exists. Compare existing sharing, applicable
+String backing-array deduplication and boundary canonicalisation; dedup is not relevant to every
+object/lifetime/collector. Keep ordinary objects or an adequate measured pool. Bounded admission,
+confinement or a validated closed domain may help; short lifetime alone does not bound peak memory.
 
 ## Visitor over a growing type set
 
@@ -162,7 +167,8 @@ admission or a validated closed domain; short lifetime alone does not bound peak
 **Detect.** Every release adds an element type and breaks every visitor.
 
 **Cost.** The expression problem, chosen in the wrong direction: each new type is a change to N
-operations, and the ones with a `default` branch are silently unhandled.
+operations; a permissive default can accidentally skip a new type. Check whether its fallback is
+intentional and satisfies the operation's contract.
 
 **Fix.** Move behaviour back onto the elements for the operations that are intrinsic; keep the
 fold only for the operations that genuinely belong outside (`gof-visitor`).

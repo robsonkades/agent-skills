@@ -2,9 +2,13 @@
 
 ## Decision tree
 
+An existing-handle or dynamic-coordinate question can justify API analysis without an optimization
+benchmark. Retain an adequate stronger mode; weaken only for a stated objective with sufficient
+ordering proof.
+
 ```text
 Can volatile/Atomic*/lock/concurrent utility express the contract clearly?
-  yes -> use it unless measured evidence justifies lower-level control
+  yes -> prefer it unless coordinates/interoperability or a justified optimization need lower-level control
   no  -> identify exact variable, coordinates and supported modes
 
 Only one-direction publication through one carrier?
@@ -58,7 +62,8 @@ remain separate protocol obligations.
 
 ## Mixed access ledger
 
-For every variable record:
+For each variable in a shared-state protocol, record the relevant paths. This ledger is not a
+mandatory new artifact for an isolated invocation-type explanation:
 
 | Code path          | Read/write/update | Mode | Required relation | Test |
 | ------------------ | ----------------- | ---- | ----------------- | ---- |
@@ -70,7 +75,8 @@ For every variable record:
 | diagnostic/admin   |                   |      |                   |      |
 
 Direct Java volatile access, VarHandle mode, Unsafe/native/foreign access, serialization/reflection
-and field declaration can coexist. The proof covers all of them or the variable is unsafe.
+and field declaration can coexist. The proof must cover actual access paths. An unaccounted path
+leaves the safety argument unresolved; missing evidence alone is not an observed unsafe execution.
 
 ## Comparison operations
 

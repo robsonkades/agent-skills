@@ -20,11 +20,11 @@ description: >
 ## Purpose
 
 Use streams where they express a transformation better than a loop, and keep them honest:
-pure stages, mutable state only inside a collector, and no pipeline that quietly holds a
-database cursor or hijacks the process-wide common pool. Two failure modes: the `forEach` that
-is a `for` loop with worse debuggability and hidden shared-state mutation; and
-`parallelStream()` applied to blocking work, where every replica's requests contend on one
-shared `ForkJoinPool.commonPool` whose effective parallelism depends on runtime configuration
+non-interfering callbacks, state owned by the reduction or transformation, and explicit resource
+and execution ownership. Two failure modes: required effects hidden in elidable intermediate
+callbacks or unsafe parallel mutation; and `parallelStream()` applied to blocking work,
+where requests within each JVM can contend on its shared `ForkJoinPool.commonPool` whose
+effective parallelism depends on runtime configuration
 and the processors visible to the JVM.
 
 ## Workflow
@@ -34,22 +34,24 @@ rewriting. Core examples target Java 21; Gatherers require Java 24+, and structu
 alternatives need their exact preview policy checked. Do not upgrade or enable preview for a
 pipeline cleanup. Examples are partial snippets with application types and imports omitted.
 
-1. **Ask what the code is doing.** Transform-filter-aggregate over a collection → stream.
+1. **Ask what the code is doing.** Transform-filter-aggregate over a collection → consider a stream.
    Loop with early exit on complex conditions, index arithmetic, two collections in lockstep,
    mutation of local state, or a checked exception per element → loop.
-2. **Keep every intermediate stage pure.** `map`, `filter`, `sorted`, `flatMap` compute; they
-   do not write to anything outside themselves. Accumulation happens in `collect` or `reduce`.
+2. **Keep required effects out of elidable callbacks.** Use non-interfering, stateless
+   behavioral parameters; supported stateful operations and gatherers own their internal state.
+   Choose an explicit terminal action or loop when effects are part of the result contract.
 3. **Pick the collector deliberately**, not the first one that compiles: `toList` when order
    matters, `toMap` with deliberate duplicate rejection or merge policy, `groupingBy` with an explicit downstream,
    `teeing` when two aggregates are needed in one pass.
-4. **Decide the return type at the API boundary.** A `Collection` for anything already in
-   memory; a `Stream` only when laziness or size genuinely demands it — and then say in the
-   Javadoc whether it must be closed.
+4. **Decide the return type at the API boundary.** Prefer a `Collection` for materialized
+   results needing repeated access. A `Stream` can express lazy traversal or an existing
+   supported API; preserve compatibility and document whether the caller must close it.
 5. **Only consider parallel with a measurement.** Blocking work needs explicit concurrency,
    cancellation and executor ownership; default parallel streams commonly use the shared
    common pool.
-6. **Verify the pipeline is single-pass and side-effect free** by reading it aloud: source,
-   what each stage computes, what the terminal operation produces.
+6. **Trace and verify the contract:** source, what each stage computes, terminal result/effects
+   and cleanup. A single-use stream can buffer or make multiple processing passes internally;
+   reuse adequate checks and investigate only the remaining material gaps.
 
 ## Rules
 
@@ -61,9 +63,10 @@ pipeline cleanup. Examples are partial snippets with application types and impor
   list, increments a counter, writes a log per element, or calls a mutating service is not a
   reliable place for required effects: even an explicitly sequential pipeline may elide a stage
   or short-circuit. Put required effects in an explicit loop or suitable terminal action.
-- `forEach` belongs at the end and, ideally, only for output — printing, publishing, writing.
-  Accumulating into a collection with `forEach(list::add)` is a mutable reduction written the
-  unsafe way: use `collect`, which is correct sequentially and in parallel.
+- `forEach` is a terminal action, including output or mutation under an explicit ownership
+  contract. A confined sequential `forEach(list::add)` can be correct; a lawful collector often
+  expresses the result better and supports isolated parallel accumulation. Preserve callers'
+  null/mutability contract rather than mechanically replacing it with `toList()`.
 - `Collectors.toMap` without a merge function deliberately rejects duplicate keys; use it when
   uniqueness is an invariant and test the failure. Supply a keep/merge policy only when duplicates
   are valid. Current JDK implementations also reject null mapped values through merge mechanics;
@@ -72,17 +75,20 @@ pipeline cleanup. Examples are partial snippets with application types and impor
 - Give `groupingBy` an explicit downstream collector whenever the group is not a plain list —
   `counting()`, `summingLong(...)`, `mapping(..., toList())`, `reducing(...)`. Deep nesting is a
   readability/shape signal; a record key or explicit result model may be clearer, without a fixed threshold.
-- `reduce` is for associative, side-effect-free combination into an immutable result. Anything
+- `reduce` is for associative, side-effect-free combination or selection of a result. Anything
   that accumulates into a mutable container is `collect`. Mutating a reduction's identity can
   appear to work sequentially but violates the contract and can corrupt parallel results.
-- Return a `Collection`, not a `Stream`, from a method whose result is already materialised. A
+- Prefer a `Collection` for a new API exposing already materialised results for repeated access. A
   stream is single-use—a second terminal traversal is invalid—has no collection-style size/index
   API even though its spliterator may know an exact size. Return a `Stream` when the result is lazily produced, is
-  large enough that materialising it is a real cost, or is backed by a resource.
+  large enough that materialising it is a real cost, or is backed by a resource. Preserve an
+  adequate existing `Stream` contract; changing a public return type is not a syntax cleanup.
 - A stream backed by a resource is a resource. `Files.lines`, `Files.walk`, `Files.list`,
   `Files.find` hold open resources; JDBC/JPA result streams may hold a cursor/connection depending
   on driver/provider and execution mode. Resource-backed streams
   belong in `try`-with-resources and their Javadoc must say so — see java-resource-management.
+  Terminal traversal does not itself close the stream. When ownership transfers to a caller,
+  keep the resource alive through consumption and let that owner close it, including on failure.
   If a repository stream depends on a transaction-bound cursor, consumption must finish inside
   that transaction; verify the provider contract rather than assuming every repository stream does.
 - Streams are lazy: traversal work starts at a terminal operation, and short-circuiting operations
@@ -102,7 +108,8 @@ pipeline cleanup. Examples are partial snippets with application types and impor
 - Use `Gatherers` (final since Java 24) for intermediate operations the JDK does not ship —
   fixed and sliding windows, `scan`, `fold`, and `mapConcurrent`, which runs a mapper on
   virtual threads with a concurrency limit and preserves encounter order. It is the supported
-  extension point; writing a custom `Spliterator` for the same job rarely is.
+  extension point on those releases. Keep an adequate existing `Spliterator` or loop when it
+  fits the source/transform contract or the supported Java baseline cannot use gatherers.
 
 - Parallel correctness requires more than “no shared list”: reduction/collector operations need
   associative combination, a true identity, compatible accumulator/combiner behavior, and honest

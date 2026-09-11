@@ -26,6 +26,12 @@ The unifying test is the same one that should have been applied before adoption:
 force does this abstraction resolve, and what would break if it were inlined?** If neither can be
 answered, it is a candidate for removal (`gof-pattern-thinking`).
 
+Start from the requested review scope, available callers/tests, accepted conventions and consumer
+contracts. Inspect missing intent or runtime wiring before asking a material question; an absent
+rationale is not proof that no benefit exists. Report supported defects and concrete maintenance
+costs separately from preferences or hypotheses. No supported findings, or retaining an adequate
+pattern, is a valid result; a review does not require a rewrite.
+
 ## Detection first
 
 ```text
@@ -33,7 +39,7 @@ Signals you can grep for or count
   an interface with exactly one implementation (+ a test double)
   a class whose body differs from its siblings only in literals
   a constructor whose parameters form unrelated clusters or are repeatedly miswired
-  a *Factory with methods whose products share no call site
+  a *Factory whose products share no selection or compatibility invariant
   getInstance() anywhere
   a listener registered with no corresponding removal
   a class named *Manager, *Helper, *Processor, *Handler with no
@@ -49,8 +55,9 @@ Signals from behaviour
   tests pass alone and fail together
 ```
 
-The first list is cheap and mechanical; run it before opinions are formed. The second list is what
-justifies acting on the first.
+Use relevant signals to target investigation, not to require a catalogue-wide scan for every task.
+Establish a reachable contract violation, observed change/operational cost or explicit requirement
+conflict before turning a signal into a finding. Counts and naming alone do not establish the cause.
 
 ## The catalogue, in brief
 
@@ -60,7 +67,7 @@ framework contracts and external consumers. Examples target Java 17 terminology;
 | Anti-pattern                        | Signal                                                 | Cost                                               |
 | ----------------------------------- | ------------------------------------------------------ | -------------------------------------------------- |
 | **Speculative interface**           | One implementor and no present boundary/policy force   | Unjustified indirection                            |
-| **Class per constant**              | Siblings differ only in literals                       | A deploy to change a number                        |
+| **Class per constant**              | Siblings differ only in literals                       | Scattered values and unjustified declaration cost  |
 | **Factory for a constructor**       | Delegation with no naming, access or lifecycle purpose | Unjustified construction indirection               |
 | **Abstract Factory everywhere**     | Products have no family-selection invariant            | Unrelated construction responsibilities            |
 | **Builder for a two-field record**  | No useful naming/defaults/staging contract             | Optional setters may defer required-field checks   |
@@ -68,7 +75,7 @@ framework contracts and external consumers. Examples target Java 17 terminology;
 | **Observer leak**                   | `register` with no `unregister`                        | Slow heap growth; a listener firing after disposal |
 | **Mediator god object**             | Unrelated protocols and costly coordinated changes     | Concentrated unrelated changes                     |
 | **Opaque decorator stack**          | Order and observable policy cannot be explained        | Unclear composed semantics                         |
-| **Proxy hiding a network**          | A getter that makes a call                             | N+1 remote calls from an innocent loop             |
+| **Proxy hiding a network**          | A getter that makes a call                             | Per-item remote calls hidden in an innocent loop   |
 | **Flyweight contention**            | A shared pool on a hot path without measurements       | Lookup/retention may outweigh saved work           |
 | **Visitor over a growing type set** | Every release breaks every visitor                     | The expression problem, chosen backwards           |
 | **Template Method with 9 hooks**    | A base class nobody can subclass correctly             | Fragile base; unreviewable changes                 |
@@ -106,9 +113,9 @@ THEN inspect whether the subject has unrelated responsibilities or the
      (java-test-doubles).
 
 IF the design is over-abstracted AND under-tested
-THEN add the characterisation tests before removing anything. Removing
-     indirection without a safety net is how a refactoring becomes an
-     incident.
+THEN reuse existing contract checks and add characterization coverage for the material
+     behavior a removal risks. Keep proposed removal conditional when consumer/runtime
+     behavior cannot be checked; avoid tests that merely preserve the old structure.
 
 IF the pattern is load-bearing for a framework
 THEN preserve the behavior and lifecycle that rely on it. Replacement requires a supported
@@ -144,13 +151,15 @@ Guarding against the opposite error, which this skill can otherwise encourage:
 - [ ] Wrapper stacks document their order at the wiring site
 - [ ] Remote/lazy access has explicit cost, failure and batching contracts
 - [ ] Copying preserves intended aliasing, invariants and compatibility regardless of mechanism
-- [ ] Names state a responsibility, not a role in a pattern
+- [ ] Names communicate a responsibility; a conventional pattern/framework suffix alone is not a defect
 - [ ] Each removal has proportionate contract checks and a compatible migration path
 
 ## References
 
-Report evidence, the missing or obsolete force, concrete cost, smallest safe change and validation.
-If the force or consumer set remains unknown, investigate it and keep removal conditional.
+For each supported finding report location/trigger, evidence, impact, missing or obsolete force,
+smallest safe correction and validation. Distinguish a correction from a preference or an unverified
+hypothesis. State reviewed scope and limits when no findings remain. If the force or consumer set
+remains unknown, identify the next discriminating evidence and keep removal conditional.
 
 - [Catalogue](references/catalogue.md) — every entry above expanded: why it happens, how to detect
   it precisely, the failure it produces in production, and the fix. Read when a specific misuse has

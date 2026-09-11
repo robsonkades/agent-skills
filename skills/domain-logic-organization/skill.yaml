@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: domain-logic-organization
-version: 1.3.2
+version: 1.3.3
 description: >-
   Choosing where business rules live — Transaction Script, Domain Model or Table Module —
   from the shape of the logic rather than from convention, and recognising when the choice
@@ -57,12 +57,14 @@ suggests:
   - architecture-and-performance
   - architecture-refactoring-paths
   - data-source-patterns
+  - enterprise-transactions
   - java-composition-over-inheritance
   - java-immutability
   - legacy-enterprise-modernization
   - offline-concurrency-control
   - orm-behavioral-patterns
   - query-objects-and-specifications
+  - repository-pattern
   - service-layer-design
 
 capabilities:

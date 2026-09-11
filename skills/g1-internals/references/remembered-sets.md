@@ -97,16 +97,19 @@ The card information uses `G1CardSet`; on JDK 25 a candidate group can share a c
 target regions. Entries keyed by source-region ranges use density-dependent containers, coarsened in a fixed
 order (`g1CardSet.hpp`, `jdk-25-ga`):
 
-| Container      | Holds                                                                                    | Coarsens to    | Flag                                                           |
-| -------------- | ---------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------- |
-| `Inline`       | A handful of card indexes packed into the pointer itself — no allocation                 | `ArrayOfCards` | —                                                              |
-| `ArrayOfCards` | A contiguous array of card indexes                                                       | `Howl`         | `G1RemSetArrayOfCardsEntries` (ergonomic; 32 here)             |
-| `Howl`         | An array of `G1RemSetHowlNumBuckets` buckets, each Inline → ArrayOfCards → BitMap → Full | `Full`         | `G1RemSetHowlNumBuckets`, `G1RemSetHowlMaxNumBuckets` (8 here) |
-| `BitMap`       | One bit per card, inside a Howl bucket                                                   | bucket `Full`  | `G1RemSetCoarsenHowlBitmapToHowlFullPercent` (90)              |
-| `Full`         | "Every card of this source region" — no card granularity                                 | —              | `G1RemSetCoarsenHowlToFullPercent` (90)                        |
+| Container      | Holds                                                                                    | Coarsens to    | Flag                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------- |
+| `Inline`       | A handful of card indexes packed into the pointer itself — no allocation                 | `ArrayOfCards` | —                                                                                |
+| `ArrayOfCards` | A contiguous array of card indexes                                                       | `Howl`         | `G1RemSetArrayOfCardsEntries` (ergonomic)                                        |
+| `Howl`         | An array of `G1RemSetHowlNumBuckets` buckets, each Inline → ArrayOfCards → BitMap → Full | `Full`         | `G1RemSetHowlNumBuckets` (selected count), `G1RemSetHowlMaxNumBuckets` (maximum) |
+| `BitMap`       | One bit per card, inside a Howl bucket                                                   | bucket `Full`  | `G1RemSetCoarsenHowlBitmapToHowlFullPercent` (90)                                |
+| `Full`         | Every card in this source card range — no finer card granularity                         | —              | `G1RemSetCoarsenHowlToFullPercent` (90)                                          |
 
-All of those flags are experimental. What matters operationally is the last row: a `Full`
-entry covers every card in its source range. Merging prepares that card coverage; heap-reference
+All of those flags are experimental; setting them requires the preceding
+`-XX:+UnlockExperimentalVMOptions`. Inspect effective container values for the actual region/card
+configuration rather than reusing a measured value from another launch. Large heap regions can be
+split into multiple source card ranges, so a `Full` entry need not cover the entire heap region.
+Merging prepares that card coverage; heap-reference
 scanning occurs later under `Scan Heap Roots`, with collection-set and other filters. Coarsening
 can increase scanning without proving that merge time alone is the bottleneck.
 The old sparse / fine-grained / coarse vocabulary describes the pre-JDK-18
@@ -127,8 +130,8 @@ Merged Cards: ...   Dirty Cards: ...   Skipped Cards: ...
 A non-zero `Howl->Full` or `BitMap->Full` counter that keeps rising, together with `Merged
 Full` and phase-time evidence, supports “RSet coarsening contributes to the cost”. Densely
 connected graphs—caches with many cross references and shared indexes—can produce it. Larger
-regions reduce region count but make a coarse/full source-region scan cover more bytes and reduce
-collection granularity; measure the container mix and scan time. Reducing unnecessary cross-region
+regions reduce region count and collection granularity, and can increase coarse/full scan coverage;
+check actual card ranges, container mix and scan time. Reducing unnecessary cross-region
 fan-in attacks the cause without assuming a region-size win.
 
 ## Measuring RSet memory
@@ -153,4 +156,6 @@ increasing covered scan work. Memory and scanning costs are distinct.
 - [OpenJDK 25 tracking policy](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RemSetTrackingPolicy.cpp)
 - [OpenJDK 25 post-barrier ordering](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1BarrierSet.cpp)
 - [OpenJDK 25 merge and scan phases](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RemSet.cpp)
+- [OpenJDK 25 container ergonomics](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1Arguments.cpp)
+- [OpenJDK 25 card-range configuration](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1CardSet.cpp)
 - [OpenJDK 26 dual-table refinement states](https://github.com/openjdk/jdk/blob/jdk-26-ga/src/hotspot/share/gc/g1/g1ConcurrentRefine.hpp)

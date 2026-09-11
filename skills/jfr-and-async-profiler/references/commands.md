@@ -251,7 +251,10 @@ metadata required to establish provenance and adequacy.
 
 ## Failure tests before production use
 
-Exercise the capture path against:
+For a new or materially changed capture path, exercise the relevant deployment and failure
+conditions below. Reuse applicable readiness evidence for an unchanged path; reviewing an existing
+artifact does not require rerunning this suite. During an incident, stay within the authorized
+recovery budget and disclose unvalidated risks:
 
 - wrong/stale PID and process restart;
 - target exits or is killed during recording;
@@ -270,7 +273,7 @@ result, and state the evidence limitations. A command that exits zero is not eno
 ## Authoritative references
 
 - [JDK `jcmd` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
-- [JDK Flight Recorder runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [JDK 25 startup recording options](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-runtime-options-for-java)
 - [JDK `jfr` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [JDK Flight Recorder API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/module-summary.html)
 - [async-profiler README and command documentation](https://github.com/async-profiler/async-profiler)

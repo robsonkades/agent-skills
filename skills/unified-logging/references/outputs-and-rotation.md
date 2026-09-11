@@ -6,6 +6,18 @@ Supported target-build outputs are discovered in -Xlog:help. Standard HotSpot fo
 stdout, stderr and file paths. Validate directory existence, permissions, working directory,
 container mounts and filename placeholder expansion before production.
 
+For JDK 25 file output, `%p`, `%t` and `%hn` expand to PID, startup timestamp and host name.
+They are not the decorator names `pid`, `time` or `hostname`. Pin this behavior to target
+help/source; do not infer another release's placeholders from its decorator list.
+
+Keep the complete `-Xlog` argument intact through the launcher and shell. Spaces and an
+absolute Windows drive colon can require quoting at different parsing layers; verify the
+actual argument and created path rather than guessing an escape sequence. A relative path
+under an owned disposable working directory avoids the drive-colon ambiguity for a probe.
+Even `-version` can create, rotate or overwrite files. Names with these placeholders can
+still collide after PID reuse/restart or with shared host identities; collection and cleanup
+remain separate responsibilities.
+
 ## Decorators
 
 Decorators add time/uptime, level, tags, process/thread and host context. Use:
@@ -28,7 +40,8 @@ disk\ budget \gtrsim active + rotated\ files + collection\ lag
 \]
 
 File size is a rotation target, not an exact cap. Restart, active-file archival and naming
-behavior must be fixture-tested for the target JDK/filesystem. Crash loops can consume
+behavior needs relevant evidence before a retention guarantee; reuse adequate target
+JDK/filesystem fixtures. A filename syntax explanation need not run a crash loop. Crash loops can consume
 slots rapidly. Unique pid/start-time names reduce collision but require cleanup/collection
 policies.
 

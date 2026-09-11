@@ -87,7 +87,7 @@ and same-object handling.
 - fair locks/semaphores may reduce starvation at throughput/latency-distribution cost; fairness is
   not a scheduler/SLO guarantee.
 - lock-free structures trade blocking for retry/coherence/reclamation complexity; route to their
-  owning skill.
+  algorithm/progress owner, lock-free-patterns, when that design is actually required.
 
 ## Troubleshooting
 

@@ -154,7 +154,8 @@ public abstract class Auditable {
 }
 ```
 
-**Composition instead of subtyping** — when the difference is data, not behaviour:
+**Composition instead of subtyping** — when data variation needs no distinct substitution
+or invariant contract. Compare it without treating sparse methods as proof against subtypes:
 
 ```java
 @Entity
@@ -166,9 +167,10 @@ public class Payment {
 }
 ```
 
-Structurally this is single table with the columns grouped meaningfully; the gain is that
-the model no longer claims a subtype relationship it does not have, and behaviour can be
-attached to the `PaymentMethod` enum or to a strategy resolved from it.
+Structurally this can remain one table with grouped columns; composition alone does not
+enforce the relationship between `method` and the populated groups. Keep the required
+conditional constraints/validation. Behaviour can be attached to the `PaymentMethod` enum
+or to a strategy resolved from it when that fits the actual domain contract.
 
 **Sealed interfaces for the domain, one table for the storage** — the modern Java form when
 the behaviour genuinely varies:

@@ -20,22 +20,27 @@ the concept. Naming the level resolves them.
 
 ## Mechanism: lambda or named type
 
-| Criterion                                      | Lambda / method reference             | Named type                   |
-| ---------------------------------------------- | ------------------------------------- | ---------------------------- |
-| One operation                                  | ✓                                     | ✓                            |
-| Two or more operations (`apply` + `supports`)  | ✗                                     | ✓                            |
-| Selected by a key from data                    | Map/registration metadata             | ✓                            |
-| Needs injection or its own dependencies        | Captured references                   | ✓                            |
-| Must be decorated (cached, timed, retried)     | Function composition                  | ✓                            |
-| Appears by name in stack traces and profiles   | Named method references/tags can help | Named methods/types can help |
-| Has its own tests and its own reason to change | Possible                              | ✓                            |
-| Supplied by the caller                         | ✓                                     | Heavy                        |
-| Defined at the call site, used once            | ✓                                     | ✗                            |
+| Criterion                                        | Lambda / method reference             | Named type                   |
+| ------------------------------------------------ | ------------------------------------- | ---------------------------- |
+| One operation                                    | ✓                                     | ✓                            |
+| Independent abstract operations on one interface | ✗                                     | ✓                            |
+| Selected by a key from data                      | Map/registration metadata             | ✓                            |
+| Needs injection or its own dependencies          | Captured references                   | ✓                            |
+| Must be decorated (cached, timed, retried)       | Function composition                  | ✓                            |
+| Appears by name in stack traces and profiles     | Named method references/tags can help | Named methods/types can help |
+| Has its own tests and its own reason to change   | Possible                              | ✓                            |
+| Supplied by the caller                           | ✓                                     | Heavy                        |
+| Defined at the call site, used once              | ✓                                     | ✗                            |
 
 Choose a diagnostic identity that operators can use: named methods/types or bounded metric/log
 metadata. A lambda's captured dependencies still need correct lifetime and thread-safety contracts;
 capture does not copy or freeze the referenced objects
 (`flame-graph-analysis`).
+
+A functional interface may also have default/static methods. A registration can pair an applicability
+predicate, a calculation function and metadata without adding abstract operations to the calculation
+interface. Prefer a cohesive implementation when those parts must enforce shared invariants; neither
+form removes the need to validate inputs and applicability at the operation's actual boundary.
 
 ```java
 // a functional interface with a domain name — the middle ground
@@ -59,12 +64,12 @@ optimized profile or exception trace.
 
 | Mechanism                                     | Fails how                                                                            |
 | --------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `if/else` chain on a code                     | Silently falls through to the last `else`; grows without bound                       |
+| `if/else` chain on a code                     | Unknown handling may be omitted; an explicit bounded chain can be adequate           |
 | `Map<Key, Strategy>`                          | Missing key returns `null` unless handled — handle it                                |
 | Sealed key + exhaustive `switch`              | Checks known cases at compilation; null, binary evolution and branch failures remain |
 | Injected `List<Strategy>` + `supports()`      | Order matters and is implicit; two may match                                         |
 | Injected `Map<String, Strategy>` (bean names) | Generated bean names may change on rename; explicit names are separate contracts     |
-| `ServiceLoader`                               | Class-path dependent; no compile-time guarantee; ordering unspecified                |
+| `ServiceLoader`                               | Class-path/module discovery can fail lazily; define business precedence explicitly   |
 
 ```java
 // keyed by something the strategy declares, validated at startup
@@ -82,6 +87,8 @@ Map<ShippingMethod, ShippingCost> shippingCosts(List<ShippingCost> strategies) {
 
 When this factory runs, duplicate and missing required keys fail. Ensure context tests exercise
 it and required validation runs before readiness; lazy bean creation can otherwise defer discovery.
+This example requires every enum member. For deployments with optional methods, validate the explicit
+required set instead; absent optional entries still need a defined unsupported-selection outcome.
 
 Binding to Spring bean names (`Map<String, Strategy>`) is convenient and fragile: the key becomes a
 bean name; renaming can change generated names, while explicitly named beans keep their name.
@@ -170,15 +177,17 @@ subclass supplies a value and inherits a specification (`java-composition-over-i
 
 ## Strategy versus its neighbours, briefly
 
-| Question                                       | Answer                                  |
-| ---------------------------------------------- | --------------------------------------- |
-| Chosen by the caller, does not change itself   | Strategy                                |
-| Changes as the object's own state changes      | State (`gof-state`)                     |
-| Two independent hierarchies varying together   | Bridge (`gof-bridge`)                   |
-| A fixed sequence with varying steps            | Template Method (`gof-template-method`) |
-| Several may apply, in order, until one handles | Chain of Responsibility                 |
-| The variation is which object to instantiate   | Factory Method (`gof-factory-method`)   |
+| Question                                             | Answer                                  |
+| ---------------------------------------------------- | --------------------------------------- |
+| Interchangeable policy, possibly selected internally | Strategy                                |
+| Lifecycle governs legal operations/transitions       | State (`gof-state`)                     |
+| Two independent hierarchies varying together         | Bridge (`gof-bridge`)                   |
+| A fixed sequence with varying steps                  | Template Method (`gof-template-method`) |
+| Several may apply, in order, until one handles       | Chain of Responsibility                 |
+| The variation is which object to instantiate         | Factory Method (`gof-factory-method`)   |
 
 Sources: [JLS 17 lambdas and capture](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27),
+[functional-interface contracts](https://docs.oracle.com/javase/specs/jls/se17/html/jls-9.html#jls-9.8),
+[ServiceLoader discovery](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html),
 [Spring bean collection injection](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html),
 and [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html).

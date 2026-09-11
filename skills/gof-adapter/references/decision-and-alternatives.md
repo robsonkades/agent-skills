@@ -75,14 +75,14 @@ Four rules:
 An adapter owns protocol interpretation, representation validation and semantic mapping. It should
 not invent domain policy to fill missing provider data; some provider-specific decisions are necessary.
 
-| In the adapter                                            | Verdict                                               |
-| --------------------------------------------------------- | ----------------------------------------------------- |
-| `dto.amount()` → `Money.of(dto.amount(), dto.currency())` | Mechanical — fine                                     |
-| `if (dto.status() == null) status = ACTIVE`               | A default, i.e. a policy — move it in                 |
-| Mapping a foreign enum onto your own, exhaustively        | Translate with explicit unknown-value policy          |
-| `if (amount > 10_000) requireApproval()`                  | Business rule — must not be here                      |
-| Retrying on a timeout                                     | A policy; belongs in a decorator or the client config |
-| Choosing between two endpoints by customer segment        | Routing policy — move it out or name it as such       |
+| In the adapter                                            | Verdict                                                                                          |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `dto.amount()` → `Money.of(dto.amount(), dto.currency())` | Mechanical — fine                                                                                |
+| `if (dto.status() == null) status = ACTIVE`               | Invented state unless the provider contract defines it; otherwise require explicit domain policy |
+| Mapping a foreign enum onto your own, exhaustively        | Translate with explicit unknown-value policy                                                     |
+| `if (amount > 10_000) requireApproval()`                  | Business rule — must not be here                                                                 |
+| Retrying on a timeout                                     | A policy; belongs in a decorator or the client config                                            |
+| Choosing between two endpoints by customer segment        | Routing policy — move it out or name it as such                                                  |
 
 The practical test: if the rule would still be true after replacing the vendor, it does not
 belong in the vendor's adapter.
@@ -120,8 +120,17 @@ A wrapper whose every method is `return delegate.same()` should usually go. The 
    one-implementation port still earns its place: it stops the vendor's types spreading and it
    gives tests a seam. Internal ports can also enforce dependency direction, test isolation or
    independent release boundaries; inspect those responsibilities before deleting them.
-3. **Inline it at the call sites** and let the compiler find them.
-4. **Delete the interface last**, after the implementations are gone, not before.
+3. **Check all consumers before removal.** Compilation finds source references, not necessarily
+   reflective/configured class names, service registrations or independently released binaries.
+   Inspect actual wiring and public compatibility obligations; migrate consumers or retain a
+   compatibility shim when required.
+4. **Inline owned call sites, then remove unneeded types.** Delete the interface only when its
+   consumers and implementations no longer require it. Verify runtime wiring and the preserved
+   behavior as well as compilation.
 
 If step 2 says keep it, add the one sentence explaining why — otherwise the next reviewer will
 repeat this analysis and possibly reach the opposite conclusion.
+
+Java compatibility is broader than a rebuilt caller: [JLS 17 chapter 13](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html)
+describes pre-existing binaries, while [Class.forName](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html)
+resolves a name at runtime. Use the project's supported baseline and actual loading mechanism.

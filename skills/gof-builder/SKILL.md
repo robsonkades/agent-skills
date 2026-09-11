@@ -31,6 +31,12 @@ construction process across outputs. A builder that provides neither is ceremony
 Examples use Java 17 records/sealed types, without preview features. Inspect the target release,
 generated code and framework versions first; this skill does not authorize a toolchain upgrade.
 
+Start with consumer code: an ordinary creation, a relevant advanced use such as incremental input
+or coordinated changes, and likely misuse such as missing values, conflicting choices or builder
+reuse. Compare those calls using the simplest viable constructor/factory and the relevant builder
+variant. Inspect existing callers and defaults before asking about missing semantics or ownership;
+ask only when the answer could change the choice.
+
 ## When it is the answer
 
 ```text
@@ -151,8 +157,9 @@ THEN verify the generated constructor path, identity/lifecycle rules, associatio
 - [ ] Variant construction revalidates the result, whether through factories, `withX` or `toBuilder`
 - [ ] Generated-builder adapters have a concrete boundary benefit rather than merely duplicating setters
 
-Report the chosen variant, why simpler construction is insufficient, invariant/ownership boundary
-and validation performed. For a small review, a concrete finding and focused check suffice.
+Report the selected construction form, consumer evidence, invariant/ownership boundary and validation
+performed. Keeping a constructor or factory is a valid outcome; justify builder machinery when it
+adds value. For a small review, a concrete finding and focused check suffice.
 
 ## References
 

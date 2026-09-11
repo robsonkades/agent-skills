@@ -20,7 +20,7 @@ percentiles do not determine the percentile of the sum. Measure the complete int
 (`architecture-and-performance`).
 
 ```java
-// A Remote Facade: one operation per interaction.
+// Candidate Remote Facade for this sequential interaction; payload/work remain bounded.
 CustomerOverview overview = api.customerOverview(id, RECENT_ORDERS);   // 1 round trip
 ```
 
@@ -67,7 +67,8 @@ persistence access; anything another caller would also need.
 ## Coarsening without over-fetching
 
 The tension is real: one call that returns everything transfers data nobody uses; many calls
-cost round trips. Three workable resolutions, in order of preference:
+cost round trips. Choose among these using the actual critical path, cacheability, payload,
+freshness, consistency and failure contract; there is no fixed preference order:
 
 1. **Design the operation around the interaction.** "Customer overview" is a real thing a
    caller does; it is not the union of every field.
@@ -76,7 +77,11 @@ cost round trips. Three workable resolutions, in order of preference:
    unbounded query surface. An expressive query API can also be safe with explicit complexity,
    depth, cost and authorization controls; an include allowlist still needs these bounds.
 3. **Separate endpoints per interaction.** `/overview` for the page, `/summary` for the
-   list. Two well-named endpoints beat one endpoint with a mode parameter.
+   list. A bounded mode or include parameter can also be adequate; compare cache keys,
+   evolution and client complexity rather than requiring separate endpoints by convention.
+
+Independent cacheable/parallel calls or bounded streaming may already meet the contract.
+Coarsening is useful when it removes a demonstrated cost without losing those properties.
 
 ## Batch operations and partial failure
 
@@ -87,8 +92,10 @@ BatchResult<OrderCreated> placeAll(@Valid @RequestBody List<PlaceOrderRequest> r
 
 A batch endpoint must answer one question before it is written: **is it atomic?**
 
-- **Atomic** — all or nothing. Simple to describe, and it means one bad item fails 999 good
-  ones. Only viable when the items are genuinely one unit of work.
+- **Atomic** — all or nothing. One bad item can roll back every item. Choose it when the
+  caller's contract requires or deliberately accepts that outcome and an actual atomic
+  resource/protocol boundary covers the effects. Items need not be one domain aggregate;
+  account for contention, transaction duration and whole-batch retry cost.
 - **Per item** — each succeeds or fails independently, and the response reports per-item
   outcomes with a stable index or key. Choose this only when partial success satisfies the business contract. Carry per-item
   outcomes, while retaining a request-level failure path for invalid envelopes or inability
@@ -132,7 +139,7 @@ ResponseEntity<OrderCreated> place(@RequestHeader("Idempotency-Key") String key,
 ResponseEntity<Void> updateShipping(@PathVariable UUID id,
                                     @RequestHeader("If-Match") String etag,
                                     @RequestBody ShippingRequest body) { ... }
-// 412 Precondition Failed when the version has moved on.
+// A false precondition prevents this write; normally return 412 Precondition Failed.
 ```
 
 Scope keys by tenant/principal and operation, compare a canonical request fingerprint, define
@@ -142,7 +149,9 @@ client outcome; replay storage and the effect need an atomic protocol or reconci
 For batches, state whether retry keys cover the whole batch or stable individual items.
 
 Parse `If-Match` using HTTP strong-comparison rules and perform the version check atomically
-with the write; an earlier read/check is insufficient. Authenticate and authorize before
+with the write; an earlier read/check is insufficient. RFC 9110 permits a successful response
+for a state change that appears already applied, without executing the rejected write again;
+do not use that exception to suppress a real conflict. Authenticate and authorize before
 revealing stored results. Protocol translation is a boundary concern; durable enforcement
 must cover every caller of the use case
 (`idempotency`, `offline-concurrency-control`).
@@ -186,6 +195,10 @@ mandatory per consumer (`view-and-representation-patterns`).
 
 ## Reviewing a remote API
 
+Apply the questions relevant to the requested operation or concern, using supplied evidence.
+An adequate boundary can receive a no-change verdict; method names or persistence-backed
+source types alone do not establish a defect.
+
 1. How many calls does the client make, and are they sequential, costly or redundant?
    Multiple useful, cacheable or parallel calls alone are not a defect.
 2. Is any operation named after a domain method rather than a caller's task?
@@ -194,10 +207,12 @@ mandatory per consumer (`view-and-representation-patterns`).
 5. Which writes need retry protection? Are scope, fingerprint, concurrency, retention and
    ambiguous completion handled, including valid conflict responses?
 6. Is there one error shape with stable codes?
-7. Does any payload type come from the persistence model?
+7. For persistence-backed payloads, does the actual encoding path control field exposure,
+   lazy access, nested state and independent wire evolution?
 8. Does shared contract code force upgrades, or can consumers independently pin compatible versions?
 
 ## Sources
 
 - [Fowler: Remote Facade](https://martinfowler.com/eaaCatalog/remoteFacade.html) — coarse remote translation without domain logic.
 - [RFC 9110: If-Match](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1) — strong comparison and precondition semantics.
+- [Spring Framework 6.0 release](https://spring.io/blog/2022/11/16/spring-framework-6-0-goes-ga) — Java 17 baseline; examples remain partial sketches.

@@ -55,8 +55,9 @@ replica breaks a flow (`session-state-strategies`).
                      over representative flows and session lifetimes.
                      Do not log tokens, values or personal data.
 
-2. Delete derived    Anything recomputable. Usually the largest share and
-                     it needs no replacement. SHIP.
+2. Remove derived    Recompute only when the conversation's contract and
+                     acceptable latency/load are preserved. Keep needed
+                     snapshots or an explicitly bounded cache. SHIP.
 
 3. Identity out      Move only stable, bounded identity claims to a signed
                      token, or use an opaque reference when revocation,
@@ -72,6 +73,10 @@ replica breaks a flow (`session-state-strategies`).
 6. Remove stickiness Then verify: kill an instance under load and confirm
                      no conversation breaks.
 ```
+
+A quoted price fixed until expiry is workflow state, even if a price can be recomputed today.
+Preserve the accepted snapshot or enough versioned inputs to reproduce it. Test a source-data
+change between conversation steps before deleting the old session value.
 
 Externalizing sessions can be a useful containment step when continuity is urgent, but does
 not make session content suitable for long-term storage. Prove serialization compatibility,

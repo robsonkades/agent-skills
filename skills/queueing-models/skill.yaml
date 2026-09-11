@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: queueing-models
-version: 1.3.1
+version: 1.3.2
 description: >-
   Choosing, parameterising and falsifying queueing models: M/M/1, M/M/c, M/G/1, finite/loss
   and closed networks; Erlang C/B, Pollaczek–Khinchine, Kingman/Allen–Cunneen, variability,
@@ -49,6 +49,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - latency-statistics
   - capacity-planning
   - coordinated-omission
   - kafka-consumers-in-java

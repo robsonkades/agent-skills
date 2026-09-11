@@ -1,6 +1,6 @@
 # Detection: coupling chain or data access?
 
-The formal rule — call methods only on `this`, parameters, objects you create, and your own
+The common shorthand — call methods only on `this`, parameters, objects you create, and your own
 fields — is a proxy. What it protects is narrower and more useful: **a class should not
 depend on the internal composition of its collaborators.** Test chains against that, not
 against dot counts.
@@ -20,8 +20,9 @@ against dot counts.
 - **Shape changes ripple.** If renaming or splitting `Address` produces compile errors in
   files that do not mention shipping or addresses in their name or API, those files were
   coupled through chains.
-- **The chain crosses a module or aggregate boundary.** Inside one aggregate, navigation is
-  the aggregate root doing its job; from outside, it dissolves the boundary.
+- **The chain crosses a module or aggregate boundary.** Check whether it reaches a private
+  component or uses a published collaborator/projection. Root-owned internal navigation can be
+  appropriate; crossing the boundary is not itself proof that the public contract was bypassed.
 
 ## False positives — chains that are fine
 
@@ -73,6 +74,8 @@ any other name proves or disproves it; demonstrate the internal change hidden fr
 
 ## API references
 
+- [Original Demeter object formulation](https://www2.ccs.neu.edu/research/demeter/demeter-method/LawOfDemeter/object-formulation.html)
+  includes computed immediate parts; the shorthand is not a complete formal checker.
 - [Java 21 List.getFirst](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#getFirst()>)
   documents availability and empty-list failure.
 - [Java 17 Stream](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html)

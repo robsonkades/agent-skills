@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-memory-model
-version: 1.3.1
+version: 1.3.2
 description: >-
   Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers
   actions/executions, synchronization order, synchronizes-with and happens-before, data races,

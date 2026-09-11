@@ -10,7 +10,7 @@ description: >
   a custom traversal is being written, when ConcurrentModificationException appears, when a stream
   over a file or a result set leaks, when paging through a remote API, or when a parallel stream
   is not faster. Does not cover stream pipeline design and collectors
-  in general, the tree being traversed (gof-composite), adding operations over
+  in general (java-streams), the tree being traversed (gof-composite), adding operations over
   it (gof-visitor), or database paging strategy.
 ---
 
@@ -27,6 +27,11 @@ Inspect compiler release/toolchains, source ownership, mutation policy and resou
 before choosing. Examples use Java 17 (partial domain types/imports omitted); Gatherers are
 standard in Java 24 ([JEP 485](https://openjdk.org/jeps/485)) and are optional, not a reason
 to upgrade a target project.
+
+Start with ordinary traversal, an advanced consumer such as interleaved passes, and an early-exit
+or failure path. Inspect existing callers and provider contracts for replay, order, mutation and
+ownership before asking about gaps. Keep an adequate loop, collection view or iterator; add a new
+abstraction only for a required consumer capability.
 
 ## Iterator, Stream, Spliterator
 
@@ -74,13 +79,16 @@ Traversal must be parallel
 - **The collection is already a `List` you can expose.** `List.copyOf` gives an unmodifiable
   structural snapshot; `Collections.unmodifiableList` gives a live unmodifiable view. Neither
   freezes mutable elements. Obtain a snapshot under the source's synchronization policy.
-- **The caller needs random access, size or repeated traversal.** A `Stream` is single-use and a
-  custom `Iterator` gives none of these; return a collection.
+- **The caller needs random access or collection-style size.** A collection may be the right
+  contract when materialization fits. Repeated traversal alone can use a repeatable `Iterable` or
+  a factory for fresh traversals; specify independent state, replay consistency and reopening cost.
+  Neither an `Iterable` nor a stream-returning method alone guarantees repeatability.
 - **You are writing an `Iterator` for an existing collection with an adequate iterator.** Delegate
   or expose an immutable view. For a custom structure, Iterator may remain the simplest correct
   traversal; add Spliterator only for useful stream/splitting semantics.
-- **The "iteration" is a remote query.** Paging through a remote API is iteration in shape only —
-  it has server-side state, latency per page, and consistency questions the interface hides.
+- **The "iteration" is a remote query.** Paging adds latency and consistency questions and may
+  hold server-side cursor state. Inspect the provider contract rather than inferring stateful
+  resources or snapshot semantics from the traversal interface.
 
 ## Decision rules
 
@@ -145,12 +153,13 @@ Two-handed traversal (merge, diff)   Iterator for explicit control; Stream.itera
 ## Cross-cutting checks
 
 - **Concurrency.** Do not assume an iterator can be driven concurrently unless its contract says
-  so, and none of the three abstractions inherently makes traversal atomic. Common semantics are fail-fast (best effort, an exception
-  _usually_), weakly consistent (no exception, unspecified visibility of concurrent changes), and
-  snapshot (`CopyOnWriteArrayList` — an exact view of the moment it started, at the cost of a copy
-  per mutation). Choose deliberately, and document which one a returned traversal offers.
-- **Distribution.** Remote iteration is pagination, and the interface hides three things: latency
-  per page, server-side cursor state that leaks if the caller abandons the walk, and consistency —
+  so, and none of the three abstractions inherently makes traversal atomic. Common semantics are
+  fail-fast (best-effort interference detection), weakly consistent (no
+  `ConcurrentModificationException`, may reflect later changes), and structural snapshot
+  (`CopyOnWriteArrayList`, with copying costs on updates). Inspect the concrete contract;
+  snapshot references do not freeze mutable elements.
+- **Distribution.** Remote iteration is pagination, and the interface can hide latency per page,
+  server-side cursor resources needing release when present, and consistency —
   with offset pagination, rows inserted or deleted mid-walk can cause items to be skipped or repeated.
   Keyset pagination avoids offset drift for a stable unique ordering but is not a snapshot: updates
   to sort keys and isolation level still matter. A cursor/snapshot token may be required
@@ -165,7 +174,8 @@ Two-handed traversal (merge, diff)   Iterator for explicit control; Stream.itera
   `hasNext()` returns false must throw `NoSuchElementException`), `hasNext()` called twice with no
   `next()` between, and — for resource-backed traversals — that abandoning the stream halfway
   still closes it. For a custom `Spliterator`, assert that sequential and parallel traversals
-  produce the same result.
+  produce the same result, and verify claimed size/comparator and split coverage where supported.
+  An unsplittable source's equality check does not test parallel decomposition.
 
 ## Review checklist
 
@@ -190,6 +200,6 @@ resource ownership is unknown, inspect the provider contract before promising co
   what each enables; fail-fast versus weakly consistent versus snapshot semantics; and when a
   hand-written `Iterator` is still the right answer. Read when choosing what a type should return.
 - [Worked example](references/worked-example.md) — a paged remote API exposed as a `Stream` via a
-  custom `Spliterator`: keyset paging, the deadline and total bound, closing and cancellation, why
+  custom `Spliterator`: cursor semantics, the deadline and total bound, closing and cancellation, why
   `trySplit` returns `null`, and the tests including sequential/parallel agreement. Read when
   implementing.

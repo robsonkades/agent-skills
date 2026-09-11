@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-architecture-analysis
-version: 1.1.1
+version: 1.1.2
 description: >-
   Enumerating what a feature actually touches, with paths: which modules, layers, contracts,
   schemas, message topics, configuration and cross-cutting concerns change, which of those changes
@@ -43,6 +43,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - feature-contract-definition
   - feature-context-analysis
   - feature-engineering
   - feature-risk-analysis

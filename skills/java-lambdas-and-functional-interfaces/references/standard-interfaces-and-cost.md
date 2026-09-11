@@ -27,12 +27,15 @@ of defining a new one.
 
 Define one when at least one of these holds:
 
-- **The name carries domain meaning at many call sites.** `interface PricingRule extends
-Function<Order, Money>` is worse than `interface PricingRule { Money priceOf(Order order); }`
-  — the second gives the method a name too, which is where most of the readability lives.
+- **The name carries domain meaning at many call sites.** A standalone `PricingRule` with
+  `priceOf(Order)` gives the operation a domain name; extending `Function<Order, Money>` can
+  preserve useful interoperability. A named abstract method plus a default `apply` bridge can
+  offer both. Compare actual consumers and preserve public extension/compatibility contracts.
 - **The signature is not expressible.** Three or more parameters, a checked exception, a
-  primitive combination the JDK does not ship, or generics with bounds the standard interfaces
-  cannot carry.
+  primitive combination the JDK does not ship, or a genuinely different generic function type.
+  Bounds on an API's type parameters alone need not require a new interface. A generic abstract
+  method can define a functional interface but cannot be implemented by a lambda; a compatible
+  generic method reference or named implementation may fit.
 - **Default methods add real composition** specific to the domain (`RetryPolicy.orElse`,
   `Validator.and` with error accumulation).
 - **The contract is stronger than the shape.** "Must be pure and idempotent", "must be
@@ -44,13 +47,14 @@ that duplicates a standard interface's shape without adding any of the above, be
 then cannot pass a lambda they already have as a `Function`.
 
 Always annotate a functional interface with `@FunctionalInterface`. It is not required, but it
-turns "someone added a second abstract method" from a broken build at every lambda call site
+turns "someone added an incompatible abstract method" from a broken build at lambda call sites
 into one clear error on the interface.
 
 ## What the runtime actually does
 
-A lambda is not an anonymous class in disguise. `javac` compiles the body to a private
-synthetic method and emits an `invokedynamic` call site; on first execution the
+A lambda is not an anonymous class in disguise. `javac` typically translates a lambda body to
+a synthetic helper and an `invokedynamic` call site; a method reference can target an existing
+method directly. Helper visibility and exact translation are compiler details. At linkage the
 `LambdaMetafactory` commonly links a generated/hidden implementation to the call site; exact
 class generation and caching are runtime details. Practical
 consequences:
@@ -59,15 +63,14 @@ consequences:
   linked call site and commonly creates an object holding captured values, with possible scalar
   replacement. Never rely on identity or a fixed allocation count; confirm with allocation and
   compilation evidence before hoisting loop-invariant functions.
-- **First use has a linkage cost.** Bootstrapping a call site is far more expensive than
-  invoking it, and a class with hundreds of distinct lambdas pays that at startup. This is
-  visible in short-lived processes, serverless cold starts, and CLI tools; it is one of the
-  things AppCDS and AOT caching address (startup-cds-crac-leyden). It is not a reason to avoid
-  lambdas in a long-running service.
+- **First use can add linkage cost.** Count sites actually linked/executed during the measured
+  startup path, not all expressions declared in a class. Runtime/CDS/AOT support can change
+  which work occurs when; startup-cds-crac-leyden owns those version-specific mechanisms.
+  Investigate only when existing startup evidence makes that cost relevant.
 - **A highly polymorphic call site can inhibit inlining.** Receiver profiles, tier and compiler
   heuristics determine whether guarded/speculative inlining remains possible
-  (jit-inlining-and-escape-analysis). This shows up as a flat profile with time spread across
-  interface dispatch, on genuinely hot paths only. Diagnose it with a profile before
+  (jit-inlining-and-escape-analysis). A flat profile alone does not establish the cause;
+  correlate hot-site profiles with compiler/inlining evidence before
   restructuring code around it.
 - **Boxing can be the larger cost.** `Function<Integer, Integer>` requires reference boxing and
   unboxing; caches and escape analysis mean this is not necessarily two allocations per element.
@@ -77,9 +80,9 @@ consequences:
 
 ## Lambdas and threads
 
-- **A lambda handed to an executor is a heap-shared object.** Everything it captured is now
-  reachable from another thread; the executor's own submission provides the happens-before edge
-  for actions before submission. Later mutations require their own ordering/coordination;
+- **Check how the executor invokes the task.** An `Executor` may execute inline on the caller's
+  thread. When the task crosses threads, captured references can become shared; the submission
+  contract orders prior actions, not later mutations. Those require their own ordering/coordination;
   they are not automatically races if locks, volatile/atomic operations or other publication
   protocols provide the required guarantees (java-memory-model).
 - **Request context does not travel merely because code is a lambda.** A `ThreadLocal` is not
@@ -94,7 +97,8 @@ consequences:
 ## Reviewing lambda-heavy code
 
 - [ ] Lambdas with non-local policy, failure semantics or diagnostic needs are named/extracted.
-- [ ] No captured `AtomicInteger`/array used purely to work around effective finality.
+- [ ] Mutable captures have an actual callback/accumulation need and a valid ownership,
+      invocation and synchronization contract; simple traversals use simpler accumulation where suitable.
 - [ ] Long-lived lambdas (scheduled, registered, queued) capture only what they need, and do
       not capture `this` unintentionally.
 - [ ] Standard interfaces used where they fit; each custom one justified by name, signature,
@@ -102,7 +106,11 @@ consequences:
 - [ ] Primitive specialisations considered where measured boxing cost matters; preserve existing
       API compatibility and reject allocation claims unsupported by evidence.
 - [ ] Checked exceptions handled by one deliberate strategy, never by sneaky throw.
-- [ ] No overload pairs distinguished only by functional interface type.
+- [ ] Overloads have an unambiguous consumer path without breaking supported signatures.
 
 Primary references: [LongAdder sum semantics](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html)
 and [ExecutorService memory consistency](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html).
+For target-type limits and inline execution, see
+[JLS functional interfaces and function types](https://docs.oracle.com/javase/specs/jls/se25/html/jls-9.html#jls-9.8),
+[lambda compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.27.3), and
+[Executor execution contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html).

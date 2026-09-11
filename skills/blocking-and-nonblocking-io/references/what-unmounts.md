@@ -34,6 +34,11 @@ pin          the carrier is gone until the call returns.      Costs a carrier ou
 
 ## Telling them apart with evidence
 
+On Java 24+, prefer `VirtualThreadSchedulerMXBean` estimates of pool size, mounted and queued
+work to carrier-name counting. Inspect the current target and tuning history: `maxPoolSize`
+is a startup input, not an immutable ceiling after runtime parallelism changes. See
+`virtual-threads-internals` for unavailable estimates and compensation limits.
+
 ```bash
 # Candidate carriers over time. Names are implementation details; correlate with workload.
 jcmd <pid> Thread.dump_to_file -format=json /tmp/d.json
@@ -81,6 +86,19 @@ without a Java park or scheduler compensation. JFR file-read and pinning events 
 not expose this; correlate OS major-fault counters and native/wall profiles. Mapping is
 not evidence that storage waits disappeared.
 
+## Completion and resource ownership
+
+A blocking socket read can return a short count; a non-blocking channel can return zero.
+Handle partial progress, EOF and errors under the protocol's framing contract; readiness
+does not promise a complete message. Do not spin on zero progress or treat it as EOF.
+
+For example, Java 25 `HttpClient.send(..., BodyHandlers.ofInputStream())` can return after
+headers while the body is still arriving. The caller owns reading and closing that stream;
+offloading only `send` leaves later reads on whichever thread consumes it. An asynchronous
+response stage can likewise finish before a streaming body. Keep stream/connection ownership
+and limits through the actual consumption/close boundary, and classify consumer callbacks too.
+Neither local completion nor cancellation establishes that a remote operation stopped.
+
 ## Verifying a third-party client
 
 Never conclude from the name. A "reactive" driver may hold a bounded internal pool; a
@@ -125,6 +143,10 @@ work that continues after the caller leaves.
 
 ## Sources
 
+- [Java 25 InputStream](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html),
+  [SocketChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/SocketChannel.html)
+  and [streaming HTTP body handlers](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpResponse.BodyHandlers.html):
+  partial progress, EOF and the distinction between response return and body consumption/close.
 - [Oracle JDK 21 virtual threads](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html)
   and [JDK 24 virtual threads](https://docs.oracle.com/en/java/javase/24/core/virtual-threads.html):
   release-specific pinning and JFR diagnostics.

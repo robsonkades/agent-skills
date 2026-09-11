@@ -14,7 +14,7 @@ this pass are recorded, not silently fixed.
    Missing benchmark evidence is a gap, not proof of inadequate security.
 2. **Is a general-purpose digest being used as a password hash?**
    `rg 'MessageDigest\.getInstance\("(SHA|MD5)'` near anything called password. SHA-256 is fast
-   by design; a modern GPU does billions per second. Note the confusing corner: the same class's
+   by design and enables cheap offline guessing. Note the confusing corner: the same class's
    `isEqual` is the _right_ call for comparison.
 3. **Is every hash salted per user, with the salt stored beside it?** A public application-wide
    constant is neither a per-password salt nor a pepper (a pepper must be secret): identical
@@ -22,17 +22,20 @@ this pass are recorded, not silently fixed.
 4. **How is the comparison done?** `rg 'Arrays\.equals|\.equals\(' ` in any file that also
    mentions hash, token, mac, signature or secret. `MessageDigest.isEqual` or the encoder's
    own `matches` — never `Arrays.equals`, never `String.equals`, never `==`.
-5. **Is there a rehash path?** `rg 'upgradeEncoding'`. Without it, a cost increase or an
-   algorithm change reaches only new users, forever.
+5. **How do existing credentials adopt the new policy?** Trace successful-login rehash or an
+   explicit reset/migration path, preserving old verification until retirement. A grep for
+   `upgradeEncoding` is only a lead: the named PBKDF2 encoder inherits `false` (§3 of
+   `password-storage.md`), and other designs can implement their own policy comparison.
 6. **Does registration cap input at 72 bytes if bcrypt is in use?** Spring Security ≥ 6.3.8 /
    6.4.4 **does** check on `encode` and throws
    `IllegalArgumentException("password cannot be more than 72 bytes")` — the CVE-2025-22228
-   fix. So the symptom is a 500 at sign-up, not a silent compliance hole, and the finding is
-   the missing boundary check. `matches` still skips the guard, so legacy hashes verify by
-   truncation (ASVS 6.2.8) and any re-encode of an over-length password — password change or a
-   rehash under `upgradeEncoding` — now throws for that user. See `password-storage.md` §3.
-7. **Does a domain type's `equals`/`hashCode` include the hash or the secret?** Both a timing
-   leak and a `hashCode` hazard.
+   fix. An uncaught exception can become a 500. In 7.1.1 `matches` skips the guard even for
+   newly written hashes: test a 72-byte password's hash against that prefix plus a suffix.
+   Enforce the verification contract too, and plan recovery for existing >72-byte users
+   before adding a limit or bcrypt rehash. See `password-storage.md` §3.
+7. **Does a domain type's `equals`/`hashCode` include the hash or the secret?** Trace whether
+   generated comparison or rendering exposes it outside the credential boundary. A field name
+   alone does not prove a remote timing oracle or a broken equality/hash contract.
 
 ## Randomness
 
@@ -42,6 +45,8 @@ this pass are recorded, not silently fixed.
    but its Javadoc also says it is not cryptographically secure. Java 17's shared
    `RandomGenerator` supertype makes `SecureRandom` and `Xoshiro256PlusPlus` look interchangeable
    at a call site; they are not.
+   Also inspect `setSeed` and seeded `SecureRandom` constructors: predictable manual seeds
+   can suppress automatic seeding. A secure class name does not repair a low-entropy seed.
 9. `rg 'getInstanceStrong'` on a request path or in a bean constructor — it selects from the
    deployment's `securerandom.strongAlgorithms` property and the selected provider may block.
    It is not a universal "more secure" switch: state the required strength/provider behavior,
@@ -50,7 +55,8 @@ this pass are recorded, not silently fixed.
     version 4, and the common objection confuses it with UUID v1. It **is** a finding under an
     ASVS L2 assessment: 11.5.1 ends "Note that UUIDs do not respect this condition", naming
     them as not meeting the 128-bit bar. Ask which applies before raising it: where L2 is
-    claimed, emit 16 bytes from `SecureRandom` Base64url-encoded; otherwise leave it.
+    claimed, emit 16 bytes from `SecureRandom` Base64url-encoded; otherwise assess the actual
+    entropy requirement and guessing/collision budget before proposing a change.
     `UUID.nameUUIDFromBytes` is deterministic MD5 and unsuitable for unguessable credentials;
     deterministic non-secret identifiers are outside this finding.
 
@@ -58,8 +64,9 @@ this pass are recorded, not silently fixed.
 
 11. **Where does the authorisation decision live, and who else calls that method?** `rg` the
     service method name. A `@PreAuthorize` on one controller plus a scheduler, a message
-    consumer, a GraphQL resolver or a second controller calling the same method is an unchecked
-    path, and it is the most common finding in this whole list.
+    consumer, a GraphQL resolver or a second controller warrants tracing its policy and guards.
+    Preserve an adequate application-service boundary; report a missing required check only
+    after establishing the reachable path. An explicit system operation may have different authority.
 12. **Is the check per resource instance or per resource type?** "Has role CUSTOMER" without
     "and this order belongs to them" is IDOR/BOLA.
 13. **Where does the subject come from?** `rg '@PathVariable.*[Uu]serId|getUserId\(\)'` in a
@@ -68,19 +75,23 @@ this pass are recorded, not silently fixed.
     `findById(id).orElseThrow()` _before_ the ownership check, or two distinct error messages,
     is an enumeration oracle.
 15. **Can the domain object reach an invalid state by a path that bypasses the DTO?** A
-    repository `save`, a test fixture, a migration-loaded row, a message handler. The DTO is not
-    the trust boundary; the constructor is.
+    repository `save`, a migration-loaded row, a message handler. Identify the path by which
+    hostile input can violate the invariant; constructor checks do not cover every persistence
+    or framework path. General placement and duplication belong to `java-defensive-programming`.
 16. **Who is allowed to construct the actor?** A parameter named `Actor` is an obligation, not
     authentication. If roles or tenant arrive from request JSON, the design has only moved the
     confused-deputy bug.
+    Can mutable aliases change those trusted claims later, and how long is the snapshot valid?
 17. **Can ownership or state change between check and write?** If read/check and mutation are
     separated by a transaction boundary, require an owner/tenant/version predicate on the
     write or appropriate transaction isolation. A unit test of the Java `if` cannot prove this.
 
 ## Validation at the trust boundary
 
-18. **Is `@Valid` actually on the `@RequestBody` parameter?** Without it the annotations are
-    decorative, nothing fails, and the code reads as validated.
+18. **What actually invokes validation before use?** For Spring MVC, inspect `@Valid`,
+    `@Validated`, applicable method validation or explicit validation, using the resolved
+    framework version. Missing one annotation alone is not proof of bypass; send hostile input
+    through each relevant entry path and verify rejection before the protected effect.
 19. **Is validation being sold as the injection control?** OWASP: "Input Validation should not
     be used as the primary method of preventing XSS, SQL Injection and other attacks."
     Parameterised queries and context-aware output encoding are the control; validation reduces
@@ -143,8 +154,8 @@ this pass are recorded, not silently fixed.
 
 ## What not to raise
 
-- `UUID.randomUUID()` for a token, **unless ASVS L2 is the bar** (finding 10). It is not a
-  cryptographic weakness; it is a conformance one, and only sometimes.
+- `UUID.randomUUID()` for a token solely because it is a UUID. Check ASVS L2 or another
+  applicable entropy requirement (finding 10), and separate conformance from a demonstrated attack.
 - bcrypt at an adequate, measured cost as though the algorithm name alone were an incident.
   Prefer opportunistic migration, but make an explicit project when compliance, compromise
   evidence, inactive accounts or legacy >72-byte semantics require one.
@@ -154,27 +165,30 @@ this pass are recorded, not silently fixed.
 - A middle-layer check duplicating a boundary check. Real, but it is
   `java-defensive-programming`'s finding, not this skill's.
 - Composition rules as a _strengthening_. NIST 800-63B-4 SHALL NOT; ASVS 6.2.5 agrees.
-- A hand-written GCM helper as a harmless abstraction. Nonce allocation, AAD, envelope version,
-  tag failure, key custody and rotation are the design; hiding them behind `encrypt(byte[])`
-  makes the unsafe choices impossible to review.
+- A helper's name or signature as proof that cryptography is safe or unsafe. Inspect nonce
+  allocation, AAD, envelope version, tag failure, key custody and rotation. A reviewed adapter
+  can encapsulate these; report a lost invariant rather than requiring every caller to manage them.
 
 ## Verification — how you know it improved
 
 Design changes in this area are verifiable, and each one should be:
 
-| Change                                 | The test that could not be written before                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Authorisation moved into the operation | Call the domain method directly with a foreign actor; assert refusal — no web layer needed |
-| Dummy-hash on the not-found path       | Compare latency distributions across warm/cold paths; no class should omit a KDF run       |
-| Constant-time comparison               | Assert the call site is `MessageDigest.isEqual`; the timing itself is not unit-testable    |
-| Parameters raised to OWASP             | Assert the encoder's configured `m`/`t`/`p` or iteration count                             |
-| `upgradeEncoding` wired in             | Store a hash at the old cost, log in, assert the stored hash changed                       |
-| Secret removed from a type             | Assert `toString()` of the type does not contain the value                                 |
-| Single-use token lifecycle             | Race two redemptions against the real datastore; exactly one transition succeeds           |
+| Change                                  | Verification                                                                                             |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Authorisation enforced by the operation | Call the protected method with a foreign actor; assert refusal and no mutation, including aliased claims |
+| Dummy-hash on the not-found path        | Compare latency distributions across warm/cold paths; no class should omit a KDF run                     |
+| Constant-time comparison                | Assert the call site is `MessageDigest.isEqual`; the timing itself is not unit-testable                  |
+| Parameters raised to OWASP              | Assert the encoder's configured `m`/`t`/`p` or iteration count                                           |
+| `upgradeEncoding` wired in              | Store a hash at the old cost, log in, assert the stored hash changed                                     |
+| Secret removed from a type              | Assert `toString()` of the type does not contain the value                                               |
+| Single-use token lifecycle              | Race two redemptions against the real datastore; exactly one transition succeeds                         |
 
 Two further signals, both cheap:
 
-- **Callers found.** After moving a check into the domain, count the call sites that now must
-  supply an actor. Each one that previously ran unchecked was a live defect.
+- **Callers covered.** Trace the required policy and actual guard for each relevant caller;
+  more actor parameters alone do not prove better enforcement.
 - **Files touched to change one parameter.** Raising a cost factor should touch one file. If it
   touches several, the parameters are scattered and the next raise will miss one.
+
+Validation activation was checked against the [Spring MVC validation reference](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html)
+on 2026-09-10. Framework wiring remains outside this skill; use the project's resolved version.

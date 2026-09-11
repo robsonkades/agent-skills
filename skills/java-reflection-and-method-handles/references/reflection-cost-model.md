@@ -61,7 +61,8 @@ mutable call sites require their documented publication protocol and may prevent
   (compilation-and-inlining-logs).
 - **Whether it costs anything:** a JMH comparison of direct call, `static final` handle,
   instance-field handle and `Method.invoke` for the same target, with `-prof gc` —
-  `gc.alloc.rate.norm` exposes the boxing that a timing number hides (jmh-microbenchmarks).
+  `gc.alloc.rate.norm` measures normalized total allocation, not boxing attribution by itself;
+  target work, argument arrays and adapters may contribute (jmh-microbenchmarks).
 
 Keep benchmark signatures identical, consume results, include cold lookup separately, use enough
 forks/warm-up to observe compilation and inspect `PrintInlining`/assembly only after the benchmark

@@ -3,8 +3,9 @@
 ## The levels, and when each is cleared
 
 An object is _strongly reachable_ if some chain of strong references reaches it from a GC
-root (a live thread's stack, a static field of a loaded class, a JNI reference). Weaker
-levels apply only when no stronger path exists.
+root, for example through a live stack reference, reachable static field or strong JNI
+reference. A loader/static-field cycle without an external root need not remain live.
+Weaker levels apply only when no stronger path exists.
 
 | Level   | Cleared when                                                                                                                                                                        | Practical meaning                                                                 |
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
@@ -16,16 +17,22 @@ levels apply only when no stronger path exists.
 The soft-reference OOME guarantee applies to softly reachable referents, not references whose
 referents still have strong owners. It does not make a reference-based cache a capacity contract.
 
-HotSpot's soft-reference policy is time- and pressure-based: a softly reachable object
-survives roughly `-XX:SoftRefLRUPolicyMSPerMB` milliseconds per megabyte of free heap since
-its last access (default 1000). The consequences that matter:
+For a custom reference queue, retain the `Reference` wrappers while notifications matter;
+registration alone does not keep them reachable. `clear()` does not enqueue. Manual
+`enqueue()` can occur while the referent is strongly owned, so a queue item alone does not
+prove reclamation or authorize releasing a still-used resource. For usable referents, read
+`get()` once and check that local; it creates a strong reference. `refersTo` (Java 16+) can
+test referent identity or clearing without strengthening reachability.
 
-- Soft references make the heap _look_ healthy while a cache silently consumes everything up
-  to the ceiling, so GC does more work per cycle for the entire life of the process.
-- Clearing happens under pressure, in bulk. A soft cache therefore loses a large fraction of
-  its entries at the moment load is highest, and the resulting miss storm hits the very
-  backend the cache existed to protect. This is the mechanism behind "the cache stopped
-  helping exactly when we needed it".
+HotSpot's `-XX:SoftRefLRUPolicyMSPerMB` is a heuristic, not an entry TTL or minimum survival
+time. The [25.0.3 policy source](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/referencePolicy.cpp)
+uses GC-related timestamps and heap state from the last collection; its policies distinguish
+current free space from maximum-heap headroom. The consequences that matter:
+
+- Soft retention can add GC/reference-processing work, but the cost needs actual evidence.
+- Clustered clearing can trigger concentrated refill work. Whether this causes an origin
+  overload depends on which entries are requested, request rates and refill capacity; memory
+  pressure need not coincide with peak traffic. Do not infer a miss storm from reference type alone.
 - Sizing is not expressible. `Caffeine.newBuilder().maximumSize(50_000)` or
   a weight limit expresses capacity. `.expireAfterWrite(...)` expresses freshness/lifetime,
   not a strict memory bound under unbounded arrivals; combine with capacity/entry-size limits
@@ -42,8 +49,9 @@ Two rules make it usable:
 
 1. **No value may reference its key**, directly or through any chain. That includes the
    common accident of an inner value class holding the key object, and the very common one of
-   a value that is a lambda capturing the key. Wrap the value in a `WeakReference` to the key
-   if it genuinely needs it.
+   a value that is a lambda capturing the key. If appropriate, weaken the value's link to
+   its key. Storing a weak reference to the entire value is a different contract: the value
+   can then disappear even while the key is strongly owned. Choose that only if allowed.
 2. **Keys must have an independent lifetime and stable equality semantics.** `WeakHashMap`
    uses `equals`/`hashCode`, not identity. A `String` key's lifetime depends on its actual
    strong roots: literals are commonly retained while their defining class remains loaded,
@@ -51,15 +59,17 @@ Two rules make it usable:
    session keys are suitable only when that reachability contract is intentional.
 
 `ConcurrentHashMap` has no weak-key variant in the JDK; Guava's `MapMaker`/`CacheBuilder` and
-Caffeine provide one. A `WeakHashMap` behind a lock is not a concurrent map — wrapping it in
-`Collections.synchronizedMap` is correct only if every compound operation is also
-synchronised.
+Caffeine provide one, but their `weakKeys()` use identity (`==`) rather than `equals`;
+do not silently change equal-key lookup behavior. See [Caffeine reference eviction](https://github.com/ben-manes/caffeine/wiki/Eviction)
+and [Guava MapMaker](https://github.com/google/guava/blob/v33.4.8/guava/src/com/google/common/collect/MapMaker.java).
+`Collections.synchronizedMap` can protect a `WeakHashMap`; client-composed operations and
+iteration need the appropriate wrapper lock. Synchronization does not stop GC-driven disappearance.
 
 ## Cleaner
 
-`java.lang.ref.Cleaner` (Java 9+) supports a fallback action after phantom reachability. It
-is appropriate only when nondeterministic best-effort cleanup/reporting is useful; it never
-replaces deterministic ownership of a native/OS resource.
+`java.lang.ref.Cleaner` (Java 9+) supports explicit cleanup and an automatic fallback after
+phantom reachability. Use the fallback when best-effort cleanup/reporting is useful; it
+does not replace deterministic ownership of a native/OS resource.
 
 ```java
 import java.lang.ref.Cleaner;
@@ -70,7 +80,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class NativeIndex implements AutoCloseable {
     private static final Cleaner CLEANER = Cleaner.create();
 
-    // MUST be static: a non-static state class would hold NativeIndex.this
+    // Static state makes the absence of an enclosing NativeIndex reference explicit.
     private static final class State implements Runnable {
         private final AtomicLong address;
         private final AtomicBoolean explicitClose = new AtomicBoolean();
@@ -98,26 +108,28 @@ public final class NativeIndex implements AutoCloseable {
 
     @Override public void close() {
         state.explicitClose.set(true);
-        cleanable.clean();                                 // release exactly once
+        cleanable.clean();                                 // invoke release at most once
     }
 }
 ```
-
-Rules this encodes, each of which is a defect when broken:
 
 This partial Java 9+ sketch omits `Native.free`; assume a valid exclusively owned nonzero
 handle and a nonthrowing release operation. A real factory must release on allocation or
 Cleaner-registration failure. If native use methods are added, design use-versus-close
 synchronization and any required `Reference.reachabilityFence`; at-most-once cleaning alone
-does not prevent use-after-free. Do not rely on fallback logging to run during process exit.
+does not prevent use-after-free. Concurrent `clean()` calls are not a completion barrier:
+another caller can return while the winning action is still running. If each `close()`
+must await release, enforce that completion contract in the owner. Do not rely on fallback
+logging to run during process exit.
 
 - **The action cannot reference the registered object.** A lambda that reads any instance
   field of `NativeIndex` captures `this`, so the object is never phantom-reachable and the
-  cleaner never runs. This is the single most common way a `Cleaner` silently does nothing.
+  automatic action cannot run while that capture remains. Explicit `clean()` is different.
 - **`close()` stays the release path.** `Cleanable.clean()` runs the action at most once and
   deregisters it, so an explicit close and a later cleanup do not double-free.
 - **Timing is not guaranteed.** Automatic actions use the cleaner thread; explicit `clean()`
-  invokes the action directly. Fallback execution may never occur, and exit behavior is not guaranteed. Never
+  invokes the action directly. Keep shared-cleaner actions short and nonblocking so one
+  cleanup does not delay others. Fallback execution may never occur, and exit behavior is not guaranteed. Never
   place flush-my-data or release-a-lock work there.
 - **Distinguish explicit close from fallback execution.** `clean()` runs the same action on
   the normal path, so unconditional “leak” logging reports false incidents. Keep release
@@ -131,19 +143,22 @@ deprecation, the reasons not to write one have not changed: unpredictable timing
 thread, no ordering, an exception in a finalizer is
 swallowed and may leave cleanup incomplete, finalization can delay reclamation without a portable
 collection-cycle count, and the
-finalizer can resurrect the object. If existing code has one, the migration is `AutoCloseable`
-plus, only where a silent leak would otherwise be invisible, a `Cleaner`.
+finalizer can resurrect the object. If existing code has one, establish explicit ownership
+with `AutoCloseable`, adding a `Cleaner` only where best-effort fallback is useful.
 
 ## Choosing
 
 ```text
 Needs release at a known point            -> AutoCloseable + try-with-resources   (java-resource-management)
-Bounded memory for hot values             -> size/time-bounded cache (Caffeine)   (caching-strategies)
+Bounded memory for hot values             -> capacity policy; expiry if needed   (caching-strategies)
 Canonicalising map, keys owned elsewhere  -> WeakHashMap, values never touch keys
-Listener/callback registry                -> explicit deregistration; weak refs only as a backstop
-Native/OS handle, leak must be visible    -> AutoCloseable + Cleaner safety net
+Listener/callback registry                -> explicit lifetime; weak refs if reachability is the contract
+Native/OS handle, useful fallback         -> AutoCloseable + optional Cleaner safety net
 Anything at all                           -> not finalize()
 ```
 
-Primary references: [SoftReference guarantee](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/SoftReference.html)
+Primary references: [reference ownership and notification](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/package-summary.html),
+[Reference operations](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/Reference.html),
+[SoftReference guarantee](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/SoftReference.html),
+[WeakHashMap contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/WeakHashMap.html)
 and [Cleaner ownership/execution contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/Cleaner.html).

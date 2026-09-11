@@ -101,7 +101,9 @@ thread-local handshake or assume an immutable snapshot throughout relocation.
 ## Attributing barrier overhead in a profile
 
 ```bash
-asprof -e cpu -d 30 -f cpu.html <pid>
+# Bash: use an authorized target and retain this unique directory for review.
+profile_dir=$(mktemp -d "${TMPDIR:-/tmp}/zgc-profile.XXXXXXXX") || exit 1
+asprof -e cpu -d 30 -f "$profile_dir/cpu.html" "$pid"
 ```
 
 Frames to separate (symbol names vary by build — confirm against the build in use rather than
@@ -115,8 +117,10 @@ generation, not execution of the generated mutator barrier.
 
 Method:
 
-1. Run under representative load with `-XX:StartFlightRecording=filename=zgc.jfr,settings=profile`
-   and async-profiler in `cpu` mode over an equivalent window.
+1. For an overhead claim, use representative existing profiles or a scoped capture with the
+   actual profiler/backend needed. JFR and async-profiler can complement each other when their
+   evidence is needed; neither a source explanation nor adequate single-source evidence requires
+   both. Align windows, output paths and measurement populations when combining them.
 2. Named slow-path frames are attributable; inlined fast-path instructions may be charged to
    application frames, so absence is not zero overhead and a load/store-frame ratio is not a
    complete cost metric.
@@ -128,7 +132,8 @@ Method:
 
 ## Sizing and stall decisions
 
-Do not size ZGC with fixed multiples of live set. Establish a time series of live/used/free
+For a sizing or stall question, do not use fixed multiples of live set. Use relevant existing or
+new time-series evidence for live/used/free
 and hard/soft-max heap, allocation-rate distribution, large-page/object requests, relocation
 progress, young/old cycles, concurrent-worker CPU and cgroup throttling. Model whether free
 pages cover allocation until the collector returns capacity under both normal and burst
@@ -139,7 +144,7 @@ up to Xmx. Soft headroom differs from remaining hard capacity and available cgro
 Budget heap residency plus native/JVM/thread/direct-buffer and other charged memory; neither
 Xmx nor virtual-address reservation equals RSS or memory.current.
 
-For each stall, distinguish:
+For the stall or capacity claim under review, distinguish the relevant evidence:
 
 | Evidence                                                                        | Likely decision axis                                                      |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |

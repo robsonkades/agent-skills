@@ -17,6 +17,11 @@ Determine whether intrinsic-monitor acquisition/ownership is a material cause of
 capacity loss, identify the guarded work and owner, then preserve semantics while reducing harmful
 serialization. Inflation is an implementation state, not itself proof of a production problem.
 
+Match the evidence to the question and reuse adequate supplied artifacts. A language-level
+wait/monitor explanation or a supported keep-current review can finish without a new capture.
+Inspect the target project's JDK/vendor and relevant flags before runtime-specific advice;
+the Java 25 documentation/source examples below are not a minimum version or upgrade permission.
+
 ## Ownership boundary
 
 - This skill owns intrinsic monitors (`synchronized`, `Object.wait/notify`) and HotSpot monitor
@@ -27,6 +32,10 @@ serialization. Inflation is an implementation state, not itself proof of a produ
   sharing without logical lock ownership.
 
 ## Investigation contract
+
+For a runtime contention diagnosis, use the relevant fields below. A static semantic explanation
+needs the guarded code and applicable contract; a source explanation needs a matching source
+version. Neither requires every runtime measurement or a proposed implementation change.
 
 ```text
 symptom/SLO, load and affected interval:
@@ -65,12 +74,15 @@ may still vary. Deflation is lifecycle/housekeeping, not a remediation for activ
 | high CPU in monitor/spin path     | spinning/churn/contention                | require owner/progress and compiled/native attribution |
 | deadlock report                   | monitor/ownable synchronizer cycle found | pool/resource/class-init starvation may be absent      |
 
-Discover event schemas/settings on the target JDK. Stock JFC thresholds are version/configuration
-facts; no fixed 1/10/20 ms rule proves absence. Use positive controls and opportunity estimates.
+For event-based claims, discover schemas/settings on the target JDK. Stock JFC thresholds are
+version/configuration facts; no fixed 1/10/20 ms rule proves absence. When absence or short-wait
+coverage matters, establish sensitivity with an applicable positive control and opportunity estimate;
+reuse adequate prior validation. Acquisitions still in progress may not yet have committed events.
 
 ## Measurement
 
-Collect repeated/time-bounded evidence aligned to workload:
+When runtime attribution is needed, select missing evidence that can change the conclusion and
+align it to workload:
 
 - event count and duration distribution by monitor class/address/owner stack where available;
 - affected operations, wait per operation and fraction of requests encountering wait;
@@ -81,6 +93,8 @@ Collect repeated/time-bounded evidence aligned to workload:
 
 Summed waits across threads overlap and can exceed wall-clock interval. Divide only by a compatible
 denominator (for example total request operations or total eligible thread-time) and state it.
+An acquisition-event percentile is not a per-operation percentile; the latter needs an operation
+cohort and correlated wait aggregation with incomplete/thresholded observations accounted for.
 Arbitrary “5/20% contention bands” are not SLO evidence.
 
 ## Remediation decision tree
@@ -117,6 +131,9 @@ command. Verify support/effect against the exact build and route lifecycle revie
 
 ## Correctness and failure tests
 
+Select tests for the proposed semantic change and affected failure paths; reuse adequate existing
+results. Capture controls support measurement claims, not every static explanation.
+
 - invariant/history tests before and after reducing/splitting lock scope;
 - callback reentry/throw/block and I/O timeout while owning lock;
 - reverse multi-lock order, equal-key tie and class initialization;
@@ -140,11 +157,15 @@ command. Verify support/effect against the exact build and route lifecycle revie
 
 ## Definition of done
 
-- [ ] Monitor/invariant, contender population, owner path and wait/hold evidence are identified.
-- [ ] JFR/dump settings, thresholds, opportunity, loss and target JDK are validated.
-- [ ] Overlap-compatible denominators and request/SLO impact are reported.
-- [ ] Alternative preserves atomicity, callback order, failure and progress semantics.
-- [ ] Relevant hot-key, virtual-thread, fairness, shutdown and deadlock/starvation checks
+Return the supported conclusion, its evidence/assumptions and any material limitation or smallest
+next check. Apply the items relevant to the request; a correct explanation or adequate current
+design is a complete result without an invented capture or finding.
+
+- [ ] The relevant monitor/invariant and semantic, source or runtime evidence are identified.
+- [ ] For capture-based claims, settings, thresholds, opportunity, loss and target JDK are validated.
+- [ ] For performance claims, event/operation populations, overlap and request/SLO impact are reported.
+- [ ] A proposed alternative preserves atomicity, callback order, failure and progress semantics.
+- [ ] Applicable hot-key, virtual-thread, fairness, shutdown and deadlock/starvation checks
       support the proposed change; unavailable checks and remaining risks are explicit.
 - [ ] A changed implementation improves the targeted metric without shifting failure elsewhere,
       or the result is explicitly keep-current/rejected/inconclusive with its evidence.
@@ -157,4 +178,4 @@ command. Verify support/effect against the exact build and route lifecycle revie
   a capture or changing critical-section scope/partitioning.
 - [JEP 491](https://openjdk.org/jeps/491)
 - [JLS 17 monitors and waits](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
-- [OpenJDK ObjectMonitor source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)
+- [OpenJDK 25 GA monitor source example](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/share/runtime) — match the target vendor/build before attributing a runtime path.

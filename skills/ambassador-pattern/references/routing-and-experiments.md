@@ -96,10 +96,12 @@ many proxies discard mirror responses. Compare offline rather than adding a late
   eligible requests as the split denominator. Reconcile retry, mirror, local rejection and
   telemetry semantics before attributing a discrepancy to lost traffic. A finite random sample
   need not equal the configured percentage exactly; state the observation window and tolerance.
-- **Error rate and latency per variant**, never pooled. A canary at 5% moves an aggregate
-  error rate by 5% of its own delta — invisible against normal noise. Compare the variants
-  against each other, not the aggregate against yesterday. Percentile aggregation rules are
-  `latency-statistics`.
+- **Error rate and latency per variant, plus whole-service SLOs.** Compare variants over
+  comparable cohorts and windows. With a fixed 5% request share and unchanged control error
+  rate, the pooled error-rate change is 5% of the canary's change; dilution can hide a regression,
+  but does not guarantee invisibility. Shared backends can degrade both variants together, so
+  relative parity is insufficient to continue rollout. See [canary isolation and monitoring](https://sre.google/workbook/canarying-releases/).
+  Percentile aggregation rules are `latency-statistics`.
 - **Correlatable routing evidence.** Use access logs or traces with a request ID, selected
   route, attempt destination and local failure reason. A response header can help internal
   debugging, but is optional and may disclose topology; public responses can carry an opaque

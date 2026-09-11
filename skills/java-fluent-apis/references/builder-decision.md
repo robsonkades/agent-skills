@@ -5,16 +5,16 @@ callers today, and what does each construction form cost the API tomorrow".
 
 ## Decision table
 
-| Situation                                                         | Use                                                               |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Few cohesive required parameters with clear roles                 | Constructor, record, or named factory                             |
-| One optional mode/default and few combinations                    | Named factories or a delegating overload                          |
-| Same-typed adjacent parameters (two `BigDecimal`, two `String`)   | Small: static factory with a value type per role. Larger: builder |
-| Many named options or invalid positional combinations             | Builder (mutable builder, immutable product)                      |
-| Optional parameters with meaningful defaults                      | Builder with defaults in the builder's fields                     |
-| Required subset must be unmissable, API has many external callers | Staged builder — after pricing the costs below                    |
-| Immutable object that callers derive varied copies from           | Wither methods (`withStatus(...)`) on the product                 |
-| Service object graph assembled by a container (Spring, Guice)     | Constructor injection; do not add a product builder for wiring    |
+| Situation                                                       | Use                                                            |
+| --------------------------------------------------------------- | -------------------------------------------------------------- |
+| Few cohesive required parameters with clear roles               | Constructor, record, or named factory                          |
+| One optional mode/default and few combinations                  | Named factories or a delegating overload                       |
+| Same-typed adjacent parameters (two `BigDecimal`, two `String`) | Role types, named factory or builder according to caller risk  |
+| Many named options or invalid positional combinations           | Builder (mutable builder, immutable product)                   |
+| Optional parameters with meaningful defaults                    | Factories for few forms; builder when combinations warrant it  |
+| Required sequence must be enforced through gradual construction | Staged builder — after pricing the costs below                 |
+| Immutable object that callers derive varied copies from         | Wither methods (`withStatus(...)`) on the product              |
+| Service object graph assembled by a container (Spring, Guice)   | Constructor injection; do not add a product builder for wiring |
 
 Two forms compose: a builder for construction plus withers for derivation is a normal
 pairing on configuration-like types.
@@ -43,18 +43,17 @@ pairing on configuration-like types.
 A staged (step) builder encodes required-before-build in the types: `amount(...)` returns
 `CustomerStage`, and only the final stage has `build()`. What it costs:
 
-- **One interface per stage.** Five required parameters means five public interfaces plus
-  the hidden implementation. That is API surface users see in completion and Javadoc.
-- **Evolution is frozen.** Adding a required parameter inserts a stage: every caller that
-  stored an intermediate stage type breaks at source level, and any external implementor of
-  a stage interface breaks entirely. Adding an _optional_ setter to a stage interface breaks
-  implementors unless it is a `default` method.
+- **Public stage types.** A type per required stage plus a final options/build surface can make
+  a small value expose a large API in completion and Javadoc.
+- **Evolution is constrained.** Inserting a required stage can change return types and reachable
+  calls. Check actual stored stage variables, chains and implementors; different changes have
+  different source, linkage and invocation effects, detailed below.
 - **Ordering is fixed.** Callers must supply required parameters in the staged order even
   when their data arrives in another order.
 
-Take staging when the API is consumed widely outside the team and a missing required
-parameter fails late or expensively. Inside one codebase, a `build()` that throws with a
-message naming the missing field is usually the better trade.
+Take staging when gradual ordered construction and costly sequence errors justify its surface.
+A required-argument factory or a `build()` that names the missing field is often sufficient,
+including for published APIs. Wide consumption increases both misuse exposure and evolution cost.
 
 Staging restricts the statically visible call sequence, not nullness or semantic validity.
 Retained stage aliases, repeated setters and casts can bypass an intended single-use sequence,
@@ -70,10 +69,15 @@ The JVM resolves a method by its full descriptor, return type included. Conseque
   compiled callers can fail with `NoSuchMethodError` if the old descriptor no longer resolves.
   Check compiler-generated bridges and inheritance rather than inferring linkage from source alone.
 - Adding a uniquely named setter to a final builder is normally binary-compatible, but overloads
-  can introduce source ambiguity, erasure clashes or changed lambda resolution. Adding abstract
-  methods to a published stage interface breaks implementors.
+  can introduce source ambiguity, erasure clashes or changed lambda resolution.
+- Adding an abstract interface method preserves compatibility with pre-existing binaries, but
+  implementors may fail recompilation and a new caller invoking it on an old implementation can get
+  `AbstractMethodError`. A suitable default can supply behavior, but inherited default conflicts
+  need separate checks. Do not classify every stage-method addition as the same breaking change.
 - Returning the concrete final builder type keeps evolution open (new methods are additive).
-  Returning interfaces buys mockability and staging at the cost above. Decide per API, once.
+  A stage interface controls visible sequencing; an implementation-hiding interface can also
+  separate capabilities. Decide whether external implementation is supported, and test those
+  implementors when evolving the contract instead of relying on an unchecked self-type cast.
 
 ## Wither allocation, honestly
 
@@ -84,5 +88,10 @@ requires a measurement. Escape analysis may eliminate the intermediate copies �
 guaranteed to. Do not redesign an immutable API around this cost without an allocation
 profile showing it on a hot path.
 
+Each wither must still return a valid value. Moving an interval from `[1,5]` to `[10,20]` through
+`withLower(10).withUpper(20)` would make the first intermediate value invalid. Offer a coordinated
+`withBounds(10,20)`, factory or builder update rather than weakening the invariant to allow a chain.
+
 For return-type evolution, consult [JLS §13.4.15](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.15)
-and inspect the emitted descriptors/bridges of the actual artifacts.
+and [interface evolution](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.5.4);
+inspect the emitted descriptors/bridges and exercise the actual old/new artifacts.

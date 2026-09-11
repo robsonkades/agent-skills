@@ -44,7 +44,8 @@ Latency is a distribution. Every rule here follows from that one fact.
    quantisation and rolling-window semantics. A statistically precise estimate of a coarse or
    truncated histogram is still wrong.
 6. **Aggregate mergeable distributions before querying.** Add compatible histogram counts or
-   raw observations, then compute the quantile. Never average instance/window quantiles.
+   raw observations, then compute the quantile. Do not average instance/window quantiles to
+   estimate their union's quantile.
 7. **Audit the observation process.** For load generators, compare scheduled/offered/started/
    completed work and inspect generator saturation; determine whether response completion
    controls future issue times. See `references/coordinated-omission.md`.

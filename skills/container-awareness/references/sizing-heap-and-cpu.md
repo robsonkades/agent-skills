@@ -17,10 +17,14 @@ maximum sizing does not require equal initial size. If `-Xmx` is explicit, do no
 
 ## Memory headroom procedure
 
-1. Run under representative load with `-XX:NativeMemoryTracking=summary`.
-2. Collect `jcmd <pid> VM.native_memory summary` **at peak usage**, not at boot.
+1. Reuse representative captures when available. If new NMT evidence is needed, enable
+   `-XX:NativeMemoryTracking=summary` at startup and run under representative load.
+2. Collect `jcmd <pid> VM.native_memory summary` **near peak usage**, not only at boot.
+   After a kill, use historical captures or plan a representative reproduction; the new
+   JVM's summary does not recover the old process's memory history.
 3. Reconcile NMT committed categories with process RSS/PSS and cgroup `memory.stat`. Do not
-   sum reservations or equate NMT committed with resident/charged memory.
+   sum reservations or equate NMT committed with resident/charged memory. Record target
+   identity and capture times: separate reads are not one atomic memory snapshot.
 4. Set `limits.memory` with margin over measured high-water behavior, covering plausible load
    variation — more connections, more dynamically generated classes.
 5. Re-measure after any library, framework or load-pattern change. Native footprint is not
@@ -65,7 +69,8 @@ During an OOM incident:
       kernel OOM context distinguishes local/ancestor limits from node pressure.
 - [ ] Heap usage at the moment of the kill known: near `Xmx`, or well below it (which
       suggests charges outside used heap, including committed resident heap, cache or other processes).
-- [ ] NMT summary collected close to the incident, not only at boot.
+- [ ] Pre-kill NMT near the incident used if available; missing tracking/capture recorded
+      explicitly, with a focused follow-up if needed.
 
 When measuring throttling:
 

@@ -45,11 +45,13 @@ allocation; provision future residency separately when estimating required capac
 
 Reserved, committed, RSS/PSS, cgroup `memory.current`, and live data are different. NMT does not
 cover every native allocation and must be enabled at startup for its supported accounting. Reconcile
-NMT with process maps/RSS and cgroup totals; unexplained residual is itself a finding.
+NMT with process maps/RSS and cgroup totals. An unexplained residual calls for accounting evidence;
+it is not by itself a leak or proof that a JVM flag is wrong.
 
-Avoid universal percentage policies. Use distributions across startup, steady load, burst, GC,
-redeploy, shutdown, and failure. Validate OOM path: Java OOME, heap-dump feasibility, cgroup kill,
-restart/backoff, and data/recovery consequences.
+Avoid universal percentage policies. For memory-envelope changes, use distributions across the
+lifecycle phases that can drive concurrent demand: startup, steady load, burst, GC, redeploy,
+shutdown and failure. Validate affected OOM paths, including dump feasibility, cgroup kill,
+restart/backoff and recovery consequences, in an isolated or authorized test environment.
 
 ## Compressed references and object headers
 
@@ -67,7 +69,8 @@ time per period; cpuset controls placement; weight/shares influence competition.
 interchangeable.
 
 Prefer correcting the resource contract when it is wrong. Override `ActiveProcessorCount` only
-when the intended logical planning count is explicit and all downstream consequences are tested.
+when the intended logical planning count is explicit and the affected consumers and resource
+interactions are understood and tested in proportion to the risk.
 Direct GC-thread overrides may be justified when collector phase evidence shows under/over-
 parallelism, but they require CPU competition and failure-progress tests.
 
@@ -80,9 +83,10 @@ connection, and orchestration throttling affect different phases. Evaluate:
 process start -> application main -> readiness -> first traffic -> warm throughput -> peak load
 ```
 
-Measure startup CPU, throttling, allocation/GC, class loading, compilation/deoptimization, code
-cache, page faults, dependency waits, and rollout concurrency. A faster readiness time that causes a
-later CPU/capacity regression is a trade, not an optimization.
+Select measurements of startup CPU, throttling, allocation/GC, class loading,
+compilation/deoptimization, code cache, page faults, dependency waits or rollout concurrency
+that distinguish the suspected cost. A faster readiness time that causes a later CPU/capacity
+regression is a trade, not an optimization.
 
 ## Explicit GC
 
@@ -127,7 +131,7 @@ or superseded, and rollout evidence verifies behavior. Do not remove solely beca
 ## Authoritative references
 
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
-- [OpenJDK HotSpot flag declarations and ergonomics](https://github.com/openjdk/jdk/tree/master/src/hotspot)
-- [JDK Flight Recorder runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [OpenJDK JDK 25 GA flag declarations and ergonomics](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot) — inspect the target release/vendor source when different.
+- [JDK 25 Flight Recorder configurations](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-configurations.html) — recording detail and overhead depend on the selected settings; measure their cost on the workload.
 - [Linux proc process memory](https://docs.kernel.org/filesystems/proc.html)
 - [cgroup v2 memory controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory)

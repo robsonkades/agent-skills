@@ -36,9 +36,9 @@ public class CardGatewayClient {
 
 Four distinct failure modes are collapsed into one `RuntimeException`:
 
-1. **Decline** — an expected outcome (the requirements say declines are shown to the
-   customer with a reason). It is not a failure at all; modelling it as an exception
-   forces every caller into catch-based control flow.
+1. **Decline** — an expected business outcome (the requirements say declines are shown to
+   the customer with a reason). Data makes that branch clear in this illustration; an existing
+   exception contract can also represent a decline if supported callers handle it appropriately.
 2. **Gateway unreachable / timed out**—operational, but timeout may mean the authorization was
    applied and its response was lost. Retry safety is not known from the exception alone.
 3. **Gateway answered garbage** (unparseable body, unexpected status)—a contract/protocol
@@ -111,8 +111,9 @@ public AuthorisationResult authorise(String paymentId, BigDecimal amount) {
 }
 ```
 
-The domain service branches on data using an exhaustive switch. Recompiled switches without a
-default must cover a new variant; already-compiled clients can instead encounter `MatchException`
+The domain service branches on data using an exhaustive switch. This variant-enumerating switch
+needs another arm when recompiled with a new variant; a covering type pattern or default may
+already cover it. Already-compiled clients can instead encounter `MatchException`
 under separate evolution, so adding a permitted result remains an API compatibility event:
 
 ```java
@@ -121,6 +122,12 @@ return switch (gateway.authorise(order.paymentId(), order.amount())) {
     case Declined(DeclineCode code, String advice) -> ledger.recordDecline(order, code, advice);
 };
 ```
+
+If `ledger.recordAuthorisation` fails after `Approved`, authorization remains known to have
+been approved; local recording can fail or remain uncertain separately. Preserve that evidence
+and use the existing recovery/reconciliation contract instead of blindly repeating authorization.
+This example does not implement a durable recovery protocol; unresolved policy belongs with the
+owners routed from `failure-atomicity.md`.
 
 The retry policy considers `remoteOutcome`, a stable idempotency key, remaining deadline/attempt
 budget and provider throttling. For `UNKNOWN`, it may query by idempotency key before deciding;
@@ -131,9 +138,9 @@ unexpected exceptions to 500, with one owning observability point.
 
 ## Trade-offs
 
-- Two exception types plus a result type replace one `RuntimeException` — more API
-  surface, and every existing caller must be migrated in the same change; half-migrated
-  is worse than unmigrated.
+- Two exception types plus a result type add API surface. Controlled callers can migrate
+  together; published callers may need an invariant-preserving adapter/deprecation window.
+  Mixed versions need compatible failure semantics, not an assumption that all clients upgrade at once.
 - An exhaustive switch makes this caller account for decline, but Java also permits a default
   branch or an ignored result. Review actual handling; a sealed result alone cannot prevent
   a caller from treating decline as success.

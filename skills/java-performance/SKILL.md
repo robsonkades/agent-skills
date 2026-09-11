@@ -4,7 +4,7 @@ description: >
   Evidence-first triage and routing for ambiguous Java/JVM performance symptoms: defining the
   affected population and work, separating latency/throughput/resource/error dimensions,
   checking measurement and recent-change validity, preserving live-incident evidence, mapping
-  competing hypotheses to discriminating signals, and handing each confirmed mechanism to its
+  competing hypotheses to discriminating signals, and handing each bounded question to its
   owning skill. Use for “it is slow,” regressions, saturation, memory/RSS growth, startup,
   uneven instances, or post-JDK/deploy changes when the cause is unknown. This is a router, not
   a substitute for performance-methodology or specialist JVM/OS/database/distributed skills.
@@ -38,7 +38,10 @@ resource demand/limits/queues and downstream health:
 recovery deadline and evidence-preservation budget:
 ```
 
-Start with available facts and mark unknowns; do not require every field before useful triage.
+Inspect the request, repository, incident timeline and available artifacts before asking the
+user to repeat context. Start with available facts and mark unknowns; do not require every
+field before useful triage. Ask only when the unresolved answer changes routing, evidence
+collection or recovery; continue independent work within the existing authority.
 For missing evidence, state which hypothesis remains unresolved and the smallest artifact or
 focused question that would distinguish it. A screenshot or unavailable process can support
 a collection plan, not a confirmed mechanism or an invented baseline.
@@ -104,7 +107,7 @@ survives the planned recovery action; use the evidence-capture owner for command
 | JFR configuration/event internals                   | `jfr-advanced`                                                                               |
 | Existing flame graph interpretation                 | `flame-graph-analysis`                                                                       |
 | Host/kernel gap in JVM evidence                     | `linux-for-jvm`, then `ebpf-for-jvm`                                                         |
-| GC confirmed as material path                       | `gc-log-analysis`, `jvm-gc-tuning`; collector internals as needed                            |
+| GC pause/phase attribution; tuning if warranted     | `gc-log-analysis`, then `jvm-gc-tuning` when warranted; collector internals as needed        |
 | Allocation source/lifetime/retention                | `allocation-profiling`, `heap-dump-analysis`, `java-reference-types-and-leaks`               |
 | Heap/non-heap/native/RSS region                     | `jvm-memory-regions`, `metaspace-internals`, `off-heap-memory`                               |
 | Safepoint/TTSP/felt pause mismatch                  | `safepoints`, `pause-attribution`                                                            |
@@ -162,13 +165,13 @@ affected cohort and timeline known?
   -> compare affected versus compatible controls and recent-change epochs
 
 leading mechanisms identified?
-  -> collect one discriminating evidence set per surviving branch
+  -> choose the next safe discriminator that can change the decision
 
-mechanism materially contributes?
-  -> hand off to owner; define intervention and validation
+bounded specialist question established?
+  -> hand off evidence and unresolved alternatives; define the next decision/check
 
-outcome improved under representative/repeated conditions?
-  -> document evidence, trade-offs, guardrail/regression prevention
+evidence shows existing behavior meets the goal?
+  -> record no change and what would warrant reopening
 ```
 
 ## Troubleshooting triage failures
@@ -198,19 +201,24 @@ success, guardrail, and rollback criteria
 ```
 
 Do not hand off only “high CPU” or a screenshot.
+The owner can investigate an established question before its mechanism is confirmed. Carry
+forward prior checks and their limits so the next skill does not repeat intake or treat an
+untested alternative as refuted. Controlled evidence of an effect can precede a mechanism
+explanation; `performance-methodology` owns that distinction and further validation.
 
 ## Definition of done
 
 - [ ] Symptom, scope, time, work denominator, lifecycle, and recent changes are explicit.
 - [ ] Measurement validity and live-incident evidence risk were checked first.
-- [ ] At least plausible alternative hypotheses and discriminating signals are recorded.
-- [ ] Affected/control cohorts and resource/dependency views are aligned.
+- [ ] Plausible alternatives that could change the decision and their discriminators are recorded.
+- [ ] Relevant affected/control views are aligned, or missing comparisons and their limits are stated.
 - [ ] Specialist owners are selected by established questions, not presumed causes.
-- [ ] No optimization or flag is proposed before material mechanism evidence.
-- [ ] Handoff includes validation/rollback criteria and evidence limitations.
+- [ ] Proposed optimization is conditional on evidence and validation; authorized incident recovery is not delayed for mechanism proof.
+- [ ] Handoff includes evidence limitations and next checks; interventions include applicable success/guardrail/rollback criteria.
 
-For this router, completion means a justified owner and bounded next discriminator, not a
-resolved performance incident. Unknowns may remain if their impact and next check are explicit.
+For this router, completion means a justified owner and bounded next discriminator, or an
+evidence-supported no-change decision with revisit conditions. It does not imply a resolved
+performance incident. Unknowns may remain if their impact and next check are explicit.
 Do not keep loading the specialist catalog once one owner can advance the established question.
 
 ## References

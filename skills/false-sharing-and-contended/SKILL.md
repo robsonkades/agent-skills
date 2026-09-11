@@ -18,6 +18,12 @@ different logical variable (writing or reading),
 then choose ownership/layout changes whose throughput/latency benefit exceeds memory and maintenance
 cost. Cache misses or poor scaling alone do not prove false sharing.
 
+Reuse the requested outcome, existing captures/layouts, ownership and deployment constraints.
+Preserve the project's Java target; use Java 25 as the reference when none is specified.
+Answer a narrow layout/flag question from its contract without requiring a performance study.
+For an investigation, ask only for missing facts that change attribution or the next experiment;
+retain an adequate design and work within the accepted capture/recovery budget.
+
 ## Ownership boundary
 
 - This skill owns false-sharing hypothesis, layout/placement, `@Contended`, padding and validation.
@@ -79,9 +85,11 @@ element stride but array base alignment and hardware line size still matter. Der
 stride elements >= ceil(cache-line bytes / element bytes)
 ```
 
-Then ensure each active slot begins in a separate relevant line, accounting for base offset and
-adjacent-line/prefetch behavior where measured. “Stride 8 for long” assumes a 64-byte line and
-suitable alignment; it is not universal.
+This is a starting-distance bound, not a proof that the full accesses occupy disjoint lines.
+Check each slot's entire accessed byte range against the actual base alignment and line size;
+an access straddling a boundary can share a line with the next slot despite distinct starting
+lines. “Stride 8 for long” assumes a 64-byte line and suitable alignment; it is not universal.
+Account for adjacent-line/prefetch behavior separately where measured.
 
 GC can move objects and allocation adjacency is not a stable API. Prefer layout within one object/
 array or ownership partition that can be verified, and test the collector/JDK used.
@@ -99,6 +107,8 @@ Verify on the exact JDK:
 - annotation is present in compiled class and applied in runtime layout;
 - effective `EnableContended`, `RestrictContended` and padding settings/support;
 - field/class contention group semantics;
+- instance versus static fields, and reference slot versus referenced data (HotSpot 25 ignores
+  static-field annotations; padding a reference does not pad its object's fields or array elements);
 - actual gaps/offsets and object/array placement;
 - memory footprint across number of instances and GC consequence.
 
@@ -165,17 +175,20 @@ allocation/GC and placement. A fixed three-fork rule or expected “magical magn
 
 ## Definition of done
 
-- [ ] Variables are logically independent and writers/topology are mapped.
-- [ ] Actual layout/address and cache-line assumptions are validated on target.
-- [ ] PMU evidence limitations and a controlled separation test are recorded.
-- [ ] Annotation/flag/module/group/padding behavior is verified, not assumed.
-- [ ] Throughput/tail gain survives realistic placement/load and correctness tests.
-- [ ] Footprint, locality, allocation/GC, upgrade and next-bottleneck costs are acceptable.
+Use the relevant checks for the requested result; a supported no-change decision or a bounded
+hypothesis with the next discriminator can complete a review. Neither is a proven performance fix.
+
+- [ ] Independence, writer/reader topology and layout assumptions support the stated diagnosis,
+      or unresolved evidence is identified explicitly.
+- [ ] Coherence/PMU coverage and any separation experiment support only the claim actually made.
+- [ ] If using annotation/padding, its flag/module/group/layout behavior is verified on target.
+- [ ] If claiming a fix, correctness and the intended production metric survive relevant load/
+      placement, with acceptable footprint, locality, allocation/GC and maintenance costs.
 
 ## References
 
 - [`@Contended` mechanics and layout](references/contended-mechanics.md) — read when applying the annotation, choosing groups, or checking ignored padding/module access.
 - [Proving and fixing false sharing](references/proving-and-fixing.md) — read when designing the separation experiment or interpreting PMU/JMH results.
 - [JEP 142: Reduce cache contention on specified fields](https://openjdk.org/jeps/142)
-- [OpenJDK `Contended`](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java)
-- [OpenJDK Striped64](https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/concurrent/atomic/Striped64.java)
+- [OpenJDK 25 `Contended`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java)
+- [OpenJDK 25 Striped64](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/atomic/Striped64.java)

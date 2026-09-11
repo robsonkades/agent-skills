@@ -1,7 +1,7 @@
 # Index decisions
 
-An index buys one of three things. Decide which before proposing one, because they want
-different indexes.
+An index can serve one or more of these jobs. Identify the required combination before proposing
+one; competing key order, width and write costs can favor different designs.
 
 | Job           | What it needs                                             |
 | ------------- | --------------------------------------------------------- |
@@ -23,7 +23,7 @@ What follows from that:
   two possible values do not imply 50/50. Covering/ordering may add other benefits.
 - **A nearly unique equality predicate** — an id, an email, an external reference — usually
   gives a selective lookup; wide ranges on the same column need a different assessment.
-- **Skew matters more than cardinality.** A `tenant_id` with 5,000 values is highly selective for
+- **Distinct count alone does not describe value frequency.** A `tenant_id` with 5,000 values is highly selective for
   4,999 tenants but retains 80% for another. Different access paths may be best; the larger tenant
   can also be slower simply because it requires more useful work. Compare plans and costs.
 
@@ -36,14 +36,15 @@ A B-tree on `(a, b, c)` commonly narrows by the leading prefix. Non-leading pred
 use index scans or version-specific skip scans (for example PostgreSQL 18); that does not give
 them the same cost as a dedicated `(b)` index. Inspect the exact access conditions and pages read.
 
-The ordering rule, in the order to apply it:
+A candidate construction sequence; choose between range navigation and ordering where they compete:
 
 1. **Start with equality predicates that establish the useful leading prefix.** Their relative
    order may not matter for this one lookup, but can matter for other queries, ordering,
    statistics, compression, and vendor-specific access paths.
 2. **Then the range used to bound the scan** (`>`, `<`, `BETWEEN`, `LIKE 'prefix%'`). Columns after
    it may still filter or cover even when they cannot further narrow that range in a given engine.
-3. **Then the columns needed for ordering**, where direction and engine rules allow the sort to be avoided.
+3. **Consider the columns needed for ordering**, where the preceding keys, direction and engine rules
+   allow the sort to be avoided. A range on another column can prevent that ordering.
 4. **Consider remaining columns needed to cover.** Included payload columns are not search keys;
    extra key columns may also serve other predicates. Wider keys/payload have distinct costs.
 
@@ -61,18 +62,23 @@ pages are all-visible. Read actual heap fetches and the engine's rules, not just
 The costs are real:
 
 - The index gets wider, so fewer entries fit per page and more pages are read for the same range.
-- The index must be maintained when any covered column is written, not just the key columns.
+- Key and payload values add maintenance on relevant writes. An assignment alone does not prove
+  an indexed value changed; actual work depends on engine behavior, expressions/predicates and
+  update optimizations. PostgreSQL 17/18 HOT requires unchanged columns referenced by non-summarizing
+  indexes and enough space on the old heap page; summarizing indexes such as BRIN are an exception
+  and can still need maintenance. A non-HOT update can require entries even in otherwise unchanged indexes.
 
-So covering pays when the lookup is the dominant cost and the added columns are narrow and rarely
-updated. `SELECT *` can make a previously covering index insufficient, but is not intrinsically
+Covering can save costly heap/table lookups or provide a narrower scan for required work; dominant
+lookup cost is not a prerequisite. Compare the executed path's reads/visibility work against width,
+write and cache costs. `SELECT *` can make a previously covering index insufficient, but is not intrinsically
 non-covering; clustered/all-column access paths are counterexamples.
 
 ## When the answer is no index
 
 - **The predicate returns most rows.** A scan may be cheapest; required bulk/reporting work is
   not a design defect by itself. Consider ordering, covering and throughput requirements.
-- **The table is small enough to sit in memory.** The optimiser will frequently ignore the index
-  and be correct to.
+- **A small or cached table has a cheaper adequate scan.** Size or residency alone does not prove
+  that choice; an index can still save filtering, ordering/LIMIT or wide-row work.
 - **The write cost exceeds the read benefit.** A high-write, low-read table with an index added
   for a report run twice a day.
 - **An existing index serves the prefix.** `(a)` may be redundant beside `(a, b)`, but its narrower
@@ -91,3 +97,5 @@ authorized engine-specific rollout and recovery plan: rebuilding may be expensiv
 
 Sources: [PostgreSQL 18 multicolumn B-trees](https://www.postgresql.org/docs/18/indexes-multicolumn.html),
 [PostgreSQL 17 covering and visibility](https://www.postgresql.org/docs/17/indexes-index-only-scans.html).
+For maintenance, see [PostgreSQL 17 HOT](https://www.postgresql.org/docs/17/storage-hot.html) and
+[PostgreSQL 18 HOT](https://www.postgresql.org/docs/18/storage-hot.html).

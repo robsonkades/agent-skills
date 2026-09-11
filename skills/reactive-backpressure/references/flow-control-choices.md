@@ -2,12 +2,12 @@
 
 ## Concurrency versus flow control
 
-| Question                                                   | Axis         | What answers it                                                          | What happens if it is ignored                                                                              |
-| ---------------------------------------------------------- | ------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Does a blocking call tie up the whole thread?              | Concurrency  | Virtual threads — unmounting frees the carrier                           | Scarce platform threads sit waiting; throughput falls for lack of threads, not memory                      |
-| How many work items may be pending at once?                | Flow control | Reactive backpressure, or an explicit limiter (semaphore, bounded queue) | Pending work grows without a ceiling until OOM, or until GC dominates CPU time                             |
-| Is the producer structurally faster than the consumer?     | Flow control | Nothing about the concurrency model decides this — it is rate arithmetic | The mismatch simply migrates from "explicit buffer full" to "implicit queue of suspended tasks full"       |
-| Must an I/O task wait without occupying a whole OS thread? | Concurrency  | Virtual threads, or historically the reactive model                      | Under the old model this motivated much of the reactive design; that specific motivation no longer decides |
+| Question                                                      | Axis         | What answers it                                                          | What happens if it is ignored                                                                        |
+| ------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Does a blocking call occupy a scarce carrier/platform thread? | Concurrency  | Virtual threads can unmount; non-blocking I/O is another option          | Waiting may constrain throughput; verify actual carrier/resource occupancy                           |
+| How many work items/bytes may remain pending?                 | Flow control | Reactive backpressure or explicit bounded admission/queues               | Sustained retained input above departures can grow backlog; finite bursts may drain                  |
+| Is the producer structurally faster than the consumer?        | Flow control | Nothing about the concurrency model decides this — it is rate arithmetic | The mismatch simply migrates from "explicit buffer full" to "implicit queue of suspended tasks full" |
+| Must an I/O task wait without occupying a whole OS thread?    | Concurrency  | Virtual threads or non-blocking I/O, subject to the deployed stack       | Check actual blocking paths and resource bounds before choosing a model                              |
 
 Much of Project Reactor's historical justification — do not block an expensive platform
 thread while waiting on I/O — lost force as a standalone argument once virtual threads made
@@ -36,30 +36,34 @@ existing stack and migration cost.
 
 ## Scenario comparison
 
-| Scenario                                                                     | Better choice                                                                       | Why                                                                                                            |
+| Scenario                                                                     | Candidate choice                                                                    | What to verify                                                                                                 |
 | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Fan-out of three downstream HTTP calls, simple aggregation, no rate mismatch | Virtual threads with structured concurrency                                         | There is no rate mismatch to resolve — it is concurrent I/O orchestration, with direct stack traces            |
+| Fan-out of three downstream HTTP calls, simple aggregation, no rate mismatch | Existing async/reactive composition or supported thread-per-task orchestration      | Lifetime, failure/cancellation and resource admission; no automatic migration                                  |
 | Kafka topic at 200K msg/s with a handler sustaining 20K msg/s                | Partition/scale consumers or reduce ingress; pause/resume only bounds local intake  | A persistent 10× deficit cannot be repaired by a client API; broker lag and retention become the durable queue |
-| Simple REST endpoint, 1:1 request/response, no streaming                     | Virtual threads (thread-per-request)                                                | The historical motivation does not apply: a blocked virtual thread costs a stack chunk, not an OS thread       |
+| Simple REST endpoint, 1:1 request/response, no streaming                     | Existing supported stack or virtual threads for suitable blocking I/O               | Actual blocking/carrier behavior, retained request state and downstream capacity                               |
 | Streaming export to a slow client                                            | Streaming driver/transport with verified demand propagation; reactive is one option | Test that slow writes bound database fetching; HTTP/2 or limitRate alone does not establish the link           |
-| Parallel calls with timeout and partial-failure tolerance                    | Virtual threads with structured concurrency                                         | The same problem the reactive combinators solve, with imperative control flow                                  |
-| Multi-stage pipeline with different per-stage rates (parse, enrich, persist) | Reactive                                                                            | Condition 3 applies: the bottleneck can migrate, and each operator already carries its own notion of demand    |
+| Parallel calls with timeout and partial-failure tolerance                    | Existing combinators or supported task-lifetime orchestration                       | Deadline, partial-result and actual cancellation semantics                                                     |
+| Multi-stage pipeline with different per-stage rates (parse, enrich, persist) | Reactive demand or explicit bounded stage admission/queues                          | Propagation, per-stage budgets and cleanup; operator demand is not the only flow-control mechanism             |
+
+Virtual threads require Java 21+; structured concurrency is a separate, version-sensitive
+API (still preview in JDK 25), not a prerequisite for every fan-out. Keep an adequate existing
+stack and apply the project's compatibility contract before choosing either.
 
 ## Overflow strategies
 
-| Strategy                                       | Real operator                                                                   | Behaviour on overflow                                                                 | When to use                                                                               |
-| ---------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Unbounded buffer                               | `onBackpressureBuffer()` (no arguments)                                         | Accumulates item by item, no ceiling                                                  | Effectively never in production                                                           |
-| Bounded buffer, overflow is an error (default) | `onBackpressureBuffer(int maxSize, Consumer<? super T> onOverflow)`             | Calls overflow callback, cancels upstream; error follows buffered drain               | Fail with an explicit recovery contract; error alone does not preserve data               |
-| Bounded buffer, drop the newest                | `onBackpressureBuffer(maxSize, onOverflow, BufferOverflowStrategy.DROP_LATEST)` | Keeps the older items; discards the arrival; the sequence **continues**               | Series where old items still matter and a passing spike can lose only its edge            |
-| Bounded buffer, drop the oldest                | `onBackpressureBuffer(maxSize, onOverflow, BufferOverflowStrategy.DROP_OLDEST)` | Evicts the oldest buffered item to make room; the sequence **continues**              | Queues where the newest item matters but a small window of context is still worth keeping |
-| Pure drop, no buffer                           | `onBackpressureDrop()` / `onBackpressureDrop(Consumer<? super T>)`              | Any item emitted with no pending demand is discarded immediately; nothing accumulates | Telemetry and logs where losing individual items is acceptable                            |
-| Keep only the latest                           | `onBackpressureLatest()`                                                        | A single slot; the newest item overwrites the previous unconsumed one                 | Gauges and dashboards — the current value matters, the intermediate history does not      |
-| Fail immediately                               | `onBackpressureError()`                                                         | No pending downstream demand causes an overflow error                                 | Reject local overload explicitly; this operator requested unbounded upstream demand       |
+| Strategy                                       | Real operator                                                                   | Behaviour on overflow                                                                 | When to use                                                                                                |
+| ---------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Unbounded buffer                               | `onBackpressureBuffer()` (no arguments)                                         | Operator supplies no item-count ceiling                                               | Only with a proven external finite item/byte envelope, including subscriber multiplicity and failure paths |
+| Bounded buffer, overflow is an error (default) | `onBackpressureBuffer(int maxSize, Consumer<? super T> onOverflow)`             | Calls overflow callback, cancels upstream; error follows buffered drain               | Fail with an explicit recovery contract; error alone does not preserve data                                |
+| Bounded buffer, drop the newest                | `onBackpressureBuffer(maxSize, onOverflow, BufferOverflowStrategy.DROP_LATEST)` | Keeps the older items; discards the arrival; the sequence **continues**               | Series where old items still matter and a passing spike can lose only its edge                             |
+| Bounded buffer, drop the oldest                | `onBackpressureBuffer(maxSize, onOverflow, BufferOverflowStrategy.DROP_OLDEST)` | Evicts the oldest buffered item to make room; the sequence **continues**              | Queues where the newest item matters but a small window of context is still worth keeping                  |
+| Pure drop, no buffer                           | `onBackpressureDrop()` / `onBackpressureDrop(Consumer<? super T>)`              | Any item emitted with no pending demand is discarded immediately; nothing accumulates | Telemetry and logs where losing individual items is acceptable                                             |
+| Keep only the latest                           | `onBackpressureLatest()`                                                        | A single slot; the newest item overwrites the previous unconsumed one                 | Gauges and dashboards — the current value matters, the intermediate history does not                       |
+| Fail immediately                               | `onBackpressureError()`                                                         | No pending downstream demand causes an overflow error                                 | Reject local overload explicitly; this operator requested unbounded upstream demand                        |
 
-The two-argument `onBackpressureBuffer(maxSize, onOverflow)` is the most common
-misunderstanding in this table. The name suggests "buffer with drop"; the actual behaviour
-without an explicit strategy is notify-and-error after draining the queued values in 3.7.5.
+Do not infer drop-and-continue from the two-argument `onBackpressureBuffer(maxSize, onOverflow)`:
+without an explicit strategy it notifies and errors after draining queued values in 3.7.5.
+That form is appropriate when its cancellation, drain and recovery behavior matches the contract.
 These overflow operators request unbounded demand upstream and implement a local policy;
 overflow is not by itself evidence that the source violated Reactive Streams. Failing loudly
 does not preserve records unless the source/consumer has a durable retry or acknowledgement
@@ -144,28 +148,31 @@ one release owner, and avoid releasing a value still used by another consumer. U
 `usingWhen` where subscription-scoped resource acquisition/cleanup fits; asynchronous cleanup
 must itself be observed. A global dropped-signal hook is not a universal resource finalizer.
 
-Test with zero/one-item demand, a full buffer, cancellation with buffered owned values,
+For a changed demand/ownership boundary, select checks with zero/one-item demand, a full buffer, cancellation with buffered owned values,
 two simultaneous subscriptions and work that ignores interruption. Assert counts/bytes and
 exactly the intended release ownership, not merely eventual reactive completion.
 
-## The three possible outcomes once a buffer fills
+## When retained input outpaces departures
 
-With arrival rate `λ` above sustainable service rate `μ`, a buffer of size `B` fills, and
-exactly three things can follow:
+If admitted arrivals remain above actual departures for long enough, a finite buffer fills.
+Account for bytes, queued and executing work, cancellation and other disposal at that boundary:
 
-1. **Unbounded buffer** — resident memory grows roughly linearly past that point; the only
-   variable is how long until OOM.
+1. **Unbounded buffer** — retained inventory can grow with the accumulated deficit. Roughly
+   linear retained-byte growth additionally assumes roughly stable rates and retained bytes
+   per item; heap occupancy also includes other objects and GC behavior. A finite envelope
+   or burst that drains has a different outcome.
 2. **Bounded buffer with an overflow policy** — drop/replace can continue with measurable
    loss; an error policy instead terminates this subscription according to its drain policy.
 3. **Admission control at the source** — a `request(n)` the publisher honours, a consumer
    `pause()`, a semaphore acquired before dispatch. Effective `λ` is forced towards `μ`, and
    the producer waits rather than the consumer drowning.
 
-Only option 3 both bounds **in-memory** backlog and keeps every item, and it requires that
-something upstream can slow down. A durable queue is a fourth architecture: it moves the
-backlog to bounded storage and makes retention/replay/recovery explicit. Replacing a pipeline
-without preserving either mechanism regresses to unbounded pending work. Admission itself
-needs bounded waiters/deadlines; moving an unbounded queue into waiting producer tasks is not a fix.
+Admission can bound local in-memory backlog while preserving work from a source that can
+actually defer production. For externally paced arrivals, explain what happens before admission:
+waiting, rejection/drop or durable retention. No finite resource preserves an indefinitely
+growing excess of offered work. A durable queue moves the backlog to bounded storage and makes
+retention/replay/recovery explicit. Preserve the required bounds during a refactor; admission
+itself needs bounded waiters/deadlines, not an unbounded queue of waiting producer tasks.
 
 ## Sources
 

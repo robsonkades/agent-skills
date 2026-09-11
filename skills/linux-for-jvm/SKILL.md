@@ -32,6 +32,12 @@ Do not upgrade the runtime or change host-wide policy merely to use this skill.
 
 ## Workflow
 
+Select the steps that answer the actual incident or configuration question; this is not a
+mandatory host audit. Reuse adequate supplied evidence and preserve configuration that already
+meets the workload's contract. For a narrow explanation, explain the relevant mechanism and
+its limits without demanding unrelated captures. During recovery, fit evidence collection
+within the established containment and availability deadline.
+
 1. **On "it died with no log", check the container/runtime status and exit code first.**
    137 conventionally means termination by `SIGKILL`; it does **not** distinguish cgroup OOM,
    global OOM, kubelet/runtime action, administrator action, or a wrapper that remapped a
@@ -57,11 +63,12 @@ Do not upgrade the runtime or change host-wide policy merely to use this skill.
 
 - Page-fault counters are in `/proc/<pid>/stat` (fields 10 and 12), **not** in `status`. And
   `VmPeak` is peak _virtual_ memory — peak RSS is `VmHWM`. A grep for the wrong field
-  returns empty, and empty reads as zero.
-- `AlwaysPreTouch` pre-empts **minor** faults; it does not protect against swap. A
-  pre-touched page is swapped out normally under memory pressure and the major fault happens
-  just the same. The benefit is predictability — cost concentrated at startup instead of
-  diffused through operation.
+  returns empty; do not interpret missing fields or failed enumeration as zero.
+- `AlwaysPreTouch` requests touching heap pages before application use. Depending on the
+  collector/build and commit path, it can move first-touch work to startup or later heap
+  commitment. Check initial versus maximum heap size and page policy: it does not prefault
+  every process mapping, eliminate all later faults or prevent swap. Measure any latency
+  benefit against startup/commit time and resident-memory/cgroup pressure before enabling it.
 - Swap can make JVM latency highly variable, but "incompatible" is too strong. Decide from
   the availability goal: no swap favors predictable latency but increases kill risk;
   bounded swap may preserve availability during transient pressure at a tail-latency cost.
@@ -78,10 +85,13 @@ Do not upgrade the runtime or change host-wide policy merely to use this skill.
   `oom_score_adj` within applicable constraints; it is not a protection against exceeding a
   container's or ancestor's `memory.max`. Kubernetes QoS influences scores; correlate
   `memory.events` with limit scope and kernel/runtime records to identify the failure.
-- Never `kill -9` first. `SIGKILL` cannot be intercepted: no shutdown hooks, no connection
-  drain or final dump-on-exit. Previously completed JFR chunks/dumps may survive, while
-  buffered events and the active chunk can be lost. Send `SIGTERM`, wait, then escalate — and
-  make `terminationGracePeriodSeconds` match the real drain time.
+- Default to the supervisor's bounded graceful stop, normally `SIGTERM` followed by escalation
+  if needed. An established containment or recovery contract can require immediate forced
+  termination, for example when continued execution violates a data-integrity invariant;
+  verify the target identity and do not let optional capture or an extra grace wait defeat
+  that deadline. `SIGKILL` cannot be intercepted: no shutdown hooks, connection drain or final
+  dump-on-exit. Previously completed JFR chunks/dumps may survive, while buffered events and
+  the active chunk can be lost. Budget `terminationGracePeriodSeconds` for the actual drain.
 - Inspect the actual launcher limits. For systemd services, persist `LimitNOFILE` and use
   `TasksMax` for service task limits; `LimitNPROC` applies across the real UID and has privileged
   exemptions. Shell limits affect descendants, not an independently started systemd unit.
@@ -108,6 +118,8 @@ Do not upgrade the runtime or change host-wide policy merely to use this skill.
 
 Return scoped, timestamped observations, supported hypotheses, the smallest justified action,
 and how to verify it. Report unavailable evidence and unresolved attribution explicitly.
+An explanation or an evidence-backed no-change conclusion can complete the task; distinguish
+checks actually run from proposed verification on the target host.
 
 ## References
 

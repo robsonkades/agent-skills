@@ -31,6 +31,13 @@ experiment commands, not instructions to upgrade the project. Preview class file
 the corresponding release and preview-enabled execution; do not mix compiler/runtime releases
 or copy old prototype flags without checking that build.
 
+Preview mode is itself part of the experiment. JEP 401 switches selected platform classes,
+including `Integer` and `LocalDate`, to value classes when preview is enabled. An apparent
+ordinary-class control using those types may therefore change before any application declaration
+does. Match preview mode and dependencies between EA control/treatment, verify the actual class
+forms they exercise, and record a preview-disabled platform comparison separately if relevant.
+Matching only the EA binary does not isolate the application representation change.
+
 The current proposal changes identity semantics, including `==`, but explicitly does not make
 `==` a replacement for `equals`. Value fields are final; references can still point to mutable
 identity objects. Null-restricted layouts and specialized generics are not implied by declaring
@@ -44,7 +51,7 @@ question and decision:
 baseline and Valhalla representation:
 JDK vendor/version/build/commit, OS and architecture:
 supported-JDK baseline, EA identity-class control, EA value-class treatment:
-preview/compiler/runtime flags:
+preview/compiler/runtime flags and platform-class forms in each arm:
 semantic assertions:
 layout evidence and flattening observation:
 workload, data/access distribution and concurrency:

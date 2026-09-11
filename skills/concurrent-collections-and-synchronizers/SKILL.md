@@ -35,7 +35,10 @@ existing stable coordination APIs when preview is not authorized.
 
 ## Workflow
 
-1. **Name the admission policy before choosing an implementation.** If overload can occur, state
+1. **Inspect the invariant and caller lifecycle first.** Reuse code, tests and the supplied context:
+   what must be atomic, who owns accepted work/resources, and what ends a wait? Ask only for missing
+   answers that change the choice. Retain an adequate existing lock or unshared collection.
+   If overload can occur, name the admission policy: state
    the capacity or explain why an intrinsically unbounded structure is safe and bounded elsewhere.
 2. **Pick the member from the tables below and write down the cost accepted.** A choice with no
    stated cost was not made.
@@ -44,7 +47,9 @@ existing stable coordination APIs when preview is not authorized.
 4. **Make cleanup exception-safe.** For owned locks/permits, acquire immediately before `try` and
    release in `finally` only after successful acquisition. Latches and phasers need their own party
    accounting rather than a mechanical lock template.
-5. **Verify with the section below**, not by re-reading the code; these failures are silent.
+5. **Verify the consequential contract below.** Finish with the chosen or retained mechanism,
+   operation/bound, ownership and failure policy, evidence and unchecked limits. State what change
+   in workload or requirements would justify revisiting it; do not exercise every table branch.
 
 ## Selecting a queue
 
@@ -56,30 +61,30 @@ chains and code: `references/queues.md`.
 | --------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | a hard, pre-allocated bound; predictable memory                             | `ArrayBlockingQueue(n)`  | producers and consumers share **one** lock — a throughput ceiling; capacity cannot change                                       |
 | a bound with high producer/consumer concurrency                             | `LinkedBlockingQueue(n)` | separate put/take locks, but a node allocation per element and less predictable timing                                          |
-| a rendezvous — the producer waits for a real taker                          | `SynchronousQueue`       | zero capacity; `size()`, `peek()` and `iterator()` are present and all report empty — every monitoring hook lies                |
+| a rendezvous — the producer waits for a real taker                          | `SynchronousQueue`       | zero capacity; collection views report empty and do not measure pending handoffs or waiting threads                             |
 | handoff **and** buffering (`transfer`, `tryTransfer`, `hasWaitingConsumer`) | `LinkedTransferQueue`    | unbounded; `size()` O(n); **`poll()` may return null on a non-empty queue on JDK 21–25** (JDK-8371740, fixed in 26)             |
 | consumer-side priority ordering                                             | `PriorityBlockingQueue`  | unbounded; iteration, `toArray` and `forEach` are **not** in priority order; equal priorities unordered — add a sequence number |
 | work that becomes due at a time (retry, TTL, expiry)                        | `DelayQueue`             | unbounded; `poll`/`take`/`remove` return only the _expired_ head while `size()` counts the future too                           |
-| LIFO processing, put-back-on-failure, hand-rolled stealing                  | `LinkedBlockingDeque`    | a single lock — work stealing's ordering, none of its contention benefit; `remove`/`contains`/bulk ops are linear               |
+| LIFO processing, put-back-on-failure, hand-rolled stealing                  | `LinkedBlockingDeque`    | a single lock shared by both ends; no promise of fork/join throughput; `remove`/`contains`/bulk ops are linear                  |
 | no blocking at all — a buffer drained by a live loop                        | `ConcurrentLinkedQueue`  | unbounded; `size()` is O(n)                                                                                                     |
 
 ## Selecting a coordinator
 
 Failure modes and worked code: `references/synchronizers-and-conditions.md`.
 
-| Situation                                                    | Pick                  | Cost accepted                                                                                                                         |
-| ------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| one thread must know N others finished; used once            | `CountDownLatch(n)`   | one-shot, the count cannot be reset; nobody rendezvouses                                                                              |
-| N threads must **meet** repeatedly; something runs per round | `CyclicBarrier(n, r)` | party count fixed; without timeout/interruption, too few arrivals can wait indefinitely; one early leaver breaks the generation       |
-| parties join and leave between rounds                        | `Phaser`              | ≤ 65535 parties (`IllegalStateException` beyond — tier it); `awaitAdvance` ignores interruption; a negative return means _terminated_ |
-| at most N in flight against a scarce resource                | `Semaphore(n, fair)`  | no ownership — an extra `release()` silently raises the limit and nothing reports it                                                  |
-| two threads swap buffers                                     | `Exchanger`           | pairs exactly two; `exchange(v)` with no partner blocks forever — use the timed overload                                              |
-| wait for **results**, not for arrivals                       | `StructuredTaskScope` | a different model — route to structured-concurrency                                                                                   |
+| Situation                                                    | Pick                  | Cost accepted                                                                                                                                      |
+| ------------------------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| one thread must know N others finished; used once            | `CountDownLatch(n)`   | one-shot, the count cannot be reset; nobody rendezvouses                                                                                           |
+| N threads must **meet** repeatedly; something runs per round | `CyclicBarrier(n, r)` | party count fixed; too few arrivals can wait indefinitely; interruption/timeout at the wait breaks the generation, failure before arrival does not |
+| parties join and leave between rounds                        | `Phaser`              | ≤ 65535 parties (`IllegalStateException` beyond — tier it); `awaitAdvance` ignores interruption; a negative return means _terminated_              |
+| at most N in flight against a scarce resource                | `Semaphore(n, fair)`  | no ownership — an extra `release()` silently raises the limit and nothing reports it                                                               |
+| two threads swap buffers                                     | `Exchanger`           | pairs exactly two; `exchange(v)` with no partner blocks forever — use the timed overload                                                           |
+| wait for **results**, not for arrivals                       | `StructuredTaskScope` | a different model — route to structured-concurrency                                                                                                |
 
 ## Replacing a compound action on a ConcurrentHashMap
 
-Leaving the compound form in place produces duplicate initialisation — two connections, two
-schedulers, a doubled counter — invisible in tests and load-dependent in production.
+Leaving a compound check/update in place can admit both callers. Choose an operation that protects
+the required invariant; the final map value alone can hide duplicate work.
 
 | What the caller wrote    | Atomic replacement                       |
 | ------------------------ | ---------------------------------------- |
@@ -90,6 +95,12 @@ schedulers, a doubled counter — invisible in tests and load-dependent in produ
 | `get`, compare, `remove` | `remove(k, expected)`                    |
 | counter increment        | `merge(k, 1L, Long::sum)`                |
 | hot counter              | `CHM<K, LongAdder>` + `computeIfAbsent`  |
+
+These protect a mapping, not a multi-key transaction or arbitrary mutation of a shared value.
+Prefer immutable replacement when readers must see a complete value change. `putIfAbsent(k, v)`
+does not undo eager construction of `v`: losing candidates may need disposal, and external side
+effects need their own contract. If loading must be shared, inspect the memoizer's lifecycle and
+failure policy in `references/collections.md` before substituting a callback mechanically.
 
 ## Rules
 
@@ -111,7 +122,8 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
 - `compute*` and `merge` may block some updates while the function executes. Keep it short and do
   not modify the map from the function, as required by the API. Current OpenJDK uses per-bin
   coordination, but application correctness must not depend on its exact monitor layout. For a
-  loader that can block, use the failure-evicting memoiser in `references/collections.md`.
+  loader that can block, compare the failure-evicting memoiser in `references/collections.md`
+  with an existing cache/load coordinator; make retry and overload policy explicit.
 - `IllegalStateException("Recursive update")` is only required for a _detectable_ recursive update
   that would otherwise not complete. It is not an enforcement boundary. Any map mutation from a
   remapping function violates the API constraint even when a particular build does not throw.
@@ -120,11 +132,12 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
   writes; **snapshot** (copy-on-write) captures a consistent sequence of element references
   at creation, but not a deep snapshot of mutable element state. It ignores later list changes;
   a listener registered during dispatch waits for a later traversal, and iterator mutation throws.
-- Copy-on-write cost is **writeRate × size**, not the read:write ratio. Use it for
-  configuration-shaped state whose write rate is bounded by human or control-plane action, never
-  for request-scoped data; batch with `addAll`. `CopyOnWriteArraySet.contains` is a linear scan.
-- For locks and permits, acquire immediately before `try` and release in `finally`; put no throwing
-  work between them. A missing `countDown()` can park a waiter indefinitely; a missing `release()`
+- Copy-on-write's copy volume depends on **copying write rate × size**, not just the read:write
+  ratio. Small read-mostly state and batched updates can fit; measure costly writes rather than
+  imposing a universal ratio or request-scope ban. `CopyOnWriteArraySet.contains` is a linear scan.
+- For locks and permits, acquire immediately before `try` and release in `finally` after successful
+  acquisition and the protected work's actual completion/cleanup; put no throwing work before the
+  cleanup guard. A missing `countDown()` can park a waiter indefinitely; a missing `release()`
   erodes capacity; a leaked
   `unlock()` is permanent, because a `ReentrantLock` is **not** released when its holder dies.
 - The untimed `tryAcquire()` and `tryLock()` **ignore the fairness setting** and barge;
@@ -153,17 +166,17 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
   callback, listener or guarded object's method can self-deadlock and is not represented as an
   ownable-lock cycle. An optimistic read must not act on a potentially inconsistent snapshot before
   successful validation; copy only safe fields into locals, validate, then use them.
-- Reach for `AbstractQueuedSynchronizer` last: `BlockingQueue` → `Semaphore` → latch/barrier/phaser
-  → `ReentrantLock` + one `Condition` per predicate → `StructuredTaskScope` → atomics. Only a
-  blocking synchronizer with a novel acquisition predicate justifies it.
+- Reach for `AbstractQueuedSynchronizer` only when a reusable blocking synchronizer needs a novel
+  acquisition/release protocol. First compare the relevant existing primitive or `ReentrantLock`
+  with conditions; an application-level state machine rarely needs its own queue machinery.
 
 ## Verification
 
-- **jcstress for the substitution table.** Two `@Actor`s racing `containsKey`+`put` against
-  `putIfAbsent` on one key, an `@Arbiter` reading the result, the interleaved outcome `FORBIDDEN`;
-  run both shapes and record observed outcomes; a finite run need not expose every race.
-  Bounded liveness tests and jcstress termination tests can expose hangs; a stale outcome is
-  evidence of non-termination under that test, not proof of a particular lost signal.
+- **Observe the invariant, not only the final value.** A controlled two-caller test can record each
+  admission, constructed resource and losing-resource cleanup; both callers may have done work
+  even when a final map read looks correct. Use jcstress when a memory/interleaving claim warrants
+  it, not to rediscover every documented atomic operation. Bound failure and cancellation tests;
+  a finite run neither proves absence of races nor identifies a hang's cause by itself.
 - **Invariant checks in tests and diagnostics:** fixed-limit semaphores should never exceed their
   configured permit count; queue construction should expose its admission policy; non-reentrant
   designs should test callback/re-entry. Java assertions are disabled unless enabled and cannot be

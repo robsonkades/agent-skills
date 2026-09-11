@@ -2,7 +2,9 @@
 
 ## Generate a catalogue per JDK epoch
 
-Do not maintain a timeless handwritten table. For every supported vendor/build/platform:
+Do not maintain a timeless handwritten table. Reuse an adequate catalogue or recording for a
+narrow schema question; inspect the relevant event subset. When establishing or upgrading a
+supported vendor/build/platform baseline:
 
 1. enumerate registered event types and setting descriptors in a small Java probe;
 2. retain shipped JFC files and their checksums;
@@ -83,8 +85,10 @@ process CPU/allocation/GC/tail latency delta
 known synthetic event count/duration distribution
 ```
 
-Recorded summed duration is a lower bound when sub-threshold events are omitted. Extrapolating
-their aggregate needs a sampling/model design; do not multiply the threshold by a guessed count.
+For the same event population and window, summed recorded duration omits sub-threshold
+contributions. It is not process elapsed time or utilization: nested or concurrent events can
+overlap, and mixed populations can double-count work. Extrapolating omitted duration needs a
+sampling/model design; do not multiply the threshold by a guessed count.
 
 ### Periodic events
 
@@ -138,7 +142,7 @@ specific settings may require it. Review against the schema/parser in the target
 
 ## Multiple configurations and recordings
 
-Test these cases explicitly:
+Select cases that exercise the configuration and reader paths being supported or changed:
 
 - base JFC plus override JFC/inline setting precedence;
 - unknown event/setting and missing JFC behavior;
@@ -193,7 +197,7 @@ paths.
 
 ## Authoritative references
 
-- [JFR event runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/runtime.html)
+- [JFR event and settings API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html)
 - [`EventType`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html)
 - [`SettingDescriptor`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/SettingDescriptor.html)
 - [JDK `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)

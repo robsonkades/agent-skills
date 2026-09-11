@@ -42,19 +42,22 @@ the measured result or the explicit absence of a performance baseline.
    upgrade with no stated reason has no way to be judged finished.
 2. **Run the existing artefact on the new JDK before changing a line.** Same jar, same flags, new
    runtime, in an isolated compatibility environment. Exercise lazy paths and rebuild separately;
-   successful startup does not cover runtime-only or compiler/toolchain changes.
+   preserve the existing `--release` target for that rebuild unless changing it is authorized.
+   Successful startup does not cover runtime-only or compiler/toolchain changes.
 3. **Make the warnings impossible to miss.** Compatibility warnings can occur at startup or
    when the affected operation first runs, and are routinely lost in container logs. Capture them — see
    `references/verification-and-rollout.md`.
-4. **Classify each failure into one of five kinds** using
+4. **Classify failures using five common kinds** in
    `references/breakage-classes.md`: a retired flag, strong encapsulation, a removed or changed
    API, a changed default, or a third-party agent or library that reads bytecode. The five have
-   different fixes and very different costs.
-5. **Fix in reversible order**: flags first (cheap, isolated), then dependency upgrades, then
-   your own source. Resist fixing anything that is not broken.
+   different fixes; record interacting causes or an unmatched failure instead of forcing one label.
+5. **Fix in the smallest reversible increments supported by the cause.** A flag change is not
+   automatically cheaper or safer than a supported library/source correction. Stage changes on
+   the old JDK where compatible; record unavoidable combined changes and their attribution limits.
+   Preserve unrelated working behavior.
 6. **Measure what the upgrade was justified by**, with the method that produced the pre-upgrade
-   baseline. Change one variable: do not tune the collector, the heap or the flags in the same
-   change.
+   baseline. Separate optional collector, heap or flag tuning from required compatibility and
+   security changes; do not claim a runtime-only effect when those changes cannot be isolated.
 7. **Stage the rollout** so that "it started" and "it is correct under load" are separate
    gates, and so a rollback is a deploy rather than a project.
 
@@ -107,8 +110,10 @@ Security Manager` during VM initialisation. It became permanently disabled in JE
   `jcmd <pid> VM.flags -all`, `VM.command_line` and `VM.system_properties` supply different
   evidence, not a complete launch/module-access inventory; inspect the contributing files
   and wrapper configuration too. Protect secrets in this output.
-- **Do not carry a performance claim across the boundary.** Any number measured on the old JDK is
-  a number about the old JDK, including your own baselines and any threshold in CI.
+- **Revalidate performance estimates, preserve acceptance requirements.** A measurement on the old
+  JDK does not predict the new runtime. Keep agreed SLOs and regression gates unless their contract
+  changes; do not reset a CI threshold merely to make an upgrade pass. Version-specific measured
+  baselines remain comparison evidence, with workload/environment differences recorded.
 - **Regenerate class-data/AOT artifacts for the target build.** Compatibility checks and launch
   mode can reject an archive, fall back or fail startup. Verify actual use and diagnostics;
   silent fallback is not guaranteed. Preserve the old image and matching artifacts for rollback.

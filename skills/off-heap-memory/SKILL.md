@@ -19,10 +19,12 @@ description: >
 ## Purpose
 
 Decide whether data belongs outside the Java heap, and find native growth that no heap dump
-shows directly (heap dumps can still identify retaining wrappers). Off-heap is not faster by definition — it is a **different memory budget
-with a different cost**. On the heap the dominant cost is GC work for as long as the object
-lives; off-heap adds allocation/release and lifetime-management costs. Managed segments
-provide safety checks, while raw addresses do not.
+shows directly (heap dumps can still identify retaining wrappers). Off-heap is not faster by
+definition — it is a **different memory budget with a different cost**. Heap cost depends on
+allocation, representation, lifetime and collector behavior; primitive payload bytes are not
+object references to scan, though storage and copying can still matter. Off-heap adds native
+allocation/release and lifetime-management costs while retaining Java wrappers and bookkeeping.
+Managed segments provide safety checks, while raw addresses do not.
 
 The failure this prevents is unmanaged native growth. A direct `ByteBuffer` normally releases
 through Cleaner/reference processing, so wrapper reachability affects timing. HotSpot also
@@ -33,29 +35,35 @@ arena ownership.
 
 ## Workflow
 
-1. **Establish the runtime and both heap and process/cgroup state.** Inspect the project's
+1. **Establish the request, runtime and available evidence.** Inspect the project's
    Java/toolchain and library versions; FFM examples require Java 22+ without an implied upgrade.
-   A busy heap does not exclude native
-   growth. Correlate GC/heap, RSS/PSS, cgroup `memory.current` and workload on one timeline.
-2. **Classify the symptom.** `OutOfMemoryError: Direct buffer memory` names the direct-buffer
+   For an API explanation or ownership review, source and focused lifecycle checks may suffice.
+   For a growth incident, correlate available GC/heap, RSS/PSS, cgroup `memory.current` and
+   workload evidence on one timeline. A busy heap does not exclude native growth.
+2. **For an incident, classify the symptom.** `OutOfMemoryError: Direct buffer memory` names the direct-buffer
    reservation path. Exit 137 alone is consistent with SIGKILL, not proof of an OOM;
    Kubernetes `OOMKilled` adds runtime evidence of an OOM event, not its allocation owner.
    Inspect `memory.events`, pod/node events and all JVM/native domains before attributing it.
-3. **Compare RSS/PSS, cgroup charge and used/committed heap over time.** Divergence is a
+3. **For growth attribution, compare RSS/PSS, cgroup charge and used/committed heap over time.** Divergence is a
    native-residency hypothesis, not proof of a leak: allocator arenas/fragmentation, stacks,
    mapped files, page cache accounting, code and delayed uncommit can produce it.
-4. **Narrow by owner:** JMX `java.nio:type=BufferPool,name=direct` covers direct-buffer
+4. **Select the next observation by suspected owner:** JMX `java.nio:type=BufferPool,name=direct` covers direct-buffer
    accounting, not arbitrary FFM/native allocations. Use NMT baselines/diffs for JVM-tracked
    categories, `/proc/<pid>/smaps_rollup`/maps for residency, and async-profiler native-memory
    recording where allocator/tool compatibility and production overhead are acceptable.
-5. **Ask the sizing question only after explaining the growth model.** Raising
-   `-XX:MaxDirectMemorySize` against sustained growth converts a fast OOM into a slow one.
+   Missing or disabled instrumentation is unknown evidence, not a zero allocation count;
+   state what can be concluded and the smallest observation that would distinguish hypotheses.
+5. **Size from legitimate capacity and the complete budget.** A justified capacity correction
+   can mitigate an incident while attribution continues; it does not prove a leak was fixed.
+   Raising `-XX:MaxDirectMemorySize` against sustained unbounded growth only defers failure.
    See `references/native-memory-diagnosis.md`.
 6. **When migrating legacy code, pick the `Arena` type from the real ownership pattern**,
    not from habit — cross-thread access to a confined segment fails deterministically with
    `WrongThreadException`, while close/access races in a shared arena require coordination.
-7. **Validate the fix by repeating the measurement under the load that revealed it,** and
-   confirm growth stopped rather than merely paused.
+7. **Close with the decision, supporting evidence and any material uncertainty.** An adequate
+   ownership/budget contract can need no change. For a claimed growth fix, repeat the relevant
+   workload measurement and check that growth stopped rather than merely paused; keep an
+   unexecuted validation plan distinct from an observed result.
 
 ## Rules
 
@@ -75,7 +83,8 @@ arena ownership.
 - **JEP 471/498 cover on-heap, off-heap and bimodal `sun.misc.Unsafe` memory access.**
   Object-plus-offset operations such as `compareAndSwapLong`, `objectFieldOffset`,
   `getAndAddInt` and volatile access are affected too. Migrate supported field/array access
-  to `VarHandle`; use FFM for native memory. JDK classes using `jdk.internal.misc.Unsafe`
+  to `VarHandle`; use FFM for native memory. Use `varhandles-and-memory-ordering` when the
+  atomicity or access-mode protocol needs a separate proof. JDK classes using `jdk.internal.misc.Unsafe`
   do not make application calls to the distinct `sun.misc.Unsafe` API exempt.
 - Treat a JEP 498 warning as scheduled work, not log noise to filter. The flip from `warn`
   to `deny` must be checked on the target build; JEP 498's future schedule is not proof
@@ -86,11 +95,12 @@ arena ownership.
 - There are **four** `Arena` factories: `ofConfined()` (single-owner thread), `ofShared()`
   (multi-thread), `ofAuto()` (GC-managed — the **non**-explicit mode;
   `close()` throws `UnsupportedOperationException`) and `global()` (process lifetime, `close()`
-  also unsupported). `ofAuto()` reintroduces exactly the non-deterministic timing risk of the
-  Cleaner; it is the exception, not the default.
+  also unsupported). `ofAuto()` permits an intentional reachability-managed lifetime when
+  release timing is acceptable and the budget accounts for delayed reclamation; it cannot
+  satisfy a deterministic release deadline.
 - Accessing or closing a confined arena from another thread throws `WrongThreadException`. If
-  more than one thread needs access or needs to close, choose `ofShared()` from creation and
-  coordinate close against in-flight access.
+  more than one thread needs to access or close and lifetime must be explicit, choose `ofShared()` from
+  creation and coordinate close against in-flight access.
 - JOL measures the heap **wrapper**, never the native payload. Reading a few dozen bytes from
   `ClassLayout.parseInstance` on a 1 MB direct buffer and concluding it is cheap is the classic
   misdiagnosis here.
@@ -98,31 +108,38 @@ arena ownership.
   allocation paths, not every external allocator/mapping. Native-memory profiling can provide
   allocation stacks, but sampled/interposed coverage, frees, allocator compatibility and
   recording window bound what it proves.
-- In async-profiler 4.x the tool is `asprof` and the event is `nativemem`. `profiler.sh` and
-  `-e malloc` do not exist in that series.
-- On the verified HotSpot implementation, absent `-XX:MaxDirectMemorySize` uses
+- The referenced async-profiler 4.0 commands use `asprof` and the event `nativemem`, not
+  `profiler.sh` or `-e malloc`. Verify other installed versions before copying commands;
+  `async-profiler-advanced` owns capture-engine, permission and conversion troubleshooting.
+- On the referenced HotSpot 25 GA implementation, absent `-XX:MaxDirectMemorySize` uses
   `Runtime.maxMemory()` as the direct-buffer ceiling. Derive an explicit value, if needed,
   from concurrency/capacity bounds, observed high-water marks, burst duration and the complete
   cgroup budget. No universal 1.3–1.5 multiplier establishes safety.
-- A JMH `gc.alloc.rate.norm` near zero for an off-heap benchmark does not mean free. It means
-  the cost is not in **that** metric; `malloc`/`free` contention still costs, and the `gc`
-  profiler cannot see it. The honest conclusion is "off-heap moves the cost out of GC", not
-  "off-heap is cheaper".
+- A JMH `gc.alloc.rate.norm` near zero describes measured Java allocation per operation,
+  not total cost. Native allocation/release is outside that metric; Java wrappers and
+  reference processing can still contribute GC work. Compare the complete data path before
+  claiming that off-heap reduces latency, memory use or GC cost.
 - Check the arithmetic of any time-to-incident estimate first. Confusing MB/s with MB/min moves
   the estimate by a factor of 60.
 
 ## Decision and failure checklist
+
+Apply the relevant checks to the ownership or performance claim; reuse adequate supplied
+evidence. A narrow API explanation does not require a deployment or a full capture campaign.
 
 - Define owner, maximum bytes, maximum concurrent allocations, release event and shutdown path.
 - Cancellation/timeout is not proof native work stopped. Keep its allocation or pool lease
   alive until actual completion; a shared arena permits thread access, not data-race freedom.
 - Specify whether data must be zeroed before reuse/release and whether untrusted sizes can drive
   allocation; use checked arithmetic and enforce per-request/per-tenant quotas.
-- Test allocation failure, partial initialization, double close, access after close, concurrent
-  close/access, cancellation and process shutdown.
-- Validate with heap/direct-pool/NMT/OS/cgroup signals together; each observes a different set.
-- Roll out with a native-memory alert and rollback threshold; compare throughput, tail latency,
-  RSS/PSS and GC work against the on-heap baseline.
+- For changed allocation/lifetime code, exercise the relevant failure paths: allocation failure,
+  partial initialization, double close, access after close, concurrent close/access,
+  cancellation and shutdown as applicable to that owner.
+- For attribution or budget validation, reconcile the relevant available heap/direct-pool/NMT/OS/
+  cgroup signals; each observes a different set.
+- For an authorized rollout, define the native-memory alert and rollback threshold. For a
+  performance claim, compare relevant throughput, tail latency, RSS/PSS and GC work against
+  the appropriate baseline; retain an adequate existing implementation when no change is justified.
 
 ## References
 
@@ -140,3 +157,6 @@ Authoritative sources: [JEP 454](https://openjdk.org/jeps/454),
 [`Arena` API, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Arena.html),
 and the OpenJDK 25 GA [`Bits.reserveMemory` implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/nio/Bits.java)
 and [`sun.misc.Unsafe`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.unsupported/share/classes/sun/misc/Unsafe.java).
+The accounting distinction is visible in HotSpot 25 GA's
+[primitive-array traversal](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/oops/typeArrayKlass.inline.hpp)
+and JMH 1.37's [GC profiler](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/GCProfiler.java).

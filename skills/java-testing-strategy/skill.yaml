@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-testing-strategy
-version: 1.0.2
+version: 1.0.3
 description: >-
   Choosing which test level earns its cost for a given change: what a unit, integration,
   contract or end-to-end test can and cannot prove, pushing each test to the narrowest scope
@@ -42,6 +42,21 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - architecture-testing
+  - concurrency-testing
+  - distributed-systems-testing
+  - java-cohesion-coupling
+  - java-design-by-contract
+  - java-legacy-code-testing
+  - java-refactoring
+  - java-test-design
+  - java-test-doubles
+  - jmh-microbenchmarks
+  - load-testing
+  - slo-and-alerting
+  - tdd
 
 capabilities:
   - reads-source

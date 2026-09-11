@@ -34,11 +34,12 @@
 
 ### Behaviour under load and concurrency
 
-| Question                                  | Skill                          |
-| ----------------------------------------- | ------------------------------ |
-| Where does the transaction start and end? | `enterprise-transactions`      |
-| Two users overwrote each other            | `offline-concurrency-control`  |
-| Why is this slow?                         | `architecture-and-performance` |
+| Question                                             | Skill                          |
+| ---------------------------------------------------- | ------------------------------ |
+| Where does the transaction start and end?            | `enterprise-transactions`      |
+| Two users overwrote each other                       | `offline-concurrency-control`  |
+| Which architectural choice causes the measured cost? | `architecture-and-performance` |
+| What explains an unlocalized performance problem?    | `performance-methodology`      |
 
 ### Boundaries and the outside world
 
@@ -61,9 +62,13 @@
 
 ## By symptom
 
+Symptoms are investigation leads, not defect verdicts. Confirm the affected operation and
+actual boundary before choosing an owner; carry existing evidence forward and stop when the
+question is resolved rather than reading the entire family.
+
 | Symptom                                         | Start at                                                                |
 | ----------------------------------------------- | ----------------------------------------------------------------------- |
-| A list screen is slow                           | `architecture-and-performance`, then `query-objects-and-specifications` |
+| A list screen slows as query/call work grows    | `architecture-and-performance`, then `query-objects-and-specifications` |
 | `LazyInitializationException`                   | `orm-behavioral-patterns`                                               |
 | Two users overwrote each other                  | `offline-concurrency-control`                                           |
 | A use case half-committed                       | `enterprise-transactions`                                               |

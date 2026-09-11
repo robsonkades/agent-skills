@@ -131,6 +131,32 @@ Note that `ExportOrdersForAccounting` takes `OrderQueries`, not `OrderRepository
 use case does not need the write model, and giving it one invites a report to load and mutate
 aggregates (`query-objects-and-specifications`).
 
+If existing callers depend on `OrderFacade`, it can delegate to these implementations while
+retaining the supported public operations. Splitting implementation ownership does not require
+removing that consumer-facing entry point.
+
+## A simpler call still needs a resource owner
+
+A Java 17 partial export API can return a caller-owned `Stream<OrderRow>` for bounded-memory
+consumption. These project types stand for a streaming source whose close handler releases its
+owned cursor; an application-wide borrowed client remains open.
+
+```java
+try (var rows = exports.openRows(range)) {
+    rows.limit(100).forEach(writer::write);
+}
+```
+
+The ordinary checkout result is a materialized `OrderId`; this advanced export result remains
+live after `openRows` returns. A terminal operation such as `findFirst` does not itself close a
+stream. The caller closes on success, short-circuit and consumption failure. Returning `rows`
+from a try-with-resources block _inside_ `openRows` would return an already-closed stream.
+Materializing within the facade or accepting a consumption callback are alternatives when their
+memory and control-flow contracts fit; do not materialize an unbounded export just to hide cleanup.
+Specify lazy failure and cancellation behavior, and test the actual resource/driver contract
+(`java-resource-management`). See the concrete [Java 17 Files.lines contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#lines(java.nio.file.Path)>)
+for a stream that retains an open resource until close.
+
 ## The remote variant
 
 The read side aggregates three services. This Java 25 preview partial method requires

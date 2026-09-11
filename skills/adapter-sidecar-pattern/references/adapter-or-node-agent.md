@@ -17,7 +17,9 @@ Reject enrichment if it can associate a record with the wrong workload after a r
 For ordinary stdout/stderr logs, first assess the existing runtime-to-node-agent path. A peer
 container does not automatically receive another container's stdout. File-only output may
 justify a shared-volume sidecar that translates to its own stdout for node collection, or one
-that ships directly. Choose a single intended ingestion path; collecting both duplicates data.
+that ships directly. Avoid unintentionally ingesting the same records twice at one destination.
+Intentional fan-out to different consumers or a migration comparison needs an explicit routing
+and duplication policy; two paths alone do not establish a defect.
 Compare measured memory/CPU per replica versus per node at representative volume, including
 noisy workloads, buffer requirements and permissible data loss. See
 [Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/).

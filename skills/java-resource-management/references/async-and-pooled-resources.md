@@ -8,7 +8,7 @@ SQLExceptions that a Supplier must translate with the original cause. Do not cop
 as a complete JDBC adapter or assume it supplies transaction/cancellation policy.
 
 `try`-with-resources ties release to the _block_, which is correct only while the block also
-bounds the _use_. Every asynchronous construct breaks that assumption in the same way:
+bounds the _use_. An asynchronous task can outlive that block:
 
 ```java
 // Broken: the connection closes when the method returns, not when the stage completes.
@@ -46,37 +46,44 @@ file it reads.
 
 Both are `AutoCloseable`, but their lifecycle contracts differ:
 
-- `ExecutorService.close()` (Java 19+) initiates an orderly shutdown and blocks until all
-  submitted tasks complete. There is no timeout parameter. If a task hangs, the enclosing
+- Default `ExecutorService.close()` (Java 19+) initiates an orderly shutdown and waits for
+  termination. There is no timeout parameter. If a task hangs, the enclosing
   block hangs — the failure looks like a stuck request with no error. Interrupting the
   waiting thread escalates to `shutdownNow`, waits for the running tasks, and re-asserts the
-  interrupt on return.
+  interrupt on return. Queued tasks may never start and their submitted Futures can remain
+  incomplete; termination and result settlement are separate responsibilities. Inspect
+  implementation overrides and retain the owner of those handles.
 - Java 25's preview `StructuredTaskScope.close()` cancels unfinished subtasks, waits for every
   forked thread, and then reports missing `join()`/structural misuse. Correct code calls `join()`
   once to obtain the configured Joiner outcome; `close` is cleanup/confinement, not a replacement
   for result handling. A configured scope timeout cancels work, but uninterruptible subtasks can
   still delay close.
 
-Use the `try`-with-resources form when the block owns the work and the tasks are bounded by
-a timeout of their own. When the executor is long-lived — a shared pool held in a field, an
+Use the `try`-with-resources form when the block owns the executor and waiting for its actual
+termination fits the lifecycle. A caller timeout alone does not bound task termination or close.
+When the executor is long-lived — a shared pool held in a field, an
 application-scoped scheduler — it is not a block-scoped resource at all, and its shutdown
 belongs to the application lifecycle (see below), not to a `try`.
 
 ## Pools: the resource is the borrow, not the object
 
-A pooled `Connection`, an HTTP connection lease, a Netty `ByteBuf` from a pooled allocator —
-`close`/`release` returns it. Two consequences:
+A pooled `Connection` or HTTP connection lease ends a borrow through its release contract;
+the pool may reuse or discard the physical resource. For a reference-counted Netty `ByteBuf`,
+release decrements the count; deallocation occurs at zero, so retained slices/duplicates matter.
+Do not infer exclusive ownership or immediate reuse from the word "pooled." Two consequences:
 
-- **Holding time is the capacity input.** By Little's Law, concurrent borrows equal arrival
-  rate times hold time; a borrow held across an unrelated remote call multiplies the pool
-  size needed by the ratio of the two latencies. connection-pool-sizing and
+- **Holding time contributes to occupancy.** For a stable matching borrow population,
+  mean concurrent borrows equal effective borrow throughput times mean hold time. At unchanged
+  throughput, doubling mean hold doubles mean occupancy, not necessarily the pool size needed
+  for a latency SLO. Offered requests and waiting-for-acquisition time are different boundaries.
+  connection-pool-sizing and
   littles-law-and-queueing own the arithmetic; the code-level rule is to acquire as late and
   release as early as the transaction allows.
-- **A leak presents as exhaustion, not as memory growth.** The symptom is
+- **A lease leak can present as exhaustion without obvious heap growth.** One symptom is
   `Connection is not available, request timed out after 30000ms` under load, with a heap that
-  looks fine. Enable the pool's own leak detection (HikariCP's `leakDetectionThreshold` logs
-  the acquiring stack trace when a borrow outlives the threshold) before reaching for a heap
-  dump—it reports the acquisition site of a long-held borrow. Treat it as a lead, not proof: a
+  looks fine. Reuse existing metrics and acquisition evidence; if insufficient, consider the
+  pool's leak detection before a heap dump. HikariCP's `leakDetectionThreshold` reports the
+  acquisition site when an outstanding borrow exceeds the configured threshold. Treat it as a lead, not proof: a
   legitimate long transaction can exceed the threshold and a returned connection may be reported
   before the detector observes its return.
 
@@ -102,9 +109,11 @@ is the part that is usually missing:
 
 1. Stop accepting new work (readiness off, listener closed) — kubernetes-service-lifecycle
    owns the traffic side.
-2. Drain in-flight work with a bound: `shutdown()` then `awaitTermination(timeout)`; on expiry,
-   capture tasks never started, invoke `shutdownNow()`, and wait again with a final bound while
-   recording tasks that ignore interruption.
+2. As the executor owner, drain with a bound: `shutdown()` then `awaitTermination(timeout)`;
+   on expiry, retain the never-started tasks returned by `shutdownNow()` and wait again with a
+   final bound while recording tasks that ignore interruption. Preserve original Future/wrapper
+   identities and settle or recover their results deliberately; executors-and-task-lifecycle
+   owns that protocol.
 3. If tasks still run, do not proceed as though draining succeeded: report the surviving work
    and follow an explicit escalation policy. Resource closure may be a documented cancellation
    mechanism only if its contract supports concurrent close/use; otherwise keep dependencies
@@ -113,11 +122,12 @@ is the part that is usually missing:
    connections before the pool.
 5. Complete normal shutdown only after release, distinguishing it from forced termination.
 
-A JVM shutdown hook runs on an unspecified thread with no ordering between hooks and no
-guaranteed completion — the process may be killed while a hook runs, and `SIGKILL` skips
-hooks entirely. Treat hooks as a best-effort last resort for closing OS resources, never as
-the mechanism that guarantees a flush of data you cannot lose; that guarantee belongs to a
-durable store or an idempotent retry on the next start.
+JVM shutdown starts the registered hook threads in unspecified order and lets them run
+concurrently. Completion is not guaranteed under forced termination; `SIGKILL` skips hooks.
+Treat hooks as best-effort cleanup, not a guarantee that accepted data is durably flushed.
+Recovery requires an actual durable record and acknowledgement/recovery contract; an idempotent
+retry alone cannot recover an intent that was never retained. delivery-semantics and idempotency
+cover those conditional recovery concerns.
 
 ## Diagnostic sequence
 
@@ -134,3 +144,6 @@ durable store or an idempotent retry on the next start.
 - [StructuredTaskScope preview contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html)
 - [JEP 505: Structured Concurrency, fifth preview](https://openjdk.org/jeps/505)
 - [CompletableFuture cancellation contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>)
+- [Runtime shutdown hooks, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Runtime.html#addShutdownHook(java.lang.Thread)>)
+- [Netty 4.1 reference-counted release](https://netty.io/4.1/api/io/netty/util/ReferenceCounted.html)
+- [HikariCP leak-detection setting](https://github.com/brettwooldridge/HikariCP#frequently-used)

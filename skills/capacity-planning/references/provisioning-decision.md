@@ -7,7 +7,7 @@ Do not approve production capacity until the evidence identifies:
 1. the demand population and useful-work unit;
 2. required scenarios and SLO evaluation windows;
 3. a reproducible feasible envelope for candidate configurations;
-4. the first constrained resource/path in each scenario;
+4. observed resource/dependency constraints and any unmeasured boundary material to the decision;
 5. autoscaling and warm-capacity reaction behavior;
 6. placement, quotas and dependency survivorship;
 7. forecast and price uncertainty;
@@ -16,6 +16,10 @@ Do not approve production capacity until the evidence identifies:
 Production telemetry is not automatically a capacity lower bound. It may contain shedding,
 hidden retries, missing demand, heterogeneous versions or an unobserved SLO violation.
 Reconcile it with controlled tests.
+
+Reuse comparable existing tests and decision records when they still cover the configuration,
+demand and failure policy. Investigate the remaining decision-changing gaps; keeping a supported
+configuration does not require finding its ultimate saturation point.
 
 ## Configuration selection
 

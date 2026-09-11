@@ -6,12 +6,12 @@ import the nested state types. Tests containing ellipses are designs, not execut
 
 ## Where the transitions live
 
-| Placement                       | Adding a state costs              | Whole machine readable?    | Fits when                                      |
-| ------------------------------- | --------------------------------- | -------------------------- | ---------------------------------------------- |
-| **In each state class**         | Edit the states that reach it     | No — spread across N files | States have substantial behaviour of their own |
-| **One transition function**     | One compile error per switch      | **Yes**                    | You own every state; the machine is the point  |
-| **A transition table (data)**   | A row                             | Yes, as data               | The machine is configured or must be shown     |
-| **Scattered `if`s on a status** | Nothing — and that is the problem | No                         | Never                                          |
+| Placement                       | Adding a state costs                       | Whole machine readable?    | Fits when                                                          |
+| ------------------------------- | ------------------------------------------ | -------------------------- | ------------------------------------------------------------------ |
+| **In each state class**         | Edit the states that reach it              | No — spread across N files | States have substantial behaviour of their own                     |
+| **One transition function**     | One compile error per switch               | **Yes**                    | You own every state; the machine is the point                      |
+| **A transition table (data)**   | A row                                      | Yes, as data               | The machine is configured or must be shown                         |
+| **Scattered transition guards** | Every authoritative path may need updating | No                         | Consolidate conflicting rules; read-only status queries may remain |
 
 ```java
 // one transition function: the whole machine in one place
@@ -77,15 +77,19 @@ classes do.
 ## Persistence
 
 ```java
-@Enumerated(EnumType.STRING)      // never EnumType.ORDINAL
+@Enumerated(EnumType.STRING)      // this example uses enum names as stable storage codes
 private Status status;
 ```
 
-STRING stores enum names, so names become storage contracts. For independently stable codes use
-an explicit mapping/converter and validate unknown values; do not rename Java constants casually.
+Without an explicit value mapping, STRING stores enum names and ORDINAL stores declaration
+positions. Names then become storage contracts; reordering or inserting constants can reinterpret
+affected positional values. Do not silently change an existing mapping or rename stored codes.
 
-`ORDINAL` stores the position, so inserting a constant in the middle or reordering the enum
-silently reinterprets every existing row. It is a data-corruption bug with no error message.
+For independently stable codes use a supported explicit mapping/converter and validate unknown
+values. Jakarta Persistence 3.2 adds `@EnumeratedValue`: a final distinct, non-null String field
+supplies STRING codes, or a final byte/short/int field supplies ORDINAL codes. Those explicit numeric
+codes are not declaration positions. Verify actual provider/version support; earlier providers do
+not gain this contract merely because the annotation appears in source.
 
 For sealed record states, persist a discriminator plus the state's data, and map explicitly:
 
@@ -163,21 +167,26 @@ and then enqueueing work is not atomic/durable publication.
 ## Side effects of a transition
 
 A transition that also sends an email, publishes an event or calls a service must define what
-happens when it is retried:
+happens when it is retried, according to the required effect and recovery contract:
 
 ```text
 Effect inside the same transaction as the state change
   → local database effects or an outbox row in the same effective transaction.
-    Outbox publication can repeat; command deduplication and relay operation remain necessary (event-driven-architecture).
+    Outbox publication can repeat; define command/effect repeat handling and relay recovery (event-driven-architecture).
 
 Effect after the commit
-  → may not happen at all if the process dies. Acceptable only if
-    something reconciles.
+  → may be lost if the process dies. Accept only when loss is permitted or the
+    required effect has a retry/reconciliation owner.
 
 Effect before the state change
-  → the effect happens for a transition that then fails. Almost always
-    wrong.
+  → may apply even if the transition fails. Require that partial outcome to be
+    permitted, or an actual compensation/recovery contract; ordering alone proves no atomicity.
 ```
+
+The pure transition function may reject a repeated event while the command handler recognizes a
+retry and returns its recorded outcome. Match actual operation identity and payload semantics;
+the same current status does not prove that this command succeeded. Coordinate duplicate handling
+with the authoritative mutation/effect protocol, and preserve unresolved outcomes (`idempotency`).
 
 ## Timeouts as transitions
 
@@ -224,4 +233,5 @@ Scenario tests remain necessary for multi-step invariants and failures.
 Primary sources: [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html),
 [AtomicReference](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html),
 [Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+[Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue),
 and [ShedLock lock duration](https://github.com/lukas-krecan/ShedLock).

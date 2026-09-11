@@ -1,13 +1,15 @@
 # Boundary classification
 
-All twenty-three, by where their guarantees hold, with what a boundary crossing requires.
+All twenty-three, by where their guarantees hold, with contracts to reassess at a boundary.
+Choose additions from the actual effect, lifetime and recovery requirements; these are not an
+automatic migration plan.
 
 ## Process-local — the guarantee stops at the JVM
 
 | Pattern       | What is local                  | What people wrongly assume          | The distributed answer                                       |
 | ------------- | ------------------------------ | ----------------------------------- | ------------------------------------------------------------ |
-| **Singleton** | One instance per class loader  | One instance per cluster            | Leader election with fencing, a lease, or idempotency        |
-| **Flyweight** | Shared references              | A shared cache across nodes         | A distributed cache — different pattern, invalidation policy |
+| **Singleton** | One instance per class loader  | One instance per cluster            | Resource-enforced authority or invariant-preserving overlap  |
+| **Flyweight** | Shared references              | A shared cache across nodes         | Local interning or a justified remote content/cache contract |
 | **Iterator**  | Traversal state                | A stable view of a changing source  | Cursor/keyset/offset chosen for access and consistency needs |
 | **Memento**   | Encapsulated restoration state | Arbitrary persistence is compatible | Snapshot format, consistency and unknown-version policy      |
 
@@ -25,14 +27,24 @@ The examples assume eight active replicas and one pool/limiter/job each. Model r
 sidecars and other clients; actual use may be lower and one replica can also exhaust resources.
 Write assumptions beside each bound (`gof-singleton`, `connection-pool-sizing`).
 
-**Flyweight** cannot cross a boundary by construction: it shares references, and references do not
-serialise. Each node interns its own copies. A "distributed flyweight" is a cache, with all the
-questions a cache has — invalidation, staleness, a network hop per miss, and a stampede when it
-empties (`caching-strategies`).
+**Flyweight**'s shared heap reference does not cross the boundary. A codec can preserve aliases
+within a decoded graph, and RMI can transfer an exported remote object's stub; neither makes two
+JVMs share the same local object. Logical IDs/content addresses can identify the same value.
+Keep per-node interning when adequate. Remote content/cache reuse adds lookup, capacity and
+recovery costs; immutable content identities may need no freshness invalidation, while mutable
+keys do. Authorization/revocation remains separate (`caching-strategies`).
+
+**Singleton**'s distributed safety is about every protected effect, not local leader belief.
+Two distinct idempotent writes can conflict: an old owner can set status back to OPEN after the
+successor set CLOSED. Deduplicating each operation once does not reject that stale intent; use
+resource-enforced authority/version predicates unless overlap preserves the full invariant
+(`distributed-locks-and-leases`, `idempotency`).
 
 **Memento** can also be persisted, but opacity does not establish format compatibility, snapshot
 consistency or recovery. Define schema identity (field or envelope), migration and unsupported-version
 behavior. Tolerating an unknown value is not always safe for restoration (`gof-memento`).
+A remote restore handle may instead expire with its owning session; persistence is needed only
+when the accepted recovery contract requires it. Keep opacity, ownership and restore-conflict rules.
 
 ## Boundary — the pattern manages a seam
 
@@ -68,6 +80,8 @@ bulk operations when workload evidence needs them rather than speculating about 
 (ideal serial latency sums service times; concurrent latency also includes scheduling, queues and
 concurrency limits), what a partial failure returns, and how one deadline is shared
 across several calls (`scatter-gather`, `structured-concurrency`).
+A local wrapper alone does not reduce downstream round trips; the operation placement, batching or
+other actual access change must do that. Preserve required capabilities and failure semantics.
 
 ## Interaction — the pattern shapes who talks to whom
 
@@ -75,7 +89,7 @@ across several calls (`scatter-gather`, `structured-concurrency`).
 | ------------ | ----------------- | ------------------------------------------------------------------------------- |
 | **Command**  | A message         | Schema identity, staleness, delivery/effect policy and terminal outcome         |
 | **Observer** | Publish/subscribe | Delivery/ordering scope, failure handling and any required transactional bridge |
-| **Mediator** | Orchestrator      | Required durable progress, deadlines, semantic undo where needed, availability  |
+| **Mediator** | Orchestrator      | Persistence when required, deadlines, semantic undo where needed, availability  |
 | **Chain**    | Workflow          | Per-step failure, redelivery semantics, partial-effect handling                 |
 
 **Command** crossing a boundary becomes a versioned contract with a future version of your own
@@ -99,7 +113,8 @@ schema          a Java type             a versioned contract
 
 When committed changes must reliably publish, an outbox is one bridge: write the event in the same
 transaction as state and let a relay forward it, allowing redelivery. Event sourcing or supported
-transactional integration may meet other contracts. Publishing to a non-enlisted broker inside a transaction that then rolls back — or
+transactional integration may meet other contracts; complete reconciliation can meet an accepted
+recovery target without preserving each notification. Publishing to a non-enlisted broker inside a transaction that then rolls back — or
 after it commits, from a process that dies — is a dual write, and it loses or invents events
 (`gof-observer`, `event-driven-architecture`).
 
@@ -134,9 +149,10 @@ retry policy            determines amplification under failure
 load-balancing strategy determines tail latency
 ```
 
-Changing one is a migration with a compatibility window, not a configuration flip. Repartitioning a
-topic changes which events are ordered relative to each other, and consumers that relied on that
-order break (`message-ordering-and-partitioning`).
+Changing a shared mapping or wire meaning may require a migration and coexistence window.
+Repartitioning a topic can change which events share an ordering scope; preserve consumers' required
+sequence through the transition (`message-ordering-and-partitioning`). A local retry-jitter change
+may instead need a bounded operational rollout and load checks, without a schema migration.
 
 **Visitor**'s exception: a fold over a structure received from another service will meet a node type
 it does not know. "Skip it" is rarely safe — a filter that ignores an unknown node matches more than
@@ -164,8 +180,8 @@ A class                 → a design pattern applies
 A package/module        → component design; the pattern is inside it
 A release unit          → versioning and compatibility appear
 A process               → serialisation, latency, partial failure
-Several processes       → ordering, idempotency, consensus
-Several regions         → partitions between them; consensus gets expensive
+Several processes       → required ordering, repeat safety and authority scopes
+Several regions         → partition/latency model and regional recovery requirements
 ```
 
 Each broader scope adds contracts to check; renaming a class supplies none of them. Retain relevant
@@ -174,3 +190,7 @@ local correctness checks and add the operational analysis (`distribution-boundar
 Sources: [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html),
 [Saga coordination and limitations](https://microservices.io/patterns/data/saga.html), and
 [Java 17 Flow contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Flow.html).
+The reference/identity distinction is specified in the
+[Java 17 RMI object model](https://docs.oracle.com/en/java/javase/17/docs/specs/rmi/objmodel.html).
+[HTTP semantics](https://www.rfc-editor.org/rfc/rfc9110.html) distinguishes repeated identical
+requests (section 9.2.2) from conditional resource changes (section 13.1.1); these are separate guarantees.

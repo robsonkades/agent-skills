@@ -2,7 +2,9 @@
 
 ## Operation proof table
 
-For every method complete:
+For custom operations being designed or reviewed, cover each applicable outcome below.
+For a library/API question, use its established contract and address only the unresolved
+obligation; a semantic explanation does not require filling an unrelated operation table.
 
 | Operation/outcome       | Preconditions | Linearization point | Postcondition | Progress | Retry/help/reclaim |
 | ----------------------- | ------------- | ------------------- | ------------- | -------- | ------------------ |
@@ -23,12 +25,19 @@ head CAS is linearization point for push/pop success
 empty read/CAS race has a defined failure point
 popped node is not reset/reinserted while a reader can rely on old next
 ABA/tag wrap/reuse horizon addressed
-failed CAS allocation and retention bounded
+live speculative/linked-node retention and allocation-rate policy stated
+if retries allocate fresh candidates, cumulative allocation grows with retries
+individual starvation has no finite retry bound
 ```
 
 GC prevents reclamation of a node still strongly reachable by a thread, but explicit reuse of that
 same node can still create ABA. Off-heap nodes require a separate reclamation scheme such as epochs/
 hazards with its own Java/native memory-order proof.
+
+If each retry allocates a fresh candidate, making the previous candidate unreachable does
+not bound total allocation for that operation. Separate cumulative allocation, allocation
+rate and live retained state, including chains held by stalled readers. A retry cap changes
+the operation's failure/cancellation outcomes; do not add one silently to claim bounded cost.
 
 ## Linked queue checklist
 
@@ -102,5 +111,5 @@ memory reclamation indefinitely while operations remain lock-free.
 - [Java concurrent package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [Java atomic package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
 - [LongAdder sum and reset contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html)
-- [OpenJDK concurrent source](https://github.com/openjdk/jdk/tree/master/src/java.base/share/classes/java/util/concurrent)
+- [OpenJDK concurrent source, jdk-25+36](https://github.com/openjdk/jdk/tree/jdk-25%2B36/src/java.base/share/classes/java/util/concurrent) — implementation snapshot, separate from target runtime evidence.
 - [Michael and Scott queue paper](https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html)

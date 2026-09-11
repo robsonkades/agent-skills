@@ -206,6 +206,15 @@ high-risk because identities, positions, signatures and downstream copies may ch
 an explicit reason (defect, privacy obligation or bounded migration), mapping/audit record,
 downstream rebuild plan, rollback point and retention decision.
 
+Establish write authority during replacement: quiesce and account for all in-flight appends,
+or use a store-enforced fence/equivalent protocol that prevents obsolete writers committing to
+the retired stream. A route flip or caller timeout does not settle an earlier append. Reconcile
+the final committed prefix and retained command identities into the replacement before making
+it authoritative; include any tail captured while copying. If writes are accepted there,
+rollback must preserve or reconcile those new facts before restoring old authority. An old
+backup or pointer reversal alone is insufficient. Test late completion, restart and rollback
+within the existing migration authority and recovery budget.
+
 ### What to do about it in advance
 
 - Give every payload an unambiguous schema identity/version, in the envelope or registry. Do

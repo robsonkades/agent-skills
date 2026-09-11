@@ -11,13 +11,15 @@ reason and classifier version rather than deciding forever from one exception cl
 | **Payload-intrinsic**     | Authenticated schema says invalid encoding/value and the same supported build/schema reproduces it; immutable business intent can never be legal | Secure quarantine, often after one diagnostic attempt; repair/producer feedback owns it                          |
 | **Transient/overload**    | Explicit retryable response, dependency unavailability, quota/lock contention with no effect, bounded resource pressure                          | Backoff/delay/pause within deadline and retry budget; exhaustion escalates or parks—it does not change the cause |
 | **Ambiguous**             | Timeout/reset/cancellation after possible dispatch; downstream may have applied the effect                                                       | Preserve operation ID; status lookup/reconcile or retry only against downstream idempotency                      |
-| **Poison-by-environment** | The same record fails on one consumer version and succeeds on another — a bad deploy, a missing schema, a wrong config                           | Neither. Stop the consumer and fix the environment                                                               |
+| **Poison-by-environment** | Failure tracks build/schema/configuration or key availability; compare the same input in supported environments before attributing cause         | Contain the affected admission/dispatch scope; investigate and repair its environment                            |
 
 Two consequences worth stating plainly:
 
 - Attempt count and elapsed/deadline budgets protect capacity for transient and ambiguous
   work; they do not identify the cause. Exhausted transient work may remain in a durable retry
-  queue or trigger incident recovery rather than contaminate a poison quarantine.
+  queue or trigger incident recovery. A native DLQ can serve as that durable recovery queue
+  when its cause/disposition metadata, ownership, retention and replay contract support it;
+  being stored there does not make the record permanently poison.
 - **The fourth row is why an attempt count is not a classifier.** A deploy that breaks
   deserialisation makes every record look permanently poison, individually indistinguishable
   from genuine poison, and the DLQ fills with valid data. The signal is the _rate_: one poison
@@ -53,9 +55,12 @@ Block the partition (gate dispatch and prevent commits past unresolved work) whe
 - you have an alert on consumer lag, because this design's failure mode is silence
 - retries are bounded; permanent defects wait for remediation rather than busy-loop
 
-Stop the consumer entirely when:
-- the failure rate indicates a systemic incident that must be diagnosed before mass quarantine
-- quarantine cannot be made durable; retain source ownership/recoverability rather than ack
+Pause the affected admission/dispatch scope when:
+- systemic failure evidence requires containment and investigation before mass quarantine
+- neither the quarantine path nor a proven fallback can make disposition durable;
+  retain source ownership/recoverability rather than ack
+- stop the whole consumer only when that is the affected scope or narrower isolation cannot
+  preserve ownership, ordering and durable progress; otherwise healthy independent work may continue
 ```
 
 ## The head-of-line decision, worked through
@@ -124,6 +129,9 @@ come from a consistent recovery protocol, not unrelated reads.
   named before the code is written.
 
 ## Classification tests
+
+Select cases for the classifier or routing contract being changed; an explanation or review
+can close from adequate existing evidence. For implementation, exercise relevant boundaries:
 
 - replay the same bytes against old/current/next consumer builds and schema registry state;
 - test representative HTTP/domain results, especially 408/409/412/425/429, authentication

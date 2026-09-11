@@ -62,13 +62,13 @@ public final class StringList implements Serializable {
     private transient Entry head;             // transient: the representation, not the content
 
     private void writeObject(ObjectOutputStream s) throws IOException {
-        s.defaultWriteObject();               // always call, even with no non-transient fields
+        s.defaultWriteObject();               // this form retains the default-field slot
         s.writeInt(size);
         for (Entry e = head; e != null; e = e.next) s.writeObject(e.data);
     }
 
     private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
-        s.defaultReadObject();                // always call
+        s.defaultReadObject();                // matches this form's defaultWriteObject
         int n = s.readInt();
         if (n < 0 || n > MAX_ENTRIES) throw new InvalidObjectException("bad size: " + n);
         for (int i = 0; i < n; i++) add((String) s.readObject());
@@ -79,8 +79,11 @@ public final class StringList implements Serializable {
 Rules encoded there: mark representation-only fields `transient`; this design calls
 `defaultWriteObject`/`defaultReadObject` symmetrically so a later non-transient field can be added;
 write logical content explicitly; and validate counts before allocating or looping. A fully
-specified custom form may omit default field data, but that choice itself is a permanent format
-contract.
+customized field layout can use `putFields`/`writeFields` and `readFields` instead. Preserve the
+default-field protocol before optional data, even when there are no persistent fields: omitting
+it can leave deserialization undefined when the defining class cannot be resolved. See the
+[serialization output contract](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/output.html#the-writeobject-method)
+and [matching input contract](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html#the-readobject-method).
 
 ## readObject is hostile-input territory
 

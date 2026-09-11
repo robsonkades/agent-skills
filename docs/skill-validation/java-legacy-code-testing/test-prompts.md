@@ -1,5 +1,13 @@
 # Selection test prompts — `java-legacy-code-testing`
 
+Historical prompts and expected verdicts from the 2026-08-27/28 review, preserved
+with its research and release records. These are not current behavioral oracles:
+P2's "never read the rest" omits necessary caller/effect investigation, and P4's
+dependency pin alone does not establish classpath impossibility or runtime
+compatibility. Description-only selection also does not verify implementation
+behavior. Use this skill's current cases and separate execution status in the
+[catalog review inventory](../catalog-review-2026-09-09.json) for subsequent evaluation.
+
 Ten prompts. Six must select this skill (two adversarial), four must select a named neighbour
 instead. Run each against the **manifest description alone** — no body, no references — because
 that is what the Claude adapter installs as frontmatter and all the selector sees.

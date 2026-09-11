@@ -3,8 +3,8 @@ name: kafka-consumers-in-java
 description: >
   Operating a Kafka consumer from Java: the log-not-a-queue model where consumption removes
   nothing and position is an offset; the rebalance as the central operational event, with
-  cooperative assignment as the mitigation and where duplicates enter; why slow processing
-  trips max.poll.interval.ms, not the session timeout; pause/resume for slow work; commit
+  assignment and membership choices that can reduce disruption and where duplicates enter;
+  processing-interval versus heartbeat/session failures; pause/resume for slow work; commit
   strategies; auto.offset.reset as a data-loss-or-reprocessing decision; and lag as record,
   byte, time and catch-up signals. Use when a group rebalances repeatedly under load, when records are
   reprocessed after a deploy, when enable.auto.commit is left on, when a consumer starts
@@ -37,8 +37,11 @@ the poll interval, the member is evicted, the group rebalances, the batch comes 
 
 First inspect the resolved Kafka client, Java toolchain, broker version, `group.protocol`,
 assignment mode (`subscribe` versus manual `assign`) and any Spring container configuration.
-References use Kafka 4.1 API semantics; snippets are partial, not a runnable application or
-authorization to upgrade. Manual assignment does not participate in group rebalances.
+References use Kafka 4.1 client API semantics; snippets are partial, not a runnable application
+or authorization to upgrade Java, Kafka or Spring. Inspect the project's resolved dependency
+management and runtime image rather than inferring its client from the broker version.
+Manual assignment does not participate in group rebalances; it still needs progress, ownership
+and checkpoint discipline, especially if multiple consumers can write the same checkpoints.
 
 1. **Fix the guarantee first** — where the commit sits relative to the side effect.
    `delivery-semantics` owns the answer; everything below assumes at-least-once plus a
@@ -50,20 +53,26 @@ authorization to upgrade. Manual assignment does not participate in group rebala
 3. **Measure the whole poll-cycle tail.** `records returned × per-record time` is a conservative
    estimate only for serial homogeneous work; include deserialization, queueing, retries,
    commits, batch overhead and correlated dependency latency against `max.poll.interval.ms`.
-4. **Choose the assignment strategy and membership shape** — incremental cooperative
-   assignment, plus static membership if rolling restarts dominate rebalances
-   (`references/poll-loop-and-rebalance.md`).
+4. **Assess assignment or membership changes only when relevant.** If reassignment disruption
+   or short restarts are the measured problem, compare the current protocol/assignor with
+   cooperative assignment or static membership and their rollout/recovery costs
+   (`references/poll-loop-and-rebalance.md`). Regular scale-up is not itself a defect.
 5. **Decide reset behavior for the consumer's subscriptions.** `auto.offset.reset` is a consumer
    configuration used when no initial offset exists or its current offset is unavailable.
    Different per-topic policies require separate consumers or explicit assignment/seek handling.
-6. **Instrument lag in time, per partition**, and alert on that rather than record counts
-   (`references/offsets-and-lag.md`).
-7. **Prove it by fault injection** — kill the consumer mid-batch and assert no loss; force a
-   rebalance under load and assert the downstream outcome.
+6. **Choose lag signals for the consumer's contract.** Distinguish committed offsets, fetched
+   position and completed effects; use meaningful per-partition age with arrival/completion
+   rates and offset-distance or byte/work context (`references/offsets-and-lag.md`).
+7. **Validate the mechanism affected by the change.** Commit/offload changes need crash and
+   completion-order checks; assignment changes need rebalance checks; reset changes need
+   bootstrap/retention cases. For triage or alert review, use the relevant evidence first.
+   The reference lists reproducible fault cases; unexecuted cases do not prove no loss.
 
 Report the observed poll/commit/rebalance evidence, the proposed failure mechanism, and the
 test that would confirm it. Missing logs or completion tracking leave the diagnosis conditional;
-polling regularly is not proof that offloaded work is completing.
+polling regularly is not proof that offloaded work is completing. For a change, include the
+commit boundary, ownership/progress implications and checks actually run. Keep a simple triage
+answer to the finding, uncertainty and next discriminating check.
 
 ## Decision block
 
@@ -142,7 +151,8 @@ Raise max.poll.interval.ms when:
 - Consumer shutdown is a drain: stop admission, bound in-flight completion while maintaining
   ownership when feasible, commit safe positions, then `close()` within the grace budget.
   Static membership/protocol can retain assignment after close until expiry; do not promise
-  immediate reassignment. Sequencing is `kubernetes-service-lifecycle`.
+  immediate reassignment. Budget close and callbacks within the remaining grace period;
+  `wakeup()` does not interrupt `close()`. Sequencing is `kubernetes-service-lifecycle`.
 - Deserialisation runs on the poll thread and bills as consumer cost, not handler cost. A record
   that cannot be deserialised can block progress, but schema-service outages or configuration
   errors can be recoverable. Preserve raw bytes/offset and classify before routing or skipping
@@ -162,5 +172,5 @@ Raise max.poll.interval.ms when:
   the poll thread.
 - [Offsets and lag](references/offsets-and-lag.md) — commit strategies compared with the
   guarantee and duplicate window each yields, `auto.offset.reset` as an explicit decision, lag
-  in time versus records, and the fault-injection tests that prove no loss under at-least-once.
-  Read when choosing a commit strategy or building consumer alerts.
+  in time versus offset distance, and fault cases for testing the affected delivery boundary.
+  Read when choosing a commit/reset strategy, building consumer alerts or validating those changes.

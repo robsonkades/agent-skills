@@ -1,7 +1,8 @@
 # Catalogue: reshaping a signature
 
 These steps change what a caller writes. Inside a deployable you rebuild atomically the
-compiler finds every caller the AST reaches — never the reflective ones, and a `private`
+compiler checks compiled source, but overload fallback can keep a changed call compiling;
+it does not find reflective callers, and a `private`
 modifier is no protection when JPA field access or Jackson reaches past it. Close the caller
 set both ways (`behaviour-preservation.md`) and classify the symbol
 (`compatibility.md`) before picking the step; across a published, exported, serialised or
@@ -20,11 +21,10 @@ separate commits; delete or `@Deprecated(since = …, forRemoval = true)` the ol
 Required whenever callers are out of reach, and the sane choice inside a codebase too
 whenever "all callers" exceeds a reviewable diff.
 
-**Precondition on the delegate:** the old signature's body after the change is exactly one
-call to the new one — no literal added, no `null` supplied for a new parameter, no exception
-type changed, no argument reordered by hand — and the old signature's tests pass unedited
-against it. A default invented for a new parameter is a behaviour change hiding in a
-compatibility shim, and needs its own commit.
+**Precondition on the delegate:** preserve the old signature's inputs, results, failures,
+effects and evaluation order. A literal/default or argument adaptation can preserve the old
+policy; prove that correspondence with existing consumer checks, not the number of calls in
+the shim. An invented default that changes the old policy is a separate behavior change.
 
 ## Encapsulate Variable
 
@@ -32,7 +32,7 @@ A field or global accessed directly gains an accessor, so the access point becom
 that can later validate, copy, log or compute.
 
 **Precondition:** every access is redirected. Make the field `private` in the same commit
-and let the compiler prove the static half was total; the framework half needs the string
+and let the compiler expose affected source sites, checking inherited-field fallback too; the framework half needs the string
 search, because JPA field access, Jackson and anything binding by field name reach past the
 accessor.
 

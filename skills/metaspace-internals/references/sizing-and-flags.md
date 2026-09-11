@@ -1,27 +1,38 @@
 # Metaspace flags and the sizing protocol
 
-## Measured defaults (OpenJDK 25, via `PrintFlagsFinal`)
+## Reference values and exact-build checks
 
-| Flag                              | Default                           | What it actually is                                                                             |
-| --------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `-XX:MetaspaceSize`               | 22020096 bytes (≈ 21.0 MB)        | Threshold that triggers the first metaspace-driven collection — **not** a size cap              |
-| `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | Overall commitment limit on this build; effectively unbounded by default                        |
-| `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum % free after a metaspace collection, below which metaspace expands                      |
-| `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum % free above which metaspace may shrink                                                 |
-| `-XX:MinMetaspaceExpansion`       | 327680 bytes (320 KB)             | Lower increment used in GC high-water-mark adjustment, not every arena/OS allocation            |
-| `-XX:MaxMetaspaceExpansion`       | 5439488 bytes (≈ 5.19 MB)         | GC high-water-mark expansion-policy parameter, not a hard cap on each allocation                |
-| `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Requested reservation/limit for compressed class metadata; verify the effective value           |
-| `-XX:+UseCompressedClassPointers` | `true` (`lp64_product`)           | Independent of UseCompressedOops on this build; verify support and effective mode on the target |
+The numeric values below are retained from earlier JDK 25 examples and were independently
+rechecked on Temurin 25.0.3+9 Windows x64 with a 16 MiB initial / 64 MiB maximum heap on
+2026-09-11. They are observed effective values for that startup, not portable defaults for
+every vendor, architecture, collector or flag combination. Earlier printouts elsewhere in this
+package remain historical; their missing vendor/architecture details cannot be reconstructed.
 
-**`-XX:MetaspaceExpansionSize` does not exist.** `java -XX:MetaspaceExpansionSize=5m -version`
+| Flag                              | Default                           | What it actually is                                                                      |
+| --------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------- |
+| `-XX:MetaspaceSize`               | 22020096 bytes (≈ 21.0 MB)        | Threshold that triggers the first metaspace-driven collection — **not** a size cap       |
+| `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | Overall commitment limit on this build; effectively unbounded by default                 |
+| `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum % free after a metaspace collection, below which metaspace expands               |
+| `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum % free above which metaspace may shrink                                          |
+| `-XX:MinMetaspaceExpansion`       | 327680 bytes (320 KB)             | Lower increment used in GC high-water-mark adjustment, not every arena/OS allocation     |
+| `-XX:MaxMetaspaceExpansion`       | 5439488 bytes (≈ 5.19 MB)         | GC high-water-mark expansion-policy parameter, not a hard cap on each allocation         |
+| `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Requested reservation/limit for compressed class metadata; verify the effective value    |
+| `-XX:+UseCompressedClassPointers` | `true`                            | Separate mechanism; effective mode can depend on build, architecture and heap ergonomics |
+
+**`-XX:MetaspaceExpansionSize` is unrecognized on the checked build.** `java -XX:MetaspaceExpansionSize=5m -version`
 answers `Unrecognized VM option 'MetaspaceExpansionSize=5m'. Did you mean
 'MinMetaspaceExpansion=<value>'?`. Material that quotes it as a single expansion-increment
 flag is wrong; there are two flags, both listed above.
 
-**`-XX:MetaspaceReclaimPolicy` is gone on 25.** The JEP 387 flag (`balanced` / `aggressive` /
-`none`) is absent from `-XX:+PrintFlagsFinal` on 25.0.3; guides written for JDK 16–21 still
-quote it. Metaspace commits and uncommits in 64 KB granules (`commit_granule_bytes: 65536`
-in `VM.metaspace basic`), which is the unit `committed` moves in.
+**`-XX:MetaspaceReclaimPolicy` is obsolete on the checked build.** JDK 21 and 25 source
+mark it obsolete from 21. The fresh 25.0.3 startup accepted `balanced` with a warning that
+support was removed in 21.0 and ignored the option; it was absent from `PrintFlagsFinal`.
+Parser acceptance does not mean the policy is active. Check stderr and effective settings
+instead of treating every absent option as an unrecognized-option failure.
+
+The pinned JDK 25 implementation commits/uncommits OS memory in 64 KiB granules
+(`commit_granule_bytes: 65536`). This is not the unit of every displayed `committed` field:
+an individual chunk/CLD can account for a smaller part of a shared committed granule.
 
 **`CompressedClassSpaceSize` has a floor.** `-XX:CompressedClassSpaceSize=1m` starts with
 `CompressedClassSpaceSize adjusted from user input 1048576 bytes to 16777216 bytes`, so a
@@ -30,11 +41,12 @@ claims.
 
 ## Which ceiling does the error name?
 
-| Symptom                                    | Failed domain / next check                                   | Relevant control                                                 |
-| ------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `OutOfMemoryError: Metaspace`              | overall metadata allocation; confirm usage and unloading     | `MaxMetaspaceSize`, only after diagnosing growth                 |
-| `OutOfMemoryError: Compressed class space` | compressed class metadata reservation                        | `CompressedClassSpaceSize` and class cardinality/lifetime        |
-| exit 137 / Kubernetes `OOMKilled`          | cgroup or node kill; inspect `memory.events` and all domains | container budget; a metaspace cap is only one possible guardrail |
+| Symptom                                        | Failed domain / next check                                               | Relevant control                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `OutOfMemoryError: Metaspace`                  | overall metadata allocation; confirm usage and unloading                 | `MaxMetaspaceSize`, only after diagnosing growth                 |
+| `OutOfMemoryError: Compressed class space`     | compressed class metadata reservation                                    | `CompressedClassSpaceSize` and class cardinality/lifetime        |
+| exit 137 alone                                 | termination cause unconfirmed; inspect process/container/kernel evidence | no metaspace or OOM attribution from status alone                |
+| Kubernetes `OOMKilled` / matching OOM evidence | memory kill; correlate the affected cgroup/node and all domains          | container budget; a metaspace cap is only one possible guardrail |
 
 Raising only MaxMetaspaceSize is not a general repair for class-space exhaustion. At startup,
 HotSpot can reduce CompressedClassSpaceSize based on MaxMetaspaceSize and alignment, so changing
@@ -46,6 +58,9 @@ proxies (CGLIB, ByteBuddy, Hibernate) or many reflective classes exhaust it whil
 metaspace total still looks comfortable.
 
 ## Sizing `MaxMetaspaceSize`
+
+Apply this protocol when a new cap or capacity claim needs evidence. Existing measurements can
+satisfy it; a supported narrow explanation or adequate current configuration needs no fresh soak.
 
 1. Exercise every relevant regime: startup, warm-up, peak feature mix, runtime generation,
    rolling redeploy overlap and the longest expected uptime. A fixed 30-minute soak is not
@@ -77,10 +92,13 @@ not itself a metaspace-contents dump.
 
 ## Operational checklist
 
+Select the checks relevant to the decision and reuse matching evidence. A missing capture limits
+the claim that needs it; it does not invalidate independent observations or require every tool.
+
 Before investigating:
 
 - [ ] Heap, metadata and other native domains compared; multiple failures can coexist
-- [ ] Symptom classified: `OutOfMemoryError` with a message, or a silent `OOMKilled`
+- [ ] Symptom classified: named `OutOfMemoryError`, confirmed memory kill, or unexplained termination
 - [ ] Effective `MaxMetaspaceSize`, `CompressedClassSpaceSize` and compressed-pointer mode recorded
 
 While observing:
@@ -101,3 +119,8 @@ When validating the fix:
 [HotSpot JDK 25 metaspace ergonomics](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspace.cpp)
 shows class reservation adjustment and GC high-water-mark policy. Defaults above are build
 observations, not portable Java guarantees.
+
+- [JDK 17 pointer ergonomics](https://github.com/openjdk/jdk/blob/jdk-17-ga/src/hotspot/share/runtime/arguments.cpp) — architecture-dependent compressed-pointer coupling and heap sizing.
+- [JDK 25 flag lifecycle](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/arguments.cpp) — obsolete-option handling and target-build checks.
+- [JDK 25 metaspace granules](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspace/metaspaceSettings.hpp) — OS commitment granule versus chunk accounting.
+- [Linux 6.10 cgroup memory events](https://www.kernel.org/doc/html/v6.10/admin-guide/cgroup-v2.html) — correlate memory-kill evidence with the affected hierarchy and interval.

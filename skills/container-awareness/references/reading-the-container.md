@@ -34,9 +34,12 @@ double MinRAMPercentage     = 50.000000 {product}
 double MaxRAMPercentage     = 25.000000 {product}
 ```
 
-**From JDK 26 the default value of `InitialRAMPercentage` is removed** (JDK-8371986): with
-no `-Xms`, the initial heap is `MinHeapSize` instead. If a startup profile depended on the
-old behaviour, ask for it explicitly with `-XX:InitialRAMPercentage=1.5625`.
+**JDK 26 changes the default `InitialRAMPercentage` to `0`** (JDK-8371986); the option
+remains available. Without an explicit initial size, heap ergonomics still account for
+minimum/generation sizes, maximum heap and collector constraints; do not assume
+`InitialHeapSize` always equals `MinHeapSize`. Inspect the resolved flags. If the startup
+profile needs the old percentage, test `-XX:InitialRAMPercentage=1.5625` explicitly against
+its startup and footprint goals rather than restoring it automatically.
 
 `MinRAMPercentage` applies when the detected memory is small. The threshold at which the
 JVM switches between the two is internal and not exposed as a flag — measure with
@@ -92,6 +95,10 @@ java -XX:NativeMemoryTracking=summary -jar app.jar   # at startup
 jcmd <pid> VM.native_memory summary                  # JVM-tracked native view, not RSS
 ```
 
+`jcmd` cannot start or restart NMT. A killed JVM cannot be attached to; use historical
+captures for that incident, or enable NMT at startup for a subsequent bounded capture.
+State which evidence belongs to the original process and which belongs to a reproduction.
+
 ## Version notes worth checking before trusting a reading
 
 - `UseContainerSupport` defaults on in supported Linux HotSpot builds since JDK 10;
@@ -107,6 +114,9 @@ jcmd <pid> VM.native_memory summary                  # JVM-tracked native view, 
 - [JDK 17 launcher options](https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html)
 - [JDK 11.0.16 fixes, including cgroups v2](https://www.oracle.com/java/technologies/javase/11-0-16-bugfixes.html)
 - [JDK 26 initial heap change](https://inside.java/2026/03/02/jdk-26-rn-ops/)
+- [JDK 26 initial heap sizing implementation](https://github.com/openjdk/jdk/blob/jdk-26%2B35/src/hotspot/share/runtime/arguments.cpp#L1623-L1647)
+- [JDK 25 NMT enablement and coverage](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)
+- [Kubernetes resource requests and limits](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [Kernel cgroup v2 paths, hierarchy and OOM counters](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)
 - [CFS bandwidth control and v1 statistics](https://docs.kernel.org/scheduler/sched-bwc.html)
 - [HotSpot CPU shares change](https://bugs.openjdk.org/browse/JDK-8281571)

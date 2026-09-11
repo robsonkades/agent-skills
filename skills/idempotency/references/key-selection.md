@@ -6,18 +6,24 @@ distinct intents, or failing to deduplicate two copies of one.
 
 ## Key source
 
-| Source                                                                                                                                   | What it identifies  | Use when                                                                                     | Failure it produces                                                                                                                                                                                                            |
-| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Client-supplied request id (`Idempotency-Key` header, a UUID the client generates **once per intent** and reuses across its own retries) | the caller's intent | the caller is code you can specify, and retries come from the caller                         | a client that regenerates the id per attempt deduplicates nothing; a client that reuses one id across genuinely distinct intents suppresses real work                                                                          |
-| Deterministic hash of the canonical business payload                                                                                     | the content         | no id can be added to the protocol, and identical content genuinely means the same operation | two legitimately identical operations (the same customer buying the same item twice in a minute) collapse into one. Only safe when the payload contains something that varies per intent — an order number, a client timestamp |
-| Business-operation key (order id + operation kind/version, payment attempt id, external transaction reference)                           | one domain intent   | the domain defines a stable, non-recycled identity for this operation                        | an object id alone may collapse distinct operations on the same object; recycled/imported identifiers require namespace and epoch                                                                                              |
-| Broker message id / delivery id                                                                                                          | one _delivery_      | last resort, and only against redelivery of the same message                                 | an upstream that republishes after its own crash emits a **new** message id for the same intent, and both are processed. It also cannot deduplicate across a topic migration or a producer restart                             |
+| Source                                                                                                                                   | What it identifies                        | Use when                                                                             | Failure it produces                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Client-supplied request id (`Idempotency-Key` header, a UUID the client generates **once per intent** and reuses across its own retries) | the caller's intent                       | the caller is code you can specify, and retries come from the caller                 | a client that regenerates the id per attempt deduplicates nothing; a client that reuses one id across genuinely distinct intents suppresses real work                                          |
+| Deterministic hash of the canonical business payload                                                                                     | the content                               | identical canonical content genuinely defines the same operation or immutable object | two distinct purchases with identical content collapse into one. If distinct intents matter, include a stable intent identifier; a timestamp alone need not be unique or stable across retries |
+| Business-operation key (order id + operation kind/version, payment attempt id, external transaction reference)                           | one domain intent                         | the domain defines a stable, non-recycled identity for this operation                | an object id alone may collapse distinct operations on the same object; recycled/imported identifiers require namespace and epoch                                                              |
+| Stable transport message identity                                                                                                        | one message within a documented namespace | the identity is preserved across every redelivery covered by the guarantee           | a new identity on republication misses the same business intent unless a stable operation ID is carried across it; delivery tags/attempt IDs do not supply that identity                       |
 
 There is no universal ranking independent of scope. A non-recycled business-operation ID is
 usually strongest; a correctly generated caller intent ID is equally useful at an API
-boundary. Payload hash is a lossy fallback because identical content may represent distinct
-intents. Broker IDs are suitable only for the documented redelivery identity; producer
-republication can create a new ID for the same business operation.
+boundary. A content-defined contract, such as one immutable blob per verified digest, needs no
+extra per-intent field. Payload hash is lossy when identical content can represent distinct
+intents. Verify transport identities across redelivery, republication and namespace changes;
+producer republication may preserve an application ID or assign a new one.
+
+For RabbitMQ AMQP 0-9-1, a **delivery tag** is a channel-scoped acknowledgement identifier,
+not a stable message identity across redelivery. The **Message ID** property is separate,
+optional and publisher-set. It is usable for deduplication only if the application ensures
+the required uniqueness, scope and preservation; RabbitMQ does not create that intent contract.
 
 ## Decision block — synthetic key and dedup store, or something cheaper
 
@@ -35,8 +41,8 @@ Avoid a synthetic key when:
   SET, a delete, an insert that a unique constraint already guards
 - the state predicate alone fully defines the contract and no replayed response or external
   effect must be associated with a particular command. Otherwise combine predicate and key
-- the only identifier available is a broker delivery id and the upstream can republish;
-  the key would give false confidence rather than deduplication
+- the only candidate is an attempt/delivery tag, or a transport message identity that is
+  not stable across the business replay paths the guarantee must cover
 
 Prefer a unique constraint on the business table instead when:
 - the domain already carries a unique identifier for the created object (order number,
@@ -73,11 +79,11 @@ authorize each replay without using a rotating secret itself as the durable iden
 Retention is bounded below by every accepted replay path; its upper bound is a product,
 legal, privacy and storage decision rather than automatically the business record's lifetime.
 
-| Retention                                                                         | Consequence                                                                                                                                     |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shorter than the client's total retry window (including a DLQ replay hours later) | the retry executes again. The dedup store is present, passes tests, and does nothing at the moment it exists for                                |
-| Longer than response/business data may legally be retained                        | response snapshots or fingerprints can violate minimization; retain the smallest tombstone/outcome permitted and use a new key for a new intent |
-| Unbounded                                                                         | the table grows without limit and its unique index eventually dominates write latency                                                           |
+| Retention                                                                         | Consequence                                                                                                                                                         |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shorter than the client's total retry window (including a DLQ replay hours later) | the retry can execute again unless another authority still enforces uniqueness; the expired dedup record no longer supplies that guarantee                          |
+| Longer than response/business data may legally be retained                        | response snapshots or fingerprints can violate minimization; retain the smallest tombstone/outcome permitted and use a new key for a new intent                     |
+| Unbounded                                                                         | new distinct keys accumulate; measure rows, index size and write cost. Permanent business uniqueness may be justified without retaining full responses indefinitely |
 
 Set it from the maximum age of every supported retry/replay source: client policy, transport
 redelivery, offline devices, outbox retention, operator replay and DLQ policy. If the system
@@ -117,3 +123,8 @@ payload differently. During a rolling upgrade, old and new instances must comput
 fingerprint for the same accepted request, or ingress must persist the canonical fingerprint.
 Do not change namespace or normalization silently: it opens a second dedup universe for
 in-flight retries.
+
+## Primary references
+
+- [RabbitMQ AMQP 0-9-1 delivery tags and acknowledgement scope](https://www.rabbitmq.com/docs/confirms)
+- [RabbitMQ message properties versus delivery metadata](https://www.rabbitmq.com/docs/consumers)

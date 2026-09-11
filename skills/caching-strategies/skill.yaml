@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: caching-strategies
-version: 1.2.1
+version: 1.2.2
 description: >-
   Deciding whether to cache, then doing it safely: saved origin work and latency, bounded size
   or weight, TTL and jitter, stampede and its four distinct scopes, cache-aside versus
@@ -47,6 +47,11 @@ dependencies:
 optionalDependencies:
   - name: connection-pool-sizing
     version: ^1.0.0
+
+suggests:
+  - idempotency
+  - java-serialization-hardening
+  - jvm-gc-tuning
 
 capabilities:
   - reads-source

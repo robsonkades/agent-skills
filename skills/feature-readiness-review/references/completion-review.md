@@ -39,9 +39,11 @@ by "the implementation does this" is unchecked.
 
 ## 4. Decisions
 
-Every significant decision has a record, and the record describes what was actually built. This
-is where planning and implementation most often diverge quietly: the record says one thing, the
-code does another, and the code is right.
+Every significant decision has a record. When implementation diverges, determine whether it is a
+defect against the accepted contract or evidence that invalidates the decision. Return a defect
+for correction. If evidence warrants a changed decision, use existing authority or obtain the
+missing decision before accepting affected work. Implementation alone is not authority to rewrite
+what was agreed. Check affected records and validation against the resulting accepted baseline.
 
 Decisions taken during implementation and recorded now are marked as recorded retrospectively.
 The label is not bureaucracy — a retrospective record captures the justification rather than the
@@ -83,8 +85,12 @@ happens to it.
 
 ## 10. Observability
 
-An operator can tell the feature is working, and diagnose it when it is not. Concretely: the
-HIGH risks in the register have a detection signal, and that signal exists in the code.
+Check applicable operational criteria and HIGH-impact risks against their detection plans. Verify
+the mechanism, responsible role and detection/response window with evidence: telemetry,
+reconciliation or a manual check may be appropriate. Code presence alone does not prove coverage.
+Retain detection gaps and their disposition; a valid accepted gap does not satisfy an unmet Required
+criterion. Evidence-backed avoided risks need no invented signal for a failure path that no longer
+exists within the reviewed scope.
 
 ## 11. Progress and artefacts
 
@@ -124,5 +130,6 @@ Remaining
   BAC-03 blocked on Q-08. RES-07 and RES-08 are defined and ready once it is answered.
 ```
 
-The headline is the honest one. A report that opens with what worked and mentions the gap in
-the last line is technically complete and functionally a false claim.
+Lead with the completion result and material gaps that determine it. Report unavailable or failed
+checks with their actual effect on that result; keep non-blocking limitations visible without
+presenting them as unmet Required criteria.

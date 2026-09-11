@@ -6,8 +6,10 @@
 java -Xlog:safepoint=info:file=safepoint.log:time,uptime:filecount=5,filesize=20M -jar app.jar
 ```
 
-Both `time` and `uptime` decorators, plus rotation, are required for correlation with an
-incident window. Real lines from 25.0.3 (executed; one line each, wrapped here):
+This is an example for a new capture, not a requirement to replace adequate existing logs.
+Use timestamps with a demonstrated mapping to the incident clock. Both decorators are useful;
+an existing mapping can suffice. Bound retained output with rotation or another appropriate
+capture/retention limit. Historical real lines from 25.0.3 (one line each, wrapped here):
 
 ```
 [1.363s][info][safepoint] Safepoint "G1CollectFull", Time since last: 155500 ns,
@@ -18,23 +20,25 @@ incident window. Real lines from 25.0.3 (executed; one line each, wrapped here):
   Total: 60800 ns, Threads: 1 runnable, 12 total
 ```
 
-| Field                | Meaning                                                                                          |
-| -------------------- | ------------------------------------------------------------------------------------------------ |
-| `Safepoint "<name>"` | The VM operation. Not every one is a GC — `ThreadDump` above is not                              |
-| `Time since last`    | Interval since the previous safepoint; shows periodic patterns                                   |
-| `Reaching safepoint` | Elapsed synchronization, potentially dominated by a late required thread; includes coordination  |
-| `At safepoint`       | VM work after synchronization; GC/VM-operation event timer boundaries may differ                 |
-| `Leaving safepoint`  | Disarm and wake-up; the third term that a hand-summed `Reaching + At` omits                      |
-| `Total`              | Safepoint cycle: `Reaching + At + Leaving`; correlate to request/thread impact                   |
-| `Threads`            | Build-specific synchronization/runnable counts versus total; not every thread was executing Java |
+| Field                | Meaning                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| `Safepoint "<name>"` | The VM operation. Not every one is a GC — `ThreadDump` above is not                                 |
+| `Time since last`    | Previous cycle end to current cycle begin; the first uses tracing initialization, not a prior cycle |
+| `Reaching safepoint` | Elapsed synchronization, potentially dominated by a late required thread; includes coordination     |
+| `At safepoint`       | VM work after synchronization; GC/VM-operation event timer boundaries may differ                    |
+| `Leaving safepoint`  | Disarm and wake-up; the third term that a hand-summed `Reaching + At` omits                         |
+| `Total`              | Safepoint cycle: `Reaching + At + Leaving`; correlate to request/thread impact                      |
+| `Threads`            | Build-specific synchronization/runnable counts versus total; not every thread was executing Java    |
 
-Older JDKs printed no `Leaving safepoint` field; a parser written for them still matches
-on 25 but attributes the third term to nothing. Capture `Total` from the line.
+Capture `Total` from the line and match the actual layout. In JDK 24 GA, `At` includes
+release (`end - sync`); JDK 25 separates `At = leave - sync` and `Leaving = end - leave`.
+Older `Total` already includes the cycle; do not add release to it again. On 25, summing
+only `Reaching + At` omits release. `Time since last` is neither TTSP nor total cycle duration.
 
 More detail when the `info` level is not enough:
 
 ```bash
-java -Xlog:safepoint=debug:file=sp.log:time,uptime -jar app.jar     # per-thread reason
+java -Xlog:safepoint=debug:file=sp.log:time,uptime -jar app.jar     # synchronization summary
 java -Xlog:safepoint*=trace:file=sp_trace.log:time,uptime -jar app.jar
 ```
 
@@ -42,7 +46,8 @@ java -Xlog:safepoint*=trace:file=sp_trace.log:time,uptime -jar app.jar
 executed: on Temurin 11 it starts and warns `Option PrintSafepointStatistics was deprecated in
 version 11.0`; on 17, 21, 24 and 25 it is `Unrecognized VM option` and the JVM refuses to start.
 A runbook still carrying it therefore fails at launch rather than degrading. Its information
-moved into `-Xlog:safepoint+stats=debug`, which emits the same per-operation table.
+moved into `-Xlog:safepoint+stats=debug`; inspect that build's per-operation table and timer
+boundaries rather than assuming an identical legacy layout.
 
 ## Naming the slow thread
 
@@ -50,9 +55,11 @@ moved into `-Xlog:safepoint+stats=debug`, which emits the same per-operation tab
 java -XX:+SafepointTimeout -XX:SafepointTimeoutDelay=500 -jar app.jar
 ```
 
-For any thread that takes longer than 500 ms (default `SafepointTimeoutDelay` is 10000) to
-reach the safepoint, the VM thread logs at `-Xlog:safepoint` **warning** level — visible on
-stdout with no `-Xlog` configuration at all (executed, 25.0.3):
+On the checked source, the VM thread compares a deadline derived from the safepoint start
+plus `SafepointTimeoutDelay` while waiting for synchronization. Crossing it can report the
+threads still not safe; it is not an individual timer for each thread or a hard completion
+bound. The default delay is 10000 ms. It logs at `-Xlog:safepoint` **warning** level —
+visible on stdout without extra logging configuration in this historical 25.0.3 capture:
 
 ```
 [0.080s][warning][safepoint] # SafepointSynchronize::begin: Timeout detected:
@@ -66,7 +73,7 @@ stdout with no `-Xlog` configuration at all (executed, 25.0.3):
 That is the thread's **name and state, not its stack**. It answers "which thread" once
 `-Xlog:safepoint` has shown that sync time is high; "what was it doing" needs a second
 source over the same window — an async-profiler wall-clock profile filtered to that thread,
-or in a test environment `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOnSafepointTimeout`,
+or in an isolated disposable test `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOnSafepointTimeout`,
 which aborts the JVM on timeout and attempts an `hs_err`; stack reporting can be incomplete. The
 aligned stack/profile may show a long poll-free compiled region, runtime transition, page
 fault or descheduled runnable thread. Ordinary native-state JNI/FFM execution is already
@@ -74,10 +81,12 @@ safepoint-safe; do not infer a native cause from the method name alone.
 
 ## JFR
 
-Prepare `safepoints.jfc` from the target JDK's profile configuration, explicitly enabling
+For a new capture that needs complete cycle reconstruction, prepare `safepoints.jfc` from
+the target JDK's profile configuration, explicitly enabling
 `jdk.SafepointBegin`, `jdk.SafepointStateSynchronization`, `jdk.SafepointEnd` and
 `jdk.ExecuteVMOperation` at suitable thresholds. JDK 25's stock profile disables Sync and End;
-event metadata proves availability, not recording enablement. Enable `SafepointLatency`
+event metadata proves availability, not recording enablement. Reuse an adequate existing
+recording and enable only events needed for the claim. Enable `SafepointLatency`
 separately only for sampler diagnostics.
 
 ```bash
@@ -102,11 +111,14 @@ There is **no `jdk.SafepointCleanup` event** on 25. VM cleanup is not synonymous
 `SafepointEnd.duration` covers leaving/disarming work. Join by `safepointId` and compute a
 cycle from `SafepointEnd.endTime - SafepointBegin.startTime`, not End.startTime. Sync is an
 aggregate pass, not the identity or individual delay of the slowest thread. Partial/missing
-joins are incomplete evidence; JFR boundaries can differ slightly from unified-log timers.
+joins cannot establish those complete cycles; independently recorded operations/sync events
+can still support narrower summaries. JFR boundaries can differ slightly from unified-log timers.
 
 `SafepointLatency` describes cooperative sampler request-to-processing delay; it is neither
 global TTSP nor a numerical measure of profile bias. JEP 518 reconstructs the sampled location
-later and retains limitations (for example intrinsic frames). Its lack of `safepointId` matters.
+later for Java execution and retains limitations (for example intrinsic frames). Native
+execution uses the previous sampling approach in this JEP; do not infer the same processing
+path for every sample. Its lack of `safepointId` matters.
 
 Reading the recording programmatically (Java 17+ snippet; imports from `jdk.jfr.consumer`,
 `java.nio.file` and `java.util`; use a target recording with the events above):
@@ -145,13 +157,32 @@ In JMC the same data is under **JVM Internals** → VM Operations / Safepoints.
 Never quote a flag default from memory in an incident report:
 
 ```bash
-java -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version | grep -iE \
-  "GuaranteedSafepointInterval|UseCountedLoopSafepoints|LoopStripMiningIter|SafepointTimeout"
+JAVA_BIN=/path/to/deployed/java
+probe_flags() (
+  capture=$(mktemp -d) || exit
+  printf 'Raw flag probe: %s\n' "$capture" >&2
+  if "$JAVA_BIN" "$@" -XX:+PrintFlagsFinal -version >"$capture/stdout" 2>"$capture/stderr"; then
+    grep -iE 'GuaranteedSafepointInterval|UseCountedLoopSafepoints|LoopStripMiningIter|SafepointTimeout' "$capture/stdout"
+    selected=$?
+    if [ "$selected" -eq 1 ]; then
+      printf 'Successful JVM invocation, but no selected flag matched; inspect raw output.\n' >&2
+    fi
+    exit "$selected"
+  else
+    status=$?
+    cat "$capture/stderr" >&2
+    exit "$status"
+  fi
+)
+probe_flags -XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions
 ```
 
 This is the step that catches "the flag I am about to recommend is already on" before the
 recommendation reaches anyone. Replace the example collector with the deployed one and include
-its relevant options; bare `-version` can select a different ergonomic configuration.
+its relevant options/environment; bare `-version` can select a different ergonomic
+configuration. This verifies that successful invocation, not the already-running process.
+Keep producer failure distinct from successful no-match; neither establishes false, zero
+or a default. Retain the raw files long enough to review the probe.
 
 ## Handshake or global safepoint
 
@@ -166,33 +197,39 @@ free or strictly serial. `-Xlog:handshake=info` identifies operations (executed,
 [0.702s][info][handshake] Handshake "GetStackTraceClosure", Targeted threads: 1, Executed by requesting thread: 0, Total completion time: 23700 ns
 ```
 
-| Operation on JDK 25                                                   | Mechanism                         | Evidence                                                                              |
-| --------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------- |
-| `Thread.getStackTrace()` on one thread; JVMTI single-thread stack ops | Handshake                         | `Handshake "GetStackTraceClosure"` (executed)                                         |
-| JFR method sampler (JEP 518) and CPU-time sampler (JEP 509)           | Async handshake to the sample     | `jdk.SafepointLatency` per sample                                                     |
-| Deoptimising one thread's frames; nmethod invalidation                | Handshake                         | `-Xlog:deoptimization=debug`, `jdk.Deoptimization`                                    |
-| ZGC/Shenandoah thread-root scanning; stack watermarks (JEP 376)       | Handshake                         | Concurrent phases in the GC log, no safepoint                                         |
-| `ThreadMXBean.dumpAllThreads`, `jstack`, `jcmd Thread.print`          | Global safepoint                  | `Safepoint "ThreadDump"` / `"PrintThreads"`                                           |
-| `jcmd Thread.dump_to_file` (JEP 444)                                  | Avoids a global application pause | Different contents/consistency; do not substitute silently for traditional dump       |
-| Heap dump, `GC.class_histogram`, JVMTI `RedefineClasses`              | Global safepoint                  | `"HeapDumper"`, `"GC_HeapInspection"`, `"RedefineClasses"`                            |
-| JVMTI operations across threads (agents, some APMs)                   | Operation-dependent               | Inspect exact API/path and log; not every multi-thread operation requires global stop |
-| Every GC pause                                                        | Global safepoint                  | `"G1*"`, `"ZMark*"`/`"ZRelocate*"`, `"Shenandoah*"`                                   |
+| Operation on JDK 25                                                         | Mechanism                                              | Evidence                                                                                                                            |
+| --------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `Thread.getStackTrace()` on another platform thread (illustrated path)      | Handshake                                              | `Handshake "GetStackTraceClosure"` (historical capture); inspect other thread/API paths                                             |
+| JFR Java sampling (JEP 518; JEP 509 CPU-time path on Linux)                 | Thread-local cooperative poll processing               | Sample-request processing is distinct from HotSpot handshake-state processing; native sampling has a different path                 |
+| Deoptimisation and nmethod invalidation                                     | Path-dependent: existing global safepoint or handshake | `deoptimize_all_marked` uses either; `-Xlog:deoptimization=debug`/`jdk.Deoptimization` alone do not classify global synchronization |
+| Concurrent collector thread-root processing; ZGC stack watermarks (JEP 376) | Selected concurrent/handshake paths                    | Inspect collector and phase; related root work can also occur at safepoints                                                         |
+| `ThreadMXBean.dumpAllThreads`, `jstack`, `jcmd Thread.print`                | Global safepoint                                       | `Safepoint "ThreadDump"` / `"PrintThreads"`                                                                                         |
+| `jcmd Thread.dump_to_file` (JEP 444)                                        | Avoids a global application pause                      | Different contents/consistency; do not substitute silently for traditional dump                                                     |
+| Heap dump, `GC.class_histogram`, JVMTI `RedefineClasses`                    | Global safepoint                                       | `"HeapDumper"`, `"GC_HeapInspection"`, `"RedefineClasses"`                                                                          |
+| JVMTI operations across threads (agents, some APMs)                         | Operation-dependent                                    | Inspect exact API/path and log; not every multi-thread operation requires global stop                                               |
+| Stop-the-world GC phases                                                    | Global safepoint                                       | Match collector operation and safepoint interval; concurrent GC events are different                                                |
 
 Operation names are the strings HotSpot compiles in (`vmOperation.hpp`; the set above was
 read out of the 25.0.3 `jvm.dll`). A name in the safepoint log that is not a collector's is
 the entry point for the non-GC investigation in pause-attribution.
 
-## Profiling without safepoint bias
+## Choosing an asynchronous profiler
 
 ```bash
 asprof -e cpu -d 30 -f cpu_profile.html <pid>
 ```
 
-async-profiler samples through Linux `perf_events`, which interrupts the thread at any
-instruction rather than at a poll. JDK 25 adds JFR CPU-Time Profiling (JEP 509) in the same
-family, but it is experimental and Linux-only — verify the event and field names with
-`jfr metadata` on your own build before depending on them.
+Choose a supported profiler version/platform/backend and CPU versus wall mode for the
+question. Linux `perf_events` is one async-profiler backend; `-e cpu` is not a promise that
+every platform/configuration uses it. Sampling trigger, delivery and stack reconstruction
+have separate loss/permission/overhead limits; an asynchronous trigger does not prove a
+complete unbiased profile. JDK 25 JFR CPU-Time Profiling (JEP 509) is experimental and
+Linux-only. Inspect the target's metadata, enablement and actual recorded events before
+depending on them; source-only interpretation does not require a new capture.
 
 Primary implementation references: [JDK 25 safepoint timing/events](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepoint.cpp),
 [JDK 25 profile JFC](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/conf/jfr/profile.jfc),
-[JEP 444 dump format](https://openjdk.org/jeps/444), and [JEP 518 sampling](https://openjdk.org/jeps/518).
+[JDK 25 deoptimisation paths](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp),
+[JDK 25 VM-operation wait](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/vmThread.cpp),
+[JEP 444 dump format](https://openjdk.org/jeps/444), [JEP 518 sampling](https://openjdk.org/jeps/518), and
+[async-profiler 4.3 profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.3/docs/ProfilingModes.md).

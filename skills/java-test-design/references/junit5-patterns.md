@@ -33,9 +33,9 @@ final class RenewalPolicy {
 }
 ```
 
-`Clock` is a constructor parameter, not a call to `LocalDate.now()` inside the method. That
-one decision is what makes every test below deterministic; no test framework can substitute
-for it.
+These examples pass a fixed `Clock`, making the time input explicit. Injection alone does not
+control other inputs or make an arbitrary clock deterministic; the determinism reference also
+covers constrained legacy seams.
 
 ## Test data builder
 
@@ -114,9 +114,10 @@ converter is needed for this LocalDate parameter. The four rows should be report
 The `name` attribute expresses the scenario clearly. Default names normally include the index
 and arguments, and are configurable; do not assume they contain only `[1]`, `[2]`, `[3]`.
 
-Use `@MethodSource` when the arguments are objects rather than literals, or when building
-them needs code. Do not use `@CsvSource` with a case whose expected value you must compute —
-that is a different test.
+Use `@MethodSource` when the arguments are objects rather than literals, or building them needs
+code. Literal expected columns make these boundary cases easy to read; generated/property cases
+can instead use an independent oracle. A computed expectation is not automatically a different
+behavior, but duplicating the production decision is not an independent check.
 
 ## `@Nested` for a shared condition
 
@@ -155,8 +156,9 @@ void blankIdIsRejectedAtConstruction() {
 ```
 
 `org.junit.jupiter.api.Assertions.assertThrows` is equivalent and returns the exception for
-further assertions. Both fail correctly when _nothing_ is thrown — which the `try { …;
-fail(); } catch` idiom gets wrong often enough to be worth banning.
+further assertions. Both fail when _nothing_ is thrown. A correct `try/fail/catch` can also
+enforce the contract; prefer framework assertions when they clarify the failure, and check
+that no-throw and wrong-type paths really fail rather than rejecting the manual form by syntax.
 
 Assert `hasMessage` only when that exact message is a contract. Use `hasMessageContaining`
 when a required diagnostic fragment is the contract; omit message assertions for incidental
@@ -171,8 +173,16 @@ wording and prefer stable structured exception fields where available.
 | `static` field                             | No                | Shared across the whole class, and across parallel runs   |
 | `@BeforeAll` (needs `static` or PER_CLASS) | No                | Whatever it builds is shared                              |
 
-`PER_CLASS` exists so `@BeforeAll` and `@MethodSource` can be instance methods. Choosing it
-for that convenience silently converts every field into shared state; if you take it, keep the
-fields immutable.
+`PER_CLASS` permits instance `@BeforeAll` and `@MethodSource` methods and can support an owned
+class-level lifecycle. Its fields persist between tests: prefer immutable fixtures, or reset and
+confine mutable state deliberately. Inspect configured defaults and parallel modes before judging
+isolation; runner resource locks coordinate participating tests, not unrelated background users.
 
-Under parallel execution, a `static` mutable field is a race, not just an ordering hazard.
+Conflicting unsynchronized concurrent accesses can race; a static field alone does not prove one.
+Synchronization prevents some races but does not by itself prevent stale state leaking between tests.
+
+## Primary references
+
+- [JUnit 5.13.4 user guide](https://docs.junit.org/5.13.4/user-guide/) — lifecycle, parameter conversion, assertions and execution configuration.
+- [JUnit 5.13.4 TestInstance](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
+- [JUnit 5.13.4 ResourceLock](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/parallel/ResourceLock.html)

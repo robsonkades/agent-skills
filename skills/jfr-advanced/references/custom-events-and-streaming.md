@@ -119,9 +119,10 @@ Subtleties:
 - Multiple recordings use the most permissive active need for whether application event work
   may execute. Test enabling/disabling dynamically.
 
-The JFR documentation notes disabled-event allocation can be eliminated by the JIT; verify with
-JMH/assembly/allocation profiling if it matters. Do not replace evidence with fixed ns/cycle
-claims.
+The [`Enabled` API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Enabled.html)
+notes that the JIT may eliminate disabled-event allocation. Do not assume that optimization or
+free payload work. Verify the relevant compiled path with JMH/assembly/allocation profiling if
+that cost matters; do not replace evidence with fixed ns/cycle claims.
 
 ## `isEnabled` versus `shouldCommit`
 
@@ -239,6 +240,9 @@ started/stopped/dumped what.
 
 ## Failure tests
 
+Select the cases relevant to the event, recording or consumer contract under change; existing
+adequate fixtures can supply evidence. A focused offline reader does not need a live exporter.
+
 - event disabled, below/above threshold, and settings change mid-operation;
 - two recordings with different thresholds/stack settings;
 - event burst and callback/exporter slowdown;
@@ -252,7 +256,7 @@ started/stopped/dumped what.
 
 ## Authoritative references
 
-- [Custom events guide](https://docs.oracle.com/en/java/javase/25/jfapi/creating-events.html)
+- [Creating and recording custom events](https://docs.oracle.com/en/java/javase/25/jfapi/creating-and-recording-your-first-event.html)
 - [Custom annotations guide](https://docs.oracle.com/en/java/javase/25/jfapi/custom-annotations.html)
 - [`Event`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Event.html)
 - [`EventType`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html)

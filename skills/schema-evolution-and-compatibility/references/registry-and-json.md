@@ -1,7 +1,9 @@
 # Registry and JSON Schema
 
-Confluent Platform documentation as published for "current"; serialiser defaults read from
-`confluentinc/schema-registry` `master`. Where another registry differs, the last section says so.
+Confluent Platform documentation captured as "current"; serializer selection/defaults checked against
+`confluentinc/schema-registry` tag `v8.3.1`, with header-framing classes checked at `v8.1.1`.
+These source checks are separate from the historical provider transcripts and from a live registry.
+Where another registry differs, the last section says so; inspect the target version and configuration.
 
 ## What the check is, and what it cannot see
 
@@ -11,9 +13,15 @@ subject. Versions are tied to subjects." It therefore cannot verify:
 
 - that any deployed consumer holds the schema version the check assumed;
 - that the data on the topic is limited to the versions a non-transitive check compared;
-- anything at all about a producer with `auto.register.schemas=false` + `use.latest.version=true` +
-  `latest.compatibility.strict=false`, which skips the check by design;
-- anything at all about a client that is not a registry-aware serialiser.
+- that an application object can be encoded correctly using the selected schema. With
+  `auto.register.schemas=false` + `use.latest.version=true` + `latest.compatibility.strict=false`,
+  the serializer skips its application-schema versus selected-latest backward-compatibility check.
+  This does not undo checks performed when registered versions were admitted under the subject policy;
+- that a non-registry-aware client actually uses the schema the gate checked.
+
+Keep those claims separate: registry history, serializer selection, actual object encoding and
+deployed-reader semantics each need appropriate evidence. Disabling one check does not make data
+safe, nor does it imply all other checks were absent.
 
 Setting compatibility by REST is global and overrides properties files; `/config/{subject}` sets it
 per subject, with a `:.__GLOBAL:` context and a `defaultToGlobal` lookup order (subject → context →
@@ -54,27 +62,39 @@ None of this is Avro's `C3 01` single-object framing.
 | Unique per topic              | yes                           | **no**                                                   | yes                                     |
 | Compatibility checked across… | all schemas in the topic      | any occurrence of that record name **across all topics** | that record name within that topic      |
 
-Class names are prefixed `io.confluent.kafka.serializers.subject.`. The subject is the Avro record
+Class names are prefixed `io.confluent.kafka.serializers.subject.`. For record-based strategies, the
+record identity is the Avro record
 fullname, the Protobuf message name, or — for JSON Schema — the **title**. The strategy configured on
 the broker for schema-ID validation does **not** propagate to clients; configure it in both.
+The table assumes the same registry namespace/context. Include context, naming overrides, references
+and access control when determining which teams/topics share a compatibility boundary.
 
 Three ways to carry several event types on one topic, with different failure modes:
 
 1. **`TopicNameStrategy` plus a union/`oneof` wrapper**, in its modern form as **schema references**:
    register each event type as its own subject, then a union of references as the topic's subject.
-   This requires `auto.register.schemas=false` + `use.latest.version=true`, or a serialiser registers
-   the concrete event type and **overwrites the union as the latest schema** — symptom on a producer,
-   `Schema not found; error code: 40403`.
-2. **`RecordNameStrategy`** — a cluster-global namespace. `com.acme.OrderPlaced` means the same thing
-   on every topic, including one owned by a team that will register an incompatible v2.
-3. **`TopicRecordNameStrategy`** — per topic per type. Usually the least bad, at the cost of subject
-   sprawl, and the option teams forget exists.
+   Deliberately select the registered wrapper, for example with `auto.register.schemas=false` and
+   `use.latest.version=true`, or a supported explicit schema ID. A lookup path that derives only the
+   concrete event schema does not automatically select the wrapper. Auto-registering that event may
+   instead attempt to make it the topic subject's latest schema, subject to registration policy.
+   Verify schema selection and actual encoding; `40403` alone does not identify this cause.
+2. **`RecordNameStrategy`** — share a record contract across topics in the same registry context.
+   This can be intentional when ownership and evolution are coordinated; unrelated teams can otherwise
+   collide on the same fullname. Inspect access controls and compatibility policy.
+3. **`TopicRecordNameStrategy`** — isolate evolution per topic and type, at the cost of more subjects
+   and independent policies. Choose it when that isolation is wanted, not merely because it exists.
+
+Retain an adequate strategy that matches the intended compatibility boundary. Switching strategies
+changes subject lookup/governance and needs its own migration and retained-data checks.
 
 ## Serialiser configuration
 
-Defaults recorded from `AbstractKafkaSchemaSerDeConfig` on `master`; verify the deployed release:
-`use.latest.version` = `false` (L114), `latest.compatibility.strict` = `true` (L124),
-`id.compatibility.strict` = `true`. For a schema-reference wrapper that intentionally selects latest:
+Defaults in `AbstractKafkaSchemaSerDeConfig` at `v8.3.1`: `use.latest.version=false`,
+`latest.compatibility.strict=true`, `id.compatibility.strict=true`. The Avro serializer first handles
+auto-registration, then an explicit ID/GUID, metadata-based selection, latest, or ordinary schema
+lookup. Inspect the actual format's path. `use.schema.id` selects an existing schema and has its own
+ID compatibility check; it is not a request to register or proof of correct object encoding.
+For a schema-reference wrapper that intentionally selects latest:
 
 ```properties
 auto.register.schemas=false
@@ -149,13 +169,13 @@ BACKWARD, open v1, required added   -> [{errorType:"REQUIRED_PROPERTY_ADDED_TO_O
 BACKWARD, closed v1, optional added -> COMPATIBLE
 ```
 
-**The constant depends on the line you run.** On 7.x this was the single
-`PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL` — reproduced on 7.9.9. In 8.x that constant is `@Deprecated`
-and is never used to build a message; 8.x splits the case by whether the added property is required,
+**The constant depends on the line you run.** The historical 7.9.9 probe emitted the single
+`PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL`. In the recorded 8.3.1 implementation that constant is
+`@Deprecated` and the relevant path instead splits the case by whether the added property is required,
 emitting `REQUIRED_PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL`,
 `REQUIRED_PROPERTY_WITH_DEFAULT_ADDED_TO_OPEN_CONTENT_MODEL` or
-`OPTIONAL_PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL`. Grepping logs for the old name finds nothing on a
-current registry.
+`OPTIONAL_PROPERTY_ADDED_TO_OPEN_CONTENT_MODEL`. Searching only for the old name can miss these
+8.3.1 outcomes; do not generalize the probe to every future provider release.
 
 Why rejection can be correct: "If the writer's schema has an open content model, then the writer may
 have produced JSON documents with `myProperty` using a different type than the type expected for
@@ -182,35 +202,36 @@ a verified three-state wrapper/module, or `JsonNode.has`/`Map.containsKey` befor
 Ordinary `Optional<T>` does not represent absent, explicit null and non-null by itself. Test all three
 states on the actual mapper and then validate required business values.
 
-The cost of tolerance is real and worth naming: with unknown properties ignored, `{"ammount": 100}`
-deserialises to a zero amount with no error. `@JsonAnySetter` lets you _observe_ the unknowns instead
-of discarding them.
+Tolerance needs separate required-value validation: the recorded plain numeric-field example with
+unknown properties ignored reads `{"ammount": 100}` as zero amount without a binding error. A required
+creator property, initializer or subsequent validation can differ. `@JsonAnySetter` can observe the
+unknowns; test the actual binder and validation instead of treating tolerance as silent success.
 
 ## Other registries — the vocabulary is portable, the semantics are not
 
-**Apicurio Registry 3.3.x** uses the same seven mode names, but compatibility is a **rule** attached
-at global, group or artifact level, and rules are inherited: "To disable a rule inherited from a
-higher level, you must explicitly set the rule at the lower level to `NONE`." A registry with no rule
-configured accepts anything — permissive by default where Confluent is `BACKWARD` by default. Its
-Confluent-compatible `ccompat` endpoint is claimed by an in-repo ADR to default to `BACKWARD`;
-that is **unverified** against a running product, and the user-facing docs say absent rules mean no
-checking. Apicurio also has validity and integrity rules with no Confluent equivalent (Confluent's
-nearest analogue is Data Contracts rulesets).
+**Apicurio Registry 3.3.x** uses the same seven mode names, but compatibility is a **rule**. Its
+rule reference documents artifact-specific rules overriding global rules; an explicit artifact-level
+`NONE` suppresses an inherited global check, whereas removing the local rule can expose it again.
+No applicable compatibility rule means no compatibility check, not an absence of validity, integrity
+or authorization checks. Verify the effective rules and endpoint/version; the native rule table does
+not establish `ccompat` defaults. Apicurio also has separate validity and reference-integrity rules;
+Confluent Data Contracts rulesets are not evidence of identical behavior.
 
 **AWS Glue Schema Registry** has **eight** modes: `NONE`, `DISABLED`, `BACKWARD`, `BACKWARD_ALL`,
 `FORWARD`, `FORWARD_ALL`, `FULL`, `FULL_ALL` — `_ALL` where everyone else says `_TRANSITIVE`, plus
 `DISABLED` ("prevents versioning for a particular schema"). Comparison is against a **checkpoint**
-version you can move with `UpdateSchema`, not simply the latest, so it will produce different
+version you can move with `UpdateSchema`, not simply the latest, so it can produce different
 verdicts from Confluent for the same history. Format support is pinned and narrower: Avro 1.11.4;
 JSON Schema **draft-04, draft-06 and draft-07 only** (no 2020-12); Protobuf proto2/proto3 without
-`extensions` or `groups`. It also extends compatibility to gRPC service definitions, which
-Confluent's checker says nothing about. Limits: 100 registries and 10 000 schema versions per region,
+`extensions` or `groups`. Check service-definition compatibility separately from message decoding;
+format support alone does not establish what a provider checks. Limits: 100 registries and 10 000 schema versions per region,
 170 KB per schema.
 
-**Karapace** (Aiven) is Confluent-REST-API-compatible, but its current format support is
-**unverified**: secondary sources disagree on whether it supports Protobuf today, and on how far its
-API parity extends (one says "up to Confluent Schema Registry 6.1.1", which would predate schema
-references and the 8.1.1 header format). Check its release notes for your version before assuming.
+**Karapace** (Aiven): the official README inspected for this review lists Avro, JSON Schema and
+Protobuf support and claims Schema Registry 6.1.1 API compatibility, with caveats for normalization
+and exact error messages. This is a documentation claim, not a running-product or full-parity test.
+Check the deployed release for reference handling, rules and newer framing such as GUID headers;
+an API-compatibility label alone does not prove those paths.
 
 Before trusting any of them, verify four things: what happens when no rule is configured; whether
 "transitive" means all versions or a checkpoint; which JSON Schema drafts are implemented; and
@@ -218,4 +239,9 @@ whether the wire framing is Confluent's magic byte plus 4-byte id (Karapace and 
 yes; Glue: no, it has its own header).
 
 Sources: [Confluent framing and migration order](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html),
-[JSON Schema default annotation](https://json-schema.org/understanding-json-schema/reference/annotations).
+[Confluent v8.3.1 serializer selection](https://github.com/confluentinc/schema-registry/blob/v8.3.1/avro-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaAvroSerializer.java),
+[v8.3.1 schema lookup checks](https://github.com/confluentinc/schema-registry/blob/v8.3.1/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDe.java),
+[JSON Schema default annotation](https://json-schema.org/understanding-json-schema/reference/annotations),
+[Apicurio 3.3 rule reference](https://www.apicur.io/registry/docs/apicurio-registry/3.3.x/getting-started/assembly-rule-reference.html),
+[AWS Glue schema registry](https://docs.aws.amazon.com/glue/latest/dg/schema-registry.html),
+[Karapace README](https://github.com/Aiven-Open/karapace/blob/main/README.rst).

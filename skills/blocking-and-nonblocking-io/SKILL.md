@@ -23,17 +23,22 @@ Keep four distinct properties distinct, because every confused architecture argu
 virtual threads and reactive programming comes from collapsing them:
 
 ```text
-Blocking API          the method returns when the operation is done
+Blocking API          the caller may wait for this call's specified result
 Blocked OS thread     a kernel-schedulable entity is parked and unavailable
-Non-blocking I/O      the syscall returns immediately with whatever is ready
-Asynchronous model    the code is expressed as callbacks or stages, not statements
+Non-blocking I/O      no wait for readiness; partial progress or would-block is possible
+Asynchronous model    completion is represented separately, e.g. a stage or callback
 ```
 
-A virtual thread doing `socket.read()` uses a **blocking API**, does **not** dedicate a
-blocked carrier to that request, sits on top of **non-blocking I/O** plus a shared poller in
-the current JDK implementation, and is written in a
-**synchronous** model. All four at once. Any sentence that treats them as the same axis is
-wrong somewhere.
+A virtual thread reading a supported socket path without an enclosing pinning frame uses a
+**blocking API**, does **not** dedicate a blocked carrier to that request, sits on top of
+**non-blocking I/O** plus a shared poller in the current JDK implementation, and is written
+in a **synchronous** model. All four at once. Any sentence that treats them as the same axis
+is wrong somewhere.
+
+Define what completion means before releasing resources: a read may return fewer bytes than
+requested, and a streaming response may return before its body is consumed. Readiness, API
+return, transfer completion and a remote business effect are different milestones; none alone
+proves the others. The classification reference gives a concrete streaming example.
 
 ## Compatibility and evidence
 
@@ -67,18 +72,19 @@ project or add instrumentation dependencies merely to apply this skill.
   `InputStream.read` on a supported socket path registers interest with the JDK's poller,
   parks the virtual thread, unmounts, and frees the carrier. Kernel poller threads still
   wait for readiness; the point is that there is no blocked OS thread per socket request.
-- Under the hood, socket channels are put in **non-blocking mode** by the JDK and a small
-  number of dedicated poller threads (`epoll`/`kqueue`) unpark virtual threads when a file
-  descriptor becomes ready. That is an implementation detail, not a specification — do not
-  build a design on it, but do use it to explain observations.
+- Under the hood, supported socket paths use **non-blocking mode** and shared readiness
+  pollers. OS mechanisms and platform/virtual poller-thread arrangements vary by JDK and
+  provider; see the poller reference. That is an implementation detail, not a specification —
+  do not build a design on it, but do use it to explain observations.
 - **Many synchronous filesystem paths retain the carrier** in the target HotSpot releases.
   Recognized blocking regions can trigger **compensation**, temporarily expanding the
-  scheduler up to `jdk.virtualThreadScheduler.maxPoolSize`. Do not generalize this to every
-  provider, native call or memory-mapped access; inspect the path and measure.
-- **Capture with compensation is not pinning.** Compensation adds a carrier so throughput
-  survives, at the cost of memory and OS threads. Pinning — a native frame or a blocking
-  class initialiser — gets no compensation, so it removes a carrier outright. Raising
-  `maxPoolSize` helps the first and does nothing for the second.
+  scheduler under an expansion policy initialized by `jdk.virtualThreadScheduler.maxPoolSize`.
+  Do not generalize this to every provider, native call or memory-mapped access; inspect the
+  path and measure.
+- **Capture with compensation is not pinning.** Compensation can add carriers to preserve
+  progress within resource limits, at the cost of memory and OS threads. Pinning — a native
+  frame or a blocking class initialiser — gets no compensation, so it removes a carrier
+  outright. Raising `maxPoolSize` helps the first and does nothing for the second.
 - The number of platform threads in the scheduler may therefore legitimately exceed
   `availableProcessors()`. Growth towards `maxPoolSize` under operations the scheduler
   recognizes for compensation is the system working as designed; native-frame pinning is
@@ -99,10 +105,11 @@ project or add instrumentation dependencies merely to apply this skill.
 - **Blocking inside an event loop is a different severity of bug** from blocking on a pooled
   thread. An event-loop thread serves many connections, so blocking it can stall every
   connection assigned to it. Loop count and assignment are framework/configuration details,
-  not a universal `2 × cores`. Combine BlockHound tests with loop-lag and wall-clock evidence.
+  not a universal `2 × cores`. Combine compatible BlockHound tests, where available, with
+  loop-lag and wall-clock evidence.
 - A "non-blocking" client library is only non-blocking to the boundary of its own API. A
-  reactive database driver that hands work to a bounded internal pool has the same ceiling as
-  a JDBC pool, expressed differently.
+  reactive database driver that hands work to a bounded internal pool has a worker/queue
+  ceiling distinct from connection limits and database capacity; inspect each bound.
 - Virtual threads make blocking calls **cheap**, not **free**: each in-flight call still
   holds a stack on the heap, a connection, a buffer and any lock it took. The scarce
   resource moved; it did not disappear.
@@ -113,9 +120,10 @@ project or add instrumentation dependencies merely to apply this skill.
 ## Minimum result
 
 For each consequential finding, identify the call and execution thread, API/model versus
-carrier behavior, supporting evidence and remaining uncertainty. Propose the smallest
-change with a resource bound and a before/after check (loop lag, carrier/native memory,
-throughput and tail latency as relevant). Do not label an unmeasured optimization a fix.
+carrier behavior, supporting evidence and remaining uncertainty. Retain an adequate path, or
+propose the smallest change with a resource bound and a before/after check (loop lag,
+carrier/native memory, throughput and tail latency as relevant). Do not label an unmeasured
+optimization a fix.
 
 ## References
 

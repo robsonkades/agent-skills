@@ -74,9 +74,10 @@ collector filter.
 
 Collector/JDK combinations may capture carrier stacks, mounted virtual-thread stacks, or only
 partial logical ancestry; unmounted virtual threads do not consume an OS thread. Thread-local
-labels and names can refer to carriers rather than logical tasks. Verify using a synthetic
-virtual-thread workload with known mounted/parked/pinned phases, and correlate with JFR events
-and application task/trace context.
+labels and names can refer to carriers rather than logical tasks. Reuse validated capability
+evidence for that collector/JDK. If a material capability remains unknown, use a bounded owned
+workload with known mounted/parked/pinned phases through the collection owner; correlate with
+JFR events and application task/trace context. Do not require a duplicate capability test.
 
 Do not convert a carrier's width into one request's latency or CPU.
 

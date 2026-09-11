@@ -205,6 +205,42 @@ agent-skills update java-performance   # one skill
 agent-skills update --major            # allow major-version jumps
 ```
 
+In an interactive terminal, the CLI checks for new releases at startup and offers a menu:
+
+```text
+Update available for agent-skills! 1.5.1 -> 1.6.0
+npm install --global @jvm-expert/agent-skills@1.6.0
+
+> 1. Update now
+  2. Remind me later
+  3. Skip this version
+```
+
+Versions above are illustrative. Use arrows or a number and Enter; Escape continues your
+command. **Remind me later** snoozes that release for 24 hours. **Skip** remembers the exact
+release; a newer release can notify you again. State lives in `~/.agent-skills/updates.json`
+(or under `AGENT_SKILLS_HOME`). The CLI checks npm at most once per day.
+
+Skill notices show the installed and available versions, agent, and scope. You can update,
+view details, snooze, or skip. Compatible updates follow `^installed`; major updates, including
+breaking `0.x` changes, require a separate explicit selection. Checks use registry metadata
+and its cache TTL, preserve the recorded registry, and exclude prereleases and deprecated
+versions. Applying a notice uses the existing atomic installer and protects local edits.
+
+Notices appear before `list`, `search`, `info`, `agents`, and online `doctor`. `install` and
+`update` check only the CLI release because those commands already select skill versions.
+Agent, registry, and scope filters also apply to skill notices; without scope flags, both
+global installs and the current project are checked.
+
+Self-update supports identified global and direct local npm installations. Local installs
+keep their dependency category and update the owning project's manifest and lockfile. npx
+and other installation methods receive instructions instead of an automatic replacement.
+After self-update the CLI exits; run your original command again to use the new release.
+
+Checks and menus are disabled in CI, redirected/piped output, `--json`, `--quiet`, dry runs,
+offline doctor, and help/version output. Network failures never fail the original command.
+To disable them explicitly, pass `--no-update-check` or set `AGENT_SKILLS_NO_UPDATE_NOTIFIER=1`.
+
 ## Creating a skill
 
 ```bash
@@ -327,7 +363,8 @@ Protocol details: [docs/registry-protocol.md](docs/registry-protocol.md).
 | `registry list\|add\|remove` | Manage registries                                     |
 
 Common flags: `--agent <id>` (repeatable, or `all`), `--global` / `--project`,
-`--registry <name>`, `--dry-run`, `--force`, `--json`, `--verbose`, `--quiet`, `--no-color`.
+`--registry <name>`, `--dry-run`, `--force`, `--json`, `--verbose`, `--quiet`, `--no-color`,
+`--no-update-check`.
 
 Every failure carries a stable error code, documented in [docs/errors.md](docs/errors.md), and
 exits with a code that distinguishes a validation failure from a resolution failure from a

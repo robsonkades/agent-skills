@@ -1,9 +1,9 @@
 ---
 name: java-reference-types-and-leaks
 description: >
-  Reachability-driven memory in Java: the strong/soft/weak/phantom levels and exactly when
-  each is cleared, WeakHashMap and its value-holds-key trap, Cleaner as a leak-reporting
-  safety net rather than a release mechanism, finalization deprecation, and the leak
+  Reachability-driven memory in Java: strong/soft/weak/phantom contracts and notification
+  limits, WeakHashMap and its value-holds-key trap, explicit Cleaner cleanup versus
+  automatic fallback, finalization deprecation, and the leak
   catalogue — obsolete references in self-managed structures, listener registries,
   ThreadLocal on pooled threads, class-loader retention, non-static nested classes holding
   their enclosing instance, and caches that only grow. Use when heap grows with traffic and
@@ -22,17 +22,19 @@ description: >
 Decide what keeps an object alive, and find the reference that should not. Two failure
 modes: memory that grows with traffic because something the code no longer uses is still
 reachable — which no GC tuning can fix — and reference types used as a design tool, where a
-`SoftReference` cache or a `Cleaner` is trusted to bound memory or release a resource and
-does neither predictably.
+`SoftReference` cache or automatic `Cleaner` fallback is trusted to provide a capacity or
+release deadline it does not guarantee. Retain an existing design when its ownership and
+memory budget are already satisfied.
 
 ## Workflow
 
 Inspect the exact JDK/vendor/build, collector, JVM flags, recording settings and workload
-before version-sensitive claims. No single authoring baseline is declared; references discuss
-JDK 25, Cleaner needs Java 9+, and `--finalization=disabled` Java 18+. Virtual threads and
+before version-sensitive claims. References use JDK 25; the Cleaner sketch needs Java 9+,
+and `--finalization=disabled` Java 18+. Preserve the project's target. Virtual threads and
 ScopedValue require their own target-release checks; do not upgrade or enable preview.
 If retaining paths or comparable reclamation points are missing, report a hypothesis and
-the evidence needed rather than declaring a leak or verified fix.
+the evidence needed rather than declaring a leak or verified fix. Reuse available captures
+and ownership requirements; ask only for missing information that changes the diagnosis or fix.
 
 1. **Confirm a retention hypothesis, not merely occupancy.** Compare equivalent
    post-reclamation points under normalized load/cache/topology. A rising floor means more
@@ -43,30 +45,32 @@ the evidence needed rather than declaring a leak or verified fix.
    there. heap-dump-analysis owns the tool workflow. JFR's `jdk.OldObjectSample` gives the
    complementary sampled evidence from a running process. Its stacks/path settings,
    overhead and collector-specific behavior must be verified before continuous use.
-3. **Match the path against the catalogue** in `references/leak-patterns.md`. Nearly every
-   real leak is one of eight shapes, and each has a specific fix.
-4. **Fix the ownership, not the symptom.** Bound the cache, remove the listener, `remove()`
-   the ThreadLocal, null the slot in a self-managed array. Adding `-Xmx` or a weaker
-   reference type moves the failure later.
+3. **Match the path against the catalogue** in `references/leak-patterns.md`. These are
+   starting hypotheses; investigate an unlisted owner when the evidence points elsewhere.
+4. **Fix a demonstrated ownership mismatch.** Bound a disposable cache, deregister the
+   listener, remove or restore the owned ThreadLocal binding, or clear an obsolete array
+   slot. Weaker references are appropriate only when collection matches the value's contract;
+   a larger heap does not repair an unwanted retaining path.
 5. **Verify against the ownership and capacity contract.** Under equivalent conditions,
    the former retaining path/count should stop unbounded growth and the service must still
-   meet latency/throughput. “Heap looks better” is not a result.
+   meet relevant latency/throughput budgets. Report the owner/path, violated contract,
+   correction and check results, or the supported no-change/conditional conclusion and
+   bounded next evidence step. “Heap looks better” is not a result.
 
 ## Rules
 
-- Reachability, not usage, keeps objects alive. There is no "unused" state — an object
-  referenced by a static field, a live thread's stack, a `ThreadLocal` value, or a class
-  loader is live no matter how long since it was touched.
+- Follow an actual strong path from a GC root through live stack references, reachable
+  static fields or thread-local values. A cycle within an otherwise unreachable application
+  loader is not itself a root; lexical local-variable scope is not a guaranteed lifetime.
 - Nulling references is for classes that _manage their own memory_ — an array-backed stack,
   ring buffer or pool, where the container knows an element is obsolete but the array still
-  refers to it. Nulling ordinary local variables to "help GC" is noise: the scope ends and
-  liveness analysis already handled it.
+  refers to it. Do not routinely null ordinary locals: inspect actual liveness if a
+  long-running method retains a large obsolete value.
 - Default to a bounded cache with an eviction policy, not to reference types. Size or time
   bounds help make retention predictable; expiry alone cannot bound memory under unlimited
-  arrivals/value sizes. Set entry/weight limits and account for payload size. `SoftReference` delegates the decision
-  to the collector, which clears under pressure — after already having done the collection
-  work, and typically all at once, so the cache's hit rate falls off a cliff exactly when the
-  system is busiest.
+  arrivals/value sizes. Set entry/weight limits and account for payload size. `SoftReference`
+  delegates eviction to the collector; clustered clearing can raise refill demand. The
+  hit-rate and origin impact depend on access distribution, GC policy and refill capacity.
 - `WeakHashMap` is for mappings whose key reachability elsewhere controls entry lifetime,
   with stable `equals`/`hashCode` semantics. It is not an identity map: an equal lookup can
   find an entry, while the particular stored key can still disappear when no strong owner
@@ -76,27 +80,26 @@ the evidence needed rather than declaring a leak or verified fix.
   at runtime with `--finalization=disabled`, runs on an unspecified thread with no ordering
   or timeliness guarantee, can resurrect objects and delay reclamation. Do not infer a portable
   fixed number of collection cycles from this mechanism.
-- `Cleaner` is a _safety net that reports a bug_, not a release mechanism. Register one only
-  for native or OS resources whose leak is otherwise invisible, have the action log loudly,
-  and keep `close()` as the real path. The cleaning action must not capture the registered
+- `Cleaner` can implement explicit release via `Cleanable.clean()` plus best-effort automatic
+  cleanup/reporting where useful. Keep `close()` as the owned release path; automatic
+  execution has no deadline. The cleaning action must not capture the registered
   object — a lambda that touches any instance field keeps it strongly reachable and the
-  cleaner can never run.
+  automatic action cannot run while that capture remains. At-most-once invocation is not
+  a use-versus-close protocol or a guarantee that another caller's cleanup has completed.
 - A `ThreadLocal` on a thread that outlives the request — a servlet-container pool, a shared
-  executor, a `ForkJoinPool` — retains its value until the thread dies or the entry is
-  overwritten. `remove()` in a `finally` at the end of the request scope is the contract;
-  stale-entry cleanup by the map itself happens only opportunistically on later operations
+  executor, a `ForkJoinPool` — can retain its value beyond the request. Remove an owned
+  top-level binding in `finally`; nested/reentrant scopes must restore the outer binding.
+  Stale-entry cleanup by the map itself happens only opportunistically on later operations
   and cannot be relied on.
-- On virtual threads the retention profile inverts: each virtual thread has its own map that
-  dies with it, so the pooled-thread leak disappears, but a per-thread value now exists once
-  per _task_, and there may be millions of tasks. Request context there wants `ScopedValue`,
-  whose binding is immutable and scope-bounded (the bound object need not be immutable), with
-  inheritance under supported structured forks — see
-  scoped-values.
+- Thread termination releases its ThreadLocal map, including on virtual threads; still-live
+  or blocked tasks can retain values, and per-task caches may multiply retention. Consider
+  supported `ScopedValue` for dynamically scoped context; retain ThreadLocal where the actual
+  per-thread or framework contract requires it. Binding/inheritance choices belong to scoped-values.
 - A non-static nested class, and an anonymous class or lambda that touches an instance
   member, can hold a reference to the enclosing instance. When such an object outlives its
   creator — stored in a registry, a cache, a scheduled task, or a long-lived callback — the
-  whole enclosing object graph goes with it. Make the nested class `static` and pass what it
-  needs explicitly.
+  enclosing graph can go with it. If that ownership is unwanted, narrow the capture, shorten
+  registration lifetime, or make the nested class `static` and pass only what it needs.
 - Metaspace growth and old application classes after redeploy suggest loader retention;
   confirm an unwanted root path and class-unloading/GC opportunity before declaring a leak.
   The usual holders are static registries, `ThreadLocal` values on container threads,

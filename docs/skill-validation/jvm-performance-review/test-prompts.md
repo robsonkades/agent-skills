@@ -1,5 +1,15 @@
 # Selection test prompts — `jvm-performance-review`
 
+Historical selection prompts and expected verdicts from an earlier skill review,
+preserved with its research and validation records. These are not current behavioral
+oracles: P1/P2 contain blanket flag-effect and release assumptions, P3 treats resource
+requests as enforcement, P4 overstates evidence precedence and NMT requirements, and
+P5/P6 prescribe fixed captures or exclude causes from unaligned aggregate evidence.
+Selection and implementation behavior also require separate execution evidence.
+Use the current cases and verification status in the
+[catalog review inventory](../catalog-review-2026-09-09.json) for subsequent evaluation.
+The original prompt text and historical counts below remain unchanged.
+
 Eight prompts. Five must select this skill; three near-misses must select a named
 neighbour. Two of the positives are adversarial — the correct output there refuses the
 premise rather than answering the question as asked.

@@ -102,9 +102,11 @@ executor.submit(() -> { try (Scope s = captured.makeCurrent()) { work(); } });
 ```
 
 StructuredTaskScope does not itself propagate OTel storage. Instrumentation/wrappers may
-already do so; when absent, wrap the fork body explicitly. A subtask that starts a span without making the parent
-current produces an orphan trace — which looks in the UI exactly like a service that did not
-call anything.
+already do so; when absent, wrap the fork body explicitly where implicit context is needed.
+A span with neither a valid current parent nor an explicit parent starts a new trace.
+`SpanBuilder.setParent(capturedContext)` can establish parentage without `makeCurrent()`;
+downstream instrumentation that reads `Context.current()` still needs the appropriate scope.
+See the [OpenTelemetry Java span/context API](https://opentelemetry.io/docs/languages/java/api/#span).
 
 ## `@Async`, `@Scheduled` and plain executors
 
@@ -138,7 +140,8 @@ ExecutorService contextual(ExecutorService delegate) {
 Option 2 is partial: DelegatingExecutorService is application code, not a JDK class. Audit
 all execution methods, lifecycle ownership and capture points. The sketch rejects an unbound
 submitter; if absence is legitimate, branch on isBound and run without rebinding. Do not
-convert absence into a legal null binding through orElse(null).
+erase that distinction by binding null: `where(KEY, null)` is legal, while `orElse(null)`
+throws `NullPointerException` in Java 25.
 
 ## What still needs an explicit capture
 
@@ -146,8 +149,9 @@ convert absence into a legal null binding through orElse(null).
   property. `ScopedValue` is in-process only.
 - Anything crossing a **queue**: a task persisted now and run later carries nothing.
 - A callback registered with a library that will invoke it on its own thread later.
-- A deadline. `ScopedValue` can carry the `Instant`, but every downstream call still needs
-  its own timeout derived from it — see `timeouts-and-deadlines`.
+- A deadline. Carry the existing monotonic local deadline and derive each call's timeout
+  from its remaining budget; binding it neither enforces nor resets that budget. Absolute
+  wall-clock/wire deadlines have separate clock assumptions — see `timeouts-and-deadlines`.
 
 ## Review checklist
 

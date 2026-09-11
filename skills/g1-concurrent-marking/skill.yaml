@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-concurrent-marking
-version: 1.3.1
+version: 1.3.2
 description: >-
   G1's concurrent marking cycle: SATB and the pre-write barrier, the cycle phases and the
   single mark bitmap with TAMS, adaptive IHOP triggering, mark stack overflow and its
@@ -43,6 +43,10 @@ files:
 dependencies:
   - name: g1-internals
     version: ^1.0.0
+
+suggests:
+  - g1-tuning-for-slo
+  - gc-log-analysis
 
 capabilities:
   - reads-source

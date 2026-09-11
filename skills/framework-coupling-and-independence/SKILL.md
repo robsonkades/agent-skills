@@ -36,8 +36,9 @@ price of a mapping layer everybody pays for on every change.
 
 ## Workflow
 
-1. **Establish the target and locate coupling.** Inspect Java/toolchain, resolved framework and
-   provider versions, runtime/configuration and tests. Import graphs find static dependencies;
+1. **Establish the target and locate coupling.** Reuse the requested outcome, accepted boundary
+   policy and representative consumer code. Inspect the project's language/toolchain, resolved
+   framework/provider versions, runtime/configuration and tests. Import graphs find static dependencies;
    also inspect reflective wiring, callbacks, generated code and behavioral contracts. Do not
    treat absent imports as proof of independence or assume permission to upgrade dependencies.
 2. **Classify each coupling by exit cost** — not by whether it is "clean". The question is
@@ -52,8 +53,9 @@ price of a mapping layer everybody pays for on every change.
 5. **Price the isolation before buying it.** Every boundary carries maintenance. Some need
    mapping and a second model; others only a narrow port. Compare concrete migration, testing
    and contract benefits against that recurring cost.
-6. **Verify the decision.** Use ArchUnit for enforceable static boundaries and focused runtime
-   tests for proxy, transaction, serialization or lifecycle semantics (`architecture-testing`).
+6. **Verify the decision.** Reuse the project's dependency/build checks for static boundaries;
+   ArchUnit is one Java option. Use focused runtime tests for proxy, transaction, serialization
+   or lifecycle semantics (`architecture-testing`).
    State missing evidence and a discriminating check instead of guessing exit cost.
 
 ## The coupling ladder
@@ -118,9 +120,10 @@ The framework's model would change your method signatures across layers
           cancellation, context and blocking semantics; do not assume it is irreversible.
 
 Someone proposes wrapping the framework "to stay independent"
-        → require the migration scenario it insures against, its
-          probability, and the mapping cost per change. Usually the
-          insurance costs more than the risk (enterprise-architecture-smells).
+        → identify the migration scenario or present contract/testing benefit
+          and recurring mapping cost. Use evidence-backed likelihood when available;
+          otherwise keep uncertainty qualitative. A narrow port need not depend on
+          whole-framework replacement being likely (enterprise-architecture-smells).
 
 The dependency is on a small library rather than a framework
         → use an adapter when it owns external failure/protocol semantics,
@@ -137,9 +140,9 @@ The framework's abstraction already IS the port you were going to write
 
 ## Rules
 
-- **The commitment is asymmetric and long-lived.** A framework choice outlives most of the
-  people who make it, sets the upgrade cadence, and constrains hiring and library choice.
-  Treat it as one of the few genuinely expensive-to-reverse decisions
+- **Assess the commitment's actual horizon and reach.** A pervasive framework can constrain
+  upgrade cadence, skills and library choice. Price the affected consumers and lifecycle;
+  record consequential commitments using the project's decision practice
   (`architecture-decision-making`).
 - Coupling to a framework is not a defect. It is a purchase: you get wiring, transactions,
   serialisation, security and an ecosystem. The defect is paying that price and _also_
@@ -157,9 +160,10 @@ The framework's abstraction already IS the port you were going to write
   requires all consumers to move together. Independently versioned services can roll through a
   compatibility window; inventory and support deadlines determine the real coupling
   (`component-and-release-boundaries`).
-- Prefer the framework's neutral abstraction to a hand-rolled one, and a hand-rolled one to a
-  vendor-specific API. `javax.sql.DataSource` over a driver class; the caching abstraction over
-  a client SDK; a JDK type over a framework type in a signature you own.
+- Prefer the smallest abstraction that preserves the required contract at the permitted boundary.
+  `javax.sql.DataSource` may serve ordinary JDBC consumers; a driver-specific capability may remain
+  inside its adapter. A neutral cache or JDK API is useful only if its lifecycle, failure and
+  provider semantics fit; neither a forwarding wrapper nor lost capability buys independence.
 - **Upgrade at a governed cadence.** The dominant cost of framework coupling is often not migrating between
   frameworks — almost nobody does — it is falling behind within one, until the jump crosses
   several breaking changes at once and lands outside the support window. Balance smaller deltas

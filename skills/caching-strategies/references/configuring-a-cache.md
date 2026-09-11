@@ -11,17 +11,25 @@ Spring Data Redis 4/Jackson 3 and its supported Java baseline; inspect the proje
 ```java
 // maximumSize counts entries and assumes they cost roughly the same
 Cache<String, byte[]> cache = Caffeine.newBuilder()
-        .maximumWeight(200L * 1024 * 1024)                 // 200 MB
-        .weigher((String url, byte[] bytes) -> bytes.length)
+        .maximumWeight(200L * 1024 * 1024)                 // logical weight budget
+        .weigher((String url, byte[] bytes) -> Math.max(1, bytes.length))
         .expireAfterWrite(Duration.ofMinutes(10))
         .recordStats()
         .build();
 ```
 
 When entry sizes vary by orders of magnitude—HTTP responses, lists, documents—logical weight is
-usually better than entry count. The example weighs only value bytes; real retained heap also
-contains keys, objects, cache nodes and allocator alignment, so calibrate the weigher against a
-heap profile rather than calling 200 MB a hard heap bound.
+usually better than entry count. The example uses value bytes with a positive floor: Caffeine
+does not consider zero-weight entries for size eviction, so empty values otherwise escape that
+bound. The floor is not an overhead estimate; choose it and the budget together to limit the
+permitted entry count as well as payload weight. A floor of one still permits many tiny entries.
+Real retained heap also contains keys, arrays/objects, cache nodes and allocator alignment;
+calibrate the weigher against a heap profile rather than calling 200 MiB a hard heap bound.
+
+The `byte[]` values are mutable references. Keep the cache private and copy at insertion and
+return boundaries, or establish exclusive ownership that prevents mutation through either alias.
+Caffeine does not copy values or reweigh an object when its contents mutate; weights are computed
+on entry creation/replacement. Test empty values and caller mutation as well as typical payloads.
 
 Choose a memory budget from container/JVM headroom, live non-cache set, allocation rate and pause
 SLO. A percentage such as 25% can be an experiment starting point, never a portable limit. Verify
@@ -95,13 +103,12 @@ default typing by default; the deprecated Jackson 2 generic serializer did.
 
 ## Near-cache (L1 + L2)
 
-- [ ] Cross-instance invalidation implemented (pub/sub, Kafka or CDC)
-- [ ] L1 TTL **short**, as the safety net for lost events
-- [ ] L1 TTL/stale-age bound derived explicitly (often no greater than L2, but consistency policy decides)
+- [ ] Cross-instance freshness contract explicit; invalidation implemented if needed (pub/sub, Kafka or CDC)
+- [ ] For changing values, L1 stale-age bound derived across layers; TTL can limit a lost event's impact
 - [ ] Metrics separated per layer (L1, L2, source) — an aggregate hit rate hides which
       layer is working
 - [ ] L2 outage policy tested: bounded fallback/origin traffic, stale serve, rejection or load shedding
-- [ ] Invalidation-propagation test running in CI
+- [ ] Invalidation propagation, or the identity/freshness contract permitting its absence, tested
 
 Redis pub/sub is fire-and-forget. An instance disconnected at publish time misses the
 message. TTL removes that local entry, but refilling from stale L2 can extend observed staleness.
@@ -117,10 +124,10 @@ version-checked cache reads.
 - [ ] Saved origin work and full hit/miss latency costs compared with the uncached path
 - [ ] `maximumSize` or `maximumWeight` set — weight if entry sizes vary widely
 - [ ] Logical weight calibrated to retained memory; full-cache post-GC/SLO headroom verified
-- [ ] TTL derived from the business tolerance for stale data
-- [ ] Jitter in the TTL if entries are created in bulk
+- [ ] TTL/other freshness mechanism derived from stale-data tolerance, or immutable identity verified
+- [ ] Jitter in the TTL if expiring entries are created in bulk
 - [ ] Values are immutable/versioned projections; entity-cache semantics are explicit
 - [ ] `recordStats()` enabled
-- [ ] Invalidation strategy defined **and** covered by an automated test
+- [ ] Invalidation strategy defined **and** tested where the freshness contract requires it
 - [ ] Cache key includes every tenant/authorization/locale dimension affecting the value
 - [ ] Cache-outage, loader-timeout, stale-fill race and cold-start behavior tested

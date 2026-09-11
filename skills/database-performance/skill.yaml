@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: database-performance
-version: 1.0.1
+version: 1.0.2
 description: >-
   Evidence-first triage and routing for database performance questions across SQL Server,
   MySQL/InnoDB, PostgreSQL, JDBC pools, ORM behavior, index portfolios, and bulk loading. Use
@@ -56,8 +56,6 @@ dependencies:
   - name: database-engine-selection-and-migration
     version: ^1.0.0
   - name: enterprise-transactions
-    version: ^1.0.0
-  - name: schema-evolution-and-compatibility
     version: ^1.0.0
   - name: distributed-transactions-and-sagas
     version: ^1.0.0

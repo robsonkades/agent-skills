@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: load-testing-advanced
-version: 1.3.1
+version: 1.3.2
 description: >-
   Selecting and executing advanced load profiles—baseline, capacity-envelope,
   breakpoint, stress, spike, ramp, soak and recovery—using bracketed boundaries,
@@ -45,7 +45,10 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - allocation-profiling
+  - capacity-planning
   - heap-dump-analysis
+  - latency-statistics
 
 capabilities:
   - reads-source

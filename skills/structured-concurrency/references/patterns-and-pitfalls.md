@@ -2,9 +2,10 @@
 
 Examples target **JDK 25** unless marked. `Joiner` name changes for 26 are in
 `api-by-jdk-version.md`. Application examples are partial; supply domain functions/types,
-metrics and imports. The cancellation test uses JUnit 5; the custom joiner uses `java.util`.
+metrics and imports. The partial-result example also uses `ConcurrentHashMap`; the cancellation
+test uses JUnit 5; the custom joiner uses `java.util`.
 
-## The four policies, and what each one is for
+## Completion policies and their uses
 
 | Need                                                    | Joiner                                                        | `join()` returns                |
 | ------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------- |
@@ -14,20 +15,29 @@ metrics and imports. The cancellation test uses JUnit 5; the custom joiner uses 
 | Collect everything, successes and failures alike        | `awaitAll()`                                                  | `null`; inspect each            |
 | Stop when a condition is met                            | `allUntil(Predicate<Subtask<? extends T>>)`                   | all subtasks (a `Stream` in 25) |
 
-Choosing `awaitAll()` means _you_ decide what a partial result means. That is the right
-choice for a dashboard aggregating six independent widgets, and the wrong one for a payment.
+Choosing `awaitAll()` means _you_ decide what each failed or missing result means. Independent
+optional widgets may remain useful after a partial failure; an operation requiring every result
+must detect failure before acting. Select from that contract, not from the feature's label.
 
 ## Fan-out where partial failure is acceptable
+
+This example permits partial results on widget failure or scope timeout, but owner interruption
+aborts the response with `InterruptedException` after child cleanup.
 
 ```java
 record Panel(String id, Optional<Data> data) {}
 
 List<Panel> render(List<Widget> widgets) throws InterruptedException {
+    Map<Subtask<? extends Panel>, Panel> completed = new ConcurrentHashMap<>();
+    List<Subtask<Panel>> tasks;
     try (var scope = StructuredTaskScope.open(
-            Joiner.<Panel>awaitAll(),
+            Joiner.<Panel>allUntil(t -> {
+                if (t.state() == Subtask.State.SUCCESS) completed.put(t, t.get());
+                return false; // observe completion; do not cancel on a widget result
+            }),
             cf -> cf.withName("dashboard").withTimeout(Duration.ofMillis(800)))) {
 
-        List<Subtask<Panel>> tasks = widgets.stream()
+        tasks = widgets.stream()
                 .map(w -> scope.fork(() -> new Panel(w.id(), Optional.of(load(w)))))
                 .toList();
 
@@ -35,27 +45,43 @@ List<Panel> render(List<Widget> widgets) throws InterruptedException {
             scope.join();
         } catch (StructuredTaskScope.TimeoutException expected) {
             metrics.increment("dashboard.scope.timeout");
-            // Completed states remain inspectable; UNAVAILABLE means no result is
-            // available, not necessarily that already-sent remote work stopped.
+            // Owner get() is invalid here on JDK 25: join did not complete.
+            // The joiner callback has retained successful results independently.
         }
+    } // close waits for subtasks and any completion callbacks still in progress
 
-        List<Panel> panels = new ArrayList<>(tasks.size());
-        for (int i = 0; i < tasks.size(); i++) {
-            Subtask<Panel> t = tasks.get(i);
-            panels.add(t.state() == Subtask.State.SUCCESS
-                    ? t.get() : new Panel(widgets.get(i).id(), Optional.empty()));
-        }
-        return List.copyOf(panels);
+    if (Thread.interrupted()) {
+        throw new InterruptedException("caller interrupted");
     }
+
+    List<Panel> panels = new ArrayList<>(tasks.size());
+    for (int i = 0; i < tasks.size(); i++) {
+        panels.add(completed.getOrDefault(tasks.get(i),
+                new Panel(widgets.get(i).id(), Optional.empty())));
+    }
+    return List.copyOf(panels);
 }
 ```
 
 Note what the timeout does: it cancels the scope and makes `join` throw. It does **not**
-return a partial-result object. For "everything that finished by T", retain the `Subtask`s,
-catch `TimeoutException`, and inspect their states as above. Leaving the block still invokes
-`close()`, which waits for every subtask thread to terminate; an uninterruptible loser can
-therefore make the method return after the nominal 800 ms bound. Cancellation of a client
-thread also does not prove that a request already sent to a remote service stopped.
+return a partial-result object. On JDK 25, owner `get()` inside the scope after a timed-out join
+throws even for a successful subtask. The callback above uses its documented permission to read
+successful results, with a concurrent map because callbacks may overlap. After close, render
+the recorded successes and fallbacks; a missing result does not prove a remote request stopped.
+This is a snapshot of recorded completions, not a precise wall-clock cutoff at 800 ms.
+Leaving the block still invokes `close()`, which waits for every subtask thread to terminate;
+an uninterruptible loser can therefore make the method return after the nominal 800 ms bound.
+
+The timeout catch intentionally leaves `InterruptedException` from join to propagate. On JDK 25,
+an owner interrupted while close waits continues waiting and returns with interrupt status set.
+The post-close check consumes that observed status and propagates interruption under this caller
+contract. It does not atomically prevent cancellation after the check or during later response
+publication; honor the framework's cancellation/publication protocol there. If interruption is
+not the caller's cancellation signal, adapt the boundary to that contract rather than clearing it.
+
+See the [JDK 25 subtask contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Subtask.html)
+and [joiner callback contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html),
+plus [close interruption behavior](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html#close()>).
 
 ## Racing redundant sources
 
@@ -73,10 +99,10 @@ This is the construct `CompletableFuture.anyOf` is mistaken for: `anyOf` returns
 _settled_ stage, including the first failure. Here, failures are ignored until every subtask
 has failed, and only then does `join` throw.
 
-Two costs to state out loud: the losing call still consumed a downstream request (hedging
-doubles load on the dependency — see `tail-latency-analysis` before doing this on a hot
-path), and the loser is cancelled by interruption, which stops it only if it is
-interruptible.
+Two costs to evaluate: an eager second attempt can increase downstream request volume and work
+(see `tail-latency-analysis` before doing this on a hot path), and interruption stops a loser
+only if it responds by exiting and releasing its resources. Measure actual attempts and residual
+work; cancellation timing and admission affect the load increase.
 
 ## Bounding concurrency inside a scope
 
@@ -183,13 +209,14 @@ before forking when that count is known. It is not a distributed-consensus quoru
 - **Treating the scope as an executor.** A reference can be stored or passed without throwing;
   misuse of owner-only methods on JDK 25 throws `WrongThreadException`. Keep lifecycle lexical;
   structure checks do not automatically close a forgotten scope.
-- **Background work in a scope.** A scope ends when its block ends. A consumer loop, a
-  scheduler or a warm-up job needs an executor with its own lifecycle.
+- **Work escaping its parent lifetime.** A bounded or long-lived parent may own a scope, including
+  an accept loop with handlers. Make stop-admission and shutdown/wait behavior explicit. A detached
+  job must have its own owner; a request's scope does not manage it after the request returns.
 - **Owner reading a result before joining.** It throws. Joiner completion callbacks may read
   successful results; a partial-result join still requires checking each subtask's state.
-- **Catching `FailedException` and continuing without unwrapping.** The useful exception is
-  `e.getCause()`; logging the wrapper produces a stack trace that names the scope and not
-  the failure.
+- **Classifying `FailedException` without inspecting its cause.** Match the underlying failure
+  through `e.getCause()`. Log the full throwable chain; logging only the wrapper's message loses
+  detail, while a full stack trace normally includes the cause.
 - **Assuming close is fast.** It waits for every subtask. Measure it — the difference
   between "scope failed" and "scope returned" includes termination, cleanup and scheduling.
 - **Reusing a `Joiner`.** One per `open`, always.
@@ -250,4 +277,5 @@ jcmd <pid> Thread.dump_to_file -format=json /tmp/dump.json
 Scopes appear as objects containing their forked threads with a reference to the parent
 scope, so the whole tree can be reconstructed — the owner is usually parked in `join`, and
 the interesting frames are its children. `cf.withName("checkout")` is what makes that dump
-searchable; unnamed scopes are indistinguishable in a dump with hundreds of them.
+searchable; generated names/IDs and parent links still distinguish unnamed scopes, but do not
+explain their application purpose.

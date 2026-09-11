@@ -1,0 +1,363 @@
+{
+  "date": "2026-09-09",
+  "skill": "java-api-design",
+  "status": "executed and assessed",
+  "protocol": {
+    "purpose": "Small forced-loading response comparison, not automatic activation or statistical proof of improvement",
+    "arms": ["no skill", "original 1.2.1", "revised 1.2.2"],
+    "model": "Parent session model inherited; no override",
+    "conditions": "Fresh default agent per arm, no inherited conversation. Same two requests and tool restrictions. Read only assigned bundle; answer from supplied context without implementation or external tools. Both requests appear in each arm, so within-arm carryover is possible.",
+    "guidance": "All SKILL.md and reference content explicitly supplied in treatment arms; package metadata omitted. This does not test selective reference loading.",
+    "grading": "Coordinator assesses observable decisions against the criteria below; no exact wording, pattern or score total required. Preserve raw responses and report each result plus limitations. One sample per arm cannot establish general reliability or causal improvement."
+  },
+  "cases": [
+    {
+      "id": "export-design",
+      "request": "Design an unpublished Java 17 library API for exporting report data. Today the operation takes a typed ReportSource and ExportFormat and writes to a caller-provided OutputStream; the caller reuses that stream after export. The operation is synchronous, and the library must work on the classpath and in named modules. The team proposes a staged fluent DSL because encryption and compression might be requested someday; neither is currently required. Recommend a small API and explain the important decisions. You may show partial Java sketches. No code execution is needed.",
+      "criteria": [
+        "Use concrete caller interactions to justify the public surface and show ordinary use.",
+        "Compare the proposed DSL with a materially simpler constructor, factory or method form; do not require one particular pattern.",
+        "Do not implement speculative encryption/compression or treat the proposed DSL as a mandate.",
+        "Keep caller ownership of OutputStream explicit, including failure behavior; do not close it internally.",
+        "Explain meaningful misuse or contract checks, preserve Java17 compatibility, and qualify unexecuted sketches."
+      ],
+      "failureConditions": [
+        "Recommend internal closure of the borrowed stream.",
+        "Mandate staged construction without a current invariant or caller need.",
+        "Silently raise Java baseline or claim compilation/execution that did not occur."
+      ]
+    },
+    {
+      "id": "holdout-stream-evolution",
+      "request": "Our published Java 17 reporting library has List<Row> find(Query query). A teammate proposes changing only its return type to Stream<Row> in a minor release so large results allocate less. The proposed stream would hold a JDBC cursor and connection until it is closed; current callers treat the List as reusable, and some call find(query).size(). We have not measured production allocation. Review the proposal and recommend a compatibility and lifecycle approach, with small consumer examples where useful. No code execution is needed.",
+      "criteria": [
+        "Identify source, binary and behavioral incompatibility of replacing the existing return contract; a minor release is not justified merely by unchanged parameters.",
+        "Consider retaining the existing API and a distinct optional streaming/pagination approach rather than assuming streaming is required.",
+        "Specify ownership and closure on normal completion, failure and early exit; do not claim terminal stream operations necessarily close JDBC resources.",
+        "Explain single-use Stream versus reusable List expectations and show a usable consumption pattern.",
+        "Treat allocation benefit as unmeasured, distinguish database integration checks from compilation, and preserve Java17."
+      ],
+      "failureConditions": [
+        "Call the return-type replacement a compatible drop-in minor change.",
+        "Assume stream consumption automatically closes JDBC resources or omit early-exit ownership.",
+        "Claim a measured memory/performance gain or claim unavailable execution."
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "a",
+      "arm": "no skill",
+      "bundle": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-api-response-MzIlLt\\a.json",
+      "status": "executed",
+      "response": "**export-design**\n\nUse one ordinary method. Three required, typed arguments do not justify a staged fluent DSL.\n\n```java\npublic final class ReportExporter {\n    public void export(\n            ReportSource source,\n            ExportFormat format,\n            OutputStream destination) throws IOException {\n        // ...\n    }\n}\n```\n\nDefine these contracts explicitly:\n\n- **Ownership:** `destination` is borrowed. Export must leave it open and should leave flushing to the caller. Close resources opened internally without closing caller-owned resources.\n- **Completion:** On successful return, all report bytes—including format trailers—have been written to the destination. That does not guarantee downstream buffers are flushed or data is durable.\n- **Failure:** Propagate `IOException` for I/O failures. A failure can leave partial output; this method does not promise atomic publication. Reject null arguments before starting output, and document any distinct invalid-data failures.\n- **Source lifecycle:** State whether the source is consumed once and who owns it. A useful default is that the caller owns the supplied source, while the exporter owns and closes any per-export reader or cursor it opens through that source.\n- **Concurrency:** Keep per-export state local. Callers must coordinate access to shared sources and destinations.\n\nKeep the existing typed `ReportSource` and `ExportFormat`; do not add generic maps, strings, builders, or extension interfaces without a concrete need. If compression or encryption becomes required, decide then whether caller-composed streams or an additional options overload fits the actual ownership and ordering requirements. Preserve the simple overload.\n\nShip a stable module descriptor exporting the public API package:\n\n```java\nmodule com.example.reporting {\n    exports com.example.reporting;\n}\n```\n\nThe same modular JAR can work on the classpath. Keep implementation packages unexported and ensure all types appearing in public signatures are accessible to named-module consumers.\n\n**holdout-stream-evolution**\n\nReject the return-type change for a minor release. It breaks source compatibility (`size()` disappears), binary compatibility (the JVM method descriptor includes the return type), and behavior: a reusable materialized collection becomes a single-use operation holding database resources. Java cannot retain both methods under the same name and parameters by overloading only the return type.\n\nKeep the published contract and add an explicitly named operation:\n\n```java\nList<Row> find(Query query);       // Existing behavior preserved\nStream<Row> stream(Query query);   // New resource-owning operation\n```\n\nPreserve `find`’s ordering, mutability, exception behavior, and transaction semantics. Do not casually rewrite it using `Stream.toList()`, whose result is unmodifiable. If third parties implement the reporting interface, avoid introducing an unsupported abstract-method obligation: consider a default materialized fallback or a separate streaming interface.\n\nFor `stream`, document and implement a clear lifecycle:\n\n- The caller must close the stream. Its close handler releases the result set, statement, and any connection owned by this operation, returning pooled connections appropriately.\n- Clean up resources if opening or fetching fails. Never close a caller-owned transaction connection.\n- Terminal operations do **not** automatically close streams. Require try-with-resources even after full consumption or short-circuiting.\n- Specify sequential, thread-confined consumption and the transaction lifetime. Return independently usable row values, rather than exposing a reused cursor-backed row.\n- Document when acquisition occurs and how database failures during traversal and closure surface; lazy failures occur after `stream()` returns.\n\n```java\nList<Row> rows = reports.find(query);\nint count = rows.size();\nrender(rows);\naudit(rows); // Reuse remains supported\n```\n\n```java\ntry (Stream<Row> rows = reports.stream(query)) {\n    rows.forEach(this::process);\n}\n\ntry (Stream<Row> rows = reports.stream(query)) {\n    Optional<Row> first = rows.findFirst();\n} // Still closes resources after short-circuiting\n```\n\nIf streaming processing is the main use case, a callback method such as `forEachRow(Query, Consumer<? super Row>)` can instead keep resource closure inside the library.\n\nMeasure before claiming an allocation improvement. Cursor-backed streaming can reduce retained rows, but drivers may buffer results, consumers may collect them again, and slow consumers hold scarce connections longer. Compare representative allocation, peak memory, latency, and connection occupancy; verify the driver’s fetching behavior. A separate `count(Query)` may help callers needing only a count, but it must define matching query semantics and does not share a snapshot with a separate fetch automatically.\n",
+      "agent": "api_sample_a",
+      "responseSha256": "9a7d720a379064c8486042fb3fdcaecacd6b2bcacd81be7cb9e994156d9d76ec",
+      "results": {
+        "export-design": {
+          "outcome": "partial",
+          "met": [2, 3, 4, 5],
+          "unmet": [1],
+          "reason": "Safe simple method and ownership/failure/null contracts, but no concrete ordinary export invocation; public declaration stands in for caller usage."
+        },
+        "holdout-stream-evolution": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Identifies source/binary/behavior break, preserves List API, proposes explicit streaming capability with closure/early-exit contract and unmeasured benefit."
+        }
+      },
+      "bundleSha256": "2afb73c96f2c2075cec5fbe55794caeb70aa494c35e6d6cac9e29e5a9f6b9462"
+    },
+    {
+      "id": "b",
+      "arm": "original 1.2.1",
+      "bundle": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-api-response-MzIlLt\\b.json",
+      "status": "executed",
+      "response": "**export-design**\n\nStart with one synchronous method. Three distinct, required argument types are clear at the call site; hypothetical encryption and compression do not justify a staged DSL.\n\n```java\n// Partial sketch; public types belong in separate files.\npublic final class ReportExporter {\n    public ReportExporter() {}\n\n    public void export(\n            ReportSource source,\n            ExportFormat format,\n            OutputStream destination) throws IOException {\n        // ...\n    }\n}\n```\n\n```java\nexporter.export(source, ExportFormat.CSV, destination);\ndestination.write(trailer); // The caller can continue using the stream.\n```\n\nMake these contracts explicit:\n\n- All arguments are non-null. Validate detectable invalid arguments before writing.\n- The call blocks until export finishes or fails. `void` is sufficient without a concrete need for a receipt.\n- The caller owns `destination`. Never close it, including on failure. Prefer leaving its flushing to the caller; finish and drain any library-owned encoding buffers before returning without flushing or closing the supplied stream.\n- If `ReportSource` owns closeable resources, specify its ownership too. A reasonable default is that caller-supplied resources remain caller-owned; the library closes resources it acquires internally.\n- An I/O failure throws `IOException` and can leave partial output. An arbitrary `OutputStream` provides no rollback guarantee. Document source/format failures separately and preserve their causes.\n- Document exporter concurrency and source-consumption rules. A stateless exporter can support concurrent calls using independent sources and destinations; sharing a stream requires caller coordination.\n\nKeep implementation helpers package-private, which also protects the classpath surface. For named modules, export only the API package:\n\n```java\nmodule com.example.reports {\n    exports com.example.reports.api;\n}\n```\n\nEvery public signature type must be accessible to consumers. Do not add `opens` without an actual reflection requirement. A final concrete class avoids publishing subclassing or provider contracts prematurely.\n\nIf options become necessary, design them from actual requirements and retain this method’s defaults. No options record, builder, asynchronous flag, or staged interfaces are needed today.\n\n**holdout-stream-evolution**\n\nReject the return-type replacement in a minor release. It breaks all three compatibility promises:\n\n| Compatibility | Impact |\n|---|---|\n| Binary | `List` and `Stream` have different erased return descriptors. Previously compiled callers can fail with `NoSuchMethodError`. |\n| Source | Assignments to `List<Row>` and calls such as `find(query).size()` stop compiling. Java cannot retain both declarations by overloading solely on return type. |\n| Behavioural | A reusable materialized result becomes a single-use traversal that holds database resources. Execution and failures may move into consumption. |\n\nKeep `List<Row> find(Query query)` and its existing ordering, mutability, reuse, and resource guarantees. Add an explicit opt-in operation such as:\n\n```java\nStream<Row> openRows(Query query);\n```\n\nIf the published API is an interface with external implementors, prefer a separate streaming capability instead of adding a required abstract method. A default method returning `find(query).stream()` materializes the result and cannot honestly promise cursor-backed streaming.\n\nSpecify that `openRows` acquires library-owned resources when called, releases partial acquisitions if opening fails, and returns a sequential, thread-confined stream. Closing it must release the result set, statement, and connection even after early termination or failure. Define any transaction involvement explicitly; do not silently close a caller-owned connection.\n\n```java\nList<Row> rows = reports.find(query);\nint size = rows.size();\nrender(rows);\narchive(rows); // Existing reusable-result contract remains.\n```\n\n```java\ntry (Stream<Row> rows = streamingReports.openRows(query)) {\n    rows.limit(100).forEach(this::render);\n}\n```\n\nTerminal operations do **not** automatically close a stream. Require try-with-resources even for `findFirst()`, exceptions, or complete consumption. Document query timing, ordering, consistency, and iteration/close failures. Returned rows should contain detached values, or any resource-dependent fields must have explicit lifetime restrictions.\n\nMeasure before promising an allocation improvement. Cursor streaming may reduce retained heap while still allocating every row; JDBC buffering can undermine the benefit, and slow consumers hold connections longer. Compare representative result sizes, peak heap, allocation rate, latency, and connection-pool occupancy.\n\nBefore release, check binary compatibility, compile representative downstream callers, run old client binaries, and test resource release after full traversal, short-circuiting, no traversal, and failures. These are proposed checks; none were executed here. There is no need to deprecate `find` merely because streaming is available.\n",
+      "agent": "api_sample_b",
+      "responseSha256": "7e6d478dde79c5125919c53e341c3d50c443f1f0605516dfa97783d2a93b6869",
+      "results": {
+        "export-design": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Concrete ordinary invocation, simpler design, caller stream reuse and compatible lifecycle guidance."
+        },
+        "holdout-stream-evolution": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Identifies source/binary/behavior break, preserves List API, proposes explicit streaming capability with closure/early-exit contract and unmeasured benefit."
+        }
+      },
+      "bundleSha256": "0c4d737521d8bcc1eede9b7d27f8a52e3f12f6e33f6940cf5c62b7f32b34f7cf"
+    },
+    {
+      "id": "c",
+      "arm": "revised 1.2.2",
+      "bundle": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-api-response-MzIlLt\\c.json",
+      "status": "executed",
+      "response": "**export-design**\n\nUse a single synchronous operation with the three existing typed arguments:\n\n```java\n// Ordinary use: destination belongs to the caller.\nexporter.export(source, format, destination);\n\n// The caller can continue using it after export.\ndestination.flush();\n\n// In-memory use needs no separate API.\nvar buffer = new ByteArrayOutputStream();\nexporter.export(source, format, buffer);\nbyte[] reportBytes = buffer.toByteArray();\n```\n\nA small public facade is sufficient:\n\n```java\npublic final class ReportExporter {\n    public ReportExporter() { /* implementation omitted */ }\n\n    public void export(\n            ReportSource source,\n            ExportFormat format,\n            OutputStream destination) throws IOException {\n        /* implementation omitted */\n    }\n}\n```\n\nThe three required values have distinct types and clear roles. A request record, builder, or staged DSL adds public contracts without preventing a demonstrated mistake. Revisit configuration when actual requirements establish optional settings or invalid combinations. Encryption and compression do not currently justify extension machinery.\n\nDefine these behavioral guarantees before publication:\n\n- Reject null arguments immediately with `NullPointerException`. Validate discoverable input problems before writing.\n- Borrow the destination: never close it, including on failure. Finish encoding and drain library-owned buffers before successful return, but leave flushing the caller’s stream to the caller. Any internal wrapper must preserve this ownership contract.\n- Treat the source as borrowed too, unless its existing contract says otherwise. Consume it synchronously and retain neither argument for later work.\n- Report I/O failures through `IOException`. Document that failure may leave partial output; exporting again to that stream can append duplicate or malformed content.\n- Return `void`: successful completion already communicates the required outcome. Add a result type only when callers need meaningful export metadata.\n- Keep the exporter stateless if practical, and document concurrency separately from the thread safety of caller-provided sources and destinations.\n\nFor misuse, `exporter.export(source, \"csv\", destination)` should fail compilation; `exporter.export(source, format, null)` should fail before writing. Closing the borrowed destination inside the exporter is an implementation defect.\n\nExport only the intended API package:\n\n```java\nmodule com.example.reporting {\n    exports com.example.reporting;\n}\n```\n\nKeep implementation classes package-private where possible. An unexported package hides public implementation types from ordinary named-module consumers, but that protection does not apply on the classpath. No `opens` directive is needed without a concrete reflection requirement.\n\nBefore publication, compile representative Java 17 consumers both on the classpath and in named modules. Verify stream reuse after success and failure, complete encoded output without closing the destination, and argument validation. These are proposed checks; none were executed.\n\n**holdout-stream-evolution**\n\nDo not replace `List<Row>` with `Stream<Row>` in a minor release. It breaks three contracts:\n\n| Contract | Impact |\n|---|---|\n| Binary | The JVM descriptor changes from returning `List` to returning `Stream`. Existing compiled callers can fail with `NoSuchMethodError`. |\n| Source | Assignments to `List<Row>` and calls such as `find(query).size()` stop compiling. Java cannot overload these methods solely by return type. |\n| Behavioral | A reusable materialized result becomes a single-use traversal holding database resources. Evaluation and failures may occur later, and callers acquire a cleanup obligation. |\n\nKeep `find(Query)` and its existing ordering, mutability, reuse, nullability, and failure behavior:\n\n```java\nList<Row> rows = reports.find(query);\nint size = rows.size();\nrows.forEach(this::display);\nrows.forEach(this::audit);  // Still valid.\n```\n\nAdd an explicitly named streaming capability. If third parties implement the existing API, a separate interface avoids imposing a new abstract method on them:\n\n```java\npublic interface StreamingRows {\n    Stream<Row> streamRows(Query query);\n}\n```\n\nConsumers requiring streaming obtain that capability explicitly:\n\n```java\ntry (Stream<Row> rows = streamingReports.streamRows(query)) {\n    rows.limit(100).forEach(this::process);\n}\n```\n\nSpecify its lifecycle precisely:\n\n- The caller must close the stream, including after short-circuiting or processing failure. Terminal operations do **not** automatically close streams.\n- Closing releases the result set, statement, and library-acquired connection, usually returning the connection to its pool. Acquisition failures must release everything already acquired.\n- Return an initially sequential, single-use stream; document that parallel traversal and cross-thread use are unsupported.\n- State when the query executes, which transaction and consistency rules apply, and how traversal failures are exposed. JDBC failures during traversal need a documented unchecked translation because stream operations cannot declare `SQLException`.\n- Define whether each `Row` remains usable after traversal and closure. Prefer detached row values if callers may retain them.\n- Define cleanup behavior when processing and resource closure both fail, preserving the primary failure.\n\nDo not present `rows.count()` as equivalent to list `size()`: it consumes the stream and may require reading every row. Collecting with Java 17’s `toList()` restores materialization and returns an unmodifiable list, which may differ from the old contract.\n\nThe performance premise remains unproven. Streaming may reduce retained heap while leaving total row allocation similar, and slow consumers hold connections longer. Measure representative result sizes, allocation, peak heap, latency, and pool occupancy. Confirm actual cursor behavior with the supported JDBC drivers; fetch-size configuration alone does not establish bounded memory.\n\nKeep `find` as a supported convenience unless there is a separate reason to retire it. If removal becomes necessary, publish a migration and compatibility window, with removal in a major release under stable SemVer. Before releasing the additive API, check binary compatibility, recompile downstream examples, run old client binaries, and exercise early termination and exceptional cleanup against the supported drivers. No checks were executed here.\n",
+      "agent": "api_sample_c",
+      "responseSha256": "a57560064ba9b4cb3e63bb8b87255984b3cda4f50b146b9488c50cea800bdea0",
+      "results": {
+        "export-design": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Caller snippets precede declaration, include in-memory use and explicit wrong-type/null misuse; simple form and ownership preserved."
+        },
+        "holdout-stream-evolution": {
+          "outcome": "pass",
+          "met": [1, 2, 3, 4, 5],
+          "unmet": [],
+          "reason": "Identifies source/binary/behavior break, preserves List API, proposes explicit streaming capability with closure/early-exit contract and unmeasured benefit."
+        }
+      },
+      "bundleSha256": "d1b45f9e9ea170aa95b9186529ff9c1f862995c912e73f7990c6cac900da07e0"
+    }
+  ],
+  "assessment": {
+    "criticalFailures": "None of the predefined critical failure conditions observed in any arm.",
+    "observedDifference": "Original and revised guidance arms supplied concrete export invocations; revised arm led with caller snippets and explicit misuse checks. All arms made the core simple-design, ownership and compatibility decisions correctly.",
+    "limits": [
+      "One response per arm with two scenarios; no repetitions or statistical reliability estimate.",
+      "Forced loading of full references, not automatic activation or progressive-disclosure behavior.",
+      "Coordinator grading was not blinded; criteria fixed before execution and raw responses retained.",
+      "Within-arm second-case carryover possible; same order across arms.",
+      "No compiler, library implementation, JDBC integration or performance execution during response samples.",
+      "No general or percentage improvement claim."
+    ]
+  },
+  "neighborEvaluation": {
+    "date": "2026-09-10",
+    "skills": ["java-api-design", "java-object-construction", "java-fluent-apis", "gof-builder"],
+    "status": "executed and assessed",
+    "protocol": {
+      "purpose": "Check related construction/API guidance together against simple construction, interface evolution and a factory-specific precondition.",
+      "arms": ["no skill", "original committed packages", "revised packages"],
+      "model": "Parent session model inherited; no override",
+      "conditions": "Fresh default agent per arm, no inherited conversation, identical ordered requests and tool restrictions. Read only the assigned bundle; no repository browsing, external lookup, compilation or implementation. Cases share a context within each arm.",
+      "guidance": "Treatment arms receive all SKILL.md and referenced Markdown content of the four packages. Metadata and other dependencies are omitted; this evaluates responses under forced loading, not activation or selective resource loading.",
+      "grading": "Coordinator assesses observable decisions against fixed criteria without exact wording or required pattern. One sample per arm, ordered cases and unblinded grading cannot establish general reliability or causal improvement.",
+      "holdout": "Final factory-precondition case is not disclosed to the reviewers and will be recorded and run only after all four package writers have stopped. No package changes driven by it before these runs."
+    },
+    "cases": [
+      {
+        "id": "simple-four-field-value",
+        "request": "Review a proposal for an internal Java 17 library; the compatibility target must remain 17. RouteOptions is an immutable value with four required components of distinct types: URI endpoint, Duration timeout, RetryMode retryMode (an existing enum), and TenantId tenant (an existing immutable value). There are no optional fields, overloads, framework reconstruction, resource acquisition or external implementors. The complete current compact constructor rejects nulls and nonpositive timeout; those are the agreed invariants. Callers read clearly as new RouteOptions(endpoint, timeout, retryMode, tenant), and the only variation is constructing a second value with a different timeout. A teammate wants a staged builder because 'four fields should always have a builder' and proposes moving validation exclusively into build(). Assess the proposal and recommend the smallest useful change, with representative consumer calls and appropriate checks. Do not implement files or claim tests ran.",
+        "criteria": [
+          "Retain a simple constructor/record or justify a similarly small factory; reject field count alone as a reason for staged machinery.",
+          "Keep the agreed invariant enforced through all construction paths rather than solely in an optional builder.",
+          "Give concrete ordinary/variation/misuse caller evidence and appropriate positive/negative checks without introducing irrelevant advanced machinery.",
+          "Preserve Java 17 and use supplied context without redundant questions or invented missing requirements."
+        ],
+        "failureConditions": [
+          "Automatically mandates a builder or upgrades Java.",
+          "Moves invariant checks to build while leaving another construction path unchecked.",
+          "Claims compilation or runtime checks were executed."
+        ]
+      },
+      {
+        "id": "published-interface-evolution",
+        "request": "Assess two proposed changes for a published Java 17 SDK that must keep existing client binaries working in a minor release. The current public interface is Draft { Draft amount(int cents); Charge build(); }. Third parties implement Draft; old client binaries call amount(int) and build(). Proposal A adds the uniquely named abstract method Draft memo(String text), with no default. Proposal B instead changes amount(int)'s return type from Draft to a new unrelated interface AmountStep (which declares Charge build()); a selected old client source chain .amount(100).build() still recompiles successfully, and there are no retained old descriptors or compiler bridges. A reviewer says A breaks every existing binary while B is proven safe by that source check. Evaluate the claim, distinguish effects on old callers, source implementors and new callers using old implementations, and recommend a compatible path and validation. A default memo implementation that silently ignores text would violate the proposed memo contract. Do not implement files or claim tests ran.",
+        "criteria": [
+          "Distinguish adding an abstract interface method's compatibility with pre-existing binaries from recompilation obligations and a new invocation on an old implementation that lacks it.",
+          "Identify Proposal B's old return descriptor/linkage risk despite selected source recompilation; do not call it safe.",
+          "Preserve existing API descriptors and behavior; consider a separate capability or additive entrypoint, or a justified release/migration, instead of an invalid no-op default.",
+          "Specify old binary/new library, source implementor and new-caller/old-implementation checks and report them as proposed."
+        ],
+        "failureConditions": [
+          "Claims every old binary fails solely because the abstract method was added.",
+          "Claims source recompilation proves the return-type change binary compatible.",
+          "Uses an ignored memo as a contract-preserving default.",
+          "Claims unexecuted checks passed."
+        ]
+      },
+      {
+        "id": "holdout-factory-precondition",
+        "request": "Review an additive API proposal in a published Java 17 library. The public record AccessPolicy(Set<String> roles) has a compact constructor that snapshots with Set.copyOf(roles). Its documented contract permits an empty set, meaning no roles are allowed; callers already use new AccessPolicy(Set.of()) for that valid state. Null sets or elements are rejected. A new convenience factory AccessPolicy.requiringRoles(Set<String>) is requested specifically for configuration paths that require at least one role. The general record contract is unchanged. A teammate proposes moving the new factory's nonempty check into the compact constructor so 'all construction paths enforce every factory check', and making the canonical constructor private to require factory use. Recommend the correct API boundary and illustrate ordinary use of both paths and misuse of the restricted factory. Consider compatibility and caller-owned mutable sets. No repository or test execution is available; do not claim checks ran.",
+        "criteria": [
+          "Separate the factory's narrower precondition from the record's shared invariant: retain the documented valid empty record and reject empty input through requiringRoles.",
+          "Reject a private canonical constructor on a public record and explain the existing public/behavioral contract.",
+          "Preserve snapshots/null handling and avoid validating a caller-owned mutable collection then creating a different snapshot without considering that gap; a snapshot-first or construct-then-check implementation is acceptable.",
+          "Provide ordinary general/restricted and misuse caller examples plus appropriate proposed compatibility and mutation checks."
+        ],
+        "failureConditions": [
+          "Makes empty records invalid despite the supplied unchanged contract.",
+          "Claims a public record can have a private canonical constructor.",
+          "Replaces the snapshot with a live view or claims arbitrary concurrent collection mutation is made safe.",
+          "Claims checks ran."
+        ]
+      }
+    ],
+    "sources": [
+      "https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.5.4",
+      "https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.15",
+      "https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.4"
+    ],
+    "artifactsDirectory": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X",
+    "runs": [
+      {
+        "id": "a",
+        "arm": "no skill",
+        "bundlePath": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/a.json",
+        "bundleSha256": "8b8604af858c5517450ec7c7dac33fa54886477fbcee807018306bd5ffcbc2cb",
+        "guidanceFiles": 0,
+        "responsePath": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/a-response.md",
+        "status": "executed and assessed",
+        "response": "## simple-four-field-value\n\nKeep the direct constructor and its validation. Four fields alone do not justify a builder: these required arguments have distinct types, the calls are already clear, and there is no construction sequence to enforce. Moving validation exclusively into `build()` would let the existing constructor bypass the agreed invariants.\n\nThe smallest change is no API change; construct the second value directly. If changing only the timeout is a recurring operation, a single copy method is useful:\n\n```java\npublic RouteOptions withTimeout(Duration newTimeout) {\n    return new RouteOptions(endpoint, newTimeout, retryMode, tenant);\n}\n```\n\nConsumer calls remain straightforward and compatible with Java 17:\n\n```java\nvar original = new RouteOptions(endpoint, timeout, retryMode, tenant);\nvar adjusted = original.withTimeout(Duration.ofSeconds(5));\n```\n\nThe method delegates validation to the compact constructor. Check that valid construction preserves the four values, each null component is rejected, and zero or negative timeouts are rejected. If adding `withTimeout`, check that it changes only the timeout, leaves the original unchanged, and rejects invalid replacement timeouts through the same constructor. These are proposed checks; none were run.\n\n## published-interface-evolution\n\nThe reviewer's claim is incorrect in both directions. Source compatibility, binary linkage, and support for a newly added operation are separate questions.\n\n| Consumer or implementor | A: add abstract `memo(String)` | B: replace `Draft amount(int)` with `AmountStep amount(int)` |\n| --- | --- | --- |\n| Existing client binaries calling the original methods | Their method descriptors remain present; adding this abstract method does not by itself break these calls. | An old call to `amount(int)` expects the descriptor returning `Draft`. With that descriptor absent, it fails with `NoSuchMethodError`. The unchanged `build()` descriptor remains available. |\n| Existing concrete implementation sources recompiled against the new SDK | Must implement `memo`, unless a suitable implementation is inherited. | Their existing `Draft amount(int)` does not implement the new method: `Draft` and `AmountStep` are unrelated return types. They require changes. |\n| New callers using an old implementation binary | Calling `memo` on an implementation without it fails with `AbstractMethodError`; original operations can still work. | Calling the new `amount` descriptor on an implementation that only supplies the old descriptor fails with `AbstractMethodError`. |\n\nThe selected chain recompiling under B proves only that this particular source expression still type-checks. JVM method descriptors include the return type; recompilation emits a different reference and says nothing about the retained old binaries. Other old sources, such as `Draft d = draft.amount(100);`, also stop compiling under B.\n\nFor the minor release, retain both original signatures. Introduce memo support through a new capability interface, such as `MemoDraft extends Draft`, obtained from an API that guarantees an implementation of that capability. Keep existing third-party implementations usable through `Draft`. A default method that silently drops the memo is invalid. An explicitly unsupported default is an option only if the published contract permits unsupported memo operations; it cannot fulfill a contract promising that every draft accepts a memo. Universal mandatory support requires a breaking migration.\n\nIf a staged API is valuable, expose it through a separate factory/API while retaining the original `Draft` API and descriptors. Java cannot overload a method solely by changing its return type.\n\nValidate using retained artifacts: compile a client and a third-party implementation against the old SDK, then run those unchanged class files with the candidate SDK. Exercise both original methods. Separately recompile representative clients and implementations, and exercise new callers against old implementations to verify the chosen capability boundary. Inspect API/descriptors and run a binary-compatibility comparison as supporting checks. No compilation or execution was performed here.\n\n## holdout-factory-precondition\n\nKeep the public canonical constructor and its existing contract: empty sets are valid, and `Set.copyOf` provides a defensive snapshot while rejecting null sets or elements. Nonemptiness is a precondition of `requiringRoles`, not an invariant of every `AccessPolicy`.\n\nAn illustrative factory validates the already-snapshotted value:\n\n```java\npublic static AccessPolicy requiringRoles(Set<String> roles) {\n    AccessPolicy policy = new AccessPolicy(roles);\n    if (policy.roles().isEmpty()) {\n        throw new IllegalArgumentException(\"At least one role is required\");\n    }\n    return policy;\n}\n```\n\nThis makes the check apply to exactly the set stored in the result, instead of checking caller-owned data and then taking a potentially different snapshot. Callers must still coordinate concurrent mutations during construction; defensive copying is not a synchronization mechanism.\n\nOrdinary use and misuse:\n\n```java\nvar denyAll = new AccessPolicy(Set.of());             // valid existing state\nvar configured = AccessPolicy.requiringRoles(Set.of(\"reader\"));\nAccessPolicy.requiringRoles(Set.of());                // IllegalArgumentException\n\nvar supplied = new HashSet<>(Set.of(\"reader\"));\nvar snapshot = AccessPolicy.requiringRoles(supplied);\nsupplied.clear();                                     // snapshot still has \"reader\"\n```\n\nPutting the nonempty check in the constructor would break valid existing behavior. A public record's canonical constructor must be public; making it private is not legal Java 17. Preserve that public construction path rather than attempting to force factory use.\n\nSuggested checks cover empty-set construction, rejection of an empty factory argument, successful nonempty factory construction, null sets/elements through both paths, and isolation from subsequent caller mutations. Also verify that the returned roles cannot be mutated. No checks were run.\n",
+        "responseSha256": "bc0cf2f000649487672a31f109d4aff958f9ac6f8b7642bf1c86b921c0d8434b",
+        "assessment": [
+          {
+            "case": "simple-four-field-value",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Retains direct construction; optional single withTimeout delegates to the compact constructor. Shows ordinary/variation calls and names concrete null/zero/negative misuse outcomes in proposed checks. Preserves 17 and makes no execution claim."
+          },
+          {
+            "case": "published-interface-evolution",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Separates old descriptors, source implementors and new invocation failure; rejects return-type recompilation as binary evidence. Recommends additive capability while preserving the old surface, with artifact checks proposed."
+          },
+          {
+            "case": "holdout-factory-precondition",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Keeps valid empty records and public canonical construction; constructs a snapshot before enforcing the narrower factory precondition. Covers mutable input, nulls, ordinary/restricted calls and misuse with proposed checks."
+          }
+        ]
+      },
+      {
+        "id": "b",
+        "arm": "original committed packages",
+        "bundlePath": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/b.json",
+        "bundleSha256": "11f6272ed56d57c23f8dcf291f6ca79520be27b92f1d9f4c7137efe132fa67ea",
+        "guidanceFiles": 13,
+        "responsePath": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/b-response.md",
+        "status": "executed and assessed",
+        "response": "**simple-four-field-value**\n\nKeep the Java 17 record and its current compact constructor. Four parameters do not justify a builder: these required components have distinct types, the positional call is already clear, and there is no optional or incremental construction to manage. A staged builder would add interfaces and fixed call ordering without solving a demonstrated problem. Stages also cannot prevent null or nonpositive values. Moving validation exclusively into `build()` would let direct construction violate the agreed invariants.\n\nThe smallest useful addition for the stated variation is one `withTimeout` method that delegates to the existing constructor. If this variation is rare, direct reconstruction is also sufficient. Representative Java 17 sketch:\n\n```java\n// Inside RouteOptions; retain its existing compact constructor.\npublic RouteOptions withTimeout(Duration timeout) {\n    return new RouteOptions(endpoint, timeout, retryMode, tenant);\n}\n\n// Consumer calls; endpoint, retryMode and tenant are existing valid values.\nvar original = new RouteOptions(endpoint, Duration.ofSeconds(2), retryMode, tenant);\nvar slower = original.withTimeout(Duration.ofSeconds(5));\n```\n\nThe original remains unchanged; the second value shares the unchanged immutable components and passes through the same validation. Preserve the constructor signature and record components. This requires no toolchain upgrade or builder dependency.\n\nSuggested checks, not run: compile representative callers with `--release 17`; retain the direct-constructor checks for each null component and zero/negative timeout; check that `withTimeout` rejects null and nonpositive timeouts through that constructor. Check that a valid copy has the requested timeout, preserves the other values, and leaves the original unchanged. No performance claim or benchmark is needed for this design decision.\n\n**published-interface-evolution**\n\nThe reviewer's claim is wrong in both directions. Source compilation and binary linkage are separate guarantees, and neither proves behavior.\n\n| Consumer | A: add abstract `Draft memo(String)` | B: replace `Draft amount(int)` with `AmountStep amount(int)` |\n| --- | --- | --- |\n| Existing binaries calling `amount(int)` and `build()` | Existing descriptors remain; these calls continue working. The addition does not break every binary. | An old call targeting `Draft.amount(int): Draft` fails with `NoSuchMethodError` because that descriptor no longer resolves. A direct call to the unchanged `build()` need not fail. |\n| Existing concrete source implementors | Must provide or inherit a valid `memo` implementation to recompile; otherwise compilation fails. | Their existing `Draft` return type cannot implement the new method returning unrelated `AmountStep`; they must change. |\n| New callers using an old implementation binary | Existing operations still work. Invoking the new `memo` method on an implementation lacking it throws `AbstractMethodError`. | Invoking the new `amount(int): AmountStep` method on an old implementation lacking that descriptor throws `AbstractMethodError`. |\n\nA is binary-compatible in the JLS sense of adding an abstract interface method, with an invocation failure when the new operation reaches an old implementation. It breaks source compatibility for affected implementors and supplies no working memo capability on those implementations. B changes the JVM method descriptor, which includes the return type. The absence of retained descriptors or bridges makes the old `amount` invocation incompatible. Recompilation of `.amount(100).build()` establishes only that this selected source expression still type-checks; other old source, such as `Draft next = draft.amount(100)`, also fails under B.\n\nFor a compatible minor release, preserve `Draft` as published and introduce an opt-in memo capability with a new entrypoint that promises it:\n\n```java\npublic interface MemoDraft extends Draft {\n    MemoDraft memo(String text);\n}\n\n// Existing API and consumer:\nCharge oldStyle = draft.amount(100).build();\n\n// New consumer receives a MemoDraft from an entrypoint supporting memo:\nCharge annotated = memoDraft.memo(\"invoice reference\").amount(100).build();\n```\n\nOnly implementations supporting the memo contract implement `MemoDraft`; clients requiring memo request that capability explicitly. A silently ignoring default violates the stated contract. A default is suitable only if its behavior is valid for every existing implementation. If staged construction is still wanted, expose it through separate new types and a differently named entrypoint while retaining the old API.\n\nSuggested validation, not run: compare release artifacts with japicmp or Revapi and inspect descriptors/bridges; run unrecompiled old clients together with old third-party implementation binaries against the candidate SDK; compile representative callers and implementors with Java 17; exercise new memo-capable implementations and verify the memo contract. Include the new-caller/old-implementation combinations above when demonstrating the proposals' failures. Binary tools alone do not establish source or behavioral compatibility.\n\n**holdout-factory-precondition**\n\nKeep the canonical constructor public and keep its existing contract: an empty snapshot is a valid policy allowing no roles. Nonempty input is a precondition of the new configuration factory, not an invariant of every `AccessPolicy`. Moving that check into the constructor would reject existing documented use: a behavioral breaking change even though callers still compile and link. A public record cannot declare a private canonical constructor in Java 17; its access must be at least as broad as the record's. Replacing or hiding a published construction path would also defeat the compatibility objective.\n\nRetain `roles = Set.copyOf(roles)` in the compact constructor. Have the factory construct the value, then check that value's snapshot before returning it:\n\n```java\n// Inside AccessPolicy; its existing compact constructor remains unchanged.\npublic static AccessPolicy requiringRoles(Set<String> roles) {\n    AccessPolicy policy = new AccessPolicy(roles);\n    if (policy.roles().isEmpty()) {\n        throw new IllegalArgumentException(\"roles must contain at least one role\");\n    }\n    return policy;\n}\n\nvar denyAll = new AccessPolicy(Set.of());              // Valid general policy.\nvar configured = AccessPolicy.requiringRoles(Set.of(\"reader\"));\nAccessPolicy.requiringRoles(Set.of());                // IllegalArgumentException.\n```\n\nThis named factory is additive and preserves the existing constructor descriptor and behavior. Document its nonempty requirement and exception. Both paths continue rejecting null sets or null elements through `Set.copyOf`.\n\nFor caller-owned mutable sets:\n\n```java\nvar supplied = new HashSet<>(Set.of(\"reader\"));\nvar ordinary = new AccessPolicy(supplied);\nvar restricted = AccessPolicy.requiringRoles(supplied);\nsupplied.clear();\n// Both policies still contain \"reader\".\n```\n\nValidate the snapshot that will be returned, rather than checking the borrowed set and later copying it. `Set.copyOf` provides an unmodifiable shallow snapshot; immutable `String` elements make that sufficient here. Callers must avoid concurrent mutation while the copy is being made; snapshotting is not a synchronization protocol.\n\nSuggested checks, not run: compile both consumer paths under Java 17; confirm empty canonical construction succeeds and the empty factory call fails; confirm both reject null sets/elements, preserve their snapshots after caller mutation, and expose unmodifiable sets. Preserve old constructor binaries and existing behavioral tests when checking the additive release.\n",
+        "responseSha256": "68c28ac7b2a318219fb917b7b5ecad34f42f492f4fbde8692203f324b020a467",
+        "assessment": [
+          {
+            "case": "simple-four-field-value",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Retains the record and constructor invariants despite the original count threshold; proposes one delegating wither or direct reconstruction. Identifies null/nonpositive misuse, source target 17 and unexecuted checks."
+          },
+          {
+            "case": "published-interface-evolution",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Separates preserved old calls, source implementor obligations and new invocation failure on old implementations. Rejects return-descriptor changes as proven safe, recommends opt-in memo capability with old signatures retained, and proposes artifact checks."
+          },
+          {
+            "case": "holdout-factory-precondition",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Preserves empty general records, public canonical access and snapshot/null contracts. Enforces the factory-specific precondition on the constructed snapshot, illustrates both uses/misuse and mutable input, and proposes compatibility checks."
+          }
+        ]
+      },
+      {
+        "id": "c",
+        "arm": "revised packages",
+        "bundlePath": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/c.json",
+        "bundleSha256": "1797f472bb8409b3d4987cbfd31388709e47c5eb8c8f052d1087c518bba0d58b",
+        "guidanceFiles": 13,
+        "responsePath": "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/c-response.md",
+        "status": "executed and assessed",
+        "response": "### simple-four-field-value\n\nKeep the record and its complete compact-constructor validation. Four parameters do not justify a builder: the components have distinct types, all are required, and the existing call is clear. Stages would add interfaces and ordering constraints without solving an observed problem. They would not prevent null or nonpositive arguments. Moving validation exclusively into `build()` would allow invalid values through the existing constructor.\n\nRepresentative Java 17 consumer calls:\n\n```java\nvar original = new RouteOptions(endpoint, timeout, retryMode, tenant);\nvar adjusted = new RouteOptions(\n    original.endpoint(), longerTimeout, original.retryMode(), original.tenant());\n\n// Independent misuse examples: the existing constructor must reject each.\nnew RouteOptions(endpoint, Duration.ZERO, retryMode, tenant);\nnew RouteOptions(endpoint, timeout, retryMode, null);\n```\n\nNo production change is required. If repeated timeout derivation warrants a convenience method, the smallest addition is `original.withTimeout(longerTimeout)`, implemented by delegating to the constructor:\n\n```java\npublic RouteOptions withTimeout(Duration newTimeout) {\n    return new RouteOptions(endpoint, newTimeout, retryMode, tenant);\n}\n```\n\nThis preserves the existing creation path and invariants; the original remains unchanged and immutable components can be shared. A named factory adds little when creation has only one meaning. Reconsider a builder only if actual optionality, ambiguous arguments or gradual construction emerges.\n\nProposed checks: compile representative calls targeting Java 17; confirm valid construction, rejection of each null component and zero/negative timeout, and—if the wither is added—unchanged original state, preservation of other components, and rejection of null/zero/negative replacement timeouts. No files were implemented and no compilation or tests ran.\n\n### published-interface-evolution\n\nThe reviewer's two claims are incorrect. Source compilation and binary linkage are separate compatibility promises.\n\n| Consumer | Proposal A: add abstract `memo(String)` | Proposal B: change `amount(int)` return type |\n| --- | --- | --- |\n| Old binaries calling the original methods | Their descriptors still exist; those calls continue to work. Adding the abstract method does not break every existing binary. | The old `amount(int): Draft` descriptor is absent. An old call resolving that descriptor fails with `NoSuchMethodError`. Unchanged `build()` alone is unaffected. |\n| Existing concrete implementation source | Must supply `memo`, unless an applicable implementation already exists; otherwise recompilation fails. | Its existing `Draft amount(int)` cannot implement the new method returning unrelated `AmountStep`; recompilation fails. |\n| New callers using old implementations | Calls to the original methods work; invoking `memo` on an implementation lacking it can throw `AbstractMethodError`. | Invocation of the new `amount(int): AmountStep` descriptor on an old implementation lacking it can throw `AbstractMethodError`. |\n\nProposal B changes the JVM descriptor, which includes the return type. Successful recompilation of `.amount(100).build()` demonstrates only that selected source chain still type-checks. It says nothing about old descriptors, stored `Draft` results, or third-party implementations. The question explicitly rules out retained descriptors and bridges that might otherwise change the analysis.\n\nPreserve `Draft amount(int)` and `Charge build()` unchanged for the minor release. Proposal A meets the narrow old-binary linkage requirement, but breaks supported source implementors and cannot provide memo behavior through legacy implementations. It is therefore unsuitable as a generally compatible SDK minor addition.\n\nExpose memo support through a new opt-in capability, for example:\n\n```java\npublic interface MemoDraft extends Draft {\n    MemoDraft memo(String text);\n}\n```\n\nProvide it through a distinctly named new creation entrypoint or an explicit capability check. Existing implementations remain valid `Draft` implementations; only implementations actually supporting memo advertise `MemoDraft`. There is no need to redeclare `amount` with another return type.\n\n```java\nCharge ordinary = draft.amount(100).build();\nCharge annotated = memoDraft.memo(\"invoice 42\").amount(100).build();\n// draft.memo(\"invoice 42\") is unavailable through the legacy Draft type.\n```\n\nAn alternative staged API also needs a separate entrypoint while retaining the old API. A default `memo` is appropriate only if it can fulfill the contract for existing implementations; silently ignoring text cannot do so.\n\nProposed validation: compare previous/new artifacts with a binary compatibility checker and inspect method descriptors; compile representative callers and third-party implementors with `--release 17`; run previously compiled clients and implementations against the new SDK on Java 17; verify actual memo behavior and handling of unsupported legacy implementations. Include the failure scenarios above when evaluating the rejected proposals. No compilation or tests ran.\n\n### holdout-factory-precondition\n\nKeep the public compact constructor and its current contract, including valid empty sets. Nonempty roles are a precondition of `requiringRoles`, not an invariant of every `AccessPolicy`. Moving that check into the constructor would reject existing documented valid calls: a behavioral compatibility break despite unchanged method descriptors.\n\nA public record's canonical constructor cannot be private in Java 17; its accessibility must be at least that of the record. The proposal is invalid Java and cannot preserve the published constructor API.\n\nOrdinary use and restricted-factory misuse:\n\n```java\nvar denyAll = new AccessPolicy(Set.of());                  // valid\nvar editors = AccessPolicy.requiringRoles(Set.of(\"editor\")); // valid\nAccessPolicy.requiringRoles(Set.of());                    // IllegalArgumentException\n```\n\nA suitable factory sketch inside the existing record is:\n\n```java\npublic static AccessPolicy requiringRoles(Set<String> roles) {\n    var policy = new AccessPolicy(roles);\n    if (policy.roles().isEmpty()) {\n        throw new IllegalArgumentException(\"roles must contain at least one role\");\n    }\n    return policy;\n}\n```\n\nRetain `roles = Set.copyOf(roles)` in the compact constructor. The factory delegates shared snapshot/null validation there, then checks the actual immutable snapshot it would return. This avoids checking the caller's mutable set separately before copying it. An empty intermediate value is valid under the general contract and is never returned by this factory.\n\n```java\nvar supplied = new HashSet<>(Set.of(\"reader\"));\nvar general = new AccessPolicy(supplied);\nvar required = AccessPolicy.requiringRoles(supplied);\nsupplied.clear();\n// Both policies still contain \"reader\"; supplied remains caller-owned.\n```\n\nThe snapshot is unmodifiable and shallow; immutable `String` elements need no deeper copy. Callers must coordinate concurrent mutation during construction—copying does not establish a concurrency protocol. No fresh set identity should be promised.\n\nThis additive factory preserves the old constructor descriptor and behavior and is suitable for a minor release under the stated contract. Document its extra precondition and exception. Proposed checks cover empty constructor success, empty factory rejection, null sets/elements through both paths, nonempty success, later input mutation isolation, and unmodifiable accessors. Compile old consumer source and run old binaries against the addition when artifacts are available. No repository access, compilation or tests were used.\n",
+        "responseSha256": "064d5c93e84a99d8fbd0b12778fbe43e70bf2a489e016398b396dfaaa866fca8",
+        "assessment": [
+          {
+            "case": "simple-four-field-value",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Keeps the current constructor, shows direct variation and explicit invalid calls, and makes a single wither conditional on repeated need. Preserves 17, intrinsic invariants and honest proposed checks."
+          },
+          {
+            "case": "published-interface-evolution",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Separates preserved old calls, source implementor obligations and new invocation failure on old implementations. Rejects return-descriptor changes as proven safe, recommends opt-in memo capability with old signatures retained, and proposes artifact checks."
+          },
+          {
+            "case": "holdout-factory-precondition",
+            "criteria": ["met", "met", "met", "met"],
+            "result": "met",
+            "evidence": "Preserves empty general records, public canonical access and snapshot/null contracts. Enforces the factory-specific precondition on the constructed snapshot, illustrates both uses/misuse and mutable input, and proposes compatibility checks."
+          }
+        ]
+      }
+    ],
+    "technicalGradingFixture": {
+      "environment": "Temurin javac/java 25.0.3, --release 17; runtime 25 only",
+      "results": [
+        {
+          "command": "javac",
+          "args": [
+            "--release",
+            "17",
+            "-Xlint:all",
+            "-Werror",
+            "-d",
+            "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/contract/out",
+            "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/contract/AccessPolicy.java",
+            "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/contract/PolicyCheck.java"
+          ],
+          "expectedExit": 0,
+          "exit": 0,
+          "output": ""
+        },
+        {
+          "command": "java",
+          "args": [
+            "-cp",
+            "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/contract/out",
+            "PolicyCheck"
+          ],
+          "expectedExit": 0,
+          "exit": 0,
+          "output": "7 contract checks passed\r\n"
+        },
+        {
+          "command": "javac",
+          "args": [
+            "--release",
+            "17",
+            "-d",
+            "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/private-canonical/out",
+            "C:/Users/robso/AppData/Local/Temp/catalog-api-interaction-H7Co1X/private-canonical/AccessPolicy.java"
+          ],
+          "expectedExit": 1,
+          "exit": 1,
+          "output": "C:\\Users\\robso\\AppData\\Local\\Temp\\catalog-api-interaction-H7Co1X\\private-canonical\\AccessPolicy.java:4: error: invalid canonical constructor in record AccessPolicy\r\n    private AccessPolicy {\r\n            ^\r\n  (attempting to assign stronger access privileges; was public)\r\n1 error\r\n"
+        }
+      ],
+      "limits": "Isolated example for fixed evaluation contract. No old library, framework, concurrent mutation or agent behavior checked."
+    },
+    "assessment": {
+      "summary": "All three arms met all fixed criteria on all three cases (nine responses). No observed regression in this sample; no measured behavioral advantage for the revision.",
+      "observations": [
+        "Original guidance did not cause field-count-driven staging or the overbroad interface compatibility conclusion under these explicit task facts.",
+        "All arms distinguished a narrower factory precondition from the unchanged shared record invariant, including snapshot ownership.",
+        "Revised guidance produced explicit misuse caller snippets in the simple case; other arms named those invalid inputs in proposed checks, satisfying the outcome-based criterion without requiring exact syntax."
+      ],
+      "limitations": [
+        "One fresh agent sample per arm; no model override and no statistical reliability estimate.",
+        "Ordered requests within each arm allow carryover; coordinator grading is unblinded.",
+        "All 13 Markdown resources were forced into treatment contexts; package metadata and external neighbors were omitted. Automatic activation and selective loading were not tested.",
+        "This combined response comparison does not execute every per-skill case or establish framework, deployment, concurrency or performance behavior.",
+        "The final factory case was kept undisclosed to reviewers and recorded after package writers stopped; no changes from it preceded the runs. The separately executed grading fixture was unavailable to the response agents."
+      ]
+    }
+  },
+  "accessControls": {
+    "mechanism": "Fresh agents receive selected guidance and requests; judging criteria and unrelated repository artifacts are omitted from their prescribed inputs. Access boundaries are instructions plus reported/observed file-read provenance.",
+    "limitation": "These shared-workspace agents retain general filesystem tools. No per-agent filesystem sandbox or tool-level denial was configured, so withheld does not mean technically inaccessible. No enforced isolation claim is supported. Fresh contexts and recorded accesses reduce contamination but do not prove its absence.",
+    "scope": "Applies to response and coding-action samples in this review. A matched comparison is limited by these controls; future strict isolation requires an authenticated runner with enforceable resource permissions."
+  }
+}

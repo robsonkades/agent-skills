@@ -30,6 +30,8 @@ evidence of concrete harm or a credible committed constraint; otherwise there is
 1. **Read the change, requirements, ownership and history.** For mature code, `git log --follow`
    exposes independent pressures. For new code, use accepted requirements, extension contracts,
    team/release boundaries and known failure modes; invented future variation is not evidence.
+   Reuse supplied context; ask only for missing consumer or ownership facts that could change
+   the conclusion. Continue independent checks and keep unresolved candidates conditional.
 2. **Generate candidates with the per-principle heuristics** in the references.
    Heuristics produce suspicions, never findings.
 3. **Find the harm for each candidate.** Name the future change that becomes
@@ -39,8 +41,9 @@ evidence of concrete harm or a credible committed constraint; otherwise there is
    writing anything.
 5. **Write the finding** in the format below, and **cost the recommendation**: a
    split costs navigation and wiring, an extension point costs indirection and API
-   surface. If the cost plausibly exceeds the harm, downgrade the finding to an
-   observation and say so.
+   surface. Compare the smallest sufficient change with retaining the current design. If
+   restructuring costs outweigh its benefit, report a supported deferral/no-change result;
+   do not relabel a required contract violation as harmless merely because repair is costly.
 
 ## Finding format
 
@@ -65,13 +68,15 @@ Use actual repository evidence; the counts in this illustrative finding are not 
 - Do not recommend an extension point for imagined variation. OCP responds to observed variants
   or an explicit published/plugin requirement with committed consumers and compatibility needs.
 - A sealed hierarchy with exhaustive switches trades open variant extension for source
-  exhaustiveness: recompiling after adding a variant identifies missing cases. Independently
-  deployed old binaries can instead fail with `MatchException`; an explicit `default` chooses
-  fallback semantics and may be legitimate only when that policy is intentional.
+  coverage: adding a newly uncovered variant can reveal missing cases when consumers are
+  recompiled. A `default` or covering type pattern, including an arm for a non-sealed branch,
+  may already cover it. Independently deployed old binaries can instead encounter
+  `MatchException`. Judge the actual coverage and fallback policy, not just the absence of `default`.
 - LSP: an override may weaken preconditions and strengthen postconditions, never the reverse.
   Investigate checks or failures added for inputs the supertype accepts, weakened effects,
   thread-safety/nullness guarantees, and equality policies that become asymmetric across
-  subclasses. A more specific exception for the same documented failure is not a violation.
+  subclasses. New subtype methods must also preserve inherited invariants and history
+  constraints. A more specific exception for the same documented failure is not a violation.
 - ISP: judge an interface by its clients, not its method count. The evidence is a
   client harmed by capabilities/changes it does not need, or an implementor unable to honor
   required operations. Unused methods or `UnsupportedOperationException` are signals, not
@@ -86,6 +91,8 @@ Use actual repository evidence; the counts in this illustrative finding are not 
 For an implemented recommendation, distinguish mechanical restructuring from API, validation
 or policy changes; report checks actually run. Missing history does not establish independent
 responsibilities, and a new interface does not by itself demonstrate lower coupling.
+Stop when supported findings and their validation or remaining evidence gaps are clear.
+An adequate design with no findings is a complete review outcome.
 
 ## References
 

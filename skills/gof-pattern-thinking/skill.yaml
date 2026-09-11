@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: gof-pattern-thinking
-version: 1.3.1
+version: 1.3.2
 description: >-
   Reasoning from a design problem to a design, where a Gang-of-Four pattern is one possible
   outcome and "no pattern" is an equally valid one: naming the forces, identifying what
   varies and along how many axes, walking the alternatives ladder from language feature up
-  to architecture, and pricing the indirection before adopting it. The first of two stages —
-  run this, then gof-pattern-selection maps the result to a shortlist. Use when a pattern
+  to architecture, and pricing the indirection before adopting it. Use gof-pattern-selection
+  to shortlist unresolved choices once the forces are understood. Use when a pattern
   name is proposed before the problem is stated, when a review must judge whether an
   abstraction earns its place, when factories and strategies have accumulated that trace to
   no requirement, when an indirection needs pricing, or when a design is starting and the
@@ -90,9 +90,18 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - gof-pattern-antipatterns
+  - gof-pattern-confusion
+  - gof-pattern-selection
   - gof-patterns-and-distribution
+  - gof-patterns-in-modern-java
   - java-dry-kiss-yagni
+  - java-performance
+  - java-solid
+  - java-test-design
   - java-test-doubles
+  - jmh-microbenchmarks
+  - pattern-selection-and-composition
 
 capabilities:
   - reads-source

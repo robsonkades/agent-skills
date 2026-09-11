@@ -8,7 +8,7 @@ Messages quoted below were produced on GraalVM CE 25.0.2 (`25.0.2+10-jvmci-b01`)
 | Symptom                                                                                                        | Candidate cause                                                                                      | Check                                                                                                                | Remedy                                                                                                          |
 | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `Error: VM option 'UseJVMCICompiler' is experimental and must be enabled via -XX:+UnlockExperimentalVMOptions` | Stock OpenJDK: the flag class is `{JVMCI experimental}`                                              | `-XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal -version \| grep JVMCI`                                       | Add the unlock **before** the flag — and read the next row, because it will not help                            |
-| `-version` passes, application dies: `Cannot use JVMCI compiler: No JVMCI compiler found`, exit 1              | JVMCI is present, no compiler is: this JDK is not a GraalVM                                          | `java --list-modules \| grep graal` then `jimage list` — `jdk.graal.compiler` has one class                          | Run on a GraalVM distribution; `-XX:+BootstrapJVMCI` turns the late failure into a start-up failure             |
+| `-version` passes, application dies: `Cannot use JVMCI compiler: No JVMCI compiler found`, exit 1              | JVMCI is present but no compiler was found; no bundled compiler in the tested stock JDK              | Inspect image modules and any external compiler configuration; the tested stock placeholder contains one class       | Use a compatible compiler/runtime; an owned `BootstrapJVMCI` preflight can expose the missing compiler          |
 | `Cannot use JVMCI compiler: JVMCI compiler 'graal' specified by jvmci.Compiler not found`                      | `-XX:+UseGraalJIT` on a JDK with the JDK 22+ placeholder module                                      | Same as above                                                                                                        | Same as above; the flag is a Galahad residue with nothing behind it on OpenJDK                                  |
 | `Error parsing Graal options: Could not find option X` and the JVM does not start                              | A `-Djdk.graal.X` name this build does not know: renamed, edition-specific, or invented              | `-XX:+JVMCIPrintProperties -Djdk.graal.PrintPropertiesAll=true \| grep X`                                            | Remove or rename using the target-build listing; edition-specific option availability changes by release        |
 | `WARNING: The 'graal.' property prefix for the Graal option X ... is deprecated`                               | Legacy prefix on 25.0 (GraalVM for JDK 24 added the warning; 25.1 dropped it)                        | —                                                                                                                    | Rename to `-Djdk.graal.X`; the semantics are unchanged                                                          |
@@ -31,8 +31,8 @@ and the rest C1 — the same count C2 would have had, since GraalVM for JDK 24 (
 "Number of libgraal threads might be too low"). The changelog states the trade openly: the
 higher fraction "benefits the program warmup but could increase the maximum RSS". On a
 container with a 2-CPU quota the ergonomic count is small, Graal's per-compilation cost is
-higher, and the queue backs off exactly as under C2 (`Tier3DelayOn`, `Tier4LoadFeedback`),
-so methods sit in tier 2/3 longer than they would under C2 on the same quota; the warm-up
+higher on some workloads. HotSpot tier feedback still applies (`Tier3DelayOn`, `Tier4LoadFeedback`),
+but compare queueing and time in each tier rather than assuming they exceed C2 on the same quota; the warm-up
 mechanics are `jit-compilation`'s subject. Read the queue with `jcmd <pid> Compiler.queue`
 or JFR `jdk.CompilerQueueUtilization`.
 
@@ -53,22 +53,24 @@ aggressive speculation: changed inputs, class loading and compilation policy als
 Generic `made not entrant` lines alone do not establish deoptimisation or its cause.
 Correlate phase-changing type profiles with latency before attributing a regression.
 
-**Observability.** JFR, JMX, `jcmd`, async-profiler and the unified logging tags all work
-unchanged — Graal is a plug-in behind JVMCI, not a different VM. The one difference worth
-knowing before an incident: `-XX:+PrintInlining` and the C2 `develop` diagnostics say nothing
-about tier 4; Graal's own `-Djdk.graal.*` logging is the replacement.
+**Observability.** HotSpot JFR, JMX, `jcmd` and unified logging remain useful, but verify
+target-build events, recording coverage and tool/OS support. For example, async-profiler v4.5's
+supported native platforms do not include Windows; remaining on HotSpot does not make an
+unsupported profiler portable. `-XX:+PrintInlining` and C2 `develop` diagnostics do not
+describe Graal's tier-4 decisions; use Graal's own `-Djdk.graal.*` diagnostics for those.
 
 **Rollback.** `-XX:-UseJVMCICompiler` on the same GraalVM binary restores C2 without changing
-the image; that is the fastest rollback and the reason to have measured that configuration
-in the first place. A full rollback to the OpenJDK build changes the class library too and
-is the second step, not the first.
+the image where that configuration is supported. Use the recovery route already tested for
+the failure: a compiler switch needs a process restart and may not fix a distribution regression.
+A previous OpenJDK image also changes class-library/runtime components; it may be the appropriate
+first rollback. Preserve the actual recovery deadline and validated application/guest contracts.
 
 ## Truffle: the other reason to need Graal
 
-Truffle languages are AST or bytecode interpreters that reach native speed through partial
-evaluation by the Graal compiler. Without Graal as the host JIT the language still runs, in
-"fallback runtime" mode — interpreter only — and prints the warning quoted in the table. The
-runtime-optimisation matrix from the GraalVM embedding reference, as of 25.1:
+Truffle languages are AST or bytecode interpreters optimized through partial evaluation by
+the Graal compiler, in a compatible host setup or a polyglot isolate. Without an optimizing
+guest runtime, execution uses the interpreter-only fallback; the warning identifies that mode. The
+runtime-optimisation matrix from the GraalVM embedding reference, for Polyglot 25.1+:
 
 | Host JDK                    | Optimising runtime                                                     |
 | --------------------------- | ---------------------------------------------------------------------- |
@@ -77,13 +79,13 @@ runtime-optimisation matrix from the GraalVM embedding reference, as of 25.1:
 | Oracle JDK 25 or OpenJDK 25 | Polyglot isolate only — the guest runs as a native image in an isolate |
 | JDK 21 runtimes             | Polyglot isolate only                                                  |
 
-GraalVM 25.1's release notes withdraw the previous jargraal-on-OpenJDK route for Truffle:
+Polyglot 25.1's release notes withdraw the previous jargraal-on-OpenJDK route for that Truffle runtime:
 the optimising runtime "is no longer supported with GraalVM 25.0 or earlier, or on plain
 OpenJDK or Oracle JDK via jargraal". The 25.1 notes also move isolated `Engine`/`Context`
-into CE, so sandboxing is no longer an Oracle-only reason to pick an edition. An application
-embedding GraalJS or GraalPy is therefore on GraalVM for the language's sake; the C2-versus-
-Graal question for its own Java code is then answered by the same measurement as anywhere
-else. Do not assume that toggling `UseJVMCICompiler` preserves guest-language performance:
+into CE. The notes explicitly direct users needing the older optimizing OpenJDK route to
+Polyglot 25.0 LTS; distinguish component compatibility from the Java baseline. An application
+may instead use an adequate fallback or supported isolate, so embedding alone does not require
+changing the host distribution. Do not assume that toggling `UseJVMCICompiler` preserves guest-language performance:
 Java host compilation and the Truffle compiler/runtime are separate evidence to collect.
 Verify the supported embedding configuration and actual guest compilation; an isolate route
 has a different runtime and cannot be treated as a pure host-JIT swap.
@@ -125,3 +127,5 @@ the number, the way the JDK build is recorded for C2.
 - [JEP 243: Java-Level JVM Compiler Interface](https://openjdk.org/jeps/243)
 - [JEP 317: Experimental Java-Based JIT Compiler](https://openjdk.org/jeps/317)
 - [JEP 410: Remove the Experimental AOT and JIT Compiler](https://openjdk.org/jeps/410)
+- [Polyglot host and guest runtime support](https://www.graalvm.org/latest/reference-manual/embed-languages/)
+- [async-profiler supported platforms, v4.5 source](https://github.com/async-profiler/async-profiler/blob/v4.5/README.md#supported-platforms)

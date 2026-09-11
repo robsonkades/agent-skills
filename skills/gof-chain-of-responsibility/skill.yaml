@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-chain-of-responsibility
-version: 1.2.1
+version: 1.2.2
 description: >-
   Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the
   classical first-accepting form versus middleware where stages may all process and forward
@@ -11,8 +11,8 @@ description: >-
   servlet filters and interceptor chains are this pattern already implemented. Use when a request
   must be offered to several possible handlers, when @Order values are tuned to make a chain work,
   when a request falls off the end of a chain and nothing happens, or when a chain is proposed for
-  three fixed cases. Does not cover the security framework's own filter configuration, the retry
-  and timeout policies applied around a call (gof-decorator, circuit-breakers), or message
+  three fixed cases. Does not cover the security framework's own filter configuration,
+  call wrapping (gof-decorator), dependency failure protection (circuit-breakers), or message
   processing across services (streaming-pipeline-topologies).
 
 license: Apache-2.0
@@ -44,15 +44,20 @@ dependencies: []
 
 suggests:
   - cancellation-and-interruption
+  - circuit-breakers
   - delivery-semantics
   - distributed-transactions-and-sagas
   - enterprise-transactions
   - event-driven-architecture
+  - gof-decorator
   - gof-mediator
+  - idempotency
   - java-composition-over-inheritance
+  - java-exception-design
   - jit-inlining-and-escape-analysis
   - poison-messages-and-dlq
   - scoped-values
+  - streaming-pipeline-topologies
   - thread-sizing-and-virtual-threads
 
 capabilities:

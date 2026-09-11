@@ -2,12 +2,15 @@
 
 Validation is an argument that the harness measured the intended population and can distinguish
 the decision-relevant effect. It is not a checklist of universal fork counts or error percentages.
+Apply the relevant sections to the claim under review, reuse adequate existing evidence and
+distinguish an experiment plan from its results. A source-contract question need not launch a run.
 
 ## Semantic oracle and boundary
 
-Before timing, test results/invariants against a trusted implementation, cover relevant boundary
-and failure cases, and prove baseline/candidate implement the same contract. A fast wrong
-implementation is not a performance result.
+Before timing, establish semantic equivalence with relevant correctness evidence: test
+results/invariants against a trusted implementation and cover material boundary and failure cases.
+Passing those cases supports the exercised contract; it does not prove equivalence for all inputs.
+A fast wrong implementation is not evidence of a valid replacement.
 
 Create a boundary ledger:
 
@@ -29,7 +32,8 @@ do not accumulate across iterations or forks, and preserve exception/cancellatio
 
 ## Anti-optimization controls
 
-Use several discriminating controls; none is sufficient alone:
+Select controls that distinguish the material threats to validity; no single control establishes
+every aspect of validity. Add another only when it resolves a relevant uncertainty:
 
 1. Return/consume the semantic result and mutate inputs as production does.
 2. Compare generated machine code or compilation logs when folding/elimination/inlining matters.
@@ -157,6 +161,10 @@ insufficient samples or symbol quality
 ```
 
 ## Publishing claim
+
+Use the fields relevant to the reported result. A local mechanism claim need not promise
+production impact or another benchmark layer; unresolved evidence can support an explicitly
+inconclusive conclusion. For system-impact claims, include external validation or mark it pending.
 
 ```text
 Under [JDK/JMH/hardware/OS/JVM flags], for [input/state/thread topology] and boundary

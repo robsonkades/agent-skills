@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: java-test-doubles
-version: 1.0.2
+version: 1.0.3
 description: >-
   Choosing and using test doubles in Java: the stub/mock/fake distinction that actually
-  changes what a test proves, preferring the real collaborator or a hand-written fake over a
-  mock, verifying interactions only when the interaction is the outcome, Mockito's strict
-  stubs, and the rule against mocking types you do not own. Use when a test mocks every
+  changes what a test proves, selecting real collaborators, fakes or mocks for the needed
+  evidence, verifying contractual interactions, Mockito's strict stubs, and deciding when
+  a foreign API needs an owned boundary. Use when a test mocks every
   collaborator the class touches, when verify is asserted on a query, when a refactoring
   broke tests that still describe correct behaviour, when deep stubs or static mocking are
   proposed, when a stubbed repository is hiding a query that does not work, when
@@ -43,6 +43,15 @@ files:
 dependencies:
   - name: java-testing-strategy
     version: ^1.0.0
+
+suggests:
+  - concurrency-testing
+  - java-cohesion-coupling
+  - java-dependency-inversion
+  - java-dry-kiss-yagni
+  - java-law-of-demeter
+  - java-legacy-code-testing
+  - java-test-design
 
 capabilities:
   - reads-source

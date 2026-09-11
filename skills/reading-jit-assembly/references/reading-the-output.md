@@ -103,7 +103,7 @@ Things this shows that are easy to get wrong:
 | Packed lane opcode over `xmm`                                                      | 128-bit vector operation; prefix alone is not decisive         | `paddd %xmm1,%xmm0`        |
 | Packed lane opcode over `zmm`, often with mask registers                           | 512-bit EVEX operation; not proof the whole loop is vectorized | `vpaddd %zmm1,%zmm0,%zmm0` |
 | Several accesses at fixed offsets before one loop branch                           | Loop unrolling — **not** vectorisation                         | see below                  |
-| `mov $imm,%reg` then `ret`, with no matching logic                                 | Constant folding — the method became a constant                | `mov $0x4,%eax`            |
+| `mov $imm,%reg` then `ret`, with no matching logic                                 | Emitted constant return; folding needs source/bytecode context | `mov $0x4,%eax`            |
 | `cmp`/`test` followed by `cmovCC` instead of `jCC`                                 | Branch replaced by a conditional move                          | `cmovl %edx,%eax`          |
 | `cmp` + `jae` before a loop head, none inside                                      | Bounds check hoisted by predication / range check elimination  | —                          |
 | Thread-relative load/test with `{poll}`                                            | Safepoint poll in this JDK/port                                | —                          |
@@ -127,6 +127,10 @@ dependency chain. C2's choice depends on target, graph and heuristics such as
 `ConditionalMoveLimit`; defaults and use of profile data are version-specific. The presence
 of `cmov` proves only the emitted form. Use branch samples/counters and end-to-end timing to
 judge it.
+
+A constant return may come from literal source, javac constant-expression evaluation or JIT
+optimization. Inspect the source/bytecode and relevant inlining/compiler evidence before
+claiming a folding transformation; the final instruction sequence alone does not identify it.
 
 ## Null checks: three cases, not two
 
@@ -184,16 +188,19 @@ microarchitecture, operands, dependency chain, cache/coherence state, branch his
 frequency and neighbouring instructions. A cold-path `lock cmpxchg` can be irrelevant while
 a seemingly cheap load dominates through cache misses.
 
-Use this evidence ladder:
+Use the steps needed for the performance claim, reusing adequate evidence. A static explanation
+does not need a new profile or a source change:
 
 1. Mark normal, uncommon and runtime paths in the control-flow graph.
-2. Sample PCs to establish which range is hot and retain enough events for stable ranking.
+2. Establish executed ranges with suitable dynamic evidence. PC sampling needs enough events
+   for stable ranking; tracing, path counts or controlled timing may support regional claims.
+   Keep their perturbation and attribution limits explicit.
 3. Form one microarchitectural hypothesis—branch misses, cache misses, front-end pressure,
    serialization—and select supported counters for that CPU.
 4. Check counter multiplexing, skid and virtualization restrictions; counters are evidence,
    not source-line truth.
-5. Change one factor, rerun the production-shaped workload, and validate throughput, tails,
-   CPU, allocation and failure behavior.
+5. If a change is justified, vary the intended factor and validate the relevant workload metrics
+   and correctness contract. Retain an adequate existing design when the evidence supports it.
 
 ## Primary references
 
@@ -201,4 +208,4 @@ Use this evidence ladder:
 - [JDK 25 nmethod comments and implicit-exception metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
 - [JDK 25 x86 assembler sources](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/cpu/x86)
 - [JEP 312: Thread-Local Handshakes](https://openjdk.org/jeps/312)
-- [JMH perfasm implementation](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)
+- [JMH 1.37 perfasm implementation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)

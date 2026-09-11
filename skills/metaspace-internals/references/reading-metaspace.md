@@ -1,5 +1,11 @@
 # Reading metaspace from a live JVM
 
+Use existing matching output when it answers the question. Capture only the diagnostics needed
+for the unresolved claim, checking command support, target identity and impact first. Numeric
+printouts below are historical examples, not new observations of the user's process; the original
+vendor/architecture was not recorded for every example. Reproduce their interpretation, not their
+exact values, on the target build.
+
 ## The allocation structure the tools report on
 
 ```
@@ -32,8 +38,8 @@ chunk splitting/coalescing and subsequent allocation also move these counters. G
 `committed` with flat freelists does not by itself prove loaders are retained; correlate CLD
 births/deaths, loaded/unloaded classes and per-loader rows.
 
-Options on 25 (`jcmd <pid> help VM.metaspace`): `basic` prints the summary without requesting
-a global safepoint on this build, but still check command impact on the target; `show-loaders` lists every CLD
+Options in the cited JDK 25 implementation (`jcmd <pid> help VM.metaspace`): `basic` prints
+the summary without requesting a global safepoint, but still check command impact on the target; `show-loaders` lists every CLD
 with its chunks, and each non-strong hidden class appears there as its own
 `<hidden class>` CLD; `show-classes` adds the class names under each loader;
 `by-chunktype`, `by-spacetype`, `vslist` and `chunkfreelist` break the numbers down. The
@@ -130,5 +136,6 @@ that do not exist are a recurring source of wrong instrumentation.
 
 ## Implementation sources
 
+- [JDK 25 metaspace diagnostic command](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspace/metaspaceDCmd.cpp): basic reporting versus the full report's safepoint operation.
 - [JDK 25 metaspace counters](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspaceCounters.cpp): combined versus class counters and reserved/committed values.
 - [JDK 25 NMT reporter](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/nmt/memReporter.cpp): accounting categories and displayed metadata breakdown.

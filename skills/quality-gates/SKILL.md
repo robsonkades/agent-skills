@@ -24,8 +24,8 @@ could never have contained that defect.
 
 Two failure modes. The pipeline that runs everything on everything becomes slow enough that
 people work around it — and a bypassed gate protects nothing while still costing the wait. The
-pipeline that gates nothing pushes every defect class to review or production, where each costs
-orders of magnitude more.
+pipeline that gates nothing leaves preventable defects to review or production, where detection
+and recovery can be harder.
 
 ## Workflow
 
@@ -41,11 +41,16 @@ orders of magnitude more.
 4. **Select per change, by risk** (`references/selecting-gates.md`). A README edit and a schema
    migration should not face the same pipeline, and pretending they do is how the pipeline
    becomes something to be endured.
-5. **Ratchet, do not big-bang.** Introducing a gate onto an existing codebase means baselining
-   current violations and failing only on new ones. A gate that goes red on 400 pre-existing
-   findings gets disabled that afternoon.
-6. **When a gate goes red, fix the cause or remove the gate deliberately.** A red build that is
-   normal has already stopped being a gate; it is now a slow way to not notice things.
+5. **Choose an adoption path from the findings.** For a large existing backlog, consider scoped
+   rollout or a reviewed baseline while failing new violations. Triage urgent security and
+   correctness risks first; age alone does not justify exemption. Read the catalogue's ratcheting
+   procedure before creating a baseline.
+6. **When a gate goes red, classify the failure.** Distinguish a product defect, invalid runner,
+   flaky check and deliberate policy finding. Fix the cause; changes to enforcement or temporary
+   exceptions need the repository's existing authority and a record of the remaining risk.
+7. **Verify a changed gate itself.** Use a known passing change, a representative violating
+   fixture and a failed/missing-evidence run. Check selection, process exit status and final CI
+   status, including any wrapper or report upload; expected failures must not turn into success.
 
 ## Rules
 
@@ -65,8 +70,9 @@ orders of magnitude more.
   complement behavioral tests; preserve an existing required threshold unless changing it is
   in scope. Report uncovered relevant paths and exclusions rather than chasing a universal number
   (java-testing-strategy).
-- A bypass mechanism must exist, must be logged, and must be visible after the fact. Teams
-  without one do not stop bypassing; they bypass by disabling the gate for everyone.
+- Use the established exception policy where one exists; do not create a bypass for a
+  non-exceptionable gate. Permitted exceptions need the accepted scope, accountable owner,
+  compensating checks and expiry/follow-up, recorded where reviewers can see them.
 - Suppressions carry a reason and an owner: `@SuppressWarnings("unchecked") // JDBC row map,
 checked by the query's projection`. A bare suppression is a silent removal of the gate at
   that line.
@@ -77,11 +83,15 @@ checked by the query's projection`. A bare suppression is a silent removal of th
   enable a gate. Time-varying inputs such as vulnerability databases need source/version and
   evaluation timestamps so changed results remain explainable.
 
+Return the selected gates and the risks they cover, material alternatives or exclusions, actual
+results and remaining required evidence. For implementation, include the configuration changes
+and evidence that enforcement works; selecting a gate set alone does not complete implementation.
+
 ## References
 
-- **The gate catalogue** — `references/gate-catalogue.md`. Each gate for a Java build: the
-  defect class it catches, its typical runtime, its false-positive profile, where it belongs in
-  the pipeline, and how to ratchet it onto an existing codebase. Read when adding, moving or
+- **The gate catalogue** — `references/gate-catalogue.md`. Candidate gates for a Java build:
+  the evidence each provides, placement and calibration considerations, and how to ratchet one
+  onto an existing codebase. Read when adding, moving or
   removing a check.
 - **Selecting gates for a change** — `references/selecting-gates.md`. Risk tiers with the gate
   set each warrants, five worked changes from a docs typo to a hotfix under incident, and the

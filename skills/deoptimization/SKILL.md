@@ -20,10 +20,10 @@ description: >
 ## Purpose
 
 Decide whether a deoptimisation is the JIT working correctly or a method that will never
-reach stable optimised code. Speculation is what makes C2 fast: it bets on a profiled
-assumption, embeds a check, and unwinds without ever producing a wrong result when the bet
-fails. The trap is recorded in method profiling data and can change later compilation
-decisions. A bounded burst that decays after recompilation is the design working; continued
+reach stable optimised code. C2 can optimise using profile assumptions protected by guards,
+or registered dependencies checked when the runtime changes. Deoptimisation preserves Java
+behavior when an assumption fails. Recorded trap history can change later compilation
+decisions. A bounded burst that decays under continued representative traffic can be normal; continued
 events at the same site require diagnosis rather than an assumption that all deoptimisation
 is benign.
 
@@ -37,31 +37,42 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
    reference window (a deploy, a config change, a library or plugin rollout) to correlate
    against. Inspect the deployed vendor/build, compiler mode and flags alongside project
    toolchains; JDK 25 observations are not authorization to upgrade the target or enable flags.
+   Reuse supplied logs, workload history and prior checks. Establish the affected startup or
+   steady-state service criterion, recovery authority and capture budget; ask only for missing
+   facts that would change the next action.
 2. **Collect the reason, the action and the compile id**, not just the fact. JFR
    `jdk.Deoptimization` (enabled in the baseline `default.jfc`; stacks enabled by `profile.jfc`
    or explicit event settings) for
    production, `-Xlog:deoptimization=debug` for a session. Both see **uncommon traps only**:
-   a class-loading or `RedefineClasses` invalidation appears in neither, so collect
-   `-Xlog:jit+compilation=debug` and `-Xlog:dependencies=debug` alongside. See
+   a class-loading or `RedefineClasses` invalidation appears in neither. If that path matters,
+   use existing evidence or collect `-Xlog:jit+compilation=debug` and
+   `-Xlog:dependencies=debug` within the budget. See
    `references/deopt-tooling.md`.
 3. **Group by method and bci, reason and action, over a stated window.** The criterion is
    the rate per site and its decay, not presence: a site trapping once, or up to four times
-   with `maybe_recompile`, then going quiet is converging. A site emitting `none` at a
+   with `maybe_recompile`, then going quiet under comparable demand suggests convergence.
+   Silence after traffic stops is not evidence of readiness. A site emitting `none` at a
    steady rate needs its compilation history checked — the action preserves compiled code
    and does not update trap state, but the action alone does not identify why it was emitted.
-4. **For a `class_check`, decide which of the two routes it took.** Trap lines and events
+4. **Distinguish receiver guards from dependency invalidation.** `class_check` trap lines and events
    with `instruction = invokeinterface` at one `cid` are a per-invocation guard. Several
    unrelated methods `made not entrant: marked for deoptimization` in the same millisecond,
-   right after a `class+load` line, are a CHA dependency invalidated by class loading — no
-   application bytecode ran to trigger it, and no trap line or JFR event exists for it.
-5. **Attack the assumption, not the threshold.** A static type that cannot gain implementors
-   at the call site, warm-up that exercises every expected type, loading generated classes
-   before traffic. See `references/reasons-and-actions.md` for the reason-to-fix table and
+   right after a `class+load` line, suggest dependency invalidation. Confirm the failed
+   dependency, context and dependee; timing alone does not prove CHA. That confirmed path
+   needs no invocation at the affected site and emits no uncommon-trap event.
+5. **Choose a proportionate response to the evidenced assumption.** Accept convergence or
+   negligible service cost; otherwise compare targeted representative warm-up, loading known
+   classes before traffic, or a compatible call-site change. Do not preload every possible
+   class or remove required polymorphism just to reduce event counts. See
+   `references/reasons-and-actions.md` for the reason-to-fix table and
    `references/production-patterns.md` for the levers and what each costs.
 6. **Validate mechanism and service outcome together.** Check the target site's rate and
    compilation state under comparable workload, then CPU, allocation and latency guardrails.
    Eliminating events by disabling compilation can worsen performance. Restore temporary
-   diagnostics to their prior settings; retain intentionally configured monitoring.
+   diagnostics to their prior settings; retain intentionally configured monitoring. Finish
+   with the supported diagnosis, evidence limits, change or no-change decision, and verified
+   outcome. If evidence is insufficient, name the smallest discriminating next check and what
+   result would change the decision; do not require a new capture after the question is resolved.
 
 ## Rules
 
@@ -89,9 +100,11 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   a universal one-event bound. Do not split an `if` merely because its first trap appeared.
 - The observed defaults on Temurin 25.0.3 are `PerBytecodeTrapLimit=4`, `PerMethodTrapLimit=100`,
   `PerMethodSpecTrapLimit=5000` (experimental), `PerBytecodeRecompilationCutoff=200`,
-  `PerMethodRecompilationCutoff=400`. C2 stops recompiling — emitting traps with action
-  `none` — once a method has decompiled `PerMethodRecompilationCutoff/2+1` = 201 times or a
-  bci has 25 overflow recompiles under those defaults. These are HotSpot implementation
+  `PerMethodRecompilationCutoff=400`. C2's `too_many_recompiles` can select action `none`
+  at eligible trap sites using a cumulative decompile count of at least 201, or a MethodData
+  overflow-recompile count of at least 25, with the required prior reason/site history.
+  These are not independent per-bci event counters or automatic method-wide exclusion.
+  Runtime C2 exclusion uses counts strictly above 400/200 respectively. These are implementation
   details, not Java contracts; verify flags and source on the deployed build. A sustained
   same-site storm is the signal to investigate, not a magic count copied from this baseline.
 - C2 recompilation-cutoff exclusion is at C2 level in the baseline. `PrintCompilation` prints
@@ -101,9 +114,11 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   Treat the exclusion as lasting for that loaded method; redefinition/reloading and
   another JVM release can alter the lifecycle.
 - `made zombie` no longer exists (JDK 20, JDK-8290025). JDK 25 prints the reason after
-  `made not entrant:` — `not used` and `OSR invalidation of lower level` are tier
-  promotion, `uncommon trap` is a trap, `marked for deoptimization` is a dependency
-  invalidation.
+  `made not entrant:`. `not used` marks replacement of an existing entry and often accompanies
+  promotion; it does not identify the successor tier. `OSR invalidation of lower level` denotes
+  lower-level OSR replacement, not necessarily tier 3 to 4. Correlate compilation IDs, tiers and
+  successor entries. `uncommon trap` identifies a trap invalidation; `marked for deoptimization`
+  needs dependency/redefinition context to establish the cause.
 - A CHA invalidation on JDK 25 runs as a `Handshake "Deoptimize"` (`-Xlog:handshake=info`;
   `DeoptimizeMarkedClosure`, `deoptimization.cpp`), not a global safepoint.
   `RedefineClasses` is a global safepoint and flushes every nmethod with an `evol_method`
@@ -115,8 +130,9 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   covers where they come from.
 - A mutable feature flag with stable retained profiling usually converges to a real
   branch — the lost constant folding, not recurring deoptimisation. A flag that swaps the
-  **type** at a hot call site costs the inline tree: monomorphic to bimorphic to a virtual
-  call (`jit-inlining-and-escape-analysis`). Put the choice one level up.
+  **type** at a hot call site may change guarded inlining; type count alone does not determine
+  the resulting inline tree (`jit-inlining-and-escape-analysis`). Moving the choice outside a
+  hot loop is an option when the actual inline shape and measured cost justify the boundary.
 - Do not confuse `jdk.CompilationFailure` (that compilation attempt failed) with
   `jdk.Deoptimization` (an active compiled frame was deoptimised; its nmethod may remain usable).
   Both on one method require failure text, compile IDs and timing before diagnosing complexity.

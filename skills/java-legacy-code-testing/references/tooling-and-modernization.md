@@ -4,7 +4,7 @@ Read this when following older legacy-testing material, or when the output you m
 large to assert on. The online corpus for this topic is dominated by material written between
 2004 and 2020, and a large fraction of its mechanics no longer work.
 
-## What is dead, and why it matters
+## Legacy tooling traps
 
 **PowerMock.** Last release `org.powermock:powermock-core:2.0.9`, published 2020-11-01.
 `powermock-api-mockito2:2.0.9` declares `org.mockito:mockito-core:3.3.3` in its published POM.
@@ -21,52 +21,54 @@ conflict at worst. This is the single most common stale instruction in this topi
 **Wall-clock abstractions.** Prefer `java.time.Clock` (Java 8+) for instants and dates; it does
 not replace a monotonic elapsed-time source or business-calendar policy. How to inject one is in
 `java-test-design/references/determinism.md` and
-`java-test-doubles/references/mockito-hazards.md`; this skill only records that the 2004 mechanics
-are dead.
+`java-test-doubles/references/mockito-hazards.md`; retain an existing abstraction that already
+meets those semantics.
 
 ## Verified coordinates
 
-Read from `repo1.maven.org` metadata on 2026-08-27. Versions move; the point of the table is the
-_artifact ids_ and the traps, which move much more slowly.
+Coordinates rechecked against Maven Central metadata on 2026-09-10. Their presence is not a
+tested compatibility matrix or an instruction to upgrade; inspect the project's resolved stack.
 
-| Library        | Coordinate                                   | Note                                                                                                                                                     |
-| -------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| JUnit          | `org.junit.jupiter:junit-jupiter:5.14.4`     | 6.1.3 exists. `UNVERIFIED:` its minimum JDK and any 5.14 → 6.1 breaking change — prefer 5.14.x                                                           |
-| Mockito        | `org.mockito:mockito-core:5.23.0`            | Inline mock maker is the default. On JDK 21+ it self-attaches an agent and the JVM warns; the documented fix is passing the Mockito jar via `-javaagent` |
-| AssertJ        | `org.assertj:assertj-core:3.27.7`            | 4.0.0-M1 is a milestone — not in a build that matters                                                                                                    |
-| ApprovalTests  | `com.approvaltests:approvaltests:31.0.0`     | Single artifact, `<scope>test</scope>`; supports JUnit 3/4/5 and TestNG                                                                                  |
-| ArchUnit       | `com.tngtech.archunit:archunit-junit5:1.5.0` | Here, one narrow rule only — see below. Anything broader is `architecture-testing`                                                                       |
-| Testcontainers | `org.testcontainers:testcontainers:2.0.5`    | Last 1.x is 1.21.4. **2.x renamed every module artifact with a `testcontainers-` prefix** — see the trap                                                 |
+| Library        | Coordinate                                   | Note                                                                                                                                                        |
+| -------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JUnit          | `org.junit.jupiter:junit-jupiter:5.14.4`     | JUnit 6.1.3 requires Java 17+ to run tests, including tests of older-target code; keep the existing compatible harness and review migration separately      |
+| Mockito        | `org.mockito:mockito-core:5.23.0`            | Inline is the default mock maker, but instrumentation availability is conditional; documented explicit `-javaagent` setup avoids relying on self-attachment |
+| AssertJ        | `org.assertj:assertj-core:3.27.7`            | 4.0.0-M1 is a milestone — not in a build that matters                                                                                                       |
+| ApprovalTests  | `com.approvaltests:approvaltests:31.0.0`     | Single artifact, `<scope>test</scope>`; supports JUnit 3/4/5 and TestNG                                                                                     |
+| ArchUnit       | `com.tngtech.archunit:archunit-junit5:1.5.0` | Here, one narrow rule only — see below. Anything broader is `architecture-testing`                                                                          |
+| Testcontainers | `org.testcontainers:testcontainers:2.0.5`    | Last 1.x is 1.21.4. **2.x renamed every module artifact with a `testcontainers-` prefix** — see the trap                                                    |
 
 **The Testcontainers 2.x trap.** `org.testcontainers:junit-jupiter` and
 `org.testcontainers:postgresql` stop at 1.21.4; the 2.x artifacts are
 `org.testcontainers:testcontainers-junit-jupiter` and `org.testcontainers:testcontainers-postgresql`.
 Getting it wrong silently resolves a stale 1.x, or does not resolve at all. An OpenRewrite recipe
 exists: `org.openrewrite.java.testing.testcontainers.TestContainers2Migration`.
-`UNVERIFIED:` whether Java _package_ names changed in 2.x — sources disagree. Do not state an
-import path for a 2.x container class without checking it.
+The official 2.0.0 release also relocates container classes to module-specific packages, for
+example `org.testcontainers.mysql.MySQLContainer`; review the selected module's API, not just
+its artifact name. That release removes JUnit 4 support, so this is not a transparent harness update.
 
 ## Approval testing
 
 The technique for pinning output you can recognise but cannot state. Emily Bache's criterion: use
 it when the code "is returning a String and you're not sure exactly what that string should be,
-but you'll know it's right when you see it". The modern authority is Bache, not Fowler — there is
-no Fowler bliki entry on approval or characterisation testing.
+but you'll know it's right when you see it". Review observed output against known requirements;
+characterization records existing behavior and does not certify that behavior as correct.
 
 **The decision rule:**
 
-| Output                                                               | Pin it with                |
-| -------------------------------------------------------------------- | -------------------------- |
-| Small, and the expected value can be _stated_                        | Explicit assertions        |
-| Large and structured — JSON, HTML, XML, a generated file, a DTO tree | `Approvals.verify(String)` |
+| Output                                               | Pin it with                                                                                              |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Small, and the expected value can be _stated_        | Explicit assertions                                                                                      |
+| Large, structured and meaningfully reviewable output | Consider `Approvals.verify(String)` over a deliberate representation; retain focused contract assertions |
 
-**The one call to show is `Approvals.verify(String)`.** `verify(Object)` on a legacy object
-silently depends on that object's `toString`, which is how a golden master ends up pinning
-garbage with authority (`java-refactoring/references/safety-workflow.md`).
+**Prefer a deliberate representation.** `Approvals.verify(String)` makes it explicit;
+`verify(Object)` delegates to `Objects.toString`, which is adequate only when that representation
+is stable, safe to disclose and meaningful for the contract (`java-refactoring/references/safety-workflow.md`).
 
 **The objection that kills the technique in practice** — "our output has timestamps and UUIDs" —
-is answered by `Options.withScrubber(...)`. Show it, or the reader concludes approval testing
-cannot handle real output.
+can be addressed by controlled inputs or `Options.withScrubber(...)`. Scrub only irrelevant
+variation; keep business timestamps, amounts and meaningful identity relationships observable.
+Check that normalization still exposes a relevant wrong value instead of hiding the regression.
 
 **On CI:** annotate with `@UseReporter(QuietReporter.class)` (or `Junit5Reporter`). The default
 `DiffReporter` tries to launch a diff tool, which on a headless agent hangs or fails obscurely.
@@ -87,11 +89,10 @@ to that skill rather than imposing a second blanket policy here.
 
 ## The one ArchUnit rule that earns its place here
 
-A rule failing the build when production code references a `*ForTest*`/`*ForTesting*` member, or
-when a non-final static field appears outside an allowlist. This is the countermeasure for the
-seam that leaked into the production API — the `setClockForTest`, the `protected` factory
-overridden only by a test, the `@VisibleForTesting` method now called from three production
-classes. Everything broader belongs to `architecture-testing`.
+A rule can enforce an actual test-only boundary or a reviewed mutable-global allowlist.
+Distinguish unintended production callers of `setClockForTest` from legitimate calls through a
+supported `protected` factory: names/visibility alone do not establish mutable global state.
+Choose the relevant access or ownership restriction with `architecture-testing`.
 `UNVERIFIED:` a specific `ArchRule` DSL expression for this was not verified against 1.5.0.
 
 ## The sweep: Feathers's mechanics in Java 21/25
@@ -101,13 +102,13 @@ not.
 
 | Feathers (2004)                                                                    | Status                                                                                                                                                                                                                              |
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| JUnit 3/4 idioms — `extends TestCase`, `setUp()`, `@RunWith`                       | **Superseded.** JUnit 5, `@BeforeEach`, extensions instead of runners                                                                                                                                                               |
+| JUnit 3/4 idioms — `extends TestCase`, `setUp()`, `@RunWith`                       | Jupiter offers lifecycle annotations/extensions; preserve a working older harness when migration is outside the task or incompatible with its runtime                                                                               |
 | Hand-rolled time abstractions                                                      | Prefer `java.time.Clock` for wall-clock instants/dates; monotonic elapsed time or domain calendars may need another abstraction                                                                                                     |
-| Setter injection / Supersede Instance Variable as the realistic substitution route | **Largely superseded.** Constructor injection is the default; a `final` field assigned once in the constructor _is_ the seam. Supersede Instance Variable is now a smell                                                            |
+| Setter injection / Supersede Instance Variable as the realistic substitution route | Prefer constructor selection where the lifecycle permits it; an existing replacement seam may suffice when initialization, concurrent use and resource ownership are controlled                                                     |
 | Replace Function with Function Pointer (C only)                                    | **Java equivalent is idiomatic:** a `Supplier`/`Function` field or parameter. A single-method behaviour seam needs no interface                                                                                                     |
-| Value objects as hand-written classes; parameter objects                           | **Records (JEP 395, JDK 16) make value seams trivial** — correct `equals`/`hashCode`/`toString` for free, which also stabilises approval output                                                                                     |
+| Value objects as hand-written classes; parameter objects                           | Records are available without preview since Java 16; generated component methods do not guarantee deep immutability, content equality for arrays or a stable/safe approval representation                                           |
 | Subclass and Override, Extract Implementer, Push Down Dependency                   | **Still current, still the workhorse.** Modern caveat: a sealed type restricts direct subclasses to its permits/module/package contract; use an allowed extension seam or injection rather than assuming any test subclass is legal |
-| Extract and Override / test subclasses generally                                   | **Still current**, with a caveat Feathers did not face: `final` classes and methods block it. Mockito 5 can mock `final`, but that is instrumentation, not a seam — the design answer is still Parameterize Constructor             |
+| Extract and Override / test subclasses generally                                   | Final classes/methods block overriding. Supported inline mocking is an instrumentation seam; compare its constraints with an available object seam instead of treating either as mandatory                                          |
 | In-memory / fake databases to get persistence code under test                      | Use the real database engine for SQL/transaction semantics; a fake port remains useful for isolated domain policy. Testcontainers needs a compatible runtime and does not replace every fake                                        |
 | "The tests are too slow to run often"                                              | Partially superseded — parallel execution, container reuse, modern hardware. The _design_ argument for small units survives; the _speed_ argument should not be the headline                                                        |
 
@@ -118,9 +119,13 @@ what answers "where do I put the test?".
 ## Sources
 
 - [Java 21 Clock](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Clock.html) — `systemDefaultZone()` captures the selected zone; it is not a monotonic timer.
-- Maven Central metadata, read 2026-08-27, for every coordinate above.
-- Mockito javadoc on `main` for the inline-mock-maker default and the JDK 21+ instrumentation note.
+- Maven Central metadata, rechecked 2026-09-10, for the coordinate families above.
+- [Mockito 5.23.0 API and instrumentation](https://javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/Mockito.html)
+- [JUnit 6.1.3 runtime requirements](https://docs.junit.org/6.1.3/overview.html)
+- [Testcontainers 2.0.0 release and migration changes](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0)
 - Published `powermock-api-mockito2:2.0.9` POM for the Mockito 3.3.3 pin.
 - [Emily Bache on approval testing](https://coding-is-like-cooking.info/2021/03/why-we-should-be-saying-approval-testing-instead-of-golden-master/)
   and `sammancoaching.org/learning_hours/legacy/approval_testing_intro.html`.
-- ApprovalTests `Approvals.java`, `UseReporter.java` and `Options` read from source on `master`.
+- ApprovalTests 31.0.0 `Approvals.java`, `UseReporter.java`, `QuietReporter.java` and `Options`
+  checked in its published sources artifact; no framework runtime integration is demonstrated by
+  the renewal-service verifier.

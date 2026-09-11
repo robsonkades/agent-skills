@@ -47,7 +47,9 @@ size, which names the leaf array instead of the static map holding it.
    warm-up and topology. Continuous class/heap/JFR statistics may establish slope more safely.
 5. **Triage by live heap and context**, then open the Dominator Tree. A large dominator is a useful
    starting point, not a universal 30% leak threshold; caches and immutable indexes can
-   legitimately dominate, while a distributed leak may have no single large owner.
+   legitimately dominate, while a distributed leak may have no single large owner. Check MAT's
+   unreachable/discard settings: an unfiltered file and its indexed graph can contain different
+   populations. Reparse existing evidence when that resolves the gap; see the MAT reference.
 6. **Run Path to GC Roots on the suspect with reference strengths made explicit.** Start
    by excluding weak/soft/phantom paths to expose strong ownership, then inspect excluded
    strengths when a soft cache or reference-processing policy is itself the question. A
@@ -87,7 +89,8 @@ size, which names the leaf array instead of the static map holding it.
 size exceeds VM limit`). An error constructed in Java code, such as `Cannot reserve N
 bytes of direct buffer memory`, produces no dump. The flag, `HeapDumpPath` and
   `HeapDumpGzipLevel` are `manageable`: `jcmd <pid> VM.set_flag HeapDumpOnOutOfMemoryError
-true` arms a running JVM that started without it.
+true` arms a running JVM that started without it only if no VM-reported OOME has yet consumed
+  the once-only guard; enabling the flag later does not reset that guard.
 - A dump written by `-XX:+HeapDumpOnOutOfMemoryError` is unfiltered by construction —
   the JVM has already failed to allocate. Treat its raw instance counts with suspicion
   and go to the Dominator Tree.
@@ -108,9 +111,10 @@ true` arms a running JVM that started without it.
   explain a `WeakHashMap` key leak. Use Paths to GC Roots to find the actual strong path and pin
   claims to the target JVM; calling `s.intern()` for comparison mutates the table and is not a
   neutral diagnostic.
-- One `ThreadLocal` instance has at most **one** entry in each thread's map — the key is the
-  `ThreadLocal` instance. Its leaks come from the value never being cleared or replaced,
-  not from entries accumulating in one `ThreadLocalMap`.
+- One `ThreadLocal` instance has at most **one** entry in each thread's map. Distinguish
+  growth within that value from many distinct keys: collected weak keys can leave stale
+  entries whose values remain strongly held until map cleanup or thread termination.
+  Inspect the entry's key, value and owning thread before choosing the lifecycle fix.
 - With virtual threads, an unmounted stack lives in the Java heap as
   continuation chunks. Check the actual HPROF and parser representation rather than assuming
   every stack-held reference appears as a chunk edge. Platform stack native bytes are absent,
@@ -124,8 +128,9 @@ true` arms a running JVM that started without it.
   parser sizing support; not every aligned object becomes smaller. Record
   which mode produced a dump: a histogram diff across that flag — or across the JDK 26→27
   boundary — may include layout/parser deltas as well as workload or code changes.
-- JMC and GCeasy.io do not open `.hprof`. MAT is the reference tool; HeapHero.io and
-  jxray.com handle dumps beyond what a local MAT can index.
+- MAT supplies the dominator/OQL workflow here. JMC's JFR views do not read HPROF, but its
+  JOverflow plug-in can; check installed plug-ins and parser compatibility. Other dump
+  analyzers have different capacity and query support; choose for the question and data policy.
 
 ## Evidence integrity and security
 

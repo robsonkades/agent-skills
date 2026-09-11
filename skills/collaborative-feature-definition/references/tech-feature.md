@@ -82,7 +82,9 @@ phases/resources (or none with reason).>
 
 ## Decomposition
 
-<None with reason, or independently valuable/testable Tech Features and enabling resources.>
+<None with reason, or independently valuable/testable Tech Features with acceptance and dependencies.
+Record enabling work as a dependency or constraint; create its implementation resources during later
+authorized lifecycle planning.>
 
 ## Revision history and approval
 
@@ -98,6 +100,12 @@ phases/resources (or none with reason).>
 Do not start with the technology name unless it is an already authorized constraint. “Migrate to Kafka”
 must still state the missing capability or unacceptable condition that makes a migration valuable. This
 keeps alternatives visible and gives completion an outcome beyond installation.
+
+Before recommending a migration or new platform, compare the proposed capability with retaining the
+current system or a targeted improvement where either could meet the objective. Compare the same
+criteria and compatibility obligations, including migration and ongoing operating costs. Identify the
+evidence that favors the choice and what would change it; unknown feasibility needs a focused check,
+not a confident selection. Do not reopen an authoritative technology constraint without new evidence.
 
 Repository patterns are evidence of current practice, not automatically an organizational mandate.
 State whether a pattern is required, recommended, merely present, or intentionally superseded.

@@ -2,13 +2,13 @@
 
 ## Symptom, hypothesis, instrument
 
-| Symptom in the log                                           | Hypothesis                                                                                                                    | Instrument that confirms it                                                                                           |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Recurring `Concurrent Mark Restart for Mark Stack Overflow`  | Discovered-object frontier exceeds the expandable mark stack; broad/live graph, insufficient marking progress or native limit | `-Xlog:gc+marking=debug`; effective `MarkStackSizeMax`; live-set/graph and concurrent CPU evidence                    |
-| `Pause Full` shortly after incomplete marking cycles         | Insufficient end-to-end reclamation headroom; late trigger is one candidate                                                   | Effective IHOP, old-allocation rate, marking + mixed-phase duration, evacuation/fallback chronology                   |
-| `Concurrent Mark From Roots` growing longer cycle over cycle | Old generation growing faster than concurrent scan capacity                                                                   | `ConcGCThreads` too low for the heap, or CPU contended with the application — check container CPU limits and affinity |
-| Frequent humongous allocation, no associated `Pause Full`    | Reclamation may keep up, or free capacity may temporarily hide accumulation                                                   | `-Xlog:gc+humongous=debug`; compare allocated, reclaimed and retained regions over time                               |
-| Frequent humongous allocation **with** `Pause Full`          | Retention, ineligibility, allocation bursts or contiguous-region shortage                                                     | Full-GC cause, candidate fields, free-region and retained-region trends before choosing region size or redesign       |
+| Symptom in the log                                           | Hypothesis                                                                                                   | Instrument that confirms it                                                                                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Recurring `Concurrent Mark Restart for Mark Stack Overflow`  | Current mark-stack capacity exhausted; graph work, growth/restart policy, maximum or native allocation limit | `-Xlog:gc=debug,gc+marking=debug`; effective stack capacities; live-set/graph and concurrent CPU evidence                                              |
+| `Pause Full` shortly after incomplete marking cycles         | Insufficient end-to-end reclamation headroom; late trigger is one candidate                                  | Effective IHOP, old-allocation rate, marking + mixed-phase duration, evacuation/fallback chronology                                                    |
+| `Concurrent Mark From Roots` growing longer cycle over cycle | More graph/SATB work, restarts or reduced effective scan capacity                                            | Comparable live-set/graph and mutation evidence, restart logs, marking CPU and container CPU availability; duration alone cannot select a thread count |
+| Frequent humongous allocation, no associated `Pause Full`    | Reclamation may keep up, or free capacity may temporarily hide accumulation                                  | `-Xlog:gc+humongous=debug`; compare allocated, reclaimed and retained regions over time                                                                |
+| Frequent humongous allocation **with** `Pause Full`          | Retention, ineligibility, allocation bursts or contiguous-region shortage                                    | Full-GC cause, candidate fields, free-region and retained-region trends before choosing region size or redesign                                        |
 
 ## The SATB invariant, and why the old value
 
@@ -26,8 +26,8 @@ An old field value is not necessarily snapshot-live: it may reference an object 
 Root processing, tracing, allocation liveness and SATB processing together preserve live objects;
 do not infer an object's allocation time from when this particular reference was assigned.
 
-The asymmetry is the point: SATB lets dead objects look live (floating garbage, reclaimed next
-cycle) and never lets a live object look dead (a dangling pointer — heap corruption). Any
+The asymmetry is the point: SATB lets dead objects look live (floating garbage, eligible for
+later reclamation) and never lets a live object look dead (a dangling pointer — heap corruption). Any
 change that trades in the other direction is not an optimisation.
 
 ## The full barrier condition
@@ -76,10 +76,15 @@ Concurrent mark threads discover live objects and push objects whose fields rema
 scanned onto the global/local mark-stack work structures.
 
 "Concurrent Mark Restart for Mark Stack Overflow (iteration #N)"   [tag gc,marking]
-  the mark stack reaches its maximum expansion and overflows before tracing completes.
+  the available mark-stack work storage overflows before tracing completes.
   G1 marks the overflow condition, completes a synchronization/restart protocol and repeats
   marking work so no reachable object is lost. SATB queues remain a distinct source of roots.
 ```
+
+On JDK 25.0.3, concurrent marking and final marking prefer restart followed by capacity expansion;
+reference processing permits immediate expansion. The restart line therefore does not prove
+that the configured maximum was reached. Inspect expansion and native allocation failures as
+well as the effective limit. Those messages use `gc=debug`/warning, not just `gc+marking=debug`.
 
 Mutation/SATB pressure can extend marking and indirectly worsen headroom, but it is not the log
 line's identity. Diagnose mark-stack overflow from stack expansion/limit and object-graph work;
@@ -153,7 +158,8 @@ several competing costs and need workload validation, not a monotonic fan-in ass
 
 ## Source checks
 
-- [JDK 25 x86 pre-barrier](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/gc/g1/g1BarrierSetAssembler_x86.cpp)
-- [SATB filtering](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1SATBMarkQueueSet.cpp)
-- [Object scanning and TAMS](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1ConcurrentMark.inline.hpp)
-- [Humongous candidate preparation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1YoungCollector.cpp)
+- [JDK 25.0.3 x86 pre-barrier](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/cpu/x86/gc/g1/g1BarrierSetAssembler_x86.cpp)
+- [SATB filtering](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1SATBMarkQueueSet.cpp)
+- [Object scanning and TAMS](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.inline.hpp)
+- [Humongous candidate preparation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1YoungCollector.cpp)
+- [Mark-stack allocation and restart](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.cpp)

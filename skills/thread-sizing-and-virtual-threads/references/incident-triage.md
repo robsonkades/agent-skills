@@ -2,9 +2,11 @@
 
 ## Minimum evidence
 
-Capture exact JDK/vendor/build and CPU/container limits, lifecycle metrics, resource waits, scheduler
-or executor state, repeated thread views, and a time-aligned JFR/profile before tuning. Thread and
-stack artifacts can contain sensitive paths/context; secure their storage and retention.
+Start with the symptom and existing time-aligned evidence. Record exact JDK/vendor/build and
+CPU/container limits; select lifecycle/resource metrics, scheduler state, repeated thread views or
+JFR/profiles that distinguish the plausible causes. A narrow configuration or feasibility question
+may not need every capture. Thread and stack artifacts can contain sensitive paths/context; secure
+their storage and retention.
 
 Use:
 
@@ -26,13 +28,13 @@ See `concurrency-diagnostics` for exact interpretation.
 `VirtualThreadSchedulerMXBean` exposes pool size, estimated mounted/queued counts and target
 parallelism. Correlate:
 
-| Scheduler/CPU shape                                        | Candidate interpretation                                        |
-| ---------------------------------------------------------- | --------------------------------------------------------------- |
-| queued rises, CPU saturated/throttled, CPU-heavy VT stacks | CPU demand exceeds effective capacity                           |
-| pool grows above parallelism, file/native waits visible    | compensation/capture; identify blocking API                     |
-| pin events plus queued rise/latency                        | pinning may constrain carriers; inspect native/foreign stack    |
-| many parked VTs, scheduler queue low                       | cheap waiting; inspect protected resource/queue age instead     |
-| live/retained VTs rise after caller timeout                | residual task lifetime; check cancellation and admission policy |
+| Scheduler/CPU shape                                        | Candidate interpretation                                         |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| queued rises, CPU saturated/throttled, CPU-heavy VT stacks | CPU demand exceeds effective capacity                            |
+| pool grows above parallelism, file/native waits visible    | compensation/capture; identify blocking API                      |
+| pin events plus queued rise/latency                        | pinning may constrain carriers; inspect native/foreign/VM reason |
+| many parked VTs, scheduler queue low                       | cheap waiting; inspect protected resource/queue age instead      |
+| live/retained VTs rise after caller timeout                | residual task lifetime; check cancellation and admission policy  |
 
 Pool, mounted and queued counts may return `-1` when unknown; parallelism is a target, not
 another live count. Mounted is not identical to consuming CPU and queued is not all live or
@@ -47,9 +49,10 @@ enablement and thresholds vary. Short filtered events and unfinished duration ev
 absent; absence is not proof that blocking or pinning did not occur.
 
 JDK 24+ removes pinning caused solely by monitor usage through JEP 491. A `jdk.JavaMonitorEnter` contention event is
-still relevant for latency even though it is not a pin. Remaining pin stacks should identify native
-or foreign-function frames, including callbacks into Java; confirm impact with scheduler queue
-and completion latency. Monitor changes do not remove those separate native-frame constraints.
+still relevant for latency even though it is not a pin. Inspect remaining pin reasons/operations and
+stacks, including native/foreign callbacks and residual VM frames such as class initialization on
+HotSpot 25. Do not infer application JNI merely from a VM-frame pin. Confirm impact with scheduler
+queue and completion latency; route version-specific mechanisms to `virtual-threads-internals`.
 
 ## Profile choice
 
@@ -77,7 +80,7 @@ Did useful CPU saturate/throttle?
 ```text
 CPU-ready virtual threads dominate?
   yes -> CPU capacity/parallelism problem
-  no  -> pin/native/foreign or carrier-capturing operation visible?
+  no  -> pin/native/foreign/VM or carrier-capturing operation visible?
           yes -> update/isolate operation; validate impact
           no  -> check CPU quota, scheduler configuration, submit failures and runtime defects
 ```
@@ -104,3 +107,5 @@ signal change, make one reversible intervention, and validate useful progress pl
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
 - [Java 25 `HotSpotDiagnosticMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/HotSpotDiagnosticMXBean.html)
 - [JEP 491](https://openjdk.org/jeps/491)
+- [OpenJDK class-initialization preemption change](https://github.com/openjdk/jdk/pull/27802) —
+  explains VM-frame pinning paths; check the deployed build rather than assuming later changes apply.

@@ -11,7 +11,7 @@ than assuming it is small or material.
 | -------------- | ----------------------- | ----------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `ofConfined()` | Deterministic, explicit | No — owning thread only | Supported, owning thread only                     | Buffers with a clear scope and a single owner (parsers, thread-confined work)                   |
 | `ofShared()`   | Deterministic, explicit | Yes                     | Supported, from any thread                        | Structures shared across threads with a single coordinated closing point (pools, shared caches) |
-| `ofAuto()`     | Non-deterministic (GC)  | Yes                     | **Unsupported** — `UnsupportedOperationException` | Only when there is no natural scope to tie a try-with-resources to; accepts GC-managed timing   |
+| `ofAuto()`     | Non-deterministic (GC)  | Yes                     | **Unsupported** — `UnsupportedOperationException` | Intentional reachability-managed lifetime with a budget that tolerates delayed reclamation      |
 | `global()`     | Never                   | Yes                     | **Unsupported** — `UnsupportedOperationException` | Permanent native data, living as long as the process                                            |
 
 Selection rule:
@@ -21,21 +21,23 @@ Need native memory
   |
   +-- Must it survive the whole process, never freed?  -> Arena.global()
   |
-  +-- Is there a clear ownership scope (try-with-resources)?
+  +-- Is reachability-managed release acceptable, including its delay and budget?
         |
-        +-- No  -> Explicit lifecycle owner across callbacks/operations?
-        |           Yes -> owned confined/shared arena, closed on actual completion
-        |           No  -> ofAuto() only if bounded GC-managed timing is acceptable
+        +-- Yes -> ofAuto() is a supported choice; no explicit close or release deadline
         |
-        +-- Yes -> Does more than one thread access OR close the segment?
+        +-- No -> Explicit ownership scope or lifecycle owner across callbacks/operations
+                 |
+                 Does more than one thread access OR close the segment?
                      |
                      +-- No  -> Arena.ofConfined()   (strong confinement)
                      +-- Yes -> Arena.ofShared()
 ```
 
-`ofAuto()` is the mode people reach for thinking it is "the explicit one". It is not: it is
-GC-managed, and it reintroduces nondeterministic release timing. Use it only when that
-lifetime is acceptable and bounded by another resource policy.
+`ofAuto()` is GC-managed: storage is released at an unspecified time after the arena and
+all its segments become unreachable. Bounding reachable bytes alone does not bound the
+backlog awaiting reclamation. Account for allocation rate, delayed release and headroom;
+choose explicit ownership when that uncertainty is unacceptable. A scope may also be an
+asynchronous lifecycle owner that closes only after actual completion.
 
 ## Allocation and typed access
 
@@ -106,7 +108,7 @@ the pool must first prevent acquisition and coordinate all leases.
 1. Identify the ownership pattern and pick the `Arena` from the selection rule above — one
    thread start to finish (`ofConfined`), several threads accessing or closing (`ofShared`),
    explicit asynchronous owner (close on completion), acceptable GC-managed lifetime
-   (`ofAuto`, last resort), truly permanent (`global`).
+   (`ofAuto`, when its timing and budget fit), truly permanent (`global`).
 2. Translate size/alignment with checked arithmetic; `arena.allocate(n, alignment)` is not a
    safe mechanical replacement until ownership and maximum allocation are enforced.
 3. Replace raw address access (`unsafe.getLong(address)`) with typed segment access
@@ -129,6 +131,13 @@ the pool must first prevent acquisition and coordinate all leases.
 --sun-misc-unsafe-memory-access=deny    # rejects targeted calls; not the JDK 25 GA default
 ```
 
-Running with `deny` in CI is how you find out, before the baseline moves, which code paths
-will stop working, including object-plus-offset CAS/volatile operations. `warn` reports
-the first affected use; absence of another warning does not mean subsequent methods are exempt.
+On a target that supports this option, a bounded run with `deny` exposes affected code paths
+that the run actually reaches, including object-plus-offset CAS/volatile operations. It does
+not prove unexercised paths are compatible. `warn` reports the first affected use; absence of
+another warning does not mean subsequent methods are exempt.
+
+Sources: Java 25 [`Arena`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Arena.html),
+[`SegmentAllocator`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/SegmentAllocator.html),
+[`MemorySegment`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/MemorySegment.html)
+and [`FileChannel.map`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html#map(java.nio.channels.FileChannel.MapMode,long,long,java.lang.foreign.Arena)>).
+These describe the API contracts; raw native-pointer lifetime requires separate coordination.

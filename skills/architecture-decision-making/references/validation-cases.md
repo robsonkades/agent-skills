@@ -7,9 +7,10 @@ parser. Inputs are synthetic. No paired agent runs have been executed for this r
 
 Run each request in fresh baseline and treatment sessions with the same model/version,
 reasoning settings, tools, permissions and repository context. The baseline has no access
-to this skill; the treatment receives its description and body with access to routed
-references. Prevent automatic skill discovery in the baseline. Keep expected/failure
-criteria out of the agent's input. For selection, first expose only the description among
+to this skill; the treatment receives its description and body with access to its three
+technical references. Keep this evaluation file and its expected/failure criteria
+unavailable to task-runner agents. Prevent automatic skill discovery in the baseline.
+For selection, first expose only the description among
 the same neighboring descriptions and record selection before providing the body.
 
 Save prompts, loaded resources, tool actions and outputs. Judge observable decisions

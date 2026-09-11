@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: hot-partitions-and-rebalancing
-version: 1.3.1
+version: 1.3.3
 description: >-
-  Repairing a partitioned system whose distribution has failed in production: a hash
-  distributes keys uniformly and says nothing about traffic, so one celebrity key or one
+  Repairing a partitioned system whose distribution has failed in production: balanced
+  key placement does not imply balanced traffic, so one celebrity key or one
   large tenant saturates a shard while the map is correct. Covers detection — per-shard
   rate, latency and storage, and the max-to-mean ratio, because an aggregate dashboard hides
   skew; naming the key by top-K sampling; the read-hot, write-hot, storage-hot and
@@ -55,6 +55,7 @@ dependencies:
 
 suggests:
   - distributed-locks-and-leases
+  - idempotency
   - latency-statistics
   - retries-and-backoff
   - tail-latency-analysis

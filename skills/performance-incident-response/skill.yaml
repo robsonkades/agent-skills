@@ -1,9 +1,9 @@
 schemaVersion: 1
 name: performance-incident-response
-version: 1.0.1
+version: 1.0.2
 description: >-
   Coordinating a production performance incident from impact declaration through evidence-preserving
-  triage, one-change mitigation, recovery validation and a blameless causal postmortem. Use when a
+  triage, coordinated mitigation, recovery validation and a blameless causal postmortem. Use when a
   latency, throughput, saturation or resource regression requires a war room; when responders are
   changing JVM flags before preserving evidence; or when MTTD, mitigation time and recovery time are
   being conflated. Evidence acquisition belongs to incident-evidence-capture; technical diagnosis

@@ -55,6 +55,10 @@ framework and compatibility constraints; requirements analysis does not authoriz
    test (`references/acceptance-criteria.md`).
 6. **Record material scope boundaries** without inventing exclusions to requested work. Scope is defined as much by the exclusions as by
    the inclusions, and unstated exclusions are where "but obviously it should also…" lives.
+7. **Close clarification for the next increment** when its intended behavior, constraints and
+   acceptance checks are clear, and remaining assumptions are safe and reversible. Continue
+   authorized implementation; if only analysis was requested, deliver the criteria. Keep
+   unresolved decisions and their dependent work explicit instead of interviewing indefinitely.
 
 ## Rules
 

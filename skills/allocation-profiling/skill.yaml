@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: allocation-profiling
-version: 2.1.1
+version: 2.1.2
 description: >-
   Attribute Java heap allocation to code and validate reductions in bytes per operation.
   Use when allocation or GC frequency regresses, JFR allocation events are empty or disagree

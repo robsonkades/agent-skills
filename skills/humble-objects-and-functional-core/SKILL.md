@@ -1,14 +1,13 @@
 ---
 name: humble-objects-and-functional-core
 description: >
-  Splitting a component into the part that decides and the part that acts, so the decision is
-  pure, deterministic and cheap to test while the effectful part stays thin enough for a small
-  set of boundary/integration tests—the Humble Object pattern and the functional core / imperative shell shape of the
-  same idea. Use when a rule can only be exercised by standing up the framework because the
-  decision lives inside the component that performs the effect, when logic sits in a
-  controller, scheduler, message listener or UI component, when a test needs a mocking
-  framework to reach the branch it cares about, or when retry, fallback or routing policy is
-  entangled with the call it governs. Does not cover which test level to use (architecture-testing,
+  Isolating decisions from hard-to-test effects with Humble Objects, or a pure functional
+  core and imperative shell when explicit data inputs fit the contract. Use when a rule can
+  only be exercised by standing up the framework, when controller, scheduler, listener or UI
+  logic makes focused tests difficult, or when retry, fallback or routing policy is entangled
+  with the call it governs. Inspect heavy mocking as a possible symptom, not proof that a
+  refactor is needed. Preserve adequate direct tests and boundary contracts. Does not cover
+  which test level to use (architecture-testing,
   java-testing-strategy), choosing and writing the doubles themselves (java-test-doubles),
   where business rules belong across layers (domain-logic-organization), the mechanics of
   immutable types (java-immutability), or module dependency direction
@@ -41,25 +40,31 @@ Inspect the project's Java release/toolchain and framework/transaction configura
 refactoring. The sealed outcomes and pattern switches below use Java 21 without preview;
 retain existing alternatives on older targets rather than upgrading the project. Preserve
 observable behavior, authorization, transaction boundaries and failure ordering. Report the
-decision extracted, the effect contract retained and actual core/boundary checks; test speed
-or reliability improvements remain unmeasured unless compared.
+decision extracted or retained, the effect contract and actual core/boundary checks; test
+speed or reliability improvements remain unmeasured unless compared. Reuse existing tests,
+consumer contracts and failure evidence to identify the testability or change goal. Ask only
+about unresolved inputs, authority or effects that would change the seam; investigate the
+independent parts while those answers are pending.
 
 1. **Find the decision.** In the component, identify the branch that would be worth a test if
    it were reachable — the conditional, the calculation, the selection.
 2. **Name its inputs.** Everything the decision reads: parameters, fetched data, the clock,
    configuration. If an input arrives through I/O, the decision does not need the I/O, it
    needs the value.
-3. **Move the decision to a function of those inputs.** No fetching, no writing, no clock, no
-   randomness — those become parameters. The result is a pure function or a small class with
-   no collaborators.
+3. **Choose the smallest useful seam.** Keep adequate direct tests or an existing service
+   with controlled collaborators. A Humble Object may extract testable effectful logic;
+   choose a pure function when explicit data inputs simplify the decision. In that core,
+   fetching, writing, clock reads and randomness stay outside; sampled values become inputs.
 4. **Leave the shell humble.** What remains fetches, calls the decision, and performs the result.
    Branches expressing infrastructure policy may remain, but test them at the cheapest level that
    observes their effects rather than forcing every branch into a pure core.
 5. **Represent the outcome as data where the shell must act on it.** "Retry after 200 ms",
    "reject with this reason" — an outcome the shell interprets, not an effect the core
    performs.
-6. **Check the payoff.** The extraction earned its cost only if a real test got faster,
-   simpler, or possible at all. If the same tests still need the same setup, revert it.
+6. **Check the payoff.** Compare access to the decision, test setup and the consumer/change
+   cost against the goal. Retain required boundary tests even if their setup is unchanged.
+   Stop when the seam and retained contracts are verified; keep the existing design or
+   simplify a proposed extraction when it adds no useful testability or maintenance benefit.
 
 ## The split
 
@@ -92,11 +97,11 @@ clock and the random source are inputs like any other; passing `Instant` rather 
 
 ```text
 The logic is inside a controller, listener, scheduled method or UI
-component, and has a branch worth testing
-        → extract it. The framework component becomes humble: bind,
-          delegate, respond.
+component, and the boundary obstructs testing a consequential branch
+        → compare direct testing with extracting that decision. Keep
+          the existing shape when it already provides a useful seam.
 
-The logic needs data from a repository or a remote call
+The chosen pure core needs data from a repository or a remote call
         → the shell fetches, the core receives the values. Do not pass
           the repository into the core "so it can fetch what it needs" —
           that reintroduces the collaborator you were removing.
@@ -131,6 +136,12 @@ core pure
 - Humility minimizes logic in the hard-to-test boundary; it does not make boundary tests worthless.
   Binding, authentication, transaction demarcation, serialization and failure translation can all
   deserve focused integration tests even when business decisions live in the core.
+- A computed plan is not continuing authority to perform an effect. Preserve the actual
+  transaction/version/eligibility check where the contract requires current state, including
+  authorization that may change after planning. The shell retains resource acquisition,
+  cleanup and task ownership on success, failure and cancellation; ending the caller's wait
+  does not by itself stop dispatched work. Extraction must not close borrowed resources or
+  move an effect outside its required lifetime.
 - Extract the decision, not the I/O. Wrapping a repository in an interface does not make the
   logic testable if the logic still lives in the shell; it only adds a seam
   (`java-dependency-inversion`).
@@ -145,9 +156,10 @@ core pure
   local `ArrayList` and returns a stable result can be pure when no mutable aliases or
   mutable elements escape or change concurrently. Local mutation can simplify sequential code
   (`java-immutability`).
-- The core is where records and sealed types pay for themselves: inputs as records, outcomes
-  as a sealed hierarchy, the shell's handling as an exhaustive `switch` the compiler checks
-  when a new outcome is added (`java-composition-over-inheritance`).
+- Records and sealed outcomes can make input and result contracts clear when their shape
+  fits. Keep adequate existing value types or a simple boolean; preserve public consumers.
+  An exhaustive `switch` checks new outcomes when its source is recompiled, subject to any
+  deliberate catch-all (`java-composition-over-inheritance`).
 - Many distributed policies have a pure decision kernel, but breakers, adaptive limits and routing
   depend on concurrent, time-varying state. Model transitions explicitly and test both deterministic
   policy and thread-safe state/effect integration. Separating them from the call they govern is

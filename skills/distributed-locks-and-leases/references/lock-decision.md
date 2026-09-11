@@ -2,7 +2,8 @@
 
 ## Step 1 — the alternatives, with the condition that selects each
 
-Work down this list. A lock is what remains when none of these fits.
+Compare the alternatives that fit the actual invariant and constraints. Keep an adequate
+existing transaction/lock when replacing it would add cost without improving the required outcome.
 
 | Alternative                 | Selecting condition                                                                                    | What it costs                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
@@ -10,7 +11,7 @@ Work down this list. A lock is what remains when none of these fits.
 | Unique constraint           | The invariant is "at most one of these exists" — one booking per seat, one payment per idempotency key | A caught constraint violation as normal control flow       |
 | Partitioned ownership       | Work can be routed by key and rebalance uses epochs/fencing (`sharding-and-partitioning`)              | Routing, recovery and a safe ownership handoff             |
 | Idempotent operation        | The operation can be repeated with the same observable outcome (`idempotency`)                         | A dedup store, and its retention decision                  |
-| Queue with per-key ordering | Serialisation, not exclusion, is what is wanted: one consumer per key by partition assignment          | Queue latency; ordering only _within_ a partition          |
+| Queue with per-key ordering | Per-key dispatch fits, and consumer execution plus handoff rejects or tolerates overlapping old work   | Queue latency, per-partition ordering and recovery         |
 | Doing nothing               | The race is benign: last writer wins is an acceptable outcome                                          | Saying so explicitly, in the design, so nobody adds a lock |
 
 The single most common wrong turn is reaching for a lock when a conditional write expresses the
@@ -19,15 +20,15 @@ dependency, a round trip, a TTL to guess and a failure mode the database did not
 
 ## Step 2 — comparing lock implementations
 
-| Implementation                       | Held until                               | Clock-dependent?                                                  | Fencing token available                                     | Main failure mode                                                          |
-| ------------------------------------ | ---------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Redis, single instance, `SET NX PX`  | TTL expiry, or owner-conditional release | Yes — server wall clock and client validity assumptions           | No monotonic counter unless separately designed             | Promotion can lose an unreplicated key and admit a second holder           |
-| Redlock (N independent Redis)        | TTL expiry on a majority                 | Yes — and contested (below)                                       | No                                                          | Its assumptions: bounded clock drift and bounded pauses                    |
-| etcd lease-backed mutex              | Unlock or attached lease expiry          | Expiry is server/quorum decided; client still has stale-work risk | Creation revision can order grants if deliberately exported | Renewal lost under partition; stale holder keeps working after regrant     |
-| ZooKeeper ephemeral-sequential lock  | Delete or session expiry                 | Ensemble session timeout                                          | Sequential-node suffix can order grants                     | Client resumes after the ensemble expired its session                      |
-| Database row lock (`FOR UPDATE`)     | Commit, rollback or connection loss      | **No**                                                            | Only if you add a fence column                              | Holds a transaction and a pooled connection for the whole critical section |
-| DB advisory lock, transaction-scoped | Transaction end                          | **No**                                                            | Only if you add a fence column                              | Same connection cost; lock is invisible to anyone reading the schema       |
-| DB advisory lock, session-scoped     | Explicit unlock or session end           | **No**                                                            | Only if you add a fence column                              | Leaks through a connection pool: the next borrower inherits the lock       |
+| Implementation                       | Held until                                                | Clock-dependent?                                                  | Fencing token available                                                                 | Main failure mode                                                          |
+| ------------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Redis, single instance, `SET NX PX`  | TTL expiry, or owner-conditional release                  | Yes — server wall clock and client validity assumptions           | No monotonic counter unless separately designed                                         | Promotion can lose an unreplicated key and admit a second holder           |
+| Redlock (N independent Redis)        | TTL expiry on a majority                                  | Yes — and contested (below)                                       | No                                                                                      | Its assumptions: bounded clock drift and bounded pauses                    |
+| etcd lease-backed mutex              | Unlock or attached lease expiry                           | Expiry is server/quorum decided; client still has stale-work risk | Creation revision can order grants if deliberately exported                             | Renewal lost under partition; stale holder keeps working after regrant     |
+| ZooKeeper ephemeral-sequential lock  | Delete or session expiry                                  | Ensemble session timeout                                          | Sequential-node suffix can order grants                                                 | Client resumes after the ensemble expired its session                      |
+| Database row lock (`FOR UPDATE`)     | Transaction end, including after detected connection loss | No application TTL                                                | Same-transaction writes use the database lock; external effects need their own protocol | Holds a transaction and a pooled connection for the whole critical section |
+| DB advisory lock, transaction-scoped | Transaction end                                           | No application TTL                                                | No automatic external fence; a cooperative same-resource protocol can suffice           | Same connection cost; all conflicting writers must participate             |
+| DB advisory lock, session-scoped     | Explicit unlock or session end                            | No application TTL                                                | No automatic external fence; own the session and participating writes                   | Leaks through a connection pool: the next borrower inherits the lock       |
 
 Two structural observations from the table:
 
@@ -39,6 +40,14 @@ Two structural observations from the table:
   or ZooKeeper sequential-node numbers can seed a token protocol with lifecycle limits; they help
   only if the external resource atomically claims and enforces them. Redis does not attach a
   monotonic grant token, and an ad hoc `INCR` needs its own durability/atomicity analysis.
+
+**Logical ownership is not a local task mutex.** In the etcd 3.5 Lock API, calls on the same
+lock with the same lease are one acquisition; a second call does not exclude another task
+sharing it. PostgreSQL advisory acquisition also succeeds for an already-owning session;
+session-level acquisitions need matching unlocks. Intentional reentrancy is valid, but independent
+tasks need distinct logical holders or local serialization. Do not share a session/lease and
+infer exclusion from two successful calls. Advisory locks also rely on every conflicting writer
+following the same protocol; they do not automatically block an ordinary SQL update.
 
 ## The Redlock disagreement, stated fairly
 
@@ -64,10 +73,12 @@ assumption fails.
 Treat the lock as an efficiency measure (subject to its documented assumptions) when:
 - a violation costs only bounded duplicate computation or a reconciled repeat
 - the operation is idempotent, or its duplicate is detectable and cheap to reconcile
-Treat it as a correctness control (fencing at the resource is mandatory) when:
+Treat it as a correctness control (the resource must enforce the invariant) when:
 - a violation corrupts data, double-charges, or breaks an invariant nothing else re-checks
 - the lock service establishes grant order, while the resource's claim/conditional check
   prevents stale holders; both parts and their atomic boundaries matter
+- or the operation is protected by the resource's own transaction/session protocol with
+  all required effects and participants inside that boundary
 ```
 
 ## Anti-pattern shapes to grep for
@@ -90,3 +101,6 @@ its lifetime/cleanup is unmanaged, not merely because the API name appears.
 Sources: [Kleppmann's critique](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html),
 [Antirez's response](https://antirez.com/news/101),
 and [Redis lock acquisition/release assumptions](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/).
+
+Ownership details: [etcd 3.5 Lock request/lease semantics](https://etcd.io/docs/v3.5/dev-guide/api_concurrency_reference_v3/)
+and [PostgreSQL advisory lock reentrancy and scope](https://www.postgresql.org/docs/18/explicit-locking.html).

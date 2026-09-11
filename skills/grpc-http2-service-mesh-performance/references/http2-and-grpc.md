@@ -54,6 +54,9 @@ and test slow readers; both peers writing while neither reads can stall or deadl
   connectivity/wait-for-ready and stream-slot queues in the budget. Java can propagate deadlines
   through gRPC Context, but async context loss or other APIs need explicit propagation. Cancellation
   requires server/application cooperation and does not roll back an already committed effect.
+  Observe caller return, transport closure and application/resource release separately: cancelled
+  work may continue consuming capacity or overlap a retry. Work accepted under a separate durable-job
+  contract retains that lifetime (`timeouts-and-deadlines`).
 - Record unary, client-streaming, server-streaming and bidirectional calls separately.
 - Benchmark encoding with representative schemas and payload distributions; bytes alone do not
   capture allocation, copies or CPU.

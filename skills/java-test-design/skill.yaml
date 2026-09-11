@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: java-test-design
-version: 1.0.1
+version: 1.0.2
 description: >-
   Writing a Java test that survives refactoring and says why it failed: naming the behaviour
   rather than the method, one reason to fail, test data builders over shared mutable setup,
   choosing the assertion that produces a readable failure, parameterised and nested tests,
-  and removing every input the test does not control — clock, ordering, locale, randomness.
+  and controlling relevant inputs — clock, ordering, locale, randomness.
   Use when a test name does not say what broke, when a failure message has to be decoded by
   reading the test, when setup is shared across unrelated tests, when a test sleeps, when
   tests pass alone and fail together, when a flaky test is about to be retried or disabled,
@@ -40,8 +40,15 @@ files:
   - references/
 
 dependencies:
+  - name: concurrency-testing
+    version: ^1.0.0
   - name: java-testing-strategy
     version: ^1.0.0
+
+suggests:
+  - concurrency-diagnostics
+  - java-test-doubles
+  - tdd
 
 capabilities:
   - reads-source

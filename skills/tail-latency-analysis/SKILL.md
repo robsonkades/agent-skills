@@ -24,6 +24,11 @@ constant (or hide a cohort regression). Start from a precisely scoped population
 
 ## Workflow
 
+Use the steps needed for the requested explanation, diagnosis or policy change. Reuse adequate
+evidence and retain a sound design. A narrow answer needs its assumptions, supported conclusion
+and relevant limits; it need not produce a full cohort report or new load/failure campaign.
+Missing deployment data limits deployment claims, not independent mathematical conclusions.
+
 ### 1. Define the user objective
 
 State latency start/end events, population, success/error treatment, deadline/censoring,
@@ -31,17 +36,19 @@ window and aggregation. Select quantiles from user impact and available sample p
 do not mandate p99, p99.9 and maximum for every service. Maximum is highly sample-size and
 duration dependent and is useful as an incident exemplar, not a stable SLO statistic.
 
-Inspect deployed Java/JDK, client/telemetry versions and effective configuration; no upgrade
-is implied. Missing recordings or request outcomes remain unknown. Use existing authorization
+For runtime-specific claims or changes, inspect deployed Java/JDK, client/telemetry versions
+and effective configuration; no upgrade is implied. Missing recordings or request outcomes
+remain unknown. Use existing authorization
 for bounded captures and isolated or authorized load/failure experiments.
 
 Record offered, admitted and successful work. Closed-loop or completion-only measurements
 can underrepresent the worst intervals; check coordinated omission and timed-out/abandoned
-requests first.
+requests first. A naturally completion-paced population can legitimately use a closed-loop
+workload; state that scope rather than extrapolating it to independently arriving traffic.
 
 ### 2. Segment before attributing
 
-Compare distributions by endpoint/operation, payload or work size, tenant/partition,
+Select relevant comparisons by endpoint/operation, payload or work size, tenant/partition,
 outcome, instance/node/zone, cache state, deployment age, load and time. Keep cardinality
 bounded in metrics; use traces/exemplars or offline joins for high-cardinality dimensions.
 
@@ -94,8 +101,8 @@ launch times align; otherwise include launch offsets and parent/merge/cleanup ov
 
 ### 5. Correlate candidate causes
 
-Build a common timeline of slow requests, queue/admission, useful load, JVM events,
-process/container scheduling, network/storage and dependencies. Evidence must overlap the
+For an attribution claim, align slow requests with the relevant queue/admission, useful-load,
+JVM, process/container, network/storage or dependency evidence. Evidence must overlap the
 affected interval and instance. Co-occurrence alone is not causation; compare unaffected
 instances/cohorts and perform a controlled change when possible.
 
@@ -119,17 +126,21 @@ complexity:
 
 See [hedging and tail tolerance](references/hedging-and-tail-tolerance.md).
 
-### 7. Validate system-wide
+### 7. Validate the claim and affected system
 
-Reproduce the original population and load, then compare user tail, success/completeness,
-attempt rate, useful throughput, downstream utilization and recovery under normal and
-degraded scenarios. A nominal 1% hedge rate is not sufficient evidence; bound and test the
-rate when the callee is broadly slow.
+For a material intervention, compare the original population and workload with the changed
+policy, including user tail, success/completeness and affected capacity/fairness limits.
+Choose normal, degraded and recovery scenarios that discriminate its risks; reuse adequate
+existing evidence. A hedge rollout needs aggregate attempt and residual-work bounds under
+broad slowdown, not just a nominal 1% hedge rate. A scoped math or source/API review can close
+with its supported result and explicit deployment limits.
 
 ## Diagnostic rules
 
-- Percentiles of components cannot generally be added, subtracted or ordered to obtain the
-  percentile of their sum.
+- Component percentiles cannot generally be added or subtracted to recover a sum's percentile.
+  With the same population and quantile definition, nonnegative sequential durations give
+  `T >= T_i` pointwise, hence `q_p(T) >= q_p(T_i)`. This lower bound does not order `q_p(T)`
+  against the **sum** of component quantiles or identify the requests causing the tail.
 - A stage percentile equal to end-to-end p99 does not prove the same requests drove both.
 - A faster p50 with worse p99 may be a regression, but decision weights come from the SLO
   and user impact—not a universal preference for tails.
@@ -166,8 +177,10 @@ critical paths or joint distributions.
 **Hedge at historical p95 and call it 5% overhead:** when the distribution shifts, almost
 all calls can cross the fixed delay. Enforce a rolling budget/pushback and test degradation.
 
-**Retry and hedge at multiple layers:** attempts multiply, deadlines reset and cancellation
-is lost. Choose one owning layer and one end-to-end deadline.
+**Independent retry/hedge policies at multiple layers:** attempt limits multiply and deadlines
+or cancellation can be lost. Prefer one policy owner; coordinated layers can be valid when
+they enforce one total-attempt/resource budget and end-to-end deadline. Account for actual
+bottom-layer work, including residual and transparent attempts.
 
 **Correlation by dashboard eyeballing:** different clocks/windows and mixture changes
 produce false matches. Align raw events and compare controls.
@@ -187,4 +200,5 @@ produce false matches. Align raw events and compare controls.
 - [gRPC: Request hedging](https://grpc.io/docs/guides/request-hedging/)
 - [gRPC: Deadlines](https://grpc.io/docs/guides/deadlines/)
 - [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)
-- [OpenJDK JFR event metadata](https://github.com/openjdk/jdk/blob/master/src/jdk.jfr/share/conf/jfr/default.jfc)
+- [OpenJDK 25 HotSpot JFR event definitions](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/jfr/metadata/metadata.xml) — native event fields, not recording enablement.
+- [OpenJDK 25 default JFR settings](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/jdk.jfr/share/conf/jfr/default.jfc) — template settings, not proof of a target recording's effective configuration.

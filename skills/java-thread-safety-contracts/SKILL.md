@@ -14,8 +14,8 @@ description: >
 
 ## Purpose
 
-State what concurrent callers may do and observe, then make implementation and tests prove that
-promise. “Uses a concurrent collection” and “all methods synchronized” describe mechanisms, not the
+State what concurrent callers may do and observe, then check implementation and evidence against
+that promise. “Uses a concurrent collection” and “all methods synchronized” describe mechanisms, not the
 atomicity, consistency, progress or callback behavior of the abstraction.
 
 Guidance is authored against Java 25 API/JLS contracts; inspect the target compiler/runtime,
@@ -149,14 +149,19 @@ An immutable binding can still refer to a mutable object; its payload needs its 
 
 ## Verification
 
-- JMM/happens-before proof for publication and every shared invariant;
+Reuse applicable caller contracts, API guarantees and existing tests before adding checks. Select
+checks for relevant unresolved failure modes; an adequate confined/immutable or library-backed design
+does not require a new primitive stress suite or load experiment merely to complete this review.
+
+- publication/happens-before argument plus ownership/atomicity reasoning for each shared invariant;
 - sequential semantic/oracle tests plus concurrent history/invariant tests;
-- jcstress/model testing for primitive patterns;
-- stress/load tests for progress, fairness, contention and memory;
+- jcstress/model testing when primitive patterns need that verification;
+- stress/load tests when progress, fairness, contention or memory claims require workload evidence;
 - deadlock, timeout, interrupt, callback reentry/failure and shutdown tests;
 - documentation tests/examples showing supported multi-call usage.
 
-Finite stress tests do not prove correctness; they validate integration around a reviewable proof.
+Happens-before does not make a compound operation atomic. Finite tests can expose counterexamples;
+passing runs support only the exercised conditions and do not replace the contract/correctness argument.
 Report the contract change, evidence for each relevant invariant/publication edge, tests actually
 run and unresolved lifecycle/liveness cases. Route detailed JMM proofs to java-memory-model and
 primitive algorithm verification to concurrency-testing rather than declaring safety from stress alone.
@@ -175,12 +180,14 @@ primitive algorithm verification to concurrency-testing rather than declaring sa
 
 ## Definition of done
 
+Apply these checks to the supported operations and lifecycle, not hypothetical features.
+
 - [ ] Callers can understand atomicity, consistency, progress, callbacks and lifecycle without code.
 - [ ] State ownership/publication and every compound invariant have one protocol.
 - [ ] Escaped references, iterators/views, callbacks and failure paths preserve the contract.
 - [ ] Lock/wait-for graph, ordering, interrupt/timeout and shutdown are reviewed.
-- [ ] Lazy initialization defines first-use, failure, retry, cancellation and cleanup.
-- [ ] Correctness and liveness tests cover supported usage and target JDK behavior.
+- [ ] If initialization is lazy, it defines first-use, failure, retry, cancellation and cleanup.
+- [ ] Relevant correctness/liveness claims have evidence and targeted checks; untested limits are explicit.
 
 ## References
 

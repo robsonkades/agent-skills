@@ -14,9 +14,8 @@ small change into a whole-repository survey.
 | Which modules exist                 | Directory layout, module or project declarations                                        |
 | What the tests are and how they run | Test directories, the CI job that runs them                                             |
 
-The framework version is the single most common source of wrong guidance: APIs are removed and
-replaced between majors, and an answer correct for one is a compile error in the other. Read the
-version before asserting anything version-sensitive. A dependency declaration can differ from
+Framework versions can change available APIs and behavior; guidance for one version may not work
+on another. Read the version before asserting anything version-sensitive. A dependency declaration can differ from
 the selected version/scope; identify the target profile or Gradle configuration. Reuse available
 resolution reports or inspect the project's supported dependency-report command. If execution
 needs unavailable artifacts/access, retain that limitation rather than silently selecting a version.
@@ -92,7 +91,9 @@ citing belong to the project under change. A finding from a sibling repository i
 finding.
 
 **Generalising from the file you happened to open.** One controller using a pattern is one
-controller. Count before you claim, and report the count.
+controller. Start with comparable paths and independent contexts, looking for counter-examples
+where they could change the finding. Report counts within the inspected sample and name its scope;
+enumerate the full population only when the needed claim requires that coverage.
 
 ## Sources for dependency evidence
 

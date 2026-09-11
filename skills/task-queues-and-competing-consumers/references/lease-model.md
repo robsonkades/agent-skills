@@ -1,14 +1,15 @@
 # The lease model
 
 In an SQS-style manual-delete model, receive does not remove a message. The broker hides it from
-other consumers for a timeout, and the worker must acknowledge (delete) before the timeout
-elapses. If it does not — crash, GC pause, slow dependency, no difference — the message
-becomes visible again and another worker takes it. That is the recovery mechanism and the
-duplicate generator, and it is the same mechanism.
+other consumers for a timeout. If the message is not deleted before expiry — crash, GC pause,
+slow dependency — it becomes eligible for another receive. A later receiver may overlap the
+original handler or may arrive after it finishes. This recovery mechanism permits duplicate
+execution; expiry alone neither proves a second execution nor stops the first.
 
 Names and semantics differ. SQS has per-receipt visibility and can duplicate even within that
-period; RabbitMQ holds an unacknowledged delivery on a channel until ack/nack, connection loss or
-configured enforcement; JMS acknowledgement can cover a session's delivered messages; database
+period; RabbitMQ AMQP 0-9-1 manual acknowledgements belong to the delivery's channel, with
+unacknowledged work requeued on channel/connection closure; JMS CLIENT_ACKNOWLEDGE acknowledges
+all messages delivered by that session, not just the referenced message; database
 queues implement whatever claim transaction/clock/fencing was designed. Verify the broker's
 redelivery, ordering, acknowledgement scope and stale-handle behavior rather than translating all
 of them into one lease model.
@@ -20,14 +21,16 @@ t0   W1 receives msg, lease expires at t0+30s
 t0   W1 begins handler (this one will take 45s: dependency is slow today)
 t30  lease expires; broker makes msg visible again — no error is raised anywhere
 t31  W2 receives the same msg, begins the same handler
-t45  W1 finishes, applies the side effect, calls delete → succeeds or fails silently
+t45  W1 finishes, applies the side effect, calls delete with its older receipt
 t76  W2 finishes, applies the side effect a second time
 ```
 
 Between `t31` and `t45` two workers hold the same item with **no mutual exclusion between
-them**. Nothing retried; nothing threw. The only observable trace is a delivery counter above
-one on W2's copy, and a delete on an expired lease from W1 — which some brokers accept and
-some reject. Read both signals: a redelivery count above one is information, not noise.
+them** in this example. No application retry or exception is required. Correlate task IDs,
+attempt intervals and effect records with available redelivery metadata; a counter is neither
+the only observable evidence nor universally available. SQS DeleteMessage can return success
+for an old receipt handle without deleting the message. An API success does not prove that
+redelivery was prevented, and deletion does not cancel an already-running handler.
 
 ## Choosing the timeout
 
@@ -50,9 +53,10 @@ visibility timeout > selected tail(E) + clock/client/broker-resolution margin
   substantially while the timeout stays fixed. Alert on measured receive-to-ack exposure,
   remaining headroom and extension failures against the chosen recovery objective; no universal
   50% threshold or handler-only percentile establishes safety.
-- Separate materially different task classes when they need different timeout, retry, priority,
-  security or capacity policy. Per-message visibility can reduce the timeout coupling on brokers
-  that support it, but operational and head-of-line coupling may remain.
+- Give materially different task classes the timeout, retry, priority, security and capacity
+  policies they require. Supported per-message/class controls can be adequate in a shared
+  queue; separate queues/pools when the needed isolation or policy cannot be provided there.
+  Operational and head-of-line coupling can remain even with per-message visibility.
 
 ## Heartbeat extension, and its failure mode
 
@@ -69,8 +73,11 @@ var heartbeat = scheduler.scheduleAtFixedRate(
 
 If the work thread wedges — a socket read with no timeout, a deadlock, an infinite loop — the
 heartbeat thread is healthy and keeps renewing. The message can remain hidden until renewal stops or a broker cap is reached.
-SQS limits visibility extension to 12 hours from the receive request; renewal does not reset that
-maximum. Other claim implementations can renew indefinitely. The lease has been converted from a recovery mechanism into a leak.
+SQS limits the visibility window to 12 hours from when SQS receives the ReceiveMessage request;
+renewal does not reset that maximum. A ChangeMessageVisibility value greater than the remaining
+maximum fails, so setting 43,200 seconds after receipt can already be too large. This is a
+visibility limit, not a scheduled redelivery time or a bound on handler execution. Other claim
+implementations can renew indefinitely. Unbounded renewal can turn recovery into a leak.
 
 Bound renewal with these conditions; they do not eliminate duplicate execution:
 
@@ -91,32 +98,38 @@ retry/stop policy rather than silently losing renewal.
 
 The lease bounds visibility. It does not exclude a second holder, and it cannot: the broker
 cannot tell "the worker is dead" from "the worker is paused", which is the failure detection
-problem (`failure-models`). Any of these designs is broken:
+problem (`failure-models`). These unguarded uses of presumed exclusivity can break correctness:
 
-| Design that assumes exclusivity         | What actually happens                                |
-| --------------------------------------- | ---------------------------------------------------- |
-| Read-modify-write with no version check | Lost update when the two holders interleave          |
-| `balance += amount` in the handler      | Applied twice; increment is not idempotent           |
-| "Only one worker has it, so no locking" | Two workers, no locking, corrupted aggregate         |
-| Deleting a source row after processing  | Second holder finds it gone and takes a wrong branch |
+| Design that assumes exclusivity                                                     | What actually happens                              |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Read-modify-write without a concurrency-safe transaction, lock or conditional guard | Lost update when the two holders interleave        |
+| `balance += amount` without logical-operation deduplication                         | Applied twice; increment is not idempotent         |
+| "Only one worker has it, so no locking"                                             | Two workers, no locking, corrupted aggregate       |
+| Deleting a source row with no valid already-processed branch                        | Second holder can mistake absence for a new action |
 
-The three legitimate responses, in the order they should be considered:
+Choose compatible controls for the actual effect contract; an existing adequate combination
+does not need replacement:
 
 1. **Make the side effect repeat-safe** — atomically deduplicate the logical operation with
    its effect, or use a versioned/conditional state transition. An absolute write can still
    overwrite newer state on stale replay; equality of payload alone is insufficient.
-   `idempotency` owns crash/commit ambiguity and external-effect reconciliation.
-2. **Guard the resource with a fencing token.** If the handler must exclude a concurrent
-   holder, the exclusion belongs at the resource: a monotonic token the resource stores and
-   compares, rejecting writes from an older token. A receipt handle is not automatically an
-   ordered fencing epoch, and optimistic version checks have a different contract. Fencing
+   A failed conditional write alone does not identify the outcome of an earlier ambiguous
+   attempt of that intent. `idempotency` owns crash/commit ambiguity and external-effect reconciliation.
+2. **Guard concurrent effects at the resource.** Transactions, conditional version transitions
+   or fencing may satisfy different invariants; state what the resource checks atomically.
+   For epoch-based ownership, it stores and compares an ordered token. A receipt handle is not
+   automatically an ordered fencing epoch, and optimistic version checks have a different contract. Fencing
    rejects stale owners after newer ownership is accepted; it does not deduplicate effects
-   already committed by an earlier owner. Electing a single holder is
+   already committed by an earlier owner, and does not prevent concurrent computation. Electing a single holder is
    `leader-election`.
 3. **Reduce expiry exposure** — smaller prefetch/batches, sufficient visibility or a heartbeat with the
-   conditions above. This lowers the probability. It never reaches zero.
+   conditions above. This can reduce expiry-driven overlap; it does not establish exclusive
+   delivery or execution. A documented duplicate-tolerant effect contract may accept overlap.
 
 ## Checklist
+
+Use the items relevant to the requested lease/recovery claim; source-only explanations can
+state these limits without inventing runtime measurements.
 
 - [ ] Timeout derived from receive-to-ack exposure and a stated duplicate/recovery objective.
 - [ ] Alerts cover exposure headroom, extension failure/cap and redelivery overlap.
@@ -128,5 +141,7 @@ The three legitimate responses, in the order they should be considered:
 
 ## Primary references
 
-- [SQS visibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) — per-receipt semantics and the total extension cap.
+- [SQS visibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) — visibility and duplicate-delivery semantics.
+- [SQS processing time](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/best-practices-processing-messages-timely-manner.html) and [ChangeMessageVisibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ChangeMessageVisibility.html) — request-origin maximum and remaining-time errors.
+- [SQS DeleteMessage](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html) — old receipt success need not remove the message.
 - [ScheduledExecutorService](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html) — periodic task failure suppresses subsequent executions; match the deployed JDK.

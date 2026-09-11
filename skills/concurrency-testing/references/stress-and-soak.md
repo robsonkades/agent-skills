@@ -65,9 +65,10 @@ The invariant is the whole design of the test. Good ones:
 | Idempotence  | replaying the same message N times leaves one effect                                          |
 | Recovery     | after the run, permits and connections equal their starting values                            |
 
-Bad ones: "the result equals what one thread would produce" for genuinely concurrent
-operations, anything about ordering that the design does not actually promise, and anything
-whose expected value depends on how the scheduler ran.
+A sequential model can be a sound oracle when it admits the legal operation orders and required
+real-time constraints. Do not demand one arbitrarily chosen serial order when several are legal,
+or assert an ordering the API never promised. Quiescent conservation alone does not validate the
+entire operation history.
 
 ## Varying what the scheduler does
 
@@ -133,20 +134,23 @@ test that finds leaks and one that runs for ten minutes and finds nothing.
 Load alone exercises the happy path faster. Faults exercise the paths that decide what happens
 in an incident.
 
-| Injected fault               | What it should prove                                           |
-| ---------------------------- | -------------------------------------------------------------- |
-| Dependency slow (p99 → 10 s) | the timeout fires, the caller is released, the work is stopped |
-| Dependency failing           | the fallback runs, is counted, and is not silent               |
-| Dependency intermittent      | retries are bounded and do not amplify                         |
-| Saturation at the limit      | the designed rejection, with its metric                        |
-| Connection dropped mid-call  | the connection is discarded, not returned poisoned to the pool |
-| Slow consumer                | backpressure or a bounded buffer, not unbounded growth         |
+| Injected fault               | What it should prove                                                        |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Dependency slow (p99 → 10 s) | caller timeout plus the specified stop or bounded residual-work policy      |
+| Dependency failing           | declared failure or fallback outcome, counted with original failure visible |
+| Dependency intermittent      | retries are bounded and do not amplify                                      |
+| Saturation at the limit      | the designed rejection, with its metric                                     |
+| Connection dropped mid-call  | the connection is discarded, not returned poisoned to the pool              |
+| Slow consumer                | backpressure or a bounded buffer, not unbounded growth                      |
 
 Toxiproxy, WireMock delays and a controllable fake dependency all work. What matters is that
 the fault is injected _below_ the code under test, so the real timeout, retry and limit code
 runs — mocking the client under test removes the mechanism being verified.
 
 ## CI budgets
+
+An illustrative allocation, not a requirement to add every test category: use the smallest
+existing or new checks that cover the material risk within the project's CI budget.
 
 ```text
 Every commit   deterministic tests + a short stress run (< 60 s total)
@@ -175,3 +179,4 @@ the observation threshold. It does not move the bug.
 
 - [OpenJDK jcstress: experimental concurrency stress harness](https://github.com/openjdk/jcstress)
 - [JUnit 5.11.4 timeouts and thread modes](https://docs.junit.org/5.11.4/user-guide/index.html#writing-tests-declarative-timeouts)
+- [Herlihy and Wing: Linearizability](https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf) — legal sequential histories and real-time ordering constraints

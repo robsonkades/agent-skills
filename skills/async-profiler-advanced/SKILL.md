@@ -55,7 +55,9 @@ Write the target process, load window, event, interval/threshold, stack mode, fi
 rate/memory limit, expected sample volume, and validation metric before collection.
 
 If versions, command/logs, event weight, workload window, or session ownership are missing,
-request the smallest missing evidence and provide a conditional plan. Do not invent an engine,
+reuse suitable supplied artifacts and project evidence first, then request only missing facts
+that could change the command or conclusion. Continue checks those unknowns do not block.
+Provide a conditional plan where needed. Do not invent an engine,
 zero-loss result, safe interval, or diagnosis from an HTML filename. Separate observations
 from hypotheses; for each proposed adjustment name evidence that would confirm or refute it.
 
@@ -116,9 +118,13 @@ file size. Instrumentation modes (`--trace`, native-allocation interception) inc
 calls, including calls rejected by duration/output filters. Bound a trial using total invocation
 rate, not just emitted events; method retransformation can also perturb compilation.
 
-Calibrate overhead against the same workload using an unprofiled control and at least two
-collection intensities. Compare throughput, latency distribution, CPU, allocation/GC, and
-dropped/lost events. “Low overhead” is not an authorization to run every event in production.
+For a new collection configuration, calibrate overhead against the affected workload/lifecycle
+using an unprofiled control and contrasting collection intensities. Reuse applicable calibration
+evidence; a conversion-only request needs no new capture. Compare throughput, latency distribution,
+CPU, allocation/GC, and dropped/lost events. During live degradation, use the existing capture
+budget and stop rule; do not delay authorized mitigation for complete calibration or a recording.
+If the budget cannot support collection, use existing evidence or a controlled reproduction.
+“Low overhead” is not an authorization to run every event in production.
 
 ## Multi-event recordings and time
 
@@ -186,6 +192,8 @@ ownership/stop rule, and success check. For a diagnostic review, add:
 
 A proposed experiment is not a measured result. A successful conversion is not proof that
 collection captured the intended population.
+If a validated recording/conversion already answers the question, report the result, its limits
+and any revisit condition; do not invent a configuration change or another capture to finish.
 
 Read [Session, output, and conversion protocol](references/output-and-conversion.md) before
 providing capture/lifecycle commands, multi-event settings, native/trace instrumentation,

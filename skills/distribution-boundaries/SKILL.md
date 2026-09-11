@@ -3,8 +3,8 @@ name: distribution-boundaries
 description: >
   Deciding whether a boundary should be a process boundary, and designing it when it must
   be: what distribution actually costs (latency, serialisation, partial failure, lost
-  atomicity, independent deployment), why a remote interface must be coarser than a local
-  one, and choosing between synchronous call, messaging and replication. Use when a module
+  atomicity, independent deployment), caller-driven remote granularity, and choosing between
+  synchronous call, messaging and replication. Use when a module
   is proposed for extraction into a service, when microservices are being adopted without a
   named driver, when a service call sits inside a transaction, when one request fans out to
   a dozen downstream calls, when two services share a database, when a "service" cannot be
@@ -46,9 +46,10 @@ The gains require design and operational evidence; a separate process alone guar
 
 ## Workflow
 
-1. **Name the driver.** Independent deployment, independent scaling, fault isolation, team
-   ownership, or a technology/regulatory constraint. "Microservices" is not a driver, and
-   neither is anticipated scale nobody has measured.
+1. **Name the outcome and driver.** Start from caller/business needs and accepted constraints:
+   independent deployment, scaling, fault isolation, ownership, or technology/regulatory fit.
+   "Microservices" is not a driver. Distinguish measured demand from a credible target workload
+   whose capacity assumptions still need validation; reuse available project evidence.
 2. **Prefer an in-process rehearsal** when feasible. Inspect dependency and change history;
    moving tangled code over HTTP preserves its coupling. A regulatory or technology
    constraint can justify direct extraction with explicit migration risks
@@ -56,9 +57,9 @@ The gains require design and operational evidence; a separate process alone guar
 3. **Draw the data ownership line.** Name the authority for each invariant and write path,
    including replicas and migration writers. Shared storage is not automatically shared
    ownership; direct access to private tables creates schema and deployment coupling.
-4. **Coarsen the interface.** A remote operation should be a complete business request, not
-   a getter. Design it as a Remote Facade over the local model
-   (`remote-facade-and-dto`).
+4. **Shape the interface from caller use cases.** A bounded lookup may already be adequate.
+   Coarsen or batch chatty navigation when the round-trip benefit justifies payload,
+   consistency and compatibility costs (`remote-facade-and-dto`).
 5. **Decide the consistency story explicitly.** What is atomic, what is eventual, what is
    the visible intermediate state, and what compensates a partial failure.
 6. **Bound call duration and capacity.** Define a deadline, retry policy (including no retry),
@@ -66,12 +67,15 @@ The gains require design and operational evidence; a separate process alone guar
    idempotency or reconciliation of an unknown outcome (`timeouts-and-deadlines`,
    `retries-and-backoff`, `idempotency`).
 7. **Verify the intended gain.** Persistent lockstep releases undermine independent
-   deployment; they do not disprove scaling or isolation benefits. Test mixed versions,
-   dependency outages and the proposed migration/rollback path.
+   deployment; they do not disprove scaling or isolation benefits. For a proposed extraction,
+   define relevant mixed-version, dependency-outage and migration/rollback checks; distinguish
+   those plans from executed validation.
 
 With missing workload, dependency or ownership evidence, keep extraction conditional and
-identify the next measurement. Return a short decision: driver and evidence, local alternative,
-chosen interaction and consistency contract, failure behaviour, and validation/rollback criteria.
+identify the next discriminating check or material question. Retain an adequate existing boundary
+when its outcomes and constraints are met. Return a short decision: driver and evidence, local
+alternative, chosen or retained interaction/consistency contract, failure behaviour, and relevant
+validation/rollback criteria; state what evidence would change the choice.
 
 ## Decision rules
 
@@ -145,9 +149,9 @@ A synchronous chain would be three or more hops deep
   (`delivery-semantics`).
 - Do not extract a service to fix a code quality problem. A tangled module becomes a
   tangled module you cannot refactor with an IDE.
-- Distribution is close to irreversible in practice. Merging two services back is a
-  migration, not a refactor, so this decision deserves the analysis that one-way decisions
-  get (`architecture-decision-making`).
+- Reversing an extraction can require data and consumer migration. Assess that cost and
+  recovery path before proceeding; record consequential choices using the project's ADR
+  conventions (`architecture-decision-making`).
 
 ## References
 

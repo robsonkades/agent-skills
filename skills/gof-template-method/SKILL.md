@@ -22,15 +22,18 @@ Write the algorithm once and let named steps vary. The base class owns the seque
 in what order, what is invariant, what must always run — and subclasses fill in the parts that
 legitimately differ.
 
-The pattern's cost is the strongest coupling Java offers. A subclass depends not only on the base
+The pattern couples subclasses to the base's implementation protocol. A subclass depends not only on the base
 class's contract but on its self-use: which hooks are called, in what order, with what state
 already established, and whether calling `super` is required. None of that is checked by the
-compiler and most of it is undocumented. Prefer composition unless one of the narrow cases below
-applies.
+compiler. Compare composition against the actual extension and lifecycle contract; retain an
+adequate inherited API when changing it would cost more than the improvement warrants.
 
 Inspect compiler release/toolchains, framework construction paths and external subclasses before
 changing hooks. Examples are partial Java 17 sketches with domain types/imports omitted; no
 preview or dependency upgrade is required. Missing caller evidence leaves API removal conditional.
+Start with ordinary calls, a supported subclass and a failing/misused run: inspect hook order,
+observable state, required `super` calls and who owns cleanup. Reuse existing evidence and ask
+only unresolved questions that change the choice or compatibility boundary.
 
 ## When it is the answer
 
@@ -61,8 +64,9 @@ that share substantial state
   optional-feature pressure; use cohesion and subclass complexity rather than a numeric cutoff.
 - **Subclasses override the template method itself.** Inspect whether this violates a required
   invariant or follows a documented extension policy; overriding alone does not settle the issue.
-- **Steps are contributed by different modules.** That is a pipeline or a chain
-  (`gof-chain-of-responsibility`).
+- **Modules control forwarding, skipping or ordering steps.** Consider a pipeline or chain
+  (`gof-chain-of-responsibility`). Modules supplying implementations of fixed named steps alone
+  do not require changing the template's sequence.
 
 ## Modern Java expression
 
@@ -87,15 +91,16 @@ The composed version lets steps be tested and reused independently. Multi-method
 needs an implementation; separate functional collaborators can use lambdas. A Steps implementation
 can coordinate several operations with private helpers, but call order/lifetime remain contracts.
 
-A middle position that works well: keep the template as a `final` class with a `final` method, and
-take the steps as constructor parameters. The sequence stays in one place, the variation is
-composed, and nothing is inheritable.
+Where callers do not require the inherited type or hooks, a `final` class taking steps as
+constructor parameters preserves a fixed sequence with composed variation. Otherwise retain the
+supported base and consider delegation behind it; finalizing an existing API is a compatibility
+change, not a prerequisite for improving its internals.
 
 ## Decision rules
 
 ```text
 IF the template sequence must be invariant
-THEN make the template method final. If subclasses may refine the sequence, document
+THEN use final for a new or compatibly migrated API. If subclasses may refine the sequence, document
      allowed override/super-call behavior and test it as public extension API.
 
 IF the constructor calls a hook
@@ -108,9 +113,9 @@ THEN it is API for every present and future subclass; changing its
      Keep the surface as small as the algorithm allows.
 
 IF a hook must call super.hook() at a particular point
-THEN the base's algorithm has leaked into every subclass and forgetting
-     the call is a silent bug. Restructure so the base calls two hooks
-     instead.
+THEN omission can violate the lifecycle contract. For a new API, keep invariant work in
+     the base around a hook; for a supported API, preserve super-call timing until a
+     compatible migration is established.
 
 IF a subclass overrides a hook to do nothing or throw unsupported
 THEN distinguish an intentional optional hook (prefer a documented base no-op) from a
@@ -134,15 +139,16 @@ THEN the template must honor the run's deadline and define partial-run semantics
 ## Cross-cutting checks
 
 - **Concurrency.** A template instance shared across threads shares whatever state the base class
-  keeps between hook calls — a field set by `read()` and used by `write()` is a race, and it is
-  invisible because each method looks correct alone. Pass a per-run context object through the
+  keeps between hook calls — overlapping unsynchronized runs can race through a field set by
+  `read()` and used by `write()`. Check confinement, reentrancy and whole-run synchronization.
+  Pass a per-run context object through the
   hooks to isolate run data; also verify steps, audit/client collaborators and escaping callbacks
   before sharing the template instance
   (`java-memory-model`).
 - **Distribution.** Templates commonly wrap batch and ETL runs where a step calls a remote system.
-  The base class must then own the parts subclasses cannot get right individually: a deadline for
-  the run, a per-step timeout, a failure classification that decides whether the run retries or
-  stops, and an explicit answer to "what does a half-finished run leave behind" — a partially
+  Honor the run's deadline and existing client/resilience ownership: transport timers and retries
+  may already implement a shared budget. A transient failure alone does not authorize a safe
+  whole-run retry. Define "what does a half-finished run leave behind" — a partially
   written output, an advanced cursor, an emitted event (`idempotency`, `retries-and-backoff`).
 - **Performance.** Hook dispatch is usually minor but should not be declared free in a measured hot
   loop. The cost worth watching is structural: a
@@ -161,9 +167,9 @@ THEN the template must honor the run's deadline and define partial-run semantics
 Return the invariant sequence, hook contracts/ownership, failure and cleanup paths, proposed
 change or reason to retain inheritance, and checks executed versus pending.
 
-- [ ] The template method is final when sequence invariance is required; otherwise override policy is explicit
+- [ ] Sequence invariance and supported override policy are explicit; finalization preserves caller compatibility
 - [ ] No constructor calls an overridable hook
-- [ ] The hook surface is small, documented, and does not require `super` calls at set points
+- [ ] The hook surface is cohesive and documented; required `super` calls are preserved or compatibly migrated
 - [ ] Optional no-op hooks are explicit; required hooks preserve substitutability
 - [ ] Mutable cross-hook state is confined, synchronized, or carried in a per-run context
 - [ ] Multiple variants or a concrete framework/SPI extension constraint exists

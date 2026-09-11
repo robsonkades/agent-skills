@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: tdd
-version: 1.0.2
+version: 1.0.3
 description: >-
   Test-driven development as a judgement call rather than a doctrine: the red-green-refactor
   loop and what each step is actually for, the discipline of watching a test fail for the
@@ -44,6 +44,17 @@ dependencies:
     version: ^1.0.0
   - name: java-test-design
     version: ^1.0.0
+
+suggests:
+  - coding-agent-discipline
+  - concurrency-testing
+  - java-api-design
+  - java-legacy-code-testing
+  - java-memory-model
+  - java-refactoring
+  - java-test-doubles
+  - jmh-microbenchmarks
+  - load-testing
 
 capabilities:
   - reads-source

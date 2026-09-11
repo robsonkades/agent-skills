@@ -1,15 +1,10 @@
-# Behavioral validation cases
+# Worked review exercises
 
-These are reproducible prompts and decision rubrics, not executed evaluations. They also
-serve as worked review exercises. No matched with/without-skill runs were performed for
-this revision. Repository checks do not measure the behavior described here.
-
-For comparison, run each request verbatim in fresh baseline and treatment sessions with
-the same model/version, settings, tools and supplied context. Expose this skill and its
-references only to treatment; keep neighboring descriptions identical. Do not supply the
-rubric to the evaluated agent. Save outputs/tool traces and judge each required behavior
-with an output excerpt, not exact wording. For selection tests, expose descriptions before
-loading bodies. Repeat runs before claiming consistency or measured improvement.
+Read these examples when a coupling claim is easy to overstate: each supplies evidence,
+a supported interpretation and failure conditions. They are exposed teaching material,
+not held-out evaluations. Written criteria and repository checks do not establish agent
+behavior or measured improvement. For a behavioral comparison, keep independent prompts
+and judging criteria outside the material supplied to the evaluated agent.
 
 ## 1. Release versus runtime, with overlapping coupling
 

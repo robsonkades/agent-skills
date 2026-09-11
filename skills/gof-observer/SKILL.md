@@ -27,6 +27,19 @@ Spring/Guava/Modulith versions, multicaster/executor configuration and transacti
 applying framework-specific guidance; no upgrade is implied. Return the concrete dispatch and
 lifecycle contract, evidence for it, and tests or explicit unverified cases.
 
+Start from the caller's operation and its listeners' required effects, using existing tests,
+registration owners, transaction configuration and recovery arrangements. Ask only about material
+gaps such as tolerated loss, callback completion or ordering. Preserve an adequate local mechanism;
+compare alternatives when those contracts cannot be met, not merely because more listeners exist.
+
+Keep callback dispatch, transaction phase, propagation and subscription lifetime here. If diagnosis
+reveals a need to design or change durable publication or business recovery, hand that design to
+`event-driven-architecture`; use `idempotency` for repeated intent or an unknown remote effect.
+Carry forward known committed effects, unresolved outcomes, recovery requirements and existing
+reconciliation/provider constraints instead of designing a new outbox or recovery protocol here.
+Local failure visibility and checking an already adequate reconciliation path remain in scope;
+they do not by themselves require that handoff.
+
 ## What people assume, and what holds
 
 ```text
@@ -97,15 +110,17 @@ Another service must react
   is issuing commands, not events (`gof-command`).
 - **Order between listeners is essential but implicit.** Prefer an explicit pipeline/workflow;
   ordered observers remain valid when the API makes phases and dependencies visible.
-- **The listener must not fail silently.** In-process events give no retry, no dead-letter and no
-  record. Work that must not be lost belongs on a durable queue.
+- **Required recovery cannot be met by the local mechanism.** Failure visibility alone does not
+  require durability. For work that must survive a crash, choose durable publication or a complete
+  reconciliation path within the recovery target; the worked example's nightly job is one such path.
 
 ## Decision rules
 
 ```text
-IF a long-lived subject holds listeners
-THEN every registration needs a deregistration with a defined owner.
-     This is the classic Java memory leak, and lambdas make it worse:
+IF a subject can outlive a listener's intended registration or captured state
+THEN provide deregistration with a defined owner. Bounded registrations that deliberately share
+     the subject's lifetime can remain until that lifetime ends.
+     Retaining expired registrations is the classic listener leak:
      capturing callbacks retain their owner; keep the exact listener reference
      or return a subscription handle. Fresh method references need not be identical.
 
@@ -118,6 +133,8 @@ IF a listener throws
 THEN decide: fail the publisher (fine when the listener is essential),
      or isolate and record (fine when it is not). Silently swallowing
      is the failure that gets discovered by a customer.
+     Propagating an exception does not undo an already applied transition or earlier listener
+     effects; any rollback or compensation needs its own effective boundary.
 
 IF the subject notifies while holding a lock
 THEN a listener that acquires another lock or re-enters can deadlock or see
@@ -170,7 +187,7 @@ THEN state it explicitly and test it, or remove the dependency.
 
 ## Review checklist
 
-- [ ] Every registration has a deregistration with a named owner
+- [ ] Every registration has an owner and end condition, including deliberate co-lifetime retention
 - [ ] The listener collection is safe to iterate while listeners are added or removed
 - [ ] Notification locking, reentrancy and snapshot visibility are explicit and deadlock-reviewed
 - [ ] Concurrent publishers cannot violate the listener thread-safety/order contract
@@ -178,7 +195,7 @@ THEN state it explicitly and test it, or remove the dependency.
 - [ ] Listener ordering is either irrelevant or imposed and tested
 - [ ] Listeners doing I/O are accounted for in the publisher's latency budget
 - [ ] Events crossing a transaction boundary have a defined phase
-- [ ] Cross-process publication has a transactional bridge and delivery-appropriate duplicate policy
+- [ ] When state and cross-process publication must agree, the recovery/transactional bridge and duplicate policy meet that contract
 - [ ] A single known listener has a stated module/lifecycle reason or is a direct call
 
 ## References

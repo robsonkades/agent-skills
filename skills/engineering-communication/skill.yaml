@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: engineering-communication
-version: 1.1.1
+version: 1.1.2
 description: >-
   Communicating engineering facts to people who will act on them: stating what is true, what
   follows from it, what is still uncertain, and the options and recommendation when needed.
@@ -42,6 +42,14 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - architecture-decision-making
+  - code-review
+  - coding-agent-discipline
+  - estimation-under-uncertainty
+  - requirements-and-acceptance
+  - technical-debt-decisions
 
 capabilities: []
 

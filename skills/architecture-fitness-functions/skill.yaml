@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-fitness-functions
-version: 1.3.0
+version: 1.3.1
 description: >-
   Define or review checks that preserve architectural qualities when a green pipeline misses
   incidents, inherited rules are skipped or unexplained, a characteristic lacks evidence,

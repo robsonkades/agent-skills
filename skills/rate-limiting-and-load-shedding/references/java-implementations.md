@@ -1,7 +1,7 @@
 # Limiting and shedding in Java
 
-Two mechanisms, two implementations. Keep them in separate components even when they sit in
-the same filter chain: one is keyed by client, the other by saturation.
+Keep quota and saturation decisions distinguishable even when they share an implementation.
+Quota keys may be per-client or global; capacity protection can also preserve tenant shares.
 
 The standalone bucket uses Java 17 (`java.time.Duration` import); later Java snippets are
 partial integration sketches. The HTTP sketch uses Spring Framework 6+ / Java 17+.
@@ -83,8 +83,9 @@ authoritative buckets for the same key during concurrent access. Never export ra
 
 ## Local plus shared: the practical distributed shape
 
-Neither extreme is usually right: a shared counter per request adds a round trip and a
-dependency to the hot path, and a static per-replica share is wrong under skew.
+A shared counter per request adds a round trip and a hot-path dependency; a static
+per-replica share can strand allowance under skew. Use grants when their added protocol is
+justified, not because either simpler choice is inherently wrong.
 
 ```text
 Protocol sketch, not executable Java:
@@ -121,15 +122,9 @@ final class AdmissionController {
     private final Semaphore permits;          // in-flight limit, not an arrival-rate limit
     private final long maxWaitNanos;
 
-    <T> T call(Supplier<T> work) throws Overloaded {
+    <T> T call(Supplier<T> work) throws InterruptedException, Overloaded {
         long start = System.nanoTime();
-        boolean acquired;
-        try {
-            acquired = permits.tryAcquire(maxWaitNanos, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new Overloaded(Duration.ZERO);
-        }
+        boolean acquired = permits.tryAcquire(maxWaitNanos, TimeUnit.NANOSECONDS);
         try {
             waitTime.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
             if (!acquired) {
@@ -147,8 +142,10 @@ final class AdmissionController {
 - This sketch requires synchronous `work`: it must retain the permit until protected execution
   finishes, including failure. Returning a `Future`/publisher releases too early; an async adapter
   releases exactly once on actual protected completion, not caller timeout/cancellation alone.
-  Bound waiting callers separately or use immediate `tryAcquire()`; timed acquisition alone
-  does not bound their count. Record interrupted waits separately from saturation timeouts.
+  Bound waiting callers separately or use immediate acquisition; timed acquisition alone
+  does not bound their count. Propagate interrupted waits to the task owner, which chooses
+  cancellation/shutdown handling; do not classify them as saturation or feed them into an
+  overload controller as queue timeouts. Timed `tryAcquire(0, unit)` still observes interruption.
 - `permits` bounds **work in flight** under that lifecycle contract.
   Requests per second does not, when request cost varies by orders of magnitude.
 - The recorded wait time can expose this queue's saturation while CPU on an I/O-bound
@@ -164,10 +161,13 @@ final class AdmissionController {
   in one bounded observable place. Making a platform-thread pool larger than the concurrency
   limit can itself consume memory/context switches; virtual threads reduce thread cost but not
   held connections or downstream demand.
-- The adaptive form replaces the fixed limit with a controller — additive increase while
-  latency stays near its observed minimum, multiplicative decrease on timeouts or rejections.
-  It removes a hand-tuned constant at the cost of a control loop that can oscillate; start
-  fixed, measure, then adapt.
+- Adaptive controllers use different delay/loss signals; minimum latency can drift with
+  workload mix and dependencies. Start fixed and adapt only when evidence justifies it.
+  Set minimum/maximum limits, sampling and adjustment bounds, recovery hysteresis and a
+  fixed fallback. A lower ceiling gates new admissions; it does not stop or reclaim already
+  executing work. Classify quota refusals and caller cancellation separately from bottleneck
+  congestion; do not decrease capacity on every rejection. Compare goodput, fairness and
+  recovery against the fixed baseline under bursts, mix changes and downstream slowdown.
 
 ## Deadline-aware queue handling
 
@@ -229,7 +229,8 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
   reconciliation policy are still your decisions.
 - **Resilience4j** — a per-instance rate limiter (permits per refresh period) and a bounded
   bulkhead for concurrency limiting. Neither is distributed, and the rate limiter's
-  permit-wait timeout must be zero if you want rejection rather than a blocked caller.
+  synchronous permit wait can block the caller. Use a zero wait for immediate rejection;
+  inspect the selected decorator's waiting/lifecycle contract.
 - **The gateway or mesh** — an edge proxy can enforce coarse per-client limits before traffic
   reaches the JVM. It can also shed from its own resource pressure or configured upstream
   signals, but may lack internal JVM queue visibility. Edge replicas still need a defined
@@ -255,3 +256,4 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
 - [Redis scripting atomicity](https://redis.io/docs/latest/develop/programmability/eval-intro/)
 - [Redis replication and failover](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)
 - [Envoy overload manager](https://www.envoyproxy.io/docs/envoy/latest/configuration/operations/overload_manager/overload_manager)
+- [Netflix concurrency-limits: controller algorithms and traffic partitions](https://github.com/Netflix/concurrency-limits)

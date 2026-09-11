@@ -9,8 +9,8 @@ description: >
   megamorphic call sites). Use when a lambda captures mutable state or a large object, when
   a codebase reinvents Function or Predicate, when checked exceptions force a try/catch
   inside a pipeline, or when a queued lambda outlives what it captured. Stream pipelines are
-  java-streams, inlining is jit-inlining-and-escape-analysis, and per-request context a
-  lambda must not capture is scoped-values.
+  java-streams, inlining is jit-inlining-and-escape-analysis, and scoped context binding is
+  scoped-values.
 ---
 
 # Java Lambdas and Functional Interfaces
@@ -27,13 +27,15 @@ else.
 ## Workflow
 
 Inspect compiler release/toolchains, target JVM, executor/callback lifecycle and existing
-failure contracts first. No single authoring baseline is declared; lambdas/function APIs
+failure contracts first. Java 25 is the authoring default, not permission to raise the project
+target; lambdas/function APIs
 start at Java 8, `Predicate.not`/`Files.readString` at 11 and `Stream.toList` at 16.
 Scoped-value/structured-concurrency handoffs have their own release/preview conditions.
 Do not upgrade or enable preview; missing execution/ownership evidence limits what capture
 and performance conclusions can be made.
 
-1. **Check the contract first.** A functional interface permits a lambda, but identity, lifecycle,
+1. **Check the contract first.** Check the target function type: a generic abstract method may
+   require a method reference or named implementation rather than a lambda. Identity, lifecycle,
    serialization, annotations, diagnostic naming, extra protocol methods and state may justify a
    named implementation even with one abstract method.
 2. **Write it as a lambda, then try the method reference.** Keep whichever reads better; a
@@ -61,8 +63,9 @@ and performance conclusions can be made.
 - Keep a lambda locally comprehensible. Line count is only a signal; extract a named method/type
   when policy, failure semantics, reuse, instrumentation or debugging needs a stable name.
 - Captured locals must be effectively final, and captured values are captured by _value_.
-  Sidestepping that with a one-element array or an `AtomicInteger` to accumulate state is a
-  signal that the code wants a loop or a collector, not a lambda. Where it is genuinely a
+  For a single traversal, a loop or collector may avoid an artificial mutable holder. A retained
+  stateful callback can legitimately capture a holder when its invocation, confinement and
+  lifetime contracts support it. Where it is genuinely a
   concurrent metric, `LongAdder` may fit; its sum is not an atomic snapshot. Exact counters,
   sequence allocation and check-then-act protocols may require `AtomicInteger`/CAS or locking.
   Choose from the required operation, not the fact that a lambda captures it.
@@ -72,12 +75,12 @@ and performance conclusions can be made.
   not all later updates — see java-memory-model.
 - Watch what a long-lived lambda pins. A lambda stored in a registry, a scheduled task or a
   queued executor task holds every captured value, and — if it touches an instance member —
-  its enclosing object. That is a live reference for the lifetime of the holder; see
+  its enclosing object. That capture path remains live while the holder retains the callback; see
   java-reference-types-and-leaks.
 - Use the standard functional interfaces. The six basics (`Function`, `BiFunction`,
   `Predicate`, `Supplier`, `Consumer`, `UnaryOperator`/`BinaryOperator`) plus their primitive
   specialisations cover nearly everything, compose via `andThen`, `compose`, `negate`, `and`,
-  `or`, and are what every library API already accepts.
+  `or`, and interoperate with many library APIs.
 - Use the **primitive specialisations** (`IntPredicate`, `ToLongFunction`, `IntUnaryOperator`,
   `ObjIntConsumer`, …) on measured paths that process primitives in bulk. A
   `Function<Integer,Integer>` requires boxing semantics; allocation depends on cache ranges,
@@ -85,17 +88,17 @@ and performance conclusions can be made.
   reverse — cluttering a cold API with primitive variants — for a cost nobody measured.
 - Write your own functional interface when a name carries domain meaning at many call sites
   (`RetryPolicy`, `PricingRule`), when the signature is not expressible with a standard one
-  (three parameters, a checked exception, generics with bounds), or when default methods add
+  (three parameters or a checked exception), or when default methods add
   real composition. Annotate it `@FunctionalInterface`: the annotation makes "accidentally
-  added a second abstract method" a compile error rather than a broken call site.
-- Do not overload a method with two functional-interface parameter types that a lambda could
-  match. Overload resolution with an implicit lambda is ambiguous or surprising, and the fix
-  after publication is a new method name.
+  added an incompatible abstract method" a compile error at the interface declaration.
+- Avoid introducing overloads with functional-interface parameters that an implicit lambda
+  could match ambiguously or surprisingly. Preserve published signatures; a distinct entry-point
+  name or a typed adapter/local can give callers an unambiguous path without breaking old clients.
 - Checked exceptions do not fit most standard interfaces. Decide per boundary: preserve an API
   that declares the exception, wrap with meaningful unchecked semantics, define
   your own throwing interface and adapt at the boundary, or keep the operation out of the
-  pipeline. Never "sneaky throw" a checked exception through a generic cast: the caller cannot
-  catch what its signature says cannot happen.
+  pipeline. Do not use a "sneaky throw" to bypass the checked contract: a specific checked catch
+  may be rejected even though a broader catch can intercept the hidden failure.
 - Lambda object identity is deliberately unspecified. HotSpot commonly reuses a non-capturing
   instance per linked call site and commonly creates state-bearing instances for captures, but
   code must not depend on `==`, identity hash, locking, or allocation count. Measure before hoisting

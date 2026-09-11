@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: orm-behavioral-patterns
-version: 1.3.1
+version: 1.3.2
 description: >-
   The three runtime behaviours that make object-relational mapping work and produce its most
   confusing failures: Unit of Work, Identity Map and Lazy Load. Use when an entity was
@@ -50,6 +50,8 @@ suggests:
   - caching-strategies
   - distribution-boundaries
   - offline-concurrency-control
+  - orm-fetch-and-batching-performance
+  - orm-structural-mapping
   - remote-facade-and-dto
   - session-state-strategies
 

@@ -16,26 +16,27 @@ log line and GC cause was reproduced on Temurin 25.0.3.
 | `UseCodeAging`, `SweeperLogEntries`, sweeper JFR events                    | Removed. `jfr metadata` on 25 lists no `CodeSweeper*` or `SweepCodeCache` event              |
 | `UseCodeCacheFlushing`, `MethodFlushing`, `NmethodSweepActivity`, `Sweep*` | Retained with new semantics — see the flag table below                                       |
 
-The consequence that matters in production: **freeing code cache now costs a GC**, and code
-cache pressure schedules one. A JVM whose heap is healthy can still show a steady stream of
-collections whose cause names the code cache.
+The consequence that matters in production: **reclaiming installed nmethods normally depends
+on GC unloading**, and code-cache pressure can schedule it. Temporary compiler `BufferBlob`s
+have explicit freeing paths; not every decrease in code-cache usage implies a GC. A JVM whose
+Java heap is healthy can still show collections whose cause names the code cache.
 
 ## The nmethod lifecycle on 25
 
 ```
 not_installed          allocated, code being installed
    → in_use            entered normally; entry barrier records the GC epoch on each entry
-   → not_entrant       deoptimisation, tier promotion ("made not entrant: not used"),
-                       dependency invalidation, or the cold heuristic
-   → (unlinked)        a GC found no frame inside it and no reason to keep it
+   → not_entrant       retirement after replacement or invalidation; existing frames may remain
+in_use or not_entrant
+   → (unlinked)        GC identifies an unloading-eligible nmethod, including cold code
    → freed             block returned to the CodeHeap free list; compiler may restart
 ```
 
-`PrintCompilation` prints the reason after `made not entrant:` on 25 — `not used` is the
-normal tier-3 → tier-4 retirement, `uncommon trap` is a deoptimisation. There is no
-`made zombie` line any more. The gap between `not_entrant` and `freed` is at least one GC
-cycle that performs class/code unloading, and can be many if a thread is parked inside the
-old code.
+`PrintCompilation` prints the reason after `made not entrant:` on 25. `not used` can accompany
+replacement, including tier-3 → tier-4 promotion; the message alone does not identify the
+transition or its cause. Correlate method, compilation IDs, tiers and deoptimization evidence.
+Cold-code unloading need not first emit a `made not entrant` line. There is no `made zombie`
+line any more. Retired code can survive several unloading cycles when frames still reference it.
 
 ## The two GC triggers (`CodeCache::gc_on_allocation`)
 
@@ -49,9 +50,12 @@ which is why a single exhausted segment does not trigger anything on its own.
 | Aggressive | free ≤ `StartAggressiveSweepingAt` (10%) of the total                                                                                                                                                       | `CodeCache GC Aggressive` | `Triggering aggressive GC due to having only N% free memory`                                    |
 | Threshold  | bytes allocated since the last unloading > `SweeperThreshold` (15%) of the total; once `used` exceeds 15%, the threshold is multiplied by the free ratio, so it shrinks as the cache fills (5% at 66% used) | `CodeCache GC Threshold`  | `Triggering threshold (T%) GC due to allocating A% since last unloading (U1% used -> U2% used)` |
 
-Only one request is outstanding at a time (`_unloading_threshold_gc_requested`), cleared when
-the GC's unloading step runs `update_cold_gc_count`. A lab run with `-Xcomp` and a 4 MB cache
-produced a trigger every ~100 ms — `Pause Young (Concurrent Start) (CodeCache GC Threshold)`
+Only one request is outstanding at a time (`_unloading_threshold_gc_requested`). With normal
+flushing/aging enabled, the GC's unloading step clears it in `update_cold_gc_count`; that
+function returns before clearing it when `MethodFlushing` or `UseCodeCacheFlushing` is off,
+or `NmethodSweepActivity=0`. On this JDK 25 path those settings also prevent re-arming the
+code-cache GC request after its first trigger; other GC causes can still run. A lab run with
+`-Xcomp` and a 4 MB cache produced a trigger every ~100 ms — `Pause Young (Concurrent Start) (CodeCache GC Threshold)`
 followed by a full concurrent cycle each time, on an application allocating almost nothing.
 
 The `StartAggressiveSweepingAt` description in `globals.hpp` still says "Segmented code
@@ -107,14 +111,15 @@ All `product`, all present in `-XX:+PrintFlagsFinal` on 25.0.3:
 | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `UseCodeCacheFlushing`      | `true`  | Enables the cold heuristic and, on a full heap, _stopping_ compilation instead of _disabling it forever_. Off: `update_cold_gc_count` returns early, at most one threshold GC ever fires (the request flag is never cleared), and a full heap disables the compiler until restart |
 | `MethodFlushing`            | `true`  | Controls compiled-method reclamation in this HotSpot path. Disabling it prevents normal recovery of code-cache space and is a diagnostic experiment, not a production remedy                                                                                                      |
-| `NmethodSweepActivity`      | `4`     | Divisor on the time-to-aggressive estimate. Higher = shorter cold timeout = more recompilation churn; `0` disables cold unloading while keeping threshold GCs                                                                                                                     |
+| `NmethodSweepActivity`      | `4`     | Divisor on the time-to-aggressive estimate. Higher = shorter cold timeout and potential recompilation churn; `0` disables cold aging and prevents re-arming the code-cache GC request on the JDK 25 path above                                                                    |
 | `SweeperThreshold`          | `15.0`  | Percentage of the total allocated since the last unloading that requests a threshold GC. "Threshold when a code cache unloading GC is invoked" is the flag's own description                                                                                                      |
 | `StartAggressiveSweepingAt` | `10`    | Percentage free (aggregate) below which the request is an aggressive GC and `cold_gc_count` drops to 2                                                                                                                                                                            |
 
 None of these is a routine tuning target. Evaluate capacity and avoidable compilation churn
-first. `NmethodSweepActivity=0` disables cold unloading, not threshold GC requests; an experiment
-must compare saved recompilation against retained code, collection cost and exhaustion risk.
-Do not claim that disabling cold unloading prevents those collections.
+first. `NmethodSweepActivity=0` changes both aging and the repeated code-cache GC trigger on
+this baseline. It is not an isolated switch for recompilation cost. An experiment must compare
+retained code, collections from every cause, exhaustion risk and compiler recovery; fewer
+code-cache GC messages alone do not establish improvement.
 
 ## Compiler stop and restart
 
@@ -158,4 +163,6 @@ follow-on, not a second fault.
 - [JDK-8290025: Remove the Sweeper](https://bugs.openjdk.org/browse/JDK-8290025)
 - [JDK 25 HotSpot `codeCache.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeCache.cpp)
 - [JDK 25 HotSpot `nmethod.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
+- [JDK 25 HotSpot `ciEnv.cpp`: replacement retirement](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/ci/ciEnv.cpp)
+- [JDK 25 HotSpot `codeBlob.cpp`: explicit runtime-blob freeing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeBlob.cpp)
 - [JDK 25 HotSpot `compileBroker.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)

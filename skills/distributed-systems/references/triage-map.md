@@ -11,15 +11,17 @@ operations both happen?
 
 | Evidence                                             | Route to                                                                  |
 | ---------------------------------------------------- | ------------------------------------------------------------------------- |
-| Same request id or message id, two side effects      | `idempotency` — the handler is not repeat-safe                            |
+| Same request id or message id, two side effects      | `idempotency` — verify identity scope and the protected-effect contract   |
 | Two different ids, apparently same business intent   | `idempotency` — establish whether the contract treats these as one intent |
 | Duplicates cluster at a deploy or a consumer restart | `delivery-semantics`; Kafka confirmed → `kafka-consumers-in-java`         |
-| Duplicates cluster at a timeout in the caller's log  | `retries-and-backoff` — the ambiguous class retried                       |
-| Duplicates on a queue after slow processing          | `task-queues-and-competing-consumers` — lease expiry                      |
+| Duplicates cluster at a timeout in the caller's log  | `retries-and-backoff` — inspect attempt history and retry decisions       |
+| Duplicates on a queue after slow processing          | `task-queues-and-competing-consumers` — inspect ack/redelivery            |
 
 Start with a duplicate's business identity, durable effects, attempt IDs and ack/progress
 history across the full retry/lease window. Timestamps alone do not establish one intent or
 causal ordering across hosts; log duplication can also mimic duplicate business effects.
+Lease expiry is a candidate only where the queue uses that model; slow processing alone does
+not establish it.
 
 ## The data is wrong or stale
 
@@ -53,12 +55,14 @@ causal ordering across hosts; log duplication can also mimic duplicate business 
 
 - Ran once per replica → verify whether work was intended once fleet-wide or once per replica;
   required role ownership routes to `leader-election`, repeated effects to `idempotency`.
-- Did not run and nothing alerted → the absence-of-errors pattern:
-  `distributed-failure-catalogue`, then `slo-and-alerting` for the freshness signal it needed.
-- Ran on stale input, or did work nobody wanted any more → stale work:
-  `distributed-failure-catalogue`, then `timeouts-and-deadlines` for the deadline it should carry.
-- Two instances did conflicting work → `distributed-locks-and-leases`, and check whether a
-  fencing token exists before believing a lock was held.
+- Did not run and nothing alerted → `slo-and-alerting` for an established freshness-signal gap;
+  use `distributed-failure-catalogue` only when the failure mechanism still needs recognition.
+- Ran on stale input, or did work nobody wanted any more → separate stale input from expired
+  useful work: `consistency-models` owns the read contract, `timeouts-and-deadlines` the useful-work
+  deadline. Use `distributed-failure-catalogue` only if the owner remains unclear.
+- Two instances did conflicting work → `distributed-locks-and-leases`; distinguish the grant,
+  resource claim and protected effect. Check actual resource-side enforcement: possession of a
+  fencing token alone proves neither a current grant nor rejection of stale effects.
 
 ## A dependency is failing
 

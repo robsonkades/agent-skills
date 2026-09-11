@@ -19,16 +19,22 @@ Own one function: given a key and a set of nodes, which node holds it — and ho
 mapping survives when a node joins or leaves. Nothing else in the partitioning family
 computes placement; this skill is where any hashing arithmetic belongs.
 
-The failure this prevents is `hash(key) % N`. With a sufficiently uniform hash it can
-distribute keys evenly, but it stays operationally stable only
-until N changes, at which point a large fraction may map somewhere new — for a cache a
-fleet-wide miss storm in one step, for a store a migration of nearly the whole dataset,
-discovered when someone adds a node to relieve pressure and the rebalance becomes the outage.
+With a sufficiently uniform hash, `hash(key) % N` can distribute keys evenly, but changing N
+can remap a large fraction depending on the divisors and node-index mapping. A cache can incur
+miss/refill traffic; a store may need to migrate changed ownership. The operational cost depends
+on the moved keys' bytes and request share, surviving copies and the handoff/refill policy.
+Adding capacity can trigger overload when those costs exceed the recovery budget; key movement
+alone does not establish a miss storm or outage.
 The second failure is subtler: a ring with one point per node is _not_ well balanced, so a
 naive implementation gets minimal disruption while handing one node several times another's
 share.
 
 ## Workflow
+
+Reuse the existing placement/configuration and supplied workload evidence before asking questions.
+Establish whether the owner holds authoritative state, a recomputable cache entry or only affinity;
+ask only about unresolved durability, failure-domain or movement constraints that change the choice.
+Keep a sound current mapping when it meets those constraints. Apply only the relevant branches below.
 
 1. **State the disruption and migration budget.** How many keys, bytes and requests may
    change owner, at what transfer rate, and under what availability target? `% N` can remap
@@ -44,21 +50,23 @@ share.
    `references/mapping-functions.md` for what disqualifies the obvious candidates.
 4. **Pick V by measurement, not by folklore.** Simulate representative keys, bytes, request
    rates and per-key cost over relevant node counts and seeds. Raise virtual points until the
-   worst load/mean is inside tolerance, then measure lookup and rebuild cost.
-5. **Implement the wrap-around explicitly.** `ceilingEntry(h)` returning `null` means the key
+   worst load/mean for the relevant resource is inside tolerance, within a rebuild/memory budget. If skew is dominated by
+   an indivisible hot key or poor hashing, more points are not the remedy. Measure lookup and rebuild cost.
+5. **For a ring, implement the wrap-around explicitly.** `ceilingEntry(h)` returning `null` means the key
    hashed past the last point on the ring and belongs to the first entry. This single branch
    is the most commonly omitted line in the pattern.
-6. **Separate invariants from statistical expectations.** With existing points unchanged,
+6. **Separate invariants from statistical expectations.** For primary ownership with existing points unchanged,
    a join may move keys only to the new node; a removal may move only the removed node's
    keys. Measure movement against K/(N+1) or K/N using a justified tolerance, not a hard
    upper bound. See `references/ring-in-java.md` for implementation and tests.
 7. **Model heterogeneous capacity explicitly.** Proportional virtual-point counts are one
    coarse mechanism, but CPU, memory, I/O and workload costs may not scale together. Prefer
    fixed logical partitions or an assignment service when placement needs constraints.
-8. **Treat membership as a data migration.** Publish a new epoch, copy and verify the newly
+8. **Choose the membership transition from the state contract.** For authoritative state, propose a new epoch, copy and verify the newly
    owned ranges, coordinate reads/writes during handoff, activate the epoch, and retire old
    owners only after stale clients and in-flight work are bounded. Minimal remapping is not a
-   migration protocol.
+   migration protocol. Disposable cache entries may instead refill from an authoritative source
+   if origin capacity, staleness and recovery budgets permit; do not mandate copying them.
 
 ## Decision block
 
@@ -66,8 +74,9 @@ For Java changes, inspect compiler release/toolchains, runtime images and resolv
 library versions first. The ring example requires Java 16+ syntax/APIs and Guava; this is
 an example prerequisite, not authorization to upgrade the target or add a dependency.
 If topology or workload evidence is missing, keep the algorithm/V recommendation conditional
-and identify the simulation or measurement needed. Deliver the placement contract, chosen
-trade-off, movement/balance evidence and handoff risks; keep simple reviews concise.
+and identify the simulation or measurement needed. Deliver the placement contract, chosen or
+retained trade-off, primary/replica movement and balance evidence, and handoff risks. State what
+new evidence would change the decision; stop when remaining unknowns do not change it. Keep simple reviews concise.
 
 ```text
 Use a ring with virtual nodes when:
@@ -110,12 +119,13 @@ Prefer a directory (sharding-and-partitioning) instead when:
   and construction is O(V×N log(V×N)) with ordinary ordered-map insertion. Rebuild, snapshot
   publication and cache effects must be measured; V in the thousands per node is a data
   structure, not merely a tuning knob.
-- **The hash must produce the same value in every process, on every JDK, forever.** Two
+- **The hash must agree across all participants using the same placement-contract version.** Two
   clients that disagree about placement are two clients writing the same key to different
-  owners. This rules out `Object.hashCode()` (identity-based), record and enum `hashCode()`
+  owners. This rules out default `Object.hashCode()` (identity-based), record and enum `hashCode()`
   (unspecified), and any library hash documented as version-unstable — Guava's
   `Hashing.goodFastHash` says so explicitly, while `Hashing.murmur3_128()` names a fixed
-  algorithm.
+  algorithm. Changing the hash/seed or encoding is a versioned remapping and migration decision,
+  not a harmless library or key-format cleanup.
 - `String.hashCode()` **is** specified and deterministic, but it is only 32 bits and was not
   designed as a placement hash. Its distribution depends on the actual key set; do not infer
   pathological clustering from prefixes alone. Evaluate representative keys and prefer a
@@ -135,6 +145,10 @@ Prefer a directory (sharding-and-partitioning) instead when:
   — skipping further virtual nodes of a node already chosen. Forgetting the distinctness
   check places every replica of a key on one machine, which is the failure the replication
   was bought to prevent.
+  Distinct nodes can still share a host, rack or zone: define and enforce the required failure-domain
+  and residency policy. Replica-set changes must be measured separately from primary movement;
+  a key whose primary stays put can still need a new replica. Constrained placement may require an
+  assignment layer, and its movement rules need separate verification.
 - Do not use this to spread requests over interchangeable replicas. Consistent hashing pins a
   key to an owner deliberately; a least-request policy deliberately does not, and
   `load-balancing-and-routing` owns that decision.

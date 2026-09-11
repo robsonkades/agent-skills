@@ -4,6 +4,9 @@
 
 A multi-step process whose next step depends on state, not on which link the user clicked:
 
+Use this extraction when shared or complex journey decisions need one owner. A trivial
+state-based redirect can remain in a handler; the mere presence of a branch is not a defect.
+
 ```java
 // Flow logic smeared across handlers. Every handler knows the whole flow.
 @PostMapping("/application/{id}/identity")
@@ -48,16 +51,34 @@ public final class ApplicationFlow {
 ```
 
 Keep typed handlers when steps have different input and validation contracts. For example,
-the identity handler delegates one transition to an application service (partial snippet):
+the identity handler delegates one transition to an application service. This partial
+Spring 6+/Java 17 web adapter snippet omits its containing controller, constructor-injected
+`applications`/`flow`, imports and request types. Map each step to an actual route explicitly:
 
 ```java
 @PostMapping("/application/{id}/identity")
 String submitIdentity(@PathVariable UUID id, @Valid IdentityForm form,
                       @CurrentUser Actor actor) {
     ApplicationState updated = applications.submitIdentity(id, actor, form.toCommand());
-    return "redirect:/application/" + id + "/" + flow.next(updated);
+    String path = UriComponentsBuilder.fromPath("/application/{id}/{step}")
+        .buildAndExpand(id, stepPath(flow.next(updated))).toUriString();
+    return "redirect:" + path;
+}
+
+private String stepPath(ApplicationStep step) {
+    return switch (step) {
+        case IDENTITY -> "identity";
+        case CREDIT_CHECK -> "credit";
+        case COMPANY_DETAILS -> "company";
+        case SUMMARY -> "summary";
+        case SUBMITTED -> "submitted";
+    };
 }
 ```
+
+The route names above are this example's web contract, not enum names or domain state.
+Keep the mapping in the web adapter, verify every destination exists, and test the configured
+context path/redirect and trusted-proxy policy. An enum's `toString()` need not match its URL.
 
 `submitIdentity` must authorize the actor for this application, validate the permitted
 transition against current state, and apply it atomically (for example, transaction plus

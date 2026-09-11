@@ -22,12 +22,14 @@ every language binding.
 | operational dependency and recovery             |                    |                    |
 | migration/dual-read-write/rollback cost         |                    |                    |
 
-Hard constraints eliminate candidates before weighted preferences. Document uncertain scores and
-run a spike rather than assigning invented precision.
+Hard constraints eliminate candidates before weighted preferences. Select relevant dimensions;
+a narrow configuration review need not fill every cell. Document consequential uncertainty and
+use a focused check when it could change the decision, rather than assigning invented precision
+or requiring a spike for an irrelevant unknown. An adequate candidate can remain unchanged.
 
 ## Compatibility questions
 
-For every candidate test:
+For a selection or compatibility change, test the applicable contracts and reachable pairs:
 
 - adding/removing/renaming fields and changing field IDs/types;
 - required/optional/default/presence semantics;
@@ -90,7 +92,9 @@ factor. Do not transfer defaults across major versions: Jackson 3.0 changed
 acceptance behavior to win a benchmark. JDK/module compatibility must come from the resolved release.
 
 Binary replacements can reduce bytes/CPU while adding schema/tooling/compatibility dependencies.
-Choose them only when measured total benefit exceeds migration and operational cost.
+For a replacement justified by performance, require measured benefit sufficient for migration and
+operational cost. A new boundary or a necessary contract repair can be chosen for hard requirements;
+do not claim an unmeasured performance win.
 
 ## Kryo/object-graph codecs
 
@@ -126,11 +130,14 @@ For retained legacy paths:
 - use per-context filter factories where appropriate;
 - test allowed/rejected graphs, depth/references/array/bytes, proxies and substitution hooks;
 - authenticate/integrity-check and bound transport/decompression before object parsing;
-- migrate with dual-read/version envelope and rollback fixtures.
+- when migration is justified, test the required dual-read/version envelope and rollback paths.
 
 Follow `java-serialization-hardening` for the security design.
 
 ## Selection result
+
+Return the fields needed to explain the actual decision. A supported keep/no-change result or a
+narrow API interpretation need not include a full experiment or migration plan.
 
 ```text
 hard constraints and candidates eliminated:
@@ -149,11 +156,10 @@ decision, review date and triggers to revisit:
 - [Protocol Buffers encoding](https://protobuf.dev/programming-guides/encoding/)
 - [Protocol Buffers serialization is not canonical](https://protobuf.dev/programming-guides/serialization-not-canonical/)
 - [Avro 1.12.0 binary encoding and resolution](https://avro.apache.org/docs/1.12.0/specification/)
-- [Jackson 3.0 configuration changes](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.0)
+- [Jackson 3.0.0 deserialization defaults](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-3.0.0/src/main/java/tools/jackson/databind/DeserializationFeature.java)
 - [Jackson 2 ObjectMapper lifecycle](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.18.0/src/main/java/com/fasterxml/jackson/databind/ObjectMapper.java)
-- [Apache Avro specification](https://avro.apache.org/docs/current/specification/)
 - [FlatBuffers documentation](https://flatbuffers.dev/)
 - [Cap'n Proto encoding](https://capnproto.org/encoding.html)
-- [Kryo documentation](https://github.com/EsotericSoftware/kryo)
+- [Kryo 5.6.2 documentation](https://github.com/EsotericSoftware/kryo/tree/kryo-parent-5.6.2)
 - [Java Object Serialization specification](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/)
 - [Java serialization filtering](https://docs.oracle.com/en/java/javase/25/core/serialization-filtering1.html)

@@ -46,10 +46,11 @@ Run:
     => java.lang.UnsupportedOperationException: not implemented
 ```
 
-The stub throws rather than returning `null` or an empty list on purpose. A stub that returns
-a plausible empty value produces a failure message about a size mismatch, which looks like a
-logic failure; `UnsupportedOperationException` says unambiguously "you have not written this
-yet". The first red should never be ambiguous.
+This walkthrough uses an explicit unsupported-operation stub to identify unimplemented work.
+Returning `null` or an empty list can also be a useful temporary stub when the assertion's
+failure demonstrates the missing required result. Inspect that actual failure: a null or size
+mismatch at the specified output can be the intended red, while an unrelated setup failure
+cannot. Choose a stub for diagnostic clarity, not a mandatory exception type.
 
 Note also that the test names the _rule_ (the remainder goes first), not the method. That
 decision was already made — the alternative, spreading the extra cent over the last
@@ -80,7 +81,7 @@ static List<BigDecimal> split(BigDecimal total, int count) {
 each instalment independently can leave the sum short or over the total. The first test
 covers one uneven split; the next step checks more selected counts.
 
-## Red 2 — stating the invariant finds a real defect
+## Red 2 — checking the invariant and zero-count rejection
 
 Two tests added: the invariant across many counts, and the degenerate input.
 
@@ -124,7 +125,7 @@ Two things happened, and both are the loop doing its job:
 - The invariant held for all six counts, including 7 and 12 where the remainder is not a
   single cent. That is evidence the `DOWN`-plus-remainder approach was right — evidence the
   first test alone did not provide.
-- The degenerate case exposed a defect that had already been written and would have shipped: a
+- The degenerate case exposed missing validation in the implementation: a
   caller passing 0 gets an `ArithmeticException` from `BigDecimal`, not a
   message naming their mistake.
 
@@ -179,5 +180,5 @@ currency-aware variant before running anything. The suite would then have gone r
 places at once, and separating an arithmetic mistake from a validation mistake from a scale
 mistake is exactly the debugging the loop exists to avoid.
 
-Compatibility and arithmetic contracts: [JUnit 6 guide](https://docs.junit.org/6.0.0/user-guide/)
+Compatibility and arithmetic contracts: [JUnit 6.1.3 guide](https://docs.junit.org/6.1.3/overview.html)
 and [BigDecimal API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html).

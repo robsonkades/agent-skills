@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: layering-and-boundaries
-version: 1.2.1
+version: 1.2.2
 description: >-
   Deciding where an enterprise application's boundaries go and which direction dependencies
   cross them: the classical presentation / domain / data-source split, the styles that
@@ -46,6 +46,7 @@ dependencies:
 suggests:
   - architecture-and-performance
   - architecture-decision-making
+  - data-source-patterns
   - distribution-boundaries
   - domain-logic-organization
   - enterprise-architecture-smells

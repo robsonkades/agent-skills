@@ -10,8 +10,8 @@ description: >
   collection parameter forces callers to convert before calling; when ClassCastException
   surfaces far from any visible cast; when a deserialised list of strings turns out to
   contain something else; or when designing a container that must hold values of several
-  types safely. Does not cover null contracts (java-null-safety), collection choice and
-  stream pipelines (java-streams), or the wider API-shape decisions (java-api-design).
+  types safely. Does not cover null contracts (java-null-safety), stream pipelines
+  (java-streams), collection implementation choice, or wider API-shape decisions (java-api-design).
 ---
 
 # Java Generics
@@ -32,6 +32,9 @@ Examples target Java 21 without preview. Inspect compiler release/toolchains and
 framework versions before changing signatures or type-token APIs; do not upgrade the project
 or add a serialization library to make an illustration work. References contain partial snippets
 unless explicitly presented as complete classes; supply imports and the enclosing declarations.
+Start with supported caller expressions, including ordinary use, a useful subtype case and a
+misuse that should be rejected. Preserve an adequate signature and its ownership/failure contract;
+fewer warnings or fewer wildcards alone do not justify changing the API.
 
 1. **Compile with relevant warnings on and govern them.** `-Xlint:unchecked`, `rawtypes`, and a
    deliberately maintained warning policy are often safer than blanket `-Werror` across JDK/tool
@@ -40,8 +43,9 @@ unless explicitly presented as complete classes; supply imports and the enclosin
 2. **Eliminate warnings from the inside out.** Fix the cause (parameterise the type, use a
    collection instead of an array, pass a class token). Suppress only when you can prove the
    invariant, on the narrowest declaration possible, with a comment giving the proof.
-3. **Parameterise types before methods.** If a class holds or produces one element type, it
-   takes a type parameter. If only one method needs one, only that method does.
+3. **Parameterise the relationship callers need.** Use a class parameter when callers choose
+   one element type for an instance's lifetime, or a method parameter for a per-call relationship.
+   A fixed domain type need not become generic.
 4. **Set use-site variance from semantic data flow.** A source is often `? extends T`; a sink is
    often `? super T`; a parameter requiring exact read/write correlation may be `T`. Return types
    usually avoid wildcards for usability, but public families such as `Class<? extends X>` show
@@ -49,8 +53,10 @@ unless explicitly presented as complete classes; supply imports and the enclosin
 5. **Check the runtime boundary.** Deserialisation, reflection, raw aliases or untyped caches can
    bypass the static contract; a typed cache/callback does not inherently lose it. Check the
    producer and token/validation behavior, including nested element types, before trusting values.
-6. **Verify.** No unchecked warnings; every remaining `@SuppressWarnings` is one declaration
-   wide and justified; and callers can pass the collections they already have without copying.
+6. **Verify.** Account for unchecked warnings and justify each narrow suppression. Compile
+   positive and deliberately invalid caller examples, and exercise runtime boundaries where
+   static checking ends. Remove type-workaround copies, not copies required for ownership or
+   isolation; report what the checks actually establish.
 
 ## Rules
 
@@ -58,9 +64,10 @@ unless explicitly presented as complete classes; supply imports and the enclosin
   member types are erased under JLS rules; static members are not erased merely through a raw
   qualifier. `List<Object>` says "any object"; `List<?>` says "unknown element type";
   a raw `List` bypasses element-type checks and can introduce unchecked conversions.
-- Use `List<?>` when element type is irrelevant. No non-null element can be safely added, but this
+- Use `List<?>` when element type is irrelevant. An arbitrary non-null value cannot be added directly, but this
   is not a read-only view: `clear`, iterator removal, and some `null` mutations remain possible.
-  Use unmodifiable types/wrappers for immutability.
+  Unmodifiable wrappers restrict mutation through that view; backing aliases and mutable
+  elements may still change. Snapshot/copy ownership belongs to java-immutability.
 - Every unchecked warning is either eliminated or proven. Placing `@SuppressWarnings` on a
   class or a long method hides the next unchecked operation somebody adds there. Put it on the
   narrowest declaration — often a local variable extracted for that purpose — and write the

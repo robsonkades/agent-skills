@@ -4,7 +4,7 @@ description: >
   Writing a Java test that survives refactoring and says why it failed: naming the
   behaviour rather than the method, one reason to fail, test data builders over shared
   mutable setup, choosing the assertion that produces a readable failure, parameterised and
-  nested tests, and removing every input the test does not control — clock, ordering,
+  nested tests, and controlling relevant inputs — clock, ordering,
   locale, randomness. Use when a test name does not say what broke, when a failure message
   has to be decoded by reading the test, when setup is shared across unrelated tests, when
   a test sleeps, when tests pass alone and fail together, when a flaky test is about to be
@@ -37,13 +37,15 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
    `testIsDueWithin2`. Method names or digits are fine when they help describe the contract.
 2. **Give it one reason to fail.** Multiple assertions are fine when they describe one
    outcome; two unrelated outcomes are two tests, because the first failure hides the second.
-3. **Make the arrangement disappear.** A builder with sensible defaults, where the test names
-   only the field it depends on, keeps the relevant input visible:
-   `aSubscription().renewingOn(MARCH_9).build()`.
+3. **Keep the relevant arrangement visible.** Direct construction is often enough. For
+   recurring incidental setup, a builder with sensible defaults can expose the changing input:
+   `aSubscription().renewingOn(MARCH_9).build()`. Reuse adequate project helpers and assertions.
 4. **Choose the assertion for its failure message.** `assertThat(list).containsExactly(a, b)`
    prints both lists on failure; `assertTrue(list.equals(...))` prints `false`.
-5. **Remove every input you do not control** — the system clock, iteration order, default
-   locale and zone, randomness, the filesystem. See `references/determinism.md`.
+5. **Control the inputs relevant to the contract** — clock, order, locale/zone, randomness and
+   external resources. Preserve required integration and default-environment behavior by
+   isolating/configuring it, rather than changing production semantics to simplify the test.
+   See `references/determinism.md`.
 6. **For a consequential new regression test, check a representative fault** with a temporary
    local mutation or the known failing revision. Restore the mutation and rerun the test;
    inspect both fault detection and diagnostic clarity. Do not leave broken production code.
@@ -55,22 +57,26 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
   is independent, readable and identifies the failing input.
 - One behaviour per test; `assertAll` only for several facets of the _same_ outcome, so that
   all of them are reported rather than just the first.
-- Shared mutable fixture state is the cause of "passes alone, fails together". Construct in
-  the test or in `@BeforeEach`; never mutate a static field. `@TestInstance(PER_CLASS)` keeps
-  one instance for the whole class — its fields are then shared state between tests.
-- Never `Thread.sleep` to wait for something. Either the thing is synchronous and the sleep
-  is noise, or it is not and the sleep is a race (concurrency-testing owns the alternatives).
-- Never assert against a value the test computes with the same expression the code uses. That
-  asserts the expression equals itself and passes when both are wrong. Write the expected
-  value as a literal for example-based tests, or use an independent oracle/property.
+- Shared mutable fixture state is a lead for "passes alone, fails together", not proof of the
+  cause. Prefer fresh test/`@BeforeEach` state; deliberate sharing needs a verified reset,
+  ownership and synchronization contract. `PER_CLASS` reuses one instance; `PER_METHOD` does
+  not isolate static/external state or references to shared objects.
+- Do not use an arbitrary sleep as proof of readiness or completion. Await the relevant
+  milestone with a bound and cleanup. An intentional delay can belong to a temporal fault
+  model, but does not establish that another task finished (concurrency-testing).
+- Do not derive the expectation by repeating the behavior under test; both copies can be
+  wrong together. Use explicit example values or an independent oracle/property. Sharing
+  incidental value constructors is different from copying the algorithm being tested.
 - Assert on the resulting value whenever the outcome is observable as one. Verifying that a
   collaborator was called is a claim about implementation, and is only justified when the
   call _is_ the outcome (java-test-doubles).
 - Assert the exception type always, and its message only when the message is part of the
-  contract callers rely on. `assertThatThrownBy(...).isInstanceOf(...)` reads better than
-  `try/fail/catch` and cannot silently pass when nothing is thrown.
-- Parameterise only cases that differ in data alone. If the expected result needs a
-  conditional to compute, they were different tests wearing one name.
+  contract callers rely on. Prefer an assertion such as `assertThrows` or
+  `assertThatThrownBy(...).isInstanceOf(...)` when it clarifies the failure. A manual
+  `try/fail/catch` must also fail on no-throw and wrong-type paths.
+- Parameterise cases sharing an arrangement and assertion contract. A conditional in an
+  independent oracle does not by itself require separate tests; split materially different
+  behaviors when grouping obscures the scenario or failure.
 - A flaky test is a defect report about the test, code or environment. Preserve the regression
   signal: do not delete, weaken or disable it just to pass. Bounded repetition can diagnose a
   flake if every outcome is retained; retry-until-green is not a fix.

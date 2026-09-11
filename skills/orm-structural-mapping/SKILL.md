@@ -17,8 +17,9 @@ description: >
 
 ## Purpose
 
-Get the structural mapping decisions right at the point where they are cheap, because each
-one becomes a data migration afterwards. These patterns are where the impedance mismatch
+Choose structural mappings from the identity, lifecycle and storage contracts they must serve.
+Changing persisted keys, representation or constraints can require a data migration;
+metadata or helper changes may leave deployed data unchanged. These patterns are where the impedance mismatch
 actually lives: an object has references, a table has foreign keys; an object may contain a
 value, a table has columns; an object graph has ownership, a schema has constraints.
 
@@ -36,8 +37,8 @@ Identity Field         the object carries the row's primary key, so the
 Foreign Key Mapping    an object reference becomes a foreign key column.
                        The owning side writes it; the other side is a view.
 
-Association Table      a many-to-many becomes a third table. The moment
-Mapping                that table needs an attribute, it is an entity.
+Association Table      a many-to-many becomes a third table. Link attributes
+Mapping                may belong to an association entity or an owned value.
 
 Dependent Mapping      a child's write lifecycle belongs to its parent;
                        an entity child still has an identifier.
@@ -51,6 +52,9 @@ Serialized LOB         a graph is stored as one JSON/XML/binary column.
 
 ## Workflow
 
+Start with the requested decision or defect and the affected mappings. Preserve an adequate
+design; use only the steps relevant to its identity, writes, queries or schema contract.
+
 1. **Choose identity with lifecycle and storage topology**, because generation constrains batching,
    sharding and when equality can be stable. It need not precede every domain decision.
 2. **For each association, name the owner** — the side that writes the foreign key — and
@@ -58,35 +62,37 @@ Serialized LOB         a graph is stored as one JSON/XML/binary column.
 3. **Decide identity per concept, not per table.** Whether something is a dependent child,
    an embedded value or an entity in its own right is a domain question with a schema
    consequence.
-4. **Ask of every value-shaped type whether it will ever be queried, indexed or reported
-   on.** Compare portability, constraints, update granularity and database JSON support;
+4. **For a value-storage decision, identify required queries, indexes and reports.**
+   Compare portability, constraints, update granularity and database JSON support;
    querying alone does not decide embedded columns versus JSON.
 5. **Predict and inspect the write statements** for a scalar edit, collection addition and
    removal. Distinguish child-row deletes, link-table recreation and order-column updates;
    a Java `List` alone does not predict the SQL.
-6. **Check nullability and constraints follow the model.** A mapping that requires
-   nullable columns for values the domain says are mandatory has moved an invariant out of
-   the database and into hope.
+6. **Check deployed nullability and constraints against the required invariant.**
+   Distinguish final enforcement from compatible nullable staging during a migration;
+   annotations alone do not establish what the database enforces.
 
 ## Decision rules
 
 ```text
 Identifier for a normal entity
-        → a database sequence with an allocation size, or a UUID (v7 or
-          another time-ordered form) if identity must exist before insert
-          or across systems. IDENTITY/auto-increment can constrain batching
+        → preserve a suitable existing key. For a new choice, compare a supported
+          sequence, IDENTITY, assigned UUID or stable natural/composite key from
+          identity timing, topology, key width and actual insert/index workload.
+          IDENTITY/auto-increment can constrain batching
           and generated-key retrieval depending on database, driver and ORM
           version—measure the actual insert path for a high-volume table.
 
 Identity must be known before the row exists (event id, correlation,
 client-generated)
-        → assigned identifier, generated in the constructor. Simplifies
-          equals/hashCode enormously (orm-behavioral-patterns).
+        → assigned identifier from the domain's creation path. It can stabilize
+          id-based equality before persistence; still define equals/hashCode and
+          repository newness explicitly (orm-behavioral-patterns).
 
 Natural key that is stable, small and never changes
-        → usable, and it removes a join in some cases. Rare: most
-          "natural" keys change eventually. Prefer a surrogate key plus a
-          unique constraint on the natural one.
+        → usable when its immutability and uniqueness are real contracts.
+          Compare referencing-key width and change propagation with a surrogate
+          plus a unique constraint; do not replace an adequate key merely by rule.
 
 Two entities, one reference
         → foreign key mapping. Identify the owning mapping attribute.
@@ -98,8 +104,9 @@ Many-to-many with nothing else to say
 
 Many-to-many where the link has a domain attribute (when, by whom, quantity,
 role) or independent lifecycle
-        → an entity. Retrofitting this later is a migration; the cost of
-          starting with it includes identity, lifecycle and repository/query cost.
+        → consider an association entity for independently identified or queried
+          links; an owner-bound value collection can also carry attributes.
+          Choose from lifecycle, mutation/query needs and actual collection SQL.
 
 A child that is never referenced from outside its parent and dies with it
         → dependent mapping: choose cascades and orphan removal to enforce
@@ -129,10 +136,10 @@ The same structure is later needed in a WHERE clause or a report
 - Bidirectional associations are a cost: two references to keep in step, two ways to load,
   and a serialisation cycle. Map an association bidirectionally only when both traversal
   directions are actually used.
-- A many-to-many link with domain attributes or lifecycle is usually clearer as an association entity. The association table
-  becomes an entity with its own identity, and code that treated it as a set must change.
-  Do not introduce it solely because an attribute might someday appear; use actual lifecycle,
-  querying and evolution requirements.
+- An association entity gives a link persistent identity and entity query/mutation semantics.
+  An owned value collection can carry link attributes without independent identity; database-owned
+  metadata need not become application state. Inspect affected mappings and callers when changing
+  representation. Do not introduce an entity solely because an attribute might someday appear.
 - Collection SQL depends on ownership, entity versus value elements, row identifiers and
   order semantics. Inspect SQL before replacing a `List` with a `Set`; preserve required
   duplicates and ordering. Mutate managed collections through an identity-based diff,
@@ -152,16 +159,17 @@ The same structure is later needed in a WHERE clause or a report
   read-only reports while mutations remain governed by its parent. Independent mutation
   commands or reassignment requirements warrant revisiting the boundary
   (`repository-pattern`).
-- Constraints belong in the schema. A mapping that produces nullable columns for mandatory
-  values, or that omits a unique constraint the domain relies on, has moved enforcement to
-  application code, where a bulk import will bypass it (`domain-logic-organization`).
-- Every one of these decisions is a migration once data exists. Spend proportionate analysis now
-  (`architecture-decision-making`).
+- Enforce database-owned invariants with deployed constraints, including mandatory values and
+  uniqueness relied on across writers. Application checks alone leave bypass paths; domain-only
+  rules still need their owning boundary (`domain-logic-organization`).
+- Assess migration and reader/writer compatibility when persisted representation or enforcement
+  changes. A mapping-only repair need not migrate data (`architecture-decision-making`).
 
 Before choosing version-sensitive mappings, inspect the Java toolchain, persistence API,
 provider, enhancement settings, dialect and schema migrations. Examples are partial mappings,
-not standalone applications. Return the selected ownership/lifecycle, expected SQL and
-constraints, plus a flush-clear-reload test that would expose the specific defect. Missing
+not standalone applications. Return the relevant decision and evidence, or explain why the
+existing mapping is adequate. For a changed write or reload contract, include the expected
+SQL/constraints and a focused flush-clear-reload check that would expose that defect. Missing
 provider or schema evidence means the recommendation remains conditional; do not upgrade
 the project to make an example work.
 
@@ -169,8 +177,8 @@ the project to make an example work.
 
 - [Identity and associations](references/identity-and-associations.md) — identifier
   generation strategies with their batching, sharding and equality consequences; owning
-  versus inverse sides with the silent no-op; association table mapping and the moment it
-  becomes an entity; collection mapping and delete-then-insert; and the query cost of each
+  versus inverse sides and inconsistent links; association entities versus owned link values;
+  collection mapping and delete-then-insert; and the query cost of each
   shape. Read when mapping a relationship or choosing a key.
 - [Embedding and serialisation](references/embedding-and-serialization.md) — embedded
   values as records, converters for single-column types, dependent mapping and its

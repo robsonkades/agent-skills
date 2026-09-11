@@ -3,19 +3,23 @@
 ## Heuristics — signs a decision wants to move
 
 - **The same branch on the same getters appears in N places.** Two call sites deciding
-  "may this order ship?" from `order.status()` and `order.paidAt()` is one rule written
-  twice; they will drift. The rule wants to be `order.isShippable()` — or better, the
-  mutation sites want `order.ship()` to enforce it.
+  "may this order ship?" from `order.status()` and `order.paidAt()` may duplicate one rule.
+  Confirm shared eligibility and change ownership; a report and an operational guard can
+  intentionally differ. For a shared object-owned rule, `order.isShippable()` can expose the
+  query, while `order.ship()` rechecks and enforces it at mutation time.
 - **A setter only ever runs behind a guard.** If every `setBalance` in the codebase sits
-  inside an `if` on `getBalance`, the guard is the real operation and the setter is its
-  loophole. Replace the pair with a command.
+  inside an `if` on `getBalance`, inspect whether callers own legitimate correction policy
+  or are compensating for a missing invariant check. Replace misplaced guard/mutation pairs
+  with commands; a validated administrative assignment can remain a distinct operation.
 - **The invariant lives in comments or wiki, not in a type.** "Callers must check the
-  credit limit before debiting" is documentation doing a constructor's job.
+  credit limit before debiting" needs an actual enforcement boundary on relevant mutations,
+  not just a constructor check.
 - **Check-then-act on shared state.** A read, a decision, then a write on the same object
   is a race window; a single command gives one place to synchronize or version but does not
   reduce the legal interleavings until that concurrency protocol is actually applied.
 - **Tests for a domain rule construct a service with five mocks.** The rule is trapped in
-  orchestration; in the domain object it tests with a constructor call.
+  orchestration only if those dependencies are incidental to the rule. A pure policy/domain
+  command can then simplify its tests; mock count alone does not determine ownership.
 - **Queries with observable side effects.** "Touch on read" timestamps, emitted business events
   or mutation visible through later results make reads order-dependent. Private memoization can
   be observationally pure, but must still be safe under the type's concurrency contract and must
@@ -51,5 +55,13 @@
   command needs a result the caller can act on — an exception for "caller broke the
   contract", a result type for expected refusals. That is new API to design and keep
   stable.
+- **Existing entry points have consumers.** Inspect compiled clients, binders and authorized
+  correction/import paths before removing or narrowing a setter. Keep a compatible validating
+  entry point when it preserves the intended contract, or plan an explicit migration; retaining
+  the signature alone does not preserve behavior or make an unsafe bypass acceptable.
 - **Visibility of the rule moves.** Readers of the service no longer see the policy
   inline. The cure is naming (`withdraw` that can refuse), not moving the rule back.
+
+[Fowler's discussion](https://martinfowler.com/bliki/TellDontAsk.html) treats responsible queries
+and layering as legitimate trade-offs. For published Java APIs, deleting a non-private method
+can break existing binaries ([JLS 21 §13.4.12](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.12)).

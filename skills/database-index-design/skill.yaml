@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: database-index-design
-version: 1.0.1
+version: 1.0.2
 description: >-
   Designing and governing an index portfolio across SQL Server, MySQL/InnoDB, and PostgreSQL:
   deriving composite keys from a workload, equality/range/order trade-offs, covering and partial
@@ -39,9 +39,6 @@ files:
 dependencies:
   - name: sql-query-performance
     version: ^1.0.0
-
-suggests:
-  - schema-evolution-and-compatibility
 
 capabilities:
   - reads-source

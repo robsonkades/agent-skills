@@ -8,6 +8,11 @@
 | `CLASS` (default) | yes                    | **no**                | bytecode tools, weavers, static analysers reading class files   |
 | `RUNTIME`         | yes                    | yes                   | anything a framework or your own code reflects over at runtime  |
 
+These entries describe retained declaration metadata, not a discovery guarantee. Local-variable
+and lambda-parameter **declaration** annotations are never retained in the class file, even with
+`RUNTIME`. Their **type-use** annotations follow separate retention rules; retention in method
+bytecode does not provide a general core-reflection API for enumerating local-variable annotations.
+
 The default is `CLASS`, and that default is one reason a hand-written
 annotation "does nothing": the framework calls `getAnnotation(...)` and gets `null`, with no
 error anywhere. Declare the retention explicitly on every annotation you define.
@@ -84,7 +89,7 @@ public @interface Schedule { String cron(); }
 public @interface Schedules { Schedule[] value(); }
 ```
 
-`getAnnotation(Schedule.class)` returns `null` when the annotation is repeated — the compiler
+On a method with repeated `@Schedule`, `getAnnotation(Schedule.class)` returns `null` — the compiler
 wraps the repetitions in the container. Use `getAnnotationsByType(Schedule.class)`, which
 handles both the single and the repeated case.
 
@@ -95,14 +100,16 @@ framework feature.
 
 ## Three ways to act on an annotation
 
-| Mechanism                                       | When it runs         | Cost                                               | Fails when                                                                                                |
-| ----------------------------------------------- | -------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Compiler check (`SOURCE`, javac plugin, linter) | build                | build/IDE integration; none at runtime             | plugin/tool not configured, version drift, generated-source or incremental-build gaps                     |
-| Annotation processor (JSR 269)                  | build                | build time; generates code you can read            | requires the processor on the annotation path                                                             |
-| Runtime reflection / scanning                   | startup, or per call | scope/index/cache-dependent discovery and dispatch | retention/access mismatch; JPMS access denial; AOT reachability metadata or framework integration missing |
+| Mechanism                                       | When it runs         | Cost                                                   | Fails when                                                                                                 |
+| ----------------------------------------------- | -------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Compiler check (`SOURCE`, javac plugin, linter) | build                | build/IDE integration; none at runtime                 | plugin/tool not configured, version drift, generated-source or incremental-build gaps                      |
+| Annotation processor (JSR 269)                  | build                | build time; can validate declarations or generate code | processor discovery/execution not configured; incompatible processor/toolchain or generated output missing |
+| Runtime reflection / scanning                   | startup, or per call | scope/index/cache-dependent discovery and dispatch     | retention/access mismatch; JPMS access denial; AOT reachability metadata or framework integration missing  |
 
-Prefer the highest row that can do the job. Concretely, this is why modern frameworks moved
-validation, mapping and dependency metadata towards processors and build-time transformation:
+Choose from the consumer's required information and lifecycle. Build-time validation can reject
+declaration errors or generate runtime checks; it cannot validate request values that arrive later.
+Retain an adequate existing consumer. Consider processing/generation when equivalent semantics
+and measured or required deployment benefits justify its build, IDE and debugging cost:
 
 - **Startup cost.** Full classpath scanning grows with candidate resources/classes, but indexes,
   bounded packages and cached metadata change the cost. Measure discovery separately from class
@@ -119,19 +126,25 @@ Since JDK 23, command-line `javac` does not implicitly run processors discovered
 ordinary class path: configure processing explicitly (`--processor-path`, `--processor-module-path`,
 `-processor`, `-proc:full`/`only`, or the build tool's processor dependency mechanism). This both
 stabilizes builds and limits execution of processor code during compilation.
+The processor itself runs in the compiler's environment; `--release 17` does not turn `javac 25`
+into a JDK 17 processor host. Check processor compatibility and generated-source compatibility
+separately. For repeatable annotations, a processor should support both the repeated annotation
+and its container; reflected `getAnnotationsByType` and processor discovery are different paths.
 
 ## Making an annotation observable
 
 An annotation whose effect is invisible is a maintenance hazard: the reader of the call site
 cannot tell that something happens. Two mitigations that cost little:
 
-- **Fail loudly at startup** when an annotation is present but its precondition is not
+- **Fail loudly at startup** when required annotation behavior lacks its enabling infrastructure
   (scheduling infrastructure is disabled, or required generated code is absent). `@Scheduled`
   registration uses a bean post-processor and does not itself require an AOP proxy.
   A container that validates its own annotation usage at boot converts a silent
-  runtime no-op into a startup failure.
+  runtime no-op into a startup failure. Preserve intentionally disabled behavior allowed by the
+  configuration contract.
 - **Make the behaviour visible in telemetry.** If an annotation causes a retry, a transaction
-  or a cache lookup, that should appear as a span or a metric, so the behaviour is discoverable
+  or a cache lookup, use adequate existing signals or focused bounded instrumentation when needed
+  to make that behavior discoverable
   from an operational view rather than only from the source. See distributed-tracing-design and
   metrics-and-cardinality.
 
@@ -145,3 +158,5 @@ cannot tell that something happens. Two mitigations that cost little:
   documents explicit processing configuration; use the compiler version, not merely `--release`.
 - [Spring scheduling](https://docs.spring.io/spring-framework/reference/integration/scheduling.html)
   documents scheduling infrastructure; check the project's Spring version when applying it.
+- [JDK 25 processor contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.compiler/javax/annotation/processing/Processor.html)
+  distinguishes processor matching, repeatable containers and supported source versions.

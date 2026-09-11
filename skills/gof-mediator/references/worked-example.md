@@ -96,6 +96,10 @@ The queue needs bounded admission, an owner that closes it, and a failure policy
 participants must become explicit failed/unknown outcomes; a recorded request is not completed
 packing. If delivery throws or the process dies after recording the claim, this in-memory example
 does not recover it automatically. Do not reset and retry blindly when the effect may have happened.
+Likewise, if `stock.reserve` throws, `payments.authorise` is not reached, yet the order remains in
+the map and another `orderPlaced` is ignored. The application must record/reconcile that partial or
+unknown outcome; the sketch is not a complete retry protocol. Even when both participant calls
+return normally, that does not establish completion of their asynchronous business effects.
 Keep completed-state retention/deduplication bounded with a defined late-event policy.
 
 Cancellation must be ordered against the packing claim: this model closes cancellation when
@@ -104,7 +108,7 @@ additional participant handshake, not merely this flag.
 
 ## The reentrancy bug found in review
 
-The first version called participants while holding the map entry's lock:
+The first version called participants inside the map's atomic computation:
 
 ```java
 private void advance(OrderId id, UnaryOperator<FulfilmentState> transition) {
@@ -171,11 +175,15 @@ The packing consumer atomically deduplicates that identity with its local effect
   orchestrator is a process that outlives the JVM.
 - **Every remote step has a deadline and outcome policy.** Compensation applies only to effects
   that require semantic undo. "Packing did not respond within 30 minutes" is
-  a state the protocol must have, with a defined action — retry, escalate, or release the stock
-  reservation. Without it, orders stall silently and are found by customers
+  a state the protocol must have, with a defined action. Missing response leaves packing unknown:
+  releasing stock is safe only when terminal evidence or a participant-enforced cancellation/recovery
+  protocol rules out incompatible late packing. A transient status lookup alone may not do that;
+  retain pending state or escalate when authority is unresolved. Retry with the stored identity
+  under the participant contract, not as a new attempt that forgets earlier effects
   (`distributed-transactions-and-sagas`).
 - **Commands need idempotency/deduplication.** The outbox relay can redeliver. A fresh UUID alone
-  does not deduplicate repeated decisions, and an external effect needs its own provider contract.
+  does not deduplicate repeated decisions, and an external effect needs its own provider contract
+  (`idempotency`).
 - **Availability is coupled for dependent progress.** A durable flow may wait and resume after
   orchestrator recovery; already dispatched independent work can continue.
 
@@ -191,7 +199,9 @@ It was rejected for this flow because of two requirements:
   position to decide whether cancellation is still possible. Choreography needs an explicit owner
   and handshake for this decision; it is possible but more involved in this scenario.
 - **Stuck-flow diagnosis.** "Which orders are waiting, and on what" is one query against the
-  orchestrator's state, and a distributed-trace correlation exercise otherwise.
+  orchestrator's state. This scenario has no equivalent durable workflow view in its choreographed
+  alternative; one could be built or already exist elsewhere. Compare its coverage, freshness and
+  maintenance cost before treating central coordination as necessary for visibility.
 
 For a fan-out with neither requirement — notify analytics, warm a cache, update a search index —
 choreography is a candidate; require a concrete coordination need before adding an orchestrator

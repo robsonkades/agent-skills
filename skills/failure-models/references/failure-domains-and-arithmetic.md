@@ -104,8 +104,10 @@ time series. Never average percentages without the matching denominator.
 
 ## Enumerating domains
 
-For each level, write what it takes down for that cause. Shared host risk does not erase
-protection against independent process crashes; model common and individual faults separately.
+Name the fault as well as the domain. The table models complete domain loss or a defect
+affecting every participant exposed to it; partial outages can affect a subset. Shared host
+risk does not erase protection against independent process crashes. Check actual placement,
+required paths and rollout exposure before assigning a blast radius.
 
 | Domain                   | Takes down                                                 | Typical control                                     |
 | ------------------------ | ---------------------------------------------------------- | --------------------------------------------------- |
@@ -113,14 +115,15 @@ protection against independent process crashes; model common and individual faul
 | Host / node              | every replica scheduled there                              | anti-affinity across nodes                          |
 | Rack / failure zone      | every node in it                                           | spread across zones                                 |
 | Availability zone        | everything in the AZ, including that AZ's managed services | multi-AZ, and a quorum that survives losing one     |
-| Region                   | everything                                                 | a second region, with the data problem that implies |
-| Dependency               | every caller of it                                         | fallback, or removal from the required path         |
+| Region                   | resources and operations relying on that region            | a second region, with the data problem that implies |
+| Dependency               | operations requiring it without a working fallback         | fallback, or removal from the required path         |
 | Deploy / artefact        | every replica running it                                   | staged rollout, canary, fast rollback               |
 | Config / feature flag    | every replica reading it                                   | staged config rollout — the same discipline as code |
 | Certificate / credential | everything that presents it                                | staggered expiries, automated renewal               |
 
-Deploy and config deserve emphasis: they are the two domains that reach every replica
-simultaneously and are the two most often left out of a redundancy diagram.
+Deploy and config can expose every replica to the same defect. Staged rollout and version
+diversity can limit simultaneous exposure; model the actual rollout rather than assuming
+that replicas either all fail together or are independent.
 
 ## Questions that expose a hidden shared dependency
 
@@ -135,8 +138,9 @@ outage:
 - Do they share a database, a cache, a secret store, or a single connection-pool target?
   A read replica that fails over to the same primary is one database.
 - Do they share a control plane — the scheduler, the load balancer, the API gateway, the
-  service mesh control plane? A mesh whose control plane is down usually keeps serving with a
-  stale config, but new pods cannot join.
+  service mesh control plane? Check the deployed implementation's cached configuration,
+  bootstrap, certificate renewal and failover dependencies separately: existing traffic and
+  new participants may have different failure conditions.
 - Do they share an authentication provider, and does that provider have its own dependency
   chain you have never drawn?
 - Do they use the same client library, with the same default timeout and the same bug?
@@ -148,9 +152,11 @@ outage:
 
 ## The check to run
 
-Before accepting a redundancy claim, name the single event that takes down the whole set. If
-you cannot name one, you have not looked hard enough — try the deploy, the config change, and
-the certificate.
+Before accepting a redundancy claim, investigate plausible events that could take down the
+set, including deploys, configuration and credentials. Record evidenced common causes and
+unresolved assumptions. If none is established, report the investigation's limits instead of
+inventing one or claiming independence is proved. Missing joint data leaves the arithmetic
+conditional; select further measurement or a fault exercise only if it could change the decision.
 
 ## Primary references
 

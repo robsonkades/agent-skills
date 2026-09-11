@@ -35,17 +35,18 @@ copies or uses another mechanism. Native code must not retain the pointer.
 
 ## Eligibility gate
 
-| Criterion    | Eligible for an experiment                                           | Reject `critical()`                                                    |
-| ------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Duration     | bounded near empty-call cost across p99.99/worst tested inputs       | unbounded, data-dependent long tail, page fault or cold initialization |
-| Blocking     | audited no I/O, locks, waits, callbacks or hidden lazy work          | any blocking/unknown dependency                                        |
-| Upcalls      | none, directly or indirectly                                         | callback/reentrancy into Java possible                                 |
-| Heap pointer | used only synchronously during the call                              | retained, published or used asynchronously                             |
-| Value        | transition/copy cost is measured material at service level           | optimization is based only on a microbenchmark ratio                   |
-| Operations   | canary monitors safepoint/carrier/native-call tails; rollback exists | no production visibility or safe rollback                              |
+| Criterion    | Eligible for an experiment                                                          | Reject `critical()`                                                    |
+| ------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Duration     | audited bound near empty-call cost on all permitted paths; measurements corroborate | percentiles alone, unbounded paths, page faults or cold initialization |
+| Blocking     | audited no I/O, locks, waits, callbacks or hidden lazy work                         | any blocking/unknown dependency                                        |
+| Upcalls      | none, directly or indirectly                                                        | callback/reentrancy into Java possible                                 |
+| Heap pointer | used only synchronously during the call                                             | retained, published or used asynchronously                             |
+| Value        | transition/copy cost is measured material at service level                          | optimization is based only on a microbenchmark ratio                   |
+| Operations   | canary monitors safepoint/carrier/native-call tails; rollback exists                | no production visibility or safe rollback                              |
 
 There is no universal one-microsecond threshold. “Extremely short” must be conservative
-relative to the service's safepoint/tail objectives and the native function's worst case.
+and satisfy the API's all-cases requirement; a permissive service SLO does not relax it.
+Tested p99.99 or worst-observed duration cannot establish a bound on untested paths.
 
 ## Interop decision matrix
 
@@ -65,12 +66,16 @@ bitfields, variadics and calling conventions require per-target validation.
 ## Batching trade-off
 
 Batching amortizes fixed transitions and often improves locality, but increases call duration,
-buffer ownership, cancellation latency and failure granularity. A 50 ms batch captures a
-carrier for 50 ms and is categorically ineligible for `critical()`, even if per-element work
+buffer ownership, cancellation latency and failure granularity. A 50 ms native batch executed
+on a virtual thread occupies its carrier during that native call; on a dedicated platform
+worker it occupies that worker instead. Either is ineligible for `critical()`, even if per-element work
 is tiny. Choose batch size from throughput, tail/cancellation budget, memory and overload
 limits; expose partial-result/error semantics.
 
 ## Measurement design
+
+Use the checks that address the proposed change and unresolved risk. Existing sufficient
+evidence or an adequate unchanged binding does not require executing every comparison below.
 
 - JMH: compare JNI, plain FFM and eligible critical FFM for the same exported function,
   descriptor, data copy and result consumption; use multiple forks and input sizes.

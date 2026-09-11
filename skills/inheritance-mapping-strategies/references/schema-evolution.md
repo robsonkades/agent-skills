@@ -2,16 +2,21 @@
 
 ## What each change costs
 
-| Change                            | Single table                                                 | Joined                                              | Concrete table                   |
-| --------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- | -------------------------------- |
-| Add a subtype                     | Columns/checks/indexes as needed; locking is engine-specific | New table + FK + index                              | New table                        |
-| Remove a subtype                  | Retire readers/writers, archive rows, then columns           | Retire subtype, handle base rows and FKs, then drop | Drop table                       |
-| Add a shared field                | `ADD COLUMN`                                                 | `ADD COLUMN` on the base                            | `ADD COLUMN` in **every** table  |
-| Add a subtype-specific field      | `ADD COLUMN` (nullable)                                      | `ADD COLUMN` on that subtype's table                | `ADD COLUMN` on that table       |
-| Move a field from base to subtype | Relax global NOT NULL if needed; revise checks               | Copy + drop across two tables                       | Retire unused copies if desired  |
-| Move a field from subtype to base | Backfill other types; revise required-field constraints      | Copy + drop across two tables                       | Add everywhere + backfill        |
-| Rename a subtype class            | Preserve explicit stored discriminator and names             | Keep explicit table/entity names                    | Keep explicit table/entity names |
-| Split one subtype into two        | Backfill the discriminator                                   | New table + move rows                               | New table + move rows            |
+| Change                            | Single table                                                 | Joined                                              | Concrete table                             |
+| --------------------------------- | ------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------ |
+| Add a subtype                     | Columns/checks/indexes as needed; locking is engine-specific | New table + FK + index                              | New table                                  |
+| Remove a subtype                  | Retire readers/writers, handle retained rows, then columns   | Retire subtype, handle base rows and FKs, then drop | Retire subtype/data/references, then table |
+| Add a shared field                | `ADD COLUMN`                                                 | `ADD COLUMN` on the base                            | `ADD COLUMN` in **every** table            |
+| Add a subtype-specific field      | `ADD COLUMN` (nullable)                                      | `ADD COLUMN` on that subtype's table                | `ADD COLUMN` on that table                 |
+| Move a field from base to subtype | Relax global NOT NULL if needed; revise checks               | Copy + drop across two tables                       | Retire unused copies if desired            |
+| Move a field from subtype to base | Backfill other types; revise required-field constraints      | Copy + drop across two tables                       | Add everywhere + backfill                  |
+| Rename a subtype class            | Preserve explicit stored discriminator and names             | Keep explicit table/entity names                    | Keep explicit table/entity names           |
+| Split one subtype into two        | Backfill the discriminator                                   | New table + move rows                               | New table + move rows                      |
+
+These are storage shapes, not permission to discard historical data. Before removal or a
+split, establish retention, reclassification rules, external references, old reports/readers
+and the rollback window. A split may also require new fields and constraints; copying rows
+or changing their discriminator alone does not validate their new business meaning.
 
 For STRING discriminators the default is the entity name, which defaults to the simple class
 name. A class rename can therefore change the mapping unless the entity name or discriminator
@@ -75,8 +80,8 @@ update/delete with backfill. A deployed dual writer does not cover an old writer
 
 ### Joined → single table
 
-The reverse, and the harder direction, because the `NOT NULL` constraints must be relaxed
-into conditional checks while references from other tables must be migrated before dropping referenced state.
+Its cost depends on the actual rows, constraints and references. Subtype-local `NOT NULL`
+requirements become conditional checks while references from other tables must be migrated before dropping referenced state.
 Deleting a child row does not require removing its outbound FK to the base. Verify the check constraints hold on the migrated data **before**
 dropping anything:
 

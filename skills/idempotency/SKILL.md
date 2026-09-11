@@ -2,8 +2,8 @@
 name: idempotency
 description: >
   Making an operation safe to apply more than once: natural idempotency versus an
-  idempotency key plus durable operation state; choosing and scoping the key, and why a
-  broker message id covers only one redelivery scope; handling concurrent in-flight
+  idempotency key plus durable operation state; choosing and scoping the key, distinguishing
+  stable message identity from delivery tags; handling concurrent in-flight
   duplicates; replaying the stored response instead of returning a conflict; and why
   idempotent is not commutative. Use when a retry produces a second row, charge or email,
   when a handler starts with an exists() check before a write, when an Idempotency-Key
@@ -36,13 +36,14 @@ error, so a client that retried after a timeout is told its request conflicts wi
    prevents a second row but still needs duplicate recognition if retries must receive the
    original result. `balance = 100` is naturally state-idempotent; `balance += 10` is not.
 2. **Choose state predicate, operation key, or both.** A conditional transition
-   (`PENDING → CONFIRMED`) prevents an illegal second transition, but an operation key is
-   still needed to distinguish a retry from a competing command, replay its result, and
-   deduplicate external effects.
+   (`PENDING → CONFIRMED`) may satisfy the contract on its own. Add an operation key when
+   the contract also requires distinguishing a retry from a competing command, replaying
+   its result, or associating external effects with that intent; reuse a suitable domain ID.
 3. **Choose the key source, namespace and lifetime** before writing code. Prefer a stable
    business-operation identifier or a caller-generated identifier created once per intent.
-   Payload hashes identify content, not intent; broker delivery IDs cover only the broker's
-   redelivery scope. See `references/key-selection.md`.
+   Payload hashes identify content, not intent. Use a transport message identity only if it
+   remains stable and unique within the promised redelivery scope; delivery tags/attempt IDs
+   are not such keys. See `references/key-selection.md`.
 4. **Make the claim and local mutation one atomic state transition.** A conditional insert
    or compare-and-set chooses one owner under concurrency. When the business mutation is in
    the same database, commit claim, mutation and response atomically. For an external effect,
@@ -65,8 +66,9 @@ error, so a client that retried after a timeout is told its request conflicts wi
   identity and semantically equivalent response, not necessarily byte-for-byte replay.
   State which guarantee the interface offers.
 - **Idempotent is not commutative.** Idempotency says `f(f(x)) = f(x)`; commutativity says
-  `f(g(x)) = g(f(x))`. At-least-once delivery gives you duplicates _and_ reordering across
-  keys, so a path that repeats safely can still converge wrongly when two different
+  `f(g(x)) = g(f(x))`. At-least-once delivery permits duplicates but does not itself define
+  ordering. Respect the transport's actual order scope: a path that repeats safely can still
+  converge wrongly when two different
   operations arrive out of order. Ordering guarantees are
   `message-ordering-and-partitioning`; a last-writer-wins field needs a version or a
   timestamp, not an idempotency key.
@@ -80,20 +82,24 @@ error, so a client that retried after a timeout is told its request conflicts wi
   same key with a materially different operation fingerprint without revealing another
   tenant's result. Canonicalization must include every field that changes semantics and the
   relevant API/tenant scope.
-- A broker message id usually identifies a _delivery_, not a business request. An
-  upstream that republishes after its own crash produces a new message id for the same
-  business intent, and the dedup store sees two distinct keys.
-- A key retained for less than the maximum replay horizon re-enables old operations. Longer
+- A stable transport message identity can cover its documented redelivery scope; do not
+  confuse it with a delivery/acknowledgement handle. If republication assigns
+  a new message identity for the same business intent, transport dedup misses it. A producer
+  can instead preserve a suitable business-operation ID; verify that contract rather than
+  inferring it from the field name.
+- A key retained for less than the maximum replay horizon can re-enable old operations unless
+  another authority still enforces their uniqueness. Longer
   retention costs storage and may retain sensitive data, but does not suppress a legitimate
   new intent when clients generate a new key per intent. Define post-expiry semantics,
   archival/DLQ replay limits and legal retention explicitly.
 - Increment and append are not naturally idempotent, but an atomic dedup record plus mutation
   can make an operation keyed by intent idempotent. Alternatives are a uniquely keyed delta,
   conditional version transition or absolute target write.
-- **Idempotency belongs in durable storage.** A cache is not a dedup store: eviction under
-  memory pressure silently re-enables the duplicate, and the cache's own consistency
-  becomes part of the guarantee. A cache in front of the durable table is fine;
-  `caching-strategies` for that.
+- **Deduplication memory must survive the failures covered by the contract.** An evictable
+  cache alone cannot prevent a forbidden repeated effect across eviction/restart. Natural
+  repeat-safety may need no separate record; process-local suppression is also valid when
+  loss of that suppression is explicitly acceptable. Keep that weaker scope clear. A cache
+  in front of authoritative durable state is fine; `caching-strategies` for that.
 
 ## State machine for external effects
 

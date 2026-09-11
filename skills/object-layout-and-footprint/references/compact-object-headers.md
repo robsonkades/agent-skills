@@ -1,15 +1,14 @@
 # Compact object headers, measured
 
-Read at step 1 whenever `-XX:+UseCompactObjectHeaders` appears in an artefact, and at step 3
-always.
+Read when effective compact-header state or its footprint effect is part of the question.
 
-**Environment.** Temurin **25.0.3+9** (Windows x64) and **26.0.2+10** (Linux x64,
+**Historical environment.** Temurin **25.0.3+9** (Windows x64) and **26.0.2+10** (Linux x64,
 `eclipse-temurin:26-jdk`); JOL `jol-core:0.17`, `ClassLayout.instanceSize()` and
 `GraphLayout.totalSize()`. Every shallow size below was reproduced identically on both builds.
 Of these, 12 classes and all 32 array sizes — **44 objects** — were additionally cross-checked
 against an `Instrumentation.getObjectSize` agent on 25.0.3 in both modes, with no
 disagreement; `HashMap$Node`, `Point` and `C3` are JOL-only, reproduced across the two builds
-but not agent-checked. On **21.0.12+8** the flag does not exist at all —
+but not agent-checked. On the tested Temurin **21.0.12+8** build the flag does not exist —
 `Unrecognized VM option 'UseCompactObjectHeaders'`, JVM refuses to start `[executed]`.
 **JDK 27 is not installed. Its default header mode is read from JEP 534 (`Closed /
 Delivered`, Release 27, confirmed at `openjdk.org/jeps/534`) and was not observed anywhere on
@@ -21,6 +20,10 @@ release-by-release default, its throughput cost and its prerequisites belong to
 `false-sharing-and-contended`.
 
 ## 1. The rule
+
+The formulas below model the tested ordinary HotSpot classes with compressed class pointers
+and alignment 8. Oop width determines reference field sizes independently. Recompute for
+other alignment/header modes; the historical generated-class check is not a portable layout proof.
 
 > **Compact object headers save 8 bytes only when removing 4 header bytes moves the object
 > into a smaller 8-byte-aligned size class. Otherwise the 4 freed bytes are absorbed by
@@ -35,8 +38,8 @@ array saving    = alignUp(16 + m, 8) − alignUp(12 + m, 8)     (elements ≤ 4 
                 = 0 always                                     (any 8-byte element)
 ```
 
-`ref` is a 4-byte element only while compressed oops are on; at 32 GB and above it is
-8 bytes, and `Object[]` moves into the second line — it stops shrinking entirely.
+`ref` is a 4-byte element only while compressed oops are on; when disabled it is
+8 bytes, and `Object[]` moves into the second line. Use effective widths, not a universal heap-size threshold.
 
 Tabulated — the two cases are exact complements, which is worth internalising because the
 array intuition is the opposite of the instance one:
@@ -113,8 +116,9 @@ not change size class.
 
 ### Without compressed oops, five of these rows reverse
 
-At 32 GB of heap and above a reference is 8 bytes, so every `p` containing one changes and the same
-rule lands somewhere else. Measured at `-Xmx40g` on 25.0.3, reproduced on 26.0.2 `[executed]`:
+With 8-byte references, each `p` containing one changes and the same model can predict a
+different size. Historically measured at `-Xmx40g`, alignment 8 and compressed class pointers
+on 25.0.3, reproduced on 26.0.2 `[executed]`:
 
 | Row            | `p` @6g | saving @6g | `p` @40g | `p%8` | classic/compact @40g | saving @40g |
 | -------------- | ------- | ---------- | -------- | ----- | -------------------- | ----------- |
@@ -149,12 +153,12 @@ at 40 GB, above the oops threshold in this configuration.
 **`ArrayList<Integer>` × 1000 is 20,976 bytes in both modes** under compressed oops. Not
 "slightly less" — the same number. The `ArrayList` is 24 in both, the backing `Object[1234]`
 is 4,952 in both, and the 1000 `Integer` boxes are 16,000 in both. There is nothing for the
-flag to take. At 32 GB and above it becomes 25,920 → 25,912: the `ArrayList` object saves its 8 bytes
+flag to take. In the wide-oop, alignment-8 comparison it becomes 25,920 → 25,912: the `ArrayList` object saves its 8 bytes
 and nothing else moves, because the boxes still do not shrink and `Object[]` is now an
 8-byte-element array. The conclusion holds; the exact equality is oops-scoped.
 
 **`String[1000]` is the row that genuinely inverts**, and it is worth knowing which way. Under
-compressed oops the saving is zero. At 32 GB and above the `String` object goes 32 → 24 for every
+compressed oops the saving is zero. In the wide-oop, alignment-8 comparison the `String` object goes 32 → 24 for every
 string regardless of payload, so 1000 of them save 8,000 bytes — **12.5% of the population**.
 An 8-character string is the case where the payload contributes nothing either way, so the
 whole difference is the header on the object.
@@ -173,7 +177,7 @@ Two `int[1000]` holding the same key/value pairs cost **8,032 bytes**, in all fo
 combinations. So `HashMap<Integer,Integer>` costs **9.0×** the primitive form under classic
 headers and **8.0×** under compact ones: the flag closes about 12% of an 800% gap.
 
-At 32 GB and above even that disappears. The same map measures **88,464 → 88,456** `[executed]` — a
+In the wide-oop, alignment-8 comparison even that disappears. The same map measures **88,464 → 88,456** `[executed]` — a
 saving of **8 bytes in total**, because `HashMap$Node` stops shrinking (`p` = 28) and only the
 one `HashMap` object moves. The gap against two `int[1000]` widens to **11.0×** and the flag
 closes 0.01% of it. If boxed collections are the
@@ -236,7 +240,7 @@ All executed on 25.0.3:
 | Same heap on a **non-moving** collector                   | **No warning.** Ends `true {command line}`                                                                                                                             |
 
 The bound is off-by-one from how it reads: `-Xmx8191g` is fine and `-Xmx8192g` warns
-`[executed]`. Both rows reproduced on 25.0.3+9 in this pass.
+`[executed]`. Both rows were reproduced on 25.0.3+9 in the historical audit, not rerun by this review.
 
 Two conditions that read as if they should disable the flag and do **not**, also 25.0.3:
 
@@ -274,7 +278,7 @@ java -XX:+PrintFlagsFinal -version | grep UseCompactObjectHeaders   # before sta
 jcmd <pid> VM.flags -all | grep UseCompactObjectHeaders             # on the running JVM
 ```
 
-**`-all` is not optional.** Executed against three live JVMs on 25.0.3 — `VM.flags -all`
+**Use `-all` to include default-valued flags.** Historically executed against three live JVMs on 25.0.3 — `VM.flags -all`
 distinguishes all three states, and the origin tag is the tell:
 
 ```text
@@ -284,9 +288,9 @@ default JVM            bool UseCompactObjectHeaders = false ... {default}
 ```
 
 `{command line, ergonomic}` means the flag was passed **and** overridden. Plain `VM.flags`
-without `-all` is worse in two ways: it prints nothing at all for a JVM sitting at the
-default, and its `-XX:±UseCompactObjectHeaders` form carries the whole answer in one
-character — so piping it through `grep -o`, the natural reflex, discards the sign and makes
+without `-all` can omit this flag when it retains its default. When present, its
+`-XX:±UseCompactObjectHeaders` form carries the whole answer in one
+character — so a `grep -o` pattern that selects only the flag name discards the sign and makes
 the enabled and the silently-disabled JVM produce identical output `[executed]`. Match on the
 value and the origin, never on the flag name alone.
 
@@ -305,8 +309,8 @@ provenance, its prerequisites and its per-release defaults are all in
 the flag to anyone. That it raises object adjacency density, and what that does to false
 sharing, is `false-sharing-and-contended`'s.
 
-**What would prove it helped on footprint.** Not an object count times eight. Run the same
-workload twice on the same build and measure:
+**For an empirical footprint-benefit claim**, compare the relevant population under matched
+conditions on the same build, using existing adequate evidence or a justified new check:
 
 1. `GraphLayout.totalSize()` over a representative, bounded population, both modes — useful
    for design-time comparison but not a substitute for whole-heap retention; or
@@ -317,23 +321,25 @@ workload twice on the same build and measure:
    code change, after validating the analyser's layout model against the JVM histogram in
    each mode. `heap-dump-analysis` owns that reading.
 
-**What predicts the answer before you run anything.** Take the top ten classes by instance
-count in the workload, fix the reference size first — 4 bytes under compressed oops, 8 above
-the 32 GB oops threshold — then apply §1 to each. A class whose `p` is `≡ 1,2,3,4 (mod 8)` saves
-nothing and no flag will change it; one whose `p` is `≡ 0,5,6,7 (mod 8)` saves 8 bytes,
-computable exactly.
+**For a prediction**, use the relevant class mix and its coverage of the live population.
+Fix actual oop width, class-pointer mode and alignment first, then apply §1 where its model
+fits. Under those fixed assumptions a class whose `p` is `≡ 1,2,3,4 (mod 8)` saves nothing;
+one whose `p` is `≡ 0,5,6,7 (mod 8)` saves 8 bytes. An incomplete top-class sample gives an
+estimate for that sample, not a complete heap saving.
 
 Do not carry the class names across the threshold. Under compressed oops the near-zero set is
 `Integer`, `Boolean`, `String`, `ArrayList`; above it, `String` and `ArrayList` leave that set
 and `HashMap$Node` joins it (§2). `Integer` and `Boolean` hold either way — they contain no
 reference.
 
-**The footprint side has a debit column.** The 22-bit class pointer (`Narrow klass pointer
-bits 22, Max shift 10` in `-Xlog:gc+metaspace`) puts every `Klass` on a 1 KB boundary, and
-the compressed class space pays for it: **537 → 1,024 bytes per class** measured over
-100,000 strong hidden classes, with the 1 GB default `CompressedClassSpaceSize` holding
-~1.06 M classes instead of ~2 M `[executed]`. A heap of 20 M small objects and 30 k classes
-nets tens of megabytes; a heap of 2 M objects and 300 k generated classes can net nothing
-and gain an `OutOfMemoryError: Compressed class space`. The figures and the `VM.metaspace`
+**The footprint side can have a class-space debit.** In the historical shift-10 encoding,
+each `Klass` was aligned to 1 KB: **537 → 1,024 bytes per class** measured over
+100,000 strong hidden classes of one template and loader topology. The 1 GB reservation's
+ID range and this template's measured cost gave the reported ~1.06 M versus ~2 M capacities
+`[executed]`. Actual encoding shift, reservation, class shape and loader topology can change
+that cost; weak hidden classes in §3 of the production reference did not show the same used-byte delta.
+Estimate a net effect from the actual object and class populations instead of transferring
+these per-class figures into another deployment. The figures and the `VM.metaspace`
 check are in `production-footprint-checks.md` §3; the class space itself is
-metaspace-internals'. Quote the class count next to the object count, always.
+metaspace-internals'. Include that evidence when evaluating the deployment trade; a narrow
+object-size explanation does not require a new class census.

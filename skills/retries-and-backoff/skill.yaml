@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: retries-and-backoff
-version: 1.1.1
+version: 1.1.2
 description: >-
   Retry as a policy with a cost: classifying a failure as transient, permanent or ambiguous
   before retrying anything; why a timeout is ambiguous and safe to retry only under
@@ -46,6 +46,16 @@ dependencies:
     version: ^1.0.0
   - name: idempotency
     version: ^1.0.0
+
+suggests:
+  - cascading-failures
+  - circuit-breakers
+  - connection-pool-sizing
+  - java-exception-design
+  - littles-law-and-queueing
+  - rate-limiting-and-load-shedding
+  - rpc-and-api-contracts
+  - tail-latency-analysis
 
 capabilities:
   - reads-source

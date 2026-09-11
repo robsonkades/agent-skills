@@ -149,16 +149,18 @@ public interface CountryRepository extends JpaRepository<Country, String> {
 ```
 
 If no distinct boundary contract is needed, wrapping this can add needless indirection.
-The hand-written interface earns its place
-when at least one of these is true:
+Reasons a hand-written interface can earn its place include:
 
-- The domain must not depend on the persistence framework (there is a real domain model).
+- The intended domain/application dependency contract excludes persistence framework types.
 - The published surface must be narrower than Spring Data's.
 - The method names must be domain language, and the mapping to queries is non-trivial.
 - The implementation combines several sources (a table plus a cache, a table plus a remote
   system).
+- A stable testing seam, domain-specific errors, lifecycle contract or verified
+  transaction/authorization interception supplies value even with forwarding methods.
 
-None of those true, in this module? Use Spring Data directly and record why
+When no distinct contract earns its cost in this module, direct Spring Data is a candidate;
+retain an adequate existing boundary when its value is established
 (`architecture-decision-making`).
 
 ## Testing at the boundary
@@ -181,12 +183,13 @@ the aggregate thread-safe or implement rollback, optimistic versioning or atomic
 Choose copying versus identity semantics to match the tested contract; share relevant contract
 tests with the real adapter. A mock can be sufficient when only a narrow interaction matters.
 
-The adapter itself needs an integration test against a real database — that is where the
-mapping, the query and the transaction actually exist, and where an in-memory fake proves
-nothing (`architecture-testing`).
+Claims about the adapter's actual mapping, SQL and transaction behavior need relevant
+provider/database integration evidence; an in-memory fake does not establish those contracts
+(`architecture-testing`). A narrow naming, interaction or boundary review can reuse adequate
+existing evidence without adding a full database test campaign.
 
 ## Sources
 
 - [Fowler: Repository](https://martinfowler.com/eaaCatalog/repository.html)
-- [Spring Data JPA: persisting entities](https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html)
-- [Spring Data JPA: transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html)
+- [Spring Data JPA 4.1.1: persisting entities](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/entity-persistence.adoc)
+- [Spring Data JPA 4.1.1: transactionality](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)

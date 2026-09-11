@@ -5,15 +5,21 @@
 Use a delayed duplicate only when:
 
 - the operation is safe to execute more than once or has durable idempotency/deduplication;
-- requests can reach failure-diverse replicas;
-- the suspected straggler is local/transient rather than shared saturation;
-- all attempts share one end-to-end deadline and cancellation reaches real work;
-- one layer owns the policy;
-- a fleet-wide hedge budget/throttling and server pushback bound degradation;
+- replica consistency and the acceptable-result rule preserve the operation contract;
+- measured or explicitly conditional joint behavior supports useful benefit within the
+  objective's cost limits; failure diversity helps, but statistical independence is not required;
+- all attempts share one end-to-end deadline, and cancellation plus enforced residual-work
+  bounds keep physical resource use within budget;
+- one policy owner or an explicit coordinated policy bounds attempts across layers;
+- aggregate admission/attempt budgets bound degradation, with server pushback honored where
+  supported;
 - attempt-level and call-level outcomes are observable.
 
 Cancellation of a client future is not proof that server/database work stopped. Verify
-protocol and application cancellation propagation.
+protocol and application cancellation propagation. If work cannot be canceled after dispatch,
+retain its capacity charge until actual completion and justify its bounded lifetime/cost.
+Reject a hedge that merely adds work to the saturated shared bottleneck without an evidenced
+benefit inside the capacity envelope; a different replica alone proves neither diversity nor benefit.
 
 ## Load arithmetic
 
@@ -35,25 +41,35 @@ amplification=\frac{\text{all attempts}}{\text{logical calls}}
 
 Track hedge issue/win/cancel/completion rates, useful throughput and downstream cost.
 
-Enforce both proportional and absolute attempt-rate limits, in-flight/queued work and payload
-budgets at the owning scope. Admit a duplicate atomically against those budgets; a low ratio
+Bound aggregate attempt rate, in-flight/queued work and payload at the owning scope. A ratio
+can complement an absolute capacity bound; a low ratio
 under high logical-call load can still overload the callee. Track canceled work that continues.
+Admit a duplicate atomically against the applicable budgets. Static allocations whose sum is
+safe under an enforced fleet-size bound, or callee admission, can establish the aggregate limit;
+a new coordination service is not inherently required. Account for bursts, restarts and scale-out.
 
 ## gRPC behavior
 
-Current gRPC service configuration supports max attempts, hedging delay, non-fatal status
-codes, retry throttling and server pushback. Deadlines cover the entire hedged call, and
-outstanding attempts are canceled after success. Language/version support differs; verify
-the deployed library.
+The guide describes max attempts, hedging delay, non-fatal status codes, retry throttling,
+server pushback and a deadline for the entire call. Verify the deployed language/version and
+effective service config: the source baseline here is **grpc-java 1.75.0**, not a universal
+language-support or default-setting claim.
 
-An unlisted fatal status can terminate the call and cancel peers; a non-fatal status can
-accelerate the next attempt. gRPC retry-throttling state is client-side per server name,
-not a globally coordinated fleet quota. Budget aggregate demand across clients separately.
-Generic hedging must define acceptable-result semantics, not merely take the first completion.
+In that version, `RetriableStream` rejects simultaneous `retryPolicy` and `hedgingPolicy`.
+It commits to an attempt on response headers and cancels peers; that is not a guarantee of
+eventual application success or a semantically acceptable result. Before commitment, a fatal
+status can end the call; non-fatal handling may retain peers or permit further attempts within
+limits. Do not assume every non-fatal response immediately launches another attempt: in this
+version absent pushback leaves the scheduled delay unchanged, while a positive pushback on an
+unthrottled non-fatal error is converted to zero delay. Negative/malformed pushback stops further
+hedging. Inspect `makeHedgingDecision`, `pushbackHedging` and commitment paths for the target.
 
-Do not combine independent retry and hedging policies on the same layer. gRPC describes
-hedging as its alternative retry policy, but application/framework layers can still create
-unintended multiplicative attempts.
+The guide describes client-side per-server-name retry throttling; Java 1.75.0 holds a throttle
+on the channel's transport provider. Neither establishes a quota shared by every process or
+channel. Budget aggregate demand separately. Configured attempt limits also do not account for
+every transparent transport retry; measure actual sends and distinguish pre-application failures
+from applied work. Generic hedging must define acceptable-result semantics, not merely take the
+first completion. Application/framework layers can still multiply attempts around gRPC.
 
 ## Alternatives
 
@@ -79,15 +95,16 @@ admission, connect, queue and cleanup. Cancel obsolete work cooperatively and me
 server activity; a timer or canceled future is not a hard execution cutoff.
 
 Timeout is ambiguous: the first attempt may have committed. Retry only safe operations and
-use backoff/jitter/budgets for transient conditions. Attempts across layers multiply; choose
-one retry owner and observe bottom-layer attempt amplification.
+use backoff/jitter/budgets for transient conditions. Independent layer limits multiply; prefer
+one retry owner, or verify coordinated total-attempt, deadline and physical-work accounting.
+Observe bottom-layer amplification without resetting the original operation identity or deadline.
 
 When overload is the cause, fail cheaply, shed and suppress retries/hedges. More duplicate
 work consumes precisely the missing capacity.
 
 ## Experiment
 
-Compare baseline and policy under:
+For a new or materially changed policy, select discriminating scenarios from:
 
 - normal distribution;
 - one transiently slow replica;
@@ -97,12 +114,18 @@ Compare baseline and policy under:
 - error and deadline responses.
 
 Measure user latency and success/completeness, logical calls, attempts, canceled work that
-continued, callee resource demand, fairness and recovery. Roll back if useful throughput or
-stability worsens even when p99 improves.
+continued, callee resource demand, fairness and recovery as relevant to its risks. Retain an
+adequate policy when existing evidence covers the decision. Judge throughput/cost/tail changes
+against the authorized objective and guardrails; an accepted bounded throughput tradeoff need
+not trigger rollback. Reconsider or roll back breaches of stability, correctness or agreed
+capacity/completeness limits even when p99 improves.
 
 ## References
 
 - [Dean and Barroso: The Tail at Scale](https://research.google/pubs/the-tail-at-scale/)
 - [gRPC request hedging](https://grpc.io/docs/guides/request-hedging/)
+- [grpc-java 1.75.0 RetriableStream](https://github.com/grpc/grpc-java/blob/v1.75.0/core/src/main/java/io/grpc/internal/RetriableStream.java) — commitment, policy exclusion, pushback and transparent attempts.
+- [grpc-java 1.75.0 service config](https://github.com/grpc/grpc-java/blob/v1.75.0/core/src/main/java/io/grpc/internal/ManagedChannelServiceConfig.java) and [channel](https://github.com/grpc/grpc-java/blob/v1.75.0/core/src/main/java/io/grpc/internal/ManagedChannelImpl.java) — parsing and throttle ownership.
 - [gRPC deadlines](https://grpc.io/docs/guides/deadlines/)
+- [gRPC cancellation](https://grpc.io/docs/guides/cancellation/) — application cooperation and work that continues.
 - [Google SRE: Addressing cascading failures](https://sre.google/sre-book/addressing-cascading-failures/)

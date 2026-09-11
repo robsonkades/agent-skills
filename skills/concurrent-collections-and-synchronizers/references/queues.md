@@ -20,15 +20,16 @@ Which insert form is a design decision, not a style preference:
   default: waiting consumes the caller's remaining deadline and can relocate a queue upstream.
 - `put(e)` — unconditional backpressure. Correct when the producer's own thread is the throttle
   and nothing bounds the enqueue path.
-- `offer(e)` — fail-fast. Correct only where dropping is genuinely acceptable and counted
-  (sampled telemetry). Silent data loss when it is not.
+- `offer(e)` — immediate admission decision. Handle `false` by an explicit rejection, bounded
+  retry or counted drop policy; the caller still owns work that was not accepted.
 - `add(e)` — throws `IllegalStateException("Queue full")`. Almost always wrong in a producer loop:
   it makes a routine capacity condition an exception, and on an unbounded queue it can never fire,
   so the code reads as if it handles overflow when it cannot.
 
 Contract facts worth holding: a `BlockingQueue` accepts no `null` elements (null is the sentinel
 for a failed `poll`); a queue with no intrinsic capacity constraint always reports
-`remainingCapacity() == Integer.MAX_VALUE`; and there is no `close`/`shutdown` — "a common tactic
+`remainingCapacity() == Integer.MAX_VALUE`. No-arg `LinkedBlockingQueue` instead has that finite
+capacity and reports capacity minus current size. There is no `close`/`shutdown` — "a common tactic
 is for producers to insert special end-of-stream or **poison** objects".
 
 ```java
@@ -52,20 +53,20 @@ need a different termination protocol because a marker may overtake or wait behi
 
 ## Choosing an implementation
 
-| Implementation           | Bounded?                      | Lock structure                           | Watch out                                                                                                                                                                                     |
-| ------------------------ | ----------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ArrayBlockingQueue`     | always, fixed at construction | one `ReentrantLock` + notEmpty/notFull   | producers and consumers contend on the same lock; capacity cannot change                                                                                                                      |
-| `LinkedBlockingQueue(n)` | yes                           | `putLock` + `takeLock` + `AtomicInteger` | node allocation per element; "higher throughput … but less predictable performance"                                                                                                           |
-| `LinkedBlockingQueue()`  | **no — `Integer.MAX_VALUE`**  | as above                                 | the classic hidden failure below                                                                                                                                                              |
-| `SynchronousQueue`       | zero capacity                 | dual-stack/queue                         | "not even a capacity of one"; `peek()`, `iterator()`, `size()` and `remainingCapacity()` all exist and all report a queue with nothing in it and no room in it (`remainingCapacity()` is `0`) |
-| `LinkedTransferQueue`    | **unbounded**                 | CAS dual queue                           | `size()` O(n); the JDK 21–25 `poll()` bug below                                                                                                                                               |
-| `PriorityBlockingQueue`  | **unbounded**                 | one lock over a heap                     | iteration is not in priority order; equal priorities unordered                                                                                                                                |
-| `DelayQueue`             | **unbounded**                 | one lock + heap + leader thread          | deliberate contract violation below                                                                                                                                                           |
-| `LinkedBlockingDeque`    | optional, default MAX_VALUE   | one lock                                 | `remove`, `removeFirstOccurrence`, `removeLastOccurrence`, `contains` and bulk ops are linear                                                                                                 |
-| `ConcurrentLinkedQueue`  | **unbounded, non-blocking**   | CAS (Michael & Scott)                    | `size()` is O(n)                                                                                                                                                                              |
+| Implementation           | Bounded?                                   | Lock structure                           | Watch out                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------ | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ArrayBlockingQueue`     | always, fixed at construction              | one `ReentrantLock` + notEmpty/notFull   | producers and consumers contend on the same lock; capacity cannot change                                                                                                                      |
+| `LinkedBlockingQueue(n)` | yes                                        | `putLock` + `takeLock` + `AtomicInteger` | node allocation per element; "higher throughput … but less predictable performance"                                                                                                           |
+| `LinkedBlockingQueue()`  | effectively unbounded: `Integer.MAX_VALUE` | as above                                 | usually exhausts memory before reaching its nominal capacity                                                                                                                                  |
+| `SynchronousQueue`       | zero capacity                              | JDK-specific transfer coordination       | "not even a capacity of one"; `peek()`, `iterator()`, `size()` and `remainingCapacity()` all exist and all report a queue with nothing in it and no room in it (`remainingCapacity()` is `0`) |
+| `LinkedTransferQueue`    | **unbounded**                              | CAS dual queue                           | `size()` O(n); the JDK 21–25 `poll()` bug below                                                                                                                                               |
+| `PriorityBlockingQueue`  | **unbounded**                              | one lock over a heap                     | iteration is not in priority order; equal priorities unordered                                                                                                                                |
+| `DelayQueue`             | **unbounded**                              | one lock + heap + leader thread          | deliberate contract violation below                                                                                                                                                           |
+| `LinkedBlockingDeque`    | optional, default MAX_VALUE                | one lock                                 | `remove`, `removeFirstOccurrence`, `removeLastOccurrence`, `contains` and bulk ops are linear                                                                                                 |
+| `ConcurrentLinkedQueue`  | **unbounded, non-blocking**                | CAS (Michael & Scott)                    | `size()` is O(n)                                                                                                                                                                              |
 
-`PriorityBlockingQueue` makes no guarantee about elements of equal priority, so FIFO among ties
-needs a sequence number in the comparator:
+`PriorityBlockingQueue` makes no guarantee about elements of equal priority. A sequence number can
+define tie order:
 
 ```java
 import java.util.Comparator;
@@ -81,51 +82,60 @@ record Job(int priority, long seq, Runnable body) {
 }
 ```
 
+This orders equal priorities by ticket assignment at creation, not by concurrent enqueue or
+completion order. It assumes the signed sequence does not wrap while relevant jobs coexist.
+
 Its `Iterator`, `Spliterator`, `toArray` and `forEach` are explicitly not in priority order; the
 only bulk way to read it in order is `drainTo` (which polls) or sorting the array yourself.
 
 `LinkedBlockingDeque` is the only `BlockingDeque` in the JDK. It gives work stealing's _ordering_
 property — the owner pushes and pops at the head (LIFO, warm in cache), a thief takes from the
-tail (FIFO, the oldest and biggest task, contending least) — but it uses a **single** lock, so it
-does not give the contention avoidance that makes real work stealing fast. For fork/join
+tail (oldest task in this head-insertion protocol, not necessarily the biggest) — but both ends share a
+**single** lock. That ordering alone does not establish a contention benefit. For fork/join
 workloads use `ForkJoinPool`. Its other genuine use is `addFirst(item)` to re-queue a failed item
 ahead of newer work.
 
 ## The unbounded queue, walked through
 
-An unbounded queue converts a _rate mismatch_ into _memory growth_, and disables every mechanism
-the API has for noticing overload at once: `put` never blocks, `offer` never returns `false`,
-`add` never throws, and `remainingCapacity()` always reports `Integer.MAX_VALUE`.
+An unbounded queue can convert a sustained excess of admissions over departures into memory
+growth. A queue with no capacity constraint does not reject or wait for space; that does not mean
+every call is non-blocking or cannot fail through allocation, internal locks or user code.
+No-arg `LinkedBlockingQueue` is effectively unbounded, but has a finite MAX_VALUE capacity and a
+decreasing `remainingCapacity()`; neither provides a practical overload signal.
 
 Where it hides: the no-arg `new LinkedBlockingQueue<>()`; `Executors.newFixedThreadPool(n)` and
 `newSingleThreadExecutor()` (both use one — pool internals belong to executors-and-task-lifecycle,
 the queue choice is ours); `PriorityBlockingQueue`, `DelayQueue`, `LinkedTransferQueue` and
 `ConcurrentLinkedQueue`, none of which has a bounded variant.
 
-What an engineer observes, in order:
+One possible failure progression, to verify against measurements:
 
-1. Latency climbs while CPU is **flat** and thread count is **flat** — everything is queued, not
-   running. (`L = λW`; the queue is `L`. Sizing belongs to littles-law-and-queueing.)
-2. Old-gen occupancy after full GC ratchets upward across hours; GC frequency climbs, then pause
-   time.
+1. Queue age/depth climb even if CPU and worker count stay flat. During growth, account for
+   admissions minus departures; do not treat unstable backlog as steady-state Little's Law.
+   Match queue population to queue residence time — littles-law-and-queueing owns that analysis.
+2. Retained queued work raises live memory and can increase GC pressure; collector behavior and
+   payload retention determine the observed symptoms.
 3. Requests time out downstream, clients retry, the arrival rate goes _up_, the queue grows faster
    — the metastable failure (cascading-failures).
 4. `OutOfMemoryError: Java heap space`, with a heap dump dominated by the queue's `Node` objects
    or the captured state of the queued lambdas.
-5. Everything in the queue at the moment of the crash is lost, with nothing having acknowledged it.
+5. In-memory queued state is lost at a crash. Recoverability depends on a durable source and replay
+   policy; an earlier acknowledgement does not make this queue durable and can make loss permanent.
 
 ## drainTo: batching without a per-element lock
 
 `drainTo` "removes all available elements … and adds them to the given collection", may be more
 efficient than repeated polling, throws `IllegalArgumentException` if you drain a queue to itself,
-and leaves elements in neither, either or both collections if adding to `c` throws. It does **not**
-block: it drains what is there now and may return 0.
+and leaves elements in neither, either or both collections if adding to `c` throws. It does not
+wait for future arrivals and may return 0, but can block on internal locks or the destination's
+`add`. It is neither a non-blocking-operation guarantee nor a transaction with the destination.
 
 ```java
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 void consumeInBatches(BlockingQueue<Task> q, int maxBatch) throws InterruptedException {
+    if (maxBatch <= 0) throw new IllegalArgumentException("maxBatch must be positive");
     List<Task> batch = new ArrayList<>(maxBatch);
     while (!Thread.currentThread().isInterrupted()) {
         batch.add(q.take());                 // block for the first element
@@ -139,6 +149,9 @@ void consumeInBatches(BlockingQueue<Task> q, int maxBatch) throws InterruptedExc
 `drainTo(list)` without `maxElements` on a deep queue can materialise the whole backlog in one batch,
 causing a latency/allocation spike and possibly memory exhaustion. Use the bounded overload when
 batch memory and processing time must be controlled.
+Once removed, the consumer owns the batch. If transfer, processing or cancellation fails, the
+surrounding protocol must account for partial progress and recovery; a queue removal is not an
+acknowledgement of successful processing. Do not blindly requeue partially applied work.
 
 ## LinkedTransferQueue: what it adds, and the JDK 21–25 bug
 
@@ -149,19 +162,21 @@ _already waiting_ consumer and returns `false` otherwise; `tryTransfer(e, timeou
 class.
 
 **JDK-8371740, "LinkedTransferQueue.poll() returns null even though queue is not empty".**
-Affected versions 21, 22, 23, 24, 25; fix version 26; no backport row was found as of this writing
-(absence of evidence, not evidence of absence). Reproduced locally on Temurin 25.0.3 with the
-reporter's four-thread `offer`/`peek`/`poll` harness: seven failed polls on a non-empty queue,
+The prior review recorded affected versions 21–25 and fix version 26. The OpenJDK fix is
+[PR 28479](https://github.com/openjdk/jdk/pull/28479); its discussion also contains a 25u backport
+request, which is not proof of a shipped fix. Check the deployed build's source/release notes.
+The prior Temurin 25.0.3 run of the reporter's four-thread `offer`/`peek`/`poll` harness recorded
+seven failed polls on a non-empty queue,
 against zero for `LinkedBlockingQueue` and `ArrayBlockingQueue`. _Inference, not a cited changeset:_
 the 25 `xfer` path reads `q = p.next` before attempting `p.cmpExItem(m, e)`, so a lost exchange on
 a stale `q == null` breaks out and returns `null`, where mainline restarts the scan.
 
-So on a 21 or 25 baseline this is incorrect:
+Even without that bug, one empty observation cannot establish completion while producers remain:
 
 ```java
 Task t = ltq.poll();
 if (t == null) {
-    shutdownBecauseDrained();     // WRONG on JDK 21-25: the queue may not be empty
+    shutdownBecauseDrained();     // WRONG without an explicit producer-completion protocol
 }
 ```
 
@@ -230,6 +245,7 @@ failed offers/removals and drift.
 ## Authoritative references
 
 - [Java 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)
+- [Java 25 `LinkedBlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/LinkedBlockingQueue.html)
 - [Java 25 `LinkedTransferQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/LinkedTransferQueue.html)
 - [Java 25 `DelayQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/DelayQueue.html)
 - [OpenJDK JDK-8371740](https://bugs.openjdk.org/browse/JDK-8371740)

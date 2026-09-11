@@ -7,6 +7,10 @@ import { InstallSkills } from '../src/application/install-skills.ts';
 import { ListInstalled } from '../src/application/list-installed.ts';
 import { RemoveSkills } from '../src/application/remove-skills.ts';
 import { UpdateSkills } from '../src/application/update-skills.ts';
+import { CheckUpdates, UPDATE_REMINDER_MS } from '../src/application/check-updates.ts';
+import { ApplySkillUpdates } from '../src/application/apply-skill-updates.ts';
+import { emptyUpdateState, type ToolUpdater, type UpdateStateStore } from '../src/ports/updates.ts';
+import { parseVersion } from '../src/domain/version.ts';
 import { DiagnoseSystem } from '../src/application/diagnose.ts';
 import { CreateSkill } from '../src/application/create-skill.ts';
 import { selectAgents } from '../src/application/agent-selection.ts';
@@ -221,6 +225,245 @@ function harness(options: HarnessOptions = {}) {
 }
 
 // --- Tests --------------------------------------------------------------------------------
+
+function updateHarness(ctx: ApplicationContext) {
+  let state = emptyUpdateState();
+  let latest = parseVersion('1.1.0');
+  let toolChecks = 0;
+  const store: UpdateStateStore = {
+    async load() {
+      return structuredClone(state);
+    },
+    async save(value) {
+      state = structuredClone(value);
+    },
+  };
+  const tool: ToolUpdater = {
+    async latestVersion() {
+      toolChecks++;
+      return latest;
+    },
+    async action() {
+      throw new Error('A check must not prepare or run an update');
+    },
+  };
+  return {
+    check: new CheckUpdates(ctx, tool, store),
+    store,
+    tool,
+    get toolChecks() {
+      return toolChecks;
+    },
+    setLatest(version: string) {
+      latest = parseVersion(version);
+    },
+  };
+}
+
+describe('interactive update checks', () => {
+  it('checks metadata without fetching payloads or writing installations, and separates major updates', async () => {
+    const { ctx, registry, installer } = harness({
+      packages: ['1.0.0', '1.2.0', '2.0.0'].map((version) =>
+        buildPackage({ name: 'a-skill', version }),
+      ),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    registry.fetches.length = 0;
+    installer.calls.length = 0;
+    const { check } = updateHarness(ctx);
+    const notices = await check.execute({ scope: 'global' });
+    assert.equal(notices.tool?.version, '1.1.0');
+    assert.deepEqual(
+      notices.skills.map((item) => [item.current, item.version, item.requiresMajor]),
+      [
+        ['1.0.0', '1.2.0', false],
+        ['1.0.0', '2.0.0', true],
+      ],
+    );
+    assert.deepEqual(registry.fetches, []);
+    assert.deepEqual(installer.calls, []);
+  });
+
+  it('persists dismissals by release and reminders for 24 hours across processes', async () => {
+    const { ctx } = harness();
+    const updates = updateHarness(ctx);
+    const first = (await updates.check.execute()).tool!;
+    await updates.check.remindLater([first]);
+    const next = new CheckUpdates(ctx, updates.tool, updates.store);
+    assert.equal((await next.execute()).tool, undefined);
+    assert.equal(updates.toolChecks, 1);
+    (ctx.clock as FixedClock).advance(UPDATE_REMINDER_MS);
+    assert.equal((await next.execute()).tool?.version, '1.1.0');
+    await next.dismiss([first]);
+    assert.equal((await next.execute()).tool, undefined);
+    updates.setLatest('1.2.0');
+    (ctx.clock as FixedClock).advance(UPDATE_REMINDER_MS);
+    assert.equal((await next.execute()).tool?.version, '1.2.0');
+  });
+
+  it('does not let a failed registry switch an installation to a hostile higher-precedence source', async () => {
+    const { ctx } = harness();
+    await new InstallSkills(ctx).execute({ refs: ['a-skill'], scope: 'global' });
+    const hostile = new FakeRegistry({
+      name: 'hostile',
+      packages: [buildPackage({ name: 'a-skill', version: '99.0.0' })],
+    });
+    const offline = new FakeRegistry({ name: 'official', packages: [], offline: true });
+    const registry = new RegistryFederationDouble([hostile, offline]);
+    const check = updateHarness({ ...ctx, registry }).check;
+    assert.deepEqual((await check.execute()).skills, []);
+    assert.deepEqual(hostile.fetches, []);
+  });
+
+  it('ignores deprecated/prerelease versions and treats 0.x breaking changes explicitly', async () => {
+    const versions = ['0.1.0', '0.1.1+build-1', '0.2.0', '0.3.0', '1.0.0-beta.1'];
+    const { ctx } = harness({
+      packages: versions.map((version) => buildPackage({ name: 'a-skill', version })),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@0.1.0'], scope: 'global' });
+    const registry = new RegistryFederationDouble([
+      new FakeRegistry({
+        name: 'official',
+        packages: versions.map((version) => buildPackage({ name: 'a-skill', version })),
+        deprecated: ['a-skill@0.3.0'],
+      }),
+    ]);
+    const notices = await updateHarness({ ...ctx, registry }).check.execute({ scope: 'global' });
+    assert.deepEqual(
+      notices.skills.map((item) => [item.version, item.requiresMajor]),
+      [
+        ['0.1.1+build-1', false],
+        ['0.2.0', true],
+      ],
+    );
+  });
+
+  it('keeps checks cached, but reads live installed versions and isolates ignores by destination', async () => {
+    const { ctx, registry } = harness({
+      packages: ['1.0.0', '1.1.0'].map((version) => buildPackage({ name: 'a-skill', version })),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'project' });
+    let lookups = 0;
+    const versions = registry.versions.bind(registry);
+    registry.versions = async (name) => {
+      lookups++;
+      return versions(name);
+    };
+    const { check } = updateHarness(ctx);
+    const global = (await check.execute({ scope: 'global' })).skills;
+    await check.dismiss(global);
+    assert.equal((await check.execute()).skills[0]?.target.scope, 'project');
+    assert.equal(lookups, 1);
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.1.0'], scope: 'project' });
+    assert.deepEqual((await check.execute()).skills, []);
+  });
+
+  it('does not notify for disabled agents or unmanaged skills', async () => {
+    const { ctx, installer } = harness({
+      packages: ['1.0.0', '1.1.0'].map((version) => buildPackage({ name: 'a-skill', version })),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    const disabled = {
+      ...ctx,
+      config: { ...ctx.config, agents: { 'claude-code': { enabled: false } } },
+    };
+    assert.deepEqual((await updateHarness(disabled).check.execute()).skills, []);
+    for (const entry of installer.installed.values()) installer.seed({ ...entry, unmanaged: true });
+    assert.deepEqual((await updateHarness(ctx).check.execute()).skills, []);
+  });
+
+  it('invalidates version metadata when a configured registry URL changes', async () => {
+    const { ctx } = harness({
+      packages: ['1.0.0', '1.1.0'].map((version) => buildPackage({ name: 'a-skill', version })),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    const updates = updateHarness(ctx);
+    assert.equal((await updates.check.execute()).skills.length, 1);
+    const changed = {
+      ...ctx,
+      config: {
+        ...ctx.config,
+        registries: [{ name: 'official', kind: 'local' as const, url: '/new', trusted: true }],
+      },
+      registry: new RegistryFederationDouble([
+        new FakeRegistry({ name: 'official', packages: [] }),
+      ]),
+    };
+    assert.deepEqual(
+      (await new CheckUpdates(changed, updates.tool, updates.store).execute()).skills,
+      [],
+    );
+  });
+
+  it('survives unreadable or unwritable reminder state', async () => {
+    const { ctx } = harness();
+    const { tool } = updateHarness(ctx);
+    const store: UpdateStateStore = {
+      async load() {
+        throw new Error('read');
+      },
+      async save() {
+        throw new Error('write');
+      },
+    };
+    const check = new CheckUpdates(ctx, tool, store);
+    const notice = (await check.execute()).tool!;
+    assert.equal(notice.version, '1.1.0');
+    await check.dismiss([notice]);
+    await check.remindLater([notice]);
+  });
+});
+
+describe('applying reviewed update notifications', () => {
+  it('installs the exact displayed release only in the selected agent and scope', async () => {
+    const { ctx, installer } = harness({
+      adapters: [adapterOf('one', '/one'), adapterOf('two', '/two')],
+      packages: ['1.0.0', '1.1.0', '2.0.0'].map((version) =>
+        buildPackage({ name: 'a-skill', version }),
+      ),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'project' });
+    const notices = await updateHarness(ctx).check.execute({ agents: ['one'], scope: 'global' });
+    await new ApplySkillUpdates(ctx).execute(notices.skills.filter((item) => !item.requiresMajor));
+    for (const entry of installer.installed.values()) {
+      assert.equal(
+        entry.version,
+        entry.agentId === 'one' && entry.scope === 'global' ? '1.1.0' : '1.0.0',
+      );
+    }
+  });
+
+  it('revalidates installations before writing after a stale notification', async () => {
+    const { ctx, installer } = harness({
+      packages: ['1.0.0', '1.1.0'].map((version) => buildPackage({ name: 'a-skill', version })),
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    const notices = (await updateHarness(ctx).check.execute()).skills;
+    installer.installed.clear();
+    installer.calls.length = 0;
+    await assert.rejects(new ApplySkillUpdates(ctx).execute(notices), /Installation changed/);
+    assert.deepEqual(installer.calls, []);
+  });
+
+  it('rejects a transitive major upgrade before changing any installed skill', async () => {
+    const { ctx, installer } = harness({
+      packages: [
+        buildPackage({ name: 'a-skill', version: '1.0.0', dependencies: { 'b-skill': '^1.0.0' } }),
+        buildPackage({ name: 'a-skill', version: '1.1.0', dependencies: { 'b-skill': '^2.0.0' } }),
+        buildPackage({ name: 'b-skill', version: '1.0.0' }),
+        buildPackage({ name: 'b-skill', version: '2.0.0' }),
+      ],
+    });
+    await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
+    const notices = (await updateHarness(ctx).check.execute()).skills.filter(
+      (item) => item.name === 'a-skill',
+    );
+    await assert.rejects(new ApplySkillUpdates(ctx).execute(notices), /Dependency b-skill/);
+    assert.ok([...installer.installed.values()].every((entry) => entry.version === '1.0.0'));
+  });
+});
 
 describe('agent selection', () => {
   it('auto-selects every detected agent', async () => {

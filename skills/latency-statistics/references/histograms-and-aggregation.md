@@ -15,10 +15,12 @@ A histogram is a lossy distribution representation. Before trusting a derived qu
 | Library/backend/version                 | defaults and native-histogram support change independently of application code                |
 
 Inspect overflow/error counters and reconcile histogram `_count` with the independently counted
-terminal outcomes. A histogram that cannot represent the deadline must not be used to prove the
-deadline was met.
+terminal outcomes. Unaccounted overflow, clamping or dropped observations invalidate deadline
+compliance claims. A complete finite bucket at or below the deadline gives a conservative lower
+bound on the compliant fraction, which can suffice for a decision even without an exact deadline
+bucket. A bucket spanning the deadline cannot resolve the exact compliant fraction.
 
-## Why quantiles cannot be averaged
+## Why averaging quantiles does not recover the union's quantile
 
 A quantile is nonlinear. Per-instance/window p99 values and their traffic weights do not contain
 enough information to recover the union's p99; averaging them can err in either direction. Merge
@@ -60,8 +62,9 @@ CDF/type-1 semantics, p99 over 200 observations is order statistic `ceil(200 × 
 the third-largest when values are distinct: it is a
 valid sample statistic, but a noisy estimate of a population tail.
 
-`n(1-p)` is the expected count beyond population quantile `p`, useful as a resolution warning—not
-a pass/fail threshold. Report:
+For a continuous population, `n(1-p)` is the expected count strictly beyond its p-quantile;
+atoms/ties can make that count smaller. Use it as a resolution warning, not a pass/fail threshold.
+Report:
 
 - total and terminal-outcome counts, plus the quantile convention;
 - distribution-free order-statistic rank bounds or an interval justified for the sampling design;

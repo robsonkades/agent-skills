@@ -22,14 +22,15 @@ that were never noticed as decisions: a broker chosen because it appeared in the
 retention period invented because a number was needed, a "corporate standard" that was one
 team's habit.
 
-This skill makes **provenance** and **authority** explicit. Missing evidence is recorded as
-unresolved; it prevents claiming acceptance, not documenting the proposal or continuing
-independent work.
+This skill makes **provenance** and **authority** explicit. Record missing sources or authority as
+unresolved rather than claiming supported acceptance. An unresolved feasibility question does not
+prevent documenting a proposal or continuing independent work.
 
 ## Workflow
 
 1. **Notice consequential choices**, including defaults that affect the feature's contracts
-   or constraints. Do not inventory every naming alternative; the categories are below.
+   or constraints. Inspect the relevant existing log, accepted baseline and policy before adding an
+   entry. Do not inventory every naming alternative; the categories are below.
 2. **Assign provenance** from the four classes. This is a question of fact and it is checkable
    (`references/provenance-and-authority.md`).
 3. **Assign accountable authority** from the consequence: Product, Engineering, Architecture,
@@ -43,11 +44,12 @@ independent work.
    reversible choices inside accepted constraints, plus choices explicitly delegated by the
    user or applicable policy. Escalating every low-impact decision is
    its own failure: it trains the user to stop reading.
-6. **Record it when it is taken**, in the log below. A decision that materially affects
-   architecture, behaviour, data, operations, security, performance or reliability also earns a
-   record of its own.
-7. **When a later discovery contradicts it**, supersede rather than edit. The history is the
-   part that has value.
+6. **Record proposals and outcomes as they arise**, with their actual status. Use the depth rule below
+   to decide whether a log entry suffices or an ADR is warranted. Link pending feasibility checks;
+   recording a proposal does not authorize its dependent commitment.
+7. **When later evidence contradicts it**, first determine whether the premise is invalidated or the
+   implementation violates a still-valid decision. Correct the deviation, or supersede the decision
+   with supported authority and evidence; preserve history and update affected downstream work.
 
 ## Provenance — the four classes
 
@@ -56,7 +58,7 @@ independent work.
 | **USER_MANDATED**      | The user required it                              | Their message, quoted                                                         |
 | **CORPORATE_MANDATED** | An applicable organisational standard requires it | Attributed confirmation or authoritative policy with issuer, scope and status |
 | **PROJECT_EXISTING**   | The project already does it this way              | `path:line`, with a count                                                     |
-| **AGENT_PROPOSED**     | The agent chose it                                | The analysis behind it                                                        |
+| **AGENT_PROPOSED**     | The agent originated the proposal                 | The analysis behind it                                                        |
 
 **The rule the whole skill exists for: PROJECT_EXISTING never promotes itself.** Finding Kafka
 in the build file establishes a declared dependency; runtime use needs wiring/consumer evidence.
@@ -101,7 +103,8 @@ THEN report it as PROJECT_EXISTING. Ask only when reuse changes externally visib
      under the accepted constraints and established convention.
 
 IF someone asserts an organisational standard
-THEN record who asserted it. An unattributed standard is an assumption.
+THEN record the assertion and check its issuer, scope, status and authority. Attribution alone
+     does not verify a mandate; retain the missing evidence rather than silently adopting it.
 
 IF a decision is hard to reverse
 THEN check whether existing authorization covers that consequence; do not infer authority
@@ -111,21 +114,23 @@ IF a decision is taken under time pressure or with a known unknown
 THEN record the unknown alongside it, so the decision is re-openable when it closes.
 
 IF implementation reveals the decision was wrong
-THEN supersede it, say what the implementation showed, and update the plan —
-     never overwrite the original entry.
+THEN identify the invalidated premise and supported replacement, supersede with links and update
+     affected work. A code deviation alone is not evidence that the decision should change.
 
 IF a Product Definition or contract revision changes the premise of a decision
 THEN mark the ED-* stale and revisit affected downstream work; continue independent work.
 
-IF the same decision is being taken for the third time
-THEN look for an existing record and changed premises before creating a duplicate.
+IF a decision is being revisited
+THEN locate its existing record and changed premises before creating a duplicate.
 ```
 
 ## What earns a record of its own
 
-Yes: technology, architecture, API contract, persistence, schema, messaging, concurrency model,
-consistency, caching, retry and resilience posture, security, observability approach,
-compatibility, migration, deployment strategy.
+Technology, API contracts, persistence, messaging, concurrency, resilience, security and deployment
+often contain consequential choices, but the category alone does not require an ADR. Follow local
+policy and use `architecture-decision-making` when cross-boundary consequences, costly reversal or
+otherwise lost rationale warrant a separate record. Link an existing ADR when it already covers the
+choice; a bounded implementation detail may need only a concise log or issue rationale.
 
 Usually no: local naming, method extraction, test file layout, anything a reader would learn
 faster from code. A version change within an allowed range can still affect runtime/API behavior;
@@ -136,7 +141,9 @@ it, and get it wrong**.
 
 ## Output
 
-The log, in the dossier, appended to as the feature proceeds:
+Use the existing decision log and identifier convention, appended to as the feature proceeds. A small
+Inline feature can retain a concise entry without creating a dossier solely for this skill.
+The examples below are illustrative, not claims about the current repository:
 
 ```text
 ED-04 Dispatch events are published to the existing Kafka cluster
@@ -147,19 +154,25 @@ ED-04 Dispatch events are published to the existing Kafka cluster
       Consulted:   Product, Operations
       Options:     see analysis.md, choice "how the dispatch is delivered"
       Record:      decisions/ADR-002-dispatch-transport.md
-      Depends on:  U-03 (resolved), C-01 (no new infrastructure)
+      Depends on:  U-03 (resolved), SC-01 (no new infrastructure)
 
 ED-05 Dispatch retry policy within the accepted 30s request deadline
       Category:    resilience
       Provenance:  AGENT_PROPOSED
       Owner:       Engineering — delegated implementation within ED-03 deadline/load constraints
-      Status:      PROPOSED; validate before calling it accepted
+      Status:      PROPOSED; request-budget and duplicate-effect checks pending
       Because:     at most three attempts including the initial call; per-attempt timeout
                    and backoff/jitter must fit the remaining deadline, with retryable
                    failures and duplicate-effect protection established by CT-02
-      Verification: timeout/lost-response cases; request budget and downstream load
-      Record:      decisions/ADR-003-dispatch-retries.md
+      Verification: PLANNED — timeout/lost-response cases; request budget and downstream load
+      Record:      this log entry; within ED-03/CT-02, no separate ADR required by local policy
 ```
 
 Every entry carries provenance, authority evidence and status. An unresolved source remains
 unknown in a pending record; never invent a mandate or relabel someone else's choice as yours.
+
+Before handoff, check IDs, source/revision links, authority and status consistency. Decision acceptance
+and implementation verification are separate: an authorized choice is not proof that it works, and a
+passing test does not supply approval. Material feasibility gaps keep dependent commitment blocked
+unless valid accepted-gap authority covers it. Report the missing evidence, next check and affected
+work; record observed validation separately from planned checks.

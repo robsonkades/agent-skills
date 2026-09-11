@@ -112,9 +112,10 @@ JDK 9 (JDK-8071667) — a different class and a different exception, commonly co
 
 ### A loader that can block: the failure-evicting memoiser
 
-`computeIfAbsent` is simpler and atomic, but holds the bin monitor for the whole load. Use it for
-cheap in-memory derivations. For anything that can block, hold no lock across the load — and then
-you own the failure policy that `computeIfAbsent` gave you for free:
+`computeIfAbsent` is simpler and atomic, but coordinates map updates across the load. Use it for
+cheap in-memory derivations. For blocking loads, compare sharing a future outside map coordination
+with the project's existing cache. This example chooses eviction of failed loads so later callers
+can retry; bounded failure caching/backoff may instead be appropriate during an outage.
 
 ```java
 import java.util.concurrent.*;
@@ -135,14 +136,14 @@ final class Memoizer<K, V> {
         try {
             return f.get();
         } catch (CancellationException | ExecutionException e) {
-            cache.remove(key, f);                  // never cache a failure
+            cache.remove(key, f);                  // this example retries after failure
             throw e;
         }
     }
 }
 ```
 
-**The `cache.remove(key, f)` is the whole point of the idiom, and it is the line most copies drop.**
+**The `cache.remove(key, f)` implements this example's retry policy.**
 Without it, a `FutureTask` that failed stays in the map forever: with a loader that fails once and
 then succeeds, the loader is invoked **once** and every subsequent caller re-throws the same cached
 `ExecutionException` until the process restarts. A one-second downstream blip becomes a
@@ -245,7 +246,7 @@ map "nobody is modifying", or a silently truncated or duplicated traversal.
 
 ## Copy-on-write
 
-`CopyOnWriteArrayList` implements every mutation by copying the backing array; the iterator holds a
+`CopyOnWriteArrayList` normally copies its backing array for changes; the iterator holds a
 reference to the array as it was at creation, so it never throws CME and never reflects later
 changes, and `remove`/`set`/`add` on the iterator throw `UnsupportedOperationException`. `null` is
 permitted. `CopyOnWriteArraySet` is backed by the same array, so `contains` is a linear scan and
@@ -254,17 +255,17 @@ the javadoc restricts it to sets that "generally stay small".
 No primary source gives a read:write ratio at which it stops paying — every number in circulation
 is folklore. What the sources do give is the shape of the cost:
 
-- each mutation is an O(n) array copy **and** O(n) garbage — CPU on the writer, plus allocation
-  pressure;
-- writers serialise on one lock, readers are wait-free;
-- total cost per unit time is roughly `writeRate × size`, so a 1M-element list with one write per
-  second is worse than a 10-element list with 1000 writes per second;
-- `addAll(Collection)` copies once, not once per element.
+- copying changes allocate an O(n) array; old arrays remain live while iterators retain them.
+  No-op operations need not copy (OpenJDK 25 `set` of the same reference is one counterexample);
+- writers serialize on one lock; ordinary `get` and snapshot traversal avoid that writer lock.
+  This is not a wait-free guarantee for every operation: user equality/predicate code can block;
+- `copyingWriteRate × size` estimates copied references, not end-to-end throughput or GC cost;
+- `addAll(Collection)` can batch publication instead of copying once per element.
 
-The rule that follows: copy-on-write is for configuration-shaped state whose write rate is bounded
-by human or control-plane action. When writes are naturally batched, a `volatile` reference to a
-`List.copyOf(...)` swapped on update has the same read cost, explicit publication (see
-java-memory-model) and no accidental `remove()` calls.
+Small read-mostly configuration or listener lists are candidates; confirm size, update frequency
+and snapshot lifetime rather than imposing a scope or ratio rule. When updates replace the whole
+list, a `volatile` reference to `List.copyOf(...)` gives explicit publication (java-memory-model)
+and rejects accidental mutation through the published list.
 
 ```java
 private volatile List<Endpoint> endpoints = List.of();      // read: volatile publication read
@@ -273,13 +274,19 @@ void refresh(Collection<Endpoint> discovered) {             // write: one public
 }
 ```
 
+This is whole-list replacement, not a concurrent read-modify-write protocol: competing writers
+that derive replacements from the old list need serialization or a CAS retry to avoid lost
+updates. Unlike copy-on-write collections, `List.copyOf` rejects null elements. Neither approach
+freezes mutable element state; obtain a coherent source collection before publishing a snapshot.
+
 ## Skip lists
 
 `ConcurrentSkipListMap` is a `ConcurrentNavigableMap` with expected average `log(n)` cost for
 `containsKey`, `get`, `put` and `remove`. Choose it only when ordering is an **operation** —
 `firstKey`, `ceilingEntry`, `headMap`/`tailMap`/`subMap`, `pollFirstEntry`, descending views — as
-in time buckets, deadline indexes and leaderboard ranges. If you only need sorted _output_, sort a
-snapshot of a CHM: `O(n log n)` once beats a permanent `log n` factor on every `get`.
+in time buckets, deadline indexes and leaderboard ranges. If sorted output is infrequent, compare
+sorting collected CHM entries with maintaining ordering on every update. Output frequency and
+workload decide the cost; concurrent CHM traversal is not an atomic whole-map snapshot.
 
 |                                                     | `ConcurrentHashMap`                | `ConcurrentSkipListMap`                                  |
 | --------------------------------------------------- | ---------------------------------- | -------------------------------------------------------- |
@@ -302,4 +309,5 @@ it; profile the deployed JDK if collection-size telemetry itself is suspected. I
 - [Java 25 `ConcurrentHashMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
 - [Java 25 `ConcurrentSkipListMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentSkipListMap.html)
 - [Java 25 `CopyOnWriteArrayList`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html)
+- [Java 25 `List.copyOf`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)
 - [Java 25 concurrent package summary](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)

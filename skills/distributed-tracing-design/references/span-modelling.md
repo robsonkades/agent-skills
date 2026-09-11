@@ -74,7 +74,7 @@ Document replay/duplicate semantics.
 
 ## Test cases
 
-Assert at least:
+Select cases relevant to the changed span classes and their failure contracts:
 
 - stable names for unknown routes and arbitrary IDs;
 - success, expected rejection, server failure, cancel and timeout status;

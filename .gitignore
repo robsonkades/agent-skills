@@ -6,3 +6,6 @@ coverage/
 .tmp/
 *.log
 .env
+.codex
+docs/parallel-skill-reviews.md
+docs/skill-review-prompt.md

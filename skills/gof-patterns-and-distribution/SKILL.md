@@ -30,12 +30,17 @@ whose names survive the crossing are the ones most likely to hide that it stoppe
 This classification is conceptual; Java API references use Java 17. Inspect the target runtime,
 codec, broker and persistence versions and effective configuration before applying their guarantees.
 
+Start with the caller's operation, required effects, loss/recovery tolerance and actual deployment
+boundary. Reuse existing contracts, tests and operational evidence; ask only about missing facts
+that change the decision. Keep an adequate local design or remote protocol. A remote read does not
+need durable progress merely because it crosses a process; a restart-surviving effect may.
+
 ```text
 Inside one process                  Across a boundary
 ──────────────────────────────────  ───────────────────────────────────
 A call has one process failure domain It may commit remotely while the reply is lost
 Latency follows local work/I/O      Adds transport queues and independent tail latency
-A reference is the object           A copy; identity does not travel
+A reference addresses local state  Values or remote handles; no shared heap reference
 Uniqueness is per class loader      Uniqueness requires coordination
 Order follows synchronization/API   Broker/protocol/topology defines its scope
 State can share memory              State may be remote/replicated; consistency is a contract
@@ -43,21 +48,23 @@ Monotonic intervals are local       Clock offset and rate assumptions need expli
 One invocation; effects may partial Delivery may be at-most/at-least/effectively-once
 ```
 
-Every transformation below follows from that table.
+The mappings below are possible roles and additional contracts, not mandatory topology changes.
+Logical identity can travel in an ID or remote handle; it does not establish shared heap identity,
+current authority or the lifetime of the referenced resource.
 
 ## Classification
 
 ```text
 PROCESS-LOCAL — the guarantee stops at the JVM
     Singleton    uniqueness is per class loader, never per cluster
-    Flyweight    references are shared; nothing crosses the wire
+    Flyweight    shares in-process state; remote reuse needs a separate protocol
     Iterator     the cursor is in this process
-    Memento      opacity/lifecycle is local unless a durable snapshot contract is added
+    Memento      remote restoration needs explicit representation, ownership and lifetime
 
 BOUNDARY — the pattern manages a seam, and the seam may be a network
     Adapter      where a foreign model, vocabulary and failure stop
     Proxy        the pattern most able to hide that a call is remote
-    Facade       coarse granularity is how round trips are saved
+    Facade       simplifies caller use; actual remote granularity decides round trips
     Bridge       supported backends must satisfy the chosen contract honestly
 
 INTERACTION — the pattern shapes who talks to whom
@@ -76,20 +83,20 @@ ALGORITHM — largely unaffected; the choice may not be
 
 ## The transformations
 
-| Local pattern | Distributed form                                          | What must be added                                                                            |
-| ------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Singleton     | Leader election / a lease                                 | Fencing tokens, or idempotency so overlap is harmless                                         |
-| Flyweight     | Distributed cache/content addressing—different mechanisms | Invalidation, staleness, serialization and remote/local tiers                                 |
-| Iterator      | Pagination/cursor                                         | Strategy, bound, deadline, cancellation, mid-walk consistency                                 |
-| Memento       | Durable snapshot/checkpoint                               | Schema identity, compatibility, consistency and corruption recovery                           |
-| Observer      | Publish/subscribe                                         | Declared delivery/ordering; transactional bridge when committed changes must publish reliably |
-| Command       | A message                                                 | Schema identity, delivery/effect policy, deduplication where needed, terminal outcome         |
-| Mediator      | An orchestrator                                           | Required durable progress, deadlines, applicable compensation and availability budget         |
-| Chain         | A workflow                                                | Per-step failure and retry, redelivery semantics, partial-effect handling                     |
-| Facade        | Remote facade, gateway or BFF when appropriate            | Contract, deployment, authentication, scaling and outage surface                              |
-| Proxy         | A service client                                          | Deadlines, a failure vocabulary, bulk operations                                              |
-| State         | State machine within a distributed workflow               | Required persistence, timeout outcomes and duplicate policy; not automatically a saga         |
-| Composite     | Fan-out                                                   | Concurrency, an overall deadline, a defined partial-failure result                            |
+| Local pattern | Distributed form                                        | What must be added                                                                            |
+| ------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Singleton     | Leader election / authoritative resource coordination   | Resource-enforced authority, or proof that overlapping effects preserve the invariant         |
+| Flyweight     | Local interning or justified remote content/cache reuse | Identity, capacity and freshness; invalidation where mutable content requires it              |
+| Iterator      | Pagination/cursor                                       | Strategy, bound, deadline, cancellation, mid-walk consistency                                 |
+| Memento       | Remote restore handle / snapshot                        | Identity, compatibility, ownership and lifetime; durable recovery when required               |
+| Observer      | Publish/subscribe                                       | Declared delivery/ordering; transactional bridge when committed changes must publish reliably |
+| Command       | A message                                               | Schema identity, delivery/effect policy, deduplication where needed, terminal outcome         |
+| Mediator      | An orchestrator                                         | Persistence when recovery requires it, deadlines, applicable compensation and availability    |
+| Chain         | A workflow                                              | Per-step failure and retry, redelivery semantics, partial-effect handling                     |
+| Facade        | Remote facade, gateway or BFF when appropriate          | Contract, deployment, authentication, scaling and outage surface                              |
+| Proxy         | A service client                                        | Deadlines, a failure vocabulary and bounded granularity; bulk operations where useful         |
+| State         | State machine within a distributed workflow             | Required persistence, timeout outcomes and duplicate policy; not automatically a saga         |
+| Composite     | Fan-out                                                 | Concurrency, an overall deadline, a defined partial-failure result                            |
 
 ## Decision rules
 
@@ -116,9 +123,10 @@ THEN it is a redesign: six properties change at once — thread,
      (gof-observer).
 
 IF an object is sent across a boundary
-THEN a representation is serialized and reconstructed; reference identity does not
-     travel. Constructor/invariant behavior is codec-specific, and the representation
-     becomes a compatibility contract (rpc-and-api-contracts).
+THEN identify whether the protocol transfers a value or a remote handle. Neither transfers a
+     shared heap reference. Logical identity, constructor/invariant behavior and handle lifetime
+     are protocol/codec-specific; the representation is a compatibility contract
+     (rpc-and-api-contracts).
 
 IF a pattern name is applied to a deployed component — "the gateway is
 our facade", "the orchestrator is a mediator"
@@ -131,8 +139,12 @@ THEN it is not an object-design question at all
      (distribution-boundaries).
 
 IF duplicate effects are harmful
-THEN choose among naturally idempotent operations, deduplication, fencing/coordination
-     and transactional authority. Dedup stores also fail/expire; no mechanism is universal.
+THEN distinguish repeating one intent from stale or conflicting distinct intents. Deduplication
+     or natural idempotence does not by itself reject a stale owner's different write; fencing
+     does not by itself deduplicate repeated writes by a current owner. Enforce the required
+     invariant at the effect boundary (idempotency, distributed-locks-and-leases).
+     Check dedup retention and failure behavior; expiration does not establish that an earlier
+     effect never occurred.
 ```
 
 ## The level confusion
@@ -153,9 +165,9 @@ pair the second has an operational existence — deployment, availability, scali
 the first does not, and using one word for both is how a network hop becomes invisible in a design
 discussion.
 
-Patterns do participate in architectures: an adapter implements a port in hexagonal architecture, a
-command is a CQRS write, a state machine is a saga's core. That is composition across levels, not
-equivalence.
+Patterns can participate in architectures: an adapter can implement a port in hexagonal
+architecture, a CQRS write can be represented by Command, and saga progress can use a state
+machine. The required behavior need not force a particular GoF object structure.
 
 ## Review checklist
 

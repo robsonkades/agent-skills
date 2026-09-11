@@ -1,13 +1,14 @@
 schemaVersion: 1
 
 name: lock-free-patterns
-version: 1.2.1
+version: 1.2.2
 description: >-
   Designing and reviewing nonblocking Java algorithms: linearization points, lock-free,
   wait-free and obstruction-free progress, CAS/RMW loops, success/failure ordering, contention
   collapse, backoff/helping, ABA/version wrap, node reuse and reclamation, publication,
-  linearizability, starvation and shutdown. Requires comparison with JDK/library and lock-based
-  alternatives plus retry and topology measurement. Use when implementing or diagnosing atomics,
+  linearizability, starvation and shutdown. For custom implementations or performance claims,
+  compare JDK/library and lock-based alternatives; measure retry and topology effects when relevant.
+  Use when implementing or diagnosing atomics,
   striped counters, queues, stacks or ring buffers—not as a synonym for “fast.”
 
 license: Apache-2.0

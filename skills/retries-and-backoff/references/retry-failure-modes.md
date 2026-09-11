@@ -16,8 +16,9 @@ with attempt ordinals/backoff visible in traces. Raw inbound rate rising while s
 not unique—it can also be overload, fan-out change or attack—so correlate logical operation IDs
 and retry policy activation.
 
-**Exit.** Retries have to be cut, not waited out. A budget empties on its own because there
-are no successes to refill it; attempt counts do not. Shedding at the dependency
+**Exit.** If retry load sustains overload, reduce or stop that work. A success-refilled budget
+empties after its burst when no successes replenish it; during partial recovery its behavior
+depends on the actual refill policy and traffic. Shedding at the dependency
 (rate-limiting-and-load-shedding) and breaking the circuit are the other two levers. The
 system-level treatment is cascading-failures.
 
@@ -29,18 +30,19 @@ system-level treatment is cascading-failures.
 gateway 3 attempts × service 3 attempts × HTTP client 3 attempts = 27 requests
 ```
 
-**Where it hides.** The third layer is usually not application code: a service mesh sidecar
+**Where it hides.** Additional layers may be outside application code: a service mesh sidecar
 with a default retry policy, an SDK with retries enabled by default, or a database driver
-reconnecting. Two of the three layers are typically invisible in the repository.
+reconnecting. Repository configuration alone may not reveal the deployed policy.
 
-**Observation.** Count requests at each hop for a single logical call in a trace, not in
-review. A ratio above the layer's `maxAttempts` warrants checking other retry layers, fan-out,
+**Observation.** Use trace/counter evidence at each hop for matching logical calls when
+assessing observed amplification; a configuration review establishes only a configured bound.
+A ratio above the layer's `maxAttempts` warrants checking other retry layers, fan-out,
 hedges, redirects and mismatched measurement windows/populations; it does not identify the cause alone.
 
 **Fix.** Give one layer ownership of the operation-level retry policy/budget and explicitly
-configure transport, proxy, SDK and application attempt counts. A lower transport layer may
-retry a connection only when it can prove no request effect; include that in the combined
-maximum rather than relying on a slogan.
+configure transport, proxy, SDK and application attempt counts. A lower transport layer needs
+reliable no-effect evidence or an explicit safe replay contract, plus inclusion in the combined
+maximum and deadline. Reconnecting alone proves neither condition.
 
 ## 3. The non-idempotent write retried after a timeout
 
@@ -60,8 +62,9 @@ catch (HttpTimeoutException e) {
 client timeout plus one backoff. Timing is a clue, not a unique fingerprint; correlate intent
 IDs, attempts and commit/delivery records to distinguish other duplication paths.
 
-**Fix.** An idempotency key carried across attempts so the server can collapse them
-(idempotency), or preserve a pending/unknown outcome and reconcile before retrying.
+**Fix.** A stable idempotency key or equivalent conditional/replay protocol that prevents
+duplicate effects (idempotency), or preserve a pending/unknown outcome and reconcile before
+retrying. Verify how the same intent's authoritative outcome is recovered, not just deduplicated.
 
 ## 4. Retry with no budget during a partial outage
 
@@ -96,32 +99,41 @@ connection-pool-sizing; the queueing arithmetic is littles-law-and-queueing.
 
 ## What to plot
 
-| Series                                             | Healthy shape               | Incident shape                                                       |
-| -------------------------------------------------- | --------------------------- | -------------------------------------------------------------------- |
-| attempts ÷ logical calls                           | ~1.0, flat                  | climbs to `maxAttempts` and plateaus there                           |
-| downstream attempts ÷ logical operations           | ~1.0                        | rises while success falls; direct amplification evidence             |
-| retry budget rejections per second                 | 0                           | > 0, which is the budget working; alert on it as a dependency signal |
-| p99 of the logical call vs p99 of a single attempt | often close without retries | measure separately; percentiles cannot be multiplied or added        |
-| duplicate business records per hour                | 0                           | > 0 after any ambiguous-class retry that lacked an idempotency key   |
+| Series                                             | Healthy shape               | Incident shape                                                         |
+| -------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------- |
+| attempts ÷ logical calls                           | ~1.0, flat                  | climbs to `maxAttempts` and plateaus there                             |
+| downstream attempts ÷ logical operations           | ~1.0                        | rises while success falls; direct amplification evidence               |
+| retry budget rejections per second                 | policy-dependent            | compare rejection rate and useful outcomes with the admitted policy    |
+| p99 of the logical call vs p99 of a single attempt | often close without retries | measure separately; percentiles cannot be multiplied or added          |
+| duplicate business records per hour                | 0                           | possible after unsafe ambiguous replay; confirm intent/effect evidence |
 
 Record raw counters and derive **attempts per logical call** over matching scopes/windows.
 Keep absolute offered rate, outstanding attempts and unknown outcomes too; ratios alone can
 hide low volume or traffic collapse. Latency sums apply to a particular sequential call's
 attempts/delays, not to separate p99 values.
+The local `maxAttempts` plateau assumes the same bounded cohort and no hidden attempts or
+fan-out. Budget rejection can be intended admission behavior; alert when it signals a material
+dependency or user-outcome problem, not merely because the counter is nonzero.
 
 ## Proving the policy before production
 
-- **Configuration test, no network.** Conservatively assert
+Choose checks for the changed policy or unresolved claim, reusing adequate existing evidence.
+A narrow source/arithmetic explanation or supported no-change review need not create a proxy,
+induce an outage or run every scenario. The following are validation options, not executed results.
+
+- **Configuration test, no network.** Bound the sequential schedule with
   `Σ(attempt timeouts) + Σ(backoff) + cleanup/response reserve ≤ caller budget`,
-  including proxy/SDK/transport layers. Assert one policy owns the budget and hidden retry
-  defaults are explicit.
+  or verify that remaining-deadline admission/clipping enforces a smaller bound and refuses
+  waits/attempts that cannot fit. Include proxy/SDK/transport layers, one budget owner and
+  explicit hidden defaults; nominal maxima need not all run before the deadline stops them.
 - **Fault injection.** A proxy in front of the dependency (Testcontainers with a latency or
   connection-cut toxic) driven to a fixed failure rate. Assert the dependency's observed
   request count stays within the budget multiplier — that is the amplification bound made
   falsifiable.
 - **Duplicate detection.** Run the ambiguous path deliberately: inject a timeout _after_ the
   server has committed, then assert exactly one business record exists. This is the test that
-  catches a missing idempotency key, and it fails loudly on the shape that costs money.
+  challenges the actual duplicate-prevention/reconciliation contract; a key's presence alone
+  does not establish it.
 - **Server guidance and cancellation.** Exercise valid/invalid `Retry-After`, a delay beyond
   remaining deadline, interruption during sleep, response streaming and breaker-open results.
   Confirm expired/pre-interrupted entry starts zero attempts and physical work is still counted

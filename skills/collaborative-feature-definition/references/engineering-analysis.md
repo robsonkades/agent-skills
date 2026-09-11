@@ -87,7 +87,9 @@ phases/resources (or none with reason).>
 
 ## Engineering decomposition
 
-<None with reason, or independently valuable/testable TF-* and enabling RES-*.>
+<None with reason, or independently valuable/testable TF-* with their acceptance and dependencies.
+Capture necessary enabling work as a dependency or delivery constraint; define RES-* during later
+authorized lifecycle planning, not as delivery tasks in this definition workshop.>
 
 ## Readiness conclusion
 
@@ -106,6 +108,11 @@ phases/resources (or none with reason).>
 
 - Begin from the accepted business-definition revision. If it is mutable or unidentified, stop and
   repair the handoff before making contracts.
+- Compare the simplest viable change with materially different approaches when the decision warrants
+  it, using the same business acceptance, contract obligations and operating conditions. Include
+  integration, migration and support costs; state what evidence would change the recommendation.
+  Unknown feasibility stays unresolved, and an already authoritative choice needs reconsideration only
+  when new evidence invalidates its premise. Do not manufacture alternatives for a routine choice.
 - A PoC answers one material uncertainty. State the decision its result will change before running it;
   time-boxing alone does not make an experiment useful.
 - Use `architecture-decision-making` for a consequential, cross-boundary, costly-to-reverse choice.

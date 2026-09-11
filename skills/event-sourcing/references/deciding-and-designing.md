@@ -104,9 +104,10 @@ public sealed interface AccountEvent {
 }
 ```
 
-`BalanceUpdated(newBalance)` would be the same information and a much worse event: it records
-the _result_ of a decision instead of the decision, so no projection can ever ask "how much was
-withdrawn" and no new rule can be applied to the past.
+`BalanceUpdated(newBalance)` alone loses the distinction between a withdrawal, deposit and
+correction. Preserve the decision when consumers or replay need that distinction. Conversely,
+`BalanceReconciled(newBalance, reason)` can record a real domain correction; include the inputs
+and provenance required by its contract rather than inventing a withdrawal to fit a naming rule.
 
 **What belongs in the payload:**
 

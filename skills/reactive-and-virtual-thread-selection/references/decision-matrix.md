@@ -22,20 +22,14 @@
 There is no row where one model wins on every workload, which is why the decision is per
 boundary rather than per organisation.
 
-## Memory, with numbers instead of adjectives
+## Memory accounting
 
 The often-quoted "virtual threads cost a few hundred bytes" describes an initial or narrow
 measurement, not a capacity constant. A parked virtual thread retains its continuation stack
-and reachable request state. Illustrative ranges are hypotheses, not sizing inputs:
-
-```text
-Shallow request handler, few frames        ≈ 1 KB or less
-Typical framework request (filters, ORM)   ≈ several KB
-Deep stack with a large ORM operation      ≈ tens of KB
-```
-
-Multiply a measured retained-size distribution by target concurrency, then include request
-payloads, buffers and GC headroom. At very high connection cardinality, differences between
+and reachable request state. First establish how many threads or subscriptions actually
+exist: an idle connection need not own a parked thread. Estimate disjoint retained state at
+the relevant concurrency, count shared objects once, and include any payload/buffer state
+not already measured plus GC headroom. At very high connection cardinality, differences between
 a concrete reactive operator graph and a concrete parked stack can decide machine size; the
 direction and crossover cannot be asserted without measurement.
 
@@ -47,7 +41,8 @@ Two second-order effects to keep in mind:
   double-counting payloads already in retained-size measurements; unbounded buffering can
   dominate either model's memory.
 
-Measure both at your target concurrency before letting this dimension decide anything.
+Use representative target measurements if memory is to decide the choice; absent them,
+keep that comparison conditional. A narrow accounting correction needs no new benchmark.
 
 ## Where backpressure comes from
 
@@ -69,8 +64,9 @@ Neither scheduler capacity nor a connection pool alone bounds all retained reque
 | Symptom on a dashboard   | heap and thread count rise; latency rises                            | queue/buffer gauges and overflow/discard metrics rise; `onErrorDropped` alone is not proof |
 | Worst realistic outcome  | OOM from unbounded in-flight work                                    | OOM from unbounded retention or data loss from an inappropriate drop strategy              |
 
-Neither shape is better in the abstract. Both are survivable if the bound was chosen and
-instrumented, and both are outages if it was inherited.
+These are possible failure paths, not inevitable outcomes. Inspect effective limits and
+overload behavior; an inherited limit may already be adequate, while an explicitly configured
+one can still be wrong. Preserve demonstrated adequate controls.
 
 ## Hybrids that work
 
@@ -82,7 +78,8 @@ instrumented, and both are outages if it was inherited.
   `boundedElastic` on virtual threads keeps one legacy blocking call from starving the event
   loops when the call is scheduled there. The virtual-thread implementation retains
   scheduler caps and queued-task bounds.
-  It still needs downstream-specific admission and cancellation/resource cleanup.
+  Verify that admission protects the downstream, whether through existing shared controls
+  or a needed local limiter, and preserve cancellation/resource cleanup.
 - **A blocking service consuming a reactive client at its edge**, converted once with
   `block()` on a permitted blocking thread (virtual or platform), outside an event loop.
   Preserve deadlines, empty-result/error behavior and context; cancellation may not abort
@@ -93,18 +90,19 @@ instrumented, and both are outages if it was inherited.
 - Blocking calls inside operators without deliberate isolation from non-blocking threads.
 - `spring.threads.virtual.enabled=true` on a WebFlux application, expecting it to make
   blocking safe. It does not: the event loops are still event loops.
-- Two models on the same request path, chosen per class by whoever wrote it.
-- Rewriting incrementally without a boundary — a half-migrated pipeline is both models'
-  costs and neither model's benefits.
+- Accidental per-class model changes with no execution, context or lifetime contract.
+- Incremental rewriting that loses bounds or ownership at an undefined handoff. A staged
+  hybrid can be useful when its intermediate contracts and remaining costs are explicit.
 
 ## Writing the decision down
 
 Whatever is chosen, record four things where the code lives: the workload shape that decided
 it, where the concurrency bound comes from, what happens at that bound, and what evidence
-would reopen the decision. A choice with no falsifier is a preference, and it will be
-re-litigated by the next team every eighteen months.
+would reopen the decision. Keep the record proportionate and distinguish missing evidence
+from a demonstrated reason to change.
 
 ## Sources
 
 - [Reactive Streams specification](https://www.reactive-streams.org/) — demand and asynchronous boundaries; boundedness must be designed across the pipeline.
 - [Reactor 3.7.2 Schedulers API](https://projectreactor.io/docs/core/3.7.2/api/reactor/core/scheduler/Schedulers.html) — virtual boundedElastic is available from Reactor 3.6.0 on Java 21+, retaining caps.
+- [JEP 444](https://openjdk.org/jeps/444) — heap stack chunks, observability limits and workload-dependent memory comparison; not a measured per-thread sizing constant.

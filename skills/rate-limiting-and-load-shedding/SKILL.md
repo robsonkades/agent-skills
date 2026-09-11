@@ -1,17 +1,14 @@
 ---
 name: rate-limiting-and-load-shedding
 description: >
-  Two mechanisms kept apart: rate limiting as a fairness and quota policy enforced per
-  client whether or not you are busy, and load shedding as self-protection that refuses work
-  you cannot complete, from your own saturation. Covers token versus leaky bucket, fixed
-  versus sliding windows, burst capacity, distributed limits and local-plus-shared
-  reconciliation, the 429 and Retry-After contract, saturation signals, deadline-aware
-  rejection. Use when a limit is enforced per replica and multiplies by replica count, when
-  a fixed window lets through double the rate intended, when a limiter returns 500 or omits
-  Retry-After, when a service collapses under traffic that broke no limit, or when shed rate
-  alerts as an error. Not queue arithmetic (littles-law-and-queueing), system-wide spread
-  (cascading-failures), the client-side complement (circuit-breakers), the retry side of a
-  429 (retries-and-backoff), replica spread (load-balancing-and-routing), error budgets
+  Choose policy quotas and saturation-based admission: limit identity, charged work, burst
+  and window semantics, distributed budgets, early rejection, fairness, deadlines and
+  recovery. Use when replica-local limits multiply a quota, window-boundary bursts break
+  the contract, rejection amplifies retries, or a service overloads while clients remain
+  within quota. Covers token/leaky buckets, fixed/sliding windows, 429/503 and meaningful
+  Retry-After guidance. Not queue arithmetic (littles-law-and-queueing), system-wide spread
+  (cascading-failures), circuit-breaker behavior (circuit-breakers), client retry design
+  (retries-and-backoff), replica routing (load-balancing-and-routing), error budgets
   (slo-and-alerting), or load generation (load-testing).
 ---
 
@@ -23,29 +20,35 @@ These are two mechanisms with two different inputs, and conflating them is why s
 careful rate limits still fall over. **Rate limiting is a policy about fairness and quota**:
 this client gets N requests per second, and the limiter enforces it identically whether the
 service is idle or dying. **Load shedding is self-protection**: the service refuses work it
-cannot complete, based on its own saturation, regardless of whose request it is and whether
-that client is within its quota. A limiter cannot save you from legitimate traffic; a shedder
-cannot enforce a contract. A service that needs one usually needs both.
+cannot complete, based on its own saturation, even when the client is within quota. A global
+rate budget can protect a known stable workload, and shedding can preserve tenant shares;
+neither automatically supplies the other's contract. Keep the decision reasons distinct,
+and add both only when the existing controls leave both needs unmet.
 
 The failure this prevents is the collapse with a green limiter. Every client is inside its
 quota, the aggregate is above capacity, queues grow, every request now waits longer than the
 caller's timeout, and the service spends 100% of its capacity producing responses nobody is
-waiting for. Nothing was violated. Nothing was rejected. Throughput goes to zero.
+waiting for. Nothing was violated. Nothing was rejected. Deadline goodput goes to zero.
 
 ## Workflow
 
-1. **Name which mechanism you are building.** Quota and fairness, or self-protection. If the
-   answer is "both", they are two components with two configurations and two dashboards.
+1. **Name the policy or resource being protected.** Inspect existing limits, quota/API
+   contracts, workload costs and saturation evidence. Compare retaining the current control
+   with a fixed rate/concurrency bound before adding distributed or adaptive machinery.
+   If both quota and capacity matter, expose separate decisions and metrics; they may share
+   one admission component. Ask only for missing contract/capacity facts that change the choice.
 2. **For a limit: fix the unit, the key and the burst.** Requests per second or a
    cost-weighted unit; keyed by API key, tenant, user or IP — an IP key behind a proxy or NAT
-   limits a shared address, not a client. Then choose the algorithm from the burst you intend
-   to allow and set that burst explicitly: token bucket's capacity _is_ the burst policy, and
-   leaving it equal to the refill rate rejects traffic the service could easily serve. See
+   limits a shared address, not a client. Specify whether attempts, admissions or completed
+   work consume quota, including later rejection/failure/refund behavior. Choose the algorithm
+   from the actual window and burst contract; capacity equal to one second's refill is valid
+   when deliberately chosen and absorbable. See
    `references/limits-and-shedding-decisions.md`.
-3. **Decide how the limit is enforced across replicas.** Dividing by the replica count is
-   wrong whenever load is uneven or the count changes; a shared counter puts a round trip on
-   every request; local buckets reconciled against a shared budget is the usual middle. State
-   the resulting over-admission bound rather than claiming the global rate is exact.
+3. **Decide how the limit is enforced across replicas.** Static shares can strand allowance
+   under skew and need a membership rule when replica count changes; a shared counter puts
+   a round trip on every request; local grants add protocol and stranded-budget costs. Choose
+   from the consistency, overage and availability contract rather than a default distributed shape.
+   State the resulting bound rather than claiming the global rate is exact.
 4. **For shedding: pick a leading saturation signal and an explicit queue policy.** Queue
    delay, deadline slack and in-flight work often lead CPU; the real bottleneck may instead be
    a connection pool, event loop or downstream limit. Reject expired work first. For live work,
@@ -77,15 +80,16 @@ Use rate limiting when:
 Use load shedding when:
 - arrival rate can exceed capacity from traffic that violates no quota — a retry storm,
   a batch job, a marketing push, or a slowed dependency reducing your own capacity
-- a queue exists anywhere on the request path (it does)
+- queued or running demand can exceed the protected resource/deadline budget
 Use both when:
-- the service is multi-tenant and its capacity is finite. They answer different questions
+- independent quota and overload requirements are not covered by existing controls
 Prefer a concurrency limit over a rate limit when:
 - request cost varies by orders of magnitude, so requests per second is not a proxy for
-  work. Concurrency bounds work in flight; rate bounds arrivals only
+  work. Concurrency bounds simultaneous operations, not their unbounded bytes/fanout;
+  combine cost/size limits where needed and preserve any independent quota contract
 Do not use shedding as a substitute for capacity when:
-- the service sheds continuously at normal traffic. That is under-provisioning with extra
-  steps; the sizing arithmetic is littles-law-and-queueing
+- the service sheds continuously at expected traffic. Investigate the configured limit,
+  workload mix and bottleneck capacity before concluding more replicas will fix it
 ```
 
 ## Rules
@@ -94,11 +98,12 @@ Do not use shedding as a substitute for capacity when:
   endpoint, operation, region or globally. Load shedding reacts to current capacity. An
   overload controller may preserve fair shares/priority while shedding; expose quota and
   saturation decisions separately so both remain explainable.
-- A **fixed window** admits up to twice the intended rate across a boundary: a full window's
-  worth at the end of one window and another full window's worth at the start of the next.
-  Use a sliding window (or a token bucket) whenever the burst matters.
+- A **fixed window** allowing N requests per T can admit 2N around a boundary, not merely
+  twice the instantaneous rate. A token bucket instead permits burst B plus refill R over
+  elapsed time; it does not enforce N in every rolling T. Choose exact/approximate rolling
+  accounting or an explicit burst envelope according to the contract.
 - Token bucket's **capacity is a deliberate burst allowance**, and the parameter most often
-  left equal to the rate by accident. Capacity is how much idle credit a client may
+  left implicit. Capacity is how much idle credit a client may
   accumulate and spend at once; refill rate is the sustained limit. Set both, and size
   capacity against what the service can actually absorb in a burst.
 - A static per-replica share is exact only under restrictive assumptions about membership,
@@ -129,10 +134,10 @@ Do not use shedding as a substitute for capacity when:
   simple/fair and preserves invested wait; controlled LIFO/drop-head can improve deadline
   goodput under overload but risks starvation and is safe only before execution begins. Use
   propagated deadlines or cancellation signals instead of guessing that age means abandonment.
-- Uniform shedding can protect homogeneous traffic. Where criticality differs, assign classes — health
-  and control-plane calls above interactive user traffic above batch and prefetch — and shed
-  from the bottom. Uniform shedding degrades everything a little, including the things whose
-  failure costs the most.
+- Uniform shedding can protect homogeneous traffic. Where criticality differs, derive
+  trusted classes and reservations from business outcomes, including starvation bounds.
+  Health/control paths need their own small abuse bounds; batch or retry work is not
+  automatically less valuable than an interactive first attempt.
 - Shedding can keep the service recoverable, but each rejected required request is still a
   user-visible availability outcome and usually counts against its SLI. Page on **goodput** — successful responses delivered inside the
   caller's deadline — and on the latency of admitted work, plot shed rate alongside them, and
@@ -161,12 +166,18 @@ Fail closed when the limiter protects a security/spend invariant; fail open or u
 local emergency allowance when availability is more important and overage is repairable. This
 is a business safety choice, not a Redis-client default.
 
+When quota and capacity gates compose, define whether a later rejection keeps the earlier
+debit; do not invent refunds after a timeout or unknown execution outcome. Release execution
+permits only when their protected resource lifetime ends. Process-local permit mechanics are
+`concurrency-limiting-and-bulkheads`; use `java-performance` only for an actual JVM diagnosis.
+
 ## References
 
-- [Limiting and shedding in Java](references/java-implementations.md) — a correct token
+- [Limiting and shedding in Java](references/java-implementations.md) — a pedagogical token
   bucket including burst, the local-plus-shared reconciliation shape, an admission-control
   filter that sheds on queue time, the 429 response with `Retry-After`, and where Bucket4j
-  and Resilience4j fit by role. Read before writing or reviewing a limiter or a shedder.
+  and Resilience4j fit by role. Read for Java implementation/review; the policy reference
+  below applies regardless of implementation language.
 - [Choosing limits and shedding policy](references/limits-and-shedding-decisions.md) — the
   algorithm comparison table, distributed-limit strategies with the error each admits,
   priority classes, deadline-aware queue policies and their fairness cost, what to

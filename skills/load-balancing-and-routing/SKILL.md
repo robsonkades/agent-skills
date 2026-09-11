@@ -3,7 +3,7 @@ name: load-balancing-and-routing
 description: >
   Getting a request to a replica that can serve it: L4 versus L7 by capability rather than
   layer number, why an L4 balancer in front of long-lived HTTP/2 or gRPC connections
-  balances connections instead of requests and pins a client to one replica, the balancing
+  balances connections instead of requests and pins each flow to one replica, the balancing
   algorithms and what each optimises, power-of-two-choices, health checking and outlier
   ejection with the fleet-ejection hazard, and connection draining. Use when per-pod request
   rate is skewed while connection counts look even, when one replica is hot after a
@@ -30,14 +30,22 @@ legal only under the operation's deadline/idempotency contract.
 The failure this prevents is the fleet that is balanced on paper and skewed in production. An
 L4 balancer plus long-lived HTTP/2 or gRPC connections balances _connections_, and a client
 that opens one connection and multiplexes ten thousand requests over it sends every one of
-them to a single replica. Adding replicas does not help; the connection does not move. Nothing
-is unhealthy, no error is logged, and the only visible symptom is that per-replica request
-rate is uneven while connection counts are not.
+them to a single replica. Adding replicas does not move that existing connection, though new
+eligible flows can use new capacity. This can produce uneven per-replica request rate without
+an unhealthy endpoint. Many independent connections with suitable work distribution can still
+make L4 adequate; measure the actual requirement before changing topology.
 
 ## Workflow
 
+Use the steps relevant to the requested explanation, diagnosis or routing change. Reuse
+adequate evidence and retain a deployment that meets its routing and availability contract.
+Missing observations permit conditional options, not a proven root cause. Return the scoped
+finding, justified change or no-change, and checks run versus still needed; a narrow review
+does not require every capture or rollout drill below.
+
 1. **Name the routing unit and information available.** TCP flow, HTTP request, RPC stream,
-   session, tenant or key lead to different behavior. Header/path routing and semantic retries
+   session, tenant or key lead to different behavior. Identify the eligible endpoint pool,
+   including readiness, locality, membership and client policy. Header/path routing and semantic retries
    require application parsing; ownership routing may require a key-aware client or directory.
 2. **Check the connection lifetime against the protocol.** HTTP/1.1 with keep-alive, HTTP/2
    and gRPC all hold connections open. Sequential HTTP/1.1 reuse also pins repeated work;
@@ -46,7 +54,8 @@ rate is uneven while connection counts are not.
    per-endpoint requests, active streams, bytes, CPU/service time, queueing and capacity.
    Connection counts alone do not mean equal load because connections carry different work.
 4. **Pick the algorithm by the property it optimises.** Round-robin ignores request cost;
-   least-request adapts to it; power-of-two-choices is the distributed approximation of
+   least-request adapts to outstanding count, which may correlate with cost;
+   power-of-two-choices is a distributed approximation of
    least-loaded. See `references/routing-modes.md`.
 5. **Design active readiness and passive outlier detection as complementary signals.** State
    thresholds, recovery, locality and correlated-failure behavior. Cap ejection/admission so
@@ -57,30 +66,34 @@ rate is uneven while connection counts are not.
    GOAWAY where applicable, and bound completion. `preStop` sleep is one coarse mechanism;
    endpoint/LB draining behavior must be verified. Budget arithmetic is
    `kubernetes-service-lifecycle`.
-7. **Verify with a rollout, not a review.** Run an open-loop client through a deploy and a
-   scale-up, recording HTTP errors, gRPC terminal statuses, resets/timeouts and per-replica
-   capacity-normalized work share. HTTP 200 alone does not establish RPC success.
+7. **Validate the changed routing claim.** For rollout or scale-up behavior, use applicable
+   existing evidence or test the actual workload model: independent arrivals need an open
+   schedule with delayed/dropped starts accounted for; completion-paced populations need
+   representative concurrency and think times. Record latency, unexpected HTTP outcomes,
+   gRPC terminal statuses, resets/timeouts and capacity-normalized work share.
+   Define success by the request contract; HTTP 200 alone does not establish RPC success.
 
 ## Decision block
 
 ```text
 Use an L4 balancer when:
-- the protocol is not HTTP (raw TCP, a database proxy), or connections are short-lived and
-  numerous enough that connection balancing approximates request balancing
-- per-request routing, retries and traffic splitting are genuinely not required
-Avoid an L4 balancer when:
-- traffic is HTTP/2 or gRPC over long-lived connections — it will balance connections and
-  pin request load to whichever replicas the clients happen to hold
+- flow-level routing meets the protocol/policy contract and enough independent connections
+  carry sufficiently comparable work to meet measured balance and recovery requirements
+- per-request routing, semantic retries and request-level traffic splitting are not required at this hop;
+  HTTP/2 or gRPC alone does not disqualify an adequate L4 deployment
+Reconsider L4 alone when:
+- a few long-lived connections concentrate work or delay capacity adoption beyond the
+  requirement, or application-level routing policy is needed
 Use an L7 proxy when:
 - you need per-request balancing, header- or path-based routing, weighted rollout, retries,
   or per-request observability; account for whether it adds a hop, TLS boundary, CPU and
   another failure/queueing domain
 Prefer client-side balancing when:
-- callers are few, internal, and share a language or mesh runtime; the extra hop's latency
-  matters; and you can distribute discovery and policy to every client
+- participating callers support compatible discovery, policy updates, health and connection
+  lifecycle; avoiding a centralized proxy hop is useful and operating that policy fits
 Avoid client-side balancing when:
-- clients are third-party or polyglot, or a policy change would require redeploying every
-  caller — the policy is then as hard to change as the clients
+- required discovery/policy cannot be deployed consistently to participating clients, or
+  their update and support burden outweighs the benefit; language count alone does not decide
 Prefer routing by key (sharding-and-partitioning) instead when:
 - a request must reach the one replica that owns its key. That is placement, not balancing,
   and a least-request policy actively breaks it
@@ -95,17 +108,20 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   inferring it from a product label.
 - Kubernetes `Service` / `ClusterIP` exposes an L4 virtual service whose implementation may be
   kube-proxy (iptables/IPVS/nftables), Windows networking or eBPF. It selects new
-  connections. gRPC or HTTP/2 traffic through a ClusterIP therefore pins: the fix is an L7
-  proxy in the path, or a headless Service plus client-side balancing — not a different
-  `sessionAffinity` setting.
+  connections from the eligible endpoint set. Multiplexed calls on an established connection
+  retain its backend. If that violates balance or scale-up requirements, compare L7 routing,
+  supported client-side discovery/policy and measured connection-pool/recycling options.
+  `sessionAffinity` does not add per-call selection. Inspect traffic policies/locality before
+  treating every ready pod as eligible to a given caller.
 - The observable signature of the multiplexing problem: per-pod
   `rate(http_server_requests_seconds_count[5m])` (or the gRPC equivalent) varies by multiples
   across pods, while per-pod established-connection counts are within a few of each other. A
   newly scaled-up pod that stays near zero request rate is the same symptom.
 - Connection recycling can bound stale placement from the server, client library or proxy.
-  Graceful HTTP/2 GOAWAY plus jitter avoids synchronized reconnects, but recycling is a coarse
-  mitigation and can increase handshake/TLS/connection pressure. Ensure clients re-resolve
-  and retry only safe streams.
+  Graceful HTTP/2 GOAWAY with jitter can reduce synchronized reconnects, but recycling is a
+  coarse mitigation and can increase handshake/TLS/connection pressure. Verify client
+  reconnect/re-resolution behavior; a replacement connection can select the same backend.
+  Retry only streams whose protocol outcome and operation contract permit it.
 - Round-robin distributes configured routing units (requests at L7, flows at L4), not
   **work**. With heterogeneous request cost it
   can produce even routing-unit counts and uneven latency; that is not a broken balancer, it is the
@@ -119,14 +135,15 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   but power-of-two choices is not universally superior: weights, locality, signal quality
   and the freshness/cost of global coordination determine the comparison.
 - **A health check is a timeout-based observation, not ground truth.** Aggressive thresholds turn a
-  shared-dependency blip into a fleet-wide ejection: every replica fails at once, the balancer
+  shared-dependency blip into a fleet-wide ejection: every replica can fail at once, the balancer
   ejects them all, and there is no backend left. Cap ejection at a fraction of the upstream
   (a max-ejection-percentage) and reserve enough capacity. A fail-open panic mode may preserve
   degraded availability, while authentication/corruption hazards may require fail-closed.
   Correlated failure is `failure-models`.
 - Coordinate readiness and balancer checks, but do not assume they are duplicates. Readiness
-  expresses endpoint lifecycle/local ability; passive ejection sees path- and request-specific
-  failures. Document precedence and recovery so disagreement is diagnosable.
+  expresses lifecycle and ability to serve the declared contract, which can deliberately
+  fail closed on a required shared dependency; passive ejection sees path- and request-specific
+  failures. Document all-unready behavior, precedence and recovery so disagreement is diagnosable.
 - Draining is a sequence with overlapping control/data planes: stop advertising, wait for
   bounded propagation, reject/redirect new work, finish or terminate in-flight work, then
   close. A fixed `preStop` sleep may cover propagation but does not prove it; measure new
@@ -146,7 +163,7 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   request counts are balanced; isolate or shard it rather than hiding skew with stickiness.
 - Retry only before response commitment and only for operations whose ambiguity/idempotency
   rules allow it. Enforce one end-to-end attempt budget to avoid multiplicative proxy/client
-  retries.
+  retries; operation replay design belongs to `idempotency`.
 - During weighted rollout, measure request and **work** share, success, latency and state/schema
   compatibility. Connection/stream lifetime can make configured weights differ from observed
   traffic for a long time.

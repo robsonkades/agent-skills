@@ -2,7 +2,7 @@
 
 ## Population contract
 
-Record:
+For a measured tail, record the fields needed to identify its population and limits:
 
 - client/server clock and latency boundaries;
 - endpoint/workflow, result status and retry semantics;
@@ -98,10 +98,21 @@ If A and B are rarely slow on different requests, p99(A) and p99(B) can each be 
 p99(A+B) is large. If slow events coincide, component sums behave differently. Therefore
 no universal inequality such as p99(A+B) less than p99(A)+p99(B) is safe.
 
+There is a different, valid marginal lower bound. For nonnegative sequential components on
+the same population, `T=A+B >= A` pointwise implies `F_T(t) <= F_A(t)` and thus
+`q_p(T) >= q_p(A)` under the same inverse-CDF quantile definition; likewise for B.
+The same order holds for matched empirical nearest-rank quantiles. Different cohorts,
+censoring rules or incompatible histogram approximations do not establish that comparison.
+
 Concrete nearest-rank example: among 1,000 matched requests, A costs 100 ms on requests 1–6,
 B on 7–12, and both are zero otherwise. Each component p99 is 0 ms, but p99(A+B) is 100 ms.
 Move B's six slow observations onto requests 1–6: component p99 values stay zero and the sum's
 p99 becomes zero too. Marginal percentiles alone cannot recover their joint behavior.
+
+The opposite direction relative to the **sum of p99s** also occurs: make A cost 100 ms on
+requests 1–20 and B cost 100 ms on 21–40, with zero elsewhere. Each component p99 is 100 ms,
+but the sum's p99 is only 100 ms, below 200 ms. Both examples retain the marginal lower bound;
+neither licenses percentile subtraction for critical-path attribution.
 
 Use:
 
@@ -121,6 +132,9 @@ histogram range/overflow and recording overhead. Slow-trace exemplars identify m
 their prevalence is not a population rate without a valid sampling correction.
 
 ## Deliverable
+
+Use the relevant fields for the decision; a mathematical explanation need only state its
+population/quantile assumptions, derivation or counterexample, and limits.
 
 ```text
 Population:

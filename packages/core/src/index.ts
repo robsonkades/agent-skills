@@ -166,6 +166,7 @@ export {
   increment,
   intersects,
   isSemanticVersion,
+  isPrerelease,
   maxSatisfying,
   parseRange,
   parseVersion,
@@ -240,6 +241,23 @@ export {
 } from './application/agent-selection.ts';
 
 export type { ApplicationContext } from './application/context.ts';
+
+export {
+  emptyUpdateState,
+  type UpdateState,
+  type UpdateStateStore,
+  type ToolUpdater,
+  type ToolUpdateAction,
+  type SelectionPrompt,
+} from './ports/updates.ts';
+export {
+  CheckUpdates,
+  UPDATE_REMINDER_MS,
+  type UpdateNotice,
+  type SkillUpdateNotice,
+  type UpdateNotices,
+} from './application/check-updates.ts';
+export { ApplySkillUpdates } from './application/apply-skill-updates.ts';
 
 export { CreateSkill, type CreateOptions, type CreateReport } from './application/create-skill.ts';
 

@@ -17,9 +17,11 @@ description: >
 
 ## Purpose
 
-Decide which layer owns an observed pause before anything is tuned. Endpoint latency mixes
-execution, queueing and downstream time; a JVM safepoint is only one candidate interval. The
-GC log times collector-specific intervals within a safepoint cycle. Between the sources sit
+Attribute the disputed delay to the extent the evidence supports before selecting a relevant
+change. Endpoint latency mixes
+execution, queueing and downstream time; a JVM safepoint is only one candidate interval.
+A stop-the-world GC entry times a collector-specific interval within a safepoint cycle;
+concurrent GC entries have different scopes. Between the sources sit
 synchronization, VM work/cleanup and whatever the host did to the
 process — and each of those is a different fix with a different owner.
 
@@ -34,30 +36,39 @@ the default, and tuning the pause that was logged — leave the real cause untou
 Inspect the deployed JVM/vendor/build, collector, actual flags and recording configuration;
 the measurements below use HotSpot 25.0.3 and do not authorize a runtime upgrade or global
 diagnostic changes. Historical executed figures are prior evidence, not a fresh run on the target.
+Use the steps needed for the requested claim. Reuse adequate captures and effective settings;
+a parser/arithmetic review, source explanation, per-thread handoff or supported no-change
+conclusion does not require new instrumentation or a remediation experiment. Missing evidence
+limits the claims that depend on it, not independently supported findings.
 
-1. **Write down the decomposition before collecting anything.** Safepoint `Total` = time to
+1. **For a safepoint-cycle claim, establish the build's decomposition.** Safepoint `Total` = time to
    reach + at-safepoint interval + leaving (disarm/wake-up) on the tested JDK 25 layout. Do not call an endpoint p99 “application-
    visible STW” until aligned thread/request evidence shows process-wide loss of progress.
    Residual latency can be queueing, a per-thread stall, a downstream wait or a host effect.
-2. **Enable the safepoint log with decorators the analyser expects.**
+2. **If cycle evidence is missing, capture the safepoint log within the diagnostic budget.**
    `-Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags`, and validate any parser
    against a small sample of the real log before trusting an aggregate report.
-3. **Read `Total`; do not reconstruct it as `Reaching + At`.** The manual sum omits `Leaving safepoint` and
-   understates that logged cycle interval; threads do not all stop at the start of TTSP.
+3. **Read the logged `Total`.** On the JDK 25 layout, `Reaching + At` omits `Leaving safepoint`;
+   the checked JDK 24 layout instead includes leaving in `At`. Do not add a guessed term to
+   an older `Total`. Threads do not all stop at the start of TTSP.
 4. **Split the pause at the sync/operation boundary.** Large `Reaching safepoint` with small
    `At safepoint` directs investigation to synchronization and delayed threads/VM or host
    scheduling. Large `At` requires operation/cleanup evidence; host stalls can inflate it too.
-5. **Cross-check `Total` against JFR** by correlating `jdk.SafepointBegin` and
+5. **When JFR correlation is needed and available, cross-check `Total`** using `jdk.SafepointBegin` and
    `jdk.SafepointEnd` on `safepointId`. Agreement detects parser/window mistakes, but both
    expose the same JVM mechanism and are not independent proof of user-visible impact.
-6. **Name the thread and the operation together.** `-XX:+SafepointTimeout` logs the name and
-   state of the slow thread (not its stack — that needs a wall-clock profile of that thread
-   over the same window); `jdk.ExecuteVMOperation` says what was waiting on it. One without
-   the other does not close the attribution.
-7. **Classify the cause before proposing a flag**, using
+6. **For unexplained high TTSP, connect delayed threads to the waiting operation.** If existing
+   evidence is insufficient, scoped `-XX:+SafepointTimeout` diagnostics can identify non-arrived
+   threads by name/state, not supply their Java stacks. Use aligned stack evidence to investigate
+   their paths and VM-operation evidence to name the waiting work; report any remaining gap.
+7. **Classify the supported cause before proposing a flag**, using
    `references/attributing-time-to-safepoint.md`, and confirm every flag's effective value
    with `jcmd <pid> VM.flags -all`, or a matched invocation including all target flags, before prescribing or removing
    it.
+
+Return the supported layer/mechanism, evidence boundary, smallest justified correction or
+no-change result, and unresolved attribution. A source or parser check is not proof that
+a production change improved latency.
 
 ## Rules
 
@@ -65,9 +76,9 @@ diagnostic changes. Historical executed figures are prior evidence, not a fresh 
   evidence. It normally represents the GC operation term, not TTSP or arbitrary queueing.
 - Capture the `Total` field directly. On JDK 25 the line carries three terms —
   `Reaching safepoint`, `At safepoint`, `Leaving safepoint` — and `Total` is exactly their
-  sum (executed, 25.0.3, zero mismatches over 1,169 lines). An analyser that sums the first
-  two is systematically optimistic by the third, and the error compounds with safepoint
-  frequency — negligible at a few safepoints per second, not negligible at thousands.
+  sum (historical 25.0.3 validation reported zero mismatches over 1,169 lines). An analyser
+  that sums the first two drops the third. Assess the omitted duration distribution,
+  frequency and aligned request/SLO impact; frequency alone does not establish negligible cost.
 - A safepoint-log parser written for one decorator set can silently match nothing against
   another. A report of "0 events found" requires checking that events actually occurred,
   rotation/loss, level/tags and parser coverage before drawing a runtime conclusion.
@@ -97,19 +108,23 @@ diagnostic changes. Historical executed figures are prior evidence, not a fresh 
   triggers it.
 - `-XX:GuaranteedSafepointInterval=0` has been the default since JDK 23, and the flag is
   **diagnostic** on 25 — it needs `-XX:+UnlockDiagnosticVMOptions` or the JVM refuses to
-  start (executed). Its effect is cadence: gaps may be real, but absence requires validating
-  completed-event coverage and log loss. Setting it back to `1000` is a diagnostic-window tool, never
-  permanent configuration.
+  start (executed). On the checked 25.0.3 implementation, a nonzero value controls the
+  VM-operation monitor's timed wait; `1000` alone does not force a safepoint every second.
+  Gaps may be real, but absence requires validating completed-event coverage and log loss.
+  Retain a nondefault setting only for an explicit continuing purpose with verified effects/costs,
+  rather than treating it as a general latency fix or removing an adequate setting by habit.
 - Confirm every event's field names on the build in use — `jfr metadata --events
 jdk.SafepointBegin,jdk.SafepointEnd,jdk.SafepointLatency` — before depending on one. Field
   names have changed between JDK versions.
 
 ## Acceptance criteria
 
-- Preserve raw safepoint, GC/JFR, request and OS evidence on aligned clocks, including
-  recording loss/rotation metadata.
-- Reproduce the attributed component under the triggering workload; change one mechanism at
-  a time and show the target term falls without regressing throughput, CPU or correctness.
+- Preserve the raw evidence needed for the conclusion, with clock alignment and relevant
+  recording loss/rotation metadata. A narrow source/parser conclusion may leave target impact
+  unmeasured without requiring every evidence stream.
+- When claiming a remediation improves a component, compare the triggering workload with
+  one mechanism changed at a time and verify the target term plus throughput, CPU and
+  correctness constraints. An adequate existing result can support no change.
 - Treat `SafepointTimeout` as escalation instrumentation: its threshold and logging overhead
   must be scoped to a diagnostic window, and thread identity/state still needs time-aligned
   stacks from a sampler or dump.

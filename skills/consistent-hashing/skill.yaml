@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consistent-hashing
-version: 1.2.1
+version: 1.2.2
 description: >-
   Stable key-to-node placement across membership changes: modulo remapping, consistent-hash
   rings, virtual points, rendezvous hashing, collision-safe Java implementations, hash
@@ -40,9 +40,11 @@ files:
 dependencies: []
 
 suggests:
+  - cache-sharding-and-replication
   - hot-partitions-and-rebalancing
   - java-memory-model
   - load-balancing-and-routing
+  - sharding-and-partitioning
 
 capabilities:
   - reads-source

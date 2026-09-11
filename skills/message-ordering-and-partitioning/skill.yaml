@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: message-ordering-and-partitioning
-version: 1.3.2
+version: 1.3.3
 description: >-
   Ordering guarantees and their exact scope/stage: common logs order per partition while a
   global total order requires a serialized sequencer; per-key ordering depends on key-to-partition
@@ -50,6 +50,7 @@ suggests:
   - consistency-models
   - event-driven-architecture
   - hot-partitions-and-rebalancing
+  - idempotency
   - kafka-consumers-in-java
   - poison-messages-and-dlq
   - retries-and-backoff

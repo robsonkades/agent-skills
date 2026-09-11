@@ -7,8 +7,8 @@
 | `IDENTITY` / auto-increment     | no                           | constrained/provider-specific | Generated-key retrieval can prevent ordinary JDBC batching         |
 | `SEQUENCE` with allocation size | yes                          | usually                       | Amortizes sequence access; tune allocation and crash gaps          |
 | `TABLE`                         | yes                          | yes                           | A row lock per allocation; avoid under concurrency                 |
-| Assigned UUID (v4)              | yes                          | yes                           | Random: index fragmentation and poor locality on large tables      |
-| Assigned UUID (v7 / ULID)       | yes                          | yes                           | Time-ordered: keeps index locality, identity before insert         |
+| Assigned UUID (v4)              | yes                          | yes                           | Random placement can cost index locality; inspect actual layout    |
+| Assigned UUID (v7 / ULID)       | yes                          | yes                           | Time-ordered: can improve locality, identity before insert         |
 | Natural key                     | yes                          | yes                           | Only if genuinely immutable; migrations when it is not are painful |
 
 The batching column indicates compatibility with batching, not that batching is enabled.
@@ -49,9 +49,10 @@ with null ids must not compare equal; handle proxy/entity type compatibility con
 A constant hash can degrade large sets. Assigned ids also require correct repository
 new-entity detection: a non-null id does not universally mean the row already exists.
 
-**Composite keys** are worth avoiding where a surrogate is possible: they complicate every
-association, every repository method and every join. Where the domain genuinely has one,
-choose `@EmbeddedId` or `@IdClass` with compatible field types and stable equality.
+**Composite keys** can fit stable domain identity or an existing schema. Compare key width,
+referencing mappings and change propagation with a surrogate plus a uniqueness constraint;
+the mere availability of a surrogate is not a reason to migrate an adequate key.
+Choose `@EmbeddedId` or `@IdClass` with compatible field types and stable equality.
 Jakarta Persistence 3.2 permits record key classes; do not infer that an older provider's
 record embeddable support also supports record identifiers. Use the project's supported
 key-class form and test derived identity (`@MapsId`) explicitly.
@@ -73,7 +74,7 @@ public class Order {
 }
 ```
 
-The silent no-op:
+An inconsistent inverse-side update (which can still cascade persistence):
 
 ```java
 order.getLines().add(new OrderLine(product, 2));   // owner's order field is null
@@ -92,6 +93,7 @@ public void addLine(ProductId product, int quantity, Money unitPrice) {
 }
 
 public void removeLine(OrderLine line) {
+    requireDraft();
     // Accept the actual managed member, not a detached equal-by-id copy.
     for (var iterator = lines.iterator(); iterator.hasNext();) {
         var member = iterator.next();
@@ -104,6 +106,7 @@ public void removeLine(OrderLine line) {
 }
 ```
 
+Both operations enforce this example's draft-only mutation contract before changing the graph.
 No public setter for the collection, no public setter for `order` on the line. This is the
 same discipline that keeps the aggregate's invariants enforceable
 (`domain-logic-organization`).
@@ -125,8 +128,8 @@ a shared key alone does not guarantee every inverse mapping becomes lazy.
 private Set<Tag> tags = new HashSet<>();
 ```
 
-The moment anyone asks "when was this tag added?" or "who added it?" or "is it the primary
-tag?", the link has attributes and must become an entity:
+If a link needs its own persistent identity, entity queries or mutation lifecycle, model an
+association entity. Attributes such as when/by whom a tag was added can then live on it:
 
 ```java
 @Entity
@@ -140,9 +143,17 @@ public class PostTag {
 }
 ```
 
-This conversion touches every query and every piece of code that treated the collection as a
-set of tags. Choose the entity form for actual lifecycle, querying or attribute requirements; do not
-predict that every link will eventually need it.
+Attributes alone do not require entity identity. An owner-bound `@ElementCollection` of
+embeddables can contain link values, including an owning `@ManyToOne` to the tag through a
+foreign key in the collection table. JPA restricts such elements to owning to-one entity
+relationships and forbids nested element collections. Compare its supported queries and
+collection DML with the association entity; it is not an automatic targeted-update shortcut.
+A database-default audit column that the ORM never reads or writes can also remain unmapped
+if database ownership satisfies the contract.
+
+Changing representation affects mappings and callers that expose or query that representation;
+an encapsulated public API may remain unchanged. Determine actual schema/data migration needs
+from deployed columns, constraints and writers. Do not predict that every link will need an entity.
 
 For unique unordered links, a `Set` with stable equality can support targeted link deletes;
 bag/list behavior depends on mapping and provider. Do not discard required ordering to
@@ -172,8 +183,9 @@ Distinguish child rows, join rows and order-column updates in the statement log.
   `@ElementCollection` update strategy depends on collection semantics and row identification;
   it is not invariably wholesale replacement.
 
-Test one scalar child edit, one removal, one addition, a reorder if meaningful, and a
-detached/merged round trip. Inspect SQL and verify surviving identities and orphan cleanup
+For a collection-write change, test the affected scalar edit, removal, addition or reorder;
+include a detached/merged round trip if that is an actual entry path. Inspect SQL and verify
+surviving identities, required ordering/duplicates and orphan cleanup
 after flush, clear and reload (`orm-behavioral-patterns`).
 
 ## Query cost by association shape
@@ -192,7 +204,9 @@ Choose explicitly per use case and validate query count, bytes and plan
 
 ## Constraints belong in the schema
 
-A mapping is not a constraint. Every invariant expressible in the schema should be there:
+A mapping annotation does not prove a deployed constraint exists. Enforce invariants the
+database must preserve across writers, after checking existing data and rollout compatibility.
+For a domain requiring one product per order and positive mandatory quantities, for example:
 
 ```sql
 ALTER TABLE order_line ALTER COLUMN order_id SET NOT NULL;
@@ -205,11 +219,15 @@ assuming annotation changes update deployed constraints. Include a foreign key f
 `NOT NULL` alone does not establish referential integrity. A CHECK permits SQL UNKNOWN,
 so mandatory `quantity` also needs `NOT NULL`.
 
-Application-level checks are bypassed by imports, bulk statements, other services and
-manual fixes. The database's are not, and the constraint's name is the contract your error
-handling matches on.
+Imports, bulk statements, other services and manual fixes can bypass application checks;
+enabled database constraints enforce their defined rules on those writes. Domain rules outside
+that contract still need application enforcement. Preserve any constraint names used by error
+handling, and account for permissions or migration procedures that can alter enforcement.
 
 These are partial JPA examples, with imports, ids and constructors omitted where unrelated.
 Verify Java, Jakarta/Javax namespace and provider versions before reuse. Sources:
 [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
-and [Hibernate 6.6 associations and identifiers](https://docs.hibernate.org/orm/6.6/userguide/html_single/).
+and Hibernate 6.6.56 source documentation for
+[associations](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/associations.adoc),
+[identifiers](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/identifiers.adoc)
+and [collections](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/collections.adoc).

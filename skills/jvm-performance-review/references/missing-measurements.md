@@ -2,7 +2,9 @@
 
 Choose evidence that separates the live hypotheses with acceptable perturbation. Commands and JFR
 views/events differ by JDK; discover them on the target (`jcmd <pid> help`, `jfr help view`,
-`jfr view types recording.jfr`, event metadata/settings) and validate a positive control.
+`jfr view types recording.jfr`, event metadata/settings). For new captures or an absence claim,
+verify relevant collection with known activity where practical; report the coverage limit when
+that control is unavailable. Reuse an adequate supplied capture.
 The `types` view needs a completed readable recording; help lists available named views
 without one. Older JDKs may not offer `view`.
 
@@ -133,7 +135,7 @@ If neither or capture inadequate:
 
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [JDK 25 `jfr`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
-- [JFR runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [JDK 25 JFR settings and configuration](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html) — enabled events, thresholds, periods and stack settings determine what a capture can show.
 - [JDK unified logging](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#enable-logging-with-the-jvm-unified-logging-framework)
 - [Linux cgroup v2](https://docs.kernel.org/admin-guide/cgroup-v2.html)
 - [Linux proc filesystem](https://docs.kernel.org/filesystems/proc.html)

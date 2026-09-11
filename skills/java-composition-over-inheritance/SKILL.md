@@ -30,19 +30,25 @@ delegating wrappers.
    or `permits`. The worked example uses Java 21 without preview; sealed types require
    Java 17+, and pattern switches require Java 21+ without preview. On an older target, use
    ordinary composition/polymorphism rather than upgrading or enabling preview implicitly.
+   Reuse the stated goals and project conventions; identify the caller or recurring change
+   the new relationship would help. Ask only for missing contracts that materially change
+   the decision. A sound existing design needs no migration.
 1. **Name what is being inherited.** A contract (the subtype _is_ usable wherever the base
-   is), implementation (code reuse only), or both. Reuse without substitutability is the
-   case to eliminate: hold the other object in a field and forward.
+   is), implementation (code reuse only), or both. For reuse without substitutability,
+   consider holding the other object in a field and forwarding; preserve existing public
+   entry points through a compatible migration rather than silently removing a supertype.
 2. **If the variants form a closed set you own**, consider a sealed interface. Put stable
    variant-owned behavior on the implementations; use an exhaustive `switch` when operations
-   evolve more often than variants. Recompilation finds missing cases, while already compiled
-   clients can instead encounter `MatchException` after incompatible hierarchy evolution.
-3. **If behaviour varies along more than one independent axis**, calculate the subtype product.
-   When N×M classes or override-order knowledge appears, keep at most one axis as a hierarchy
-   and compose the others as policies. Correlated axes with a tiny closed product may still be
+   evolve more often than variants. Recompilation finds newly uncovered cases; a `default`
+   or covering supertype pattern can still compile, so review its semantics. Already compiled
+   clients can encounter `MatchException` when a new value matches no applicable case.
+3. **If behaviour varies along more than one independent axis**, inspect the supported combinations.
+   When N×M classes or override-order knowledge appears, consider keeping one axis as a hierarchy
+   and composing the others as policies. A tiny supported product may still be
    clearer as named subtypes.
-4. **If genuine substitutability remains**, inheritance is right — see the rule below for
-   common legitimate shapes. Design and document for it: specify self-use, keep
+4. **If genuine substitutability remains**, inheritance is an option — weigh the shared
+   implementation against its evolution coupling, using the legitimate shapes below.
+   When choosing it, design and document for it: specify self-use, keep
    overridable surface minimal.
 5. **Decide with evidence.** Read
    [references/decision-model.md](references/decision-model.md) for the fragile-base risk
@@ -51,11 +57,14 @@ delegating wrappers.
 
 ## Rules
 
-- An externally subclassable class not designed for extension should be `final`, `sealed`, or
-  hidden behind a non-exported/package-private boundary. Framework proxies and bytecode tools
-  can require non-final classes; treat that as an explicit runtime contract with tests.
-- Never call an overridable method from a constructor: it runs against a subclass whose
-  fields are not yet initialised. Self-use of overridable methods elsewhere must be
+- For a new API with no extension contract, use `final`, `sealed`, or a
+  non-exported/package-private boundary as appropriate. Restricting an already published
+  class can break existing subclasses; missing extension documentation is not proof that
+  none exist. Framework proxies and bytecode tools can require non-final classes; treat
+  that as an explicit runtime contract with tests.
+- Do not introduce calls to overridable methods from a constructor: they may observe
+  incomplete subclass state. Inspect existing framework hooks before changing their
+  lifecycle. Self-use of overridable methods elsewhere must be
   documented, because subclasses will depend on it either way.
 - A subclass that overrides a promised operation to do nothing or throw is evidence the base
   contract is too broad. Restructure code you own; for a platform contract that explicitly
@@ -75,11 +84,13 @@ delegating wrappers.
 
 ## Deliverable
 
-Name the observed coupling or contract defect, ownership/compatibility constraints, chosen
+Name the observed coupling or contract issue (or why no change is needed), ownership/compatibility constraints, chosen
 relationship and the trade-off that rules out the closest alternative. For a migration,
 map old entry points to new ones and distinguish preserved behavior from policy changes;
 report characterization checks actually run. If callers or subclass contracts are unavailable,
 state the missing evidence and keep claims of safe replacement conditional.
+Stop once the relationship decision and affected consumer checks are supported; report
+separate policy changes or unresolved migration work without presenting a design as implemented.
 
 ## References
 

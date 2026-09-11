@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-and-performance
-version: 1.3.0
+version: 1.3.1
 description: >-
   Attribute endpoint latency and throughput limits to architectural choices when query counts
   grow with result size, remote calls are chatty, connections are held across other work,
@@ -38,6 +38,8 @@ files:
 
 suggests:
   - performance-methodology
+  - jfr-and-async-profiler
+  - sql-query-performance
   - littles-law-and-queueing
   - connection-pool-sizing
   - allocation-profiling

@@ -52,9 +52,10 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
 3. **Read the GC log for the code cache's own causes** — `CodeCache GC Threshold` and
    `CodeCache GC Aggressive`. On JDK 20+ the code cache is a GC trigger, and under Serial or
    Parallel each trigger is a **Full GC**. See `references/unloading-and-gc.md`.
-4. **Sample at three points, 30-60 seconds apart**, to tell stable exhaustion from oscillating
-   thrashing. Record `jstat -compiler` — `Compiled`, `Failed`, `Invalid` — as part of the
-   incident baseline.
+4. **Sample across the relevant compilation and unloading window.** Three points 30-60 seconds
+   apart can start a baseline, but can miss faster oscillation or longer warm-up. Correlate
+   counter deltas and event timestamps before diagnosing thrashing. Record `jstat -compiler`
+   — `Compiled`, `Failed`, `Invalid` — as part of the incident baseline.
 5. **Predict the pressured segment from the tier mix** before measuring: tiers 2 and 3 go to
    `profiled`, tiers 1 and 4 and native wrappers go to `non-profiled`. Cross-reference
    `PrintCompilation` or `jdk.Compilation`, and cross-reference deoptimisation events when
@@ -107,8 +108,10 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
   compact a heap. Relocation would have to preserve active frames, call sites, metadata and
   runtime references; do not extrapolate this implementation fact into a claim that a future
   JVM can never compact code.
-- `jcmd Compiler.codecache` reports aggregate `free` and never the largest contiguous free
-  block. `jcmd Compiler.CodeHeap_Analytics` does — run `aggregate`, then `FreeSpace`.
+- `jcmd Compiler.codecache` reports total `free` per heap, not its distribution.
+  `Compiler.CodeHeap_Analytics` lists reclaimed free blocks — run `aggregate`, then `FreeSpace`.
+  Its largest listed block excludes unused tail space and possible heap expansion; compare
+  those and applicable fallback heaps before attributing an allocation failure to fragmentation.
 - Fragmentation grows with allocate/free/reallocate cycles, not with raw volume. Frequent
   deoptimisation and ClassLoader churn are the factories; a heap that only ever fills does
   not fragment.

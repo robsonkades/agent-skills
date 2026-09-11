@@ -20,6 +20,11 @@ see attributes supplied at span creation, not status or attributes added later.
 
 ## Tail-sampling topology
 
+The component details here are pinned to Collector contrib 0.160.0. Its default
+`trace-complete` strategy evaluates accumulated data on timer handling; `span-ingest`
+evaluates arriving batches and can finalize terminal outcomes earlier. Check the actual
+strategy and policies before treating decision wait as a single fixed trace-completion rule.
+
 All relevant spans must reach the same decision shard within the policy window. A common
 topology is:
 
@@ -53,22 +58,33 @@ trace entries under steady arrivals. It is not a byte bound: include span-size d
 exception payloads, decision caches and exporter/retry queues. `expected_new_traces_per_sec`
 is an allocation hint, not admission control in the referenced tail processor; inspect the
 pinned component's actual limits and eviction metrics.
+For 0.160.0, inspect `num_traces`, `num_shards`, overflow behavior, trace-size limits and
+decision caches together. Per-shard limits and retained/exporting data affect the total;
+an entry-count setting is not a process-memory bound.
 
 ## Configuration governance
 
 Java autoconfiguration can use system properties, environment variables, files,
 programmatic customizers and newer declarative configuration with different precedence and
-exclusivity. The rules change by agent/SDK mode and version. Generate an effective
-configuration report from the pinned deployment and avoid duplicating the same field across
-sources.
+exclusivity. The rules change by agent/SDK mode and version. Inspect the effective values
+and their sources for the fields relevant to the decision. Intentional defaults/overrides
+can be valid; retain an adequate documented precedence policy rather than requiring one
+flat source.
 
-Set and test service.name, version/instance/deployment identity, propagators, sampler,
-exporter endpoint/protocol, batch sizes, timeouts, queue limits and resource detectors.
+In the Java 1.62.0 property-based SDK autoconfiguration path, system properties override
+environment variables, which override supplied defaults; properties customizers apply
+afterward and can override those values. Declarative configuration follows a separate path.
+This is not a universal precedence rule for every agent, SDK or configuration mode.
+
+For relevant configuration changes, verify service.name, version/instance/deployment identity,
+propagators, sampler, exporter endpoint/protocol, batch sizes, timeouts, queue limits or
+resource detectors as affected; adequate effective configuration evidence may suffice.
 Never expose credentials in diagnostics.
 
 ## Overhead experiment
 
-Treatments should isolate:
+Choose treatments that distinguish the requested cost claim; a narrow API/configuration
+review need not run an overhead campaign. Candidate contrasts include:
 
 1. baseline without OTel;
 2. agent/SDK installed with export disabled or no-op where meaningful;
@@ -81,7 +97,8 @@ which sampler/processors/exporters remain enabled; their timing differences do n
 instrumentation cost automatically. Guard expensive post-start enrichment with `isRecording()`
 when appropriate; attributes required by the sampler must instead be available at creation.
 
-Use repeated randomized/blocked runs and the same workload/state. Measure:
+For an overhead comparison, use repeated randomized/blocked runs and the same workload/state.
+Select the relevant measurements:
 
 - client latency distribution and useful throughput;
 - process CPU, allocation, GC, heap/native memory and threads;
@@ -101,8 +118,22 @@ regulatory/audit semantics require a separate durable pipeline. Traces are norma
 diagnostic—not the source of truth for business events.
 
 Define which signals survive overload: pipeline health, SLI metrics and sampled exemplar
-coverage may be more valuable than every internal span. Test recovery after the backend
-returns; retry queues can create a second overload.
+coverage may be more valuable than every internal span. For a changed export/retry path or
+an outage-resilience claim, check recovery after the backend returns; retry queues can
+create a second overload.
+
+In Java 1.62.0, `BatchSpanProcessor` drops spans when its queue is full and clears an
+exported batch after success, failure or its wait timeout; it does not itself retry that
+batch. The timeout bounds the processor's wait on the result, not necessarily the exporter's
+work. Inspect the concrete exporter/client retry, cancellation and acknowledgment contracts;
+include their retained work in the budget. The processor's `forceFlush` can complete
+successfully even after an export failure, so it is not proof of backend delivery.
+
+Only the lifecycle owner should drain/flush/shut down the SDK or provider. Coordinate
+producers and in-flight operation spans, allow a bounded shutdown window and record any
+remaining loss; a successful local shutdown does not establish backend persistence.
+Agent/framework-managed providers should use that owner's lifecycle rather than request-level
+shutdown calls.
 
 ## Sensitive data
 
@@ -115,8 +146,14 @@ backend access/retention. The collector is a security boundary and DoS target.
 - [OpenTelemetry sampling](https://opentelemetry.io/docs/concepts/sampling/)
 - [Tracing SDK contract](https://opentelemetry.io/docs/specs/otel/trace/sdk/) — recording,
   sampling and processor behavior.
-- [Tail sampling processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/README.md)
-  — evolving component documentation; use the deployed release tag for configuration.
+- [Tail sampling processor, contrib 0.160.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/README.md)
+  and [configuration contract](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/config.go)
+  — strategy, cache, sizing and overflow details; verify the actual deployed release.
+- [Java 1.62.0 BatchSpanProcessor](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/sdk/trace/src/main/java/io/opentelemetry/sdk/trace/export/BatchSpanProcessor.java)
+  — sampled export, queue/drop, flush and exporter-wait behavior.
+- [Java 1.62.0 property merging](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/sdk-extensions/autoconfigure-spi/src/main/java/io/opentelemetry/sdk/autoconfigure/spi/internal/DefaultConfigProperties.java)
+  and [SDK autoconfiguration builder](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/sdk-extensions/autoconfigure/src/main/java/io/opentelemetry/sdk/autoconfigure/AutoConfiguredOpenTelemetrySdkBuilder.java)
+  — supplied defaults, overrides/customizers and the separate declarative path.
 - [OpenTelemetry Collector scaling](https://opentelemetry.io/docs/collector/scaling/)
 - [OpenTelemetry Java configuration](https://opentelemetry.io/docs/languages/java/configuration/)
 - [OpenTelemetry baggage](https://opentelemetry.io/docs/concepts/signals/baggage/)

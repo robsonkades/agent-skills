@@ -33,6 +33,15 @@ the benchmark" is an out-of-memory error with a countdown on it.
 
 ## Workflow
 
+Use JDK 25 HotSpot as the reference baseline, preserving the project's actual runtime.
+Reuse the supplied build, flags, workload, logs and acceptance criteria before asking for
+material missing context. For allocation-site attribution alone, hand off to
+`allocation-profiling` with the existing recording, known caller and supplied
+build/workload/measurement context. Retain an adequate collector and reuse sufficient existing
+evidence without requiring a new capture or collector experiment.
+Otherwise follow the Epsilon or Shenandoah branch needed by the question; existing evidence
+may suffice without a new capture or configuration change.
+
 1. **Decide what Epsilon is being asked to prove.** Isolating a benchmark from collection,
    verifying an allocation-free path, or making hidden allocation visible are three different
    experiments with three different heap sizes.
@@ -46,12 +55,14 @@ the benchmark" is an out-of-memory error with a countdown on it.
    attribute sites with JFR/async-profiler. Reserve disk/native headroom for dump creation. For an
    allocation-free claim, read the post-warm-up slope rather than the mere OOM.
 4. **For Shenandoah, confirm the build and the effective mode before measuring anything.**
-   `java -XX:+UseShenandoahGC -version` (Oracle JDK builds have no Shenandoah), then
+   `java -XX:+UseShenandoahGC -version` on the actual vendor/platform binary, then
    `-Xlog:gc+init` for `Mode:` and `Heuristics:`, or `jcmd <pid> VM.flags -all | grep -E
 "ShenandoahGCMode|ShenandoahGCHeuristics"`. Product is not default.
 5. **Check the time constraint and the capacity constraint separately.** Time:
-   `(InitFreeThreshold − MinFreeThreshold)% × soft max / allocation rate` is a rough learning
-   headroom model, not a guaranteed failure deadline. Inspect actual triggers. Capacity:
+   `(InitFreeThreshold − MinFreeThreshold)% × heap / allocation rate` illustrates
+   single-generation learning headroom when soft and hard maxima match, not a guaranteed
+   failure deadline. Otherwise inspect both trigger bases. In generational
+   mode use the relevant generation's capacity/rate and actual triggers. Capacity:
    the configured `Max Evacuation` budget and actual `available` in the
    `gc+ergo` lines. A heap can satisfy one and violate the other.
 6. **Look for pacing before looking for pauses.** `-Xlog:gc+stats` → `Allocation pacing
@@ -96,13 +107,16 @@ accrued` per thread. Correlate affected requests; absent pauses alone do not ide
   2026-09-05); targeted is not delivered. State the effective mode from the runtime;
   never infer it from a future proposal.
 - Generational mode adds a **post-write barrier** feeding a card-table remembered set
-  (512-byte cards), on top of the LRB. The LRB cannot serve that purpose: the old-to-young
-  relation can only be captured when the reference is written.
+  (512-byte cards by default), on top of the LRB. The LRB cannot serve that purpose: the old-to-young
+  relation must be recorded for young collection even when the field is never read again.
+  Account for collector-driven promotion as well as mutator writes; the LRB alone cannot
+  maintain that remembered set.
 - `ShenandoahInitFreeThreshold` (70), `ShenandoahMinFreeThreshold` (10),
-  `ShenandoahLearningSteps` (5) and every other threshold are **experimental flags**: without
+  `ShenandoahLearningSteps` (5) are **experimental flags** on this baseline: without
   `-XX:+UnlockExperimentalVMOptions` before them the JVM refuses to start (verified).
-  `InitFreeThreshold` governs the learning phase only — at start-up and again after every
-  degenerated or full GC; `MinFreeThreshold` is the floor in every phase.
+  `InitFreeThreshold` governs the learning phase only; establish it from `Learning …`
+  triggers rather than assuming every fallback resets it. `MinFreeThreshold` is considered whenever this trigger is evaluated,
+  both during and after learning, not continuously enforced within a running cycle.
 - During learning/relearning, raising `InitFreeThreshold` starts earlier and grows the simple
   headroom term `IFT − MFT`; it can also spend more concurrent CPU and is not the adaptive
   steady-state control. Change it only when logs show learning-phase/spike degeneration, then
@@ -110,29 +124,38 @@ accrued` per thread. Correlate affected requests; absent pauses alone do not ide
 - **The pacer is on by default** (`ShenandoahPacing=true`) and stalls allocating threads
   against `ShenandoahPacingMaxDelay` (10 ms) per episode; scheduling can overshoot and a
   request can encounter several episodes. It
-  shows up nowhere in `-Xlog:gc`; only `-Xlog:gc+stats` reports it. Verified: 51% of a
-  thread's time paced with zero degenerated cycles in the log.
+  is absent from ordinary pause lines; `-Xlog:gc+stats` reports accrued pacing for
+  currently present Java threads over the interval since the previous report, not just GC
+  cycle time or request time. The captured example reports 51% for one thread with zero
+  degenerated cycles; that is not a diagnostic cutoff or a request-latency measurement.
 - `ShenandoahGCMode=passive` and `ShenandoahGCHeuristics=aggressive` are **diagnostic** and
   need `-XX:+UnlockDiagnosticVMOptions` (verified). `passive` disables collector barriers and
   concurrent heuristic cycles; allocation failures and explicit requests can cause STW
   degenerated/full collection. It does evacuate and compact. Never a
   production setting.
 - `Degenerated GC` is not `Full GC`. `(Mark)`, `(Evacuation)`, `(Update Refs)` resume the
-  running cycle in STW from that phase; `(Outside of Cycle)` runs a whole cycle STW; `Bad
-progress` upgrades to full GC (immediately in `satb`, after two in generational), as do
-  three back-to-back degenerations (`ShenandoahFullGCThreshold`). Recurring degenerated GC
+  running cycle in STW from that phase; `(Outside of Cycle)` runs a whole cycle STW.
+  Progress policy and consecutive-degeneration limits can upgrade to full GC; inspect the
+  exact update's predicates and counter resets, not a fixed count inferred from
+  `ShenandoahFullGCThreshold=3`. The GA and 25.0.3 implementations differ; see the fallback
+  matrix. Recurring degenerated GC
   can reflect insufficient headroom; recurring full GC needs cause/flag/capacity evidence.
   No threshold creates space for an oversized live set.
 - `System.gc()` normally requests a concurrent cycle in `satb`/generational mode with
   `ExplicitGCInvokesConcurrent=true`. `DisableExplicitGC`, overrides and passive mode change
   this; inspect effective flags and logged causes.
-- Enlarging the heap raises `C_max` linearly but does not reduce marking work per cycle:
-  single-generation Shenandoah marks every live object, young or old, every cycle. For high
-  young-allocation workloads, the generational mode attacks the cause; more heap only buys
-  time.
+- Holding the model's other inputs constant, more heap raises estimated `C_max` linearly.
+  It does not by itself remove whole-live-set tracing from single-generation cycles.
+  High short-lived allocation can justify testing generational mode; compare its added
+  bookkeeping, actual cycle work and memory/CPU cost against retaining adequate settings.
 - Treat every barrier symbol name as a starting point to confirm against the build in use.
   `ShenandoahBarrierSet::need_load_reference_barrier` is a compile-time predicate and never
   appears on a mutator stack; the runtime frames are `ShenandoahRuntime::*`.
+
+Return the supported finding or budget bound, exact build/mode and measurement interval,
+remaining uncertainty, and any justified change with its validation criterion. A no-change
+result or one bounded experiment is sufficient when that answers the question; do not report
+an unexecuted experiment as a measured improvement.
 
 ## Production and security constraints
 

@@ -40,13 +40,17 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
 4. **Bound it**—by count or a measured weight proxy. Account for keys, values, node metadata,
    allocator/GC headroom and concurrent load buffers; a weigher's logical bytes are not measured
    heap retention. Validate with heap/allocation evidence under representative occupancy.
-5. **Set a TTL from the business tolerance for stale data**, and add jitter if entries are
+5. **Choose a freshness contract.** Immutable content/version keys whose value cannot change may
+   need capacity eviction without TTL or invalidation; verify that identity contract and handle
+   retention, authorization and revocation separately. For changing values, derive a TTL or another freshness
+   mechanism from the business tolerance for stale data, and add jitter if expiring entries are
    created in bulk. Keep the longest jittered lifetime inside that tolerance, accounting for
    source lag and load time. Access-based expiry does not bound the age of frequently read data.
-6. **Define the invalidation strategy and write an automated test for it** — propagation is
-   the part that silently stops working.
+6. **Define and test invalidation where required** — propagation is the part that silently stops
+   working. If it is unnecessary, state and verify the identity/freshness contract that permits it.
 7. **Instrument outcomes**: request-weighted and byte-weighted hit/miss, origin rate and load
-   latency/failures, eviction/admission, retained memory, stale-age/version and invalidation lag.
+   latency/failures, eviction/admission, retained memory, and stale-age/version/invalidation lag
+   where applicable to the freshness contract.
 
 ## Rules
 
@@ -54,8 +58,9 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
   origin queueing/load and fill. Increasing hit rate has linear average benefit only if those
   distributions stay fixed; near saturation, queueing can make the system nonlinear. Hit-rate
   gain per byte depends on the observed popularity/size distribution, not a universal logarithm.
-- **A broken cache has better metrics than a correct one.** No limit, no TTL and no
-  invalidation gives the best possible hit rate. This is why hit rate never travels alone.
+- **Hit rate does not establish correctness.** Keeping entries longer can improve hits while
+  violating freshness or memory bounds. Judge lifetime and invalidation against the value's
+  contract, not their mere presence or absence.
 - Avoid putting managed/mutable JPA entities in an application cache—the cache may retain aliases,
   lazy proxies and persistence-context assumptions. Cache immutable projections/value snapshots
   with an explicit version. A provider's second-level cache is a separate coordinated mechanism,
@@ -104,6 +109,11 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
   Avoid secrets/PII in keys because keys appear in metrics, logs and admin tools.
 - Negative caching protects against penetration only with a short bounded TTL and input/cardinality
   controls. Caching every attacker-chosen miss is itself an unbounded-memory attack.
+  Cache absence only when the source confirms it under the key's visibility contract; a timeout,
+  unavailable dependency or loader failure leaves existence unknown. Explicit failure caching
+  can suppress repeated origin calls, but represent failures separately from not-found results,
+  with bounded retention and an accepted retry/recovery policy. Preserve the failure outcome
+  rather than reporting confirmed absence.
 
 ## Deliverable
 
@@ -117,9 +127,10 @@ the next discriminating measurement; do not label an untested hypothesis a confi
 - [Spring Data Redis object mapping and serializers](https://docs.spring.io/spring-data/redis/reference/redis/template.html)
 - [Spring Data Redis 4 migration guide](https://docs.spring.io/spring-data/redis/reference/upgrading.html)
 - [Caffeine refresh semantics](https://github.com/ben-manes/caffeine/wiki/Refresh)
-- [Caffeine 3.2.2 API](https://www.javadoc.io/static/com.github.ben-manes.caffeine/caffeine/3.2.2/com.github.benmanes.caffeine/com/github/benmanes/caffeine/cache/Caffeine.html)
+- [Caffeine 3.2.2 builder API contracts](https://github.com/ben-manes/caffeine/blob/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/Caffeine.java)
 - [Redis Pub/Sub delivery](https://redis.io/docs/latest/develop/pubsub/)
 - [Redis key eviction](https://redis.io/docs/latest/develop/reference/eviction/)
+- [AWS caching failure responses and recovery trade-offs](https://aws.amazon.com/builders-library/caching-challenges-and-strategies/)
 
 ## References
 

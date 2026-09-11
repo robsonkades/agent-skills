@@ -34,6 +34,9 @@ versioning and distribution.
 
 ## Workflow
 
+Apply the steps relevant to the request. Preserve an adequate existing design and evidence;
+a narrow review can conclude that no change is needed, with its scope and limits stated.
+
 1. **Establish scope from the request and repository.** Use existing authorization and
    inspect the current skill before asking. Clarify only unresolved information that
    materially changes the work; continue independent authorized work in the meantime.
@@ -45,14 +48,18 @@ versioning and distribution.
 4. **Draft the body at minimum viable size.** Purpose, workflow, decision rules,
    constraints. Keep short conditional guards near the decisions they protect; route
    substantial conditional detail to references.
-5. **Decide resources by necessity.** Each supporting file must answer "what capability
-   does this provide that the body cannot?" Read `references/resource-design.md` when
+5. **Decide resources by purpose.** Each supporting file should justify its contribution,
+   including conditional detail that keeps the common path focused. Read `references/resource-design.md` when
    choosing between a reference, a script and an asset.
 6. **Review against the gates below**, then against `references/anti-patterns.md`.
 7. **Validate the actual change.** Check links and metadata, run relevant example/script
    checks when applicable, and follow repository integration rules. Report checks that
    ran separately from written cases or unexecuted plans; implement justified in-scope
    corrections when the task requests improvement, rather than stopping at suggestions.
+
+When work is shared, file ownership is a coordination rule, not filesystem isolation.
+Check actual tool access and side effects; coordinate shared writes according to the
+repository workflow. A skill's reusable procedure does not change runtime permissions.
 
 ## The frontmatter contract
 
@@ -75,7 +82,10 @@ Progressive disclosure is the intended model; actual loading depends on the clie
 | ---------- | -------------------------------- | --------------------------------------- |
 | Selection  | **name + description**           | Describes when selection is appropriate |
 | Activation | The whole Markdown body          | Every line costs context on every use   |
-| Execution  | A reference or script, on demand | Free until actually needed              |
+| Execution  | A reference or script, on demand | Detail can be deferred until needed     |
+
+Deferred reading reduces initial instruction context; it does not promise zero discovery,
+I/O, execution or tool-output cost. Verify the actual client and harness behavior.
 
 A description that lists capabilities (`"expert in performance"`) does not discriminate. A
 description that names situations (`"use when p99 regressed after a deploy, or CPU is high
@@ -90,8 +100,8 @@ THEN remove it; do not remove a critical guard based only on assumed model compe
 IF a section is relevant only to some tasks the skill covers
 THEN consider a routed reference; keep short critical conditions at the decision point.
 
-IF the skill needs a persona ("you are an expert…") to feel authoritative
-THEN it lacks substance; replace the persona with decision rules.
+IF a persona ("you are an expert…") substitutes for substantive guidance
+THEN add the decision rules; retain role or audience context when it serves the task.
 
 IF the same mechanical operation would be re-derived on every run
 THEN reuse an existing reliable tool or add a script if its maintenance cost is justified.
@@ -100,8 +110,8 @@ IF the skill's boundary overlaps another skill's
 THEN clarify this skill's boundary or intentional composition; report changes needed
 outside the authorized scope rather than editing both automatically.
 
-IF a rule cannot be checked against the produced work
-THEN restate it as something observable, or drop it.
+IF a rule has no observable criterion in relevant outputs, artifacts or execution evidence
+THEN clarify how to check it; remove it only if it adds no useful constraint.
 
 IF recommendations depend on evidence, including a generative task with risky assumptions
 THEN read references/evidence-and-confidence.md and add that discipline.
@@ -113,13 +123,13 @@ THEN read references/evaluation.md and add proportionate evaluation cases.
 ## Quality gates
 
 - [ ] The description names triggering situations, not capabilities
-- [ ] Name matches the directory, and the boundary excludes at least one adjacent topic,
-      naming the nearest neighbouring skill when one exists
+- [ ] Name matches the directory; the boundary states relevant exclusions and names an
+      actual neighbouring owner where that avoids confusion
 - [ ] Substantial conditional detail is routed; critical guards remain visible
-- [ ] Every rule is specific enough to be checkable against the output
+- [ ] Consequential rules have checkable criteria in appropriate outputs, artifacts or traces
 - [ ] Every supporting file is routed from the body by an explicit condition
 - [ ] Repetition has a safety or routing purpose; detailed rules have one authoritative home
-- [ ] Removing any file would lose a capability
+- [ ] Each file has a useful purpose that justifies its context and maintenance cost
 
 ## Output
 
@@ -129,7 +139,8 @@ provides, validation results and unresolved decisions that actually need user in
 
 When reviewing a skill, report findings ordered by impact, each with the concrete edit
 that fixes it. Distinguish implemented fixes from recommendations and measured outcomes
-from expected benefits. Do not rewrite a skill wholesale when three edits would do.
+from expected benefits. If no supported defect is found, report that result and its limits.
+Do not rewrite a skill wholesale when a few edits would do.
 
 ## References
 

@@ -55,9 +55,10 @@ update that also overwrites fields it did not mean to touch; a delete followed b
 LWW picks a winner and **discards the loser silently**. Three caveats, all of which have to be
 accepted explicitly:
 
-- **With wall-clock timestamps, clock skew chooses the winner.** One host minutes ahead wins
-  every conflict until someone notices. Prefer a version from the source of truth; use a
-  timestamp only where the producers share a trusted clock source and the loss is tolerable.
+- **Wall-clock skew can choose a winner unrelated to domain order.** A clock ahead of its
+  peers can dominate conflicts. Prefer a version from the source of truth; timestamp LWW
+  requires accepting loss and documenting clock uncertainty, resolution and ties. Clock
+  synchronization alone does not order events within overlapping uncertainty intervals.
 - **A tie must break deterministically** — compare a stable id when versions or timestamps are
   equal — or two replicas applying the same pair converge on different states.
 - **Record-level LWW discards a whole concurrent update**, not only the conflicting field.
@@ -110,7 +111,10 @@ only a genuinely commutative, associative and duplicate-safe merge is independen
 its declared outcome. Key choice can change only after checking every required effect and
 recovery path.
 
-## Proving that handlers are order-insensitive
+## Challenging an order-insensitivity claim
+
+Use these checks when that claim or a proposed change needs validation. Reuse adequate
+existing evidence for an unchanged contract; select histories and effects the claim covers.
 
 ```java
 @RepeatedTest(50)
@@ -137,9 +141,10 @@ void final_state_is_independent_of_delivery_order() {
 - With few enough records, enumerate every permutation instead of shuffling; beyond a handful a
   property-based generator over permutations is the same test with better coverage.
 
-Also generate duplicates, gaps, late snapshots, concurrent equal versions, restore/epoch reset
-and poison records. Run the handler against the real transactional constraint: an in-memory
-model does not prove the SQL predicate is atomic.
+For the affected mechanism, include relevant duplicates, gaps, late snapshots, concurrent
+equal versions, restore/epoch reset or poison records. Validate a changed persistence guard
+against the target transactional constraint when claiming database behavior: an in-memory
+model does not prove the SQL predicate is atomic. Report unexecuted checks explicitly.
 
 ## Decision matrix
 
@@ -155,3 +160,4 @@ model does not prove the SQL predicate is atomic.
 
 - [Shapiro et al., Conflict-free Replicated Data Types](https://inria.hal.science/inria-00609399/document)
 - [RFC 1982: Serial Number Arithmetic](https://www.rfc-editor.org/rfc/rfc1982)
+- [RFC 5905: NTP clock offset, delay and dispersion](https://www.rfc-editor.org/rfc/rfc5905.html#section-8) — synchronization has uncertainty; a timestamp comparison is not a domain sequencing protocol.

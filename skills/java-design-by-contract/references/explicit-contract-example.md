@@ -105,20 +105,20 @@ public final class StockLevel {
 
 What each mechanism carries:
 
-- **`Quantity`** removes "must be positive" from every reservation path in the module —
-  callers cannot construct the invalid call. Caller B's dropped check is now
+- **`Quantity`** carries positivity through ordinary typed construction paths; the
+  reference still needs the documented null check. Caller B's dropped positivity check is now
   unnecessary rather than forgotten.
-- **The constructor** owns the class invariant; immutability means nothing can break it
-  after construction, so no method needs to re-verify it.
+- **The constructor** owns the class invariant; these private final primitive fields preserve
+  it through the supported API, so methods need not repeat its component checks.
 - **`InsufficientStockException`** separates the expected state conflict the caller could not
   guarantee ("legitimately out of stock" — callers branch on it) from the _bug_ class
   (`IllegalArgumentException` from `Quantity` for a violated value contract). External
   invalid input may legitimately be mapped at the boundary; the exception type alone does
   not mean a programmer bug. If declines turn
-  out to be a routine outcome the caller always branches on, promote the result to a
-  sealed type — that decision belongs to java-exception-design.
-- **The `assert`** states the postcondition at its source. Disabled in production
-  (`-ea` in CI and tests), its expression is not evaluated there and it pins a cheap diagnostic
+  out to be a routine outcome the caller always branches on, compare a result type with the
+  existing exception convention — that decision belongs to java-exception-design.
+- **The `assert`** states the postcondition at its source. When disabled, its expression
+  is not evaluated; enable it with `-ea` for diagnostic tests. It pins a cheap diagnostic
   near the arithmetic. If violating this guarantee could be persisted rather than discarded with
   the new object, use an unconditional internal check as well.
 - **Javadoc** turns the callers'-heads knowledge into the promise: the `@throws`
@@ -131,15 +131,17 @@ What each mechanism carries:
   mapping-layer treatment instead — the invariant-in-constructor idea survives, the
   `final` fields may not.
 - `Quantity` is one more type, and one more thing to unwrap at the JSON and JDBC edges.
-  Worth it here because reservations arrive from three call paths; a single-call-path
-  value would not repay the wrapping.
-- Callers that used to "reserve what's available, capped" now get an exception; the
-  capping behaviour, if wanted, must become its own honest method (`reserveUpTo`),
-  which is the contract surfacing a product decision that was previously an accident.
+  Repeated call paths make a shared invariant valuable here; caller count alone does not decide
+  whether misuse prevention or compatibility costs justify a wrapper.
+- If callers previously relied on "reserve what's available, capped", rejecting it is a
+  deliberate behavior change, not just making the existing contract explicit. Preserve that
+  policy where required, or migrate it to an honest operation such as `reserveUpTo`.
 - Immutability makes one `StockLevel` value safe; it does not serialize updates. Two requests can
   read the same level, both create valid successors, and lose one reservation on write. The
-  repository must use a version/CAS or conditional update (`available >= quantity`) and map a
-  failed predicate to the same explicit state-conflict outcome.
+  repository must serialize the authoritative transition, for example with a version/CAS or
+  conditional update (`available >= quantity`). A version mismatch alone does not prove
+  insufficient stock; distinguish it from failed availability according to the public contract,
+  with bounded re-read/retry or an explicit conflict outcome where appropriate.
 
 ## Verification
 
@@ -158,6 +160,7 @@ published API needs a compatibility/migration plan through java-api-design.
   bounds `reserved + quantity` by `onHand`, preventing overflow on accepted requests.
 - Race reservations against the real persistence mechanism and prove no oversell/lost update;
   unit tests of the value object cannot establish datastore atomicity.
-- Grep callers: the old `getOnHand() - getReserved()` arithmetic appears nowhere
-  outside the class; `setReserved` has no remaining callers and is deleted, not
-  deprecated-and-kept.
+- For the controlled-caller migration, check that reservation mutation uses the contract-owning
+  operation and obsolete setters have no remaining supported uses. A published compatibility
+  window may retain forwarding/deprecated entry points that still enforce the invariant;
+  source search alone does not prove external consumers have migrated.

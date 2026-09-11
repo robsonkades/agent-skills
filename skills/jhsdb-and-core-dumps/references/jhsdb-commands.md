@@ -77,7 +77,7 @@ and syntax before relying on any of these.
 ```
 clhsdb> where <id>                         # stack trace for a thread ID
 clhsdb> where -a                           # traces for enumerated threads
-clhsdb> threads                            # list all threads
+clhsdb> threads                            # list enumerated threads, not all virtual tasks
 clhsdb> thread <id>                        # print information for a thread
 clhsdb> inspect <addr>                     # inspect the object at an address
 clhsdb> print <addr>                       # print the object at an address

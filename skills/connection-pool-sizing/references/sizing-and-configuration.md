@@ -17,6 +17,15 @@ and a stable measurement interval. For 200 borrows/s and mean hold time 0.020 s,
 risk. Stuck borrows may not yet appear in the completed-use timer: cross-check active counts,
 transaction age and checkout traces.
 
+For direct connections, sum each pool's maximum over peak coexisting replicas, including rolling
+deployments, batch workers and other clients of the same database. Keep administrative/recovery
+reserve available; neither an average replica count nor one pool per process is a safe assumption.
+The configured session limit is not a target for useful concurrent queries: validate the workload's
+safe execution concurrency separately. If a proxy such as PgBouncer multiplexes sessions, account
+for its client limits, backend pools per user/database, pooling mode and queue/deadline behavior;
+application pool maxima no longer map one-to-one to database sessions. Do not introduce a proxy
+solely to hide excess demand.
+
 ## HikariCP settings and their real defaults
 
 | Property                   | Default (5.x/6.x)                                           | What to set                                                                        |
@@ -27,8 +36,8 @@ transaction age and checkout traces.
 | `leak-detection-threshold` | 0 (disabled)                                                | choose above legitimate hold durations; diagnostic warning, not forced reclamation |
 | `maximum-pool-size`        | 10                                                          | from the calculation above                                                         |
 
-HikariCP logs the effective configuration at startup at `DEBUG` level. Confirm there rather
-than trusting the file — a property in the wrong prefix is accepted silently.
+HikariCP logs the effective configuration at startup at `DEBUG` level. Confirm bound values rather
+than trusting the file — a property in the wrong prefix may be silently ignored.
 
 Illustrative Spring Boot properties, not portable production settings. The lifetime below assumes
 a verified connection-age cutoff above 280 seconds; the acquire timeout requires a request budget
@@ -86,7 +95,8 @@ behavior separately; compare hold time and database load as well as statement co
 
 - [ ] Mean `W` measured from checkout to return; p50/p99 and outstanding borrows inspected
 - [ ] `L = λ_borrow × mean(W)` calculated for one pool and stable interval
-- [ ] Database budget agreed across all instances, admin reserve, workload classes, and failover
+- [ ] Direct/proxied session budgets and safe execution concurrency agreed across all pools,
+      peak instances, admin/recovery reserve, workload classes and failover
 - [ ] Candidate pool size validated at representative concurrency; margin justified by evidence
 - [ ] `connection-timeout` inside the endpoint's latency budget, never 0
 - [ ] `max-lifetime` derived from connection-age cutoff; in-use retirement and idle drops handled separately
@@ -105,11 +115,20 @@ behavior separately; compare hold time and database load as well as statement co
 
 - [ ] Query count scales as intended with endpoint result cardinality and fetch strategy
 - [ ] **An automated test locking the statement count** on the critical path
-- [ ] No external I/O (HTTP, gRPC, queue, sleep) inside `@Transactional`
+- [ ] External waits removed from connection hold time where the consistency contract permits;
+      remaining waits justified and bounded. Moving an effect across commit changes failure/atomicity
+      semantics and needs an accepted recovery contract
 - [ ] Transaction interception mode verified; in default proxy mode, calls cross the proxy and do
       not use self-invocation. Method visibility is checked against proxy type and Spring version
+- [ ] Nested transactions/additional borrows cannot strand all outer borrowers waiting for another
+      connection; propagation semantics and capacity both reviewed
 - [ ] Bulk write batch execution verified for the actual provider, driver and identifier strategy
-- [ ] `try-with-resources` on every manual JDBC access
+- [ ] Owned JDBC resources closed on every path; use `try-with-resources` for connections the code
+      owns. Spring `DataSourceUtils.getConnection` pairs with `releaseConnection` in `finally` so
+      a transaction-bound connection is not prematurely closed; verify wrapper/framework ownership
 
 Sources: [HikariCP configuration](https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby)
 and [Hibernate 6.6 batching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#batch).
+For the relevant boundary, consult [PgBouncer client and backend configuration](https://www.pgbouncer.org/config.html),
+[Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html)
+and [Spring DataSourceUtils ownership](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/datasource/DataSourceUtils.html).

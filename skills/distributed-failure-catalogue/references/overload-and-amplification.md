@@ -27,7 +27,8 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
   Early success, deadlines and retry budgets reduce the realized count.
 - **Where it hides** — retries in more than one layer, two of which are usually invisible in
   the repository: a mesh sidecar default, an SDK's built-in retries, a driver reconnect.
-- **Owner** — `retries-and-backoff` (budgets, jitter, retrying at exactly one layer).
+- **Owner** — `retries-and-backoff` (budgets, jitter, one owner of the end-to-end policy;
+  nested retries require explicit safe attempt/deadline accounting).
 
 ## Cascading failure
 
@@ -44,14 +45,18 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 
 ## Timeout stacking
 
-- **Symptom** — the caller has returned an error and the downstream work is still running:
+- **Symptom** — request-owned work outlives its intended lifetime after caller expiry:
   in-flight counts at the callee exceeding anything the caller admits to.
 - **Mechanism** — an inner timeout longer than the remaining caller budget, or a timeout with
   no effective cancellation. Sequential hop/attempt budgets can add; parallel branches take
   a maximum, and retries add further terms. Stopping the wait and stopping the work are
   separate mechanisms.
-- **Where it hides** — `future.get()` with no bound; a connect timeout with no read or request
-  timeout; a retry policy whose total exceeds the caller's budget; `TimeoutException` caught
+- **Discriminator** — inspect the accepted operation lifetime, effective outer/server bounds
+  and observed resource release. Deliberately accepted durable work has a separate lifetime;
+  continuing inside that contract is not abandoned request work. Missing one timeout/cancel API
+  does not establish a defect, and a cancellation signal does not prove termination or no effect.
+- **Where it hides** — `future.get()` with no effective enclosing bound; a connect timeout
+  with no read or request timeout; a retry policy whose total exceeds the caller's budget; `TimeoutException` caught
   without cancelling; a JDBC call with no `setQueryTimeout`.
 - **Owner** — `timeouts-and-deadlines` (deadline propagation and cancellation).
 

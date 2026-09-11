@@ -30,18 +30,24 @@ service interface and its single implementation.
 
 ## Workflow
 
-1. **Find the boundaries that already exist**, including the informal ones: a package
+1. **Identify the desired change or violated contract, then find existing boundaries**,
+   including informal ones: a package
    nobody outside touches, a class every feature edits, a schema owned by another team.
-   These are the real structure; the diagram is aspiration.
+   Inspect callers, build rules, transaction/security ownership and accepted architecture
+   decisions. If a missing ownership or compatibility requirement changes the choice, ask
+   for that requirement; mark minor reversible assumptions and proceed.
 2. **For each candidate boundary, name what varies across it.** A boundary earns its cost
    when it isolates change, ownership, trust, invariants or a public contract. Co-change
    is a reason to inspect its cost, not proof that these protections are unnecessary.
+   Compare retaining the current structure with the smallest useful adjustment and any
+   materially different style justified by those drivers.
 3. **Fix the dependency direction and write it down.** Direction is the whole substance of
    a layering decision; without it you have packages, not layers.
 4. **Decide what crosses.** The type that crosses a boundary is part of the boundary's
    contract. Serializing a JPA entity directly can couple the HTTP representation to the
    persistence model and lazy-loading behavior; inspect the actual mapping/serialization.
-5. **Enforce mechanically.** ArchUnit rules, module boundaries, or compilation units.
+5. **Enforce mechanically using the project's language/build tools.** Module visibility,
+   dependency checks or compilation units; the reference's ArchUnit examples are Java-specific.
    Check that forbidden dependencies actually fail; code review alone can miss violations.
 6. **Recheck the count.** Use representative change history and the boundary's protection
    contract to assess value. Missing history, especially in a new system, is uncertainty;
@@ -67,8 +73,9 @@ Data source       persistence, external systems, transaction mechanics.
 
 Two properties matter more than the diagram. **Downward-only dependency:** a lower layer
 never names a higher one. **Skip rules are a decision, not an accident:** presentation
-reaching data source directly is a legitimate, common choice for read paths, and a bad
-accident when it happens to a write path (`query-objects-and-specifications`).
+reaching data source directly can be legitimate for read paths; it is a defect when it
+bypasses required authorization, tenant isolation or invariants on either read or write
+paths (`query-objects-and-specifications`).
 
 ## Decision rules
 
@@ -118,11 +125,12 @@ The boundary is between features rather than between technical concerns
   domain type, a dedicated representation, or a projection; each choice is defensible and
   the failure is choosing by default (`remote-facade-and-dto`).
 - Layer count is a cost. Three layers with real constraints beat six with none. Every
-  additional layer multiplies mapping code, obscures stack traces and lengthens the change
-  path; it must buy something nameable.
+  additional layer must buy something nameable; it can add mapping, indirection and a
+  longer change path, depending on the contracts that cross it.
 - The read path and the write path are allowed to differ. Writes benefit from going
   through the domain to protect invariants; reads frequently do not, and forcing every
-  query through an aggregate is a leading cause of N+1 and of over-fetching
+  query through an aggregate can add unnecessary loading. Inspect generated queries and
+  fetched data before attributing N+1 or over-fetching to the layer choice
   (`architecture-and-performance`).
 - Hexagonal, clean and onion architectures share an inward-dependency principle —
   outward dependencies are inverted through interfaces the inside owns — with different
@@ -132,8 +140,16 @@ The boundary is between features rather than between technical concerns
   usually "the domain must be testable and outlive this framework" or "we will replace
   this integration". Without such a driver you are buying mapping code.
 - A boundary you cannot violate accidentally is worth more than a boundary described in a
-  wiki. Prefer compiler and build-time enforcement; a failing ArchUnit test is the
-  cheapest architecture governance available.
+  wiki. Prefer compiler and build-time enforcement that covers the intended rule; ArchUnit
+  is one option for Java bytecode, not evidence that runtime wiring or business invariants
+  are enforced.
+
+Deliver the retained or proposed boundary, its protected outcome, allowed dependencies and
+crossing types, concise alternatives/rationale, and validation performed or still needed.
+For a change, identify affected callers and a verifiable migration increment that preserves
+required transaction, security and compatibility behavior. Record consequential decisions
+using the repository's ADR convention (`architecture-decision-making`); routine choices
+need only a concise rationale. State what missing evidence would change the recommendation.
 
 ## References
 

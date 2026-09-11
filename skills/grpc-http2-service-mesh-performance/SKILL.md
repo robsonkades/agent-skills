@@ -19,7 +19,12 @@ semantics, and proxy/mesh policy. A change in one layer does not prove that anot
 
 ## Investigation contract
 
-Record the exact client/server/proxy versions, transport implementation, topology, request and
+Start with the required useful-completion, latency or resource outcome and the incident/optimization
+decision. Reuse available contracts, configuration and measurements; ask only for unresolved facts
+that change that decision. Select the evidence relevant to the affected path, and preserve an adequate
+configuration when it already meets the goal. Missing evidence can justify a bounded next check.
+
+Record relevant client/server/proxy versions, transport implementation, topology, request and
 response sizes, unary/streaming shape, channel and connection counts, concurrent streams, flow-
 control windows, TLS connection age, retries/hedges, offered and completed work, and per-hop
 latency/CPU/memory. Preserve a direct-path control where possible.
@@ -40,7 +45,8 @@ upgrades, and generic gRPC guidance does not establish a Java transport's exact 
    cannot establish that proxy policy or connection churn became cheaper.
 4. Check effective configuration from protocol negotiation, runtime metrics or proxy config dump.
    A configuration key accepted by a framework or CRD is not evidence that it changed behavior.
-5. Change one layer and validate useful completion, tail latency, errors, retries, CPU and memory.
+5. When a change is justified, change one layer and validate useful completion, tail latency, errors,
+   retries, CPU and memory. Preserve incident evidence without delaying necessary authorized mitigation.
 
 ## Decision rules
 
@@ -56,8 +62,10 @@ upgrades, and generic gRPC guidance does not establish a Java transport's exact 
   not rebalance it.
 - Treat TLS handshake cost separately from steady-state record protection. Connection churn,
   certificate rotation and session resumption determine how often the expensive path occurs.
-- Combine application and proxy retries into one attempt budget. Never retry or hedge a possibly
-  committed non-idempotent operation without a durable idempotency contract.
+- Combine application and proxy retries into one attempt budget. For possibly committed effects,
+  require actual repeat-safe conditional/idempotent protection or resolve the outcome authoritatively
+  before reissuing; unresolved outcomes stay unknown. `idempotency` owns effect protection and
+  `retries-and-backoff` owns retry policy.
 - A mesh is justified by security and policy as well as latency. Measure its marginal cost and
   compare sidecar, node/ambient and direct paths without silently discarding required controls.
 
@@ -70,6 +78,9 @@ Scope that uncertainty: missing a direct control prevents causal mesh-overhead a
 does not invalidate a directly observed exhausted window or executor queue. Continue independent
 diagnosis. Compare end-to-end distributions; adding/subtracting per-hop p99 values does not
 produce a request's critical-path latency.
+Report the retained or changed policy, remaining uncertainty and what would change the decision.
+Stop when the goal is supported or the next observation costs more than its decision value; a
+supported no-change result does not require a tuning campaign.
 
 ## References
 

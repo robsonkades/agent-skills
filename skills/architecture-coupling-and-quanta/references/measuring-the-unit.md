@@ -4,6 +4,8 @@ Use these measurements to investigate edges, not to manufacture a quantum count.
 Record environment, window, input revision/query, exclusions, artifact-to-target mapping
 and missing coverage. Save raw counts alongside ratios. A clean result from incomplete
 telemetry is not evidence of independence.
+For any ratio, a zero denominator means no eligible observations: report it as undefined,
+not as 0% coupling or evidence of independence.
 
 ## 1. Co-change: locate candidate change obligations
 
@@ -74,6 +76,12 @@ A compatible independent deployment refutes a universal “always lockstep” cl
 not prove every future change independent. A rare destructive migration can matter even
 when the historical ratio is low. Preserve the scope of each conclusion.
 
+Record binding launch/approval policies and their owners separately from technical constraints.
+A mandatory coordinated launch can limit independent delivery even when mixed versions work;
+it need not require simultaneous binary deployment if dark deployment is permitted. Establish
+which action the policy governs. A compatible rollout test does not waive that obligation, and
+a habitual release train is not automatically a mandatory policy.
+
 [DORA's loosely coupled teams capability](https://dora.dev/capabilities/loosely-coupled-teams/)
 supports asking about independent deployment and testing; it supplies no quantum-count
 algorithm or threshold for these ratios.
@@ -137,12 +145,32 @@ two writers maintaining one table's invariant have a data coordination obligatio
 can still break on a column rename. State each mechanism rather than equating every session
 with a shared-schema writer.
 
+For an atomicity claim, name the invariant and trace the actual connection/transaction context,
+enlisted resources and any coordinator. One database can serve independent transactions, and
+different schemas within it can participate in one transaction. Inspect the isolation/locking
+needed for the invariant; grouping writes in a transaction alone does not prove that concurrent
+executions preserve it. Mark unknown enlistment as unknown even if a framework annotation or
+diagram says “transactional.”
+
+Merging processes does not turn multiple transactional resources into one local transaction.
+Distinguish an atomic commit boundary from several local commits with retries or compensation.
+For the latter, map what can remain committed when a later action fails and who must recover it;
+an error response does not undo prior effects. Keep a working local transaction where it meets
+the requirement, and hand off any transaction redesign after establishing the constraint.
+
 Sources checked 2026-09-05:
 [PostgreSQL monitoring](https://www.postgresql.org/docs/current/monitoring-stats.html),
 [SQL Server sessions](https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-exec-sessions-transact-sql?view=sql-server-ver17),
 [OTel database spans](https://opentelemetry.io/docs/specs/semconv/db/database-spans/),
 [OTel migration guide](https://opentelemetry.io/docs/specs/semconv/non-normative/db-migration/).
 Match privileges and fields to the deployed versions.
+
+Transaction distinctions checked 2026-09-10 against
+[PostgreSQL 18 transactions](https://www.postgresql.org/docs/18/tutorial-transactions.html),
+[schemas](https://www.postgresql.org/docs/18/ddl-schemas.html) and
+[Spring's local versus global transaction model](https://docs.spring.io/spring-framework/reference/data-access/transaction/motivation.html)
+(7.0.9 documentation). These support the boundary distinction, not proof of a project's enlistment
+or concurrent invariants; inspect its actual database, transaction manager and recovery behavior.
 
 ## 4. Runtime dependence and validation
 

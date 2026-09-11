@@ -10,9 +10,9 @@ the target project's release before recommending them.
 
 ### A sealed switch is not the Switch Statements smell
 
-The smell was never the keyword; it was _unchecked repetition of a type dispatch_. An
-exhaustive switch over a sealed type inverts the problem — the compiler enumerates every
-dispatch site when a variant is added:
+The smell was never the keyword; it was _unchecked repetition of a type dispatch_. A
+switch enumerating the variants of a sealed type without a catch-all makes recompilation
+expose missing cases when that set changes:
 
 ```java
 sealed interface PaymentMethod permits Card, Boleto, Pix {}
@@ -29,14 +29,14 @@ BigDecimal feeFor(PaymentMethod method, BigDecimal amount) {
 }
 ```
 
-The **new** smell is `default` (or `case null, default`) on a switch over a sealed type:
-it silently absorbs every future variant, buying back the exact defect exhaustiveness
-exists to prevent. Flag the `default`, not the switch. A legitimate exception: a
-deliberately partial handler that documents why unknown variants share one behaviour.
+A `default` or unconditional type-pattern case can absorb future variants. Flag it when
+the contract requires each variant to receive explicit policy review, not merely because
+the label exists. A deliberately tolerant handler may correctly give unknown variants one
+behavior; keep its null policy separate. See the evolution discussion below.
 
 ### Records dissolve Data Clumps — and half of Primitive Obsession
 
-The grouping half is now nearly free:
+Records make grouping concise; API and mapping changes still have migration costs:
 
 ```java
 record DateRange(LocalDate start, LocalDate end) {
@@ -48,16 +48,19 @@ record DateRange(LocalDate start, LocalDate end) {
 }
 ```
 
-The _semantics_ half survives: a `record Transfer(String iban, long cents)` still has
-primitive obsession inside it — `iban` carries rules no type enforces. A record of
-primitives fixes travel, not meaning.
+The _semantics_ half survives: `record Transfer(String iban, long cents)` does not itself
+specify IBAN or amount rules. Locate the actual validation and trust boundary before
+reporting primitive obsession; a dedicated type earns its place through evidenced invariant,
+reuse or confusion benefits. Grouping syntax alone neither supplies nor disproves validation.
 
 ### Pattern matching dissolves the instanceof-cast chain's boilerplate — not its design question
 
-`if (x instanceof Card c)` chains become a clean switch, but a switch over a _non-sealed_
-supertype still needs `default` and still misses new subtypes silently. The design
-question — close the hierarchy or use polymorphism — remains, and is java-refactoring's
-decision table.
+Pattern matching removes casts, but an open-supertype switch still needs adequate coverage:
+an unconditional type pattern such as `case PaymentMethod other` can supply it without a
+literal `default`. That catch-all can intentionally handle later implementations. Decide
+whether variants are owned and closed, or callers need a supported extension/fallback contract;
+do not seal an open plugin API merely to make dispatch look exhaustive. Polymorphism is another
+choice when ownership of the behavior fits; see java-refactoring's decision table.
 
 ### Boolean blindness got cheap to fix
 
@@ -85,12 +88,14 @@ representation, or `Optional.of` used as a let-expression. None is an automatic 
 imperative branching may be clearest, and an internal parameter can make optionality explicit.
 Fixes and correct usage are java-optional's; nullability contracts are java-null-safety's.
 
-### The record that should be a class
+### Record shape versus ownership contract
 
-A record with ten components, half of them nullable, exposing raw mutable collections it
-was handed — value semantics claimed, not delivered. Detect: mutable component types
-without defensive copies in the compact constructor; component lists that read like a
-God Object's field list. Depth: java-immutability.
+Component count, nullability and mutable component types are leads, not findings. A record
+is shallowly immutable: a claimed snapshot can still change through an aliased list. Check
+the promised ownership, equality and lifecycle contract; immutable inputs or ownership
+transfer may avoid copying, and an explicitly confined live view may be intentional. A
+record can also remain a domain value. Recommend copies or a class only when that contract
+requires them; a long component list alone proves neither choice. Depth: java-immutability.
 
 ### Sealed sprawl
 
@@ -103,13 +108,15 @@ may fit better (java-refactoring's polymorphism-vs-sealed table).
 
 ### Exhaustiveness hidden by a convenience default
 
-An exhaustive source switch without `default` makes recompilation identify every new enum or
-permitted subtype; a separately evolved binary can still reach a compiler-generated fallback
+An exhaustive source switch enumerating current variants without a catch-all makes recompilation
+identify newly uncovered variants. No `default` is insufficient if a type pattern already covers
+them. A separately evolved binary can still reach a compiler-generated fallback
 and throw `MatchException` (Java 21+) rather than execute stale policy. An explicit `default`
 trades that fail-fast behavior for fallback behavior. That may be correct for a tolerant
 presentation edge, but is suspect in authorization, money or protocol-state decisions. Record
 the compatibility policy instead of chanting "never default".
 
-Primary language references: [JLS §14.11 (`switch`)](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.11),
-[JLS §8.1.6 (sealed classes)](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.1.6),
-and [JLS §13.4.2 (evolution and `MatchException`)](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.2).
+Primary language references for the Java 21 baseline: [JLS §14.11 (`switch`)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11),
+[JLS §8.1.6 (sealed classes)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6),
+[JLS §13.4.2 (evolution and `MatchException`)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.2),
+and [Record's shallow-immutability contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html).

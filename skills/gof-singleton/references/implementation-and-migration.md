@@ -2,6 +2,10 @@
 
 ## The four idioms, with their exact guarantees
 
+Separate Java 17 examples; import `java.time.Clock` for the enum example. Inspect the actual
+identity, failure and lifecycle contract before selecting an idiom; these snippets own no
+closeable external resource. Publication does not make later mutation thread-safe.
+
 ```java
 // 1. Enum — Effective Java's recommendation when a singleton is genuinely required
 public enum Clocks {
@@ -14,8 +18,10 @@ public enum Clocks {
 Guarantees: initialization on active use of the enum class, not independently on first use of
 each constant; safe publication from class initialization. Resistant to standard
 reflective instantiation (`Constructor.newInstance` on an enum throws); serialisation preserves
-identity without `readResolve`. Costs: cannot extend a class; the type is an enum, which is
-misleading if it models no enumeration; still global state.
+identity in the receiving defining class without `readResolve`. Costs: cannot extend a class;
+the enum API may not fit an existing class contract, and mutable global state still needs ownership.
+Enum instance fields are not persisted by [standard enum serialization](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants);
+canonical identity is not state capture or restoration.
 
 ```java
 // 2. Holder idiom (initialisation-on-demand) — the best plain-class option
@@ -26,13 +32,14 @@ public final class Registry {
 }
 ```
 
-Guarantees: initialised on first call to `getInstance()`, not on class load; correctness comes
-from the JVM's class-initialisation lock, so no synchronisation appears in the fast path.
+Guarantees: the instance is initialized on active use of `Holder`, normally the first
+`getInstance()` call, not merely loading `Registry`. Correctness comes from class-initialisation
+semantics; callers need no explicit synchronization after initialization.
 Costs: accessible reflection can create another instance; serialization matters only if the
 type participates in Serializable. The shown class does not.
 
 ```java
-// 3. Double-checked locking — correct only exactly like this
+// 3. Classic double-checked locking — volatile publication is required here
 public final class Registry {
     private static volatile Registry instance;     // volatile is not optional
     private Registry() {}
@@ -99,23 +106,28 @@ Rules that prevent it:
 - **Class loaders.** Two defining loaders can define distinct types/instances; loaders delegating
   to the same parent definition share that class. Class/loader identity can distinguish them.
 
-If any of the three matter to correctness, the requirement is stronger than a Java singleton can
-express, and belongs on the ladder in
+Match the actual threat/compatibility boundary: an enum can satisfy standard reflective-construction
+and serialization identity requirements within its defining class. Privileged mechanisms, other
+construction paths or independent defining loaders require separate analysis; do not infer JVM or
+cluster uniqueness. Place a broader authority requirement on the ladder in
 [uniqueness-and-scope.md](uniqueness-and-scope.md).
 
 ## Migrating off an entrenched singleton
 
-A big-bang removal of a `getInstance()` called from two hundred places is not reviewable. The
-sequence below keeps every step small and independently mergeable.
+A large removal can benefit from the sequence below; a small cohesive change need not be split.
+First establish what the migration improves, the supported static/canonical-identity contract,
+existing test seams and lifecycle owner. Retaining the accessor is valid when its contract is needed.
 
-1. **Make the state visible.** Add a constructor taking the collaborators the singleton
-   currently reaches statically. The static instance now calls it. Nothing else changes.
-2. **Introduce an interface** for what callers actually use — usually two or three of its
-   methods, not all fifteen. The narrower interface is the real API and often reveals that
-   callers wanted different things.
+1. **Make collaborators visible.** Route construction through explicit collaborators when useful,
+   preserving access restrictions, canonical creation, initialization timing and failure behavior.
+   Do not expose another construction path merely to enable injection.
+2. **Reuse the smallest suitable caller contract.** Inject the concrete type or existing interface
+   when adequate. Extract an interface only for an actual consumer boundary, substitution or
+   failure/ownership contract; injection alone does not require one.
 3. **Convert callers leaf-first.** A caller that already receives its collaborators takes one
    more parameter; the singleton is passed at the call site. Each converted caller becomes
-   testable immediately, which is the incentive that keeps the migration moving.
+   easier to isolate only where its actual collaborators/lifecycle now support that test seam;
+   verify behavior rather than equating a new parameter with testability.
 4. **Move ownership to the composition root without creating two live owners.** Initially inject
    the existing canonical instance; coordinate cutover of both legacy and injected call paths,
    including shutdown, before constructing a replacement. Do not close a shared instance twice.
@@ -128,20 +140,19 @@ Two things to watch during the migration:
 - **Do not add a `setInstance()` for tests.** It makes tests order-dependent and creates a
   production API for mutating global state. If tests cannot be written without it, do step 3 for
   those callers first.
-- **Watch for initialisation order that the static holder was accidentally providing.** Code
-  that worked because the singleton was created on first use may break when it becomes an eager
-  bean — usually because something reads configuration that is not ready. That is a real
-  ordering bug the singleton was hiding, and it should be fixed rather than re-hidden.
+- **Preserve intended initialization timing.** First-use construction may be a valid contract;
+  an eager bean can violate it. Configure an appropriate owned lifecycle or justify a change with
+  dependency/failure evidence rather than treating laziness itself as a hidden bug.
 
 ## Test hazards, and what they indicate
 
-| Symptom                                     | Cause                                             | Fix                                                     |
-| ------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------- |
-| Test passes alone, fails in the suite       | State from an earlier test survived in the static | Inject the collaborator; stop sharing                   |
-| Test order changes the result               | Same                                              | Same                                                    |
-| Parallel tests interfere                    | One instance, many threads, mutable state         | Same, or make the instance immutable                    |
-| A `reset()` exists only for tests           | Production API added to undo global state         | Treat as a migration marker; convert those callers      |
-| A test needs a bytecode agent to substitute | Static call with no seam                          | Introduce the interface (step 2) before testing further |
+| Symptom                                     | Candidate cause                                  | Discriminating check / correction                                                     |
+| ------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Test passes alone, fails in the suite       | Earlier state survived, static or external       | Reproduce order and identify the state owner before isolating it                      |
+| Test order changes the result               | Shared state or initialization timing            | Compare actual setup/cleanup and defining-class lifetime                              |
+| Parallel tests interfere                    | Competing access to shared mutable state         | Identify overlapping users; isolate fixtures or enforce the required protocol         |
+| A `reset()` exists only for tests           | Tests are compensating for a shared lifetime     | Inspect reset scope and isolation; do not reset resources used by other tests         |
+| A test needs a bytecode agent to substitute | Required static call or a missing practical seam | Reuse concrete/existing interfaces, adapters or process isolation as contracts permit |
 
-The pattern across the table: every one of these is fixed by the same move, and none is fixed by
-a better singleton.
+These are diagnostic signals, not proof of one cause or a mandate for one abstraction. Verify the
+specific failure and the retained production/parallel-test contract after a correction.

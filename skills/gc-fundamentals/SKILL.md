@@ -19,14 +19,20 @@ description: >
 ## Purpose
 
 Supply the mechanism behind GC symptoms, so a diagnosis explains rather than describes.
-The failure this prevents is tuning a collector to fix something the collector is not
-doing — most reported "GC problems" are the collector behaving correctly given how much
-live data it is handed.
+The failure this prevents is tuning a collector before distinguishing workload retention,
+collector phase work and resource availability. A collector regression or misconfiguration
+remains a candidate when the evidence supports it.
+
+GC reachability is not the same as business usefulness or source-code scope. Losing the relevant
+root paths makes an object eligible for reclamation, subject to reference-processing rules;
+it does not promise immediate reclamation or closure of a file/socket. Read the reachability
+boundary in `references/collector-mechanisms.md` when those lifetimes are being conflated.
 
 ## Workflow
 
 1. **Identify the target, then separate pause duration from frequency.** Inspect the exact
-   Java build, collector/mode, effective heap/CPU limits and flags. Duration can reflect
+   Java build, collector/mode, effective heap/CPU limits and flags. Reuse supplied logs and
+   accepted outcome budgets; the JDK 25 examples do not authorize a project upgrade. Duration can reflect
    live data, phase work or scheduling; frequency can reflect allocation, young capacity,
    triggers or changed ergonomics. Compare like-for-like windows before choosing a cause.
 2. **Ask what survived, then inspect the non-copy work.** The evacuation component tracks
@@ -100,7 +106,8 @@ live data it is handed.
 - On the JDK 25 baseline, **ZGC is generational by definition** — `-XX:+ZGenerational` no
   longer selects a mode (obsolete and ignored with a warning on 25; JEP 490) — and
   **generational Shenandoah is product** (JEP 521).
-  Any collector comparison written before JDK 23 needs redoing.
+  Revalidate older comparisons where collector mode, barriers, status or workload assumptions
+  changed; retain still-applicable mechanisms and measurements with their original scope.
 - **Separate delivered changes from targets and local validation.** As of 2026-09-05,
   [JEP 523](https://openjdk.org/jeps/523) is Closed/Delivered for JDK 27, changing G1's
   default selection in constrained environments. The tested JDK 25 build still picks Serial
@@ -110,7 +117,9 @@ live data it is handed.
 ## Output
 
 Report the observed collector phase/symptom, supported candidate mechanism, competing cause,
-next discriminating measurement and owning skill. State when logs or workload evidence are
+next discriminating check or supported no-change decision, and owning skill when needed.
+Adequate behavior within accepted budgets does not require new collection or tuning.
+State when logs or workload evidence are
 missing; do not infer causation from a phase name or run an intrusive diagnostic automatically.
 
 ## References

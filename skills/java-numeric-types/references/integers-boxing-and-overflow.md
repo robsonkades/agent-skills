@@ -58,14 +58,15 @@ c == d;        // not portable; usually false with HotSpot's default cache
 For boxing of constant expressions, the JLS guarantees identity for booleans, ASCII characters
 and integral values from `-128` through `127`; implementations may cache more. HotSpot has an
 `Integer` cache tuning flag, but application correctness must not depend on it.
-`Boolean.valueOf` returns the two constants. The practical consequence is that `==` on boxed
-values is a bug that unit tests with small numbers can miss.
+`Boolean.valueOf` returns the two constants. Using `==` for boxed value equality is a bug that
+unit tests with small numbers can miss; explicit object-identity comparison has a different contract.
 
 Three more behaviours to have memorised:
 
 - **Unboxing throws on null.** `int n = map.get(missing);` and `if (flags.get(k))` throw
   `NullPointerException` from a line containing no visible dereference — the exception message
-  in recent JDKs (helpful NPEs) names the unboxing, which is the fastest way to recognise it.
+  can identify unboxing when helpful VM-generated NPE detail is enabled. Message text is not
+  a portable exception contract; inspect the actual expression and stack.
 - **Mixed operands unbox.** `Integer x; int y; x == y` compares _values_ because `x` is
   unboxed — so the same operator means different things depending on the other operand's type.
   Write `x.intValue() == y` or `Objects.equals(x, y)` and say which you meant.
@@ -79,8 +80,9 @@ Primitive by default. Boxed when:
 - a collection or generic type parameter requires it (`List<Integer>`, `Map<Long, Order>`);
 - the value is genuinely optional and `null` is the encoding of that (a nullable column, an
   unset request field) — and then the nullability belongs in the API contract (java-null-safety);
-- a framework demands it (JPA identifiers are the standard example, where `null` distinguishes
-  "not yet persisted").
+- the actual framework/lifecycle contract uses a nullable value, such as an unassigned identifier.
+  Jakarta Persistence permits primitive and wrapper IDs; inspect mapping and new-entity detection
+  rather than treating every JPA identifier as requiring a box.
 
 Avoid a boxed type as a counter, loop variable or accumulator on a material path. The classic:
 
@@ -97,8 +99,10 @@ target runtime. Caches and escape analysis may avoid some allocations; boxes tha
 collection generally remain. The cost can include allocation/GC, indirection, locality and
 memory bandwidth, not merely arithmetic.
 
-Where it matters (bulk data paths, per-element pipelines over millions of items), the fixes are
-mechanical:
+Where it matters (bulk data paths, per-element pipelines over millions of items), compare these
+candidates against null/absence, key density/range, growth, ordering and public API contracts.
+Preserve arithmetic semantics too: `IntStream.sum()` uses wrapping `int` addition, so it cannot
+replace a checked reduction unchanged. Wider accumulation still needs its own range proof.
 
 | Instead of                        | Use                                                            |
 | --------------------------------- | -------------------------------------------------------------- |
@@ -124,23 +128,26 @@ claims performance-methodology exists to discipline.
   `bigint` unless the table is provably bounded.
 - **UUIDs are 128 bits** and do not fit any primitive; stored as `char(36)` they cost index
   space and locality, stored as `binary(16)` they are compact but need a canonical byte order.
-  Time-ordered variants (UUIDv7) exist specifically to restore index locality.
+  UUIDv7 places a timestamp first to support time ordering; actual index locality and cost still
+  depend on storage/comparison order, generation and workload.
 - **Random ids need `SecureRandom`** when guessing one has consequences.
   `ThreadLocalRandom`/ordinary `RandomGenerator`s are non-cryptographic regardless of apparent
   statistical quality.
 
 ## Review checks
 
-- [ ] No `int` arithmetic whose product or sum can exceed `Integer.MAX_VALUE`; exact methods
-      used where overflow would be a defect.
+- [ ] Check both signed bounds on products, sums, differences and conversions; use exact methods
+      where overflow/underflow is a defect, retaining deliberate modular/hash arithmetic.
 - [ ] For bucket indices with positive bucket count, `Math.floorMod` handles negative hashes;
       retain truncating remainder where that is the intended arithmetic contract.
-- [ ] No `==`/`!=` between boxed values.
+- [ ] Boxed comparisons distinguish value equality from intentional object identity; no accidental
+      `==`/`!=` value comparisons.
 - [ ] Every unboxing site has a proven non-null source, or the value stays boxed.
 - [ ] Boxed accumulators or loop variables on a measured material path have been evaluated.
-- [ ] Primitive specialisations on paths that process values in bulk — with a profile, not a
-      hunch, when the change costs readability.
-- [ ] Large ids serialised as strings at any boundary a JavaScript client can reach.
+- [ ] Primitive specialisations preserve absence, range, collection and arithmetic contracts —
+      with a profile, not a hunch, when the change costs readability.
+- [ ] Large ids retain their exact value through every consumer: use a string contract or a verified
+      lossless parser/encoding, preserving compatibility when changing a public representation.
 
 ## Authoritative references
 

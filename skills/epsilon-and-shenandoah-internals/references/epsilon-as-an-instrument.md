@@ -70,12 +70,12 @@ gap is the finding.
 
 ## Four uses, and the heap each implies
 
-| Use                                                                  | Heap                                                           | Why                                                                                                          |
-| -------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Precise benchmarking                                                 | Large enough not to OOM during the measurement                 | No GC means no GC variance in the numbers; allocation throughput is isolated from collection logic           |
-| Very short-lived processes (CLI, sub-second serverless, small batch) | Measured cumulative allocation plus startup and safety reserve | Compare end-to-end runtime and resident memory with a collecting baseline                                    |
-| Detecting hidden allocation pressure                                 | Deliberately modest — enough to run, not enough to hide        | Excess allocation becomes a fast, observable OOM instead of a symptom a collector masks until it is too late |
-| Investigating an allocation-free claim                               | Sized past warm-up with a defined measurement window           | Bound allocation with counters/profiles; finite survival cannot prove zero allocation                        |
+| Use                                                                  | Heap                                                           | Why                                                                                                                    |
+| -------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Precise benchmarking                                                 | Large enough not to OOM during the measurement                 | Removes reclamation work from this configuration; does not isolate allocation cost from JIT, runtime or layout effects |
+| Very short-lived processes (CLI, sub-second serverless, small batch) | Measured cumulative allocation plus startup and safety reserve | Compare end-to-end runtime and resident memory with a collecting baseline                                              |
+| Detecting hidden allocation pressure                                 | Deliberately modest — enough to run, not enough to hide        | Excess allocation becomes a fast, observable OOM instead of a symptom a collector masks until it is too late           |
+| Investigating an allocation-free claim                               | Sized past warm-up with a defined measurement window           | Bound allocation with counters/profiles; finite survival cannot prove zero allocation                                  |
 
 Size from cumulative bytes allocated during startup, warm-up and measurement, plus measured
 waste and reserve. A normal collector's peak occupancy plus 20% is insufficient: it can
@@ -153,14 +153,16 @@ attribution (`heap-dump-analysis`, `allocation-profiling`).
 
 1. State the claim to be tested — "this hot path does not allocate", "this benchmark's
    variance is GC", "our allocation rate is X".
-2. Compute the heap from `T_oom` for the experiment you are running, and write down the
-   predicted time to OOM.
+2. Compute the heap and remaining-time estimate for the chosen window. Intentionally exhaust
+   it only when an exhaustion experiment answers the question; a sufficient existing
+   allocation measurement or finite-budget bound needs no forced OOM.
 3. Choose dump/pre-touch/startup controls for the hypothesis and reserve headroom. Set
    `-XX:-ExitOnOutOfMemoryError` only if an isolated harness must observe the error.
-4. Compare exhaustion with the prediction; investigate unaccounted allocation, waste,
-   allocation size and the actual failure cause before attributing a shortfall.
+4. If exhaustion occurs, compare it with the prediction; investigate unaccounted allocation,
+   waste, allocation size and the actual failure cause before attributing a shortfall.
 5. Analyse any dump for classes/graphs and use allocation evidence to identify producing code.
-6. Fix, then re-run the same Epsilon configuration. Surviving the window that previously
+6. If a change is warranted, verify correctness and re-run comparable measurement windows.
+   Retain adequate code when the budget is met and no defect is demonstrated. Surviving the window that previously
    OOMed demonstrates meeting that finite budget, not zero allocation. Report measured bytes
    per operation or an upper bound; no observed OOM gives a bound, not a new measured `T_oom`.
 

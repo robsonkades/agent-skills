@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-command
-version: 1.2.1
+version: 1.2.2
 description: >-
   Command in modern Java: turning an invocation into an object so it can be queued, logged,
   scheduled, retried or undone — and the distinction from an event, which is a fact rather than a
@@ -49,11 +49,14 @@ suggests:
   - distributed-transactions-and-sagas
   - event-driven-architecture
   - executors-and-task-lifecycle
+  - gof-strategy
+  - idempotency
   - java-composition-over-inheritance
   - message-ordering-and-partitioning
   - orm-behavioral-patterns
   - poison-messages-and-dlq
   - query-objects-and-specifications
+  - rpc-and-api-contracts
   - scoped-values
 
 capabilities:

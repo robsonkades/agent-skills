@@ -104,8 +104,10 @@ jcmd <pid> Compiler.CodeHeap_Analytics FreeSpace     # print from the snapshot
 jcmd <pid> Compiler.CodeHeap_Analytics discard       # release the C-heap the snapshot uses
 ```
 
-Every print function except `all` needs a prior `aggregate` in the same JVM, otherwise it
-answers `No aggregated data available for heap … Run function aggregate first.` `all` does
+Print functions normally need a prior `aggregate` in the same JVM, otherwise they
+answer `No aggregated data available for heap … Run function aggregate first.` `FreeSpace`
+can also print this message after a successful aggregation when a heap has no reclaimed
+free-list blocks; it does not establish zero allocatable space. `all` does
 both and prints everything — 1,500+ lines for an idle JVM, far more for a loaded one; redirect
 it to a file.
 
@@ -114,10 +116,13 @@ What each section gives, per heap:
 - **Global CodeHeap statistics** — `freeSpace`, `usedSpace`, `Tier1 Space`/`Tier2 Space` (the
   tool's names for C1 and C2 code), `Alive Space`, `not entrant`, `stubSpace`, each with a
   block count and a percentage of capacity. `not entrant` space that is large and stable is
-  code waiting for a GC that has not come.
+  retired code not yet reclaimed; inspect unloading eligibility and surviving frames before
+  attributing it to an absent GC.
 - **Free blocks** — `Free space in CodeHeap '…' is distributed over N free blocks`, the
   **List of all Free Blocks** with each size, and the **Top Ten Free Blocks**. The first entry
-  of the top ten _is_ the largest contiguous free block. **Top Ten Free-Occupied-Free
+  of the top ten is the largest reclaimed free-list block in that snapshot. Unused committed
+  tail space and possible expansion are separate allocation sources, and fallback can use
+  another heap. **Top Ten Free-Occupied-Free
   Triples** shows which occupied gaps, if freed, would coalesce into a large block — the
   tool's own estimate of what unloading could recover.
 - **Largest Used Blocks** — the biggest nmethods by name, which is where to look when one
@@ -215,8 +220,8 @@ Every allocation occupies a whole number of allocation segments. On 25.0.3 the s
 128 bytes (`CodeCacheSegmentSize`, a `pd experimental` flag: it appears only under
 `-XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal`, and `CodeHeap_Analytics` prints it as
 `CodeHeap allocation segment size is 128 bytes`). A block is at least
-`CodeCacheMinBlockLength` (6, `diagnostic`) segments, so no nmethod occupies fewer than 768
-bytes.
+`CodeCacheMinBlockLength` (6, `diagnostic`) segments for fresh tail allocation. Free-list reuse
+can split off a smaller allocation; this flag alone does not establish an nmethod footprint.
 
 |                                 | Internal                                                                     | External                                                                                                                              |
 | ------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -236,18 +241,19 @@ CodeHeap 'non-profiled nmethods'
 aggregate free       = 12 + 3 + 40 = 55 segments
 largest contiguous   = 40 segments
 
-An allocation of 45 segments FAILS: not for lack of aggregate space, but
-because no single block reaches 45. Compiler.codecache reports free=55 and
-cannot distinguish this from one contiguous 55-segment block.
+Assume this heap has no unused tail or expansion capacity. A 45-segment
+allocation cannot fit here because no single free block reaches 45.
+Compiler.codecache reports free=55 and cannot distinguish this from one
+contiguous 55-segment block. Another heap may still satisfy allocation fallback.
 CodeHeap_Analytics FreeSpace lists three blocks and names the 40 as Pos 1.
 ```
 
 The allocator coalesces adjacent free blocks when it can, which mitigates but does not
 eliminate this when live blocks separate the gaps. A heap
 that receives 10,000 allocations and frees none does not fragment; it simply fills. The
-profiled/non-profiled split exists because tier-3 code lives seconds and tier-4 code lives
-hours — mixing them is what fragments, which is why the allocation fallback, once it starts,
-is the beginning of the problem rather than a graceful degradation.
+profiled/non-profiled split separates code with typically different lifetimes; tiers do not
+guarantee lifetimes in seconds or hours. Mixing lifetimes through fallback can increase
+fragmentation risk, but a spill or a restart alone does not prove fragmentation caused a failure.
 
 ## Triage checklist
 
@@ -258,12 +264,12 @@ is the beginning of the problem rather than a graceful degradation.
 - [ ] GC log searched for `CodeCache GC Threshold` / `CodeCache GC Aggressive`, and the
       collector's cost of each noted (Full GC on Serial/Parallel)
 - [ ] `jstat -compiler` recorded as part of the incident baseline (`Failed`, `Invalid`)
-- [ ] Sampled at three points 30-60s apart, to separate stable exhaustion from thrashing and
-      to see one heap spilling into the other
+- [ ] Sampling spans relevant compilation/unloading activity; counter deltas and events
+      distinguish stable pressure from oscillation rather than relying on three snapshots alone
 - [ ] Tier mix cross-referenced from `PrintCompilation` or `jdk.Compilation`
 - [ ] Deoptimisation events cross-referenced when `non-profiled` is the pressured segment
 - [ ] `Compiler.CodeHeap_Analytics aggregate` + `FreeSpace` taken once when fragmentation is
-      suspected — the largest free block versus the failing method's size
+      suspected — reclaimed blocks, unused tail, expansion and fallback versus the failing allocation
 - [ ] Any `Out of space in CodeCache` exception text found in application logs treated as the
       same incident
 - [ ] Any manual segment sizing checked to sum exactly to an explicit `ReservedCodeCacheSize`
@@ -279,4 +285,5 @@ is the beginning of the problem rather than a graceful degradation.
 - [JDK 25 `java` launcher: advanced JIT and CodeHeap Analytics options](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 HotSpot `codeCache.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeCache.cpp)
 - [JDK 25 HotSpot `codeHeapState.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeHeapState.cpp)
+- [JDK 25 HotSpot `heap.cpp`: free-list and tail allocation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/heap.cpp)
 - [JDK 25 HotSpot `compileBroker.cpp`: compile kind and statistics accounting](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)

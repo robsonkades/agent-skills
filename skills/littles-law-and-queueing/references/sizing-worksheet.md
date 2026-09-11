@@ -17,8 +17,10 @@ deadlines and SLO                     include queueing and timeout semantics
 burst/failover model                  magnitude, duration, autoscaling/recovery delay
 ```
 
-Use means in Little/demand laws; quantiles do not multiply or add. Preserve distributions for the
-SLO model. Keep the same cohort and clock boundaries on both sides of every equation.
+Use means in Little/demand laws; a latency quantile cannot replace the mean, and adding marginal
+quantiles does not generally give an end-to-end quantile. Preserve distributions for the SLO model.
+Keep the same cohort and clock boundaries on both sides of every equation. In `D_k=V_k S_k`,
+`S_k` is the mean over visits, not an unweighted average of per-transaction service means.
 
 ## 2. Reconcile observed concurrency
 
@@ -52,6 +54,12 @@ its eventual terminal outcomes and outstanding members. Client timeout is an obs
 departure, but server work may continue; do not remove it from server occupancy until that
 boundary actually releases it. An unfinished server residence is censored at observation end,
 not a completed duration equal to the client timeout. See `latency-statistics`.
+
+For an item with fixed accounted size `b` throughout residence `W`, integrate bytes over time:
+in a stable population, `mean bytes = λ E[bW]`, not generally `λ E[b] E[W]`. For example, equally
+frequent items with `(b,W)=(1 byte,9 s)` and `(9 bytes,1 s)` give `E[bW]=9 byte·s`, whereas the
+product of means is `25 byte·s`. Shared storage, changing sizes and GC reclamation need their own
+accounting boundaries; this arithmetic does not size the heap.
 
 ## 3. Establish resource capacity
 

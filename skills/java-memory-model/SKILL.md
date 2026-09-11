@@ -99,6 +99,11 @@ does not detect completed work. Confirm the actual lifecycle before using termin
 For immutable or safely isolated data built before publication, with exactly one publisher
 and one publication per holder instance (`ready` initially false, never reset):
 
+For this volatile argument, initialization writes must happen-before the publisher's anchor:
+construct in that thread or establish an ordered handoff from the producer. Relaying a reference
+obtained through a data race does not order that producer's ordinary payload writes; assess any
+final-field guarantees separately.
+
 ```java
 private Config config;
 private volatile boolean ready;
@@ -187,11 +192,17 @@ specific instructions or “volatile reads are free” as portable correctness/p
 1. Preserve the wrong business outcome and relevant inputs/version; thread dumps/JFR may show
    liveness/contention but usually not a data race.
 2. Minimize the state/action pattern and enumerate outcomes.
-3. Build a jcstress test with explicit acceptable/interesting/forbidden outcomes.
-4. Use static analysis and code review for inconsistent locking, unsafe publication and compound
+3. Use jcstress when a custom or changed primitive protocol warrants schedule exploration;
+   classify acceptable/interesting/forbidden outcomes first and route test construction to
+   `concurrency-testing`.
+4. Use available static analysis and code review for inconsistent locking, unsafe publication and compound
    operations, but verify tool rule limitations.
-5. Fix the proof, then run stress/load tests across target JDKs/architectures for integration—not as
-   proof that all executions are safe.
+5. Fix the proof, then select integration/stress/load checks for the changed code and its actual
+   risks across target JDKs/architectures—not as proof that all executions are safe.
+
+A simple review of an unchanged documented handoff can finish with its proof and relevant existing
+checks. Record which checks ran and which remain unexecuted; do not require a new stress harness
+merely because shared state exists.
 
 ## Anti-patterns
 
@@ -212,7 +223,8 @@ specific instructions or “volatile reads are free” as portable correctness/p
 - [ ] Publication, mutation and lifecycle edges use exact JLS/API contracts.
 - [ ] Final-field guarantees are separated from safe publication and immutability.
 - [ ] Constructor escape, interruption, timeout and shutdown paths are covered.
-- [ ] Legal/forbidden outcomes and jcstress/static/integration evidence are recorded.
+- [ ] Legal/forbidden outcomes and applicable jcstress/static/integration evidence are recorded,
+      with unexecuted checks explicit.
 - [ ] Correctness does not depend on processor/JIT timing folklore.
 
 ## References

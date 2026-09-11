@@ -28,6 +28,11 @@ runtime build and deployment limits before applying release-specific APIs. Virtu
 require Java 21+; `close()` and `setParallelism` require Java 19+. Do not upgrade the project merely
 to apply a recommendation. API claims below are checked against Java 25 unless otherwise labelled.
 
+Reuse the requested outcome, existing profiles/configuration and accepted resource/recovery limits.
+Ask only for unresolved facts that change correctness, attribution or the next experiment. Keep an
+adequate sequential path or pool; a narrow contract review need not reopen sizing or collect new
+profiles. During an incident, keep investigation within the authorized recovery window.
+
 1. Identify the actual pool and entry path: `invoke`, external submission, `fork`, parallel stream,
    or an executor-less async API.
 2. Describe the task DAG: parent/child dependencies, joins, exceptional paths, and unowned work.
@@ -65,8 +70,9 @@ costs and does not by itself make blocking safe.
 - Do not claim a special fork-to-task happens-before rule that the `ForkJoinTask` API does not state.
   Publication and result visibility follow the documented task/Future completion APIs and the JMM;
   intermediate shared state still needs its own synchronization.
-- Cancellation is best effort. `ForkJoinTask.cancel` does not generally interrupt the executing
-  thread. Long computations need explicit cooperative checks where cancellation is a requirement.
+- Cancellation depends on task construction. The default `ForkJoinTask.cancel` implementation
+  ignores its interrupt argument; interruptible adapters have a different contract (see the pool
+  mechanics reference). Long computations still need cooperative checks where cancellation is required.
   Cancelled task status is not proof the task body has exited; do not release shared resources on
   that status alone.
 - Exceptions surface through `join`/`invoke`/`get`; an event task with no observer can fail without
@@ -98,7 +104,8 @@ Too-fine tasks pay allocation, queue, steal, completion and merge overhead. Too-
 too little parallel slack and amplify skew. JDK guidance gives rough computational-step ranges, but
 production thresholds must be calibrated for the operation, data distribution and hardware.
 
-Measure a threshold sweep with warmup and multiple forks. Include sequential baseline, allocation,
+When granularity remains unresolved, measure a threshold sweep with warmup and multiple forks.
+Reuse comparable existing evidence. Include sequential baseline, allocation,
 CPU utilization, bandwidth/cache counters where relevant, steals, task imbalance and end-to-end
 latency. A faster microkernel can make the whole service slower through extra allocation or shared
 pool contention. Stop adding parallelism when the bottleneck is bandwidth, cache/NUMA traffic,
@@ -120,6 +127,10 @@ associative reduction. Encounter order and stateful operations can constrain par
 Pool accessors—active/running threads, queued tasks/submissions, steals and quiescence—return estimates
 or snapshots. Compare time series to a known healthy workload; no single steal ratio proves either
 good balance or bad granularity.
+
+Helping APIs can also execute work on their caller. In particular, `awaitQuiescence` may run tasks
+on an external monitoring/request thread; worker counts alone omit that execution. Its wait timeout
+does not preempt a task the caller is helping, so do not treat it as a task deadline or passive wait.
 
 | Symptom                                        | Evidence to distinguish                                               | Candidate action                                                           |
 | ---------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- |

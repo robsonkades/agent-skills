@@ -25,8 +25,9 @@ operand order, so source and destination are inverted in every two-operand instr
 which produces no crash and no exception, only a wrong conclusion that then drives a code
 change.
 
-Reading assembly answers **what the code does**. It does not answer where time is spent;
-only sampling correlated to instructions (`perfasm`) does that. And it is the last level,
+Reading assembly answers **what code was emitted**. It does not establish which paths ran or
+where time was spent. Dynamic evidence can come from address-aware sampling, suitable tracing,
+path counts or controlled timing; retain its granularity and perturbation limits. And it is the last level,
 not the first: which tier, whether a call inlined and whether an allocation survived are
 answered a level up, and a listing cannot show code the compiler removed. Keep the
 questions apart, and never conclude from a static reading alone that an instruction is the
@@ -34,17 +35,23 @@ bottleneck.
 
 ## Workflow
 
+Start from the requested static interpretation, capture or performance claim. Reuse adequate
+supplied evidence and retain a sound conclusion or code choice. A narrow answer needs the
+relevant listing/context, interpretation and limits; it need not install a decoder, collect a
+profile, change source or produce a full performance decision record.
+
 1. **Decide whether assembly is the right level.** Tier, inlining and escape questions are
    `-XX:+PrintCompilation`, `-XX:+PrintInlining` and allocation profiling; "where is the
    time" is `perfasm` or a profiler. Open a listing for instruction-level questions only —
-   was a bounds check hoisted, a lock inflated, a loop vectorised, a barrier emitted. The
+   was a bounds check hoisted, an inflated-lock path emitted, a loop vectorised, a barrier emitted. The
    table is in `references/hsdis-setup-and-flags.md`.
-2. **Verify hsdis is actually loaded** before trusting any output. Without the plugin the
+2. **Verify decoder coverage when the question needs mnemonics.** Without the plugin the
    JVM does not fail: it logs `[warning][os] Loading hsdis library failed` once, at the
    first method printed, and continues with the abstract disassembler — hex words instead
    of mnemonics while retaining useful HotSpot annotations (`{poll}`, `{runtime_call …}`,
    `;*iaload`). Structure and annotated relocations can remain readable without hsdis;
-   decoded operand semantics do not.
+   decoded operand semantics do not. An annotation/layout question may already have sufficient
+   evidence; verify a trusted matching decoder only when missing instruction semantics matter.
 3. **Narrow the capture to one method** with `-XX:CompileCommand=print,Class::method`
    (needs no unlock), a `CompileCommandFile`, or `jcmd <PID> Compiler.directives_add` on a
    running JVM — which affects only compilations that start after it lands, and prints to
@@ -69,10 +76,11 @@ bottleneck.
    and uncommon trap, TLAB allocation, card mark or ZGC barrier, lock fast path — and for a
    load with no visible `cmp`/`test`, use the three-way null-check test. See
    `references/pattern-catalogue.md` and `references/reading-the-output.md`.
-8. **Triangulate the conclusion.** Keep the full listing, compilation/inlining log, exact VM
-   flags, workload and profile from the same fork. Use `perfasm` or another address-aware
-   sampler before naming a hot instruction; use suitable hardware counters only after
-   checking event support, multiplexing and sample count on the target host.
+8. **Triangulate the actual claim.** Keep the listing and compilation/configuration context
+   needed to interpret it. For execution or performance claims, correlate dynamic evidence
+   with that fork and nmethod lifetime. Address-aware sampling is useful for hot-instruction
+   attribution; regional timing or path counts support different claims. Select hardware
+   counters only for a relevant hypothesis and check support, multiplexing and sample count.
 
 ## Rules
 
@@ -117,7 +125,7 @@ bottleneck.
 - `PrintAssembly` may enable `DebugNonSafepoints` and report that side effect. A
   `{post_call_nop}` is metadata-supporting code, not application logic; it still occupies
   code-cache and front-end bandwidth, so call it negligible only after measurement.
-- For current OpenJDK source, build hsdis from the checkout root with
+- For the pinned OpenJDK 25 source, build hsdis from the checkout root with
   `bash configure --with-hsdis=<backend>` and `make build-hsdis`; the JDK 18 change replaced
   the old standalone build. Prefer a vendor-supplied plugin when the distribution provides
   one, otherwise build against a matching source line and verify library provenance.
@@ -131,15 +139,18 @@ bottleneck.
 
 ## Decision record
 
-For every assembly-backed recommendation, record:
+For a material assembly-backed recommendation, record the applicable evidence below. For a
+narrow static interpretation, return the supported finding and its limits; missing performance
+evidence need not prevent an adequate static answer.
 
 - hypothesis and source-level construct;
 - JDK vendor/build, compiler and tier, normal versus OSR compilation;
 - OS/architecture/microarchitecture, GC and relevant VM flags;
-- exact method descriptor and compile id, plus evidence the nmethod was current while sampled;
+- exact method descriptor and compile id, plus nmethod lifetime when attributing execution;
 - complete listing with syntax, not a cropped happy path;
-- sampled event, event count, kernel permissions and multiplexing status;
-- alternative explanation considered, source change proposed, and before/after workload result.
+- dynamic measurement method and coverage; for sampling, event/count, permissions and multiplexing;
+- alternative explanation considered and decision, including a justified no-change outcome;
+  for a proposed performance change, its relevant before/after workload validation.
 
 Keep conclusions scoped to the captured build and workload. If a method is replaced during
 sampling, partition samples by nmethod lifetime and address range; reject attribution when

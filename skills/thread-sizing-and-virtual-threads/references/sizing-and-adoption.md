@@ -27,12 +27,17 @@ usually have small/controlled admission queues so stale work does not outlive it
 
 ## Blocking platform-pool experiment
 
-Let `C` be mean CPU seconds per task and `W` mean non-CPU seconds occupying a platform worker,
-excluding time waiting to enter that worker pool. With available task CPU budget `B` in
+Let `C` be mean CPU seconds per task and `W` mean blocked seconds occupying a platform worker,
+excluding time waiting to enter that worker pool and runnable time waiting for CPU. With available task CPU budget `B` in
 CPU-equivalents, `threads ≈ B × (1 + W/C)` is a saturation hypothesis for stable independent work,
 not an SLO guarantee. `C` is not total service/residence time and must be positive. For `B=1.5`,
 `C=0.010 s`, `W=0.090 s`, the candidate is 15 workers and CPU ceiling about 150 tasks/s.
 Demand of 300 tasks/s is infeasible under those assumptions; extra threads do not double CPU.
+At a completed rate `X`, task CPU demand is `X*C` CPU-equivalents and utilization of this budget
+is `X*C/B`; mean occupied workers are approximately `X*(C+W)` under the same assumptions.
+These are occupancy/capacity checks, not configured pool-size recommendations. If wall time minus
+CPU time includes quota throttling, run-queue delay or stop-the-world pauses, separate those causes
+before treating it as `W`. Serialized lock or provider waits also need their own capacity model.
 Validate a range because correlated waits, long tails, resource caps and burst traffic
 violate those assumptions.
 
@@ -56,6 +61,10 @@ A gain with resource health inside its envelope is consistent with removing plat
 scarcity; use thread/CPU profiles and controlled variables before attributing the cause. If latency
 rises because far more calls reach a fixed dependency, add/repair resource-local
 admission instead of pooling virtual threads.
+Compare matching request populations, outcomes and load windows across repeated runs. Report
+rejection, timeout and success rates alongside latency; faster successful requests alone can hide
+lost work. After overload subsides, verify that backlog, residual work and resource occupancy recover.
+Keep the current execution model when it already meets the contract and the measured benefit is absent.
 
 ## Lifecycle and admission sketches
 
@@ -91,6 +100,8 @@ ThreadPoolExecutor cpu = new ThreadPoolExecutor(
 
 Resource gate belongs directly around the provider operation, with remaining deadline and exactly-once
 release; see `concurrency-limiting-and-bulkheads`.
+This replacement assumes independent tasks: preserve any ordering/state-confinement guarantee of the
+old executor. A concurrency cap alone does not establish ordering or thread affinity.
 The request executor still needs bounded ingress; parking unlimited requests on a resource semaphore
 does not bound retained heap. `close()` has no timeout and must be called by the lifecycle owner,
 not by one of the executor's own tasks. Cancellation/interrupt is a request, not proof of task

@@ -16,16 +16,20 @@ HttpRequest request = HttpRequest.newBuilder(uri)
         .GET().build();
 ```
 
-| Knob                  | Bounds                                                                                                                   | Does not prevent                                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `connectTimeout`      | Establishing the connection                                                                                              | Anything after the connection exists; a hung name resolver, which the platform resolves with no per-call bound |
-| `HttpRequest.timeout` | At least execution through response construction; current JDK built-in implementation through body-subscriber completion | Caller work after a streaming body is returned, and arbitrary application retry policy                         |
-| _(absent)_            | —                                                                                                                        | Any finite request bound; the specified behavior is effectively infinite                                       |
+| Knob                  | Bounds                                                                                                              | Does not prevent                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `connectTimeout`      | Establishing the connection                                                                                         | Anything after the connection exists; a hung name resolver, which the platform resolves with no per-call bound |
+| `HttpRequest.timeout` | JDK 25 built-in implementation: request through response headers; JDK 26 extends through body-subscriber completion | JDK 25 body stalls, arbitrary application retry policy and caller processing after body consumption            |
+| _(absent)_            | —                                                                                                                   | Any finite request bound; the specified behavior is effectively infinite                                       |
 
 The two are independent. A client built with only `connectTimeout` has no bound against a
-server that accepts the connection and then never answers — the most common production stall
-shape. Prefer setting `HttpRequest.timeout` over relying on cancelling the
-`CompletableFuture` returned by `sendAsync`; the timeout is the bound the client documents.
+server that accepts the connection and then never answers. Set `HttpRequest.timeout`, then
+verify the scope on the deployed implementation. On JDK 25, a server can send headers promptly
+and stall the body even with `BodyHandlers.ofString()`. Enforce the remaining outer lifetime
+across body consumption and wire cancellation to the original exchange or stream. Merely adding
+`orTimeout` changes future completion; it does not abort the exchange and can leave that future
+already completed when a later `cancel` is attempted. Streaming bodies must be consumed or
+closed/cancelled by their owner. JDK 26's wider timer does not remove that ownership requirement.
 
 ## Spring `RestClient` / `RestTemplate`
 
@@ -65,7 +69,8 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 | Database statement timeout                             | Server execution according to vendor semantics                      | Pool acquisition, client DNS/connect or transaction work outside that statement       |
 | Spring transaction timeout                             | Framework transaction policy, often applied to resource operations  | Guaranteed asynchronous interruption of arbitrary current Java/server work            |
 
-Sizing the pool so the lease timeout is not the binding constraint is connection-pool-sizing.
+Whether pool capacity, admission or the lease policy should change belongs to connection-pool-sizing;
+removing lease timeouts by enlarging the pool can overload the database.
 
 ## Kafka consumer
 
@@ -85,15 +90,16 @@ and make effects repeat-safe—raising `request.timeout.ms` targets the wrong ph
 
 ## Cancellation, per mechanism
 
-| Mechanism                        | Stops the work when                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| `Future.cancel(true)`            | The target checks the interrupt flag or sits in an interruptible blocking call |
-| Closing the socket or connection | Releases the local resource; peer detection and server-work termination vary   |
-| gRPC deadline expiry             | The server observes cancellation through its `Context` and can abandon work    |
-| `Statement.setQueryTimeout`      | The driver's cancel reaches the server and the server honours it               |
-| _Nothing_                        | The caller stops waiting — the callee finishes the work and discards it        |
+| Mechanism                        | Stops the work when                                                               |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| `Future.cancel(true)`            | The target exits/unwinds on interruption; checking the flag alone is insufficient |
+| Closing the socket or connection | Releases the local resource; peer detection and server-work termination vary      |
+| gRPC deadline expiry             | The server observes cancellation through its `Context` and can abandon work       |
+| `Statement.setQueryTimeout`      | The driver's cancel reaches the server and the server honours it                  |
+| _No cancellation wired_          | Caller wait can end while callee work continues, including committing effects     |
 
-All mechanisms race completion and may leave an unknown business outcome. The last row is the
+All mechanisms race completion and may leave an unknown business outcome. A cancelled future does
+not establish when its task exits or releases resources. The last row is the
 default whenever no cancellation is wired, and it is how timeouts plus retries can increase load.
 
 The Future row assumes an implementation that interrupts its task (for example FutureTask).
@@ -108,7 +114,7 @@ documenting any rounded-up server/driver timeout. Check range and sentinel seman
 
 ## Verification matrix
 
-Test each named phase independently: pool acquisition, DNS/proxy, TCP/TLS, request upload,
+Select relevant phases and test them independently: pool acquisition, DNS/proxy, TCP/TLS, request upload,
 response headers, slow/dribbling body, JDBC execution/result streaming and cancellation. Record
 caller release, connection/pool return, callee cancellation observation, database session/lock
 release and committed business outcome. Documentation gives API intent; only the deployed JDK,
@@ -118,3 +124,5 @@ HTTP implementation, driver, database and framework versions establish operation
 
 - [Spring Boot 3.5 HTTP clients](https://docs.spring.io/spring-boot/3.5/reference/io/rest-client.html) — builder and request-factory configuration.
 - [CompletableFuture](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — cancellation and timeout completion are not task interruption.
+- [OpenJDK 25 `MultiExchange`](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/java.net.http/share/classes/jdk/internal/net/http/MultiExchange.java) — request timer cancelled before response-body reading in this baseline.
+- [JDK 26 `HttpRequest.Builder.timeout`](<https://docs.oracle.com/en/java/javase/26/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)>) — body-subscriber completion coverage is explicitly documented for the JDK 26 built-in implementation.

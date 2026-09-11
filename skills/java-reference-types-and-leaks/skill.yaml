@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: java-reference-types-and-leaks
-version: 1.3.1
+version: 1.3.2
 description: >-
-  Reachability-driven memory in Java: the strong/soft/weak/phantom levels and exactly when
-  each is cleared, WeakHashMap and its value-holds-key trap, Cleaner as a leak-reporting
-  safety net rather than a release mechanism, finalization deprecation, and the leak
+  Reachability-driven memory in Java: strong/soft/weak/phantom contracts and notification
+  limits, WeakHashMap and its value-holds-key trap, explicit Cleaner cleanup versus
+  automatic fallback, finalization deprecation, and the leak
   catalogue — obsolete references in self-managed structures, listener registries,
   ThreadLocal on pooled threads, class-loader retention, non-static nested classes holding
   their enclosing instance, and caches that only grow. Use when heap grows with traffic and
@@ -42,10 +42,21 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: java-resource-management
+    version: ^1.0.0
+  - name: caching-strategies
+    version: ^1.0.0
 
 suggests:
+  - allocation-profiling
+  - concurrency-limiting-and-bulkheads
   - gc-log-analysis
+  - heap-dump-analysis
+  - java-object-construction
+  - off-heap-memory
+  - reactive-backpressure
+  - scoped-values
 
 capabilities:
   - reads-source

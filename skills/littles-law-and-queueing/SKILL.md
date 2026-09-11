@@ -33,6 +33,11 @@ Inspect the Java toolchain, executor implementation and deployment resource limi
 applying API-specific advice. References use JDK 25 documentation; the executor example uses
 long-established APIs and does not require upgrading the project.
 
+Start from the requested decision and existing metrics/configuration. Ask only for missing boundary,
+demand or SLO evidence that changes the conclusion; continue independent reconciliation work. If a
+safe size cannot be supported, give the missing measurement and a bounded experiment, not an invented
+headroom factor.
+
 1. **Draw the boundary.** Define admission and departure events, population/outcomes, time window
    and whether `L` includes queued plus executing work. Use effective departure flow (including
    whichever terminal outcomes the cohort defines) for `λ` and mean residence `W` for that cohort.
@@ -42,11 +47,11 @@ long-established APIs and does not require upgrading the project.
 3. **Separate demands.** For resource `k`, measure visits `V_k`, service demand `D_k` (resource
    time per completed transaction), residence `R_k = Q_k + S_k`, queue length and saturation.
    Wall time, CPU demand and downstream occupancy are different quantities.
-4. **Choose a queueing model only if its assumptions resemble evidence.** M/M/1 is a sensitivity
+4. **Use a model when prediction is needed and its assumptions resemble evidence.** M/M/1 is a sensitivity
    baseline, not an 80% law. Arrival/service variability, server count, scheduling, finite buffers,
    blocking, priorities and backpressure change the curve (`queueing-models`).
 5. **Separate concurrency demand from capacity.** `L=λW` predicts average in-flight work at a
-   measured operating point. Capacity requires per-resource demand (`U_k=X D_k`), server/quota
+   measured operating point. Capacity requires per-resource demand (`U_k=X D_k/m_k`), server/quota
    limits and an SLO model. Configured worker count is neither measured `L` nor utilisation.
 6. **Design admission, queue bound and overload outcome together.** Bound waiting by time and/or
    count, reserve downstream capacity, choose rejection/cancellation semantics, and validate under
@@ -78,18 +83,23 @@ long-established APIs and does not require upgrading the project.
   many submitters can still overload a downstream resource. After shutdown this policy silently
   discards tasks, so submitted futures can remain incomplete. Rejection status and retry semantics depend on the protocol and
   whether the condition is rate limiting (`429`) or temporary capacity loss (`503`).
-- Little's relation can sanity-check object counts/bytes only with consistent units and lifetime-
-  weighted cohorts; it is not a GC sizing formula. Allocation, reachability and live-set ownership
+- Little's relation can sanity-check object counts/bytes only with consistent units and size/residence
+  weighting; mean size times mean lifetime can be wrong when they are correlated (see the worksheet).
+  It is not a GC sizing formula. Allocation, reachability and live-set ownership
   belong to `gc-fundamentals` and `object-layout-and-footprint`.
 
 ## Required decision artifact
+
+For a conservation-only question, return the boundary, inputs, reconciliation and limits; no model
+fit or pool change is required. For sizing, add the relevant resource/option rows, compare the current
+setting with plausible changes, and state what evidence would change the recommendation.
 
 ```text
 Boundary/cohort: arrival, admission, departure; queued/running; terminal outcomes
 State/window:    stable / ramp / overload / drain; inventory at start and end
 Measurements:    λ or X, mean L, mean W; reconcile residual and uncertainty
 Resources:       visits, demand, utilisation, queue wait, servers/quotas
-Model:           M/M/1, M/G/1, M/M/c, finite/closed/network; assumptions checked
+Model if needed: M/M/1, M/G/1, M/M/c, finite/closed/network; assumptions checked
 Options:         service reduction, capacity, admission, queue bound, batching, shedding
 Decision:        configured workers/queue/rejection; SLO and recovery validation
 ```

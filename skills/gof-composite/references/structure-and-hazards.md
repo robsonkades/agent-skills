@@ -26,28 +26,31 @@ record Branch(String name, List<Node> children) implements Node {
 }
 ```
 
-| Form        | Client that only computes | Client that manipulates structure | Adding a node type              |
-| ----------- | ------------------------- | --------------------------------- | ------------------------------- |
-| Transparent | Clean                     | Clean, but may throw at runtime   | Silent — nothing breaks         |
-| Safe        | Clean                     | `instanceof` + cast at every site | Silent                          |
-| Sealed      | Clean                     | Exhaustive `switch`, no cast      | Every `switch` fails to compile |
+| Form        | Client that only computes | Client that manipulates structure | Adding a node type                |
+| ----------- | ------------------------- | --------------------------------- | --------------------------------- |
+| Transparent | Clean                     | Optional mutation may refuse      | Depends on operation contract     |
+| Safe        | Clean                     | Branch/capability access          | Depends on operation contract     |
+| Sealed      | Clean                     | Exhaustive `switch`, no cast      | Recheck exhaustiveness on rebuild |
 
-The last column is the decisive one. In a transparent or safe composite, adding a `SymlinkNode`
-compiles everywhere and is silently unhandled by every traversal written before it. In a sealed
-one the compiler enumerates the sites.
+An interface-based traversal may already handle a new subtype through its shared operation;
+manual type enumeration can miss it. With a sealed hierarchy, recompilation rejects switches whose
+coverage is no longer exhaustive, while fallback/total patterns may still compile. Old binaries
+are not updated automatically and may throw `MatchException` for a new unmatched subtype.
 
-Use transparent only when node types are contributed by code you do not compile — then the open
-interface may matter, but plugin extensibility does not require structural mutation on leaves.
-Prefer a separate mutable-branch capability; silently ignoring add/remove can lose requested work.
+Choose transparent mutation only when the consumer contract deliberately permits optional
+operations and handles refusal; Java's collection interfaces demonstrate that distinction.
+Plugin extensibility does not require mutation on leaves. A separate mutable-branch capability
+often avoids runtime refusal; silently ignoring a requested add/remove can lose work.
 
 ## Depth: the failure that reaches production
 
-Recursive traversal of a tree whose depth comes from data will overflow. A JVM default stack
-handles a few thousand frames; a nested-JSON payload, a pathological directory structure or a
-generated expression tree reaches that easily.
+Data-controlled depth can exceed the available call stack. There is no portable safe frame count:
+the build, thread kind, method shape and stack configuration matter. An enforced small depth bound
+may make recursion adequate; otherwise use an iterative walk with explicit resource bounds.
 
 ```java
-// iterative: no recursive call stack; pending nodes still consume memory
+// For validated, bounded, acyclic input; shared nodes contribute once per path.
+// Iterative: no recursive call stack; pending nodes still consume memory.
 static long size(Node root) {
     long total = 0;
     Deque<Node> stack = new ArrayDeque<>();
@@ -74,9 +77,9 @@ static Node parse(JsonNode json, int depth) {
 ```
 
 A depth limit at the boundary is a security control, not a nicety: deeply nested documents are a
-standard denial-of-service technique against recursive parsers, and the JVM's response —
-`StackOverflowError` — can leave a request thread in an indeterminate state, since it may be
-thrown anywhere, including inside a `finally`.
+denial-of-service input against recursive parsers. `StackOverflowError` aborts the affected
+operation and can also disrupt cleanup code that requires more stack; it is not an input-validation
+strategy or proof the entire JVM must terminate.
 
 The `JsonNode` sketch checks domain construction only after JSON parsing. Configure limits in the
 actual parser before building that tree, and bound bytes, node count and fan-out as well as depth.
@@ -84,7 +87,8 @@ An explicit deque avoids call-stack overflow but does not bound total work or pe
 
 ## Cycles, identity and parent pointers
 
-A parent pointer turns a tree into a cyclic graph, and three methods then recurse forever:
+Traversable child-to-parent back-references create cycles in the object graph. Methods that
+recursively follow both directions can fail to terminate:
 
 ```java
 record Branch(String name, List<Node> children, Branch parent) { }
@@ -93,17 +97,19 @@ record Branch(String name, List<Node> children, Branch parent) { }
 
 Rules:
 
-- **Records auto-generate `equals`, `hashCode` and `toString` over every component.** A record
-  with a parent component is a stack overflow waiting for its first log statement. Either do not
-  use a record, or exclude the parent by writing the three methods by hand.
+- **Record methods include every component by default.** The failure requires a cycle actually
+  followed by the component operations; a parent field alone is not proof. Self-equality may
+  short-circuit even when structural hashing or rendering overflows. Omit cyclic components from
+  structural methods or choose explicit identity/ID semantics where appropriate.
 - **Prefer not to store the parent.** Pass it down during traversal, or keep an external
   identity-keyed `IdentityHashMap<Node, Node>` or stable-ID map for operations that need it;
   a structural HashMap key can recursively hash the same tree. Most parent pointers exist for one
   method that could have taken a path instead.
-- **If the parent must be stored**, define equality by identity (`==`) or by a stable id, and
-  document that structural equality is not available.
-- **Detect cycles when the structure is built from input**, with an identity set on the path.
-  Discovering a cycle during traversal is too late; the traversal is where it hangs.
+- **If the parent must be stored**, exclude the back-reference from structural operations or
+  use identity (`==`)/stable-ID semantics, according to the consumer contract. Document that choice.
+- **Reject forbidden cycles at construction**, using active-path identity rather than equality
+  or a global set that also rejects legal sharing. Mutable/external graphs may change later;
+  operation-specific visited/path guards and work limits must then prevent hangs at traversal too.
 
 ## `equals` and `hashCode` on a recursive structure
 
@@ -127,27 +133,31 @@ for (Node child : branch.children()) {
 ```
 
 That one is loud. The quiet ones are worse: another thread adding a child during a `size()` walk
-produces a total that no state of the tree ever had, and a `List` resized mid-iteration can skip
+can produce a total that no state of the tree ever had, and a `List` resized mid-iteration can skip
 elements without any exception at all.
 
-Options, best first:
+Choose according to the operation's consistency contract:
 
 1. **Immutable nodes, copy-on-write root.** Mutation produces a new tree sharing unchanged
-   subtrees; readers hold a consistent snapshot with no locking, and aggregates can be cached on
-   each node at construction.
+   subtrees; safely publish the deeply immutable root and read it once per operation. Pure
+   snapshot aggregates can be cached; external inputs need their own version/invalidation contract.
 2. **Copy under the same synchronization used by writers.** This gives a branch snapshot,
    not automatically a coherent whole-tree snapshot; independently copied branches can mix versions.
-3. **A lock around the whole tree.** Correct, and it serialises every reader — acceptable for
-   configuration trees, not for hot data.
+3. **Synchronization covering the tree invariant.** A mutex serializes access; an appropriate
+   read/write lock can permit multiple readers while excluding writers. Account for contention,
+   callbacks and lock ordering rather than rejecting locks by workload label alone.
 
-`ConcurrentHashMap`-style per-node concurrency is almost always the wrong answer here: the
-invariant is over the whole structure, not over one node, so per-node atomicity buys nothing.
+Per-node concurrency alone does not preserve a whole-tree invariant. It can be adequate for an
+explicitly weak view, or participate in a version/retry protocol that establishes the required
+consistency. Fail-fast exceptions are best-effort diagnostics, not synchronization guarantees.
 
 ## Sharing and double counting
 
-If the same node instance may appear under two parents, the structure is a DAG. Then:
+If the same node instance appears under two parents, it is shared structure; it is a DAG only if
+acyclicity also holds. Then:
 
-- Aggregations double-count. `size()` over a DAG is not the size of the distinct content.
+- Per-path aggregation repeats shared contributions intentionally; distinct-node aggregation
+  needs a different traversal. Equal values and identical node instances are not interchangeable.
 - For distinct-node aggregation, use an identity visited set. For per-path aggregation, a global
   visited set would suppress legitimate repeated contributions; use a path-active set for cycles.
 - "Remove this node" becomes ambiguous — from which parent?
@@ -155,6 +165,9 @@ If the same node instance may appear under two parents, the structure is a DAG. 
 Decide explicitly. If sharing is not intended, enforce it at insertion (a node may have at most
 one parent, checked when added). If it is intended, say so and make every operation
 identity-aware.
+
+A compact acyclic shared graph can still have exponentially many paths. Bound the work appropriate
+to the selected semantics; node-count and depth bounds alone may not bound a per-path walk.
 
 ## Lazy children and the database
 
@@ -172,3 +185,8 @@ Options
 The last one is often correct. "Total permissions for this user" is a query, and answering it by
 walking an object tree is a design that chose a shape before a workload
 (`orm-behavioral-patterns`).
+
+Primary contract checks: [MatchException on Java 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/MatchException.html)
+describes separate-compilation anomalies; [Collection](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
+defines optional operations; [ArrayList](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ArrayList.html)
+qualifies fail-fast behavior. These do not establish a particular application's graph policy.

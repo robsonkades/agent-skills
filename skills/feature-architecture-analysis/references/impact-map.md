@@ -29,7 +29,10 @@ IMP-01  <path>[:line]   NEW | MODIFIED | READ   INTERNAL | EXTERNAL   <change> <
 - **NEW** — did not exist; the proposed location must be labeled. Additions can affect
   routing, exhaustive consumers, permissions, defaults or serialization, so compatibility
   still needs investigation.
-- **MODIFIED** — exists and changes. The interesting class.
+- **MODIFIED** — an existing element changes, including removal or retirement. State the operation
+  explicitly; retain the prior path/identity and revision for removed elements, and both locators for
+  moves/renames. Trace remaining callers, configuration, retained data and rollback compatibility;
+  deleting a file does not remove the impact on its consumers.
 - **READ** — does not change, but the feature depends on its current behaviour. Include it when
   the dependency is new or heavier than before; that is how a change breaks a file nobody edited.
 
@@ -43,8 +46,9 @@ persisted is EXTERNAL, because the stored rows outlive the deployment.
 
 ## The layers to sweep
 
-A map that only lists application code is the common incomplete one. Sweep all of these and say
-"none" where there is none:
+A map that only lists application code can miss important effects. Use the applicable concerns below
+against the actual architecture; the table does not require these layers or empty output sections.
+Distinguish no impact found in the inspected scope, not applicable, and not examined/unavailable.
 
 | Layer         | Look for                                                        |
 | ------------- | --------------------------------------------------------------- |
@@ -90,7 +94,8 @@ The map is the input to three later decisions, and it should be read for each:
 
 - **Depth** — locality can reduce coordination work, but security, invariants, concurrency,
   reversibility and resource exposure determine review depth alongside it.
-- **Test level** — EXTERNAL entries need a test at the level where they are observed.
+- **Test level** — EXTERNAL entries need verification where their effects are observed; cite existing
+  coverage or identify the missing check rather than assuming every entry requires a new test.
 - **Risk** — every boundary crossing is a candidate risk entry, with the consumer as its
   detection point.
 

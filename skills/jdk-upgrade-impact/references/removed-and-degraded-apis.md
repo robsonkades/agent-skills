@@ -24,7 +24,7 @@ green; static inspection and representative runtime tests must reach the changed
 | 23 (JDK-8320532) | `Thread.suspend()`/`resume()` and the `ThreadGroup` equivalents removed                                           | `cannot find symbol` when compiling on 25.0.3                                                                          | yes (absence)     |
 | 24               | JEP 486: Security Manager permanently disabled                                                                    | `-Djava.security.manager=allow` refuses to start; `System.setSecurityManager` throws `UnsupportedOperationException`   | yes               |
 | 24               | JEP 498: Unsafe memory access warns on first use; `--sun-misc-unsafe-memory-access=allow\|warn\|debug\|deny`      | warning naming the caller                                                                                              | yes               |
-| 24               | JEP 472: JNI and FFM warn without `--enable-native-access`; `--illegal-native-access=deny` fails them             | `WARNING: A restricted method in java.lang.foreign.Linker has been called`                                             | yes               |
+| 24               | JEP 472: restricted JNI/FFM operations warn without native access; `--illegal-native-access=deny` rejects them    | warning or `IllegalCallerException` at a restricted operation, not ordinary arena/segment use                          | yes               |
 | 24               | JEP 490: `-XX:+ZGenerational` obsolete (ZGC is generational)                                                      | `Ignoring option ZGenerational; support was removed in 24.0` — starts, ignored                                         | yes               |
 | 15 → expired     | JEP 374: `-XX:+UseBiasedLocking` deprecated, later obsolete, now expired                                          | `Unrecognized VM option 'UseBiasedLocking'` — refuses to start                                                         | yes               |
 | by 25            | `TLS_RSA_*` cipher suites listed in `jdk.tls.disabledAlgorithms` of the shipped `conf/security/java.security`     | a peer offering only RSA key exchange fails the TLS handshake                                                          | yes (config file) |
@@ -33,6 +33,12 @@ Two rows can have broad impact without a dedicated migration warning: the annota
 default (missing generated code can cause compile errors or a run-time
 `NoSuchMethodError`) and the CLDR space (a test that compares formatted time to a literal, or a
 downstream parser).
+
+For restricted FFM calls, native-access enablement applies to the caller's module
+(`ALL-UNNAMED` for class-path callers).
+Ordinary `Arena` allocation and bounded segment access do not require a grant merely because
+they use FFM. Restricted operations, such as creating a native downcall handle, do; a denied
+probe must reach that operation. Inventory the actual callers before granting native access.
 
 ## Class-file versions
 
@@ -79,6 +85,8 @@ multi-release behavior, and custom loaders/tool settings may handle it different
 ## Primary references
 
 - [JDK 25 javac](https://docs.oracle.com/en/java/javase/25/docs/specs/man/javac.html) — release targeting and processor discovery.
+- [JDK 20 release notes](https://www.oracle.com/java/technologies/javase/20-relnote-issues.html) and [JDK 23 release notes](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html) — CLDR 42 formatting and explicit annotation-processing configuration.
 - [JDK 25 Runtime API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Runtime.html) — `exec(String)` deprecated since 18; whitespace tokenization is not shell parsing.
 - [JDK 23 Subject API](https://docs.oracle.com/en/java/javase/23/docs/api/java.base/javax/security/auth/Subject.html) — conditional `getSubject` failure before permanent Security Manager disablement.
+- [JEP 472](https://openjdk.org/jeps/472) and [JDK 25 Linker](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.html) — restricted native operations and caller-module access.
 - [JAR specification](https://docs.oracle.com/en/java/javase/25/docs/specs/jar/jar.html) — multi-release entry selection and manifest requirements.

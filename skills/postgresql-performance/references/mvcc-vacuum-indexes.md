@@ -2,8 +2,10 @@
 
 ## Tuple lifecycle
 
-An update writes a new heap tuple; delete marks a tuple obsolete. VACUUM makes dead space reusable and
-advances freeze protection, but it cannot remove versions still visible to the oldest xmin. Check:
+An update writes a new heap tuple; delete marks a tuple obsolete. Old versions need not all wait
+for VACUUM: page pruning/HOT cleanup can reclaim versions during ordinary access once no relevant
+snapshot can see them. VACUUM makes dead space reusable and advances freeze protection, but cannot
+remove versions still protected by visibility horizons. For a cleanup/maintenance question, check:
 
 - long/open/idle transactions and `backend_xmin`;
 - abandoned replication slots and standby feedback;
@@ -18,12 +20,16 @@ evidence with actual horizons. Dead-tuple statistics are estimates, not exact bl
 ## Autovacuum and freeze
 
 Scale-factor triggers grow with table size; large high-churn tables often need relation-specific
-absolute thresholds. PostgreSQL 18 adds a global maximum vacuum threshold, so state version before
-using it. Tune trigger frequency, worker/cost capacity, and completion time together—more frequent
+absolute thresholds. PostgreSQL 18 adds `autovacuum_vacuum_max_threshold`, a ceiling on the
+update/delete-trigger calculation with a per-table override; it is not every vacuum trigger or
+a PostgreSQL 17 setting. Tune trigger frequency, worker/cost capacity, and completion time together—more frequent
 starts do not help if workers cannot finish.
 
-Never disable autovacuum to avoid load. Approaching anti-wraparound limits eventually forces work and
-can stop writes. Monitor oldest unfrozen XID with a large safety margin.
+Do not disable autovacuum simply to avoid load. A deliberate manual or temporary alternative must
+still cover cleanup, statistics, visibility and freeze, with an owner, completion/age monitoring and
+recovery if maintenance falls behind. Preserve a demonstrated adequate policy. Anti-wraparound
+autovacuum can run even when ordinary autovacuum is disabled; approaching XID/MXID limits forces
+work and can stop writes. Monitor age with a large safety margin.
 
 ## HOT and fillfactor
 
@@ -52,4 +58,5 @@ rewrite.
 
 Sources: [HOT, PostgreSQL 18](https://www.postgresql.org/docs/18/storage-hot.html),
 [routine vacuuming](https://www.postgresql.org/docs/18/routine-vacuuming.html), and
+[vacuum settings](https://www.postgresql.org/docs/18/runtime-config-vacuum.html), plus
 [BRIN](https://www.postgresql.org/docs/18/brin.html). Verify settings against the deployed 17/18 version.

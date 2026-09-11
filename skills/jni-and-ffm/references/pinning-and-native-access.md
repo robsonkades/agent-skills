@@ -63,8 +63,9 @@ libraries; unknown frames or missing symbols are not evidence of Java overhead.
 
 ## Structural mitigations
 
-No synchronous JNI/FFM variant makes a blocking native frame unmountable. A bounded dedicated
-platform-thread pool is one mitigation; others are a genuinely asynchronous native API,
+No synchronous JNI/FFM variant makes a blocking native frame unmountable. If measured
+occupancy or failure risk warrants a change, a bounded dedicated platform-thread pool is
+one mitigation; others are a genuinely asynchronous native API,
 process isolation, shorter bounded batches or a Java implementation. Size the pool with
 measured latency/concurrency, native resource capacity and explicit queue/load-shedding—not
 Little's Law alone:
@@ -95,7 +96,8 @@ an explicit policy for native calls that outlive it; interruption cannot force t
 
 FFM restricted methods already required native-access authorization; JEP 472 brought JNI
 loading/use under the same direction in JDK 24. Under the JDK 24/25 warn policy, unauthorized
-restricted access produces a warning associated with the caller module:
+restricted access produces module-attributed warnings: the caller for library loading and
+FFM restricted calls, but the declaring module for JNI native-method binding. For example:
 
 ```
 WARNING: A restricted method in java.lang.foreign.Linker has been called
@@ -104,14 +106,14 @@ WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers i
 WARNING: Restricted methods will be blocked in a future release unless native access is enabled
 ```
 
-| Action                                         | Restricted/native-access relevance                                      |
-| ---------------------------------------------- | ----------------------------------------------------------------------- |
-| native library load and JNI use                | governed by JEP 472 policy in current releases                          |
-| `Linker.nativeLinker().downcallHandle(...)`    | restricted FFM operation                                                |
-| `Linker.nativeLinker().upcallStub(...)`        | restricted FFM operation                                                |
-| `SymbolLookup.libraryLookup(...)`              | restricted library lookup                                               |
-| Existing segment read/write                    | memory access itself is not a new native link/load authorization        |
-| generated binding invoking a restricted method | authorization belongs to the calling module; generation is no exemption |
+| Action                                         | Restricted/native-access relevance                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------- |
+| native library load and JNI binding            | loader call's module versus native method's declaring module, respectively |
+| `Linker.nativeLinker().downcallHandle(...)`    | restricted FFM operation                                                   |
+| `Linker.nativeLinker().upcallStub(...)`        | restricted FFM operation                                                   |
+| `SymbolLookup.libraryLookup(...)`              | restricted library lookup                                                  |
+| Existing segment read/write                    | memory access itself is not a new native link/load authorization           |
+| generated binding invoking a restricted method | authorization belongs to the calling module; generation is no exemption    |
 
 ```bash
 java --enable-native-access=ALL-UNNAMED -jar app.jar
@@ -143,8 +145,9 @@ It generates bindings, not memory-ownership semantics or an exemption from nativ
 
 ### Before production
 
-- [ ] Every native call that can block has explicit carrier strategy: bounded platform pool,
-      asynchronous native API, process isolation or justified platform-thread execution
+- [ ] Calls that can block have a justified execution strategy, including retaining bounded
+      virtual-thread calls when carrier capacity and failure impact are acceptable, an existing
+      platform worker, a dedicated pool, native async API or process isolation
 - [ ] Every `Linker.Option.critical()` use satisfies the documented extremely-short/no-upcall
       contract, has bounded non-blocking behavior, service-level evidence and rollback
 - [ ] `--enable-native-access` is configured explicitly for the modules or jars doing native

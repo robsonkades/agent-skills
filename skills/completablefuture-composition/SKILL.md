@@ -41,16 +41,16 @@ missing, request that evidence and keep the proposed fix conditional.
 
 ## Execution contracts
 
-| Form                         | Contract                                                                         | Engineering consequence                                                                                                                                               |
-| ---------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| non-`Async` dependent method | action may run in the completing thread or another caller of a completion method | it may execute inline on an event loop, request thread, test thread, or application completer                                                                         |
-| `*Async` without executor    | uses the stage's default async facility                                          | ordinary `CompletableFuture` uses the common pool when it supports parallelism > 1, otherwise a thread-per-task executor; subclasses may override `defaultExecutor()` |
-| `*Async(..., executor)`      | arranges execution through that executor                                         | rejection, queuing and actual concurrency are still properties of the supplied executor                                                                               |
+| Form                         | Contract                                                                         | Engineering consequence                                                                                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| non-`Async` dependent method | action may run in the completing thread or another caller of a completion method | it may execute inline on an event loop, request thread, test thread, or application completer                                                                           |
+| `*Async` without executor    | uses the stage's default async facility                                          | base Java 17/21 futures use a thread-per-task fallback at low common-pool parallelism; OpenJDK 25 uses the common pool. Subclasses may override `defaultExecutor()`     |
+| `*Async(..., executor)`      | normally submits through the supplied executor                                   | rejection, queuing and actual concurrency depend on the executor; Java 17/21 can substitute the fallback even for an explicitly supplied common pool at low parallelism |
 
 Use a non-`Async` stage only for small, non-blocking, non-reentrant transformations that are safe on
 any completing thread. Use an explicit executor when isolation, context, blocking behavior or
-capacity matters. Passing an executor specifies _where submission goes_; it does not promise a new
-thread or concurrent execution.
+capacity matters. An explicit executor does not by itself promise a new thread or concurrent
+execution.
 
 Do not derive the common pool from `availableProcessors() - 1` as an invariant. Active processor
 count, common-pool properties, embedding and implementation version can change it. Record effective
@@ -97,9 +97,11 @@ For each operation define:
 - whether a late success is harmless, deduplicated, compensated or an unknown outcome;
 - which component observes terminal failure and records it exactly once.
 
-`cancel(true)` completes a `CompletableFuture` exceptionally with cancellation semantics; the
-`mayInterruptIfRunning` flag has no effect in this implementation. It is not proof that a supplier
-or remote request stopped.
+Base `CompletableFuture.cancel(true)` does not interrupt its supplier. Provider futures can add
+cancellation behavior: Java 25's default `HttpClient` returns cancelable futures, including derived
+ones. Inspect the actual handle; `copy()` is not a universal cancellation-isolation boundary.
+Cancellation return value, public exceptional state, actual resource release and remote effects
+are separate observations; use `cancellation-and-interruption` for the provider contract.
 
 ## Fan-out and admission
 

@@ -2,30 +2,33 @@
 
 ## Classifying the edge
 
-| The dependency is on…   | Examples                         | Decision                                                                       |
-| ----------------------- | -------------------------------- | ------------------------------------------------------------------------------ |
-| A mechanism you own     | persistence layer, HTTP client   | Invert when change/failure/release isolation repays a port                     |
-| A system you do not own | payment gateway SDK, mail relay  | Quarantine it at an adapter; add a policy port when policy calls it            |
-| A stable value/API type | `Instant`, `BigDecimal`, `Path`  | Usually keep it; abstract the operation (`Files`/remote I/O), not value syntax |
-| Another piece of policy | pricing rules used by order flow | Leave it; peers may call directly                                              |
-| An API you publish      | plugin SPI, extension points     | Already inverted — keep the interface                                          |
+| The dependency is on…   | Examples                         | Decision                                                                           |
+| ----------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| A mechanism you own     | persistence layer, HTTP client   | Invert when change/failure/release isolation repays a port                         |
+| A system you do not own | payment gateway SDK, mail relay  | Quarantine it at an adapter; add a policy port when policy calls it                |
+| A stable value/API type | `Instant`, `BigDecimal`, `Path`  | Usually keep it; abstract the operation (`Files`/remote I/O), not value syntax     |
+| Another piece of policy | pricing rules used by order flow | Leave it; peers may call directly                                                  |
+| An API you publish      | plugin SPI, extension points     | Preserve its extension contract; inspect actual ownership and dependency direction |
 
 Direction matters more than layering vocabulary. The question is never "is this the
 service layer calling the repository layer" but "if this dependency changed vendor,
 protocol or shape tomorrow, which source files would the compiler force me to edit?"
-If the answer includes policy files, the edge points the wrong way.
+If the answer includes policy files, ask whether the change is a mechanism detail the
+policy should be insulated from, or a real policy-contract change. A source edge or release
+boundary alone does not establish the cost or justify a new interface.
 
-## Invert when
+## Look for value in inversion when
 
 - Policy code cannot be unit-tested without network, filesystem, container or a
   mocking framework stubbing a vendor type you do not own.
-- Two production implementations exist or are scheduled — not imagined. A second
-  implementation is the moment the abstraction stops being speculative.
+- Two production implementations exist or are scheduled — not imagined. Check whether
+  they satisfy the same policy capability; do not hide incompatible semantics behind a
+  misleading common contract.
 - The mechanism's types leak into policy signatures (`HttpResponse`, `ResultSet`,
   a generated SDK class as a parameter or return type). The leak couples every
   caller, not just the class that made it.
-- The edge crosses a team or release boundary: the mechanism ships on a different
-  cadence, so a source-level dependency turns their schedule into yours.
+- The edge crosses a team or release boundary. Inspect actual compatibility promises and
+  change propagation; a stable contract may already permit independent releases.
 
 ## Leave it alone when
 
@@ -36,8 +39,8 @@ If the answer includes policy files, the edge points the wrong way.
 - The candidate is stable pure computation with no independent variation/release boundary.
   Determinism makes direct testing easy; independently changing tax policy may still justify
   a strategy even though it performs no I/O.
-- You would wrap a JDK port (`Clock`, `Random` via `RandomGenerator`) in a local
-  interface. Inject the JDK type instead.
+- You would wrap a JDK port (`Clock`, `Random` via `RandomGenerator`) without different
+  policy semantics or a useful capability restriction. Inject the matching JDK type instead.
 
 ## Making direction physical: JPMS
 
@@ -82,7 +85,8 @@ rules; their strength depends on the rule and coverage, not merely on being test
 A factory inverts _creation_ the way a port inverts _invocation_. Decide the same
 way:
 
-- Policy needs fresh instances of a **policy concept** per unit of work → inject a factory port.
+- Policy controls the creation/acquisition timing or scope of a **policy concept**, including
+  lazy or per-unit-of-work use → consider a factory port and specify reuse/cleanup.
   Database connections, HTTP sessions and transport clients should normally be acquired inside
   the adapter; exposing `ConnectionFactory` to policy merely renames the mechanism leak.
 - Policy needs one collaborator for its lifetime → inject the instance; a factory
@@ -98,8 +102,8 @@ it does not by itself prove that the port was unnecessary:
 - The double implements only the policy capability and has no vendor/framework setup; line count
   is a smell locator, not an acceptance criterion.
 - The policy test constructs the subject with `new`, no framework and no reflection.
-- The test asserts on policy outcomes (what was sent, what was decided), not on
-  interaction scripts ("verify method X was called once").
+- The test asserts on policy outcomes (what was sent, what was decided). Effect count/order
+  matters when it is part of the contract; avoid asserting incidental helper-call scripts.
 - Deleting the adapter module leaves the policy module compiling.
 
 ## Primary sources

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-lambdas-and-functional-interfaces
-version: 1.3.2
+version: 1.3.3
 description: >-
   Lambdas, method references and the functional interfaces they implement: what a lambda
   captures and what that costs, why its this differs from an anonymous class's, when a
@@ -11,8 +11,8 @@ description: >-
   megamorphic call sites). Use when a lambda captures mutable state or a large object, when
   a codebase reinvents Function or Predicate, when checked exceptions force a try/catch
   inside a pipeline, or when a queued lambda outlives what it captured. Stream pipelines are
-  java-streams, inlining is jit-inlining-and-escape-analysis, and per-request context a
-  lambda must not capture is scoped-values.
+  java-streams, inlining is jit-inlining-and-escape-analysis, and scoped context binding is
+  scoped-values.
 
 license: Apache-2.0
 
@@ -43,7 +43,17 @@ files:
 dependencies: []
 
 suggests:
+  - allocation-profiling
+  - executors-and-task-lifecycle
   - java-exception-design
+  - java-memory-model
+  - java-reference-types-and-leaks
+  - java-serialization-hardening
+  - java-streams
+  - jit-inlining-and-escape-analysis
+  - scoped-values
+  - startup-cds-crac-leyden
+  - structured-concurrency
 
 capabilities:
   - reads-source

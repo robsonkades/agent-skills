@@ -98,6 +98,9 @@ radius but does not establish that the selected objects are correct.
 - **Where it hides** — an enrichment call with no fallback; a feature-flag service consulted
   per request; an audit write on the request path; an authorisation cache falling through to
   a synchronous call.
+- **Discriminator** — verify which operations can legitimately succeed without this result.
+  Required authorization or audit durability may correctly block completion; calling them
+  optional does not authorize bypass. Compare the accepted degraded contract with actual behavior.
 - **Owner** — `failure-models` (availability arithmetic); `cascading-failures` (criticality).
 
 ## The second-system effect
@@ -145,18 +148,21 @@ radius but does not establish that the selected objects are correct.
 
 ## Control-plane/data-plane coupling
 
-- **Symptom** — established data traffic could have continued, but an outage in discovery,
-  identity, configuration or orchestration makes all requests fail or all instances restart.
-- **Mechanism** — the request path synchronously requires control-plane freshness instead of
-  operating from a bounded last-known-good snapshot; fail-closed behavior was chosen without
-  a criticality/expiry policy.
+- **Symptom** — established data requests fail or instances restart during an outage in
+  discovery, identity, configuration or orchestration.
+- **Mechanism** — the request path depends synchronously on control-plane freshness. This may
+  be unnecessary coupling or a required correctness/authorization constraint; a last-known-good
+  snapshot is an alternative only within its accepted freshness, revocation and authority contract.
 - **Where it hides** — per-request feature-flag or discovery fetch, startup refusing cached
   config, credential refresh with no overlap, readiness tied to a remote control plane.
 - **Discriminator** — existing endpoints/data remain healthy while control operations fail;
-  a canary using cached state succeeds.
+  a canary using cached state may demonstrate continued availability, not correct authorization
+  or current ownership. Check the protected operation's contract before treating fail-closed
+  behavior as a defect or widening cached-state use.
 - **Owner** — `failure-models`, `caching-strategies`, and
   `kubernetes-service-lifecycle` for lifecycle coupling.
 
 ## Source
 
 - [PostgreSQL 18 statement snapshots and transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html)
+- [RFC 7662 — token-introspection caching and stale authorization trade-offs, section 4](https://www.rfc-editor.org/rfc/rfc7662.txt)

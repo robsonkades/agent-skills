@@ -2,16 +2,16 @@
 
 ## The comparison
 
-| Dimension              | Memento                     | Snapshot                              | Event sourcing                           |
-| ---------------------- | --------------------------- | ------------------------------------- | ---------------------------------------- |
-| Lives                  | Transient or durable        | In storage, across versions           | In storage, as an append-only log        |
-| Readable by others     | No — opaque by design       | Yes — it is a contract                | Yes — events are the contract            |
-| Schema and versioning  | Needed when persisted       | Required                              | Required, for every event type, forever  |
-| Answers "what was it?" | Yes                         | Yes                                   | Yes, by replay                           |
-| Answers "why?"         | No                          | No                                    | Only recorded reasons                    |
-| Cost                   | Memory                      | Storage plus a serialisation contract | Replay, projections, schema evolution    |
-| Undo                   | Natural                     | Coarse                                | New compensating facts; not erasure      |
-| Typical use            | Editor undo, what-if branch | Job checkpoint, aggregate snapshot    | Audit-critical domains, temporal queries |
+| Dimension              | Memento                            | Snapshot                                | Event sourcing                             |
+| ---------------------- | ---------------------------------- | --------------------------------------- | ------------------------------------------ |
+| Lives                  | Transient or durable               | Transient or durable                    | In storage, as an append-only log          |
+| Readable by others     | No — opaque by design              | Depends on the consumer contract        | Yes — events are the contract              |
+| Schema and versioning  | Needed when persisted              | When persisted or crossing versions     | Required while retained events need replay |
+| Answers "what was it?" | Yes                                | Yes                                     | Yes, by replay                             |
+| Answers "why?"         | No                                 | No                                      | Only recorded reasons                      |
+| Cost                   | Retained state and any persistence | Capture plus any durable format/storage | Replay, projections, schema evolution      |
+| Undo                   | Natural                            | Coarse                                  | New compensating facts; not erasure        |
+| Typical use            | Editor undo, what-if branch        | Job checkpoint, aggregate snapshot      | Audit-critical domains, temporal queries   |
 
 Decision sequence that works:
 
@@ -21,9 +21,12 @@ Decision sequence that works:
 3. **Must authoritative events reconstruct state?** Consider event sourcing. If only audit
    reasons matter, compare a separate audit trail; events explain only what was recorded.
 
-Do not arrive at event sourcing by accumulating snapshots. A snapshot history tells you the state
-at times T1…Tn and can never tell you what happened between them; that information is destroyed at
-capture time and is not recoverable later.
+These properties overlap: an opaque capture can also be a transient or durable snapshot.
+Choose the contract from its consumers rather than making snapshots public by definition.
+
+Do not arrive at event sourcing by accumulating snapshots. State-only captures do not establish
+unrecorded intervening events or reasons. Existing audit/effect records may provide that evidence;
+taking a snapshot neither creates it nor destroys those separate records.
 
 ## Encapsulation in Java
 
@@ -79,8 +82,8 @@ version it — but it is no longer this pattern's guarantee.
 ## Memory strategies for undo
 
 ```text
-Full capture per step        depth × size. Simple; the default that
-                             surprises people when the object is large.
+Independent full copies      depth × copied size, plus other retained state.
+                             Simple and often adequate for bounded small objects.
 
 Command inverses             store what to undo, not what it was. Cheapest
                              when inverses are exact (gof-command).
@@ -90,8 +93,8 @@ Diffs                        store the delta. Compact; restoring the k-th
 
 Persistent (immutable)       each edit produces a new version sharing the
 structures                   unchanged parts. The undo stack becomes a
-                             stack of references, and memory is
-                             proportional to what actually changed.
+                             stack of references; retention depends on copied
+                             paths, shared values and all live history roots.
 
 Bounded depth                cap the stack; the oldest entries are
                              discarded. Almost always also needed.
@@ -100,11 +103,12 @@ Bounded depth                cap the stack; the oldest entries are
 Immutable state can make capture a reference read, provided collections and their elements are
 immutable. Records do not enforce deep immutability or persistent collection algorithms; copying
 a modified list still costs its length. Compare this with full copies/diffs using actual edit
-patterns and retained bytes. Bound history whichever representation is chosen.
+patterns and retained bytes. Full copies are adequate when they already fit the budget. Bound
+history whichever representation is chosen; a count alone does not bound arbitrarily large captures.
 
-Retention is the failure that shows up in production rather than review: an undo stack of ten
-captures of a large document graph pins ten graphs. Where the object references loaded entities or
-buffers, an editing session's heap grows monotonically and looks like a leak
+Retention includes everything reachable from retained versions: shared subgraphs count once, but
+redo stacks or what-if branches can keep versions alive after the main undo stack drops them.
+Loaded entities and buffers can make history much larger than the visible state suggests
 (`heap-dump-analysis`).
 
 ## Torn captures
@@ -133,10 +137,15 @@ serialization or CAS, and restore needs an explicit stale-edit policy. A lock ma
 coupled state. CAS update functions must be side-effect-free because retries can repeat them;
 see [AtomicReference 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html).
 
+Restoring the exact old reference can produce A → B → A: identity-based CAS sees A again, not the
+intervening transitions. If those transitions must invalidate a writer, retain a non-restored
+generation/version or equivalent protocol. Checking only current identity is valid when that is
+the accepted policy; atomic publication alone does not choose the conflict rule.
+
 ## Versioning, once it is durable
 
-The moment a capture is written to disk, a queue or a database, a future version of your code will
-read it.
+A capture written to disk, a queue or a database may be read after a restart or upgrade; its
+readers and retention policy determine the compatibility requirements.
 
 ```java
 public record CheckpointV2(
@@ -151,8 +160,9 @@ Rules:
 
 - **Identify the schema explicitly.** A field, envelope or schema identifier can do this;
   positional order of a JSON version field is not significant.
-- **Additive changes are optional with documented defaults**; anything else is a new version with
-  an explicit upgrade path.
+- **Validate missing/default and changed-field semantics for actual readers.** An optional new
+  field can change recovery meaning; successful decoding is not compatibility. Use the schema's
+  evolution rules and an explicit migration/new version when required.
 - **Decide what an older reader does with a newer capture.** Reject unsupported semantics;
   ignoring unknown fields is safe only under a proven compatibility policy, for events too.
 - **Prefer an explicit durable schema over native Java serialization.** Existing serialized
@@ -162,8 +172,9 @@ Rules:
 ## Restore is not compensation
 
 Restoring an object's fields does not unsend an email, unpublish an event, or unmove money. A
-design that offers "undo" over operations with external effects needs compensating actions with
-their own outcomes and failure modes, and those cannot be hidden behind a `restore` call
+design that offers "undo" over operations with external effects must define available compensation
+or reconciliation, including their outcomes and failure modes. Some effects cannot be undone;
+none of these policies can be inferred from a `restore` call
 (`distributed-transactions-and-sagas`, `idempotency`).
 
 State the boundary in the API: restore changes only the state it owns. Reject or reconcile a

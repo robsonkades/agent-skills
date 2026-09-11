@@ -30,12 +30,18 @@ code/compiler-log evidence.
 ## Workflow
 
 1. **Confirm the baseline is not the explanation.** Record vendor, full JDK build, compiler,
-   tiering and effective flags; this material targets HotSpot C2, chiefly JDK 25. Check
+   tiering and effective flags; this material targets HotSpot C2, chiefly JDK 25. Reuse
+   established compiler evidence. For a confirmed Graal target, stop these C2 steps and hand off
+   detailed partial-EA diagnosis to `graalvm-jit`, carrying the known build/settings, allocation
+   site, available evidence and remaining gaps. For C2, check
    `DoEscapeAnalysis`, `EliminateAllocations` and `EliminateLocks` with unlocked
    `-XX:+PrintFlagsFinal`; inspect `ReduceAllocationMerges` only where available (JDK 22+).
    Preserve the project's target rather than upgrading it. Check diagnostics against the exact VM.
 2. **Establish that allocation is really happening, then that EA is the mechanism.**
-   `gc.alloc.rate.norm` at the object's full size is the reason to continue. At zero, rerun
+   Validate the counter/event, measured threads, execution window and operation denominator.
+   Partial bytes/op can reflect execution frequency, mixed tiers or other allocations; full
+   object size is not a prerequisite for investigation. Reject unavailable counter values
+   before subtraction. At a valid zero, rerun
    with `-XX:-DoEscapeAnalysis`: still zero means EA dependence was not demonstrated. Inspect
    dead-code removal, caching, untaken paths and measurement scope before attributing a mechanism.
 3. **Ask the compiler before theorising.** On the target HotSpot product build,
@@ -56,12 +62,15 @@ code/compiler-log evidence.
    survive" table — a merge with an unsupported user, an identity hash, a non-constant array
    index, a field or array limit, a taken rare branch — then trace the escaping edge to its
    sink. See `references/connection-graph.md`.
-7. **Fix the cause, not the symptom.** Construct the object inside the rare branch, split the
-   escaping path into its own method, reduce polymorphism, or raise `MaxBCEAEstimateSize` —
-   the last only when the gain sought is lock elision. Then repeat steps 2 and 3 on the same
-   load.
+7. **Choose a change only when the allocation matters to the workload.** Retain an adequate
+   design within its budgets. Lifetime relocation, hot/cold splitting or inlining changes
+   must preserve constructor effects, exception order, identity and caller contracts;
+   semantic retention cannot be tuned away. Raising `MaxBCEAEstimateSize` is only a candidate
+   for lock elision. Compare the relevant alternative and repeat steps 2 and 3 on the same load.
 8. **Investigate rematerialisation cost separately**, with `-Xlog:deoptimization=debug` or
-   `jdk.Deoptimization` over a real window, not with JMH.
+   `jdk.Deoptimization` over a real window, not with JMH. On the JDK 25 baseline these cover
+   uncommon traps, not all dependency invalidations; use the appropriate compilation/dependency
+   evidence from `deoptimization`. Reuse available evidence and the authorized capture budget.
 
 ## Rules
 

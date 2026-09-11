@@ -9,6 +9,8 @@ Partial Java 17 shape sketches, not executable SDK integrations: constructors, m
 bodies and lazy initialization are omitted. Inspect actual project SDK/framework versions.
 Payment retry requires an outcome-aware idempotency contract and bounded deadline/attempts;
 volatile alone does not make lazy initialization once-only. Use the specialist skills to implement.
+For repeated payment effects, `idempotency` owns the effect contract; a retrying wrapper does not
+establish repeat safety or resolve an earlier unknown outcome by its shape.
 
 ```java
 // ADAPTER — different interface; the foreign type stops here
@@ -26,7 +28,7 @@ public final class RetryingGateway implements PaymentGateway {
     public Authorisation authorise(Payment p) { /* retry loop around delegate */ }
 }
 
-// PROXY — same interface; access controlled; the caller cannot reach the subject
+// PROXY — same interface; controls lazy creation; audit other paths to the subject
 public final class LazyGateway implements PaymentGateway {
     private final Supplier<PaymentGateway> factory;
     private volatile PaymentGateway target;                       // created on demand
@@ -80,7 +82,7 @@ the wrapper does not enforce that boundary; an internal trusted reference alone 
 
 ## The composed case
 
-Real outbound clients are usually all four at once:
+An outbound design can compose these roles when each responsibility is needed:
 
 ```java
 PaymentGateway gateway =
@@ -97,8 +99,8 @@ name tells a reader what to expect:
 
 - The metrics and retry layers are **stackable** and their order carries meaning
   (`gof-decorator`).
-- The lazy layer is a **proxy**: nobody else holds the real gateway, and it decides when it is
-  created.
+- The lazy layer is a **proxy**: it decides when to obtain the gateway. The factory's implementation
+  determines whether other references exist; the sketch does not prove exclusive access.
 - The Stripe layer is an **adapter**: it is where `StripeException` stops.
 - `Checkout` is a **facade**: coarse, sequencing several collaborators.
 
@@ -122,26 +124,31 @@ their interaction protocol, identify and bound that additional role (`gof-mediat
 **"Facade" over one collaborator.** Useful if that collaborator is a complex subsystem and the
 facade supplies a stable, simpler contract; count does not measure coupling reduction.
 
-**"Adapter" containing business rules.** The rules are in the boundary layer where nobody looks for
-them, and they will be lost when the vendor is replaced. The test: would the rule still be true
-after swapping the vendor? Then it does not belong in the vendor's adapter.
+**"Adapter" containing business rules.** A vendor-independent invariant hidden in translation can
+be lost when the vendor changes. Identify its domain/application owner; invoking that owner's
+validation from an adapter can be legitimate. Vendor-specific mapping rules belong at this
+boundary. Judge ownership and callers before moving code.
 
 ## Framework wrappers are the same four
 
-| Framework thing                         | Which pattern                                                               |
-| --------------------------------------- | --------------------------------------------------------------------------- |
-| `@Transactional` / `@Cacheable` proxy   | Proxy-based advice when enabled; self-invocation can bypass it              |
-| Servlet `Filter`, `HandlerInterceptor`  | Ordered processing chain; may stop continuation                             |
-| `RestClient` interceptors               | Decorator                                                                   |
-| Hibernate lazy association              | Proxy or bytecode enhancement; inspect mapping/runtime                      |
-| A Spring Data repository implementation | Repository abstraction; may combine proxy, adapter and query implementation |
-| An application service                  | May expose a facade; inspect actual responsibilities                        |
+| Framework thing                         | Which pattern                                                                |
+| --------------------------------------- | ---------------------------------------------------------------------------- |
+| `@Transactional` / `@Cacheable` proxy   | Proxy-based advice when enabled; self-invocation can bypass it               |
+| Servlet `Filter`, `HandlerInterceptor`  | Ordered processing chain; may stop continuation                              |
+| `RestClient` interceptors               | Continuation chain; may also wrap requests/responses or add decorator duties |
+| Hibernate lazy association              | Proxy or bytecode enhancement; inspect mapping/runtime                       |
+| A Spring Data repository implementation | Repository abstraction; may combine proxy, adapter and query implementation  |
+| An application service                  | May expose a facade; inspect actual responsibilities                         |
 
-Knowing which is which explains the failure modes: proxies bring self-invocation and `instanceof`
-problems; decorators bring ordering questions; adapters bring translation duties; facades bring
-transaction-boundary decisions.
+Use the role to choose a contract check, not to infer a failure: advice reachability depends on
+the actual proxy/weaving mechanism; type checks depend on interface versus subclass proxying.
+Wrapping raises ordering questions, translation raises mapping duties, and a facade's workflow
+raises transaction/partial-effect questions without supplying atomicity.
 
 Verify the actual mechanism: [Spring AOP proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)
 documents self-invocation bypass for proxy advice (AspectJ weaving differs).
 [Jakarta Servlet 6 Filter](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/filter)
 can invoke the chain or block it; do not infer that every layer must run from a decorator label.
+Likewise [Spring 6.1.21 ClientHttpRequestInterceptor](https://docs.spring.io/spring-framework/docs/6.1.21/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html)
+may forward or block execution and wrap a response. If it throws after receiving a response, it
+must close that response. Inspect the project's actual version and continuation contract.

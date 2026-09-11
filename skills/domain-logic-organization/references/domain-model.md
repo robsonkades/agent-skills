@@ -9,9 +9,9 @@ better than procedures;
 it is that when rules interact, having one owner per rule stops the combinatorial
 duplication that scripts suffer.
 
-The test for whether you have one: **pick an invariant, and name the single place a
-violation is impossible to write.** If the answer is "everywhere that updates the field",
-you have structures and procedures, whatever the classes are called.
+The test for whether it owns a rule: **pick an invariant, trace every supported transition,
+and identify its enforcement point.** ORM hydration, bulk SQL and competing writers also
+need their own protections; object methods alone do not make stored violations impossible.
 
 ## Rich versus anaemic, concretely
 
@@ -105,21 +105,22 @@ require persistence ignorance — that is a separate decision with its own price
 
 ## Classifying a concept: entity, value, or neither
 
-Before deciding where a rule lives, decide what kind of thing holds it. Evans' two
-questions, in his own framing (_DDD Reference_, 2015, pp. 11–12):
+Before deciding where a rule lives, decide what kind of thing holds it. These practical
+questions apply Evans' identity/value distinction (_DDD Reference_, 2015, pp. 11–12):
 
 | Ask                              | Entity                                                                                             | Value object                                                                                    |
 | -------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | The question the concept answers | "Which one?"                                                                                       | "How much / what kind?"                                                                         |
 | Defined by                       | A thread of identity running through time, across changing attributes and distinct representations | Its attributes alone — "many objects have no conceptual identity"                               |
 | Equality                         | Identity, and the model "must define what it means to be the same thing"                           | All attributes equal                                                                            |
-| Change                           | Mutates over a lifecycle                                                                           | Replaced whole, never mutated                                                                   |
+| Change                           | Identity persists across state changes; representation may be mutable or replaced                  | Treat as immutable; replace the value when attributes change                                    |
 | Cost of getting it wrong         | Mistaken identity, which Evans names as leading to data corruption                                 | Identity attached where none exists: performance cost, and every object starts to look the same |
 
-The default is the value: identity carries a lifecycle, a repository, an id strategy and a
-`HashSet` hazard, so the burden of proof sits on the entity. Two operational tests settle
-most cases — _replaceability_: if an attribute changes, would you replace the whole object
-(value) or update it in place and still call it the same thing (entity)? — and _conceptual
+The default is the value: identity requires a continuity and equality policy, so the burden
+of proof sits on the entity. It does not require a repository for every entity; aggregate
+children may be reached through their root. Two operational tests help — _continuity_: if
+attributes change, is it still the same business thing, even when its in-memory representation
+is replaced? — and _conceptual
 whole_: are these attributes meaningless apart (an amount without its currency, a street
 without its postcode)? If so they are one value, not several fields.
 
@@ -146,9 +147,10 @@ Obsession).
 | Neither                                                      | the primitive                          | —                           | `java-code-smells`, Primitive Obsession, carries the budget for when a wrapper earns its place                                                                                                                       |
 
 Records (final in JDK 16), sealed interfaces (17) and pattern matching for `switch` with
-record patterns (both 21) are what make this table current: a closed variant set is now
-checkable by the compiler, which is why `int status` plus an `if` chain is no longer
-defensible. On a Java 21 baseline write `case Pending p ->`, not `case Pending _ ->` —
+record patterns (both 21) let the compiler check a closed variant set. Use that capability
+when the domain is closed; an external status code with evolving values may need a boundary
+translation and unknown-value policy instead. On a Java 21 baseline write
+`case Pending p ->`, not `case Pending _ ->` —
 unnamed patterns are JDK 22 (JEP 456) and `--release 21` rejects them.
 
 Review prompts for this classification:
@@ -176,24 +178,26 @@ constraint is the enforcement and the check is only for the error message
 
 ## Sizing: what the model costs to load
 
-A domain model enforces invariants over loaded state, so every write costs the load of
-whatever the invariant spans. This is the pattern's real price and the source of most
-disappointment with it.
+A transition needs enough authoritative state to enforce its invariant. Loading an aggregate
+is one strategy; maintained summaries, database constraints or conditional writes may avoid
+loading every related row, provided all writers preserve the same contract. Assess the actual
+fetch path rather than attributing a full graph load to every domain-model write.
 
 - An aggregate spanning 4 tables and 30 rows may be acceptable; measure fetch plans, row width,
   lock duration and latency against its workload budget rather than assigning a universal cost.
 - An aggregate that spans a customer's entire order history: unbounded, and it degrades
   with tenure, so it passes every test and fails for your best customer.
 
-Practical bound: an aggregate should be loadable in a small, **fixed** number of queries,
-with a **bounded** number of rows. When an invariant seems to require an unbounded
-collection, it is nearly always expressible as a derived value maintained on the root
-(a running total, a count, a last-event timestamp) rather than by loading the collection.
+Aim for a bounded load within the operation's budget. When an invariant appears to require
+an unbounded collection, consider a maintained summary (a running total, count or timestamp)
+only if it captures the required decision. Define initialization, concurrent updates and repair;
+an approximate or stale summary cannot enforce a strict invariant merely because it is cheap.
 
 ## The four failure modes
 
-1. **Anaemic model** — described above. The diagnosis is mechanical: search for public
-   setters on entities and for `if` statements in services that mention entity state.
+1. **Anaemic model** — described above. Setters and service conditionals are investigation
+   leads. Trace a bypassable or duplicated domain rule before diagnosing a defect; deliberate
+   scripts, shared policies and ORM accessors can be valid.
 2. **Aggregate too large** — everything reachable is in one aggregate because the object
    graph made it convenient. Symptoms: lock contention, `OptimisticLockException` between
    users editing unrelated parts, and slow loads. The fix is splitting on invariants, not
@@ -202,9 +206,9 @@ collection, it is nearly always expressible as a derived value maintained on the
    services because that is where the transaction and the other repositories are. Detect
    by diffing: rules arriving in services over six months is the trend that matters.
 4. **Reads forced through the write model** — a list screen loading 50 aggregates to
-   display 4 columns each. The domain model is a write-side construct; reads should use
-   projections (`query-objects-and-specifications`). Forcing them through the model is the
-   leading cause of N+1 in well-intentioned codebases (`architecture-and-performance`).
+   display 4 columns each. Compare projections (`query-objects-and-specifications`) when
+   traces show unnecessary loads. Bounded entity reads that need the model's behavior may
+   already be adequate; diagnose N+1 from actual fetches (`architecture-and-performance`).
 
 ## When the domain model is the wrong choice
 
@@ -220,6 +224,7 @@ collection, it is nearly always expressible as a derived value maintained on the
 
 ## Sources
 
+- [Evans: DDD Reference](https://www.domainlanguage.com/ddd/reference/) — entity identity, value semantics and aggregate/repository boundaries.
 - [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2): entity requirements, relationship ownership, optimistic locking and bulk operations.
 - [Java 17 Record API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): default component equality and explicitly declared methods.
 - [Fowler: Domain Model](https://martinfowler.com/eaaCatalog/domainModel.html): data and behavior in the domain model.

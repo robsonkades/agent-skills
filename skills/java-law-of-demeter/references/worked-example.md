@@ -59,8 +59,9 @@ the owned concept instead. Either way the caller no longer branches on membershi
 mechanically is the Middle Man smell. It is justified here because "a customer's discount
 rate" is a concept `Customer` genuinely owns — callers ask the customer, and whether the
 answer comes from a membership, a promotion or a contract is `Customer`'s private business.
-A `Customer.membershipPoints()` forwarder, by contrast, would be structure with a longer
-name. **Trade-off:** the rate table is now harder to see from the checkout code; the test
+A `Customer.membershipPoints()` forwarder that merely exposes private representation would be
+structure with a longer name; its name alone does not settle whether it is a supported owned query.
+**Trade-off:** the rate table is now harder to see from the checkout code; the test
 for it moves from a service test to a `Membership` test, which is where it becomes cheap.
 
 If pricing owns the table and membership is only input, moving it into `Membership` would create
@@ -80,7 +81,7 @@ public void send(Order order) {
 
 **Analysis.** `ReceiptSender` decides nothing on the navigated data — it only reads two
 values. Moving behaviour would mean teaching `Customer` about receipts; wrong direction.
-The fix is to stop passing the container:
+When the sender's contract needs only these values, narrow what is passed:
 
 ```java
 public void send(EmailAddress to, String recipientName,
@@ -89,12 +90,17 @@ public void send(EmailAddress to, String recipientName,
 }
 ```
 
+Changing the public `send(Order)` signature is a separate compatibility decision. Retain a
+delegating entry point while supported callers require it, preserving validation/failure timing
+and the existing snapshot protocol, or use an explicitly authorized migration. The four-argument
+form alone does not establish source, binary or behavioral compatibility.
+
 The caller — which already holds the `Order` legitimately — performs the navigation once
 and obtains a consistent set of values using the owning aggregate's snapshot/locking or
 transaction protocol, then hands them over. A mere sequence of getters proves no consistency.
-`ReceiptSender` no longer imports `Order`, `Customer` or
-`ContactDetails`, and restructuring `ContactDetails` now touches one assembly point instead
-of every consumer. **Trade-off:** the parameter list grew from one to four; if it keeps
+The narrowed sending code no longer navigates `Order`, `Customer` or `ContactDetails`;
+a retained compatibility entry point still depends on `Order`. Restructuring `ContactDetails`
+now touches the assembly point instead of every consumer. **Trade-off:** the parameter list grew from one to four; if it keeps
 growing, group them into an immutable purpose-specific `ReceiptData` snapshot and defensively
 copy lines. Four scalars read at different times from mutable/ORM state can be less correct than
 one container, so narrowing must preserve observation consistency.
@@ -124,8 +130,9 @@ behalf of the API contract. Leave it.
 - `ReceiptSender` and the discount call sites compile without importing `ContactDetails`
   or directly navigating `Membership`; inspect resolved calls/compiled dependencies, not just
   imports. `var` can still carry a forbidden intermediate type without an import.
-- The tier table exists exactly once (search for `"0.05"` / `SILVER` comparisons outside
-  `Membership`).
+- The two callers use the same owned membership policy. Searches for `"0.05"` / `SILVER`
+  find candidates, not proof of duplication; inspect meaning and authority before merging a
+  separate policy or removing required checks.
 - In a temporary branch/fixture, change the published shape used by the assembly point
   (renaming only a private field proves little). Keep `ReceiptSender.send`'s contract stable;
   its code and tests should remain unchanged. Identify expected mapper/assembly edits explicitly.

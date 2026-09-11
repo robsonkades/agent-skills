@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: postgresql-performance
-version: 1.0.1
+version: 1.0.2
 description: >-
   Diagnosing and tuning PostgreSQL 17/18 from engine evidence: MVCC tuple versions, VACUUM/freeze
   and bloat, HOT updates and visibility maps, plans and cardinality, work memory/spills, WAL and

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-confusion
-version: 1.2.1
+version: 1.2.2
 description: >-
   Telling apart the patterns that look alike, so a design is not chosen because a name sounded
   right. Covers the four wrappers (Adapter, Decorator, Proxy, Facade) and the two questions that
@@ -54,12 +54,15 @@ suggests:
   - gof-flyweight
   - gof-mediator
   - gof-memento
+  - gof-pattern-antipatterns
+  - gof-pattern-selection
   - gof-patterns-and-distribution
   - gof-proxy
   - gof-singleton
   - gof-state
   - gof-template-method
   - gof-visitor
+  - idempotency
 
 capabilities:
   - reads-source

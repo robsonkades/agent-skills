@@ -11,13 +11,13 @@ E[Wq] = ρS/(1−ρ)
 E[L]  = ρ/(1−ρ)
 ```
 
-| `ρ` |                  `E[R]/S` | Model reading                                                             |
-| --: | ------------------------: | ------------------------------------------------------------------------- |
-| .50 |                       2.0 | mean queue wait equals mean service time                                  |
-| .70 |                      3.33 | small demand/load errors already amplify                                  |
-| .80 |                       5.0 | 10% relative more arrivals gives `ρ=.88`, `E[R]=8.33S`                    |
-| .90 |                      10.0 | 10% relative more arrivals gives `ρ=.99`, `E[R]=100S`                     |
-|  ≥1 | no stationary finite mean | backlog grows until a finite limit, shedder or workload change intervenes |
+| `ρ` |                  `E[R]/S` | Model reading                                                           |
+| --: | ------------------------: | ----------------------------------------------------------------------- |
+| .50 |                       2.0 | mean queue wait equals mean service time                                |
+| .70 |                      3.33 | small demand/load errors already amplify                                |
+| .80 |                       5.0 | 10% relative more arrivals gives `ρ=.88`, `E[R]=8.33S`                  |
+| .90 |                      10.0 | 10% relative more arrivals gives `ρ=.99`, `E[R]=100S`                   |
+|  ≥1 | no stationary finite mean | stationary formulas invalid; finite bounds or shedding change the model |
 
 The derivative `d(E[R]/S)/dρ=1/(1−ρ)^2` explains nonlinear sensitivity; it does not create a
 universal 70%, 80% or 90% operating threshold. Real headroom also covers burstiness, failover,

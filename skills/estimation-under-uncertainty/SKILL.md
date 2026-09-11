@@ -21,19 +21,20 @@ An estimate predicts work or completion under assumptions. A single number witho
 uncertainty can be planned against as certainty. Even a numerical range can mislead when
 its coverage, scope or calendar assumptions are invented.
 
-The job is to give a number people can act on, with the uncertainty attached in a form they can
-use, and to say what would reduce it.
+The job is to support the planning decision with a forecast and its uncertainty when evidence
+permits, or identify what must be learned before a number is useful.
 
 ## Workflow
 
-1. **Do not hide requirement uncertainty inside a precise estimate.** When a decision still needs a
-   number, give a deliberately broad conditional range and state what is missing; otherwise defer
-   the forecast until the scope-changing questions are answered (requirements-and-acceptance).
-   Define effort versus elapsed time, working versus calendar days, start point, definition
-   of done, available capacity and dependency dates before converting work into a delivery date.
-2. **Decompose until the pieces are things you have done before.** A piece you can compare with
-   something real is estimable; a piece that is still a category ("the reporting") is not. The
-   decomposition is also the most reliable way to find work nobody had counted.
+1. **Identify the decision and forecast event.** Reuse supplied scope, history and constraints;
+   ask only for missing information that changes the decision (requirements-and-acceptance).
+   Give a conditional range only when its bounds have a basis; pressure for a number does not
+   supply one. Otherwise state what prevents forecasting and the next useful investigation.
+   Define effort versus elapsed time, working versus calendar days, forecast date, start point,
+   total versus remaining work, completion criteria, capacity and dependencies.
+2. **Decompose where it exposes omitted work or a material dependency.** Comparable whole-change
+   history may already be sufficient. Stop when more detail would not change the decision;
+   unfamiliar work needs explicit assumptions or investigation, not endless subdivision.
 3. **Choose inputs supported by evidence**: comparable cycle-time samples or elicited
    quantiles with explicit assumptions. If using PERT, distinguish bounds and modal inputs
    from P10/P50/P90; they are not interchangeable. Without calibration, label the range
@@ -46,8 +47,9 @@ use, and to say what would reduce it.
 5. **Calibrate against comparable history.** Record sample count, start/end definitions,
    changed team conditions and omissions. Three examples can anchor discussion, not establish
    reliable tail percentiles. Compare forecasts with later outcomes without replacing old estimates.
-6. **State the forecast event and assumptions**: a central P10–P90 interval describes 80%
-   predicted coverage, while "by P80" describes 80% predicted completion by one deadline.
+6. **State the forecast event and assumptions**: a central P10–P90 interval has nominal 80%
+   coverage, while "by P80" is a model completion percentile, not an interval.
+   Discrete durations/rounding can change coverage; calibration requires actual outcomes.
    Both require a stated model/basis. Otherwise report an uncalibrated scenario range.
 7. **Re-estimate when evidence arrives**, and say so immediately. An estimate is a statement
    about what you knew when you made it. Update when new evidence changes the decision or
@@ -59,9 +61,9 @@ detail to the decision; do not invent a date, owner or probability merely to fil
 
 ## Rules
 
-- Avoid a bare single number when uncertainty affects the decision. If pressed, give the range and then the
-  number you would plan against — but never let the range disappear silently, because it is the
-  only part carrying information about risk.
+- Avoid a bare single number when uncertainty affects the decision. If supported, give the
+  range and explain the planning value selected from it for the decision's risk tolerance.
+  Keep assumptions and residual risks visible; an unsupported broad range is still a guess.
 - State whether the range is a scenario span or a calibrated prediction interval, and whether
   a quoted percentile is a deadline or interval endpoint. A confidence interval for a mean
   does not describe the uncertainty of one future delivery.
@@ -86,7 +88,7 @@ detail to the decision; do not invent a date, owner or probability merely to fil
 - **Methods and arithmetic** — `references/methods.md`. Three-point estimation and PERT with
   worked numbers, when variances add, decomposition, reference-class
   forecasting from your own history, the cone of uncertainty, and the failure modes of each
-  method. Read when producing an estimate for anything larger than a day.
+  method. Read when selecting a method, combining work, forecasting remaining time or checking calibration.
 - **Estimates, targets and commitments** — `references/commitments.md`. Keeping the three
   apart, what to do when a target is presented as an estimate, negotiating scope rather than
   dates, communicating a slip, and the agent-specific version of the same discipline. Read when

@@ -1,9 +1,9 @@
 # Failure atomicity
 
-A failed method should leave its receiver in the state it had before the call. When it does
-not, the exception is only the first failure: the second is that the caller catches it,
-retries or continues, and operates on an object that is now internally inconsistent — with no
-error at the moment the damage becomes visible.
+When unchanged state is the failure contract, a failed method must leave its receiver as it
+was before the call. An undocumented partial mutation can make a caller retry or continue on
+inconsistent state. Some operations instead promise partial progress or invalidate the receiver;
+define that post-failure state and the covered failures before choosing an implementation.
 
 ## The four ways to get it
 
@@ -11,9 +11,9 @@ The code blocks are partial Java 21 snippets: domain types (`Money`, `Entry`, `R
 imports and helper methods are elided. `validate` must not mutate existing rules or external
 state; copying the list alone does not isolate mutable elements or side effects.
 
-**1. Immutability.** An immutable object cannot be left half-modified; a failed operation
-simply produces no new instance. This is the strongest form and needs no discipline at the
-call site — see java-immutability.
+**1. Immutability.** A truly immutable receiver cannot be left half-modified. That protects
+the receiver, not external effects performed by the operation or a caller's publication of
+new state — see java-immutability.
 
 **2. Check before you change.** Order the method so every validation happens before any
 mutation:
@@ -56,17 +56,19 @@ Some operations use copy-then-swap, but do not assume library sorts are failure-
 `List.sort` contract does not promise rollback if the comparator throws. Read
 the target API contract and test exceptional paths.
 
-**4. Recovery code.** A rollback in a `catch` that undoes what was already done. It is the
-weakest option: the rollback itself can fail, it doubles the code paths, and it is hard to
-test. Reserve it for durable structures (an on-disk index, a file layout) where the other
-three are impossible.
+**4. Recovery code.** A rollback in a `catch` that undoes what was already done. Consider it
+when preparation/copying is unsuitable and restoration can meet the declared failure model;
+this can apply to owned in-memory state as well as durable structures. Verify rollback failure
+and prevent concurrent observers from seeing an invalid intermediate state. Disk recovery also
+needs crash semantics; a `catch` cannot run after process loss.
 
 ## Where to relax it deliberately
 
 Failure atomicity is not free and not always desirable:
 
-- **A batch that processes 10 000 records** should usually keep the 9 998 that succeeded and
-  report the two that failed. Atomicity at the item level, a summary at the batch level — see
+- **A batch that permits independent item progress** can keep successful items and report
+  failures. A declared all-or-nothing batch must retain that guarantee; item count does not
+  authorize partial commits. For item-level outcomes and a batch summary, see
   the result-type discussion in `design-decisions.md`.
 - **Concurrent/fail-fast collections** may detect interference with
   `ConcurrentModificationException`, but detection is best effort and does not promise rollback.
@@ -84,42 +86,44 @@ is a trap.
 Failure atomicity is a property of _in-memory_ state, and this is where it is most often
 over-claimed:
 
-- **A method that mutates the object and calls a remote service is not atomic**, regardless of
-  ordering. If the local mutation succeeds and the call times out, you do not know whether the
-  remote side applied it — a timeout is not a failure, it is an unknown. That is the
+- **Local mutation plus an ordinary remote call does not establish joint atomicity.** A timeout
+  is a local failure signal; without definitive evidence the remote effect may remain unknown.
+  Preserve known completed effects separately from unknown ones. That is the
   idempotency and retry problem, not an exception-design one: see idempotency,
   timeouts-and-deadlines and retries-and-backoff.
 - **A database transaction gives atomicity for persistent state**, and only for what is inside
   it. In-memory fields mutated in the same method are _not_ rolled back when the transaction
   is: an entity object, a cache, a counter or a queued event stays modified while the row does
   not. This mismatch is the standard bug behind "the cache says shipped, the database says
-  pending"; enterprise-transactions and ddd-adjacent skills cover the pattern of publishing
-  effects only after commit.
+  pending"; enterprise-transactions covers transaction participation and rollback boundaries.
+  Publishing only after commit avoids premature visibility but can still need recovery if
+  that later publication fails.
 - **A local exception does not establish cross-service atomicity.** Coordinated transaction
   protocols can provide atomic commit for participating resources under their assumptions;
   ordinary independent HTTP calls do not inherit it. Route the choice among coordinated
   transactions, reconciliation and compensation to distributed-transactions-and-sagas. A saga
   or outbox is not mandatory for every remote call, and compensation is not rollback isolation.
 
-The practical rule: make the in-memory object atomic, make the persistent state
+The practical rule: enforce the declared in-memory failure state, make persistent state
 transactional where required, and define remote outcome/reconciliation semantics explicitly. Do not
 substitute one for another.
 
 ## Review checks
 
-- [ ] Mutating methods either validate/prepare fallible work before publication or explicitly
-      document partial progress.
+- [ ] Mutating methods enforce their declared failure state through preparation/recovery or
+      an explicit partial-progress/invalidation contract.
 - [ ] Fields participating in one invariant are published as one immutable state where practical;
       rollback paths handle their own possible failures.
-- [ ] Complex updates build new state and install it with one assignment.
+- [ ] Complex updates prepare before publication or use a verified recovery protocol fitting
+      the declared contract and ownership.
 - [ ] Methods that deliberately are not atomic say so in the Javadoc.
-- [ ] No method mutates in-memory state and then performs a remote call whose failure would
-      leave the two inconsistent — or, if it must, the remote effect is idempotent and the
-      local state is derived from the confirmed outcome.
-- [ ] In-memory state changed inside a transaction is either derived from the persistent state
-      or explicitly restored when the transaction rolls back.
-- [ ] A test exercises the failure path and asserts the object is still usable afterwards —
-      not only that the exception was thrown.
+- [ ] Methods combining local and remote changes preserve known/unknown outcomes and use the
+      accepted reconciliation, safe repetition or coordinated protocol required by their contract;
+      a local throw does not erase an applied effect or by itself require idempotent remote operations.
+- [ ] In-memory state changed inside a transaction is restored, invalidated or reconciled with
+      persistent state after rollback as required by the accepted consistency contract.
+- [ ] A test exercises the failure path and checks the promised unchanged, partially progressed
+      or unusable state afterwards — not only that the exception was thrown.
 
 ## Authoritative references
 

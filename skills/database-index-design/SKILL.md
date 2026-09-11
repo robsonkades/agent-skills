@@ -13,8 +13,9 @@ description: >
 
 ## Purpose
 
-Produce the smallest index set that supports the measured workload while making write, storage,
-locking, maintenance, and rollout costs explicit. This skill owns the portfolio and DDL decision;
+Choose an index set that supports the measured workload at justified write, storage, locking,
+maintenance, and rollout cost. Retain an adequate portfolio; fewer indexes can still cost more
+if consolidation widens keys or loses useful access paths. This skill owns the portfolio and DDL decision;
 `sql-query-performance` owns reading one statement's executed plan.
 
 ## Required inputs
@@ -28,7 +29,10 @@ executed plans and actual work for the target statements:
 DDL availability, lock, log/WAL, disk, rollback, and maintenance constraints:
 ```
 
-If the workload or engine is unknown, do not emit DDL. State what must be measured first.
+Inspect existing schema/migrations, captured plans and usage windows before asking for new
+evidence. If the workload or engine is unknown, do not emit DDL; identify the missing decision
+input. Estimated plans can support candidates when actuals are unavailable, with runtime benefit
+explicitly unverified.
 
 This skill has no Java language minimum: its compatibility boundary is the database and
 migration tooling. In Java projects inspect resolved JDBC/ORM versions, generated SQL and
@@ -37,6 +41,10 @@ MySQL 8.4 for version-sensitive examples; SQL Server features require the actual
 edition. Do not upgrade the application or database to match a proposed index feature.
 
 ## Workflow
+
+Commands such as `EXPLAIN ANALYZE` run the statement and can perform writes and
+function side effects. Reuse suitable captures or use an authorized environment with execution,
+lock-wait and cleanup bounds. Rollback does not restore every sequence or external effect.
 
 1. Normalize each target query into equality predicates, all range predicates,
    ordering, joins, projection-only columns, and non-sargable expressions.
@@ -51,8 +59,9 @@ edition. Do not upgrade the application or database to match a proposed index fe
    maintenance, cache footprint, logging, lock reach, and operational DDL cost.
 6. Validate with the application's parameterized statement and executed plan. Confirm which key
    parts positioned the scan and which remained residual.
-7. Deploy with the engine's explicit online/concurrent algorithm where supported, observe boundary
-   locks and log/disk headroom, then re-measure reads and writes. Removal needs an observation window
+7. Plan the engine's explicit online/concurrent algorithm where supported; execute only within the
+   authorized deployment scope. Observe boundary locks and log/disk headroom, then re-measure reads
+   and writes. Removal needs an observation window
    longer than the business cycle and must include every replica role.
 
 ## Core rules
@@ -66,8 +75,10 @@ edition. Do not upgrade the application or database to match a proposed index fe
   `SeekPredicates`/`Predicate`, `used_key_parts`/rows examined, or `Index Cond`/`Filter`.
 - Range and ordering on different columns compete. Choose from result limit, tail selectivity, sort
   cost, and workload frequency; one index cannot promise both universally.
-- Covering moves lookup cost into every write and leaf entry. `INCLUDE` keeps a column out of key
-  ordering; it does not make the bytes or maintenance free. MySQL has no `INCLUDE` equivalent.
+- Covering trades lookups for wider entries and maintenance on relevant writes. Which updates
+  maintain an index depends on the engine, indexed columns/predicate and update optimizations.
+  `INCLUDE` keeps a column out of key ordering; it does not make the bytes or maintenance free.
+  MySQL has no `INCLUDE` equivalent.
 - Every index proposal includes the cost of writes and storage. On PostgreSQL, indexing an updated
   column can also prevent HOT updates and make non-summarizing indexes participate in that update.
   PostgreSQL 18 exempts summarizing indexes such as BRIN from that eligibility restriction;
@@ -82,6 +93,11 @@ edition. Do not upgrade the application or database to match a proposed index fe
   different lock, failure, cleanup, edition, and rollback semantics.
 
 ## Evidence and output
+
+State the portfolio decision: retain, add, modify, or remove, with its evidence and trade-offs.
+A no-change review is complete when the workload/constraint roles are supported and any material
+observation gap is explicit. Distinguish planned DDL and predicted benefit from executed changes
+and measured results; scale the detail to the decision.
 
 For each accepted candidate report:
 
@@ -104,3 +120,6 @@ confidence and missing evidence:
   coverage, partial-index, uniqueness, FK, or specialized-index semantics.
 - [Portfolio lifecycle](references/portfolio-lifecycle.md) — read when consolidating, deploying, or
   removing indexes in production.
+- [PostgreSQL EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html) and
+  [sequence effects](https://www.postgresql.org/docs/18/functions-sequence.html) — execution and
+  rollback boundaries when collecting actual plans.

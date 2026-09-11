@@ -28,9 +28,13 @@ Status: documented, not executed. The checker tests are separate code-level evid
 
 For each request/context below, use fresh sessions with the same model/version, settings,
 tools and surrounding instructions. Omit this skill for the baseline; supply SKILL.md and
-access to references for treatment. Keep expectations hidden. Record outputs/tool calls and
-pass/fail per required characteristic with evidence, not a wording match. For selection, keep
-neighboring descriptions constant and add this description only in treatment.
+access to references for treatment. In the isolated evaluation copy, remove this reference's
+`## Reproducible behavioral cases` heading and everything after it from agent-accessible
+resources; retain the preceding technical and source guidance. Keep the full cases and other
+evaluation artifacts private to the evaluator in both arms, supplying only the selected
+request/context to the agent. Record outputs/tool calls and pass/fail per required
+characteristic with evidence, not a wording match. For selection, keep neighboring
+descriptions constant and add this description only in treatment.
 
 ### 1. A check that reports but cannot block
 

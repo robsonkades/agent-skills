@@ -1,8 +1,10 @@
 # Validation and troubleshooting
 
 Archive compatibility is an implementation/update contract, not just a feature-release contract.
-Capture `java -Xinternalversion`, vendor/image digest, OS/CPU and effective flags, then rerun the
-negative tests on the exact deployed build. JDK-8377932 is the concrete warning: affected early
+For a compatibility/adoption claim, establish `java -Xinternalversion`, vendor/image digest,
+OS/CPU and relevant flags; reuse adequate evidence and select the negative tests affected by
+the change on the exact deployed build. A source-only flag explanation needs no new cache build.
+JDK-8377932 is the concrete warning: affected early
 JDK 25 builds and patched JDK 25 updates have materially different JAR validation behavior.
 
 ## What is validated at startup
@@ -15,7 +17,7 @@ JDK 25 builds and patched JDK 25 updates have materially different JAR validatio
 | JAR identity/content                      | Replace one class while keeping path stable                          | Patched JDK-8377932 builds must reject; affected builds demonstrate stale-code risk |
 | Directories/custom loaders                | Confirm which application classes are actually archived              | Unsupported/uncovered classes load normally and can dominate                        |
 | Agents/JVMTI transformations              | Test every production agent and order                                | Early hooks can disable or restrict sharing/AOT                                     |
-| Damaged/untrusted archive                 | Truncate/flip bytes; test `-XX:+VerifySharedSpaces` where applicable | Authorization/signature is still required; CRC is not authenticity                  |
+| Damaged/untrusted archive                 | Truncate/flip bytes; test `-XX:+VerifySharedSpaces` where applicable | Trusted provenance/access policy still applies; CRC is not authenticity             |
 
 Fallback modes are designed to continue for many cache incompatibilities; malformed launch
 options and other fatal errors can still stop startup. Use `on` in CI to validate compatibility,
@@ -32,13 +34,16 @@ java -XX:AOTCache=app.aot -XX:AOTMode=on -cp app.jar Main
 # patched build: reject; affected build: may run BUILD_A
 ```
 
-Run this in the update qualification suite. Corretto's develop changelog, consulted 2026-09-05,
-lists the fix under **25.0.4.7.1**, not 25.0.3; a changelog entry alone does not establish that the
-build is released on the target platform or present in the image. A safe pipeline does not
+Use this when qualifying the relevant update/cache identity behavior. The earlier 2026-09-05
+review recorded Corretto's develop changelog under **25.0.4.7.1**. The source retrieved on
+2026-09-11 instead places JDK-8377932 under **25.0.3.9.1**; that discrepancy does not establish
+whether the page changed or the earlier attribution was mistaken. Do not infer a universal
+25.0.x fix boundary from either record. A changelog entry alone does not establish a target
+binary's behavior, platform availability or deployment. A safe pipeline does not
 depend on rejection: cache filename/manifest includes the application digest, both live in one
-immutable signed image, and rollout telemetry exposes build ID from executing application code.
+immutable release under the required provenance controls, and rollout telemetry exposes build ID from executing application code.
 
-Local counterexample: Temurin 25.0.3+9 on Windows amd64 accepted a JAR replaced at the same path
+Historical local counterexample: Temurin 25.0.3+9 on Windows amd64 accepted a JAR replaced at the same path
 after training; both `AOTMode=on` and `auto` exited 0 and printed the cached `BUILD_A`, while
 `AOTMode=off` printed `BUILD_B_UPDATED` from the new JAR. Thus neither the feature/update number
 nor successful fail-fast consumption proves application/cache consistency on every vendor build.
@@ -64,8 +69,9 @@ This probe did not validate Corretto or a newer patched runtime.
 
 Build after JAR signing/repacking in the final runtime image, with production-relevant flags.
 Publish application, runtime and cache digests as one release manifest; never reuse a cache layer
-only because paths match. Validate creation, one fail-fast consumption, one changed-artifact
-rejection, startup correctness and measured benefit before promotion.
+only because paths match. For a new artifact pipeline, validate creation, fail-fast consumption,
+artifact-identity mismatch handling and startup correctness before promotion; verify measured
+benefit when that is the adoption claim. Preserve adequate existing controls for unchanged paths.
 
 ## Primary references
 

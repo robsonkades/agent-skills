@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: sharding-and-partitioning
-version: 1.3.1
+version: 1.3.2
 description: >-
   Whether to split data across owners at all, and on which key: what sharding buys — write
   capacity, locality, data volume and isolation — against distributed transactions/indexes,
   non-local query routing, rebalancing as standing
-  work, and a shard map that is itself a distributed system; the alternatives that usually
-  win; the shard-key scorecard and classic wrong keys. Use when sharding is proposed for
+  work, and a shard map that is itself a distributed system; the alternatives and their
+  selection conditions; the shard-key scorecard and classic wrong keys. Use when sharding is proposed for
   future scale with no measured growth curve, when a table is called too big before
   retention is checked, when a shard key is chosen or changed, when a query appears that
   does not carry the key, or when cross-shard joins or unique constraints are discussed.
@@ -48,12 +48,15 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - cache-sharding-and-replication
   - consistent-hashing
   - distributed-transactions-and-sagas
   - failure-models
   - hot-partitions-and-rebalancing
+  - idempotency
   - latency-statistics
   - scatter-gather
+  - stateless-service-design
   - tail-latency-analysis
 
 capabilities:

@@ -5,6 +5,9 @@
  * Swapping it out is how the rest of the system would run on a different runtime.
  */
 export { NodeFileSystem } from './file-system.ts';
+export { FileUpdateStateStore } from './update-state.ts';
+export { NpmToolUpdater } from './tool-updater.ts';
+export { NodeSelectionPrompt } from './selection-prompt.ts';
 export {
   ConsoleLogger,
   NodeCommandRunner,

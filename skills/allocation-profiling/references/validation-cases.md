@@ -118,6 +118,24 @@ capture or collector/TLAB change.
 **Failure:** Insisting on an allocation flame graph before using the supplied retention
 evidence, or equating the allocation site with the retaining owner.
 
+## 7. Cold lifecycle versus a warmed result
+
+**Request/context:** “Our Java 25 batch JVM runs once and exits. The explicit goal is lower
+total allocation from launch through job completion, although the current latency SLO passes.
+A candidate drops warmed JMH bytes/op by 30%, but adds a startup precomputed table. Existing
+whole-job recordings and job counts are available. Approve the improvement.”
+
+**Expected behavior:** Inspect the existing whole-job evidence and preserve startup work in
+the comparison. Treat the warmed result as evidence about its isolated operation, not the
+requested lifecycle. The passing latency SLO does not invalidate the separate allocation goal.
+
+**Required output:** A matched launch-to-completion byte and outcome comparison including
+the table and job definition; distinguish a candidate from a verified improvement. If the
+candidate has no demonstrated payoff, retaining the implementation is a valid decision.
+
+**Failure:** Discarding startup as warm-up, approving from JMH alone, forcing a new production
+capture despite sufficient retained evidence, or refusing the goal merely because an SLO passes.
+
 ## Evaluation status and source limitations
 
 These cases have not been executed as paired agent runs. Repository verification and any

@@ -3,8 +3,9 @@
 ## Discovery
 
 Use target java -Xlog:help. A tag existing in the list does not prove the exact one-tag set
-has call sites. Validate likely combinations on a workload and use JVM suggestions/log
-framework diagnostics.
+has call sites. Use JVM suggestions/log framework diagnostics and matching sources when
+needed. Validate on a relevant workload when claiming its coverage; an explanation of syntax
+does not itself require a new capture.
 
 ## Semantics
 
@@ -36,8 +37,10 @@ Assertion: expected [class,load] lines and known loaded class
 Negative check: no unexpected trace-level flood
 ```
 
-The probe proves syntax only. Some events occur only after application behavior, allocation,
-deoptimization or an incident trigger.
+The probe checks syntax and can also emit real startup class-load events. Credit the actual
+matching records for that build/run, without treating them as evidence of application/module,
+custom-loader or incident paths that were not exercised. Some events occur only after
+application behavior, allocation, deoptimization or an incident trigger.
 
 ## Levels
 

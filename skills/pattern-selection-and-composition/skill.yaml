@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pattern-selection-and-composition
-version: 1.3.2
+version: 1.3.3
 description: >-
   Choosing enterprise patterns from forces rather than familiarity, and combining them into
   an architecture whose parts reinforce rather than fight each other: the selection criteria
@@ -56,6 +56,11 @@ suggests:
   - distribution-boundaries
   - enterprise-architecture-smells
   - orm-behavioral-patterns
+  - offline-concurrency-control
+  - patterns-and-modern-frameworks
+  - session-state-strategies
+  - idempotency
+  - remote-facade-and-dto
 
 capabilities:
   - reads-source

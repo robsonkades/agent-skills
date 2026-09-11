@@ -6,6 +6,10 @@ One active worker can impose a capacity ceiling and failover gaps. These alterna
 the application-wide singleton or delegate coordination; they do not eliminate all ownership
 changes or the need to protect concurrent effects.
 
+First check whether the existing owner already meets the safety, capacity and failover
+contract. Keep an adequate coordinator when avoiding duplicate load or another operational
+requirement justifies it; use the alternatives below for a concrete unmet requirement.
+
 | Alternative                                              | Selecting condition                                                                                       | What you give up                                                                        |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | Partition the work by key                                | The job is a sweep over entities and can be assigned in durable ranges/buckets                            | A rebalance protocol with fencing when membership changes (`sharding-and-partitioning`) |
@@ -18,13 +22,13 @@ limits remain, and naive `hash(key) % N` remaps most keys whenever N changes.
 
 ## Comparing mechanisms
 
-| Mechanism                               | Where the decision lives                      | Fencing token                                                                                     | Typical failover                      | Adequate for                                                               |
-| --------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------- |
-| Coordination-store lease (etcd, Consul) | A quorum-backed session/key with expiry       | A revision/index may be usable if selected monotonically and propagated                           | Remaining grant plus coordination     | Critical singleton when every sink enforces a derived term                 |
-| ZooKeeper ephemeral sequential znode    | Ensemble session plus ordered contender nodes | Sequential suffix or suitable transaction ID can identify a term, with namespace/wrap assumptions | Session expiry plus watch/election    | ZooKeeper estate with a recipe and resource-side enforcement               |
-| Kubernetes `Lease` object               | The API server (etcd underneath)              | Not by itself: the record holds an identity and a duration                                        | Lease duration minus renewal progress | Controller-style singletons whose work is idempotent or separately fenced  |
-| ShedLock-style row with an expiry       | One row in your existing database             | No                                                                                                | `lockAtMostFor` remainder             | Scheduled jobs that are idempotent or tolerate a skipped or duplicated run |
-| Database row/advisory lock held open    | A live database session                       | No, unless you add a fence column                                                                 | Connection loss detection             | Short singletons only; it pins a connection for the role's whole lifetime  |
+| Mechanism                               | Where the decision lives                      | Fencing token                                                                                     | Typical failover                      | Adequate for                                                                                        |
+| --------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Coordination-store lease (etcd, Consul) | A quorum-backed session/key with expiry       | A revision/index may be usable if selected monotonically and propagated                           | Remaining grant plus coordination     | Critical singleton when every sink enforces a derived term                                          |
+| ZooKeeper ephemeral sequential znode    | Ensemble session plus ordered contender nodes | Sequential suffix or suitable transaction ID can identify a term, with namespace/wrap assumptions | Session expiry plus watch/election    | ZooKeeper estate with a recipe and resource-side enforcement                                        |
+| Kubernetes `Lease` object               | The API server (etcd underneath)              | Not by itself: the record holds an identity and a duration                                        | Lease duration minus renewal progress | Controller-style singletons whose work is idempotent or separately fenced                           |
+| ShedLock-style row with an expiry       | One row in your existing database             | No                                                                                                | `lockAtMostFor` remainder             | Scheduled jobs that are idempotent or tolerate a skipped or duplicated run                          |
+| Database row/advisory lock held open    | Transaction or session, depending on lock API | No automatic external-sink fence; authority must be enforced with the effect                      | Transaction/session termination       | An existing database owner whose lifetime, connection cost and authority protocol meet the contract |
 
 Three things the table is saying:
 
@@ -36,6 +40,13 @@ Three things the table is saying:
   object stores or external APIs.
 - Failover depends on remaining lease/session detection, coordination, state recovery, warm-up
   and backlog. A mechanism and its timing configuration jointly determine it.
+
+For example, PostgreSQL 17 row locks last until transaction end (with savepoint rollback
+exceptions), while advisory locks can use transaction or session scope. Session advisory locks
+can outlive a transaction and need a live owning session; holding one for hours is a connection
+and lifecycle decision, not automatically an invalid mechanism. A long transaction has its own
+costs. Advisory locking is cooperative and does not itself fence writes by clients that ignore
+it, nor arbitrary external sinks; verify the actual atomic authority/effect protocol.
 
 ## ShedLock and the "don't run this twice" family, stated plainly
 
@@ -54,8 +65,9 @@ it. There is no token, so nothing downstream can reject the slow one.
 
 Consequences for configuration and design:
 
-- Set `lockAtMostFor` from a credible upper execution bound plus margin, and instrument
-  overruns. No finite value proves a hung/paused job has ended; too low creates overlap, too
+- Set `lockAtMostFor` from execution-duration evidence and a justified margin, and instrument
+  overruns. Observed maxima are not hard execution bounds. No finite value proves a hung/paused
+  job has ended; too low creates overlap, too
   high delays recovery. For unbounded work, redesign into bounded resumable units or add
   renewal plus a separately enforced fence.
 - `lockAtLeastFor` keeps the lock for a minimum interval measured from acquisition, even
@@ -92,17 +104,22 @@ Elect nothing when:
 
 ## Reviewing an existing election
 
-- [ ] The leader stops before its conservative local deadline and admits no unit that can
-      outlive the remaining safe budget.
+Apply the items affected by the request, reusing adequate evidence. Report a material gap or a
+supported no-change conclusion; a mechanism review does not require every rollout/failure test.
+
+- [ ] The local admission deadline accounts for documented provider, clock-rate and bounded
+      work/quiescence assumptions; the sink remains safe if a pause prevents the holder stopping.
 - [ ] A failed renewal never extends the conservative deadline; admission stops early enough
       to quiesce before it.
 - [ ] Every externally visible write is protected by effective sink-side authority/fence
       enforcement, or repeated and concurrent effects preserve the required invariant.
 - [ ] Local role/term metrics are correlated with useful progress and resource-side fence
       evidence; a sampled `sum(is_leader)` is not proof of exclusivity.
-- [ ] The lease exceeds the worst measured pause; the failover budget is written down.
+- [ ] Observed timing distributions support the churn/failover estimate, not a safety proof;
+      any hard bounds have independent justification and the failover budget is explicit.
 - [ ] Shutdown stops admission, checkpoints/quiesces, then releases or safely expires authority.
-- [ ] There is a test in which the leader is partitioned or stopped, asserting at the resource.
+- [ ] New or changed stale-owner protection has evidence from an applicable partition/pause
+      test that asserts at the resource, or the unexecuted check is reported as a limitation.
 
 ## Version and provider questions
 
@@ -121,12 +138,17 @@ proof of exclusive execution.
   identity while the old process still lives?
 - What happens when the coordination store is available to one candidate but the protected
   resource is available to another?
-- Can the protected resource compare-and-set a term in the same atomic operation as the
-  effect? If not, classify the singleton as best-effort.
+- Can the protected resource enforce authority atomically with the effect, or do repeated
+  and concurrent effects preserve the required invariant? If neither holds, election alone
+  cannot establish that invariant.
 
 ## Primary references
 
-- [etcd concurrency election API](https://pkg.go.dev/go.etcd.io/etcd/client/v3/concurrency)
-- [Apache ZooKeeper recipes: leader election](https://zookeeper.apache.org/doc/current/recipes.html#sc_leaderElection)
-- [ShedLock README and behavioral guarantees](https://github.com/lukas-krecan/ShedLock)
-- [client-go election timing and fencing limitations](https://pkg.go.dev/k8s.io/client-go/tools/leaderelection)
+These are reviewed source versions, not upgrade requirements; confirm the deployed client and
+provider's contract before transferring a behavior to it.
+
+- [etcd 3.6.0 concurrency election source](https://github.com/etcd-io/etcd/blob/v3.6.0/client/v3/concurrency/election.go)
+- [Apache ZooKeeper 3.9.3 recipes: leader election](https://zookeeper.apache.org/doc/r3.9.3/recipes.html#sc_leaderElection)
+- [ShedLock 6.10.0 README and behavioral guarantees](https://github.com/lukas-krecan/ShedLock/blob/shedlock-parent-6.10.0/README.md)
+- [client-go 0.33.0 election timing and fencing limitations](https://github.com/kubernetes/client-go/blob/v0.33.0/tools/leaderelection/leaderelection.go)
+- [PostgreSQL 17 explicit locking: row and advisory lifetimes](https://www.postgresql.org/docs/17/explicit-locking.html)

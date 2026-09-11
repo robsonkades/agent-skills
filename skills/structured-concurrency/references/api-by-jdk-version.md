@@ -2,13 +2,13 @@
 
 ## What "preview" costs in production
 
-| Obligation                         | Consequence                                                                                                             |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `--enable-preview` to compile      | `javac --release 25 --enable-preview`; the build must pin the release                                                   |
-| `--enable-preview` to run          | every JVM start, including tests, CI and the container entrypoint                                                       |
-| Class files are **version-locked** | a class compiled with preview on 25 refuses to load on 26 — `UnsupportedClassVersionError`-class failure, not a warning |
-| No compatibility promise           | the API changed in 25, 26 and again in 27; a JDK upgrade can be a code change                                           |
-| Public library API risk            | a library _can_ expose a preview type, but consumers inherit the exact-JDK and preview-flag obligations                 |
+| Obligation                                        | Consequence                                                                                                                |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `--enable-preview` to compile                     | `javac --release 25 --enable-preview`; the build must pin the release                                                      |
+| `--enable-preview` to run                         | every JVM start, including tests, CI and the container entrypoint                                                          |
+| Preview-marked class files are **version-locked** | a class using Java 25 preview features refuses to load on 26 — `UnsupportedClassVersionError`-class failure, not a warning |
+| No compatibility promise                          | the API changed in 25, 26 and again in 27; a JDK upgrade can be a code change                                              |
+| Public library API risk                           | a library _can_ expose a preview type, but consumers inherit the exact-JDK and preview-flag obligations                    |
 
 The version lock is the decisive one for anything shipped as an artefact: a preview build is
 not "a jar that runs on 25+", it is "a jar that runs on exactly this JDK". For an
@@ -21,18 +21,18 @@ responsibilities; its semantics are not automatically identical to a scope.
 
 ## Signature drift
 
-| Element                       | JDK 21–24 (JEP 453/462/480/499)                          | JDK 25 (JEP 505)                            | JDK 26 (JEP 525)                    | JDK 27 (JEP 533, delivered)                                 |
-| ----------------------------- | -------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | ----------------------------------------------------------- |
-| Construction                  | `new StructuredTaskScope<>()`, `new ShutdownOnFailure()` | `StructuredTaskScope.open(...)`             | unchanged                           | extra `open` overload                                       |
-| All-or-fail policy            | `ShutdownOnFailure` + `throwIfFailed`                    | `open()` or `Joiner.allSuccessfulOrThrow()` | unchanged                           | `…OrThrow` throws `ExecutionException`                      |
-| First success                 | `ShutdownOnSuccess` + `result()`                         | `Joiner.anySuccessfulResultOrThrow()`       | **`Joiner.anySuccessfulOrThrow()`** | overload taking an exception mapper                         |
-| `allSuccessfulOrThrow` result | n/a                                                      | `Stream<Subtask<T>>`                        | **`List<T>`**                       | `List<T>`                                                   |
-| Wait for everything           | `join()` + inspect subtasks                              | `Joiner.awaitAll()`                         | unchanged                           | `awaitAll()` removed; select/customize policy               |
-| Stop at a condition           | n/a                                                      | `Joiner.allUntil(Predicate)`                | unchanged                           | unchanged                                                   |
-| Config parameter              | constructor arguments                                    | `Function<Configuration, Configuration>`    | **`UnaryOperator<Configuration>`**  | `UnaryOperator<Configuration>`                              |
-| Custom joiner callbacks       | n/a                                                      | `onFork`, `onComplete`, `result`            | adds **`onTimeout()`**              | `onTimeout` replaced by `timeout`; exception type parameter |
-| `fork` returns                | `Subtask<T>` (since 21)                                  | `Subtask<T>`                                | `Subtask<T>`                        | `Subtask<T>`                                                |
-| Failure from `join`           | `ExecutionException` via `throwIfFailed`                 | `FailedException`                           | `FailedException`                   | `ExecutionException`                                        |
+| Element                       | JDK 21–24 (JEP 453/462/480/499)                          | JDK 25 (JEP 505)                            | JDK 26 (JEP 525)                    | JDK 27 (JEP 533, delivered)                                                |
+| ----------------------------- | -------------------------------------------------------- | ------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| Construction                  | `new StructuredTaskScope<>()`, `new ShutdownOnFailure()` | `StructuredTaskScope.open(...)`             | unchanged                           | extra `open` overload                                                      |
+| All-or-fail policy            | `ShutdownOnFailure` + `throwIfFailed`                    | `open()` or `Joiner.allSuccessfulOrThrow()` | unchanged                           | `…OrThrow` throws `ExecutionException`                                     |
+| First success                 | `ShutdownOnSuccess` + `result()`                         | `Joiner.anySuccessfulResultOrThrow()`       | **`Joiner.anySuccessfulOrThrow()`** | overload taking an exception mapper                                        |
+| `allSuccessfulOrThrow` result | n/a                                                      | `Stream<Subtask<T>>`                        | **`List<T>`**                       | `List<T>`                                                                  |
+| Wait for everything           | `join()` + inspect subtasks                              | `Joiner.awaitAll()`                         | unchanged                           | `awaitAll()` removed; select/customize policy                              |
+| Stop at a condition           | n/a                                                      | `Joiner.allUntil(Predicate)`                | unchanged                           | unchanged                                                                  |
+| Config parameter              | constructor arguments                                    | `Function<Configuration, Configuration>`    | **`UnaryOperator<Configuration>`**  | `UnaryOperator<Configuration>`                                             |
+| Custom joiner callbacks       | n/a                                                      | `onFork`, `onComplete`, `result`            | adds **`onTimeout()`**              | `onTimeout` replaced by `timeout`; exception type parameter                |
+| `fork` returns                | `Subtask<T>` (since 21)                                  | `Subtask<T>`                                | `Subtask<T>`                        | `Subtask<T>`                                                               |
+| Failure from `join`           | `ExecutionException` via `throwIfFailed`                 | `FailedException`                           | `FailedException`                   | standard `…OrThrow`: `ExecutionException`; custom policy/mapper may differ |
 
 Read one column. Mixing two is how code ends up calling a method that exists in neither.
 Examples are partial: supply domain types/functions and imports for the scope, nested
@@ -121,7 +121,8 @@ java --enable-preview -version
 javap -v YourScope.class | grep -i 'major\|minor'   # minor version 65535 == preview
 ```
 
-A `minor version 65535` in a class file is the preview marker. Seeing it in a released
+A `minor version 65535` in a class file is the preview marker; enabling the compiler flag alone
+does not mark a class that uses no preview feature. Seeing the marker in a released
 artefact means that artefact is pinned to one JDK, whether or not anyone intended it.
 
 Primary references: [JDK 25 API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html),

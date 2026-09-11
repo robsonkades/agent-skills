@@ -14,24 +14,24 @@ An axis qualifies when both are true:
 
 ## The axis list
 
-| Axis             | The question it answers                                                   |
-| ---------------- | ------------------------------------------------------------------------- |
-| Correctness      | Can this option satisfy the behaviour at all, including the edge cases?   |
-| Complexity       | How much must someone understand to change it safely six months from now? |
-| Reuse            | Does it extend something that exists, or add a parallel mechanism?        |
-| Performance      | Against the stated target — not in general                                |
-| Scalability      | What happens at the volume that was actually named                        |
-| Reliability      | Which failures it survives, and which it converts into data loss          |
-| Failure modes    | How it fails, how loudly, and who finds out                               |
-| Security         | What surface it adds, what it exposes, what it must be trusted with       |
-| Observability    | Can an operator tell it is working, and diagnose it when it is not?       |
-| Testability      | Can the behaviour be tested without the whole system running?             |
-| Operational cost | What has to be run, monitored, patched and paged on                       |
-| Compatibility    | What existing callers, consumers or stored data have to tolerate          |
-| Migration cost   | What must happen to existing data or in-flight work                       |
-| Reversibility    | What undoing it costs once it is in production with data behind it        |
-| Extensibility    | Only when a specific expected extension is named, with who expects it     |
-| Money            | Only when the difference is material and someone owns the budget          |
+| Axis             | The question it answers                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| Correctness      | Can this option satisfy the behaviour at all, including the edge cases?                          |
+| Complexity       | How much must someone understand to change it safely six months from now?                        |
+| Reuse            | Does it extend something that exists, or add a parallel mechanism?                               |
+| Performance      | Against the stated target — not in general                                                       |
+| Scalability      | What happens at the volume that was actually named                                               |
+| Reliability      | Which failures it survives, and which it converts into data loss                                 |
+| Failure modes    | How it fails, how loudly, and who finds out                                                      |
+| Security         | What surface it adds, what it exposes, what it must be trusted with                              |
+| Observability    | Can an operator tell it is working, and diagnose it when it is not?                              |
+| Testability      | Can required contracts be tested at appropriate levels with credible fixtures and failure cases? |
+| Operational cost | What has to be run, monitored, patched and paged on                                              |
+| Compatibility    | What existing callers, consumers or stored data have to tolerate                                 |
+| Migration cost   | What must happen to existing data or in-flight work                                              |
+| Reversibility    | What undoing it costs once it is in production with data behind it                               |
+| Extensibility    | Only when a specific expected extension is named, with who expects it                            |
+| Money            | Only when the difference is material and someone owns the budget                                 |
 
 ## Two axes that are usually decisive and usually skipped
 
@@ -72,9 +72,11 @@ Elimination on a constraint is not a judgement and should not be dressed as one:
 ```text
 Eliminated   Managed queue service
 Because      the user named cloud services as prohibited for this system (round 2)
-Note         it would otherwise have been the recommendation; if that constraint is
-             lifted, re-open this choice.
+Evaluated    constraint only; no comparative preference established
+Reopen if    an authorized revision lifts that prohibition; then compare delivery,
+             retention, recovery and operating costs under the same requirements.
 ```
 
-The note is worth writing. It is the only way a later reader learns that the chosen option was
-second best under a constraint that may no longer hold.
+Record an earlier supported comparison if one exists, with its conditions and evidence.
+Elimination alone does not establish that an option would otherwise win, or that the selected
+option is second best. A changed constraint reopens evaluation, not automatic acceptance.

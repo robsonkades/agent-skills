@@ -20,8 +20,8 @@ database locks may instead be tied to a transaction or session whose termination
 observes. These have different liveness and stale-client failure modes. **Leader
 election** grants a longer-lived role and may use terms, sessions or leases
 (`leader-election`); **ownership** by partition serializes work per key but still needs a safe
-rebalance (`sharding-and-partitioning`); **consensus** is how a fault-tolerant lock service decides
-who holds the grant (`consensus-and-quorums`). Only the last is agreement; a grant alone
+rebalance (`sharding-and-partitioning`); **consensus** can establish replicated grant order in
+a quorum-based lock service (`consensus-and-quorums`). A grant alone
 cannot stop an uncooperative or stale client from writing to a different resource.
 
 The failure this prevents is the two-writer sequence with no exception in it. Process A takes a
@@ -34,25 +34,33 @@ transaction-scoped lock in that same resource, or a repeat-safe invariant.
 
 ## Workflow
 
-1. **Ask whether you need a lock at all.** A conditional write (`UPDATE … WHERE version = ?`),
+1. **Establish the invariant and whether coordination already enforces it.** Reuse the supplied
+   code, transaction/session boundaries, workload and recovery policy before asking material
+   unanswered questions. A conditional write (`UPDATE … WHERE version = ?`),
    a unique constraint, a partitioned owner or an idempotent operation moves coordination into
-   the resource or removes the need for exclusive execution. Exhaust
-   `references/lock-decision.md` first.
-2. **Name the protected resource and ask whether it can reject a stale writer.** Fencing is a
+   the resource or removes the need for exclusive execution when it preserves the actual invariant.
+   Keep an adequate existing design; compare only relevant alternatives from
+   `references/lock-decision.md`.
+2. **Name every protected effect and whether its resource can reject a stale writer.** Fencing is a
    property of the _resource_: a table with a fence column can enforce it, a third-party HTTP API
    generally cannot. This decides everything below — `references/fencing-tokens.md`.
 3. **If it cannot be fenced, preserve the invariant through another mechanism**: operation-scoped
    idempotency (`idempotency`), invariant-preserving convergence or serialization at the resource.
    Treat the lock as an efficiency measure only if duplicate/concurrent effects are explicitly
    acceptable; do not silently weaken a correctness requirement.
-4. **Choose the implementation from the failure mode you can tolerate**, not from what is already
-   deployed: TTL leases (Redis), quorum/session-backed locks (etcd/ZooKeeper), and
-   connection/transaction-scoped database locks have different expiry and availability modes.
-5. **Write acquire and release with an owner token.** The lock value is a unique token; release
+4. **Choose or retain an implementation whose failure model fits the invariant and constraints.**
+   TTL leases (Redis), quorum/session-backed locks (etcd/ZooKeeper), and transaction/session
+   database locks have different expiry and availability modes. Existing operational support
+   matters, but cannot substitute for a missing safety property.
+5. **Use the implementation's ownership and cleanup protocol.** For key/value leases, the lock
+   value is a unique owner token; release
    compares it and deletes only on a match, atomically. A bare `DEL` releases whoever holds it
    now — a lock-stealing bug that appears only after the first expiry.
-   Renewal must also atomically compare the owner token before extending expiry. A timeout is
-   an unknown outcome, not a grant; stop starting work until ownership is established.
+   Renewal must also atomically compare the owner token before extending expiry. For session or
+   transaction locks, own that scope and use its supported release/end operation. An acquisition
+   timeout is unknown, not a grant. A renewal timeout must not extend established validity.
+   Stop admitting work before authority is lost; cancellation does not prove in-flight effects
+   stopped, so resource enforcement remains necessary.
 6. **Size the lease as a liveness trade-off, not a proof.** Use measured duration and pause
    distributions plus headroom; choose the crash-recovery delay you can tolerate. No observed
    percentile bounds future pauses, so correctness must survive expiry.
@@ -64,7 +72,9 @@ Record the target JDK/client-library versions, lock-store topology/persistence a
 transaction/conditional-write semantics. Java/SQL examples are partial protocol sketches, not a
 declared runnable Java baseline. Inspect project dependencies before adapting APIs; do not upgrade
 to fit them. Deliver the invariant, grant/claim/effect boundaries, failure assumptions, evidence
-and remaining validation. Missing resource semantics means the safety claim remains unproven.
+and remaining validation, including a supported no-change decision when appropriate. Missing
+resource semantics leaves the safety claim unproven: identify the smallest deciding check and
+continue independent work. State what evidence would change the recommendation.
 
 ## Decision block
 
@@ -97,7 +107,10 @@ Prefer instead when:
 - **A fencing protocol has four parts**: issue a monotonically increasing token, carry it,
   advance/claim that token at the resource before doing work, then condition every effect on
   that token still being current. Without the claim step, an old token can be accepted before
-  the new holder's first write. See `references/fencing-tokens.md`.
+  the new holder's first write. Numeric ordering is not authorization: identify the trusted
+  grant source, protected resource identity and retained fence history. A highest-installed-token
+  check rejects stale owners after the resource transition; strict post-expiry exclusion needs
+  effect-atomic current authority. See `references/fencing-tokens.md`.
 - Clock assumptions are algorithm-specific. Server-decided lease expiry does not literally
   compare client and server timestamps, while Redlock reasons about elapsed acquisition time
   and bounded drift. Use a monotonic source for local elapsed duration, but it cannot prove
@@ -126,8 +139,9 @@ Prefer instead when:
   can leak when a connection returns to its pool without explicit unlock. Prefer the transaction
   form when its scope fits (`pg_advisory_xact_lock`), or own the session and cleanup explicitly.
   Verify acquisition success and keep protected work on the required session/transaction.
-- Lock the narrowest key that expresses the invariant (`order:{id}`, not `orders`), assume no
-  reentrancy, and decide what happens when the lock store is unreachable — fail closed or fail
+- Lock the narrowest key that expresses the invariant (`order:{id}`, not `orders`), verify
+  ownership identity/reentrancy rather than assuming each call is a new grant, and decide what
+  happens when the lock store is unreachable — fail closed or fail
   open. "Log and continue" is fail-open chosen by accident.
 
 ## References

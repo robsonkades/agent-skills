@@ -55,7 +55,7 @@ Three prompts for investigation, none of which alone proves creep:
 ## Recording a reclassification
 
 ```text
-C-04  Structured logging for the new consumer
+SC-04 Structured logging for the new consumer
       Was: Required
       Now: Recommended
       Reason: required correlation and failure diagnosis are covered by existing
@@ -63,6 +63,13 @@ C-04  Structured logging for the new consumer
               Structured fields improve query convenience but are not needed for acceptance.
       Consequence if dropped: the consumer is diagnosed the same way as the rest
               of the system, which is worse than the alternative but not new.
+      Evidence: <existing correlation criterion and validation reference>
+      Authority: <existing authorization for this decision, or mark it proposed>
+      Delivery: <selected or omitted from this delivery; no implied future commitment>
+      Impact: <scope revision and affected plan/resource entries; correlation criterion unchanged>
 ```
 
-The consequence line is what makes dropping it a decision rather than an omission.
+The consequence line exposes the trade-off; evidence and authority establish whether the
+reclassification can take effect. If the feature explicitly promised the new logging format,
+existing correlation alone does not remove that commitment. Resolve the scope revision before
+marking the original obligation satisfied or excluding its dependent work.

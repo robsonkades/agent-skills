@@ -21,11 +21,11 @@ hash.size();   // 2 — equals() compares scale as well as value
 tree.size();   // 1 — compareTo() compares numeric value only
 ```
 
-`TreeSet`, `TreeMap`, `SortedMap` and the sorted views ignore `equals` entirely: membership,
-lookup and deduplication are all decided by `compareTo`/`Comparator`. A class whose ordering
-is inconsistent with equality therefore behaves differently in a sorted collection, and any
-`Set` swapped from `HashSet` to `TreeSet` for "determinism" silently changes semantics.
-Document the inconsistency in the Javadoc when it exists, as `BigDecimal` does.
+`TreeSet` element lookup and `TreeMap` key lookup use their ordering relation. This does not
+replace equality everywhere: `TreeMap.containsValue`, for example, uses value equality.
+An ordering inconsistent with equality violates the general `Set`/`Map` contract even though
+ordered-key behavior is defined. Swapping a `HashSet` for a `TreeSet` can therefore change
+semantics. Document any intentional inconsistency and check the operations consumers use.
 
 ## Writing it
 
@@ -50,10 +50,10 @@ comparison consistent with record equality: two representations of one id can ha
 that `Money.byAmount()` treats equal while `Money.equals` distinguishes scale/currency. Test
 `compareTo == 0` against `equals`, or document a separate presentation comparator instead.
 
-- **Never subtract.** `(int)(a.millis - b.millis)`, `a.count - b.count` and
-  `(int) (a.amount - b.amount)` all overflow and return a wrong _sign_ — the bug appears only
-  for operands far apart, so it survives testing and corrupts a sort in production. Use
-  `Integer.compare` / `Long.compare` / `Double.compare`, or the `comparing*` factories.
+- **Prefer comparison to subtraction.** Integer differences may overflow or narrow to a wrong
+  sign; `(int) (a.amount - b.amount)` can also truncate a fractional difference to a false tie.
+  A proven bounded integral difference can be valid, but the `compare`/`comparing*` factories
+  express the contract without that range argument.
 - **Use primitive-specialised factories** (`comparingInt`, `comparingLong`,
   `comparingDouble`) when a primitive key is hot: generic `comparing` requires a reference key
   and may box/materialize values. A comparison sort invokes extraction O(n log n) times in the
@@ -65,9 +65,9 @@ that `Money.byAmount()` treats equal while `Money.equals` distinguishes scale/cu
 - **Extract cheaply.** The key extractor runs on every comparison; if it parses, formats,
   normalises or dereferences a lazy association, precompute the key or use a
   decorate-sort-undecorate (`Stream.map` to a pair, sort, map back).
-- **Nulls are a design decision, not a `NullPointerException`.** `Comparator.nullsFirst` /
-  `nullsLast` state it explicitly; a raw `Comparator.comparing` on a nullable key throws
-  during the sort, from inside TimSort, with a stack trace that names none of your code.
+- **Define the null contract.** Reject nulls at the boundary when they are invalid, or use
+  `Comparator.nullsFirst` / `nullsLast` at the nullable element/key layer. A raw comparison may
+  throw on null when that comparison is reached; exception location is not a contract diagnosis.
 
 ## "Comparison method violates its general contract!"
 
@@ -101,8 +101,9 @@ is also valid when its relation satisfies the laws; syntax alone neither fixes n
 
 ## Total order is a distributed requirement, not a nicety
 
-Any ordering used for pagination/canonicalization across queries or processes needs a strict,
-deterministic tiebreaker, not merely the total preorder sufficient for `Comparator`:
+Pagination of distinct rows needs deterministic tie handling. Canonicalization needs to order
+values whose encoded forms differ; identical encoded duplicates can remain interchangeable.
+A total preorder sufficient for `Comparator` does not by itself establish either result contract:
 
 ```sql
 -- keyset pagination over a non-unique sort key
@@ -116,13 +117,14 @@ ORDER BY issued_at DESC, id DESC      -- id is the tiebreaker; without it, rows 
   predicates to sort directions and define snapshot/consistency semantics separately.
 - **Cross-service comparison.** If two services sort the same collection to compute a hash, a
   digest, a canonical form or a diff, an unstable tiebreak makes their results differ for
-  identical data. Canonical encodings (for signatures, idempotency keys, cache keys) must
-  define a total order on every collection they serialise; see idempotency and
-  rpc-and-api-contracts.
+  identical data. Specify order for unordered collections whose different serializations matter;
+  preserve semantically ordered sequences and allow byte-identical ties. See idempotency and
+  rpc-and-api-contracts for canonical encoding contracts.
 - **Merges and reconciliations.** Ordering by timestamp alone across replicas is not total —
   clocks collide and are not monotonic between machines. A `(timestamp, node, sequence)`
-  tuple is; consistency-models and message-ordering-and-partitioning cover what ordering can
-  and cannot be assumed across a network.
+  tuple distinguishes events only if its generation scope prevents reuse/collision, including
+  restarts and sequence resets. consistency-models and message-ordering-and-partitioning cover
+  what ordering can and cannot be assumed across a network.
 
 ## Stability, and when it is load-bearing
 
@@ -152,3 +154,4 @@ pick the layer that owns the order and let the other one preserve it.
 - [Comparator contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Comparator.html)
 - [List.sort stability contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#sort(java.util.Comparator)>)
 - [SortedMap equality caveat, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/SortedMap.html)
+- [TreeMap key lookup and value equality, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/TreeMap.html)

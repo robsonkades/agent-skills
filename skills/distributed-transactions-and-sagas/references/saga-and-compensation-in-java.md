@@ -83,25 +83,35 @@ The refund is a **new business fact**, not a deletion of the charge. Compensatio
 whether the charge exists and target that identity; inventing a refund for a charge that never
 existed may itself violate the payment API or ledger invariant.
 
+Here the context must retain the original charge's identity, amount and currency, not read a
+mutable order price at recovery time. The participant must account for prior refunds and current
+eligibility when applying this command; a full refund is only this example's agreed contract.
+Do not restore a pre-saga snapshot over later independent changes. Record an authorized partial
+refund, credit or manual obligation when the original business outcome is no longer recoverable.
+
 ## When the compensation itself fails
 
 The following block illustrates control flow, not a complete store API. Every state write requires
 the current ownership/version, and durable escalation must close the failure-to-enqueue crash gap.
+`CompensationRejectedException` is an application-specific participant result that establishes
+nonapplication of this compensation under its protocol, including any earlier unresolved attempt.
+A transport exception, generic runtime exception or inconclusive status lookup does not establish
+that result.
 
 ```java
 void compensateCompletedBackwards(SagaInstance saga, List<SagaStep> steps) {
     store.mark(saga.id(), COMPENSATING);
     for (CompletedStep completed : store.completedStepsDescending(saga.id())) {
         if (steps.get(completed.position()) instanceof SagaStep.Compensatable c) {
+            store.markCompensationStarted(saga.id(), c.name()); // must commit before the call
             try {
-                store.markCompensationStarted(saga.id(), c.name());
                 c.compensate(saga.context());
-                store.mark(saga.id(), c.name(), COMPENSATED);
-            } catch (RuntimeException e) {   // nothing compensates this
+            } catch (CompensationRejectedException e) { // definite participant rejection only
                 store.mark(saga.id(), c.name(), COMPENSATION_FAILED, e.toString());
                 escalation.enqueue(saga.id(), c.name(), saga.context());
                 return;                      // policy retries or routes to manual repair
             }
+            store.mark(saga.id(), c.name(), COMPENSATED);
         }
     }
     store.mark(saga.id(), COMPENSATED);
@@ -119,6 +129,14 @@ and its repair intent atomically (for example an outbox), or have a durable scan
 failure; a separate `escalation.enqueue` alone has a crash gap. Resolve a refund whose response
 was lost and skip known compensated steps. Never declare the entire saga compensated while an
 effect is unknown or its pivot has committed.
+
+Other exceptions propagate to the outer durable worker: it stops this attempt and resolves
+store/participant status before retrying or marking a business failure. If the store is unavailable,
+retain the existing durable evidence and resume when it can be read; a failed response does not
+prove a state write failed to commit. A refund followed by failed success persistence remains a
+possibly completed effect, not a rejected refund. Expired ownership stops all transitions.
+The backwards order shown is suitable only when the compensation dependencies permit it; the
+business may require a different order or independent compensations in parallel.
 
 ## Testing: fail every step, assert the invariant each time
 
@@ -149,8 +167,9 @@ Additional cases the parameterised sketch does not reach:
 - **Crash between the call and the record** — the participant succeeds, then the runner
   throws before `store.mark(..., DONE)`. On replay the step must not apply twice; the
   participant's own key is what makes that true, not the saga log.
-- **Compensation failure** — make one compensation throw, then assert an escalation row
-  exists and the instance is `COMPENSATION_FAILED`, not `COMPENSATED`. A saga reporting
+- **Known compensation rejection** — make one compensation definitively reject without effect,
+  then assert durable repair is discoverable and the step is `COMPENSATION_FAILED` while the
+  saga is not `COMPENSATED`; an aggregate failure status depends on the store contract. A saga reporting
   success after a failed compensation is the worst outcome available: nothing looks at it
   again.
 - **Concurrent coordinators** — race two claims/transitions for one version and assert one
@@ -161,3 +180,13 @@ Additional cases the parameterised sketch does not reach:
   deliver the old execute; assert no reservation or charge is resurrected.
 - **Repair notification crash** — fail after durable compensation failure but before enqueue;
   prove the scanner/outbox still schedules repair and an expired coordinator cannot overwrite it.
+- **Ambiguous compensation or state write** — lose the refund response or its success-record
+  response; preserve recoverable evidence and resolve the original effect before choosing repair.
+  If recording intent fails, do not call the participant until durable intent is established.
+- **Later changes and time limits** — change the order after charging, partially refund it or
+  consume its reservation; compensation must preserve other work and obey the participant's
+  current eligibility and the agreed repair policy.
+
+Source: [Compensating Transaction pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction)
+for business-specific compensation, concurrent work and recovery order. The custom states and
+exception above do not implement MicroProfile LRA's participant state machine.

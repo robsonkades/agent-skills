@@ -6,7 +6,7 @@
 | ---------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------- | --------------------------------------- |
 | **GoF Factory Method**       | `protected abstract Product create()` overridden by a subclass, called from inherited code | An inherited algorithm must not know the concrete product | Is there an inherited algorithm at all? |
 | **Static factory method**    | `public static Money of(...)` on the product type                                          | Naming, instance control, returning a subtype, caching    | Naming conventions and instance control |
-| **"a method named createX"** | Anything                                                                                   | Nothing in particular                                     | Rename it and move on                   |
+| **"a method named createX"** | Shape alone does not identify a pattern                                                    | May expose a meaningful provider/creation contract        | Consumer contract, not the name alone   |
 
 Effective Java's Item 1 is the middle row. It is not this pattern, and treating them as one is
 how a two-line `static of` becomes an abstract class with two subclasses.
@@ -22,7 +22,7 @@ implementation per arity; `Integer.valueOf` caches. None of that involves a subc
 | Injected `Supplier<Product>`        | Per-instance variation, testing, no hierarchy             | Framework APIs with no supported injection seam    |
 | `Function<Input, Product>`          | Product depends on an argument                            | Same                                               |
 | `Map<Kind, Supplier<Product>>`      | Data-driven selection, the whole set visible in one place | Discovery/registration must be supplied separately |
-| Sealed `Kind` + exhaustive `switch` | Compile-time proof that every kind is handled             | Kinds contributed by code you do not compile       |
+| Sealed `Kind` + exhaustive `switch` | Compile-time case coverage for the known type set         | Working branch behavior or open plugin extension   |
 | Dependency injection                | Deployment-time selection and lifecycle                   | Per-call selection needs a provider or registry    |
 | `ServiceLoader<ProductProvider>`    | Open extension by unknown modules                         | Discovery failures and provider-selection policy   |
 | Abstract Factory                    | Several products that must agree with each other          | No family invariant to protect                     |
@@ -58,28 +58,30 @@ final class CsvImporter extends Importer {
 hook reads NUL. Do not demonstrate this with `final char delimiter = ';'`: that constant
 variable can be inlined and masks the defect. See [JLS 17 initialization order](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.5).
 
-Three fixes, in order of preference:
+Compare fixes against creation frequency and ownership:
 
-1. **Pass the parser in.** `Importer(Parser parser)`; no hook, no ordering question.
-2. **Make it lazy.** `parser()` computes on first use, after construction has completed, with a
-   correctly published cache.
+1. **Pass a fully constructed parser in** when it should live with the importer. For a fresh
+   parser per run, pass a provider and invoke it in `run`, after construction.
+2. **Defer the hook until actual use after construction.** Merely calling a lazy accessor or
+   injected supplier from the constructor does not establish readiness. Cache only if reuse is
+   intended, with a correct publication and failure policy.
 3. **Two-phase init.** A separate `initialise()` the caller must invoke — the weakest option,
-   because "must invoke" is not enforced.
+   unless a controlled factory/framework prevents use before initialization completes.
 
-The general rule: a constructor may not call an overridable method, ever. This pattern invites
-the violation more than any other, because the hook exists precisely to be called from inherited
-code.
+Avoid overridable calls during construction: the hook exists to be called from inherited code,
+but its implementation may depend on subclass state that is not ready yet.
 
 ## Selection keys from outside the process
 
 When the product kind comes from a message header, a content type or a database column, the
-factory becomes a mapping from untrusted data to a Java type. Two rules:
+selection needs an explicit trust boundary. Use approved registry keys rather than arbitrary
+class names; plugin registration can extend that registry under its own authorization policy.
 
 ```java
 // wrong: any class name on the wire becomes an instantiation
 Class.forName(header.get("type")).getDeclaredConstructor().newInstance();
 
-// right: a closed, explicit map; unknown keys fail loudly
+// right: an explicit supported registry; unknown keys follow the declared failure policy
 private static final Map<String, Supplier<Command>> KINDS = Map.of(
     "payment.submitted", PaymentSubmitted::new,
     "payment.settled",   PaymentSettled::new);
@@ -88,16 +90,20 @@ Supplier<Command> factory = KINDS.get(type);
 if (factory == null) throw new UnknownCommandType(type, KINDS.keySet());
 ```
 
-Reflective instantiation from an unvalidated name is a deserialisation gadget, not a factory —
-and the closed map also gives you a readable error and a place to see every supported kind.
+[`Class.forName(String)`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html#forName(java.lang.String)>)
+initializes the selected class; a cast after loading/instantiation is too late to prevent its
+initialization or constructor effects. This risk does not require Java object deserialization.
+The registry makes the supported mapping explicit; payload validation and permission to perform
+the selected operation remain separate. Do not silently substitute an unrelated default for an
+unknown key.
 
 ## Naming that keeps the distinction visible
 
 - `create*` / `new*` — often suggests freshness; verify the actual API contract.
 - `of` / `from` / `valueOf` — a static factory; may return a cached or shared instance.
 - `get*` — may construct: `Supplier.get()` does not guarantee freshness or reuse.
-- `newInstance` on an injected object — you have a `Supplier`; name the field for what it
-  produces (`parsers`, not `parserFactory`).
+- `newInstance` on an injected object — may be a named provider or a supplier-like contract;
+  preserve meaningful input, checked-failure, lifecycle and public API semantics.
 
 A one-method factory can become a Supplier when its domain contract, checked exceptions and
 public compatibility permit. Specify nullability, freshness, thread safety and resource ownership;

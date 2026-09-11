@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: rpc-and-api-contracts
-version: 1.1.1
+version: 1.1.2
 description: >-
   The contract between two services and how it changes without a coordinated deploy: partial
   failure as a first-class outcome, an error surface a machine caller can act on (stable
   extensible codes, outcome certainty, retry conditions, RFC 9457), compatibility in both directions and
-  expand-then-contract, versioning only where compatibility is impossible, and choosing REST,
+  expand-then-contract, versioning under an explicit compatibility policy, and choosing REST,
   gRPC or messaging on observable conditions. Use when a client branches on an error message
   string, when a field is renamed or a
   proto field number reused, when a rolling deploy breaks consumers, when a synchronous
@@ -42,8 +42,17 @@ files:
   - references/
 
 dependencies:
+  - name: idempotency
+    version: ^1.0.0
   - name: timeouts-and-deadlines
     version: ^1.0.0
+
+suggests:
+  - delivery-semantics
+  - event-driven-architecture
+  - java-exception-design
+  - retries-and-backoff
+  - serialization-performance
 
 capabilities:
   - reads-source

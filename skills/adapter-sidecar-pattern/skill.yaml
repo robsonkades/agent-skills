@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: adapter-sidecar-pattern
-version: 2.3.0
+version: 2.3.1
 description: >-
   Choose and review Kubernetes telemetry adapters when a legacy or vendor process emits
   incompatible metrics, logs or health signals, when deciding between per-pod translation

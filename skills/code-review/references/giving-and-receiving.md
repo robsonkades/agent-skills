@@ -27,8 +27,8 @@ guess the scope of.
 
 ## Severity vocabulary
 
-Agree on three or four labels and use them on every comment. The exact words matter less than
-their consistency:
+Use the repository's vocabulary and requested schema. When neither specifies labels, the
+following is a fallback; choosing ordinary labels does not require another user question:
 
 | Label          | Meaning                                                                                                         | Blocks merge  |
 | -------------- | --------------------------------------------------------------------------------------------------------------- | ------------- |
@@ -55,10 +55,12 @@ concrete rather than by repetition.
 3. **If it is genuinely a preference**, the author decides. They carry the change; a reviewer's
    taste is not a veto, and treating it as one is what makes people stop opening small pull
    requests.
-4. **If it is a decision with long consequences** — a dependency, a data model, a boundary —
-   stop the review and escalate to a decision with the people who will live with it
-   (architecture-decision-making). A pull request comment thread is the wrong instrument for an
-   architectural choice, and the wrong record of it.
+4. **If an unresolved trade-off has long consequences**, identify the affected requirement,
+   consumers and viable alternatives. Inspect accepted decisions before reopening them; a
+   dependency or boundary change alone does not require a new ADR. Use
+   architecture-decision-making when the choice exceeds the review's authority or needs a durable
+   architectural decision under repository conventions. Defer the affected implementation's
+   polishing, continue independent checks, and record the remaining coverage.
 5. **Timebox.** If replies repeat without new evidence, suggest a focused discussion with the
    relevant owner. Record the technical decision and reason; do not contact others or publish
    comments unless the user requested that action.

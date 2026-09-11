@@ -3,18 +3,35 @@
 These recipes use POSIX awk syntax plus shell utilities; check their availability (Windows may
 need an existing Unix tool environment). Unsupported awk extensions can fail at parse time.
 Use `LC_ALL=C`, inspect stderr and stage exit codes; pipeline success alone can hide earlier failure.
+Apply the locale to every stage (for example, `export LC_ALL=C` in the analysis shell).
 
 The recipes below deliberately target G1 unified logs with tags, GC IDs and millisecond completion
 summaries. First create `completed.log` in an analysis-owned directory, preserving the source:
 
 ```bash
-LC_ALL=C awk '/\[gc *\]/ && /GC\([0-9]+\) Pause (Young|Full|Remark|Cleanup)/ && /[0-9]+([.][0-9]+)?ms$/ {
+LC_ALL=C awk '{ sub(/\r$/, "") }
+/\[gc *\]/ && / Pause / {
+  if (!match($0, /GC\([0-9]+\) Pause (Young|Full|Remark|Cleanup) /) ||
+      $0 !~ / [0-9]+([.][0-9]+)?ms$/) { bad++; next }
+  key=substr($0,RSTART,RLENGTH)
+  if (seen[key]++) { bad++; next }
   print; n++
-} END { if (!n) { print "no supported G1 pause completions" > "/dev/stderr"; exit 1 } }' gc.log > completed.log
+} END {
+  if (bad || !n) {
+    print "duplicate/unsupported pause records or no supported G1 pause completions; discard output"
+    exit 1
+  }
+}' gc.log > completed.log
 ```
 
+Use `completed.log` only after this stage succeeds; inspect its diagnostic and discard the
+partial output on failure. The diagnostic goes to that file too, avoiding a nonportable
+`/dev/stderr` assumption. Check stderr separately for awk/tool failures.
 Verify collector/process identity separately; split other collectors and unsupported formats rather
-than feeding their phase lines into this filter. Reconcile counts against raw logs and drop notices.
+than feeding their phase lines into this filter. Remark and Cleanup may share a concurrent-cycle
+ID, so uniqueness is by ID and pause type. Reconcile counts against raw logs and drop notices;
+the filter cannot detect events missing entirely or an unrecognised tag layout. Unrelated tags
+and concurrent-cycle summaries are outside this pause population, not parser failures.
 
 ## Pause distribution
 
@@ -34,8 +51,10 @@ awk '/Pause/ && match($0, /[0-9]+([.][0-9]+)?ms$/) {
 
 `total` divided by an explicitly measured wall-clock window covering those pauses is the logged
 stop-the-world pause share. Use the same units; do not include the first pause in a denominator
-starting at its completion. It
-does not include concurrent GC CPU or barrier cost. The sample count is essential: under
+starting at its completion. If the window clips a pause, report the boundary treatment:
+use its overlap for time share and keep full-event durations separate for quantiles. Do not
+add nested phase or safepoint times to the same GC pause. It does not include concurrent GC
+CPU or barrier cost. The sample count is essential: under
 nearest-rank estimation, p99 is the maximum until at least 100 observations and remains a
 noisy tail estimate for small windows.
 
@@ -96,6 +115,11 @@ downstream pause cost. When survivor pressure is causal, a larger young/survivor
 one candidate; lowering `MaxGCPauseMillis` can instead shrink young and worsen it.
 
 ## When the log cannot answer: who allocated
+
+Pass the existing log, recording and workload context to `allocation-profiling`. If a new
+recording is needed, the following is a bounded example: substitute the known authorized PID
+and an approved output path writable by that JVM. Inspect start failure and wait for the
+recording to finish before printing it; do not read a stale file as this capture's result.
 
 ```bash
 jcmd <pid> JFR.start duration=60s settings=profile filename=/tmp/gc.jfr

@@ -1,5 +1,9 @@
 # Release record — `architecture-coupling-and-quanta` 1.0.0
 
+> This preserves the 1.0.0 release conditions, including its historical registry blocker
+> and source limitations. It does not describe the current package or verify later
+> revisions. See [the current catalog review](../../skill-validation/catalog-review-2026-09-09.md).
+
 The first new package of this increment, and the vocabulary the rest of the suite's decomposition
 skills will defer to. It answers one cross-level question: **given a system that already spans
 packages, jars, services and databases, what is the unit that can ship on its own, and which

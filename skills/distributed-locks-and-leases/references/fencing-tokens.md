@@ -51,11 +51,25 @@ All four parts are obligations:
    Define recovery across restore/recreation and counter wrap: ZooKeeper sequence suffixes are
    parent-scoped signed 32-bit counters, not an eternal global order. Do not reset token history
    while an old holder can still reach a resource that accepts it.
+   Distinguish the unique owner identity used for release from the ordered fence; a random owner
+   token is not ordered. Reusing a lease/session for independent tasks may reuse one logical grant.
 2. **Claim.** The new holder atomically advances the resource fence before reading or doing
    expensive work. Merely receiving token 34 does not magically inform the resource.
 3. **Carry.** The token travels with every write in the critical section.
 4. **Enforce.** Final writes require the current fence to equal the holder's token. If holder
    35 claims while 34 works, 34 must be rejected.
+
+State the trust boundary: these checks assume authorized participants carry grants issued for
+this resource by the agreed authority. An arbitrary larger client-supplied number is not proof
+of ownership. Where callers can forge tokens or target another tenant's resource, validate
+authority and resource access as part of the protected protocol; trusted internal workers may
+already satisfy this through existing service and database permissions.
+
+The resource's fence history must survive the failures in scope too. Restoring an older row or
+recreating a key with a cleared fence can admit an old holder even if the issuer never repeats
+tokens. Preserve the watermark or establish a resource-generation/authority transition that
+old holders cannot use before admitting work. Coordinate store/resource recovery; restoring
+only the counter or waiting an assumed pause duration is not a universal repair.
 
 ```sql
 -- Claim before work. COALESCE handles a nullable/uninitialized fence if the schema permits it.
@@ -105,8 +119,9 @@ or a transactional result record. A fence orders owners; it does not deduplicate
 
 Fencing orders effects after a newer claim. It does not prove that a client whose lease has
 expired but has no successor is still authorized, and it cannot retract an irreversible effect
-already performed. If lease validity itself is part of the invariant, colocate the operation
-with a transactional ownership check or make the effect repeat-safe.
+already performed. If lease validity itself is part of the invariant, validate current authority
+atomically with the effect in a resource that can enforce it. Repeat-safety can satisfy a
+duplicate-tolerance requirement; it does not authorize a forbidden post-expiry operation.
 
 ## Which resources can be fenced
 
@@ -126,7 +141,7 @@ business effect. An opaque third-party or irreversible side effect often cannot 
 
 ## When fencing is impossible
 
-In priority order:
+Choose according to the invariant, rather than treating every option as required:
 
 1. **Make the operation idempotent** under a key derived from the work, not from the lease.
    Verify concurrent duplicate handling, key lifetime and payload conflicts. Idempotency preserves
@@ -156,7 +171,10 @@ clock and pause point; complement it with process/network faults in an isolated 
 - **Assert at the resource**, not on the lock client's behaviour: the bug being hunted is a
   second accepted write, and the lock client cannot see it.
 - Exercise stale renewal/release, token history reset, lost claim/publish responses and duplicate
-  same-token effects. Unix `kill -STOP`/`kill -CONT <pid>` sketches apply only to controlled test
+  same-token effects. Include independent tasks sharing a logical owner, and recovery/key reuse
+  that loses the resource watermark when those are possible. Test unauthorized cross-resource
+  or invented tokens where the trust boundary permits such inputs.
+  Unix `kill -STOP`/`kill -CONT <pid>` sketches apply only to controlled test
   processes; use a supported pause mechanism on other platforms.
 
 Sources: [ZooKeeper sequence and session lifecycle](https://zookeeper.apache.org/doc/r3.7.2/zookeeperProgrammers.html)

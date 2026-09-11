@@ -12,9 +12,15 @@ Commands are templates: replace `build/classes` with actual production class roo
 and `/tmp/graph` with an isolated writable output directory. Supply resolved `--class-path`
 or `--module-path`; for multi-release JARs select the target `--multi-release` version.
 Treat missing dependencies and stale/incomplete artifacts as gaps, not absent coupling.
-Use `-filter:none` for class-level investigation because the default can hide same-archive
-edges. Keep generated production code visible in the graph, labeling it separately when
+Use `-filter:none` for class-level investigation to disable package/archive filtering;
+explicit `-filter` regexes and input selection still apply. Verify the selected tool's filters
+against a known edge before treating absence as evidence. Keep generated production code visible,
+labeling it separately when
 computing source-maintenance metrics; exclude test outputs from production counts.
+An absent bytecode edge is not proof of absent source coupling: `SOURCE`-retention annotations
+can disappear. A use of a `static final` constant variable is compiled to its value, erasing
+the field reference even if `jdeps` still reports the declaring class. Compare source/build
+dependencies when changing such a contract; old binaries can retain the old value.
 Under JPMS the package graph is supplemented by the module graph: `requires`
 edges, which the compiler enforces and which cannot form cycles.
 
@@ -48,8 +54,9 @@ inv.reporting -> inv.pricing
 inv.reporting -> inv.stock
 ```
 
-`inv.stock` and `inv.pricing` form a cycle, preventing a clean topological build without
-prebuilt peers. Compatible versioned artifacts may still release separately. Assume the
+`inv.stock` and `inv.pricing` form a cycle. They can compile together within one artifact,
+but cannot be independently ordered as a package DAG. Separate build/module and release
+constraints need their own evidence. Assume the
 following illustrative history and class-level detail, rather than measured repository evidence:
 
 - `inv.pricing -> inv.stock`: `VolumeDiscount` reads `StockLevel.quantity()` —
@@ -153,3 +160,9 @@ are an optional architecture change, not runnable alongside the classes as one s
 - [`jdeps` for JDK 25](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jdeps.html)
 - [JPMS module declarations, JLS §7.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.7)
 - [`Module` exports, opens and readability](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Module.html)
+- [JLS 25 binary representation of constant variables](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.1)
+  explains why inlined field uses cannot be recovered as symbolic field references.
+- [JLS 25 annotation retention](https://docs.oracle.com/javase/specs/jls/se25/html/jls-9.html#jls-9.6.4.2)
+  specifies omission of source-only annotations from binaries.
+- [OpenJDK 25.0.3 jdeps options](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jdeps/share/classes/com/sun/tools/jdeps/JdepsTask.java)
+  provides the implementation's filter defaults and option handling; check the actual tool build.

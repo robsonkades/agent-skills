@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: mysql-innodb-performance
-version: 1.0.1
+version: 1.0.2
 description: >-
   Diagnosing and tuning MySQL 8.4+ InnoDB from engine evidence: clustered primary-key storage,
   buffer pool and redo/checkpoint pressure, undo/purge history, next-key/gap locks and deadlocks,

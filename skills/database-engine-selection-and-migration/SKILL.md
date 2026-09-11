@@ -17,6 +17,12 @@ cutover. Start with vetoes and behavioral proof, not a weighted feature populari
 
 ## Decision inputs
 
+For an existing system, establish the outcome requiring change and whether migration or its
+destination is already mandated. If the choice remains open, include retaining the current engine
+as a baseline and assess whether a targeted query/index, configuration or supported-version change
+meets the same success criteria. Route unexplained slowness to `database-performance` before
+treating migration as its remedy; reuse accepted decisions when the target is fixed.
+
 ```text
 read/write/admin SLOs, availability, RPO/RTO, retention, and growth:
 OLTP/analytic/hybrid workload, data shape/distribution, working set, and peak concurrency:

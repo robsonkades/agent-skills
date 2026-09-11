@@ -3,8 +3,8 @@
 A partner API returns audit events in pages of up to 500, addressed by an opaque cursor. Callers
 want to process "all events since T" without knowing about pages.
 
-This is the case where iteration's uniform interface hides the most: latency per page, server-side
-cursor state, and consistency while the underlying data changes.
+This is the case where iteration's uniform interface hides the most: latency per page, possible
+server-side cursor state, and consistency while the underlying data changes.
 
 Partial Java 17 example, with domain types/imports and HTTP adapter omitted. Assume immutable
 value cursors, at most 500 non-null events per page, and a fetcher that enforces the remaining
@@ -100,13 +100,16 @@ Four deliberate decisions:
   size would be a lie the pipeline acts on.
 - **`trySplit` returns `null`.** Fetching the cursor chain is sequential. Batching fetched events
   for parallel processing is possible, but adds buffering/prefetch and is intentionally omitted.
-- **A hard `maxEvents` bound.** An unbounded remote walk is an unbounded commitment; a partner
+- **A hard `maxEvents` bound on source events.** Filtering may emit fewer downstream results.
+  An unbounded remote walk is an unbounded commitment; a partner
   whose data grows tenfold should not silently truncate a full walk. At the cap, throw unless
   exhaustion is already known; a further empty terminal page might exist, but completeness is
   then unconfirmed. An explicit caller `limit(n)` requests a prefix instead.
 - **Deadline/interruption checks include buffered events and fetch boundaries.** The transport
   must enforce the remaining budget during a blocking call; these checks cannot interrupt it
-  themselves. Repeated cursors fail; longer cycles or empty progressing pages remain deadline-bound.
+  themselves. Immediately non-advancing cursors fail; longer cycles or empty progressing pages
+  remain deadline-bound. These checks do not bound time inside the consumer's callback or undo
+  effects it has already performed.
 
 That last point is the one that separates a correct remote iterator from a dangerous one:
 **exhaustion and abandonment must not be indistinguishable.**
@@ -131,7 +134,7 @@ try (var events = auditClient.eventsSince(lastRun, Deadline.in(Duration.ofMinute
 `limit`, `takeWhile` and `findFirst` now work as callers expect and stop fetching pages — laziness
 is inherited from the spliterator, not implemented again.
 
-## Keyset, not offset
+## Verify cursor semantics
 
 The API offers both `?page=N` and `?after=<cursor>`. The cursor form is used, because with offset
 paging:
@@ -150,7 +153,9 @@ Complete audit export may require a snapshot/high-water mark and reconciliation 
 
 Where only offset paging exists, the mitigation is to state the semantics explicitly ("may skip or
 repeat items if the source changes during the walk"). Idempotency handles repeats, not missing
-events; reconcile or use a provider snapshot when completeness is required.
+events; reconcile or use a provider snapshot when completeness is required. When processing
+repeated events has external effects, `idempotency` owns that effect contract; ordinary traversal
+alone does not require a deduplication mechanism.
 
 ## Closing and cancellation
 

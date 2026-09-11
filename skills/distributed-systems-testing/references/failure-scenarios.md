@@ -8,8 +8,11 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 - **Inject** — use a closed port for refusal and a controlled packet DROP for a blackhole.
   Stopping a container alone does not establish which network failure the client observes.
-- **Invariant** — the caller fails within its own budget, the fallback ran if there is one,
-  and no partial state was written. In-flight counters return to zero afterwards.
+- **Invariant** — the caller returns the contracted outcome within its budget, including a
+  fallback only where required. Assert permitted durable/pending state and recovery separately:
+  loss of a response need not mean non-application. Observe remaining work and its cleanup bound.
+  When the transaction contract requires atomic rollback, assert that strict state invariant at
+  its authority; a timeout alone neither proves nor relaxes it.
 - **Wrong assertion** — `assertThrows(Exception.class, …)`. It passes whether the caller
   waited 50 ms or 50 s, and says nothing about the state left behind.
 
@@ -17,10 +20,12 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 - **Inject** — latency above the configured timeout via a proxy toxic. This is the mode that
   causes outages, and the one a stopped container never reproduces.
-- **Invariant** — the caller's own latency is bounded by its timeout, the resource it held
-  (connection, permit, thread) is released, and the breaker's slow-call path recorded it.
+- **Invariant** — caller latency meets the applicable deadline. Track client cleanup and actual
+  protected work separately through their declared bounds; do not release a work permit merely
+  because the caller stopped waiting. If a breaker is configured, assert the outcome recording
+  required by its predicate and decorator order, not an assumed slow-call event.
 - **Wrong assertion** — asserting only that the call eventually returned. Assert the elapsed
-  time against the bound, and assert the pool's available count afterwards.
+  time against the bound and observe release at the resource's actual lifetime boundary.
 
 ## 3. Dependency failing intermittently
 
@@ -58,9 +63,10 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 - **Inject** — kill the process or container between the side effect and the acknowledgement,
   and separately between the write and the commit. Then restart it.
-- **Invariant** — after recovery there is exactly one business record, no orphaned lock or
-  lease, and any partially written state is either completed or reconciled. This is the
-  crash-recovery model made concrete (`failure-models`).
+- **Invariant** — within the recovery budget, accepted work and protected effects satisfy the
+  declared delivery/commit contract, with no unintended duplicate or lost accepted effect.
+  Pending state, locks and leases reach their specified terminal or recoverable condition;
+  a crash before commit need not leave a business record (`failure-models`).
 - **Wrong assertion** — that the service restarts cleanly. Restarting is not the property;
   the state left behind by the interrupted operation is.
 
@@ -68,30 +74,35 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 - **Inject** — pause the holder's process or container (not kill it) for longer than the lease
   duration, let a second holder acquire, then resume the first.
-- **Invariant** — the resumed holder's writes are **rejected**, because the protected resource
-  enforces a fencing token. If they are accepted, the lock does not provide mutual exclusion
-  and the test has found the defect it exists for (`distributed-locks-and-leases`).
-- **Wrong assertion** — that the second holder acquired the lock. That always works; the
-  question is what the first one is still allowed to do.
+- **Invariant** — the protected resource preserves the stated business invariant despite a
+  stale holder. For fencing, wait until the successor's claim is accepted by the resource, then
+  release the stale action and assert rejection. A resource-local conditional transition or an
+  explicitly repeat-safe effect may satisfy the contract without a fencing token; assert that
+  mechanism's invariant (`distributed-locks-and-leases`).
+- **Wrong assertion** — only that the second holder acquired the lock. That observes a grant,
+  not what the first holder is still able to do at the protected resource.
 
 ## 8. Rolling deploy with mixed versions
 
-- **Inject** — run the old and new versions simultaneously against one database and one topic:
-  old producer with new consumer, and new producer with old consumer. Both directions.
-- **Invariant** — neither combination loses a message, throws on deserialisation, or writes a
-  value the other cannot read. Unknown fields are ignored rather than fatal; a new enum
-  constant does not crash an old consumer (`rpc-and-api-contracts`).
+- **Inject** — exercise reader/writer and application/store pairs reachable during the actual
+  rollout, rollback and retained-history replay. Include both directions when both can occur;
+  a staged rollout can deliberately exclude a pair if that exclusion is verified.
+- **Invariant** — required data, effect and response semantics survive each reachable pair,
+  including deliberate rejection where the contract requires it. Do not mandate ignoring unknown
+  fields or enums. Use `schema-evolution-and-compatibility` for serialized wire pairs and
+  `rpc-and-api-contracts` for API behavior; relational DDL and application/backfill/cutover safety
+  require engine behavior and the project's migration conventions/tests as separate evidence.
 - **Wrong assertion** — a contract test against the new version alone. It proves the current
   pair agrees, not that the mixed window survives.
 
 ## 9. Overload and rejection
 
 - **Inject** — offered load above the configured concurrency limit or queue bound.
-- **Invariant** — rejection is the designed response (a 503 with `Retry-After`, a fallback
-  value), it is counted, and goodput stays flat rather than collapsing. Nothing is queued
+- **Invariant** — rejection follows the actual response contract, is counted, and useful work
+  stays within the declared degraded-load objective. A flat goodput curve is not universal. Nothing is queued
   without bound (`rate-limiting-and-load-shedding`, `concurrency-limiting-and-bulkheads`).
-- **Wrong assertion** — that all requests eventually succeeded. Success under overload usually
-  means an unbounded queue, which is the defect.
+- **Wrong assertion** — that all requests eventually succeeded without observing arrival,
+  queue age/size and completion bounds. Eventual success alone does not establish bounded load handling.
 
 ## Auditing coverage
 

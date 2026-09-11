@@ -29,24 +29,27 @@ convention or magic string doing a job an annotation would do with compile-time 
 ## Workflow
 
 0. **Establish compatibility.** Inspect compiler release/toolchain, processor configuration,
-   resolved framework versions and runtime. No authoring baseline was previously declared:
-   language references here use Java 17; records require Java 16+ without preview, and
+   resolved framework versions and runtime. Language references and sketches here use Java 17;
+   records require Java 16+ without preview, and
    `Deprecated.since`/`forRemoval` require Java 9+. Adapt to the project without upgrading it,
    enabling preview or adding dependencies implicitly. If configuration is missing, keep
    enforcement diagnoses conditional and name the evidence needed.
 1. **Name the consumer before defining the annotation.** It may be the compiler, processor,
    framework, static-analysis tool, documentation generator or a human-facing API contract. If no
-   consumer benefits from structured metadata, Javadoc is usually clearer.
+   consumer benefits from structured metadata, Javadoc is usually clearer. Keep adequate direct
+   code or configuration; adding metadata or a processor needs a concrete consumer benefit.
 2. **Pick the retention from the reader.** `SOURCE` for compile-time-only checks, `CLASS` for
    bytecode tools, `RUNTIME` only when something reflects over it at runtime. Retention is not
    a default to copy from the last annotation you wrote.
 3. **Constrain the targets.** `@Target` restricts where it can be applied; without it, an
    annotation is legal in places the reader never looks, which is how "the annotation does
    nothing here" bugs happen.
-4. **Verify the enforcement path end to end**, with a test that violates the annotated
-   constraint and asserts the failure. An annotation with no failing test proves nothing.
-5. **Check what happens under proxying, native image and module boundaries** — the three
-   places where annotation-driven behaviour silently stops applying.
+4. **Verify the consumer's promised result.** For enforcement, exercise valid and invalid input
+   through the actual path and assert acceptance/rejection. For documentation or generation,
+   check the produced output and excluded cases; no runtime enforcement is implied.
+5. **Check relevant deployment boundaries** — proxying, native image and modules when the
+   actual consumer uses them. Reuse adequate existing tests and evidence; metadata visibility
+   is a different check from discovery, invocation and enforcement.
 
 ## Rules
 
@@ -92,9 +95,11 @@ convention or magic string doing a job an annotation would do with compile-time 
   acceptable. On JDK 23+, command-line `javac` runs processors only when annotation processing is
   explicitly configured (for example `--processor-path`, `-processor`, or `-proc:full`); ensure
   the build tool declares processors rather than relying on classpath discovery.
-- Do not put secrets or environment-specific policy in annotation elements. Element values are
-  restricted to annotation-compatible constants/types and are baked into class metadata; they
-  require recompilation to change and may be visible through bytecode/reflection.
+- Do not put secrets in annotation elements. Explicit values are restricted to
+  annotation-compatible constants/types and may be visible through bytecode/reflection.
+  A fixed literal may be a property key or expression that the consumer resolves from external
+  configuration; verify that consumer and its refresh lifecycle. Changing an annotation default
+  can affect already compiled uses that omitted the element; review this as API behavior.
 
 - For repeatable annotations, inspect both the repeated annotation and its container: retention,
   target and inheritance must be compatible. For `TYPE_USE`, decide whether the consumer reads

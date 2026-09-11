@@ -5,42 +5,42 @@ before the second. The columns suggest candidates, not measured win rates or aut
 
 ## Creation
 
-| Design problem                                            | Candidates                                          | Simpler alternative                        | What decides                                                          |
-| --------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
-| Construction has many or optional parameters              | Builder                                             | Record + named static factories            | Naming, staging, defaults and invariants; count alone does not decide |
-| Several related objects must stay mutually consistent     | Abstract Factory                                    | One `@Configuration` per profile           | Is the family chosen per deployment (DI) or per request (factory)?    |
-| An inherited algorithm must not know the concrete product | Factory Method                                      | Injected `Supplier` / `Map<Key, Supplier>` | Existing extension contract and ownership of construction             |
-| A new object must be built from an existing one's state   | Prototype                                           | Copy constructor; immutable sharing        | Required distinct identity, subtype and aliasing semantics            |
-| Exactly one instance is needed                            | Singleton                                           | One bean, injected                         | "One per what?" — class loader, process, or cluster                   |
-| Which concrete type depends on runtime data               | Factory/registry; Factory Method for subclass hooks | Map of suppliers or compatible switch      | Registration ownership, extension and creation lifecycle              |
+| Design problem                                            | Candidates                                          | Simpler alternative                                    | What decides                                                                                |
+| --------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Construction has many or optional parameters              | Builder                                             | Constructor/named factory; record if its contract fits | Consumer naming, defaults, invariants and ownership; count alone does not decide            |
+| Several related objects must stay mutually consistent     | Abstract Factory                                    | Existing DI family configuration                       | Family invariant, selection timing and construction ownership; DI and factories can coexist |
+| An inherited algorithm must not know the concrete product | Factory Method                                      | Injected `Supplier` / `Map<Key, Supplier>`             | Existing extension contract and ownership of construction                                   |
+| A new object must be built from an existing one's state   | Prototype                                           | Copy constructor; immutable sharing                    | Required distinct identity, subtype and aliasing semantics                                  |
+| Exactly one instance is needed                            | Singleton                                           | One bean, injected                                     | "One per what?" — class loader, process, or cluster                                         |
+| Which concrete type depends on runtime data               | Factory/registry; Factory Method for subclass hooks | Map of suppliers or compatible switch                  | Registration ownership, extension and creation lifecycle                                    |
 
 ## Structure and boundaries
 
-| Design problem                                                   | Candidates | Simpler alternative                        | What decides                                                              |
-| ---------------------------------------------------------------- | ---------- | ------------------------------------------ | ------------------------------------------------------------------------- |
-| An existing type has the wrong interface                         | Adapter    | Change one side, if compatible             | Ownership plus external compatibility and migration cost                  |
-| A subsystem of collaborators is used in one standard sequence    | Facade     | Direct composition                         | Useful boundary/policy or repeated orchestration, not caller count        |
-| Cross-cutting behaviour must be added, stackably, at runtime     | Decorator  | The framework's filter/interceptor         | Is the concern transport-shaped or domain-shaped?                         |
-| Access to an object must be controlled or deferred               | Proxy      | An explicit lazy accessor or `Supplier`    | Can callers tolerate knowing? Then do not hide it                         |
-| Two things vary independently and the class count is multiplying | Bridge     | Composition (a field)                      | Does the abstraction side have variants too? Otherwise Strategy           |
-| A part and a whole must be treated identically, recursively      | Composite  | A collection field                         | Uniform recursive operations; finite depth is valid and should be bounded |
-| Many long-lived duplicate objects dominate the heap              | Flyweight  | String deduplication; a smaller field type | occurrences ÷ distinct values; measure first                              |
+| Design problem                                                   | Candidates | Simpler alternative                        | What decides                                                                             |
+| ---------------------------------------------------------------- | ---------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| An existing type has the wrong interface                         | Adapter    | Change one side, if compatible             | Ownership plus external compatibility and migration cost                                 |
+| A subsystem of collaborators is used in one standard sequence    | Facade     | Direct composition                         | Useful boundary/policy or repeated orchestration, not caller count                       |
+| Cross-cutting behaviour must be added, stackably, at runtime     | Decorator  | The framework's filter/interceptor         | Is the concern transport-shaped or domain-shaped?                                        |
+| Access to an object must be controlled or deferred               | Proxy      | An explicit lazy accessor or `Supplier`    | Required consumer transparency, access and lifecycle contracts; preserve adequate APIs   |
+| Two things vary independently and the class count is multiplying | Bridge     | Composition (a field)                      | Independent evolution/ownership and implementor contract; current class counts are clues |
+| A part and a whole must be treated identically, recursively      | Composite  | A collection field                         | Uniform recursive operations; finite depth is valid and should be bounded                |
+| Many long-lived duplicate objects dominate the heap              | Flyweight  | String deduplication; a smaller field type | occurrences ÷ distinct values; measure first                                             |
 
 ## Behaviour and interaction
 
-| Design problem                                          | Candidates              | Simpler alternative                         | What decides                                                                  |
-| ------------------------------------------------------- | ----------------------- | ------------------------------------------- | ----------------------------------------------------------------------------- |
-| One operation has interchangeable algorithms            | Strategy                | A lambda; configuration                     | Do the variants differ in behaviour or only in constants?                     |
-| Behaviour changes with the object's own status          | State                   | Enum/status plus transition function        | State-dependent legality/behavior; transitions may be externally driven       |
-| An algorithm's skeleton is fixed; steps vary            | Template Method         | A final class taking its steps in           | Does a framework construct the subclass?                                      |
-| A request must be offered to several possible handlers  | Chain of Responsibility | A `switch` over a sealed kind               | Is the handler set open to other modules?                                     |
-| An invocation must be queued, logged, retried or undone | Command                 | Call the method                             | Does anything actually consume the reification?                               |
-| Prior state must be restorable                          | Memento                 | Immutability; command inverses              | Is the inverse exact and cheap? Then Command                                  |
-| Dependents must be told something changed               | Observer                | Direct calls                                | Subscription ownership, lifecycle and decoupling; known listeners can qualify |
-| Many-to-many collaboration has become a web             | Mediator                | Events; or fewer collaborators              | Do participants need results, or only notification?                           |
-| Several operations must run over one object structure   | Visitor                 | Compatible exhaustive dispatch              | Type ownership, operation growth, target Java and extension contracts         |
-| A structure must be traversed without exposing it       | Iterator                | Return an unmodifiable collection           | Is the sequence computed, unbounded, or paged?                                |
-| A small language must be evaluated                      | Interpreter             | Existing bounded evaluator or configuration | Grammar/semantics, translation needs, security and maintenance cost           |
+| Design problem                                          | Candidates              | Simpler alternative                         | What decides                                                                                |
+| ------------------------------------------------------- | ----------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| One operation has interchangeable algorithms            | Strategy                | A lambda; configuration                     | Do the variants differ in behaviour or only in constants?                                   |
+| Behaviour changes with the object's own status          | State                   | Enum/status plus transition function        | State-dependent legality/behavior; transitions may be externally driven                     |
+| An algorithm's skeleton is fixed; steps vary            | Template Method         | A class taking composed steps               | Existing hook/SPI and lifecycle contracts; who owns the extension set                       |
+| A request must be offered to several possible handlers  | Chain of Responsibility | A `switch` over a sealed kind               | Is the handler set open to other modules?                                                   |
+| An invocation must be queued, logged, retried or undone | Command                 | Call the method                             | Does anything actually consume the reification?                                             |
+| Prior state must be restorable                          | Memento                 | Immutable capture; exact inverse            | Restoration ownership, intervening changes and effects; cheap inverse alone is insufficient |
+| Dependents must be told something changed               | Observer                | Direct calls                                | Subscription ownership, lifecycle and decoupling; known listeners can qualify               |
+| Many-to-many collaboration has become a web             | Mediator                | Events; or fewer collaborators              | Who owns coordination decisions, results, ordering and participant lifetimes?               |
+| Several operations must run over one object structure   | Visitor                 | Compatible exhaustive dispatch              | Type ownership, operation growth, target Java and extension contracts                       |
+| A structure must be traversed without exposing it       | Iterator                | Return an unmodifiable collection           | Is the sequence computed, unbounded, or paged?                                              |
+| A small language must be evaluated                      | Interpreter             | Existing bounded evaluator or configuration | Grammar/semantics, translation needs, security and maintenance cost                         |
 
 ## The rows that most often resolve to "no pattern"
 
@@ -101,11 +101,12 @@ Any chosen translator must parameterize values and allowlist accessible fields/o
 (`gof-interpreter`).
 
 **"Two services must both know when a policy is renewed."**
-Candidates: Observer. But one subscriber is in another process, which takes it out of the pattern
-entirely. If committed policy changes require reliable notification, evaluate a transactional
+Candidates: Observer, with a separate distributed delivery contract for the remote subscriber.
+Local listener mechanics do not establish that contract. If committed policy changes require
+reliable notification, inspect existing publication/consumer guarantees before evaluating a transactional
 outbox plus messaging and idempotent consumption; best-effort notifications have different needs
 (`gof-observer`, `event-driven-architecture`). The in-process listener and the message consumer are
-different designs sharing a name.
+different mechanisms whose guarantees must be stated, even when the same conceptual role is useful.
 
 Sources: [JEP 441, finalized in Java 21](https://openjdk.org/jeps/441) and
 [Spring REST client configuration](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html).

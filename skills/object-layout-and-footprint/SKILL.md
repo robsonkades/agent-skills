@@ -6,7 +6,7 @@ description: >
   an array is proposed to save the header; when HashMap<Integer,Integer> or List<Long> is on
   a bulk path; when -XX:+UseCompactObjectHeaders is evaluated for footprint; or when smaller
   objects are expected to buy shorter GC pauses without a collector-specific measurement.
-  Answers in bytes per element; one record-versus-array example reverses under the JDK 27
+  Answers in bytes per element; one record-versus-array comparison changes under the upstream JDK 27
   default (JEP 534, not yet GA). Sizing a replacement belongs here; measuring what exists is
   heap-dump-analysis. Not flag lifecycle (jvm-performance-review), @Contended padding
   (false-sharing-and-contended), cache hierarchy (cpu-cache-and-numa), allocation rate
@@ -29,26 +29,31 @@ that produced it. Every one of those errors is directional: they all understate 
 footprint, except the compact-header one, which overstates the saving on exactly the objects
 that dominate a real heap.
 
-## The gate
+## Evidence and scope
 
-**No size without three things attached: the JDK build, the tool, and the header mode.**
+**Attach the known build, method, header mode, reference/class-pointer widths and alignment
+to a size claim; label missing inputs and conditional estimates.**
 
 Inspect the project's toolchain, deployed JVM, collector, heap size and effective alignment/
 compression flags before applying these HotSpot measurements. They do not authorize a Java
 upgrade, dependency addition or flag change. Historical `[executed]` tables below record the
 stated experiments; they are not a claim that every applying agent reran those experiments.
 
-A pasted `ClassLayout` listing with no command line is unusable, not merely incomplete. The
+A pasted `ClassLayout` listing can establish visible offsets and arithmetic even when its
+command line is missing; it cannot establish an unknown deployment's layout. The
 same class measures 32 or 24 bytes and the same array measures 24 or 16, on one JVM, decided
-by one flag. On JDK 27 that flag's default flips `[source-only: JEP 534]`, so an unlabelled
-listing does not even tell you which of two answers it is.
+by one flag. The upstream JDK 27 default flips `[source-only: JEP 534]`; distinguish the
+listing's visible layout from an unknown deployment's effective mode.
 
-State it as `48 bytes (Temurin 25.0.3+9, JOL 0.17 ClassLayout.instanceSize, default headers)`
-or do not state it.
+For a measured claim, state its conditions, for example `48 bytes (Temurin 25.0.3+9,
+JOL 0.17 ClassLayout.instanceSize, classic headers, compressed class pointers/oops, align8)`.
+For an estimate, state the assumed inputs and what evidence would change it. A narrow
+arithmetic explanation or adequate existing representation can close without a new run,
+population estimate, flag comparison or migration.
 
 ## The arithmetic
 
-This is the whole method. It is version-scoped: **executed on Temurin 21.0.12+8 (Linux x64),
+The following is a bounded empirical model. Historical checks were **executed on Temurin 21.0.12+8 (Linux x64),
 25.0.3+9 (Windows x64) and 26.0.2+10 (Linux x64), all three agreeing**, with JOL 0.17
 cross-checked against `Instrumentation.getObjectSize`.
 
@@ -63,6 +68,9 @@ specification: VM-injected fields, special classes, value-class experiments, ali
 and future layout algorithms require a target-build measurement. Holes are an output of the
 layout, not a portable input. The model matched 650 generated classes in both tested header
 modes `[executed]` — 0–20 random fields, 2–4-deep inheritance chains, zero misses.
+
+The base table assumes 64-bit HotSpot, compressed class pointers and alignment 8. Heap oop
+compression is a separate input; wide klass pointers change the classic header to 16 bytes.
 
 | Term                         | Classic headers                           | Compact object headers                  |
 | ---------------------------- | ----------------------------------------- | --------------------------------------- |
@@ -94,9 +102,11 @@ of the fourteen rows in `compact-object-headers.md` §2 reverse, and `Object[]` 
 population large enough to ask this skill's question is often a heap large enough to cross the
 threshold. _Where_ the threshold is as a heap-sizing decision is `jvm-performance-review`'s.
 
-Which header column is in force: classic on JDK 21, 25 and 26 `[executed]`; compact on JDK 27
+Defaults on the tested Temurin 21, 25 and 26 builds were classic `[executed]`; the upstream
+JDK 27 default is compact
 `[source-only: JEP 534, Closed / Delivered, Release 27]` — JDK 27 is not GA and nothing in
-this skill was run on it. The flag is experimental on 24 and needs
+this skill was run on it. Vendor backports and defaults can differ, including on JDK 17/21
+(JEP 534); use the effective target state. In the upstream lifecycle the flag is experimental on 24 and needs
 `-XX:+UnlockExperimentalVMOptions` there (JEP 450); a product flag on 25 (JEP 519, executed:
 no unlock needed); default on 27 (JEP 534). A JDK 24 command line pasted onto 25 works; a 25
 line pasted onto 24 does not. The rest of the flag's lifecycle and its cost belong to
@@ -106,55 +116,60 @@ Three things the arithmetic gets wrong if you stop before the `alignUp`:
 
 - `record Point(int,int)` computes to 12 + 8 = 20 and **is 24**.
 - `byte[1]` computes to 17 and **is 24**. So do `byte[2]` through `byte[8]`.
-- **Declaration order is not the layout.** Fields are grouped by descending size with
+- **Declaration order is not the layout.** In the measured ordinary layouts, fields are grouped by descending size with
   references placed last, and under classic headers a 4-byte field is hoisted into the
   12–15 header hole ahead of the 8-byte group. You cannot compute an offset from source
   order; you can compute a size.
 
 ## Workflow
 
-1. **Pin the header mode before anything else**, on the target build — never assumed from the
-   release number, and never read off the command line. The flag can read `true` where it was
+Apply the steps needed for the requested size, shape or deployment claim. Reuse adequate
+target evidence; distinguish a conditional model from a measurement and a footprint comparison
+from a recommendation to change production.
+
+1. **Establish the relevant layout inputs**, on the target build — not merely the release
+   number or requested command line. The flag can read `true` where it was
    passed and `false` where it runs: two conditions cause that on 25.0.3 — disabled compressed
    class pointers, and a heap larger than 8191 GB with header-based forwarding — each
-   announced only by a one-line `warning` on stderr that nobody reads.
+   accompanied by a warning on stderr. Record effective oop/class-pointer widths and alignment too.
 
    ```bash
    java <same target flags> -XX:+PrintFlagsFinal -version | grep UseCompactObjectHeaders
    jcmd <pid> VM.flags -all | grep UseCompactObjectHeaders             # already running
    ```
 
-   `-all` is not optional: plain `VM.flags` prints nothing at all for a JVM sitting at the
-   default, and the one character that carries the answer — the `+`/`-` — is the first thing a
-   `grep -o` throws away. Read `references/compact-object-headers.md` §4 whenever
+   Use `-all` to include a flag still at its default; plain `VM.flags` can omit that flag.
+   The character that carries the answer — the `+`/`-` — is the first thing a
+   name-only `grep -o` pattern throws away. Read `references/compact-object-headers.md` §4 whenever
    `-XX:+UseCompactObjectHeaders` appears anywhere in the artefact — it has the three origin
    tags to match on. Why the JVM overrode it, and what that means for the rest of the
    configuration, is `jvm-performance-review`'s.
 
-2. **Compute the per-element size a priori** with the arithmetic above. For arrays, for the
+2. **Model the per-element size when a prediction is needed** with the arithmetic above. For arrays, for the
    per-length table, and for the superclass gap-filling rule, read
-   `references/array-and-object-arithmetic.md`. Do this before measuring: a prediction that
-   the measurement then confirms is worth far more than a measurement alone, because it is
-   the prediction that transfers to the next class.
-3. **Decide whether compact object headers change the answer.** They are not a uniform
+   `references/array-and-object-arithmetic.md`. Explain a mismatch between the model and
+   trustworthy measurements instead of forcing either to fit.
+3. **Compare header modes when the question depends on them.** They are not a uniform
    8-byte saving and they are zero on several of the commonest classes in a Java heap. Read
    `references/compact-object-headers.md` for the measured per-class table and the rule that
    predicts each row. Never multiply 8 bytes by an object count.
-4. **Only now compare shapes.** Record versus final class versus primitive array versus
+4. **Compare the relevant equivalent shapes.** Record versus final class versus primitive array versus
    parallel arrays versus a boxed collection, at the stated population size, in measured
    bytes per element. Read `references/shape-decision.md`. Emit bytes per element and the
-   total at N, in both header modes when supported; otherwise label the alternate model
-   hypothetical rather than changing the project baseline. Never report a percentage alone.
-5. **Measure to confirm the prediction.** Read `references/jol-operating-procedure.md` for
+   total at N when known. Compare both header modes only when that is part of the decision;
+   label unsupported alternatives hypothetical rather than changing the project baseline.
+   Keep absolute bytes alongside any percentage.
+5. **Measure when the claim needs confirmation.** Read `references/jol-operating-procedure.md` for
    the invocation that works on JDK 25/26, the four ways JOL fails — one of which throws on
    the first record you try — and the `Instrumentation.getObjectSize` cross-check. Read it
-   before the first JOL run, not after the first stack trace. When the population already
+   before a JOL run. Choose the cross-check for the measurement's uncertainty and consequence.
+   When the population already
    lives in a JVM you cannot attach JOL to, `jcmd <pid> GC.class_histogram` reports shallow
    sizes computed by that JVM in its own header mode — `Point` 24 → 16 `[executed]` — and
    `references/production-footprint-checks.md` §1 says what a heap dump cannot tell you.
-6. **Report with the gate satisfied.** Build, tool, header mode, and shallow versus deep
-   stated explicitly. If the number came from a source rather than a run, label it as
-   source-derived; JDK 27 is not GA and nothing about it here was executed.
+6. **Report the scoped result and its evidence.** Name shallow, reachable, retained or other
+   quantities precisely, with known inputs and limits. Label source-derived estimates and
+   historical results; do not imply a new run. JDK 27 is not GA as of this review and was not executed here.
 
 ## The headline: the record-versus-array intuition is backwards
 
@@ -173,8 +188,8 @@ on a pad and shrinks by nothing at any length.
 
 "Drop the record for a primitive array to save the header" is therefore wrong for a
 four-`long` payload today and **more** wrong once compact headers are the default. The
-direction of the comparison changes, not just its magnitude — which is why a footprint
-optimisation justified on JDK 25 must be re-measured before it ships on JDK 27.
+comparison moves from a tie to a saving. If a deployment decision depends on that saving,
+confirm the target layout with adequate existing evidence or a bounded measurement.
 
 The intuition is only right when the array amortises **one header across many elements**.
 Parallel primitive arrays beat a million records by 20 bytes each — 24.00 against 44.00 bytes
@@ -194,7 +209,8 @@ it is the point of that reference.
 - **Distinguish the boxed type, collection structure and reference width.**
   Under compressed oops `Integer`, `Boolean`, `ArrayList` and the `String` object are all
   unchanged, and `ArrayList<Integer>` of 1000 distinct values measured **20,976 bytes in both
-  modes** on 25.0.3 and 26.0.2. At 32 GB and above the same population measures 25,920 → 25,912 — the
+  modes** on 25.0.3 and 26.0.2. With 8-byte oops, compressed class pointers and alignment 8,
+  the historical wide-reference population measures 25,920 → 25,912 — the
   `ArrayList` itself now saves 8 bytes and nothing else does, so the conclusion survives but
   the equality does not. A boxed-collection-heavy heap is the case where an "8 bytes per
   object" plan overstates the saving. This is not a rule for all boxed collections:
@@ -204,8 +220,10 @@ it is the point of that reference.
   `byte[]` payload can shrink and the rule runs over **payload bytes**: 8 when
   `(length × bytesPerChar) mod 8` ∈ {1,2,3,4}, else 0. With `COMPACT_STRINGS` on by default,
   `bytesPerChar` is 1 for a Latin-1-representable string and 2 for anything containing a
-  character above U+00FF, and the two encodings give **opposite** answers at 3–6 characters:
-  "5 to 8 characters gains nothing" is true for ASCII and false for UTF-16 at 5–6. At 32 GB and above
+  character above U+00FF; `length` means UTF-16 code units. Inspect `CompactStrings` too.
+  The two encodings give **opposite** answers at 3–6 code units:
+  "5 to 8 characters gains nothing" is true for ASCII and false for UTF-16 at 5–6. With
+  8-byte oops, compressed class pointers and alignment 8,
   the `String` object itself goes 32 → 24, so it saves 8 regardless of payload and the whole
   example inverts — `String[1000]` of 8-character strings goes from a flat 52,016 to
   64,016 → 56,016, a 12.5% saving `[executed]`. `compact-object-headers.md` §3 has every
@@ -215,8 +233,9 @@ it is the point of that reference.
   is 48. Name which one you measured, every time.
 - **Version-scope every size, and label anything not executed.** JDK 27 is not GA. Its
   default header mode is read from JEP 534 (`Closed / Delivered`, Release 27, confirmed at
-  `openjdk.org/jeps/534`), not observed. `-XX:+UseCompactObjectHeaders` does not exist at all
-  on JDK 21 — the JVM refuses to start with `Unrecognized VM option` (executed, 21.0.12+8).
+  `openjdk.org/jeps/534`), not observed. `-XX:+UseCompactObjectHeaders` is absent from
+  the tested Temurin 21.0.12+8 build — it refuses to start with `Unrecognized VM option`
+  `[executed]`; this is not a claim about downstream JDK 21 backports.
 - **Match sharing to the question.** To model distinct boxes, verify values are outside the
   configured `Integer` cache (which can exceed 127). To model a real cached population,
   retain its sharing: JOL counts each reachable box once, not once per reference. Reachable
@@ -227,12 +246,14 @@ it is the point of that reference.
 - **Do not reach for `-XX:+PrintFieldLayout`.** It is a `develop` flag: on the tested production
   JDK the JVM refuses to start with it (executed, 25.0.3), there is no `-Xlog` equivalent,
   and JOL is the tool used here on production builds. Direct VM/offset tooling is another
-  option; consult the JOL reference for the source-only change on JDK 28 development builds.
+  option; consult the JOL reference for the pinned source-only development change.
 - **Compact object headers buy heap bytes with class-space bytes.** The 22-bit class
   pointer used a shift of 10 in the measured configuration: **537 → 1,024 bytes per class** of
   compressed class space (executed, 25.0.3, 100,000 strong hidden classes), so the 1 GB
-  default holds ~1.06 M classes instead of ~2 M. On a proxy- or lambda-heavy service read
-  `jcmd <pid> VM.metaspace` before switching, and quote both sides.
+  reservation exposed ~1.06 M aligned IDs and held roughly ~2 M of the classic template.
+  These are encoding/template/loader-specific figures, not a universal per-class cost or ceiling.
+  When evaluating a class-heavy deployment, inspect existing `VM.metaspace`/pool evidence
+  for the actual shift, reservation and loader topology and account for both heap and class space.
   `references/production-footprint-checks.md` §3.
 - **Under G1, an object whose aligned size exceeds half a region reserves whole regions.**
   `byte[600000]` requires one 1,048,576-byte region with 1 MB regions;
@@ -256,7 +277,7 @@ it is the point of that reference.
 - [Compact object headers, measured](references/compact-object-headers.md) — which objects
   shrink and which do not, with the rule that predicts every row; the two conditions that
   disable the flag while it still reads as set; and the deep-footprint tables showing where
-  the saving is zero. Read at step 1 whenever the flag appears, and at step 3 always.
+  the saving is zero. Read when interpreting the effective flag or comparing header modes.
 - [The shape decision](references/shape-decision.md) — record versus final class versus
   primitive array versus parallel arrays versus `ArrayList` versus `HashMap`, measured at
   N = 1,000,000 in bytes per element under both header modes, with the break-even reasoning

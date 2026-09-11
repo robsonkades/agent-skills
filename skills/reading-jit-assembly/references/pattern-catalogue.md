@@ -1,6 +1,6 @@
 # Pattern catalogue: what the runtime's own code looks like
 
-Every sequence here is an observed recognition aid, decoded from Temurin 25.0.3 product C2
+Every sequence here is a historical recognition aid, decoded from Temurin 25.0.3 product C2
 output on x86-64 Windows with the stated/default flags and normalized to AT&T syntax. It is
 not a stable machine-code ABI. Register choice, offsets, instructions, barrier expansion,
 locking protocol and comments can change with JDK, vendor, compiler, architecture, GC,

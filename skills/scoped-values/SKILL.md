@@ -68,11 +68,14 @@ Report the binding owner, value ownership, execution boundaries and validation g
   authorization policy.
 - `get()` on an unbound value throws `NoSuchElementException` — deliberately, rather than
   returning null. Use `orElse(default)` where absence is legitimate, `isBound()` to branch,
-  and `orElseThrow(...)` for a domain-specific failure. Both `where(KEY, null)` and
-  `orElse(null)` are legal in Java 25, so `get() == null` does **not** imply "unbound"; avoid
-  null bindings when absence must stay distinguishable.
+  and `orElseThrow(...)` for a domain-specific failure. `where(KEY, null)` is legal in Java 25,
+  but `orElse(null)` throws `NullPointerException`, even when bound; this changed on finalization.
+  A null result from `get()` does **not** imply "unbound". Use `isBound()` when distinguishing
+  absence from a deliberately nullable binding.
 - **Automatic cross-thread inheritance uses StructuredTaskScope**, captured when the scope
-  is created. Plain threads do not inherit; executor/CompletableFuture/@Async submission
+  is created. Forking under different or rebound bindings throws `StructureViolationException`;
+  if subtasks need a nested binding, open their scope inside it. See `structured-concurrency`
+  for scope ownership and closure. Plain threads do not inherit; executor/CompletableFuture/@Async submission
   does not itself propagate bindings. Inline execution or synchronous stages can see the
   executing thread's current binding, and wrappers can explicitly bind a captured value.
   Do not rely on this timing accident. There is no `InheritableScopedValue`.
@@ -83,8 +86,10 @@ Report the binding owner, value ownership, execution boundaries and validation g
 - `ThreadLocal` is not deprecated and not an anti-pattern. The JDK uses it. Keep it for a
   genuine per-thread cache with a bounded number of threads, and for interop with any API
   that reads one — which is most frameworks.
-- A `ScopedValue` bound around a whole application lifetime is a global variable with extra
-  syntax. If the binding is not shorter-lived than the process, it is not carrying context.
+- Match the binding to the owned operation. A one-job CLI may bind around its whole `main`;
+  a long-running server must not carry one request's tenant across unrelated requests.
+  For ordinary process configuration or a short call chain, explicit objects/parameters may
+  already be sufficient; do not introduce scoped context solely to hide them.
 - Reading is fast — comparable to a local variable, with a small per-thread cache — but that
   is an implementation property, not a specification. Do not design around it; do not
   measure a micro-benchmark of `get()` and conclude anything about the application.

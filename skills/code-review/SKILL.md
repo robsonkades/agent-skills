@@ -94,5 +94,5 @@ approval rules wholesale.
   reviewing.
 - **Writing and receiving findings** — `references/giving-and-receiving.md`. The anatomy of an
   actionable comment, severity vocabulary, resolving deadlock between reviewer and author,
-  receiving feedback, and when pairing replaces review rather than adding to it. Read when a
-  review is stalled, tense, or being rubber-stamped.
+  receiving feedback, and when pairing replaces review rather than adding to it. Read when
+  writing findings or resolving a stalled, tense, or rubber-stamped review.

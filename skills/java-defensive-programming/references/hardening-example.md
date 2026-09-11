@@ -162,24 +162,29 @@ charge-limit check atomically with posting under the ledger's concurrency protoc
 
 - Three small types and a parse step replace "just pass the DTO through" — more files,
   and mappers must be written where frameworks previously auto-bound. This buys its cost
-  only when the data crosses more than one method; a value used once in the controller
-  can be checked inline.
+  when reusable invariants or safe construction warrant those types; crossing multiple
+  methods is a useful signal, not a requirement. A value used once can often be checked
+  inline, and an adequate existing validated class need not become a record.
 - Rejecting where the old code repaired is a behaviour change callers can feel: clients
-  that relied on sign-flipping now get 400s. That surfacing is intended, but it belongs
-  in the change log, and a metrics count of new 400s for a release cycle tells you who
-  was relying on the repair.
+  that relied on sign-flipping now get 400s. This example assumes that stricter contract
+  is approved; inspect supported consumers and agree a transition before changing it.
+  Release notes and observed rejection counts support rollout, but neither alone proves
+  compatibility or identifies every affected caller.
 - Bean Validation (`@NotNull`, `@Pattern`) could express the format checks
-  declaratively; it validates only where a validator runs, while the constructor
-  validates on every construction path (tests, message consumers, batch jobs). The
-  constructor is the stronger guarantee; use annotations as well when you want
-  aggregated field errors in the 400 body.
+  declaratively; it validates only where the configured validator and groups run.
+  Constructor checks cover paths that invoke that constructor. Java serialization invokes
+  a record's canonical constructor, but skips an ordinary serializable class's constructors;
+  inspect other mapper/reconstitution paths rather than generalizing from these records.
+  Keep useful annotation validation for staged or aggregated boundary errors without making
+  it a substitute for the completed domain invariant. Serialization hardening belongs to
+  java-serialization-hardening.
 
 ## Verification
 
 - Grep the interior for `!= null`, `requireNonNull` and default-substitution on the
   refund path: remaining occurrences must each trace to a constructor establishing its
-  own invariant or to a distinct interior invariant (balance, state) — not to re-checks
-  of the boundary.
+  own invariant, a documented public-entry contract or a distinct interior invariant
+  (balance, state) — not to proven-redundant component checks.
 - Tests at the boundary, not per layer: `" gb82WEST12345698765432 "` normalises and
   passes; `"###"`, missing/zero/negative amount, blank/oversized/control-bearing reason each yield
   the documented field/code without echoing input—and _no_ ledger write. The negative-amount test asserts rejection, where
@@ -190,3 +195,7 @@ charge-limit check atomically with posting under the ledger's concurrency protoc
 
 These are acceptance checks to execute on the concrete endpoint, not recorded HTTP or
 ledger test results from the sketches.
+
+For reconstruction semantics, see [Java SE 25 serialization input](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html).
+For validator activation and groups, see [Jakarta Validation 3.1](https://jakarta.ee/specifications/bean-validation/3.1/jakarta-validation-spec-3.1);
+use the project's actual framework and version when verifying the HTTP path.

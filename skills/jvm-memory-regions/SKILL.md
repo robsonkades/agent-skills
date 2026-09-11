@@ -25,7 +25,7 @@ regions pushing RSS past the cgroup, and the **kernel** killing the process — 
 dying.
 
 Only the Java heap object graph is reclaimed directly as ordinary GC-managed objects, but
-class unloading, code-cache sweeping, native cleaners/arenas and OS reclaim couple the
+class unloading, code-cache reclamation, native cleaners/arenas and OS reclaim couple the
 other domains to different lifecycles. Not every domain has a hard flag or a distinct
 `OutOfMemoryError`; that is why accounting starts from evidence rather than six fixed boxes.
 
@@ -55,6 +55,10 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
    obtained by subtracting NMT committed from RSS is not a measured untracked-native total.
 5. **Judge normalized trends, not instants** — compare equivalent reclamation points,
    native/RSS/cgroup peaks and the workload regime that produced them.
+6. **Deliver a bounded decision.** State observed attribution, competing explanations,
+   the candidate budget or evidence for keeping the current settings, and material unknowns.
+   Separate proposed effects from validated results; name the next discriminating check or
+   rollout measurement. Missing NMT/maps or peak-overlap evidence remains a limitation.
 
 ## Rules
 
@@ -74,13 +78,16 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
   not a process-wide bound or resident bytes. JVM/native threads, main-thread policy,
   rounding and guard regions can differ; inspect actual reservations. Reduce stacks only after testing Java/native call depth and guard-page behavior;
   stack overflow is a correctness failure, not merely a tuning regression.
-- Code-cache pressure can stop compilation and trigger flushing/sweeping/restart behavior
+- Code-cache pressure can stop compilation and trigger reclamation/restart behavior
   that varies by tier/segment and release. `jdk.CodeCacheFull` is strong evidence of an
   event, not proof of permanent interpretation or a universal 80% threshold. Correlate
-  compiler logs, segment occupancy, sweeper activity and throughput (`code-cache-segments`).
+  compiler logs, segment occupancy, reclamation and throughput (`code-cache-segments`).
+  HotSpot removed the sweeper in JDK 20; on the JDK 25 baseline, do not require a sweeper
+  thread or its old lifecycle states as evidence.
 - Measure object layout with JOL rather than estimating headers. Compact object headers
   (JEP 519, product in 25) are **off by default through JDK 26 and on by default from
-  JDK 27** (JEP 534); disable with `-XX:-UseCompactObjectHeaders`. **Do not budget 8 bytes
+  JDK 27** (JEP 534, delivered into 27 but not yet GA); disable with
+  `-XX:-UseCompactObjectHeaders`. **Do not budget 8 bytes
   per object**: alignment makes savings class/layout-dependent, and some common small
   objects can retain the same aligned size while their surrounding graph/arrays change.
   For the rule that predicts which classes do save, the measured
@@ -120,5 +127,6 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
 
 Authoritative sources: [Oracle Native Memory Tracking guide](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html),
 [Oracle container support guide](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#java-options-for-linux),
-[JEP 519](https://openjdk.org/jeps/519), [JEP 534](https://openjdk.org/jeps/534), and
+[JEP 519](https://openjdk.org/jeps/519), [JEP 534](https://openjdk.org/jeps/534),
+[HotSpot sweeper removal, JDK-8290025](https://bugs.openjdk.org/browse/JDK-8290025), and the
 [Linux cgroup v2 memory controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory).

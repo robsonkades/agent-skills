@@ -20,13 +20,13 @@ Extract state from a JVM that can no longer cooperate. Attach-based `jstack`, `j
 `jcmd` ask the target JVM to execute diagnostic work, so they need a live, responsive
 attach path; individual commands have different safepoint/handshake impact. The
 Serviceability Agent reads HotSpot memory externally, live or from a core. Live SA attach
-still suspends and can destabilize the target; core-file analysis is the safe post-mortem
-mode.
+still suspends and can destabilize the target; core-file analysis avoids disrupting a live
+target.
 
 The failure this prevents is arriving at the incident with no readable artefact. Automatic
-core dumps need a tested JVM/OS/collector/storage path **before** the crash; hs_err is
-routinely deleted by log rotation; and a `jhsdb` from a slightly different build reads the
-wrong binary offsets and fails in ways that do not name their own cause.
+core dumps need a tested JVM/OS/collector/storage path **before** the crash; hs_err can be
+lost through log rotation or container cleanup; and mismatched `jhsdb`/binary assets can fail
+or misinterpret VM state without clearly identifying the mismatch.
 
 ## Workflow
 
@@ -41,22 +41,28 @@ Live SA attach, core capture and deliberate termination require authority for th
 capacity and recovery budget. Reuse existing incident/session authorization; ask only for
 missing scope. A redundant replica alone is not authorization or proof of safe disruption.
 
+Reuse available reports, exact-build metadata and comparable measurements. Choose the next
+inspection or capture for a material unresolved question; a completed triage need not perform
+every tool step or configure future capture during the incident.
+
 1. **Triage the artefacts before touching a tool.** hs_err present? Core present?
    `OutOfMemoryError` in the application log? Nothing at all? Each combination points
    somewhere different, and the empty case is itself evidence.
-2. **Read hs_err first, in this order.** Header (signal or `fatal error:` text and the
+2. **When hs_err exists, read it first.** Header (signal or `fatal error:` text and the
    problematic frame letter), `Current thread` state, `Native frames` / `Java frames`,
    `Heap:` and `Metaspace:`, then the `Events` sections (`Internal exceptions`,
    `Deoptimization events`, `GC Heap History`), `VM Arguments`, and the `S Y S T E M`
-   block with rlimits and — on Linux — the cgroup limits. It is the cheapest artefact
-   and it usually names the direction.
-3. **If nothing exists, check the kernel.** `dmesg` and `journalctl -k` for an OOM kill
-   before assuming an application bug.
-4. **Capture a core with a real method** — `gcore`, GDB `generate-core-file`, or a
-   deliberate fatal signal — and know which stops temporarily, which terminates, how
-   `core_pattern` routes output, and what `coredump_filter` omits.
-5. **Analyse with the matching build.** Run the `jhsdb` from the same `$JAVA_HOME` that
-   produced the process or the core, then GDB for native registers and memory.
+   block with rlimits and — on Linux — the cgroup limits. Existing text can narrow the
+   question without another invasive capture; incomplete sections limit conclusions.
+3. **If nothing exists, inspect external termination evidence.** On Linux, use available
+   kernel/cgroup/orchestrator records, including `dmesg` or `journalctl -k`, to distinguish
+   an OOM kill from other causes before assuming an application bug.
+4. **If a new core is needed and a target remains available, use a real capture method** —
+   on Linux, `gcore`, GDB `generate-core-file`, or an authorized deliberate fatal signal.
+   Know which stops temporarily, which terminates, how `core_pattern` routes output, and
+   what `coredump_filter` omits.
+5. **Analyse a usable core with the matching build.** Use the archived `jhsdb` and binaries
+   that match the target; add GDB when native registers/memory can resolve the question.
 6. **Name the gaps in the evidence.** Unmounted virtual threads appear in neither
    `jstack` nor `jhsdb jstack`; say so rather than concluding from their absence.
 7. **Size from measurement, not a rule of thumb.** Before concluding "the container was
@@ -93,9 +99,9 @@ missing scope. A redundant replica alone is not authorization or proof of safe d
   `coredump_filter`, compression and retention. Worst-case planning approaches heap plus
   native mappings, but core size is not a fixed `-Xmx + constant` formula.
 - Set `-XX:ErrorFile=` to a writable, persistent path — not a container's ephemeral working
-  directory — and exclude `hs_err_pid*.log` from log rotation. It is the most valuable
-  artefact of a crash and the most commonly deleted. Where no persistent path exists,
-  `-XX:+ErrorFileToStderr` (or `ErrorFileToStdout`) writes the whole report to the
+  directory — and preserve `hs_err_pid*.log` under incident retention rather than generic
+  log rotation. Where no persistent path exists,
+  `-XX:+ErrorFileToStderr` (or `ErrorFileToStdout`) routes fatal-report output to the
   stream the log pipeline already captures, so a pod that is replaced seconds after the
   crash can leave hs_err in the log store if capture, delivery and retention complete; test
   truncation/loss limits in that pipeline rather than assuming the full report survived.

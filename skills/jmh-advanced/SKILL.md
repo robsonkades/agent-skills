@@ -38,6 +38,14 @@ this is not permission to upgrade
 the target toolchain. Preserve existing project compatibility. When measurement or profiler
 evidence is unavailable, return the experiment and missing checks, not a claimed winner.
 
+Start with the decision being requested and reuse applicable commands, generated harness code,
+raw fork results and diagnostic artifacts already available. A version-matched annotation or
+configuration question can finish with a supported explanation or correction. For an experiment,
+select the factors below that can change its conclusion; add a run or profiler only to resolve a
+material gap. Ask for missing context only when it changes that choice. Adequate existing evidence
+may support retaining the design; unresolved mechanisms may require an inconclusive result and
+one bounded next check rather than a complete profiler, JVM or production matrix.
+
 ```text
 hypothesis and competing mechanisms:
 state ownership and sharing graph:
@@ -241,14 +249,17 @@ confounded state improve precision around the wrong mixture.
 
 ## Definition of done
 
+Apply these checks to the experiment and claims actually in scope. A design records planned
+checks separately from executed results; a narrow API explanation does not require measurements.
+
 - [ ] State topology, actor mix, success counters, mutation, and invariants are explicit.
 - [ ] Parameter matrix is feasible and interaction/seed strategy justified.
 - [ ] Lifecycle/reset and environmental controls match the estimand.
 - [ ] Fork/block/randomization and practical effect design are documented.
 - [ ] Profiler/counter support, adequacy, overhead, and artifact integrity are validated.
 - [ ] Diagnostic and decision runs are separated or combined with calibrated justification.
-- [ ] Clusters, drift, and profiler sensitivity are explained, not averaged away.
-- [ ] The claim is bounded and handed to the correct production/load/concurrency validation.
+- [ ] Clusters, drift, and profiler sensitivity are explained or remain explicit limits on the conclusion, not averaged away.
+- [ ] The claim is bounded; production/load/concurrency claims have the corresponding validation or are marked unverified and handed off.
 
 ## References
 

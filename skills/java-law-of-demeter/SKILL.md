@@ -35,13 +35,14 @@ link and is often worse than the chain.
    expose structure as contract, so walking them is intentional schema coupling rather than
    encapsulation leakage. The suspect case walks _distinct collaborators' private composition_. Read
    `references/detection.md` when the classification is not obvious.
-2. **Ask what the caller does with the result.** Decides or mutates on it → move the decision to
-   the module that owns the policy and required data, which is not necessarily the data class.
-   The placement decision is java-tell-dont-ask's. Only reads a value → consider a stable
+2. **Ask what the caller does with the result.** If it decides or mutates, check whether it already
+   owns that policy and authorized operation. Move only a misplaced decision to its actual owner,
+   which is not necessarily the data class. The placement decision is java-tell-dont-ask's.
+   Only reads a value → consider a stable
    projection/snapshot or narrowing what is passed.
 3. **Price the fix against the chain.** Count the forwarding methods it would add and the
-   classes it would touch. A `getCustomerCity()` on `Order` that exists to shorten one call
-   site is a Middle Man, not an improvement.
+   classes it would touch. A `getCustomerCity()` on `Order` added solely to shorten a call
+   provides no boundary benefit; one caller can still justify a stable owned query.
 4. **Treat boundary navigation deliberately.** Mappers, serialisers, reports and assertions
    may legitimately publish/inspect shape; still check invariants, nulls, consistency and I/O.
 5. **Verify** with caller contract tests and a representative intermediate-shape change.
@@ -67,19 +68,21 @@ link and is often worse than the chain.
   still leak an invariant or trigger unwanted I/O.
 - Getters on a record you own, read locally for data, are not violations. Query, reporting
   and mapping code navigates structure legitimately.
-- Chains that mix navigation with mutation (`getX().getY().setZ(...)`) are the worst case:
-  both coupling and a decision made outside the owner — hand the decision part to
-  java-tell-dont-ask.
+- Chains that mix navigation with mutation (`getX().getY().setZ(...)`) warrant checking both
+  exposed composition and invariant enforcement. A published collaborator's authorized command
+  may be legitimate; a raw setter bypassing the owner is a different contract. Hand misplaced
+  decision/enforcement work to java-tell-dont-ask.
 
 ## Runtime consequences
 
 - A harmless-looking chain over ORM entities can trigger lazy loads, N+1 queries, a closed-
-  session failure or inconsistent reads between hops. That is evidence of a leaky persistence
-  boundary; diagnose fetch/round-trip cost with `orm-fetch-and-batching-performance`, not by
-  adding getters.
-- Repeated remote/proxy navigation is worse: each hop can be a network call with independent
-  timeout/failure semantics. Replace it with a coarse-grained operation or projection owned by
-  the remote boundary.
+  session failure or inconsistent reads between hops. Inspect available mapping, initialization,
+  transaction and query evidence before concluding which occurs or violates the intended boundary.
+  Diagnose observed fetch/round-trip cost with `orm-fetch-and-batching-performance`, not by adding getters.
+- Distinguish remote/proxy dispatch from local access to an already returned value. When repeated
+  remote calls cause material cost or failure exposure, compare a coarse-grained operation or
+  projection with the existing contract. Preserve required data, authorization, freshness and
+  partial-failure semantics; a shorter chain alone proves neither fewer calls nor a better boundary.
 - Narrowing to several scalar parameters can destroy snapshot consistency and create long
   parameter lists. Prefer one immutable purpose-specific projection when values must be observed
   together; copy mutable collections at the boundary.

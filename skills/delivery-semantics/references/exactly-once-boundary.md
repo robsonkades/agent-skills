@@ -52,6 +52,8 @@ production loop also needs these state transitions, not a catch-and-continue wra
   email, a file. `abortTransaction()` marks records aborted for committed-only readers;
   it does not physically erase them or undo a charge.
 - **A second Kafka cluster.** MirrorMaker-style replication is a separate producer.
+- **The same business intent at distinct input offsets.** Both records may commit normally;
+  Kafka transactions do not discover application-level identity or collapse those duplicates.
 - **Downstream consumers reading `read_uncommitted`.** They
   observe aborted records, and the guarantee ends at their first read.
 - **Reproducibility.** A nondeterministic transformation can produce a different value after
@@ -72,8 +74,8 @@ operational failure modes that need metrics and restart tests.
 Use when the side effect is "publish a message" and the source of truth is a database.
 
 Write the business row and the outbox row in **one database transaction**; a separate relay
-reads the outbox and publishes. The dual-write problem disappears because there is one
-commit.
+reads the outbox and publishes. Business state and publication intent commit atomically;
+broker publication remains a separate step that requires relay recovery and retention.
 
 The `@Transactional` snippets below assume a framework-managed invocation whose transaction
 manager enlists both repositories in the same database transaction. Verify propagation,
@@ -88,11 +90,12 @@ public void placeOrder(Order order) {
 }
 ```
 
-- The relay is **at-least-once** by construction: it can publish and die before marking the
-  row sent. Consumers must be repeat-safe — `idempotency`.
+- Publishing before marking the row sent permits duplicates if the relay dies between them.
+  At-least-once publication also depends on retained outbox state and eventual successful
+  relay recovery; consumers must be repeat-safe — `idempotency`.
 - Multiple relays require an atomic claim/lease, partition ownership or CDC protocol. A
-  naive `SELECT` followed by update races; even a correct relay remains at-least-once if it
-  publishes before marking the row complete.
+  naive `SELECT` followed by update races; even a correct claim protocol does not make
+  publication before the sent marker duplicate-free.
 - SQL `ORDER BY` alone does not guarantee publication order: concurrent relays, retries and
   partition routing can reorder messages. Per-key sequencing is
   `message-ordering-and-partitioning`, not a property the outbox grants.
@@ -117,7 +120,7 @@ The dedup store's real design problems — key choice, scope, TTL, the concurren
 race, and replaying the stored response — are `idempotency`. What belongs here is only the
 boundary: this reduces exactly-once _processing_ to at-least-once _delivery_ plus a
 deduplicated _application_, which is `effectively-once`. It is not exactly-once delivery,
-and the message is still transmitted more than once.
+and the message may still be transmitted more than once.
 
 ## Decision block
 
@@ -137,23 +140,30 @@ Prefer the outbox instead when:
 - the source of truth is a database and the message is a consequence of a row
 
 Prefer at-least-once plus an idempotent consumer instead when:
-- the side effect is the consumer's own write to a store it can key on
-- any of the transaction conditions above fails
+- the effect is naturally repeat-safe, or stable identity and an atomic dedup/effect write
+  (or a verified provider contract) protect the required outcome
+- that simpler contract meets the need without atomic Kafka output and offsets
+
+If neither covers the required outcome:
+- identify the missing effect/identity/recovery capability; consider reconciliation or
+  explicitly accepted loss instead of claiming that a local marker protects a remote effect
 ```
 
 ## Evidence and failure matrix
 
-| Cut point                                  | Expected recovery evidence                                            |
-| ------------------------------------------ | --------------------------------------------------------------------- |
-| Before external effect                     | Input is retried; no effect exists                                    |
-| Effect committed, local response lost      | Retry occurs; idempotency key or reconciliation finds one effect      |
-| Kafka output sent, transaction aborted     | `read_committed` sees no output; input offset is not advanced         |
-| Kafka transaction commit response lost     | client resolves transaction/fencing state; no external effect assumed |
-| Outbox row committed, relay not run        | scanner/CDC eventually publishes                                      |
-| Relay published, sent marker not committed | publish repeats; downstream dedup invariant still holds               |
+| Cut point                                  | Expected recovery evidence                                                                                 |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Before external effect in this attempt     | This attempt has no effect; retain any earlier unknown outcome; replay depends on progress/recovery policy |
+| Effect committed, local response lost      | Resolve through a verified retry/status contract; without one, the caller's outcome remains unknown        |
+| Effect confirmed, offset response lost     | Effect stays known; resolve progress separately before claiming replay                                     |
+| Kafka output sent, transaction aborted     | `read_committed` hides this transaction's output; this transaction does not advance input progress         |
+| Kafka transaction commit response lost     | client resolves transaction/fencing state; no external effect assumed                                      |
+| Outbox row committed, relay not run        | Retained intent is published after successful scanner/CDC recovery                                         |
+| Relay published, sent marker not committed | Publication may repeat; the downstream outcome invariant still holds                                       |
 
-Test each relevant cut point with broker restarts, network ambiguity, partition revocation
-and process death. Assert the business invariant, not merely record counts: duplicate log
+Exercise representative cuts for the actual path in a bounded disposable fixture; include
+relevant broker restarts, network ambiguity, partition revocation or process death. Record
+what ran and which recovery assumptions remain untested. Assert the business invariant, not merely record counts: duplicate log
 records can be acceptable while duplicate charges are not.
 
 ## Source

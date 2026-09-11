@@ -110,9 +110,13 @@ primaryRepo.updateBalance(id, balance - amount); // lost update, no error
 //    TTL starts at fill time and does not bound the age of the replica's source data.
 ```
 
-Rule for all three: route a decision read to the authoritative write transaction when supported,
-and always enforce the invariant with a conditional write/constraint/version predicate. A fresh
-read alone still races another writer.
+For mutable decision state, authoritative transaction reads can avoid some stale proposals, but
+the invariant still needs a conditional write/constraint/version predicate. A replica-sourced
+proposal can be safe when the authority atomically validates every relevant condition and the
+caller handles rejection before any side effect. A fresh read alone still races another writer.
+For caches, check the endpoint's actual version/freshness and return-eligibility contract rather
+than banning caching: unchanged bytes can become inaccessible through mutable authorization,
+deletion or retention rules. Verify their enforcement where the endpoint requires them.
 
 For proxy acquisition semantics, consult the
 [Spring LazyConnectionDataSourceProxy API](https://docs.spring.io/spring-framework/docs/7.0.x/javadoc-api/org/springframework/jdbc/datasource/LazyConnectionDataSourceProxy.html)

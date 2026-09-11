@@ -29,13 +29,13 @@ unknown outcome that the caller cannot classify from its own view alone.
 
 ## The five options compared
 
-|                           | Atomicity                                                               | Isolation                                                                 | Blocking behaviour                                                                                  | Operational cost                                                                                          | Failure recovery                                                                       |
-| ------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| **One local transaction** | Atomic commit over enlisted writes                                      | The database's chosen isolation level                                     | Locks/versions held for the transaction duration                                                    | Lowest when one owner/store is valid                                                                      | Database recovery plus application retry for ambiguous commit                          |
-| **XA / 2PC**              | Full across the enlisted resource managers                              | Each resource manager's own                                               | **In-doubt participants hold locks until the coordinator decides**; a coordinator crash blocks them | A transaction manager with a durable recovery log, plus a runbook for resolving in-doubt branches by hand | Coordinator replays its log on restart; unresolved branches need an operator           |
-| **Transactional outbox**  | Full over the database write plus the _intent_ to publish               | Full for the database write; the message is visible later                 | None beyond the local transaction                                                                   | A relay process, its lag metric, and a claim column if it is not singleton                                | Relay resumes from unsent rows; delivery is at-least-once (`delivery-semantics`)       |
-| **Orchestrated saga**     | No atomic commit; drives declared completed/compensated/repair outcomes | No automatic global isolation; local isolation and semantic guards remain | No database lock should span remote steps; semantic reservations may persist                        | Replicated coordinator, durable/versioned saga state and workers                                          | Claims one instance, resolves unknowns, then advances or compensates                   |
-| **Choreographed saga**    | No atomic commit; same semantic obligation                              | No automatic global isolation                                             | Event dependencies can wait indefinitely without deadlines                                          | Flow, schemas and recovery logic distributed across participants                                          | Requires correlated durable events/status; a separate projection may expose whole flow |
+|                           | Atomicity                                                                  | Isolation                                                                 | Blocking behaviour                                                                                 | Operational cost                                                                                          | Failure recovery                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **One local transaction** | Atomic commit over enlisted writes                                         | The database's chosen isolation level                                     | Locks/versions held for the transaction duration                                                   | Lowest when one owner/store is valid                                                                      | Database recovery plus application retry for ambiguous commit                                    |
+| **XA / 2PC**              | Atomic protocol across enlisted resources; heuristic outcomes can break it | Each resource manager's own                                               | Prepared branches retain resource-specific locks/reservations until a recoverable decision arrives | A transaction manager with a durable recovery log, plus a runbook for resolving in-doubt branches by hand | Coordinator recovery resolves prepared branches; heuristic/missing decisions need reconciliation |
+| **Transactional outbox**  | Full over the database write plus the _intent_ to publish                  | The database's chosen isolation; the message is visible later             | None beyond the local transaction                                                                  | A relay process, its lag metric, and a claim column if it is not singleton                                | Relay resumes from unsent rows; delivery is at-least-once (`delivery-semantics`)                 |
+| **Orchestrated saga**     | No atomic commit; drives declared completed/compensated/repair outcomes    | No automatic global isolation; local isolation and semantic guards remain | No database lock should span remote steps; semantic reservations may persist                       | Replicated coordinator, durable/versioned saga state and workers                                          | Claims one instance, resolves unknowns, then advances or compensates                             |
+| **Choreographed saga**    | No atomic commit; same semantic obligation                                 | No automatic global isolation                                             | Event dependencies can wait indefinitely without deadlines                                         | Flow, schemas and recovery logic distributed across participants                                          | Requires correlated durable events/status; a separate projection may expose whole flow           |
 
 The deciding columns are the atomic boundary, observable intermediate state, blocking during
 failure, and who owns recovery. Local saga steps still have isolation; what is absent is one
@@ -52,10 +52,10 @@ Check these before choosing it, because each one has ended an XA rollout:
 
 - Both drivers actually implement `XAResource` and the vendor supports recovery, not just
   enlistment.
-- The transaction log lives somewhere that survives the pod: an emptyDir or container
-  filesystem means an in-doubt branch can never be resolved automatically.
-- The same transaction-manager identity comes back after a restart, so it can recover its
-  own branches; a randomly named replica cannot.
+- The recovery process can access the durable decision log after a pod is lost. Losing its
+  sole copy on an emptyDir or ephemeral filesystem prevents automatic decision recovery.
+- Recovery recognizes the original manager's branches under the provider's identity/ownership
+  rules. Verify any supported takeover; starting an unrelated replica does not establish recovery.
 - Someone can list and resolve in-doubt transactions in both resources, and has done it once
   in a drill.
 
@@ -92,7 +92,8 @@ Accept with choreography that:
 
 ## Anti-patterns, as shapes
 
-- `@Transactional` on a method that also calls a broker or an HTTP client — the dual write.
+- `@Transactional` on a method that also calls an unenlisted broker or HTTP participant —
+  inspect actual enlistment before calling the method shape a dual-write defect.
 - A saga step that calls `orderRepository.delete(id)` as a "compensation" for a step another
   service committed: deleting your own row does not un-reserve their inventory.
 - A compensation implemented as `try { … } catch (Exception e) { log.error(…) }`. The
@@ -108,3 +109,6 @@ Accept with choreography that:
 
 Source: [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html);
 inspect the project's resolved framework version and effective overrides.
+For enlisted branches, read-only votes and heuristic recovery states, see the
+[XAResource contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.transaction.xa/javax/transaction/xa/XAResource.html)
+and Jakarta Transactions 2.0 section 3.4.8. This reference does not require upgrading the project JDK.

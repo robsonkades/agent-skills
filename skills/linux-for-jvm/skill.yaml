@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: linux-for-jvm
-version: 1.3.1
+version: 1.3.2
 description: >-
   The Linux side of a JVM incident: RSS versus virtual memory, page faults and swap,
   AlwaysPreTouch, transparent huge pages, cgroup CPU throttling, the two OOM killers,
@@ -46,7 +46,11 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - container-awareness
   - cpu-cache-and-numa
+  - ebpf-for-jvm
+  - gc-fundamentals
+  - tcp-tuning
 
 capabilities:
   - reads-source

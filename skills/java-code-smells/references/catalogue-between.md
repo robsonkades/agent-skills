@@ -22,9 +22,9 @@ live relative to the data they concern.
   every time.
 - **Detect:** change history, not code shape: recurring co-change sets in `git log`.
   Ask "what did the last three such changes touch?"
-- **Not it when:** the fan-out is one mechanical registration point per layer (a new
-  case, a new adapter) and each edit is compiler-guided — a sealed hierarchy makes the
-  compiler enumerate exactly these sites, which is fan-out made safe.
+- **Not it when:** the fan-out is intentional registration per layer and each edit is
+  adequately checked. Variant-enumerating switches without catch-alls expose missing cases
+  on recompilation; sealing alone does not verify registrations, old binaries or runtime wiring.
 - **Fix:** Move Method / Move Field to gather the scattered concept; Introduce
   Factory/Strategy so new variants register in one place.
 
@@ -94,8 +94,8 @@ live relative to the data they concern.
   finding them all.
 - **Detect:** two or more switches over the same discriminator in different classes;
   a `default` arm doing "nothing" so new variants pass silently.
-- **Not it when:** a single exhaustive switch over a sealed type or enum with no
-  `default` — the compiler finds every site when a variant is added. See
+- **Not it when:** a cohesive exhaustive switch over a sealed type or enum — variants
+  enumerated without catch-alls expose missing cases on recompilation. See
   `modern-java.md` before flagging any switch.
 - **Fix:** Replace Conditional with Polymorphism, or with sealed + exhaustive switch —
   the choice between them is java-refactoring's decision table.
@@ -163,4 +163,6 @@ live relative to the data they concern.
   value — or when orchestration policy properly belongs to an application/domain service. An
   anemic object is a smell only when misplaced behavior and unenforced invariants are evidenced.
 - **Fix:** Move Function into it, Encapsulate Collection, Replace Derived Variable with
-  Query. If it should stay data, make it a record and stop treating it as a domain object.
+  Query when that type should own the behavior. Retain intentional data representations;
+  a domain value can be a record, and a projection may need its existing class/API/mapping
+  contract. Neither role mandates a representation change.

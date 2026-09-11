@@ -1,5 +1,9 @@
 # Validation — `architecture-coupling-and-quanta`
 
+> These are historical gate verdicts for earlier content. Their counts and PASS labels
+> do not verify version 1.1.2 or establish behavioral improvement. Current checks are
+> recorded in [the catalog review](../../skill-validation/catalog-review-2026-09-09.md).
+
 **VERDICT (iteration 4, final): PASS — 0 BLOCKER, 0 MAJOR, 0 MINOR, 0 NIT.**
 
 _Iteration 3: FAIL — 1 MAJOR, 1 MINOR. Iteration 2: PASS (superseded by Phase 4). Iteration 1: FAIL —

@@ -18,9 +18,10 @@ policy.
 - Genuinely trivial mechanics: one `toString`, one arithmetic expression. Extracting
   `subtract(fee)` to `netOf(gross, fee)` adds a hop and removes nothing.
 
-**When not to apply.** Code with a single reader-path and a short life: test bodies,
-one-off migration scripts, `main` in a tool. Test methods in particular _should_ read as
-given/when/then mechanics; extracting them into helpers hides what the test asserts.
+**When not to apply.** A short test body, one-off migration or tool entrypoint may be
+clearest as one reader-path. Keep the test's action and assertions visible; a named helper
+for meaningful shared setup can still reduce distraction. Apply the actual project's
+conventions and lifetime, not a blanket prohibition on test helpers.
 
 ## Temporal coupling
 
@@ -33,8 +34,8 @@ given/when/then mechanics; extracting them into helpers hides what the test asse
 - Javadoc or comments saying "must be called after/before X".
 - A `reset()`/`clear()` method whose only purpose is making an object reusable.
 
-**Fix directions**, in order of preference: make the first step a constructor or static
-factory so an instance _is_ the completed first step; return the intermediate state from
+**Fix directions**, when the order is accidental: make the first step a constructor or static
+factory if construction legitimately owns that work; return the intermediate state from
 `a()` and take it as a parameter in `b()`; encode phases as distinct types
 (`UnvalidatedOrder` → `ValidatedOrder`, records make this cheap); merge the methods when
 callers never legitimately separate them.
@@ -53,21 +54,22 @@ callers never legitimately separate them.
   does not enforce safety. Do not replace a useful builder with a 9-argument constructor.
 
 **When not to apply.** When the ordered API is public and published, re-shaping it is API
-evolution with compatibility costs (java-api-design), not an internal cleanup. Inside the
-module, fix it; at the boundary, document and deprecate first.
+evolution with compatibility costs (java-api-design), not an internal cleanup. Internal
+methods may also implement framework or resource protocols. Keep adequate lifecycles;
+when a change is justified, plan compatibility and any needed deprecation before removal.
 
 ## Hidden dependencies
 
 **Detect.** Ambient reads inside domain logic: `LocalDate.now()`, `Instant.now()`,
 `Locale.getDefault()`, `TimeZone.getDefault()`, `Math.random()`, static config holders,
-system properties, singletons reached through static getters. The test-side symptom is
-decisive: a test that needs to set a system property, freeze a static, or sleep is
-witnessing a hidden dependency.
+system properties, singletons reached through static getters. A test that sets a system
+property, freezes a static, or sleeps may reveal a hidden input; establish whether this
+causes isolation, reproducibility or maintenance problems before prescribing a seam.
 
-**Fix.** Take the dependency as a parameter at the boundary — `Clock` (then
+**Fix when control is needed.** Take the dependency as a parameter at a suitable boundary — `Clock` (then
 `LocalDate.now(clock)`), `Locale`, `RandomGenerator`, a config value rather than the
-config source. Only the composition root and the outermost adapter layer touch the
-ambient versions. Preserve the time zone and number/timing of samples: replacing repeated
+config source. Resolve ambient inputs where their ownership is clear; avoid passing an
+unused dependency through unrelated layers. Preserve the time zone and number/timing of samples: replacing repeated
 time reads with one boundary snapshot changes semantics if the operation intentionally
 observes elapsed time or a date rollover. Retain a clock for that contract.
 
@@ -83,27 +85,31 @@ observes elapsed time or a date rollover. Retain a clock for that contract.
   not merely because every dependency could theoretically be abstracted.
 
 **When not to apply.** Threading a `Clock` through fifteen call layers to reach one
-`now()` is worse than the disease if nothing between them uses it — restructure so time
-is sampled once at the boundary and the _value_ is passed, rather than plumbing the
-clock. If neither is practical this sprint, a package-private seam plus a TODO beats a
-half-threaded parameter that some paths ignore.
+`now()` adds cost if nothing between them uses it. For a snapshot contract, sample at the
+boundary and pass the _value_; for repeated observations, retain a clock at the component
+that needs it. An existing adequate seam may suffice. A partial migration that silently
+leaves some paths uncontrolled does not establish reproducibility.
 
 ## The fragmentation limit (when NOT to split)
 
-Splitting stops paying when any of these holds:
+These signals suggest that splitting may cost more than it saves:
 
-- The fragment has one caller and needs fields or 3+ parameters to share state with it —
-  the signature is wider than the body.
+- The fragment has one caller and needs broad shared state just to perform one small
+  step — investigate its purpose rather than rejecting a parameter count.
 - The fragment's name would restate its body (`addToTotal` for `total = total.add(x)`).
 - Understanding any fragment requires reading its caller anyway.
 - The pieces would sit at the _same_ level as the caller — you are paginating, not
   layering.
 
-The over-fragmented example in `worked-examples.md` shows the merge. The honest metric is
+Check whether the boundary serves a real policy, extension or lifecycle contract before
+merging. The over-fragmented example in `worked-examples.md` shows the merge. The honest metric is
 concepts-in-flight for the reader, not method length; a linear 30-line method at one level
 is often the most readable form a computation has.
 
 ## Diagnostic sequence
+
+Use this sequence to identify candidates, then check the exceptions and affected contracts
+above; matching a signal is not itself a review finding.
 
 ```text
 Hard to understand

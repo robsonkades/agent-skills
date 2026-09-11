@@ -29,6 +29,10 @@ list; do not rely on one remembered precedence table across deployment wrappers.
 
 ## Triage
 
+Follow the branches needed to resolve the reported symptom. Supplied effective configuration,
+captures or source evidence may already answer a narrow question; mark absent evidence as
+unknown without forcing an unrelated live change or complete cost/termination campaign.
+
 ```text
 No/incorrect unified log
   -> pin VM.version and capture stdout+stderr

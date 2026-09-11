@@ -2,7 +2,7 @@
 name: task-queues-and-competing-consumers
 description: >
   Distributing work to a pool of interchangeable workers through a queue: the lease and
-  visibility-timeout model, and why an expired lease duplicates work instead of failing it;
+  visibility-timeout model, and why an expired lease can duplicate work instead of failing it;
   sizing the timeout from processing plus prefetch wait; heartbeats and their failure mode;
   admission and retention bounds; priority starvation; and age, backlog, arrival and drain
   rate as autoscaling signals. Use when two workers process one message although nothing
@@ -27,16 +27,23 @@ prefetch, task size, priority and dispatch policy determine actual balance.
 The failure this prevents is silent double-execution. In an SQS-style visibility model, receiving
 does not remove a message; it hides it for a bounded time, and when that time expires it becomes visible
 again for another worker. If the first worker is still running — slow dependency, long GC
-pause, a batch that grew — the message is now being processed twice, concurrently, with
-nothing failing and nothing retrying. **The visibility timeout is a bet on how long the work
-takes, and losing the bet duplicates the work.**
+pause, a batch that grew — another receive can start concurrent processing without an
+application retry or exception. Expiry permits redelivery; a receiver must actually take the
+message for this overlap to occur. **A visibility timeout does not establish exclusive
+execution or one durable effect.**
 
 ## Workflow
 
-Inspect broker/queue type, acknowledgement mode, client/framework and Java versions, prefetch,
+Start with the requested decision: a source-level explanation, an existing design review, or
+a change to intake, leases, effects, recovery or scaling. Use supplied evidence; an adequate
+design can close with no change. Apply the steps and output below only to affected claims.
+A narrow lease explanation need not invent a worker implementation or crash campaign.
+
+Inspect relevant broker/queue type, acknowledgement mode, client/framework and Java versions, prefetch,
 retention and redelivery configuration. RabbitMQ channel acknowledgements and JMS sessions
 are not SQS receipt leases. Preserve the deployed baseline. Missing evidence is unknown;
-deliver the ownership/ack/recovery path, budgets and actual validation. Run crash/requeue
+report the affected ownership/ack/recovery path, assumptions and actual validation. Do not
+infer deployed configuration or recovery guarantees from documentation alone. Run crash/requeue
 experiments only in isolated or already authorized environments.
 
 1. **Run the decision block below**: interchangeable workers and independent items, or explicit
@@ -44,41 +51,51 @@ experiments only in isolated or already authorized environments.
 2. **Measure lease exposure**, not just handler time: prefetch/permit wait + queue client work +
    handler + acknowledgement, under degraded dependencies and pauses. Select an explicit
    premature-redelivery versus crash-recovery objective; there is no universal percentile.
-3. **Pick one of the three responses to lease expiry** and write down which: size from the
-   tail, extend by heartbeat while working, or make the handler repeat-safe (`idempotency`)
-   and accept the overlap. Most systems need the third regardless.
+3. **Choose the effect and recovery contract.** Use repeat-safe effects (`idempotency`),
+   resource-side concurrency guards, or explicitly accepted duplicate effects as appropriate.
+   Sizing from exposure and bounded heartbeats reduce expiry overlap; neither replaces a
+   required effect guarantee. Preserve an adequate existing combination.
 4. **Bound accepted backlog by age, bytes/items, retention and recovery capacity.** If the
    managed broker cannot reject at a depth, enforce admission upstream and specify what the
    producer sees (`rate-limiting-and-load-shedding`).
-5. **Bound intake before delivery**: reserve permits before pulling, or configure broker credit/
-   prefetch and bounded dispatch for push consumers. Handle receive failure and submission rejection
-   without leaking permits or deliveries. The limit is `concurrency-limiting-and-bulkheads`.
-6. **Scale from a signal set.** Age is closest to a latency SLO, but combine it with depth,
-   arrival/drain rate, in-flight saturation and startup delay; broker age can be approximate or
-   reset by redelivery. `references/worker-loop-and-scaling.md` gives the control model.
-7. **Prove it by killing a worker mid-lease** and asserting redelivery, one observable side
-   effect under the declared contract, and no unexplained missing item. Happy paths alone do
-   not exercise recovery; sample fault cases do not prove every failure mode.
+5. **Bound all held work**: reserve permits before pulling, or use supported broker credit,
+   bounded prefetch/dispatch and an equivalent intake limit. Account for running, queued and
+   unresolved receive ownership, including lease time spent waiting locally. Handle receive
+   failure and submission rejection without leaking capacity or deliveries. The limit is
+   `concurrency-limiting-and-bulkheads`.
+6. **Choose a controller for the workload.** One normalized metric can drive scaling when its
+   capacity relationship and guards are established; retain age, rates and saturation for
+   relevant diagnosis and SLO coverage. Broker age can be approximate or reset by redelivery.
+   `references/worker-loop-and-scaling.md` gives the control model.
+7. **Validate the affected failure windows.** For a new crash-recovery claim, a bounded
+   isolated worker failure can test redelivery, the declared effect contract and item
+   reconciliation. Reuse adequate relevant evidence; neither happy paths nor a few fault cases
+   prove every failure mode. State remaining uncertainty instead of requiring unrelated tests.
 
 ## Decision block
 
 ```text
 Use a task queue with competing consumers when:
-- items commute, or ordering is explicitly enforced by a broker group/partition and the
-  worker preserves that lane's ownership
-- the worker is stateless and any worker can take any item
+- items are independent, commute, or use the ordering/concurrency controls their effects need;
+  explicit per-key lanes must preserve ownership through retry and recovery
+- any eligible worker can safely take the item; local caches or owned state are valid when
+  their routing, reconstruction and handoff preserve the effect contract
 - producer and consumer rates differ over time and a bounded buffer absorbs the difference
-- the work is retryable and its side effect can be made repeat-safe
+- the work's retry, duplicate and loss policy fits the delivery contract
 
 Avoid a task queue when:
 - correctness needs an order the queue cannot express or preserve through retry/redelivery;
   FIFO/message-group queues can serialize a key, but head-of-line blocking is the cost
-- the same item must be consumed independently by several subscribers with their own
-  positions, or must be replayable after it succeeded; here an acked message is gone
+- ordinary acknowledged messages must remain historically replayable but no retained log,
+  archive or republication path supplies that requirement
+
+For independent subscribers:
+- a supported topic/exchange with a queue or durable subscription per subscriber can work;
+  where a subscription permits multiple consumers, they share that subscription's work
 
 Prefer a partitioned log instead when:
-- per-key ordering, replay, or several independent consumer groups are required
-  (kafka-consumers-in-java)
+- retained ordered history and independently replayable positions fit the workload
+  (kafka-consumers-in-java); per-key ordering or fanout alone does not require a log
 
 Prefer fenced ownership or resource-side concurrency control when:
 - stale concurrent execution would violate correctness. Neither a queue lease nor leader
@@ -90,10 +107,12 @@ Prefer an in-process executor instead when:
 
 ## Rules
 
-- **A visibility timeout is not a lock.** It bounds how long a message stays hidden; it excludes
-  nobody, and two workers holding one item is the model working as designed. Mutual exclusion
-  needs a fencing token the _resource_ checks (`leader-election`) — a lease alone does not
-  survive a GC pause on its holder.
+- **A visibility timeout is not a lock.** It controls delivery eligibility, not a running
+  handler's authority. Protect effects with the actual resource's transaction, conditional
+  transition or fencing contract as needed (`leader-election` for elected ownership).
+  Fencing rejects old epochs after a newer one is accepted; it neither stops old computation
+  nor deduplicates an earlier committed effect. A failed version check alone does not resolve
+  an ambiguous earlier attempt of the same intent (`idempotency`).
 - Size from the measured **receive-to-ack** distribution plus safety/resolution margin, against
   a stated premature-redelivery error budget and maximum crash-recovery delay. Segment by task
   class; censored timings from already-expired work do not reveal the unseen tail.
@@ -111,17 +130,20 @@ Prefer an in-process executor instead when:
 - Never write `while (true) { var msg = poll(); executor.submit(() -> handle(msg)); }` onto an
   unbounded executor. It drains the broker's queue into the heap: the queue's backpressure
   disappears, depth reads zero while the process is overloaded, and every in-flight lease is on
-  the clock at once. Acquire the permit before `poll`.
+  the clock at once. Acquire capacity before `poll`, or demonstrate an equivalent finite bound
+  covering local buffering, outstanding receives and rejection recovery.
 - Queue depth alone cannot predict wait, while oldest-message-age alone can be stale,
-  approximate, reset by retry, or dominated by one poison item. Use age for SLO alerting and a
-  controller signal set—visible/in-flight depth, arrival/drain rate, service-time distribution,
-  saturation, startup delay and downstream capacity. Validate stability and scale-down hysteresis.
+  approximate, reset by retry, or dominated by one poison item. Use age for SLO alerting and
+  appropriate controller inputs/guards—visible/in-flight depth, arrival/drain rate, service-time
+  distribution, saturation, startup delay and downstream capacity. A single normalized control
+  metric need not consume every diagnostic signal. Validate relevant stability and scale-down behavior.
 - A shared queue can balance work dynamically, but it is not the per-worker-deque work-stealing
   algorithm. Prefetch can strand work behind slow handlers; measure distribution and credit.
   The in-JVM mechanics are `forkjoinpool-and-work-stealing`.
-- Strict priority starves the low class permanently while high-priority arrivals sustain above
-  capacity. Bound the starvation explicitly — age items into a higher class after a stated time
-  in queue, or give each class a weighted share of workers. "Rarely happens" is not a policy.
+- Strict priority can starve the low class while higher-priority eligible work stays backlogged.
+  If the low class has a service guarantee, supply ageing or reserved capacity with bounded
+  competing demand. An explicitly best-effort class may instead accept starvation and expiry;
+  record that policy and observe dropped/expired work. "Rarely happens" is not a policy.
 - On shutdown, stop intake and resolve polls racing with shutdown, then drain or cancel held
   work. Releasing a delivery while its old handler still runs invites overlap; retain resource
   guards/idempotency. Interruption does not prove termination. The grace budget and ordering
@@ -143,7 +165,8 @@ Prefer an in-process executor instead when:
 ## Primary references
 
 - [Amazon SQS visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) — redelivery, in-flight limits, FIFO groups and extension limits.
-- [RabbitMQ consumer acknowledgements](https://www.rabbitmq.com/docs/confirms) — delivery acknowledgement and requeue semantics, which are not identical to SQS visibility.
+- [RabbitMQ 4.2 consumer acknowledgements](https://www.rabbitmq.com/docs/4.2/confirms) — AMQP 0-9-1 delivery acknowledgement and requeue semantics, which are not identical to SQS visibility.
+- [RabbitMQ 4.2 exchanges](https://www.rabbitmq.com/docs/4.2/exchanges) — fanout routes copies to bound destinations; durability and subscription retention remain separate choices.
 - [JMS acknowledgement modes](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1) — session and acknowledgement semantics.
 
 ## References

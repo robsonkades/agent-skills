@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-state
-version: 1.2.1
+version: 1.2.2
 description: >-
   State in modern Java: making an object's behaviour depend on an explicit state, with the
   transitions themselves modelled rather than implied by scattered flags. Covers the intent
@@ -11,7 +11,7 @@ description: >-
   timeouts as transitions in a durable workflow. Use when boolean flags multiply on an entity,
   when a status field is checked in scattered ifs, when an illegal transition reaches production,
   when a workflow must survive a restart, or when two requests transition the same entity
-  concurrently. Does not cover interchangeable algorithms chosen by a caller (gof-strategy), saga
+  concurrently. Does not cover interchangeable algorithms (gof-strategy), saga
   orchestration across services (distributed-transactions-and-sagas, gof-mediator), or optimistic
   locking mechanics (offline-concurrency-control).
 
@@ -46,7 +46,9 @@ suggests:
   - distributed-locks-and-leases
   - distributed-transactions-and-sagas
   - event-driven-architecture
+  - gof-mediator
   - gof-strategy
+  - idempotency
   - java-composition-over-inheritance
   - java-memory-model
   - offline-concurrency-control

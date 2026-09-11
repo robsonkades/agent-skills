@@ -53,7 +53,10 @@ Consequences to accept before shipping it:
   longer come for free. A single mutable value does not: S copies can disagree.
 - **Retries must return to the same bucket.** Randomly choosing again can duplicate an event
   across buckets and defeats per-bucket idempotency. Persist the choice or derive it from a
-  stable operation/entity identifier.
+  stable operation/entity identifier. Stable routing alone does not suppress a duplicate
+  append or increment: preserve the operation's natural or enforced repeat semantics
+  (`idempotency`). A timed-out attempt may already have applied; retain its original layout
+  and outcome evidence when reconciling or retrying across a move.
 - **Salt selectively.** Keep the hot-key list in configuration that can change without a
   deploy, and salt only those keys; the alternative is charging every read in the system the
   fan-out to fix one key.
@@ -73,15 +76,18 @@ Sequence:
    still authoritative. Clients keep reading and writing to the old owner.
 2. **Bulk-copy the partition**, throttled, from a consistent snapshot. Record the snapshot
    position.
-3. **Stream the changes since the snapshot** to the new owner until the lag is small and
-   stable. "Small and stable" is the go/no-go signal — a lag that is not converging means the
-   cut-over will need a longer freeze than planned.
+3. **Stream the changes since the snapshot** and measure backlog, incoming change rate and
+   target apply rate. A stable lag alone is not cutover readiness: budget the final write
+   drain, catch-up, verification and publication within the permitted interruption window.
+   Backlog divided by apply rate estimates catch-up after arrivals stop, under that rate
+   assumption; live catch-up depends on the net apply-minus-arrival rate. Leave headroom for
+   variability and delay cutover if the supported bound does not fit.
 4. **Establish the cutover fence.** Stop admission at the old epoch (or use a store-supported
    atomic ownership transition), drain accepted writes and persist the final change
    position. Clients may observe retryable errors, deadline expiry or latency; a short freeze
    does not guarantee success, so preserve idempotency and remaining deadlines.
-5. **Drain the remaining changes**, verify by comparison (row counts and a checksum over the
-   key range, not a spot check).
+5. **Apply through the final change position**, then verify equivalent state at that cut
+   (row counts and a checksum over the same key range and representation, not a spot check).
 6. **Publish version v+2** with the new owner authoritative. Every commit path validates the
    current ownership epoch; the old owner rejects all mutations for the moved partition,
    including a request carrying a newer map but routed to the wrong endpoint. A paused client
@@ -101,24 +107,30 @@ restartable, idempotent transition.
 ## Throttling and hysteresis
 
 - **Throttle the copy in bytes or rows per second** and treat it as production load against
-  both the source and the target. An unthrottled rebalance to relieve a hot shard is the
-  second incident.
-- **Cap concurrent moves**, and never move more than one replica of the same partition at a
-  time — that is a durability decision disguised as a throughput one.
-- **Automatic rebalancing needs hysteresis or it oscillates.** Three rules, all necessary:
-  trigger only when the skew ratio exceeds the threshold for a sustained window; require a
-  cool-down before the same partition may move again; and require the projected post-move
-  ratio to be better by a margin, not merely better. Without the margin, the balancer chases
-  noise.
+  both the source and the target. An unthrottled rebalance can cause a second incident.
+  After completion or abort, restore temporary throttles according
+  to their owner and the store's supported protocol; do not remove unrelated limits. Kafka
+  4.3's reassignment tool removes its reassignment throttles when `--verify` confirms the
+  reassignment has completed; leaving them behind can throttle ordinary replication.
+  Check the deployed tool/version.
+- **Cap concurrent moves** using the store's supported replica-transition protocol and
+  required healthy-copy/quorum/failure-domain budget. One replica at a time is a conservative
+  policy, not a universal implementation requirement.
+- **Control rebalance churn.** Reuse adequate controller behavior; sustained triggers,
+  cool-downs and a projected improvement margin can prevent chasing noisy skew. Evaluate
+  copy cost and SLO headroom as well as balance, rather than requiring one controller design.
 - **Give the balancer a rate limit on its own decisions**, and an off switch that an operator
-  can reach without a deploy. Every automatic rebalancer eventually makes an incident worse
-  once, and the response time is how long it takes to turn it off.
+  can reach without a deploy. Define safe pause/abort behavior for moves already in progress;
+  stopping new decisions does not settle their ownership transitions.
 
 ## Proving the repair
 
 - Replay the incident's traffic shape — the recorded per-key distribution, not a uniform
-  load — against the repaired system, and assert the max/mean skew ratio stays under
-  tolerance. Uniform traffic alone misses intrinsic popularity skew and cannot establish that its
+  load — against the repaired system when existing evidence is insufficient. Evaluate
+  per-shard headroom and the declared request/SLO/admission contract, including offered,
+  admitted, completed, rejected and timed-out work. A lower max/mean caused by dropping work
+  is not recovery; a tolerable intentionally skewed distribution need not become uniform.
+  Uniform traffic alone misses intrinsic popularity skew and cannot establish that its
   repair works, though it can still reveal placement or capacity imbalance.
 - For the migration path, inject the failure that matters: pause a client between reading the
   shard map and issuing its write, complete the cut-over, then release it. Assert it cannot commit under stale authority: reject it or safely reroute with epoch and
@@ -132,8 +144,11 @@ restartable, idempotent transition.
 
 ## Primary references
 
-- [Apache Kafka operations: partition reassignment throttling](https://kafka.apache.org/documentation/#basic_ops_cluster_expansion)
-- [Amazon DynamoDB adaptive capacity and split-for-heat behavior](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+- [Vitess 22 topology service](https://vitess.io/docs/archive/22.0/reference/features/topology-service/)
+  — distinguishes per-query serving from startup/background discovery and metadata recovery;
+  global and local outage guarantees differ.
+- [Apache Kafka 4.3 operations: partition reassignment throttling and cleanup](https://kafka.apache.org/43/operations/basic-kafka-operations/)
+- [Amazon DynamoDB adaptive capacity and hot-item limits](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/burst-adaptive-capacity.html)
 - [Google Cloud Spanner: schema design and hotspot avoidance](https://cloud.google.com/spanner/docs/schema-design)
 - [DynamoDB random and calculated write sharding](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html)
   — distinguishes full-key queries from directly routed item reads; apply the semantic

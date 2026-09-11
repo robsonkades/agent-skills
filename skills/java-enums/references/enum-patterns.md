@@ -28,18 +28,19 @@ public enum Currency {
 
 Points that generalise:
 
-- The reverse lookup lives in a `static final` map built once in a static initialiser, not in a
-  linear scan over `values()` per call.
-- The lookup returns `Optional` (or throws a domain exception) rather than `null` or
-  `IllegalArgumentException` from `valueOf` — an unknown code from outside the process is an
-  expected input, not a programming error. See java-optional and java-exception-design.
-- Enum constructors run during class initialisation, before the constants exist. A constructor
-  cannot access a static field of its own enum (except compile-time constants), which is why
-  the map is built after the constants, in a static block or via `values()`.
+- This reverse lookup builds a `static final` map after the constants; duplicate codes fail
+  collection instead of silently overwriting an identity. A small, infrequent linear lookup may
+  be adequate; choose by clarity and measured need rather than assuming a map improves performance.
+- Define unknown-code behavior explicitly: `Optional`, a domain exception or an established
+  nullable contract can fit. `valueOf` recognizes names, not the code field. Unexpected external
+  codes need deliberate handling, not accidental coercion; see java-optional and java-exception-design.
+- Constants are constructed before later static fields are initialized. Direct access from an
+  enum constructor to its non-constant static fields is prohibited; indirect helper access can
+  still observe uninitialized state. Build the lookup after constant construction.
 
 ## Behaviour per constant
 
-Three forms, in the order to reach for them:
+Three forms; choose by behavior ownership and the changes the contract must support:
 
 **1. Constant-specific method bodies** — when each constant genuinely behaves differently.
 
@@ -82,21 +83,21 @@ validated money arithmetic.
 
 **3. A `switch` in the caller** — legitimate when the behaviour belongs to the caller rather
 than to the enum: rendering, mapping to a transport code, or applying a policy that the
-enum's own module must not know about. Use a switch expression with no `default` so the
-compiler enforces exhaustiveness:
+enum's own module must not know about. Omit a catch-all when every new constant needs an
+explicit decision on source recompilation:
 
 ```java
 String label = switch (status) {
     case NEW      -> "Novo";
     case SHIPPED  -> "Enviado";
     case CANCELLED-> "Cancelado";
-};   // no default: adding a constant breaks the build here, which is what you want
+};   // recompiling with a newly uncovered constant requires a decision here
 ```
 
-What a `default` costs: with one, a new constant silently takes the fallback path in every
-switch in the codebase, and the bug appears as wrong behaviour rather than as a compile error.
-Prefer no `default` for enums you own; where a fallback genuinely is correct (an unknown value
-from outside), make it explicit and log it.
+A `default` hides missing explicit cases in that switch, but can be the intended behavior for
+future constants. Test that fallback rather than removing it by rule; observe unexpected values
+only as the operational contract warrants. A raw unknown string may fail decoding before any
+switch runs, so boundary decoding needs its own policy.
 
 ## Extensibility through interfaces
 
@@ -117,10 +118,9 @@ static <T extends Enum<T> & Operation> void runAll(Class<T> opType, double x, do
 ```
 
 The limitation is real: implementation _inheritance_ between the enums is impossible, so shared
-logic goes in a helper class or a default method. If the extension set is large and needs
-shared state, the honest answer is that this is no longer an enum — a sealed interface with
-record implementations gives closed extensibility with data, and pattern matching gives the
-exhaustiveness back.
+logic goes in a helper class or a default method. Open plugins or per-instance data may call for
+ordinary interface implementations and a registry. Sealed variants with records fit a deliberately
+closed data-bearing family; size or state alone does not justify closing an existing extension API.
 
 ## EnumSet and EnumMap
 
@@ -137,15 +137,20 @@ applyStyles(EnumSet.of(Style.BOLD, Style.ITALIC));
 - `EnumSet` uses bit vectors and iterates in declaration order. Specific storage layouts
   and comparisons against primitive bit fields depend on the JDK and workload; object and
   wrapper overhead means equivalent total footprint or speed must not be assumed.
+- The bit-field contrast is for a new local API. Preserve published masks and unknown bits when
+  translating an existing protocol; enum declaration positions are not that protocol's bit numbers.
 - Accept `Set<Style>` in the parameter, not `EnumSet<Style>` — callers may hold any set — and
   return an unmodifiable copy: `EnumSet` is mutable and not thread-safe. `Set.copyOf` does
   not promise declaration-order iteration or an `EnumSet` representation. For arbitrary
   possibly empty sets, start with `EnumSet.noneOf(Style.class)`, `addAll(styles)`, then wrap
   the owned copy with `Collections.unmodifiableSet`. `EnumSet.copyOf(emptyHashSet)` throws
   because the element type cannot be inferred; copying an empty `EnumSet` works.
+- `EnumSet` cannot contain null; `EnumMap` cannot contain null keys but permits null values.
+  Preserve or deliberately migrate caller contracts before replacing collections that accept them.
 - `EnumMap` is an array indexed internally by ordinal, wrapped in the `Map` interface. It
-  replaces the "array indexed by `ordinal()`" pattern that breaks whenever a constant is
-  inserted, and its iteration order is declaration order — useful for deterministic output.
+  avoids hand-maintained index mappings, and its iteration order is declaration order. An owned
+  array initialized from the same enum version can also remain correct; compare actual contracts
+  and measured costs before replacing it.
 - Neither is a concurrent collection. Prefer immutable publication; otherwise choose external
   synchronization, copy-on-write, or `ConcurrentHashMap` according to update/read patterns and
   atomic-operation needs.
@@ -164,12 +169,12 @@ public enum OrderState {
 }
 ```
 
-It stays a good fit while the transitions are pure and the state is a single value. It stops
-being one when transitions need side effects, guards over aggregate data, or persistence of
-intermediate steps — at that point the state belongs to a domain object and the enum is just
-its status field. And note the distributed caveat: a state machine held in an enum field is
-per-process. Two replicas processing the same entity concurrently need optimistic locking or a
-lease, not a more careful enum — see offline-concurrency-control and distributed-locks-and-leases.
+Keep per-entity state and resource ownership outside shared enum constants. An enum may still
+describe statuses or transition policy when a domain object supplies guard data or owns effects;
+its presence does not make read-decide-write atomic. Preserve an adequate authoritative conditional
+update/transaction or choose concurrency control for the actual state location. A distributed lease
+is only one option and needs protected-resource enforcement, not merely a careful enum — see
+gof-state, offline-concurrency-control and distributed-locks-and-leases.
 
 ## Performance notes worth knowing, not optimising for
 
@@ -182,4 +187,6 @@ lease, not a more careful enum — see offline-concurrency-control and distribut
   separate compilation still means old bytecode only knew the constants visible when compiled.
 
 Primary references: [EnumSet API and empty-copy behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/EnumSet.html)
+and [EnumMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/EnumMap.html),
+[Enum identity and ordering](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html),
 and [JLS enum members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.9.3).

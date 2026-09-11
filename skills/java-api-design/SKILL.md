@@ -1,7 +1,7 @@
 ---
 name: java-api-design
 description: >
-  Naming and API design for Java code that others call: names carrying domain vocabulary,
+  Java API design from ordinary, advanced and invalid consumer calls: names carrying domain vocabulary,
   method and boolean naming conventions, arity and parameter objects, overload hazards,
   discoverability, public versus internal surface (package-private, JPMS exports), and API
   evolution — binary, source and behavioural compatibility, deprecation, semantic
@@ -24,15 +24,19 @@ accepted on behalf of unknown callers — publish deliberately, evolve deliberat
 ## Workflow
 
 Before proposing code, inspect compiler release/toolchains, dependencies, CI/runtime versions,
-the previous public API and supported consumers. No single authoring baseline is declared;
-the references use Java SE 25, while the record snippets require Java 16+.
+the previous public API and supported consumers. Use Java 25 without preview as the authoring
+default when no project target is specified; the record snippets require Java 16+.
 JPMS and enhanced deprecation require Java 9+, `List.copyOf` Java 10+, and record patterns
 Java 21+ without preview. Adapt to the project's target; do not upgrade it or enable preview.
 If release or consumer evidence is missing, state the gap and keep compatibility claims
 conditional rather than declaring a safe minor release.
 
-1. **Name from the caller's side.** The vocabulary is the caller's domain (`settle`,
-   `authorise`, `refund`), never the implementation (`processData`, `handleRequest`).
+1. **Sketch consumer code before declarations.** Start from existing callers and the requested
+   outcome; write ordinary use, a relevant advanced use, and likely misuse. Check what the
+   caller must know, which choices are required, how failure is handled, and who owns any
+   returned resource. For a small API these can be three short call sites. Resolve material
+   unknowns from project evidence or a focused question; label reversible assumptions.
+   Name from the caller's domain (`settle`, `authorise`, `refund`), not the implementation.
    When choosing or reviewing names, read [references/naming.md](references/naming.md)
    for the heuristics and the false positives.
 2. **Minimise the surface.** Package-private is the default; `public` is the exception
@@ -43,9 +47,14 @@ conditional rather than declaring a safe minor release.
 3. **Shape the signatures.** Parameter count is a signal, not a threshold. Boolean flags,
    transposable same-typed arguments, recurring data clumps, optionality and independent
    evolution often justify a parameter object or split method; a cohesive four-argument
-   operation may be clearer as-is. Constructor
-   ergonomics — when a plain constructor or record suffices, builders, staged
-   construction — are java-fluent-apis' territory.
+   operation may be clearer as-is. Compare only forms that address the observed caller risk:
+   a constructor/record for clear required values; a named factory for distinct creation
+   meanings; a builder or fluent configuration for meaningful optionality; staged construction
+   when preventing invalid sequences earns its extra public types and evolution cost.
+   Compose capabilities when support varies independently; consider a DSL only when callers
+   need a recurring domain language. Keep the simplest form that meets the contract, and state
+   what new caller evidence would change the choice. java-object-construction and
+   java-fluent-apis own factory/builder mechanics; this skill owns the consumer comparison.
 4. **Check the overload set.** Overloads must be interchangeable in behaviour, differing
    only in accepted form. Never overload where boxing, widening or generics make
    resolution surprising — different behaviour gets a different name.
@@ -66,9 +75,10 @@ conditional rather than declaring a safe minor release.
   ownership and concurrency; `List` alone answers none of those.
 - No abbreviations except those established in the caller's domain (`VAT`, `IBAN`,
   `TTL`); `calcAmt` saves four characters and costs every reader a guess.
-- Discoverability is structural: each return type should offer the natural next call, so
-  the IDE's completion list reads as documentation. A method returning `String` or `Map`
-  where a domain type exists throws that thread away.
+- Check discoverability at call sites: names, parameter roles and useful result operations
+  should be apparent without knowing implementation details. A domain type can expose a
+  meaningful contract; a plain `String` or `Map` may be exactly the promised value. Neither
+  wrapping every scalar nor making every operation chainable is a usability requirement.
 - Accept the least-specific abstraction the operation needs and return the most-specific useful
   contract, but do not expose an internal mutable collection. `List.copyOf` creates an
   unmodifiable shallow snapshot and rejects null elements; `Collections.unmodifiableList` is a
@@ -86,16 +96,17 @@ conditional rather than declaring a safe minor release.
   actually intended, plus a Javadoc `@deprecated` naming the replacement or explaining why no
   direct substitute exists. Removal follows the published compatibility window—commonly a major
   version—not merely the annotation.
-- Semantic versioning is a compatibility claim, not a counter: behavioural breaks are
-  breaks — a stricter precondition on an existing method is a major version even though
-  every caller still compiles and links.
+- Under stable Semantic Versioning, narrowing the published input contract requires a major
+  version even when callers still compile and link. Correcting behavior that violated the
+  existing contract is different; inspect that contract and migration impact before classifying it.
 - Which exceptions a method throws is part of its contract — design that surface with
   java-exception-design.
 
 ## References
 
-For a review, deliver the affected declaration and caller evidence, compatibility impact,
-proposed adjustment and focused validation. For an implementation, compile representative
+For a review, deliver representative consumer calls, the affected declaration, compatibility
+impact, selected form and focused validation. Exercise ordinary/advanced use and misuse, including
+resource cleanup or invalid sequences when relevant. For an implementation, compile representative
 callers at the target release; for published changes also run old binaries and relevant
 contract tests. Separate executed checks from proposed checks and unavailable consumer evidence.
 

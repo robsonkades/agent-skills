@@ -34,26 +34,32 @@ for that session. No global linearizability requirement follows from this observ
 
 1. **State the requirement as something a client observes.** "Two users must never both be
    assigned seat 14C." "A user must never see their own write disappear." "A balance may lag
-   by up to five seconds but must never go backwards." No model names yet.
+   by up to five seconds but reads must not regress to an older committed revision." A legitimate
+   debit can reduce the numeric balance; distinguish history monotonicity from that business invariant.
+   No model names yet. Reuse existing requirements and tests before collecting new evidence.
 2. **Ask who observes it.** Requirements that hold only for the session that performed the
    write may need session guarantees. Compare their routing and metadata costs with the
    coordination required by the actual cross-client contract.
 3. **Map each requirement to guarantees and scope**, using
    `references/requirement-to-model.md`: object/key range, session versus all clients, normal
    operation versus partition, and any time bound. Record the cost and fallback.
-4. **Trace the whole read path, not the database.** A linearizable store behind a
-   read-replica router, a CDN, or a cache delivers the weakest link in the chain. The path
-   has a consistency model; the store only has one of its components.
+4. **Trace the whole read path, not the database.** Unchecked replica or mutable-cache reads
+   can weaken a linearizable store's client-visible guarantee. Validate routing, versions and
+   read snapshots; an immutable-version endpoint may have a different contract from a mutable
+   "latest" lookup. Topology alone does not establish the path's guarantees.
 5. **Separate but connect isolation from consistency explicitly.** Decide the transaction isolation
    level for interactions among concurrent transactions, and the distributed model for ordering
    and recency across nodes; a product may bundle these as strict serializability.
-6. **Write a test that fails under the model you rejected.** Stale-read detection with a
+6. **Select or specify a test that distinguishes the viable designs.** Reuse a sufficient existing
+   check; execute the missing integration check when implementing or validating the mechanism.
+   Examples include stale-read detection with a
    deliberately lagged replica, or a partition injected with a network fault. Techniques are
    in `references/read-your-writes-in-java.md`.
 
-Inspect the project's JDK, resolved Spring/driver versions, transaction manager, replication mode,
-commit acknowledgement policy and read routing before proposing implementation details. The Java
-reference contains partial Spring sketches, not a declared runnable Java baseline. When evidence
+Inspect the datastore/version, replication mode, commit acknowledgement policy and actual read
+routing before proposing implementation details. For Java/Spring work, also inspect the project's
+JDK, resolved framework/driver versions and transaction manager. The Java reference contains partial
+Spring sketches, not a declared runnable Java baseline. When evidence
 is absent, state the candidate guarantee and the missing configuration or experiment; do not infer
 semantics from annotations or topology names. Deliver the observable contract, affected path,
 supporting evidence, failure behavior and one test that distinguishes it from a rejected design.
@@ -91,8 +97,14 @@ supporting evidence, failure behavior and one test that distinguishes it from a 
   updates stop and communication/reconciliation resumes. It has no deadline. A numeric requirement
   is bounded staleness/SLA evidence, not plain eventual consistency; measure end-to-end visibility,
   not just transport lag.
-- A cache in front of a strongly consistent store downgrades the path to the cache's own
-  staleness behavior. If the requirement is read-your-writes, use a commit/version token or route
+- A cache serving mutable state without the required validation can weaken the path's recency.
+  Immutable content under an exact version key or correctly validated reads may satisfy the
+  contract; a version field alone does not enforce it, and the "latest version" lookup needs its
+  own freshness policy. Unchanged bytes may cease to be returnable: check mutable authorization,
+  deletion or retention eligibility and verify that the path enforces its required visibility and
+  failure behavior. Preserve immutable caching where the whole endpoint contract permits it;
+  public, perpetually accessible content does not need a synchronous origin check for this concern.
+  If the requirement is read-your-writes, use a commit/version token or route
   to an authoritative path known to include the write; invalidation alone has stale-fill races.
   Cache mechanics are
   `caching-strategies` and `cache-sharding-and-replication`.

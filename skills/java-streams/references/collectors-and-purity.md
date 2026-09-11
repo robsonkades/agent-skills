@@ -11,9 +11,9 @@ orders.stream()
 
 This sequential terminal action is legal, but has two design costs:
 
-- **It is not safe if the stream ever becomes parallel.** `ArrayList` is not thread-safe;
-  adding `.parallel()` produces lost elements or `ArrayIndexOutOfBoundsException`, not an
-  error message about concurrency.
+- **Unsynchronized parallel accumulation is unsafe.** `ArrayList` is not thread-safe;
+  adding `.parallel()` can produce lost elements or exceptions, or appear to work. A passing
+  run does not establish safe shared accumulation.
 - **It hides the result.** The written form of the operation is "collect the SKUs of active
   orders", which the pipeline should state directly:
 
@@ -99,11 +99,12 @@ Summary summary = products.stream().collect(teeing(
 - `groupingBy` does not promise the returned map's type, mutability or serializability; its default
   downstream is `toList()`, which likewise makes no mutability/type guarantee. Supply a map factory
   and downstream collector when either property belongs to the contract.
-- Grouping by two or more attributes is clearer with a record key
-  (`record Key(Category c, Region r)`) than with nested `groupingBy`, which produces a type
-  nobody can read and forces two lookups at every use.
-- `groupingByConcurrent` exists for parallel pipelines and gives up encounter order. Using it
-  sequentially buys nothing.
+- Compare a record key (`record Key(Category c, Region r)`) with nested `groupingBy` from the
+  consumer's access pattern. Flat lookup and hierarchical traversal favor different shapes;
+  preserve a useful existing/public grouped contract.
+- `groupingByConcurrent` is unordered and supports concurrent accumulation. A sequential use
+  can still satisfy a required `ConcurrentMap` result contract; it does not gain parallel
+  accumulation speed. Its grouped lists are not thereby guaranteed thread-safe.
 
 ## reduce versus collect
 
@@ -116,8 +117,8 @@ String joined = names.stream().collect(StringBuilder::new, StringBuilder::append
                               .toString();
 ```
 
-The distinction that matters: `reduce`'s accumulator must be **pure** — it returns a new value
-and mutates nothing. A `reduce` whose accumulator mutates and returns its first argument
+The distinction that matters: `reduce`'s accumulator must be **side-effect free** — it may select
+an existing value without mutating it. A `reduce` whose accumulator mutates and returns its first argument
 can appear to work sequentially but violates the reduction contract: the mutable identity may
 be shared across parallel partial reductions, corrupting or duplicating data. Mutable accumulation is `collect`'s job, and `collect` requires a
 combiner precisely so the parallel case is expressible.
@@ -126,7 +127,10 @@ Two further points:
 
 - `reduce(identity, accumulator)` requires that `identity` really is one:
   `accumulator.apply(identity, x)` must equal `x`. `""` for concatenation, `0` for addition,
-  `BigDecimal.ZERO` for `add` — but `BigDecimal.ZERO` is not an identity for `multiply`.
+  `BigDecimal.ZERO` for numerical addition — but addition uses the maximum operand scale, so
+  adding zero can change the representation of a negative-scale operand. If scale/`equals`
+  belongs to the result contract, define the representation policy too. Zero is not an identity
+  for multiplication.
 - Repeated immutable string concatenation in a reduction can copy an increasing prefix and become
   quadratic. Use `joining()` (or an explicit builder when control is needed), then measure for large
   pipelines rather than relying on JIT rescue.
@@ -135,8 +139,8 @@ Two further points:
 
 A standard stream functional interface cannot declare a checked exception, and an unchecked one
 prevents the terminal operation from producing its normal result; earlier side effects may already
-have happened. When per-element failure is expected — parsing a batch,
-calling a dependency per item — model the outcome instead of throwing:
+have happened. When the batch must continue after per-element failure — parsing a batch or
+calling a dependency per item — an outcome model can preserve both successes and failures:
 
 ```java
 sealed interface Parsed permits Ok, Failed { }
@@ -147,17 +151,27 @@ Map<Boolean, List<Parsed>> byOutcome =
     lines.stream().map(Parser::parse).collect(partitioningBy(p -> p instanceof Ok));
 ```
 
-This keeps both the successes and the failures, which is what a batch job actually needs — a
-single exception that discards 9 999 good records is rarely the requirement. java-exception-design
+This fits a continue-and-report contract. A fail-fast or reject-whole-batch contract may instead
+need an exception and a separate publication boundary; throwing does not roll back prior effects.
+A loop can preserve a checked failure API without wrapper machinery. java-exception-design
 covers the wider choice between exceptions and result types.
 
 ## Review checks
 
-- [ ] No mutation of anything outside the pipeline in `map`/`filter`/`sorted`/`flatMap`.
-- [ ] `forEach` only for output, never for accumulation.
+- [ ] Intermediate callbacks do not carry required effects or interfere with the source;
+      state affecting results follows the operation's contract.
+- [ ] Terminal effects/accumulation follow their ordering, failure and ownership contract;
+      confined sequential mutation is distinguished from unsafe shared parallel mutation.
 - [ ] Every `toMap` states whether duplicates are invalid or defines an explicit merge policy;
       nullable values and keys are accounted for.
 - [ ] `groupingBy` has an explicit downstream whenever the value is not a plain list.
 - [ ] `reduce` accumulators are pure; mutable accumulation uses `collect`.
 - [ ] Collector-produced collections' mutability and iteration order match what callers assume.
 - [ ] Per-element failures are modelled, not thrown, when the batch must continue.
+
+## Primary references
+
+- [Java 21 Stream contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html)
+- [Java 21 Collector laws](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collector.html)
+- [Java 21 Collectors](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html)
+- [Java 21 BigDecimal scale and equality](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html)

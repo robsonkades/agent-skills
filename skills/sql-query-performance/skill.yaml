@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: sql-query-performance
-version: 1.2.1
+version: 1.2.2
 description: >-
   Making one SQL statement fast, from its execution plan rather than a guess: reading estimated
   against actual rows, finding the operation that actually costs, whether a scan is wrong at
@@ -13,8 +13,8 @@ description: >-
   proposed on a low-cardinality column.  Engine-neutral: concept and measurement, not one vendor.
   Not the ORM issuing the statements (orm-fetch-and-batching-performance), pool
   sizing (connection-pool-sizing), the request-path budget (architecture-and-performance),
-  caching the result (caching-strategies), or schema change safety
-  (schema-evolution-and-compatibility).
+  caching the result (caching-strategies), or index portfolio and DDL rollout
+  (database-index-design).
 
 license: Apache-2.0
 
@@ -41,5 +41,8 @@ files:
   - references/
 
 suggests:
+  - architecture-and-performance
   - caching-strategies
+  - connection-pool-sizing
+  - database-index-design
   - orm-fetch-and-batching-performance

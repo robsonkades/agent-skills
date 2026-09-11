@@ -18,7 +18,7 @@ description: >
 
 ## Purpose
 
-Put something in front of an object that controls how it is reached, without the caller knowing.
+Put something in front of an object that controls how it is reached through a compatible consumer contract.
 The four classical kinds differ in what they control: a **virtual** proxy defers creation, a
 **remote** proxy hides a different address space, a **protection** proxy checks permission, a
 **smart reference** adds accounting — reference counting, caching, logging.
@@ -26,6 +26,12 @@ The four classical kinds differ in what they control: a **virtual** proxy defers
 The pattern's risk is inseparable from its purpose. A proxy is a lie told for a good reason, and
 the lie gets expensive when what it conceals is a network, a database round trip, or an
 authorisation decision that the caller could have bypassed.
+
+Start from ordinary consumer calls, a failure path and the required access/lifecycle boundary.
+Reuse existing wiring, proxy-mode, transaction, identity and outcome evidence before asking about
+material gaps. Keep an adequate direct object, explicit lazy accessor or existing proxy. Finish
+with the retained or revised contract, evidence, relevant checks and unresolved limits; distinguish
+proposed tests from executed results.
 
 ## When it is the answer
 
@@ -35,8 +41,8 @@ Creating or loading the subject is expensive and may not be needed
           (Supplier, a load method) when callers can tolerate knowing.
 
 Access must be checked and cannot be bypassed
-        → protection proxy, with the subject unreachable otherwise.
-          If the subject is reachable directly, the proxy is advisory.
+        → protection proxy, with no unchecked route for callers subject to that policy.
+          Authorized infrastructure may have a separate, deliberate access path.
 
 A framework must add behaviour to code it does not own
         → dynamic proxy or bytecode subclass. This is how
@@ -102,6 +108,7 @@ IF a proxied method is called from inside the same object (this.x())
 THEN ordinary Spring proxy-based advice is bypassed, so @Transactional, @Cacheable
      and @Async semantics are not applied at that call. AspectJ weaving and explicit
      programmatic mechanisms differ; verify the configured advice mode
+     and existing outer transaction before changing the required unit of work
      (java-dependency-inversion).
 
 IF the class or method is final, or the method is private
@@ -114,7 +121,7 @@ THEN behavior depends on proxy kind and equality delegation. Prefer interface/se
      contracts; use framework-aware type/annotation utilities or a constrained unwrap
      path only where infrastructure truly needs the target.
 
-IF a virtual proxy initialises lazily
+IF a virtual proxy initialises lazily and is shared across threads
 THEN the target must be safely published. Exactly-once initialization is required only
      when duplicate construction has observable effects or unacceptable cost; otherwise
      benign duplicate creation may be a simpler policy.
@@ -124,9 +131,9 @@ THEN inspect executed statements: it can create N+1, while batch/subselect fetch
      an already-initialized persistence context can change the result
      (orm-behavioral-patterns).
 
-IF a protection proxy guards an object other code can obtain directly
-THEN the check is advisory. Make the subject unreachable or move the
-     check into it.
+IF a caller subject to the protection policy can obtain the target through an unchecked route
+THEN that caller can bypass the guard. Restrict that route or enforce the
+     required check at the protected operation within the actual trust boundary.
 
 IF a lazy proxy escapes the scope that can initialise it
 THEN uninitialized lazy state may fail to load; already initialized values need no session.
@@ -135,11 +142,11 @@ THEN uninitialized lazy state may fail to load; already initialized values need 
 
 ## Cross-cutting checks
 
-- **Concurrency.** A virtual proxy's lazy field needs safe publication — an unguarded `if (target
+- **Concurrency.** A shared virtual proxy's lazy field needs safe publication — an unguarded `if (target
 == null)` may hand another thread a partially constructed object, and two threads may both
   initialise a subject whose creation has side effects. Use a holder, `volatile` with
   double-checked locking done exactly right, or precompute. A proxy that adds `synchronized` also
-  changes the subject's concurrency characteristics for every caller
+  serializes its guarded calls, not unguarded calls through other aliases
   (`java-memory-model`).
 - **Distribution.** This is the pattern most likely to make a distributed system look like a
   local one, and the failure is architectural rather than local: latency per call, retries the
@@ -165,7 +172,7 @@ THEN uninitialized lazy state may fail to load; already initialized values need 
 - [ ] Self-invocation behavior matches the configured proxy/weaving mode
 - [ ] Proxy kind is compatible with final/private/interface constraints where interception is required
 - [ ] Lazy initialization is safely published; duplicate-creation semantics are explicit
-- [ ] A protection proxy's subject cannot be obtained by another route
+- [ ] Callers subject to a protection policy cannot reach the operation through an unchecked route
 - [ ] Identity-sensitive infrastructure uses semantic/framework-aware APIs or a constrained unwrap
 - [ ] Lazy proxy loops are backed by query-count/fetch-plan evidence
 - [ ] Failure paths — denied, unavailable, uninitialised — are covered by tests
@@ -174,7 +181,7 @@ THEN uninitialized lazy state may fail to load; already initialized values need 
 
 - [Kinds and hazards](references/proxy-kinds-and-hazards.md) — the four kinds with what each
   controls, JDK dynamic proxies against bytecode subclassing and what each cannot intercept, the
-  self-invocation hole and its three fixes, JPA lazy proxies and `LazyInitializationException`,
+  self-invocation hole and contract-dependent fixes, JPA lazy proxies and `LazyInitializationException`,
   identity and unwrapping, and Proxy against Decorator in one table. Read when introducing or
   debugging a proxy.
 - [Worked example](references/worked-example.md) — a virtual proxy over an expensive report

@@ -40,15 +40,15 @@ this here?" If so, it belongs in a report, not the diff.
 
 ## Overreach patterns that recur
 
-| Pattern                                      | What it costs                                                            |
-| -------------------------------------------- | ------------------------------------------------------------------------ |
-| Introducing an interface for one class       | Indirection with no substitution (java-dry-kiss-yagni)                   |
-| Adding a config option nobody asked for      | A new supported combination, for ever                                    |
-| Generalising for an imagined second case     | The second case never comes, or does not fit the generalisation          |
-| Rewriting instead of changing                | Discards undocumented behaviour that was load-bearing                    |
-| Adding a dependency to save ten lines        | Supply chain, upgrades, licence, and it must be justified in review      |
-| "Improving" adjacent code in the same commit | Makes the real change unreviewable and unrevertable                      |
-| Adding defensive checks everywhere           | Noise that hides the two checks that matter (java-defensive-programming) |
+| Pattern                                          | What it costs                                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Introducing an interface for an imagined variant | Indirection without a current substitution or ownership need (java-dry-kiss-yagni) |
+| Adding a config option nobody asked for          | A new supported combination, for ever                                              |
+| Generalising for an imagined second case         | The second case never comes, or does not fit the generalisation                    |
+| Rewriting instead of changing                    | Discards undocumented behaviour that was load-bearing                              |
+| Adding a dependency to save ten lines            | Supply chain, upgrades, licence, and it must be justified in review                |
+| "Improving" adjacent code in the same commit     | Makes the real change unreviewable and unrevertable                                |
+| Adding defensive checks everywhere               | Noise that hides the two checks that matter (java-defensive-programming)           |
 
 ## When to stop and ask
 

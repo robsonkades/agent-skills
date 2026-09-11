@@ -219,6 +219,10 @@ probe.
 
 ## Report template
 
+For an existing-artifact review, report what those artifacts support and what remains unknown;
+do not manufacture a new capture or remediation requirement. Include a next experiment only
+when it resolves a material uncertainty within the task and available budget.
+
 ```text
 Question:
 Scope and population:
@@ -231,7 +235,8 @@ Correlated JVM/cgroup/application evidence:
 Interpretation:
 Alternative explanations:
 Overhead and privileges:
-Next discriminating experiment:
+Decision or unresolved limitation:
+Next discriminating evidence, if needed:
 ```
 
 ## Authoritative references

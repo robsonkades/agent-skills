@@ -1,8 +1,8 @@
 ---
 name: hot-partitions-and-rebalancing
 description: >
-  Repairing a partitioned system whose distribution has failed in production: a hash
-  distributes keys uniformly and says nothing about traffic, so one celebrity key or one
+  Repairing a partitioned system whose distribution has failed in production: balanced
+  key placement does not imply balanced traffic, so one celebrity key or one
   large tenant saturates a shard while the map is correct. Covers detection — per-shard
   rate, latency and storage, and the max-to-mean ratio, because an aggregate dashboard hides
   skew; naming the key by top-K sampling; the read-hot, write-hot, storage-hot and
@@ -38,29 +38,35 @@ implementation; inspect the project's toolchain and APIs without assuming upgrad
 
 ## Workflow
 
-1. **Measure distribution, normalized by each shard's capacity**, for accepted and offered
-   request rate, errors, queueing, latency, CPU/IO, storage and replication lag. Use top-share,
+1. **Reuse the workload evidence, SLO and recovery budget.** Retain an adequate topology when
+   the observed skew meets those requirements with headroom; a ratio alone is not a defect.
+   Measure distribution, normalizing comparable demand by each shard's capacity, for offered,
+   admitted and completed request rate, errors, queueing, latency, CPU/IO, storage and
+   replication lag. Use top-share,
    max/median and a heat map; max/mean is only a screening signal. A ratio near 1 can still
    hide a uniformly saturated fleet, rejected work or heterogeneous instances.
-2. **Classify the skew** as read-hot, write-hot, storage-hot or mixed from which ratio is
-   elevated. They have different repairs, and a cache fixes exactly one of them. The
-   signature table is `references/detecting-skew.md`.
-3. **Name the key.** A shard-level metric proves skew exists; it does not say what to fix.
+2. **Classify the supported hypothesis** as read-hot, write-hot, storage-hot or mixed using
+   request mix and resource evidence, not a ratio alone. Ordinary read caching does not
+   remove write throughput requirements. The signature table is `references/detecting-skew.md`.
+3. **Identify contributing keys when skew is workload-driven.** A shard-level metric shows
+   a measured difference; it does not establish a key-level cause.
    Sample requests on the hot shard and count by key, or read the store's own top-key
    facility. Cheap sampling techniques are in `references/detecting-skew.md`.
 4. **Decide whether the key is intrinsically hot or the key choice is wrong.** One celebrity
    key on an otherwise even distribution is a key-level repair. A shard key whose design
-   concentrates traffic — a timestamp, an enum, a tenant id in a power-law fleet — is a key
-   problem, and the repair is a migration (`sharding-and-partitioning`).
+   concentrates traffic — a timestamp, an enum, a tenant id in a power-law fleet — may need a
+   key change (`sharding-and-partitioning`). Compare that migration with adequate isolation,
+   capacity, work reduction or admission controls; preserve atomicity and ordering requirements.
 5. **Apply the narrowest repair that fits the classification**, and price it before shipping:
    salting costs read fan-out, a dedicated shard costs an operational special case, a cache
    costs staleness. `references/repairs-and-rebalancing.md` has each with its condition.
 6. **If the repair is a move, treat the move as a distributed protocol.** Version the shard
    map, define the double-ownership window, throttle the copy, and make a stale client unable
    to write to the former owner.
-7. **Prove steady state and recovery.** Replay the observed power-law key distribution,
-   measure tail amplification and catch-up time, inject stale clients and abort midway.
-   Then add bounded-cardinality per-shard detection and alerts on skew plus saturation.
+7. **Verify the chosen repair and any migration.** Reuse representative checks; where more
+   evidence is needed, replay the observed key/work distribution, measure request outcomes,
+   tail amplification and catch-up time. For moves, inject stale clients and abort midway.
+   Reuse or add bounded-cardinality detection on skew plus saturation; report unexecuted checks.
 
 ## Decision block
 
@@ -87,7 +93,8 @@ Investigate fleet capacity or common-mode failure when:
   a ratio near 1 alone does not establish overload or justify adding capacity
 Change the shard key when:
 - the concentration is structural rather than incidental — the key design guarantees it
-  recurs. Accept that this is a full migration (sharding-and-partitioning)
+  recurs and simpler controls cannot meet the required workload/headroom without breaking
+  the contract. Price the full migration (sharding-and-partitioning)
 ```
 
 ## Rules
@@ -120,14 +127,18 @@ Change the shard key when:
   routing only in a client or proxy is insufficient: paused clients and old owners survive
   cutover. The general fencing mechanism is `distributed-locks-and-leases`.
 - Throttle the migration copy explicitly, in bytes or rows per second, and treat it as
-  production load. An unthrottled rebalance to relieve a hot shard is a second, larger
-  incident caused by the fix.
-- Automatic rebalancing without hysteresis oscillates: it moves a partition off a hot node,
-  the target becomes hot, and it moves back. Require the threshold to be exceeded for a
-  sustained window, cap concurrent moves, and impose a per-partition cool-down.
-- A shard-map read must not depend on the data plane it describes. If clients discover
-  ownership by querying the shards, the hot shard's saturation makes the map unavailable
-  precisely when a rebalance needs it.
+  production load. An unthrottled rebalance can exhaust the remaining headroom and turn
+  the attempted repair into a larger incident.
+- Automatic rebalancing can oscillate: a move makes the target hot and triggers a move back.
+  Use the supported controller's noise/churn controls, such as sustained thresholds,
+  improvement margins and cool-downs, with a budget for concurrent moves.
+- Protect the routing and recovery metadata needed under the failures being repaired.
+  Synchronous ownership discovery through a saturated shard can block traffic and
+  rebalancing. Supported cached routing may keep existing operations serving during a
+  map-service outage while topology changes pause, provided the cache validity and
+  commit-time ownership rules still hold. Define startup/refresh failure behavior and
+  sufficient metadata access for recovery; fail closed when required routing or write
+  authority cannot be established.
 - Latency figures from the hot shard are still latency figures: do not average p99 across
   shards to decide whether the fleet is healthy — that is the error `latency-statistics`
   exists to prevent, and the per-shard decomposition is `tail-latency-analysis`.
@@ -149,8 +160,8 @@ Change the shard key when:
   replayable.
 
 Return the observed distribution and missing evidence, the hypothesis and its falsifier,
-the chosen repair's semantic costs, and the before/after SLO and recovery checks. Keep
-unmeasured benefits conditional.
+the repair or no-change decision and semantic costs, and the available SLO and recovery checks.
+Keep unmeasured benefits conditional.
 
 ## Anti-patterns
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-streams
-version: 1.2.1
+version: 1.2.2
 description: >-
   Stream pipelines as a design decision: when a stream is clearer than a loop and when it is
   not, side-effect-free stages and mutable reduction with collectors, the toMap and
@@ -43,6 +43,18 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - concurrency-diagnostics
+  - concurrency-limiting-and-bulkheads
+  - container-awareness
+  - forkjoinpool-and-work-stealing
+  - java-enums
+  - java-exception-design
+  - java-lambdas-and-functional-interfaces
+  - java-resource-management
+  - jmh-microbenchmarks
+  - structured-concurrency
 
 capabilities:
   - reads-source

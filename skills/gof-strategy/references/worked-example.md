@@ -78,6 +78,12 @@ dependencies and carry metadata through a registration too):
   hide the option.
 - Freight needed injected collaborators and its own tests.
 
+This is an alternative interface for the example, not a compatible mutation of a published
+functional API. Adding independent abstract methods breaks lambda source use; an old implementation
+may still load and serve old calls but fail when a new unimplemented method is invoked. For external
+consumers, compare a separate registration/adapter, meaningful compatible defaults or a versioned
+transition. Metadata and a predicate can accompany the original calculation function.
+
 ```java
 public interface ShippingCost {
     ShippingMethod method();
@@ -147,7 +153,8 @@ Three failures that used to be free shipping are now exceptions:
 - An unknown method — the original bug. `ShippingMethod` is an enum parsed at the boundary, so an
   invalid code from a partner is rejected at the edge with the list of valid values; the map lookup
   is the second line of defence.
-- A method with no strategy — caught at startup, not in production.
+- A required method with no strategy — caught when the registry factory runs. This example requires
+  all enum methods; exercise the required validation before readiness rather than relying on lazy creation.
 - A method that does not apply to this order — a distinct error, because "we do not ship freight to
   that zone" is a different answer from "we do not know that method".
 
@@ -235,3 +242,6 @@ trade to assess here. ShippingMethod remains a closed enum even though bean impl
 the registry does not make the key domain open.
 For four fixed branches that never grew, the original `switch` — with a `default` that threw —
 would have been the better answer.
+
+For public interface evolution, see [JLS 17 interface binary compatibility](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.5.4)
+and [JVM interface invocation](https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.invokeinterface).

@@ -51,8 +51,9 @@
 
 A rename in a published API is a removal plus an addition — a breaking change (see
 compatibility.md). The non-breaking route: add the well-named method, implement the old
-as a delegating `@Deprecated(since, forRemoval = true)` wrapper naming the replacement,
-remove at the next major version. Budget for the old name living for years; that price is
+as a delegating deprecated wrapper naming the replacement. Set `forRemoval = true` only
+when removal is intended, and remove after the published compatibility window, no earlier
+than the next major under stable SemVer. Budget for the old name living for years; that price is
 why names deserve review before first publication, not after.
 
 ## Authoritative references

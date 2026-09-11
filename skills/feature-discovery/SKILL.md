@@ -17,8 +17,8 @@ description: >
 
 ## Purpose
 
-Most feature rework traces to a sentence that entered the plan as a fact and was never true.
-It usually arrived as a reasonable inference — "they will want this exported too", "the
+Feature rework can start with a sentence that entered the plan as a fact but was never established.
+It may arrive as a reasonable inference — "they will want this exported too", "the
 existing queue is obviously the right one" — and by the time it is contradicted, code depends
 on it.
 
@@ -42,6 +42,9 @@ guessing visible, so that later phases can be trusted to know which is which.
    turns out to be the other one — not by how interesting the question is.
 6. **Name the ambiguities separately.** An ambiguity is a phrase with two readings that lead to
    different work. Record both readings; do not choose.
+   Check for consequential omissions in who can trigger or observe the outcome, effects on
+   existing data, and repeated or partly failed operations. Record only plausible in-scope gaps
+   and their consequences; an omitted answer does not authorize adding a requirement.
 7. **State the expected outcome** in observable terms: what a user, an operator or a caller can
    do after this feature exists that they cannot do now. Trace it to stated intent; if missing,
    record the gap rather than inventing a goal or acceptance criterion.
@@ -60,7 +63,7 @@ guessing visible, so that later phases can be trusted to know which is which.
 | **FACT**       | Supplied evidence establishes this scoped proposition | Source and scope       |
 | **ASSUMPTION** | An unverified interpretation is provisionally used    | Basis and falsifier    |
 | **UNKNOWN**    | Available context does not establish an answer        | Consequence and impact |
-| **DECISION**   | A choice was made, and an alternative existed         | Owner, source, status  |
+| **DECISION**   | A choice is proposed or has a recorded outcome        | Owner, source, status  |
 
 Classify each atomic proposition, splitting compound sentences. "The user requested X" can
 be a fact while "X already works in production" remains unknown. A proposed decision stays
@@ -74,9 +77,12 @@ IF a statement came from the user's message
 THEN it is a FACT about the request, sourced to that message —
      but a claim inside it about the system is only a fact once checked.
 
-IF a statement came from the repository
-THEN it is a FACT about the code, sourced to path:line —
-     it is not a fact about what the feature must do.
+IF evidence describes the current implementation
+THEN record the scoped observation; it does not by itself establish what the feature must do.
+
+IF a supplied policy, contract or decision establishes a constraint
+THEN cite its authority, applicable scope and revision. An accepted repository artefact can
+     establish a requirement; its storage location alone does not make it authoritative.
 
 IF the request uses "should", "probably", "I think" or "we usually"
 THEN interpret its role: "the API should reject duplicates" can state desired behaviour;
@@ -115,7 +121,7 @@ Facts              <each with source>
 Assumptions        <each with falsifier>
 Unknowns           <each with impact HIGH | MEDIUM | LOW>
 Decisions          <owner, source and proposed/accepted/superseded status>
-Constraints        <stated by the request; not inferred>
+Constraints        <request or applicable accepted policy/contract/decision; source and scope>
 Dependencies       <systems, teams or work this feature waits on>
 Ambiguities        <phrase, reading A, reading B>
 Expected outcome   <observable>

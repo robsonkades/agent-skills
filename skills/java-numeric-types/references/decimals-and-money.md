@@ -121,9 +121,10 @@ static List<BigInteger> allocateMinorUnits(BigInteger totalUnits, int parts) {
 }
 ```
 
-Any split — instalments, tax across lines, a discount over a basket — needs an allocation
-routine with a stated remainder rule, and a test asserting that the parts sum exactly to the
-whole. This routine assigns extra units, with the total's sign, to the first `extras` positions;
+When parts must conserve a total, state the weights and residual-unit policy; an exact equal
+split may need no remainder handling. The shown routine is for equal-weight shares, not a weighted
+tax or discount policy. Test that the parts sum exactly to the whole and match their recipients.
+This routine assigns extra units, with the total's sign, to the first `extras` positions;
 recipient order must therefore be stable. Bound `parts` and input precision at untrusted
 boundaries to avoid materializing an attacker-sized result. A conservation check should include
 zero, negative totals, fewer units than recipients and an invalid nonpositive part count.
@@ -139,8 +140,9 @@ new BigDecimal("1.0").compareTo(new BigDecimal("1.00"));   // 0     — numerica
   intentionally part of identity. Encode that choice in a domain type rather than alternating
   conventions at call sites.
 - `BigDecimal` in a `HashSet`/`HashMap` key position obeys `equals`, so `1.0` and `1.00` are
-  two entries; in a `TreeSet`/`TreeMap` they are one. Normalising the scale in a wrapper type
-  removes the whole problem, which is another argument for `Money` over raw `BigDecimal`.
+  two entries; with natural ordering in a `TreeSet`/`TreeMap` they are one. Inspect an explicit
+  comparator separately. Normalize only when that matches the required identity; an adequate
+  canonical key or deliberately scale-sensitive representation need not change.
 - `stripTrailingZeros()` can canonicalize numerically equal cohorts, but it may produce a negative
   scale and scientific notation (`new BigDecimal("600").stripTrailingZeros().toString()` is
   `6E+2`). It is therefore not a fixed-scale money policy. `toPlainString()` avoids exponent
@@ -148,26 +150,33 @@ new BigDecimal("1.0").compareTo(new BigDecimal("1.00"));   // 0     — numerica
 
 ## Crossing boundaries
 
-**Database.** `DECIMAL(p, s)` / `NUMERIC(p, s)` with explicit precision and scale; never
-`FLOAT`, `REAL` or `DOUBLE PRECISION` for money. Make the Java policy compatible with the column
+**Database.** Use `DECIMAL(p, s)` / `NUMERIC(p, s)` for decimal amounts, or a suitably ranged
+integral column for an explicit minor-unit contract; neither requires replacing the other when
+the existing design is adequate. Avoid binary floating columns for exact money. Make the Java policy compatible with the column
 scale and verify the driver/database rounding-or-rejection mode—a mismatch need not fail loudly.
-Sum in the database when summing many
-rows, and be aware that a `SUM` of a `DECIMAL` may promote precision.
+Choose database versus application aggregation from the required snapshot, transferred rows and
+actual query cost; database `SUM` precision/range rules depend on the engine and operand type.
+
+For an exact `long` minor-unit boundary, apply the declared scale and use
+`amount.movePointRight(domainScale).longValueExact()` when no rounding is allowed. `longValue()`
+can discard fractional digits and high-order bits; exact conversion rejects fractional or
+out-of-range results. Bound input scale/precision before arithmetic or rendering untrusted values.
 
 **JSON and APIs.** JavaScript's ordinary `JSON.parse` produces Number values: the stored binary
 value of `19.99` is approximate even if its ordinary rendering still prints `19.99`.
 Integers outside the safe range cannot all be distinguished (for example `9007199254740993`
-becomes `9007199254740992`). Serialise
-monetary amounts as strings (`"19.99"`) or as an object `{"amount": "19.99", "currency": "BRL"}`,
-and configure the mapper accordingly (Jackson:
+becomes `9007199254740992`). For consumers using binary Numbers, preserve exact amounts with
+strings (`"19.99"`) or an object `{"amount": "19.99", "currency": "BRL"}`. Retain an adequate
+verified lossless numeric contract; changing public encoding requires compatibility planning.
+Configure the mapper accordingly (Jackson:
 bind directly to `BigDecimal`; `USE_BIG_DECIMAL_FOR_FLOATS` affects untyped `Object`/`Number`/map
 content rather than typed `BigDecimal` properties). A decimal token can be parsed without binary
 loss, but lexical scale and trailing-zero preservation are separate contract choices. Document
 the representation in the contract—rpc-and-api-contracts.
 
-**Aggregation across services.** Summing decimals is associative only if no rounding happens
-in between; if each service rounds its own subtotal, the total depends on the partitioning of
-the work. Decide where rounding happens — once, at the end, or per line with a documented rule
+**Aggregation across services.** Exact decimal addition is associative; intermediate rounding
+can make results depend on grouping. If each service rounds its own subtotal, the total can depend
+on how work is partitioned. Decide where rounding happens — once, at the end, or per line with a documented rule
 — and make it part of the contract, not an emergent property of how many shards processed the
 batch. distributed-aggregation-and-barriers covers the general problem.
 

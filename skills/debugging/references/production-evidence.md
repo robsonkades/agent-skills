@@ -87,8 +87,9 @@ The cause is not established until it explains the timing, the distribution acro
 customers, and why it did not happen before. Write that down while it is fresh.
 
 Then: where feasible the reproduction becomes a regression test at the narrowest level that reproduces it
-(java-testing-strategy), and any evidence you wished you had had becomes an instrumentation
-change — a metric, a span, a log field. Record unresolved causal gaps and targeted follow-up;
+(java-testing-strategy). For a remaining evidence gap, identify which observation would distinguish
+the unresolved causes; first check existing coverage, retention and correlation. Add a targeted
+metric, span or log field only when its diagnostic value justifies its cost. Record targeted follow-up;
 do not claim recurrence is prevented merely because a test or dashboard was added.
 
 Sources: [JDK 25 jcmd command impact and syntax](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

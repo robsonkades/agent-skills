@@ -4,7 +4,7 @@ A payment client constructs charge requests. Customer, amount and a caller-stabl
 are required; capture mode and statement descriptor are optional. Treating the key as optional
 would make retry safety depend on a stylistic builder call.
 
-These are partial sketches with omitted domain types/accessors and imports (`BigDecimal`,
+These are partial Java 25 sketches with omitted domain types/accessors and imports (`BigDecimal`,
 `Objects`, `Optional`). Compile public types in separate files; the `var` call sites need
 Java 10+. The example's role types must be immutable as well as validated for the product's
 immutability claim to hold. This is API-shape guidance, not provider-specific payment rules.
@@ -35,8 +35,8 @@ var request = new ChargeRequest(customerId, amount, "BRL", idempotencyKey,
 
 - Six positional parameters with multiple optional/defaulted roles make call sites ambiguous.
 - Three adjacent `String` parameters. The call site above compiles with the idempotency key
-  in the statement-descriptor slot; the bug surfaces as truncated bank statements, not as a
-  compile error.
+  in the statement-descriptor slot. The fields are wrong without a compile error; rejection,
+  display or deduplication effects depend on the provider's actual contract.
 - Each new optional parameter has been adding a constructor overload — the telescoping
   pattern proper, not the harmless two-overload pair.
 - Idempotency is an operation contract, not a manual-capture option: every retryable charge
@@ -129,7 +129,20 @@ var request = ChargeRequest.charge(
 compile error and key presence is mandatory. The key's value must originate at the operation
 caller and remain stable across retries; generating it inside `build()` would defeat deduplication.
 
-## The staged variant, if required-at-compile-time must be total
+For conditional configuration, an ordinary local makes the decision visible:
+
+```java
+var builder = ChargeRequest.charge(customerId, amount, idempotencyKey);
+if (manualCapture) {
+    builder.captureMode(CaptureMode.MANUAL);
+}
+var request = builder.build();
+```
+
+Reusing the builder retains its operation key and options. It is useful for preparing alternatives,
+not authorization to send different charge operations or payloads under the same key.
+
+## The staged variant, when ordered gradual construction is justified
 
 ```java
 public interface CustomerStage { AmountStage customer(CustomerId id); }
@@ -160,10 +173,10 @@ Honest, against the factory-plus-builder above:
   required parameters.
 - Staging captures presence and order, not arbitrary cross-field rules among options; encoding
   those requires a branching state graph whose API and compatibility cost grows quickly.
-- Promoting an optional parameter to required later inserts a stage: source-breaking for
-  every caller that stored an intermediate stage type, binary-breaking for any implementor.
-  The factory-plus-builder version absorbs the same change by moving one parameter into
-  `charge(...)` — still breaking, but one method, not an interface family.
+- Promoting an optional parameter to required can insert a stage and change exposed return
+  descriptors or valid chains; assess the actual migration using the decision reference.
+  Adding a required argument to `charge(...)` also breaks existing calls if the old overload is
+  removed. Neither form makes a new mandatory requirement automatically compatible.
 
 Here the factory-plus-builder wins even for a published API: required values are compile-time
 arguments without exposing intermediate stage types, while optional evolution stays relatively
@@ -173,11 +186,13 @@ open.
 
 Acceptance checks for the concrete implementation, not recorded test results:
 
-- Recompile every module that constructs `ChargeRequest`; delete the old public
-  constructors only once no caller remains (search for `new ChargeRequest(`).
+- Recompile known constructing modules and inspect generated/reflection construction paths.
+  Search for `new ChargeRequest(` as one source of evidence; local absence does not establish
+  that published clients or framework bindings no longer need an old constructor.
 - If the artefact is published, run a binary-compatibility check (for example japicmp)
-  against the previous release — removed constructors and changed return types must be a
-  deliberate major-version decision, not a surprise.
+  against the previous release and exercise supported old callers/implementors against the new
+  artifact. Retire constructors under the actual deprecation/release policy; preserve adapters or
+  overloads when compatibility is required rather than assuming a source migration is sufficient.
 - Add tests for every local and cross-field invariant, repeated `build()` behavior, and defensive
   copies of mutable inputs; assert stable failure codes/types rather than brittle prose when the
   API is published.
@@ -187,4 +202,4 @@ Acceptance checks for the concrete implementation, not recorded test results:
   stale aliases as well as source snippets that intentionally fail before the final stage.
 - Confirm the descriptor unit against [String.length](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#length()>)
   and the provider contract; the sample does not establish provider acceptance.
-- Confirm formatting: chains one call per line in the touched call sites.
+- Follow project formatting; split longer chains when it improves diagnosis or review.

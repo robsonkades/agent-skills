@@ -18,15 +18,15 @@ description: >
 
 ## Purpose
 
-Treat this pattern as a request to justify global state. Singleton bundles two separate
-decisions — _there is one instance_ and _anyone can reach it without being given it_ — and the
-second is what causes the damage. It hides dependencies from constructors, so a type's real
-collaborators are invisible; it fixes initialisation order in ways nobody chose; it makes tests
-order-dependent; and it silently promises a uniqueness that stops at the class loader.
+Justify instance uniqueness and global access separately. Static access can hide collaborators,
+couple initialization and test lifetimes, and imply a scope the implementation does not enforce.
+It can also preserve a deliberate canonical token or supported API. Inspect ordinary callers,
+external consumers and failure/test behavior before prescribing removal.
 
-Almost always the requirement is "one instance", and dependency injection delivers exactly that
-by constructing one and wiring it. The instance is then unique because nothing else makes one —
-without any type having to enforce it, and without any caller reaching around its constructor.
+Compare an owned instance passed directly or through DI with the existing accessor. Injection
+does not require a new interface and does not itself prevent other construction. Reuse known
+scope and wiring; ask only for unresolved creation, identity or lifecycle requirements that could
+change the choice. Retain an adequate mechanism and state what would justify changing it.
 
 Inspect compiler/toolchain, container definitions and deployment topology first. Implementation
 examples use Java 17 without preview; ScopedValue is final in Java 25 and represents dynamic
@@ -40,7 +40,7 @@ Dynamic scope   ScopedValue (may share the same value across structured forks)
 Defining class loader    a static field — the same class may exist in several loaders
 Process (JVM)   a static field, if one class loader; a DI container's
                 singleton scope, if one relevant bean definition/container
-Container/pod   the process, restated — one JVM per pod by convention
+Container/pod   inspect actual processes/containers; pod membership adds no uniqueness
 Node            an OS-coordinated lock/socket, with stale-owner and namespace handling
 Cluster         leader election or a distributed lock with a lease
 Region          the above, plus a consensus system that spans zones
@@ -49,8 +49,8 @@ System          a protocol and authority boundary, not a language primitive
 
 A conventional static `getInstance()` is bounded by the defining class loader. A requirement for
 a horizontally scaled service — one scheduler, one cache warmer, one sequence generator, one
-outbox relay — needs an explicit coordination/effect contract, and no amount of `static` will produce it. This is the
-single most expensive misunderstanding in this pattern (`leader-election`,
+outbox relay — needs an explicit coordination/effect contract, and no amount of `static` will produce it
+(`leader-election`,
 `distributed-locks-and-leases`).
 
 Spring singleton scope is one instance per bean definition per container, not per type/JVM.
@@ -63,7 +63,8 @@ receive dependencies rather than consulting a static service locator.
 ```text
 The type is a stateless, immutable value or function, and passing it
 around is genuinely noise
-        → an enum constant or a static final field. Not getInstance().
+        → an enum constant or static final field may suffice; preserve a supported
+          accessor and required canonical identity rather than changing syntax alone.
 
 The hosting API owns creation and offers no injection point, while one
 process-wide adapter must coordinate access to a JVM/native facility
@@ -72,44 +73,49 @@ process-wide adapter must coordinate access to a JVM/native facility
 
 A framework or legacy call site cannot be given a dependency and must
 reach one
-        → Singleton as a bridge, marked as such, with a plan to remove it.
+        → an explicit compatibility bridge; retain it for its supported lifetime,
+          or plan removal when actual consumers and ownership permit it.
 ```
 
 ## When it is not
 
-- **"Configuration should exist once."** It does — the container creates one and injects it. The
-  requirement was access, not uniqueness.
+- **"Configuration should exist once."** Inspect required scope, reload/snapshot policy and
+  actual definitions. An owned injected instance may meet the need without global access.
 - **"Creating it is expensive."** That argues for creating it once, which is what a bean or a
   field already does. It does not argue for reaching it statically.
 - **"Everything needs it."** A dependency that everything needs is still a dependency; making it
   invisible does not reduce coupling, it only stops the compiler from showing it.
-- **A cache or registry.** Global mutable state under concurrency, with no eviction policy and
-  no owner. Give it an owner and inject it (`caching-strategies`).
+- **A cache or registry with no state/lifetime owner.** Inspect retention, consistency and
+  concurrent access; define ownership and pass the existing instance where appropriate
+  (`caching-strategies`). The name alone does not prove those policies are missing.
 - **Anything that must be unique across replicas.** See the ladder above.
-- **Counters, sequence numbers, id generators.** Process-local uniqueness produces colliding ids
-  the day a second replica starts.
+- **An uncoordinated per-process counter used as a global id.** Replicas/restarts can reuse values;
+  inspect the actual allocation/collision protocol before replacing a valid id generator.
 
 ## Decision rules
 
 ```text
 IF the requirement is stated as "only one X"
-THEN ask "one per what?" and place it on the ladder before designing.
+THEN establish "one per what?" from available evidence and place it on the ladder.
 
 IF the answer is cluster or system
-THEN this pattern is irrelevant. Use leader election, a lease, or make
-     the operation idempotent so multiplicity stops mattering (idempotency).
+THEN a local singleton cannot provide that authority. Compare actual coordination
+     and effect contracts; idempotency handles repeated logical effects, not
+     conflicting distinct operations or leadership (idempotency).
 
 IF the type has mutable state and is reached statically
 THEN it is global mutable state. Every thread-safety argument must be
-     made explicitly, and every test must undo it.
+     made explicitly. Tests must isolate or restore the state they own without
+     resetting a live shared instance under other users.
 
 IF a singleton is being added so that code can reach a collaborator
-THEN pass the collaborator. The singleton is solving a plumbing problem
-     by removing the plumbing from view.
+THEN compare passing the collaborator with any required static compatibility or
+     canonical-identity contract. A concrete type or existing interface may suffice.
 
 IF lazy initialisation is required
-THEN use the holder idiom or an enum. Double-checked locking is correct
-     only with a volatile field and is rarely worth the risk.
+THEN compare holder/enum initialization with an adequate synchronized accessor
+     and the required failure/lifetime policy. The shown classic DCL idiom needs
+     volatile publication; do not replace a correct simple accessor without cause.
 
 IF the singleton's initialiser touches another class's static initialiser
 THEN inspect cycles and blocking: cross-class initialization alone is normal,
@@ -123,30 +129,29 @@ THEN treat that as evidence of hidden mutable lifetime. Prefer an owned instance
 
 IF an enum is used purely as a namespace for one instance holding
 mutable state
-THEN the serialisation and reflection safety it buys is irrelevant, and
-     the global-state cost remains.
+THEN its standard serialization/reflective-construction identity guarantees may
+     still matter; they do not establish safe access to that mutable state.
 ```
 
 ## Cross-cutting checks
 
-- **Concurrency.** Uniqueness and thread safety are unrelated: a singleton is one instance
-  shared by every thread, which makes any mutable field in it a contended, visibility-sensitive
-  variable. Publication of the instance itself must be safe — the holder idiom and `enum` get
+- **Concurrency.** Uniqueness does not imply thread safety. Determine which threads access each
+  mutable field and the synchronization/ownership protocol; contention requires actual competing
+  access. Publication of the instance itself must be safe — the holder idiom and `enum` get
   this from class-initialisation semantics; a plain `if (instance == null)` does not, and
-  double-checked locking without `volatile` has no Java Memory Model guarantee
+  the shown classic DCL needs `volatile` or a separately proven publication protocol
   (`java-memory-model`).
-- **Distribution.** Process-local, always. A singleton connection pool, rate limiter or
-  scheduler becomes N of them under horizontal scaling, and the resulting limit is N times what
-  was configured — a common cause of exhausting a database's connection limit after a scale-up
+- **Distribution.** Local state remains local. N independent pools or limiters with equal limits
+  have an aggregate configured ceiling of N times that limit, not necessarily observed usage.
+  Budget rollout overlap and other clients; inspect actual demand before attributing exhaustion
   (`connection-pool-sizing`, `rate-limiting-and-load-shedding`).
 - **Performance.** A contended `synchronized getInstance()` on a hot path can add latency; modern
-  JVMs can make uncontended locking cheap, while the holder idiom removes per-access locking. The
-  larger effect is indirect: a single shared mutable
-  structure becomes the contention point for the whole application, and no amount of lock
-  tuning fixes a design that funnels every thread through one object
+  JVMs can make uncontended locking cheap; the holder needs no application lock per access. The
+  larger effect may be contention within shared state. Measure competing access and the actual
+  bottleneck before choosing partitioning, less sharing or lock changes
   (`false-sharing-and-contended`, `lock-inflation`).
-- **Testing.** Static state survives between tests in the same JVM, so tests pass alone and fail
-  in a suite, or pass in one order and fail in another. Parallel test execution makes it worse.
+- **Testing.** Static state survives while the same defining class remains live. It can cause
+  order/parallel interference, but these symptoms also have other causes; reproduce the failure.
   The absence of a constructor parameter also means a test cannot substitute the collaborator
   through constructor injection; legacy seams, wrappers or isolated processes may help during
   migration (`java-test-design`).
@@ -159,12 +164,12 @@ uniqueness and removal safety conditional.
 
 - [ ] "One per what?" is answered explicitly and matches the mechanism used
 - [ ] Nothing that must be unique across replicas relies on a static field
-- [ ] The instance holds no mutable state, or every mutation is documented as thread-safe
-- [ ] Lazy initialisation uses the holder idiom or an enum, not unguarded or non-volatile checks
-- [ ] Initialization has no cyclic/blocking dependency and has an explicit failure policy
+- [ ] Mutable state has an explicit ownership/synchronization contract
+- [ ] Initialization has a valid publication protocol; no unguarded classic DCL or race
+- [ ] Static initialization avoids cyclic/wait dependencies; owned acquisition has a failure policy
 - [ ] Legacy resets are isolated from concurrent tests and tracked for removal
-- [ ] Dependency injection was considered and rejected for a stated reason
-- [ ] Spring's singleton scope is not described as this pattern in review comments
+- [ ] Owned-instance/injection alternatives were compared with any required global-access contract
+- [ ] Spring lifecycle scope is distinguished from global access and actual construction count
 
 ## References
 

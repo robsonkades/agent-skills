@@ -32,6 +32,10 @@ throughput number is promised.
 
 The recipes target JDK 25's incubator API. Inspect the project's toolchain, runtime images and
 module/build flags first; a supported API in the authoring JDK does not authorize a target upgrade.
+For module visibility or numerical correctness questions, resolve that contract directly; a
+performance investigation is needed when deciding whether a rewrite benefits the workload.
+Reuse available profiles and requirements, and ask only about unresolved deployment or numerical
+constraints that change the choice. Missing measurements leave a benefit claim unproven.
 
 1. **Prove the loop matters.** Profile the production-shaped workload and identify the hot
    kernel, input-size distribution, data layout and semantic constraints. Do not vectorise a
@@ -73,16 +77,20 @@ module/build flags first; a supported API in the authoring JDK does not authoriz
 - Do not conflate `jdk.incubator.vector` with the FFM API. `java.lang.foreign` (JEP 454) has
   been final since JDK 22 and needs no `--add-modules`. Common Panama origin, unrelated
   standardisation status.
-- `--add-modules jdk.incubator.vector` must reach **both** `javac` and `java` — and every
-  build, CI, test-JVM, JMH and `jlink` wrapper in between. Missing it at compile time gives
-  "package jdk.incubator.vector is not visible"; missing it at run time gives "module not
-  found" or `NoClassDefFoundError`.
+- Resolve `jdk.incubator.vector` at compile and run time. The class-path recipe passes
+  `--add-modules jdk.incubator.vector` to both `javac` and `java`, including test/JMH forks;
+  compilation success alone does not prove runtime module resolution.
+  Named modules can declare `requires jdk.incubator.vector;` instead. A linked image must
+  contain the module; inclusion follows the resolved module graph, not a flag copied blindly
+  into every wrapper. Incubation alone does not require `--enable-preview`.
 - The API does not promise that an arbitrary fixed shape/op lowers to hardware SIMD. Official
   docs warn that choosing unsupported shapes may run slowly or fail. Prefer
   `SPECIES_PREFERRED` for portable shape-invariant algorithms and test both behavior and
   lowering on every supported architecture; never make fallback mode part of an SLO assumption.
 - The masked signatures are `fromArray(species, array, offset, mask)` — four arguments — and
-  `intoArray(array, offset, mask)` — three. No extra numeric parameter.
+  `intoArray(array, offset, mask)` — three. No extra numeric parameter. A masked store does
+  not protect earlier arithmetic. Check each operation's inactive-lane policy; mask arithmetic
+  that could throw and exclude invalid inactive values from reductions.
 - Use JMH for comparative kernel timing; a one-shot manual timer cannot isolate warm-up,
   optimization and environment noise. Return a result or make required work observable;
   `Blackhole` is one option for a void benchmark, not a universal requirement for side effects.
@@ -106,7 +114,8 @@ module/build flags first; a supported API in the authoring JDK does not authoriz
 - Incubator adoption is a release-engineering decision: pin the JDK line, compile/test with
   the matching module, include it in `jlink`, assess API migration on every JDK upgrade, and
   canary by CPU architecture before broad rollout.
-- Return the semantic contract, exact build/CPU/species, lowering evidence and measured scope.
+- Return the semantic contract and relevant target/verification evidence. For a performance
+  recommendation, include the exact build/CPU/species, lowering evidence and measured scope.
   Missing decoding, failed forks or untested fleet classes remain explicit gaps, not proof of
   absent SIMD or a deployment-ready speedup.
 

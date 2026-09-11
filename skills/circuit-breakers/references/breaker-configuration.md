@@ -31,6 +31,12 @@ Behaviours that affect diagnosis:
   breaker half-open; in Resilience4j 2.3.0 zero means no such bound. A positive bound reopens
   the breaker but does not abort unfinished probes: keep client timeouts/cancellation. Allow
   enough time for the intended sample at the actual arrival rate.
+- In Resilience4j 2.3.0 an ignored exception returns a permit without filling the recorded
+  sample. Replacements can therefore exceed the configured probe count over time. Late
+  completions are handled by the **current** state: an earlier success can fill a half-open
+  sample, and an earlier ignored call can return permission while new probes are pending.
+  Test these overlaps; use a separate resource limit when actual concurrent work must be bounded.
+  See the tagged [state machine](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java).
 
 Illustrative Spring Boot configuration fragment, not a universal Java property file. It needs
 the matching Resilience4j Spring integration; verify binding on the project's resolved version.
@@ -64,7 +70,7 @@ and by status class, never by message text.
 | Connect/read timeout                          | usually    | count when attributable to this dependency/scope, not caller cancellation  |
 | Connection refused/reset, DNS failure         | decide     | may be backend-wide, local resolver/network, endpoint- or zone-specific    |
 | 500, 502, 503, 504                            | usually    | exclude payload-specific failures; split endpoint/failure domains          |
-| Slow call above the slow-call threshold       | yes        | the resource cost is the same as a failure                                 |
+| Slow call above the slow-call threshold       | slow rate  | failure/success classification remains separate from recorded duration     |
 | 400, 401, 403, 404, 405, 422                  | usually no | validation/domain misses; shared credential/routing faults are exceptions  |
 | 408 request timeout                           | decide     | origin, proxy or caller may own the timeout                                |
 | 409 conflict                                  | no         | a business outcome, not a dependency fault                                 |
@@ -103,14 +109,15 @@ Retry(Breaker(call))    each admitted attempt is recorded; sample size and failu
                         Once open, later attempts fail fast without reaching the dependency.
 
 Breaker(Retry(call))    one outcome per logical call → the threshold means what it says,
-                        but each protected call lasts attempts × timeout + Σ backoff, so
+                        but duration includes attempts and backoff, so
                         slow-call detection is measuring the retry policy, and the retries
                         keep reaching a dependency the breaker would have stopped calling.
 ```
 
-Whichever order is chosen, assert the composed worst case against the caller's budget:
-`attempts × per-attempt timeout + Σ backoff ≤ remaining deadline` (`timeouts-and-deadlines`).
-Retry policy itself is `retries-and-backoff`.
+Whichever order is chosen, budget attempts and backoff against the shrinking caller deadline.
+Include admission/setup/cleanup time outside the attempt timeout; the timeout may stop waiting
+without stopping downstream work. `timeouts-and-deadlines` owns those bounds and cancellation,
+while retry policy itself is `retries-and-backoff`.
 
 Normally exclude `CallNotPermittedException` from retries: waiting and retrying local rejection
 adds no backend evidence and may synchronize callers with recovery. Verify actual annotation/AOP
@@ -121,18 +128,20 @@ publisher assembly can miss the eventual failure and record an artificially shor
 
 A breaker's window lives in the JVM that owns it. Consequences worth stating explicitly:
 
-- Each instance needs `minimumNumberOfCalls` of **its own** traffic before it can trip. With
-  20 replicas behind a balancer, per-instance traffic is a twentieth of the fleet's, and a
-  threshold sized from fleet traffic will never be reached.
+- Each instance needs `minimumNumberOfCalls` of **its own recorded** traffic before a rate
+  can trip it. Measure routing skew: fleet traffic divided by replica count is only a balanced
+  approximation. A fleet-sized minimum may never fit a time window, or take too long to fill
+  a count window; ignored outcomes reduce the sample further.
 - During a partial dependency outage — some backend instances failing — replicas whose calls
   happened to land on the failing ones open while others stay closed. Fleet behaviour is a
   mixture, not a state.
 - After a deploy every breaker starts closed with an empty window, so a rollout re-probes a
   dependency the previous pods had already given up on.
 
-With N independent breakers and P half-open permits each, a synchronized recovery wave can
-admit up to N × P probes, before retries or other clients. Budget that aggregate load and
-consider supported wait jitter/staggering; do not treat a per-JVM probe count as global control.
+With N independent breakers and P initial half-open permits each, a synchronized first wave
+can admit N × P probes. That is not a total-work ceiling: account for ignored-call replacements,
+late completions, unfinished calls from previous rounds, retries and other clients. Budget that
+aggregate load and consider supported wait jitter/staggering; per-JVM permits are not global control.
 
 Sharing state across replicas via a distributed counter buys uniformity and costs coordination
 plus another failure mode. A pushed control-plane decision avoids a per-call round trip but has

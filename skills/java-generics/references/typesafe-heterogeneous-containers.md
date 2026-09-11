@@ -67,10 +67,11 @@ Map<TypeRef<?>, Object> byType = new HashMap<>();
 byType.put(new TypeRef<List<String>>() {}, names);      // the anonymous subclass carries the type
 ```
 
-Jackson's `TypeReference` and Spring's `ParameterizedTypeReference` are exactly this. Two costs
-to accept knowingly: each token is an anonymous class (a loaded class per distinct use site),
-and the safety is now reflective — there is no `Class.cast` that can check `List<String>`, so
-the retrieval cast is unchecked and the container is only as correct as its own code.
+Jackson's `TypeReference` and Spring's `ParameterizedTypeReference` support this capture
+technique; their supported constructors/factories and hierarchy handling are library-specific.
+The shown anonymous-subclass form defines a class per declaration site, not per token instance.
+There is no `Class.cast` that checks `List<String>` elements, so a retrieval cast remains
+unchecked and the container still needs its own insertion/validation invariant.
 
 This `TypeRef` is a capture illustration, not a production container or runtime validator.
 The shown `Map` has no typed insertion contract and accepts a mismatched value. A production API
@@ -109,15 +110,16 @@ unrelated code.
 This pattern is a controlled hole in the type system, and it is over-used. Prefer an ordinary
 type when the set of values is known:
 
-- **A record or a small class beats an attribute map** whenever the keys are fixed at design
-  time. `record RequestContext(TenantId tenant, TraceId trace, Instant deadline)` is checked at
+- **Consider a record or small class when the keys are fixed** and its presence/update contract
+  fits. `record RequestContext(TenantId tenant, TraceId trace, Instant deadline)` is checked at
   compile time, is visible to the reader, and cannot be missing a key at runtime.
-- **A sealed interface plus pattern matching beats a `Map<Class<?>, Handler>`** when the set of
-  handled types is closed: the compiler then proves exhaustiveness, which the map cannot.
-- **Context propagation across threads has its own mechanism.** `ScopedValue` supports bounded
-  bindings on supported JDKs; `ThreadLocal` works on platform and virtual threads but requires
-  explicit lifetime/cleanup and does not automatically propagate across executor tasks. A map on
-  a request object usually reinvents it with fewer guarantees. See scoped-values.
+- **A sealed interface plus pattern matching can provide compile-time exhaustiveness** for a
+  closed type set. A validated registry may still fit runtime handler selection or replacement;
+  preserve that requirement instead of replacing it merely because the key set is closed.
+- **Explicit context passing may already be adequate.** If ambient bindings are actually needed,
+  `ScopedValue` is final in Java 25 and preview in 21–24; preserve the project's target and preview
+  policy. `ThreadLocal` needs explicit lifetime/cleanup and does not automatically propagate
+  across executor tasks. Choose from the actual propagation/ownership contract; see scoped-values.
 
 Use the heterogeneous container when the key set is genuinely open — extensions, plugins,
 framework attributes, per-type caches — and keep it behind an API narrow enough that

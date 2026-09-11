@@ -144,4 +144,5 @@ Good children expose separately usable outcomes, such as “customer can save a 
 “customer can submit a saved draft.” Each can be accepted independently.
 
 A frontend child and backend child are not independent product features when neither works alone. Keep
-them as implementation resources under one feature.
+them under one feature and note their dependency; later authorized lifecycle planning defines the
+implementation resources.

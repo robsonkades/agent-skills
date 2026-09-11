@@ -1,5 +1,7 @@
 import {
   AgentCatalog,
+  ApplySkillUpdates,
+  CheckUpdates,
   type AgentSkillsConfig,
   type ApplicationContext,
   type FederatedRegistry,
@@ -20,8 +22,13 @@ import {
   NodeHttpClient,
   SystemClock,
   cacheHome,
+  FileUpdateStateStore,
+  NpmToolUpdater,
+  NodeSelectionPrompt,
 } from '@jvm-expert/node';
 import type { LogLevel } from '@jvm-expert/core';
+import { fileURLToPath } from 'node:url';
+import type { NotificationServices } from './update-notifications.ts';
 
 export const TOOL_NAME = '@jvm-expert/agent-skills';
 
@@ -36,6 +43,7 @@ export interface Container {
   readonly hasher: Hasher;
   readonly configStore: FileConfigStore;
   readonly config: AgentSkillsConfig;
+  readonly notifications: NotificationServices;
 }
 
 /**
@@ -86,10 +94,67 @@ export async function createContainer(options: ContainerOptions): Promise<Contai
 
   const installer = new AtomicInstaller({ fs, hasher, clock, logger, toolVersion });
 
+  const ctx: ApplicationContext = {
+    agents,
+    registry,
+    installer,
+    fs,
+    env,
+    commands,
+    clock,
+    logger,
+    config,
+    toolVersion,
+  };
+  const tool = new NpmToolUpdater({
+    fs,
+    env,
+    commands,
+    http,
+    packageDirectory: fileURLToPath(new URL('../', import.meta.url)),
+    nodeExecutable: process.execPath,
+  });
+  // Notification traffic has a short deadline and never launches credential prompts.
+  // Its drivers share the normal registry cache, but installs keep their usual timeouts.
+  const notificationFactory = new DefaultRegistryFactory({
+    fs,
+    hasher,
+    clock,
+    logger,
+    extractor,
+    cacheDir: cacheHome(fs, env),
+    ttlSeconds: config.cache.ttlSeconds,
+    http: { get: (url, request) => http.get(url, { ...request, timeoutMs: 2000 }) },
+    commands: {
+      which: (command) => commands.which(command),
+      run: (command, args, request) =>
+        commands.run(command, args, {
+          ...request,
+          timeoutMs: 2000,
+          env: { ...request?.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' },
+        }),
+    },
+  });
+  const notificationRegistry = new RegistryFederation(
+    config.registries.map((entry) => notificationFactory.create(entry)),
+  );
+  const notifications: NotificationServices = {
+    check: new CheckUpdates(
+      { ...ctx, registry: notificationRegistry },
+      tool,
+      new FileUpdateStateStore(fs, env),
+    ),
+    apply: new ApplySkillUpdates(ctx),
+    tool,
+    prompt: new NodeSelectionPrompt(),
+    logger,
+  };
+
   return {
-    ctx: { agents, registry, installer, fs, env, commands, clock, logger, config, toolVersion },
+    ctx,
     hasher,
     configStore,
     config,
+    notifications,
   };
 }

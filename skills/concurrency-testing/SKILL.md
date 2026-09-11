@@ -34,12 +34,15 @@ uses Java 25 preview. Inspect compiler release/toolchains, CI JDK, resolved test
 timeout mode before adapting them. Keep the project's baseline and existing test framework;
 do not upgrade Java or enable preview merely to use this skill.
 
-1. **Separate the logic from the concurrency.** Inject the executor. Test the logic with a
-   same-thread executor, deterministically; test the concurrency separately and explicitly.
-2. **Write the failure-path tests first**, because they are the ones that will otherwise not
-   exist: cancel mid-flight, interrupt, time out, reject at the limit, fail the dependency.
-3. **Replace every sleep with a synchronisation point** — a latch, a barrier, `Awaitility`
-   with a bound. A sleep is either a flaky test or a slow one, and usually both.
+1. **Identify the contract and reuse its existing tests.** Separate pure logic where useful:
+   a same-thread executor can test it, while controlled queued execution or real workers test
+   asynchronous boundaries. Do not change the executor model when that changes the contract.
+2. **Select missing failure-path tests** for the actual lifecycle: cancel mid-flight,
+   interrupt, time out, reject at the limit, fail the dependency. Establish the expected
+   caller outcome, physical work lifetime and resource owner before writing the oracle.
+3. **Replace sleeps used for coordination with an observable checkpoint** — a latch, a
+   barrier or a bounded poll. Checkpoint placement must expose the intended race rather than
+   accidentally order away the conflicting accesses. A controlled delay can still model a slow dependency.
 4. **Assert invariants, not schedules.** After owned work terminates, account for every
    submission as success, failure, cancellation or rejection with disjoint definitions;
    check resource bounds and recovered permit counts at their specified observation points.
@@ -55,15 +58,17 @@ do not upgrade Java or enable preview merely to use this skill.
 - **A passing run shows no checked invariant failed in its exercised executions.** It does not
   establish correctness under unobserved interleavings, other hardware, or other JDK versions.
   Say this out loud in review when a test is offered as proof of thread safety.
-- **Never `Thread.sleep` to wait for another thread.** Use `CountDownLatch` for "has it
+- **Do not treat a fixed sleep as evidence another thread progressed.** Use `CountDownLatch` for "has it
   started", `CyclicBarrier` for "start together", `Awaitility` (or a bounded poll) for "has
-  the effect happened". A sleep encodes a timing assumption that CI hardware will violate.
+  the effect happened". A poll may delay between checks; the observed condition and overall bound
+  are its oracle, not elapsed sleep alone.
 - **A flaky concurrency test is a bug report.** Diagnose whether the cause is a product race,
   faulty oracle, harness coordination or environment. Adding a retry, a longer sleep or
   `@Disabled` deletes the only evidence you had.
 - **Test cancellation explicitly, and assert the effect, not the flag.** `f.cancel(true)`
   returning `true` does not prove work stopped. Assert the connection returned to the pool, the permit was
-  released, the file was closed, within a bound.
+  released, the file was closed, within the owning contract's bound. Confirm acquisition/start
+  first; zero active work is not evidence of cancellation if no operation ever started.
 - **Test interruption explicitly.** Interrupt a task mid-blocking-call and assert it
   terminates within a bound and handles interruption according to its ownership contract:
   propagate, restore at a boundary, or deliberately consume at a terminal owner.
@@ -90,7 +95,7 @@ do not upgrade Java or enable preview merely to use this skill.
   `--enable-preview --release 25` and execution with that JDK and `--enable-preview`.
   Surefire's runtime `argLine` alone does not enable compilation; preserve existing agents
   and flags when configuring the project's compiler and test runner.
-- Give the test JVM a deliberately small scheduler
+- When carrier capture is a material risk, give an isolated test JVM a deliberately small scheduler
   (`-Djdk.virtualThreadScheduler.parallelism=1 -Djdk.virtualThreadScheduler.maxPoolSize=1`) in
   one dedicated test to expose work that captures or pins a carrier: with no compensation
   available, it serialises visibly.

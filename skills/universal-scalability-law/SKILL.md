@@ -38,6 +38,10 @@ If N=1 is unobserved, gamma is an inferred baseline, not a measured single-unit 
 This is a model/experiment skill with partial Python/R examples, not a Java API prescription.
 Record the target JDK/build as an experiment invariant and inspect the existing analysis runtime,
 NumPy/SciPy or R/package versions. Do not upgrade the application or analysis stack to fit an example.
+Select the steps needed for the actual equation, descriptive fit, prediction or deployment question.
+Reuse adequate run data and validation, and retain a model or configuration that meets the stated
+decision. A narrow explanation does not require a new sweep, causal intervention or complete model
+card. Missing evidence limits the conclusions that depend on it, not every supported local result.
 
 1. **Define `N` and the experiment.** `N` is exactly one axis: concurrent closed users, runnable
    workers, cores, JVMs or pods. State what stays fixed—hardware, per-unit hardware, dataset,
@@ -56,7 +60,9 @@ NumPy/SciPy or R/package versions. Do not upgrade the application or analysis st
    observations and obtain coefficient/prediction intervals.
 6. **Check identification and residuals.** Plot runs and fit, coefficient covariance/profile,
    bootstrap stability and held-out predictions. A high R² is neither required nor sufficient;
-   systematic residuals, wide intervals or parameter trade-off mean the curve is not decision-ready.
+   unexplained residual structure or uncertainty can prevent the intended decision. Weakly identified
+   coefficients can coexist with adequate predictions over a supported local range; they do not
+   establish a precise peak, extrapolation or mechanism.
 7. **Compute the peak only when defined.** For the standard constrained model with `β>0` and
    `α<1`, continuous `N* = sqrt((1−α)/β)`. Evaluate feasible neighbouring integers and prediction
    intervals. If `N*≤1` (equivalently `α+β≥1`), the feasible curve is already non-increasing after one
@@ -64,7 +70,7 @@ NumPy/SciPy or R/package versions. Do not upgrade the application or analysis st
    beyond the baseline under the standard interpretation. With `β=0, α=1` it is constant;
    with `β=0, α>1` the maximum is the lowest feasible N. Include no-finite-peak cases in
    uncertainty summaries rather than discarding them before computing a peak interval.
-8. **Attribute and validate causally.** Compare denominator terms at the operating `N`, form a
+8. **Validate any causal attribution.** For a mechanism claim, compare denominator terms at the operating `N`, form a
    mechanism hypothesis, measure it directly, change one mechanism, and refit/hold out. Coefficient
    movement without mechanism evidence is correlation.
 
@@ -100,7 +106,11 @@ NumPy/SciPy or R/package versions. Do not upgrade the application or analysis st
 - USL predicts throughput capacity, not latency at an arrival rate, tail probability, queue size,
   cost, reliability or safe autoscaling behavior. Feed capacity scenarios into the owning skills.
 
-## Required model card
+## Decision record
+
+For a fitted-model or capacity decision, retain the fields below that substantiate its claims,
+linking existing evidence where adequate. A descriptive answer can report its equation, domain,
+supported predictions and limits without inventing experiments or mechanism attribution.
 
 ```text
 Decision:        marginal unit, peak, architecture comparison or scenario bound
@@ -110,7 +120,7 @@ Throughput:      useful-completion definition; offered/admitted/error/drop guard
 Design:          N points, randomisation/blocking, independent run unit, state criterion
 Fit:             γ, α, β intervals/covariance; error model; residuals; held-out results
 Peak/marginal:   integer candidates and prediction interval; cost/guardrail context
-Attribution:     direct evidence for suspected contention/coordination mechanism
+Attribution:     direct evidence if a contention/coordination mechanism is claimed
 Limits:          supported range, regime changes, sensitivity and re-fit triggers
 ```
 

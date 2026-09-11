@@ -9,6 +9,9 @@ instead of `grep` and native continuation syntax. Check `java -Xlog:help` before
 release-sensitive logging tags; a missing tag or flag is a tooling limitation, not evidence
 that no compilation or deoptimization happened. Retain the complete log before filtering:
 fixed context windows can truncate nested inlining trees and mix compilation identities.
+Reuse a sufficient existing capture. For a new one, use a bounded representative run and a
+fresh writable artifact directory; verify process exit and capture completeness before
+interpreting an empty result. Diagnose the measured hot path, not every non-inlined method.
 
 ## Flag classes: which flags a product JVM will even accept
 
@@ -45,19 +48,22 @@ Method suspected of being under-optimised
 |      (a tier-3 tree saying "callee is too large" is C1's verdict, not C2's)
 |
 +-- 3. Is there an allocation that "should" have disappeared?
-|      product JVM: compare normalized allocation-rate/profile deltas; samples can miss it
+|      product C2: correlate LogCompilation elimination entries with the installed nmethod
+|                  and compare normalized allocation/profile deltas; absence is inconclusive
 |      debug build only: inspect escape state AND scalar replaceability/elimination result
 |                        NoEscape alone does not prove allocation removal
 |
 +-- 4. Unstable compilation (recurring "made not entrant: uncommon trap")?
        -Xlog:deoptimization=debug / JFR jdk.Deoptimization -- a deoptimisation problem,
-       not a threshold problem. "made not entrant: not used" is the normal 3 -> 4 promotion.
+       not a threshold problem. "not used" can accompany replacement, including 3 -> 4;
+       correlate the history instead of inferring that transition from the reason alone.
 ```
 
 ## Which tier is each method in
 
 ```bash
-java -XX:+PrintCompilation MyApp 2>&1 | grep MyClass
+java -XX:+PrintCompilation MyApp > compilation.log 2>&1
+grep MyClass compilation.log  # navigation only; retain and inspect the full log
 ```
 
 Real output, Temurin 25.0.3:
@@ -80,7 +86,8 @@ same lines are available through unified logging as
 
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:+PrintCompilation -XX:+PrintInlining \
-     -XX:CompileCommand=print,MyClass::hotMethod MyApp 2>&1 | grep -A 10 hotMethod
+     MyApp > inlining.log 2>&1
+grep -n hotMethod inlining.log  # locate the compilation, then read its complete tree
 ```
 
 Real output for the same caller, first the tier-3 tree and then the tier-4 tree:
@@ -136,7 +143,13 @@ varies in format between builds. Read the output of your own runtime and cross-c
 the method source — is there a reference that escapes, or not? Never build a log parser around
 a fixed string here.
 
-**On a product JVM, use converging indirect evidence.** Compare allocated bytes/op (for example
+**On a product C2 JVM, start with available compiler evidence.** With `LogCompilation`, a
+successful `eliminate_allocation` entry records the allocation type and method/BCI contexts.
+Match it to the installed C2 compilation ID; it is evidence for that compilation, not all
+executions of the source allocation. A missing entry does not prove survival. The
+`escape-analysis-internals` skill owns this correlation and its limitations.
+
+Compare allocated bytes/op (for example
 JMH GC profiler or controlled runtime counters), async-profiler allocation samples and JFR
 allocation events with compilation state fixed. Sampling absence is not proof; event settings,
 TLAB/outside-TLAB coverage and workload equality matter. Where warranted, confirm no allocation
@@ -153,8 +166,8 @@ java -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation \
 
 The resulting text-plus-XML log is consumed by **JITWatch**, which reconstructs the compilation
 timeline and the inlining tree with reasons, and — combined with `hsdis` — shows bytecode and
-assembly side by side. Overhead is noticeably higher than `PrintCompilation` and
-`PrintInlining` alone; do not run it continuously in production.
+assembly side by side. Logging and decoding can add CPU, storage and I/O costs; use a bounded
+capture and assess its effect on the workload before considering continuous production use.
 
 ## Confirming defaults before reasoning about them
 
@@ -169,9 +182,9 @@ thing:
 
 ```bash
 java -XX:-Inline MyBench              # no inlining anywhere in the process
-java -XX:-DoEscapeAnalysis MyBench    # EA off, rest of C2 intact
+java -XX:-DoEscapeAnalysis MyBench    # EA off; dependent optimizations can also change
 java -XX:-EliminateAllocations MyBench # EA on, scalar replacement off
-java -XX:TieredStopAtLevel=1 MyBench  # C1 only — is the bug C2's, or logic?
+java -XX:TieredStopAtLevel=1 MyBench  # C1-only control; a difference does not prove a C2 bug
 ```
 
 `-XX:-Inline` is process-wide and blunt. JMH `@CompilerControl(DONT_INLINE)` or
@@ -181,21 +194,22 @@ separate benchmark shapes when true call-site isolation matters.
 
 ## Threshold tuning under tiered compilation
 
-`-XX:CompileThreshold` is accepted **without error and without effect** while tiered
-compilation is on, which is the default on every supported release including JDK 25. It is
-honoured only under `-XX:-TieredCompilation`. A runbook that "raises CompileThreshold to speed
-up warm-up" is silently doing nothing, and the false sense of having acted is the worst part —
-nobody investigates a problem that looks solved.
+In the default C1/C2 tiered mode on Temurin 25.0.3, `-XX:CompileThreshold` does not change
+compilation eligibility. The boolean `TieredCompilation` alone is insufficient: on the same
+build, C1-only modes such as `TieredStopAtLevel=1` apply legacy thresholds even with it true;
+`-XX:-TieredCompilation` also honors them. Compare effective flags and modes before diagnosing
+a no-op. See the pinned [legacy-policy initialization](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)
+and [compiler-mode predicates](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.inline.hpp).
 
-| Flag                                                  | Controls                                | When to adjust                                                                                     |
-| ----------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `-XX:Tier3InvocationThreshold`                        | One eligibility input for tier 3 policy | Diagnostic experiment after observing history/queue; not a standalone “compile after N” control    |
-| `-XX:Tier4InvocationThreshold`                        | One eligibility input for tier 4 policy | Diagnostic experiment; earlier compilation can use immature profiles and increase CPU/code cache   |
-| `-XX:CompileThresholdScaling`                         | Scales tier-policy thresholds           | Broad experiment whose queue, profile-quality, startup CPU and code-cache effects must be measured |
-| `-XX:CompileCommand=CompileThresholdScaling,C::m,0.1` | The same factor for **one method**      | When only a handful of methods must reach tier 4 early; leaves the rest of the process untouched   |
+| Flag                                                  | Controls                                | When to adjust                                                                                                   |
+| ----------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `-XX:Tier3InvocationThreshold`                        | One eligibility input for tier 3 policy | Diagnostic experiment after observing history/queue; not a standalone “compile after N” control                  |
+| `-XX:Tier4InvocationThreshold`                        | One eligibility input for tier 4 policy | Diagnostic experiment; earlier compilation can use immature profiles and increase CPU/code cache                 |
+| `-XX:CompileThresholdScaling`                         | Scales tier-policy thresholds           | Broad experiment whose queue, profile-quality, startup CPU and code-cache effects must be measured               |
+| `-XX:CompileCommand=CompileThresholdScaling,C::m,0.1` | The same factor for **one method**      | Scoped eligibility experiment; shared compiler queues, CPU and later compilation decisions can still be affected |
 
 ```bash
-java -XX:Tier4InvocationThreshold=2000 -XX:CompileThresholdScaling=0.5 MyApp
+java -XX:CompileThresholdScaling=0.5 MyApp
 # then re-check with PrintCompilation that the target methods reach tier 4 earlier
 ```
 

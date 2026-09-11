@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: distributed-systems-testing
-version: 1.1.1
+version: 1.1.2
 description: >-
   Testing the failure behaviour a distributed system claims: injecting latency, errors,
   partitions and process death; verifying that timeouts, retries, breakers and fallbacks do what
-  their configuration says; proving idempotency against duplicate delivery; and running a
+  their configuration says; checking idempotency against duplicate delivery; and running a
   controlled experiment in production rather than a chaos tool. Use when resilience
   configuration exists but has never been exercised, when a timeout or retry budget is being
   chosen, when an incident was caused by a dependency being slow rather than down, when a
@@ -59,6 +59,8 @@ suggests:
   - distributed-tracing-design
   - distributed-transactions-and-sagas
   - framework-coupling-and-independence
+  - humble-objects-and-functional-core
+  - idempotency
   - kubernetes-service-lifecycle
   - leader-election
   - littles-law-and-queueing
@@ -68,6 +70,7 @@ suggests:
   - rate-limiting-and-load-shedding
   - retries-and-backoff
   - rpc-and-api-contracts
+  - schema-evolution-and-compatibility
   - slo-and-alerting
   - timeouts-and-deadlines
 

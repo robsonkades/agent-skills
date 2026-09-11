@@ -22,8 +22,8 @@ The practical consequences are unglamorous and are the ones teams skip:
 - A release needs compatibility notes so consumers can decide whether and when to upgrade.
 - The component needs an owner who can answer "is this change breaking?".
 
-A module that nobody is willing to write a release note for is not a component. It is a
-package that has been given a `pom.xml`.
+A proposed independently published component needs someone to own these obligations.
+An internal build/encapsulation module can remain useful without its own external release notes.
 
 ### Common closure
 
@@ -71,12 +71,12 @@ modules.
                         too hard to reuse
 ```
 
-Each edge is a real cost paid for satisfying the two principles at its ends. There is no
-position that avoids all three; the decision is which cost this system can afford now, and
-the answer legitimately changes over a system's life.
+The diagram highlights costs when change and reuse needs conflict; it does not prove that
+every component has such a conflict. Where they do, decide which cost this system can afford
+now. Aligned needs can justify retaining the component, and the answer can change over its life.
 
 **Read the diagram as a trajectory, not a target.** Young system with no external consumers:
-sit near common closure. Mature component library with many independent consumers: move
+sit near common closure. Mature component library with many independent consumers: consider moving
 toward common reuse. Moving is a refactor, not a failure.
 
 ## Coupling: how components may depend on each other

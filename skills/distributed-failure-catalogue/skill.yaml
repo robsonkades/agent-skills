@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: distributed-failure-catalogue
-version: 1.3.1
+version: 1.3.2
 description: >-
   Evidence-oriented recognition index for recurring distributed failure shapes: overload
   amplification, gray and asymmetric failure, split ownership, stale work, mixed versions,
@@ -49,6 +49,8 @@ dependencies:
     version: ^1.0.0
   - name: distributed-locks-and-leases
     version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
   - name: rate-limiting-and-load-shedding
     version: ^1.0.0
   - name: retries-and-backoff
@@ -63,6 +65,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - debugging
   - connection-pool-sizing
   - consensus-and-quorums
   - distribution-boundaries

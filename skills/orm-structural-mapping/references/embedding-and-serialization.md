@@ -2,14 +2,19 @@
 
 ## Embedded Value
 
-A value object with no identity, stored as columns of its owner's table. This is the
-cheapest possible upgrade from primitive obsession: a real type in the model, no extra
-table, no join.
+A value object with no independent identity can group basic columns in its owner's table,
+giving them a domain type without an extra table or join. Collection, relationship and
+provider-specific aggregate mappings can have different storage shapes.
 
 This partial example assumes the application permits only currencies using two fractional digits;
 it is not a general monetary model. Choose precision, scale and currency validation from
 the domain, and match the database columns so persistence cannot silently round values.
 Normalize scale to make record equality consistent for numerically equal amounts.
+`CurrencyPolicy.requireSupportedTwoFractionCurrency` below is an application-owned hook,
+not a JDK or persistence API. Its omitted implementation must reject codes outside the
+domain's supported set and currencies that do not use this model's two-fraction scale;
+every constructor path, including ORM reconstruction, invokes it. Supply that policy and
+the omitted `CurrencyMismatch` exception before compiling; no allowed currency set is implied.
 
 ```java
 @Embeddable
@@ -18,6 +23,7 @@ public record Money(BigDecimal amount, String currency) {
     public Money {
         Objects.requireNonNull(amount);
         Objects.requireNonNull(currency);
+        CurrencyPolicy.requireSupportedTwoFractionCurrency(currency);
         amount = amount.setScale(2, RoundingMode.UNNECESSARY);
     }
 
@@ -45,14 +51,17 @@ Record embeddables are supported by Hibernate 6.2+ and standardized by Jakarta P
 project's actual provider/API baseline; older mappings may need a regular embeddable class.
 This does not establish record support for every identifier use.
 
-See [Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)
+See the [Hibernate 6.2.0 record instantiator](https://github.com/hibernate/hibernate-orm/blob/6.2.0/hibernate-core/src/main/java/org/hibernate/metamodel/internal/EmbeddableInstantiatorRecordStandard.java),
+[Hibernate 6.2 embeddable types](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-types)
 and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
 for record, ownership and converter contracts.
 
 ### Points that bite
 
-- **Two embeddables of the same type in one entity** need `@AttributeOverrides` on at least
-  one, or the columns collide.
+- **Repeated embeddables need distinct column mappings.** With JPA's default names, use
+  `@AttributeOverrides` to avoid collisions. A configured provider naming strategy can also
+  distinguish the paths; Hibernate's `ImplicitNamingStrategyComponentPathImpl` is such an
+  option, while explicit overrides retain provider portability. Inspect actual mapping names.
 - **Null semantics.** With every column null, some configurations hand back `null` and
   others an object with null components. If the value is optional, pick one and write a test
   for it; if it is mandatory, make the columns `NOT NULL` and the question disappears.
@@ -63,6 +72,9 @@ for record, ownership and converter contracts.
 - **Querying works normally**: `where i.total.amount > :x`. This is the property a JSON
   column generally lacks through portable JPQL path navigation. Database JSON operators
   and provider extensions can still query JSON; compare required portability and plans.
+
+See [Hibernate 6.6.56 embeddables and implicit naming](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/domain/embeddables.adoc)
+for the provider-specific alternative to explicit overrides.
 
 ## Single-column values: converters
 

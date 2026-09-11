@@ -28,21 +28,27 @@ explicit lifecycle for external resources, time and identity.
 
 The failures this prevents are all failures of premise: teaching `-Xshare:dump` before checking
 the default archive in the deployed image; writing CRaC flags that a standard
-Temurin or Oracle JDK 25 does not recognise at all; leaving `-XX:AOTCacheOutput` in the
-production start command, where it retrains the cache on every launch; and quoting a speedup
+Temurin or Oracle JDK 25 does not recognise at all; accidentally leaving `-XX:AOTCacheOutput` in
+the ordinary serving command instead of consuming the cache; and quoting a speedup
 percentage nobody measured.
 
 ## Workflow
 
-1. **Measure the real target.** Record port-open/readiness, first successful representative
-   response, first response meeting the latency SLO and time/requests to stable throughput.
-   Improving class loading can affect several phases, but it does not prove warm-up is solved.
+Start from the requested explanation, review or adoption decision. Reuse adequate build, log,
+source and measurement evidence; a sound existing CDS setup may need no change. A narrow
+flag/API explanation does not require building an archive, signing a new artifact or running
+a benchmark. Apply the lifecycle and validation requirements to the mechanism actually proposed.
+
+1. **Measure the real target when making a performance claim.** For a service, separate
+   port-open/readiness, first representative success, first response meeting the latency SLO
+   and stable throughput where relevant. For finite CLI/CI work, measure useful completion,
+   correctness and the stage's critical path. Class-loading improvement does not prove warm-up.
 2. **Account for the actual runtime image.** Mainline 64-bit JDK images commonly ship a default
    CDS archive and `-Xshare:auto` is the default; custom `jlink` images and vendor/platform builds
    may differ. Verify use with logs instead of inferring it from version alone.
-3. **Select by constraint, then by granularity.** Use the decision tree in
-   `references/technique-selection.md`; the choice is decided by platform and build control
-   long before it is decided by expected gain.
+3. **Select by attributable cost and accepted constraints.** Use the decision tree in
+   `references/technique-selection.md`. Platform/build support establishes feasibility, not
+   a reason to replace an adequate default archive or AppCDS setup.
 4. **Use dynamic/AppCDS deliberately.** `AutoCreateSharedArchive` is convenient for repeated
    local/CLI launches that exit cleanly and have a writable path; an immutable production image
    should normally build and validate its archive in CI rather than mutate it at shutdown.
@@ -51,26 +57,31 @@ percentage nobody measured.
 6. **Make the training run representative.** Profiles are only worth what the training
    exercised; refresh-and-exit can train startup and shared paths but does not exercise the
    request-specific paths or input distributions needed to establish endpoint warm-up.
-7. **Build the archive and application image as one immutable, signed unit.** Validation details
+7. **For a new deployed cache, bind it to the application/runtime artifact identity.** Use the
+   release's required provenance and access controls; a signed immutable image is one option.
+   Validation details
    changed in JDK 25 updates (including the JDK-8377932 fix); never use a historical weakness as
    the design. Pin the exact vendor/build and run a changed-JAR negative test in CI.
-8. **Verify the cache is actually in use, then report the distribution with its protocol** and the
-   phase it applies to—total startup or one phase. Use `-Xshare:on`/`AOTMode=on` as CI
+8. **Verify use for a cache-use claim; measure comparable cohorts for a speedup claim.** Report
+   the relevant phase, distribution and protocol without inventing unsupported tail precision.
+   Use `-Xshare:on`/`AOTMode=on` as CI
    compatibility gates; in production weigh fail-fast against crash-loop availability and expose
    fallback explicitly.
 
 The working baseline here is HotSpot JDK 25; inspect compiler/toolchain, vendor update, resolved
 Spring/CRaC dependencies and final image before using a versioned recipe. Do not upgrade the
-project merely to match the examples. Return mechanism, lifecycle/artifact contract, exact build,
-training coverage, observed use/rejection and measured startup phases; label untested paths.
+project merely to match the examples. Return the requested conclusion, evidence and relevant
+limitations. An adoption proposal also needs its mechanism, lifecycle/artifact contract, exact
+build, training coverage and validation of the claimed use/benefit; label untested paths.
 
 ## Rules
 
 - CRaC is **not mainline in OpenJDK 25**. `-XX:CRaCCheckpointTo`, `-XX:CRaCRestoreFrom` and
   `jcmd JDK.checkpoint` need an explicitly CRaC-enabled build (Azul Zulu with CRaC, BellSoft
-  Liberica with CRaC, or the `openjdk/crac` fork); Temurin 25.0.3 rejects them with
+  Liberica with CRaC, or the `openjdk/crac` fork). The historical Temurin 25.0.3 probe rejected them with
   `Unrecognized VM option 'CRaCCheckpointTo=…'` and `PrintFlagsFinal | grep -i crac` prints
-  nothing. Confirm that before writing a single CRaC flag.
+  nothing. Check successful producer execution and the exact build's capability before using
+  CRaC flags; an empty filter after a failed Java launch proves nothing about support.
 - JEP 483 (AOT class loading and linking) is **Delivered in JDK 24 — not preview**; it needs no
   `--enable-preview`. JEP 514 (one-command ergonomics) and JEP 515 (AOT method profiling) are
   Delivered in JDK 25. JEP 516 (AOT object caching with any GC) is **Delivered in JDK 26**. On
@@ -78,12 +89,16 @@ training coverage, observed use/rejection and measured startup phases; label unt
   JEP 516 removes the any-GC restriction for AOT object caching in JDK 26, not every other cache
   compatibility constraint.
 - JEP status names the integration/release target, not proof that a particular vendor image,
-  platform or deployed build implements it. Check release/GA availability separately. The Leyden
-  project page still lists AOT native-code compilation as proposed work; JDK 25 profile caches
-  must not be described as containing compiled application methods.
-- `-XX:AOTCacheOutput=<file>` requests training/assembly on each invocation and replaces output
-  on success. The production start command—systemd unit, Docker ENTRYPOINT—
-  must use `-XX:AOTCache=<file>`. These are different flags, not aliases.
+  platform or deployed build implements it. Check release/GA availability separately. As of
+  2026-09-11, JEP 544 (AOT code compilation) is Candidate with no target release listed; the
+  Leyden overview still lists that work as in progress. JDK 25 profile caches must not be
+  described as containing compiled application methods.
+- With the default `AOTMode=auto`, `-XX:AOTCacheOutput=<file>` selects training followed by
+  assembly. An ordinary serving command consumes with `-XX:AOTCache=<file>`. An intentional
+  finite train-then-launch deployment phase can use `AOTCacheOutput` with explicit stop,
+  side-effect isolation, resource/output validation and failure handling before starting the
+  consumer. Do not interchange these flags in ordinary launch commands; explicit
+  `AOTMode=create` is assembly-only and `off` ignores AOT inputs.
 - JDK-8377932 allowed affected AOT-cache builds to accept a changed application JAR. The fix is
   recorded in JDK 25 update changelogs, so behavior cannot be inferred from feature
   version alone. Verify the vendor build's release notes and negative-test replacement of a JAR;
@@ -96,7 +111,7 @@ training coverage, observed use/rejection and measured startup phases; label unt
 - Under fallback modes (`-Xshare:auto`, `-XX:AOTMode=auto`), an incompatible application archive
   may be skipped while the application continues. Turn rejection into a failed
   start with `-Xshare:on` or `-XX:AOTMode=on` where an unexpectedly cold JVM is worse than a
-  crash-loop — verified: a compact-headers mismatch exits with status 1 under `on`.
+  crash-loop — the historical compact-headers mismatch probe exited with status 1 under `on`.
 - `JDK_AOT_VM_OPTIONS` configures the assembly child of the JEP 514 flow. Treat the overall
   command's exit status as insufficient evidence: assert a fresh non-empty output, inspect the
   assembly log and consume it once with `AOTMode=on`. Respect the exact JEP/runtime restrictions
@@ -127,10 +142,12 @@ training coverage, observed use/rejection and measured startup phases; label unt
   workload/platform costs, not constants.
 - Always state whether a percentage covers total startup or one phase. The two are routinely
   swapped, and the swap is what makes the claim unfalsifiable.
-- Treat `.jsa`, `.aot` and CRaC images as sensitive executable-derived artifacts. Pin provenance,
-  restrict write/read access, scan/sign them with the application image, and assume a CRaC image
-  contains every secret observed before checkpoint. Rotate credentials after restore when the
-  provider contract requires freshness.
+- Treat `.jsa`, `.aot` and CRaC images as executable-derived artifacts requiring trusted
+  provenance and appropriate access controls. Apply scanning/signing required by the release
+  policy; an unauthenticated checksum alone does not establish provenance. Protect CRaC images
+  on the conservative assumption that observed secrets may remain captured unless verified
+  capture/exclusion behavior establishes otherwise; Java unreachability is not erasure.
+  Rotate credentials after restore when the provider contract requires freshness.
 
 ## References
 

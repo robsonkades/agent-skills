@@ -86,9 +86,12 @@ feedback mechanism and whether the drain rate is positive before claiming waitin
 3. **Restart only components that need it**, in stages with jitter and readiness checks.
 4. **Ramp admission back** from measured surviving capacity, not a universal percentage. Wait
    through relevant timeout/retry and warm-up windows at each step, and roll back if queue age,
-   client errors or dependency saturation exceed agreed bounds. The
-   ramp is the mechanism that prevents the thundering herd on recovery — the backlogged
-   clients all retry the instant the first success appears.
+   client errors or dependency saturation exceed agreed bounds. Budget the combined recovery
+   load: new traffic, retries, probes, cache warming and replay, plus work still running after
+   caller timeout or removal from routing. Reuse existing controls where they already cover
+   that demand; a low client-side in-flight count alone does not establish downstream headroom.
+   The ramp prevents the thundering herd on recovery — the backlogged clients all retry the
+   instant the first success appears.
 5. **Watch goodput, attempts/logical call, queue age and dependency saturation** alongside error
    and shed rates. Fast rejection can lower latency while availability remains degraded.
 

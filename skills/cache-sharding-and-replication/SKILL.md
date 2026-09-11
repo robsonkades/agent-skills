@@ -33,9 +33,11 @@ is looking at the cache, because the cache is up.
 
 ## Workflow
 
-Before recommending changes, inspect cache product/version, Java client and resolved dependencies,
-runtime/toolchain, routing and retry configuration, replica placement, working-set bytes, per-node
-request share and origin capacity at the required SLO. This skill is language-independent and
+Before recommending changes, reuse the request, configuration and existing measurements: cache
+product/version, relevant clients and runtimes, routing/retry configuration, replica placement,
+working-set bytes, per-node request share and origin capacity at the required SLO. Ask only about
+unresolved constraints that change the decision, such as permitted stale reads or replica locations;
+continue independent analysis with explicit assumptions. This skill is language-independent and
 declares no Java baseline or executable Java examples; do not infer support for a client feature
 or authorize an upgrade. With missing measurements, provide conditional estimates and the exact
 measurement needed, not a production sizing or confirmed incident diagnosis.
@@ -81,8 +83,8 @@ Keep RF = 1 when:
 - the origin demonstrably absorbs a node loss, and the memory is better spent on a larger
   working set; replicas can also serve reads if the product and consistency contract allow it
 Prefer a proxy or a clustered cache over client-side sharding when:
-- clients are polyglot, numerous, or cannot be redeployed together; the topology then
-  changes without touching them
+- its routing/discovery protocol reduces coordination across numerous or polyglot clients;
+  check actual client capabilities, because dynamic client-side membership can also avoid deploys
 Prefer client-side sharding when:
 - clients are few and share a runtime, and the extra network hop is a measurable share of
   the cache's own latency — the point of a cache is that it is fast
@@ -97,10 +99,11 @@ Do not add a cache node to fix a hot key:
   eviction, spot reclaim), not a disaster scenario.
 - A rolling restart can cause repeated remapping or replica promotion. Gate each next restart
   on origin headroom, client SLOs and restored replica readiness, not just recovered hit rate.
-- Stable placement limits movement: `hash(key) % N` remaps
-  nearly the entire keyspace on a membership change, turning one node's loss into a total
-  miss storm. Consistent hashing is one option; fixed slots can also preserve placement.
-  The mapping function belongs to `consistent-hashing`; this is the consequence.
+- Stable placement limits movement: changing N in `hash(key) % N` can remap a large fraction,
+  depending on the divisors and node-index mapping. The moved keys' request share, surviving
+  copies and refill policy determine miss traffic; compare resulting origin demand with measured
+  capacity before predicting an outage. Consistent hashing is one option; fixed slots can also
+  preserve placement. The mapping function belongs to `consistent-hashing`.
 - Node loss has a **second-order** cost when keys remap and refill on survivors: their
   memory did not grow, so insufficient headroom can raise evictions on previously healthy shards.
   Measure this effect rather than assuming the hit-rate dip equals the lost key share.
@@ -119,6 +122,9 @@ Do not add a cache node to fix a hot key:
   disagreement is two clients writing the same key to two different nodes, and both of them
   may read stale. Distribute membership through one source, versioned; versioning alone does
   not make an overlapping rollout coherent.
+- Replica and L1 placement must respect data-access and residency constraints. Preserve tenant
+  and authorization distinctions in keys and access checks; a key prefix is not access control.
+  Check whether one tenant's refill can consume the shared origin budget before widening replication.
 - A proxy costs one extra network hop on the cache path, which is the path chosen for being
   fast. Measure the hop against `T_source` before rejecting it: a fraction of a millisecond
   in front of a source costing tens of milliseconds is usually the right trade, and it buys
@@ -128,25 +134,33 @@ Do not add a cache node to fix a hot key:
   while other systems coordinate them at extra latency/availability cost. Check the exact command
   and failure contract against the access pattern.
 - **A near-cache (local L1 in front of the shared L2) is a second cache with its own
-  coherence problem**, and it is per-instance: invalidating the L2 invalidates no L1.
-  `caching-strategies` owns invalidation propagation and the L1 TTL as the safety net; the
-  topology consequence is that the copies to invalidate now number `instances + replicas`.
+  coherence problem**, and it is per-instance. An L2 acknowledgement alone does not establish
+  that every L1 is current; a product may propagate invalidations, with delivery/loss-recovery
+  semantics to verify. `caching-strategies` owns that protocol and the source-age budget across
+  layers; the topology consequence is up to `instances caching the key + RF` copies per key,
+  excluding temporary migration copies.
 - Every entry crossing the network is serialised, so the value size is a throughput decision,
   not a detail. A large value multiplied by the fan-out of a warm-up is a network incident —
   `serialization-performance` owns the format cost.
 
 ## Deliverable
 
-Return the chosen topology and rejected alternative, measured inputs versus assumptions,
-node-loss origin-load estimate, replica placement/read policy, and failure-test acceptance
-bounds with rollout abort criteria. For incidents, distinguish observed timing/counters from
-the cache-loss hypothesis and name the load test or evidence that would refute it. State which
-checks actually ran; a paper estimate is not demonstrated failure tolerance.
+Scale the result to the task. For a topology decision, return the recommendation (including
+keeping the current design), the materially relevant alternative and why it loses, measured
+inputs versus assumptions, node-loss origin-load estimate, replica placement/read policy, and
+failure-test acceptance bounds with rollout abort criteria. State what evidence would change
+the decision. Stop discovery when the remaining unknowns do not change it; otherwise name the
+specific measurement or experiment needed. An incident diagnosis need not choose a replacement
+topology: distinguish observed timing/counters from the cache-loss hypothesis and name evidence
+that would refute it. State which checks actually ran; a paper estimate is not demonstrated
+failure tolerance.
 
 ## Primary sources
 
 - [Redis Cluster specification](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/)
 - [Redis replication](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)
+- [Hazelcast 5.6 Near Cache](https://docs.hazelcast.com/hazelcast/5.6/cluster-performance/near-cache) —
+  an example of invalidation propagation and loss reconciliation, not a universal L1 guarantee.
 - [Amazon Dynamo paper](https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf)
 
 ## References

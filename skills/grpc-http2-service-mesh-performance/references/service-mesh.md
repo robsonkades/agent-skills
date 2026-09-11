@@ -22,17 +22,24 @@ change routing, connection count and backend load rather than simply remove one 
 ## Policy composition
 
 Inventory timeout, retry, hedge, circuit breaking, connection-pool and outlier policies at client,
-proxy, ingress and server. Compute the maximum attempts reaching the backend and test overload and
-ambiguous-outcome cases. A valid object accepted by the API does not prove the intended field was
+proxy, ingress and server. Compute the configured-policy attempt envelope and separately account for
+transport retries; test overload and ambiguous-outcome cases. A valid object accepted by the API does not prove the intended field was
 effective; use schema validation and the proxy's effective configuration.
 
 Normalize retries versus total attempts: two client retries mean three attempts; one proxy retry
 means two per incoming attempt. If both layers can fully retry, the configured envelope is 3 × 2 = 6
-backend attempts per logical call, not 3 + 2. Deadlines, retryable status, response commitment,
+policy-driven backend attempts per logical call, not 3 + 2. Deadlines, retryable status, response commitment,
 buffers and retry throttling can reduce it; hedges overlap in time. Count actual attempts and
 backend effects, and distinguish gRPC transparent retries before application processing from
 configured retries. Response headers commit a gRPC call for retry purposes; this is not proof that
 the business effect has or has not committed. A timeout can still leave an ambiguous result.
+
+The configured envelope is not a universal bound on physical attempts. Transparent retries may
+leave the configured attempt counter unchanged; local-only attempts do not reach the backend,
+while attempts rejected by the server library can still consume network/proxy resources without
+application processing. Verify the implementation's separate limits and counters. grpc-java 1.84.0
+retains the prior attempt count for transparent retries; do not infer application invocations or
+business effects from that counter alone.
 
 Long-lived streams need a reconnect/resume contract: proxy drain, GOAWAY, maximum connection age
 and keepalive enforcement can interrupt them. Transport reconnection does not replay application
@@ -46,3 +53,5 @@ required guarantees.
 Primary references: the deployed mesh's versioned API and performance documentation,
 [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446), and the relevant proxy configuration dump.
 For attempt and response-commit behavior see [gRPC retry](https://grpc.io/docs/guides/retry/).
+The counter distinction is visible in
+[grpc-java 1.84.0 RetriableStream](https://github.com/grpc/grpc-java/blob/v1.84.0/core/src/main/java/io/grpc/internal/RetriableStream.java).

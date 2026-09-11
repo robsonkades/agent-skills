@@ -17,8 +17,9 @@ that the source is being hit at full rate while the cache reports almost no acti
 
 ## The four series that must be on the dashboard
 
-Hit rate alone is misleading, because the **worst** cache — unbounded, no TTL, no
-invalidation — has the best hit rate. Track it alongside:
+Hit rate alone is misleading: retaining entries longer can improve it while violating memory
+or freshness bounds. A bounded cache of immutable content need not expire entries for freshness.
+Track hit rate alongside:
 
 1. **Post-GC retained occupancy by cache/value class.** It should converge near the intended
    working-set bound under steady input; total Old Gen alone cannot identify the owner.

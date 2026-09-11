@@ -2,21 +2,24 @@
 
 ## Decision table
 
-| Situation                                                        | Choose                                                                                | Because                                                                         |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Reuse of behaviour, no substitutability claim                    | Composition + forwarding                                                              | Coupling limited to the delegate's public contract                              |
-| Closed set of variants you own, dispatch varies by variant       | Sealed interface + records + exhaustive `switch`                                      | Compiler enforces exhaustiveness; adding a variant surfaces every dispatch site |
-| Variants share real state and helper behaviour, set still closed | Sealed abstract base class                                                            | Shared fields live once; hierarchy stays closed to strangers                    |
-| Open extension by code you will never see                        | Interface (+ default methods), possibly an abstract skeleton documented for extension | Third parties need a contract, not your implementation                          |
-| Behaviour varies on 2+ independent axes                          | One axis as types, others as composed strategies                                      | N×M subclasses otherwise; N+M objects instead                                   |
-| Cross-cutting add-on behaviour (retry, metrics, caching)         | Decorator over a shared interface                                                     | Stackable at runtime; base type untouched                                       |
+| Situation                                                        | Choose                                                                                      | Because                                                                                 |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Reuse of behaviour, no substitutability claim                    | Composition + forwarding                                                                    | Coupling limited to the delegate's public contract                                      |
+| Closed set of variants you own, dispatch varies by variant       | Sealed hierarchy; suitable data leaves may be records; external operations may use `switch` | Recompilation detects uncovered variants; covering fallbacks still need semantic review |
+| Variants share real state and helper behaviour, set still closed | Sealed abstract base class                                                                  | Shared fields live once; hierarchy stays closed to strangers                            |
+| Open extension by code you will never see                        | Interface (+ default methods), possibly an abstract skeleton documented for extension       | Third parties need a contract, not your implementation                                  |
+| Behaviour varies on 2+ independent axes                          | Consider one axis as types, others as composed policies                                     | Avoid a subtype per supported combination; runtime object count depends on wiring       |
+| Cross-cutting add-on behaviour (retry, metrics, caching)         | Decorator over a shared interface                                                           | Stackable at runtime; base type untouched                                               |
 
-Sealed hierarchies are a middle ground the older advice predates: closed polymorphism
-gives exhaustive checking that open inheritance cannot, and variant-specific data that a
-flat strategy field cannot. The residual trade is the expression problem in one sentence —
-a sealed set makes _new operations_ local (one more switch) and _new variants_ loud when all
-consumers are recompiled; separately evolved binaries may reach a synthetic fallback and throw
-`MatchException`. An open hierarchy makes new variants local and new operations expensive.
+Sealing lets the compiler use permitted variants for coverage analysis. An open hierarchy
+can still have an exhaustive switch through a covering type pattern or `default`, but cannot
+enumerate unknown future subtypes. The residual trade is the expression problem —
+a sealed set makes _new operations_ local (one more switch) and _new variants_ visible to
+recompiled switches that no longer cover the set. Explicit defaults or broader patterns may
+still cover them; acceptance by such a fallback does not establish correct new behavior.
+Separately evolved binaries may reach a synthetic fallback and throw
+`MatchException`. Open polymorphism makes new variants local; a new operation needing
+variant-specific implementations may require changes across that family.
 Pick by which kind of change and deployment boundary the domain actually produces.
 
 ## Fragile-base risk heuristics
@@ -29,9 +32,10 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
   `HashSet.addAll` calls `add` trap. Grep the base for calls to its own non-final,
   non-private methods.
 - **Base and subclasses owned by different teams or released separately.** Every base
-  release is an unreviewed change to the subclasses.
+  release needs compatibility evidence; a shared source build cannot establish what all
+  separately deployed subclasses observe.
 - **`protected` mutable fields.** Subclasses depend on representation, not contract; the
-  base can no longer change its own state layout.
+  base cannot freely change the exposed state contract.
 - **Overrides that call `super.method()` at a required point.** The base's algorithm has
   leaked into every subclass; forgetting the call is a silent bug.
 - **Overrides that weaken required base behaviour** (empty bodies,
@@ -48,13 +52,14 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
   but priced in and managed by the framework's compatibility promises.
 - **A shallow sealed abstract base you own entirely.** Two or three subclasses, same
   module, same maintainer, shared state genuinely common — the coupling is confined and
-  the compiler knows the whole set. Dismantling it into delegation adds forwarding for no
-  risk reduction.
+  the compiler knows the whole set. Dismantling it merely to change the relationship adds
+  forwarding; identify a concrete benefit before paying that migration cost.
 - **Interface extension.** `interface A extends B` primarily extends a contract and carries no
   instance representation. Default methods can still introduce self-use, conflict and binary
   evolution concerns, so inspect them rather than assuming implementation-free inheritance.
-- **Exception hierarchies.** `DomainException extends RuntimeException` and its children
-  carry no algorithmic self-use; the hierarchy exists for `catch` selection.
+- **Exception classification.** `DomainException extends RuntimeException` and its children
+  may exist only for `catch` selection; inspect custom behavior before inferring algorithmic
+  self-use merely from the hierarchy.
 - **Stable, closed, working hierarchies.** Low change pressure and no defect evidence reduce the
   expected payoff, but do not excuse a security, integrity or substitutability violation whose
   failure is merely rare. Compare demonstrated risk with migration cost
@@ -72,6 +77,9 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
   recursive generics are another option, not a prerequisite for every fluent wrapper.
 - **Object-graph plumbing**: dependencies must be constructed and wired where a subclass
   got them implicitly.
+- **Lifetime and ownership**: holding a delegate does not make the wrapper its owner.
+  Preserve who may close resources or cancel work, including shared/borrowed delegates and
+  failure cleanup. Forwarding `close()` or returning a delegate can change that contract.
 
 If these costs dominate and the base contract is stable and documented, keeping
 inheritance is the correct engineering decision — record it as such.
@@ -91,3 +99,4 @@ inheritance is the correct engineering decision — record it as such.
 See [JLS 21 §8.1.6](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6),
 [JLS 21 switch execution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11),
 and [Collection optional operations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html).
+For restricting an existing hierarchy, see [JLS 21 class evolution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.2).

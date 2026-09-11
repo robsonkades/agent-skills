@@ -4,20 +4,27 @@ description: >
   Designing and reviewing nonblocking Java algorithms: linearization points, lock-free,
   wait-free and obstruction-free progress, CAS/RMW loops, success/failure ordering, contention
   collapse, backoff/helping, ABA/version wrap, node reuse and reclamation, publication,
-  linearizability, starvation and shutdown. Requires comparison with JDK/library and lock-based
-  alternatives plus retry and topology measurement. Use when implementing or diagnosing atomics,
-  striped counters, queues, stacks or ring buffers—not as a synonym for “fast.”
+  linearizability, starvation and shutdown. For custom implementations or performance claims,
+  compare JDK/library and lock-based alternatives; measure retry and topology effects when relevant.
+  Use when implementing or diagnosing atomics, striped counters, queues, stacks or ring
+  buffers—not as a synonym for “fast.”
 ---
 
 # Lock-free patterns
 
 ## Purpose
 
-Prove safety and progress of a nonblocking algorithm and establish that its complexity buys a
-decision-relevant benefit. Lock-free means system-wide progress under defined assumptions; one
-thread may retry/starve indefinitely, cache lines still contend, and external blocking can remain.
+Assess safety and progress of a nonblocking algorithm; for a custom design or performance claim,
+establish why its complexity is justified. Lock-free means system-wide progress under defined
+assumptions; one thread may retry/starve indefinitely, cache lines still contend, and external
+blocking can remain.
 
 ## Entry gate
+
+Start with the requested operation and claim, reusing existing API contracts, proofs and
+measurements. A narrow semantic/progress review can close with a supported explanation or
+no change; keep an adequate library implementation. Report a specific unresolved obligation
+when evidence is missing instead of requiring a full benchmark or redesign for every review.
 
 Before custom code:
 
@@ -30,8 +37,9 @@ Before custom code:
 Custom lock-free code is justified by requirements, not by absence of `BLOCKED` threads.
 
 Inspect the project's Java baseline, concrete atomic type/library version and supported
-architectures. References use JDK 25 documentation; the `AtomicReference.getAcquire()`
-illustration needs Java 9+. This does not authorize upgrading a Java 8 project.
+architectures. References use JDK 25 documentation; `AtomicReference.getAcquire()` and
+`Thread.onSpinWait()` need Java 9+. A Java 8 algorithm can use its supported atomic APIs
+with their ordering contracts; these illustrations do not authorize an upgrade.
 
 ## Algorithm contract
 
@@ -151,6 +159,11 @@ often the discriminating evidence. See `references/measuring-cas-contention.md`.
 
 ## Validation
 
+Use the checks that challenge the requested operation's safety/progress or performance claim.
+Reuse applicable library contracts and existing evidence for a narrow review. Custom protocol
+changes still need their relevant invariant, memory-order and progress justification; a
+performance claim also needs representative comparisons and measurements.
+
 - sequential oracle and representation invariants;
 - linearizability/history testing over bounded models;
 - jcstress for memory-ordering/atomic litmus patterns;
@@ -176,14 +189,18 @@ tests challenge assumptions and integration.
 
 ## Definition of done
 
+Apply these obligations to the requested scope and distinguish existing evidence, executed
+checks and proposed follow-up. Do not demand new tests or measurements unrelated to the claim.
+
 - [ ] Semantics, invariants and linearization points cover success and failure.
 - [ ] Progress class is scoped with scheduler/participant assumptions.
 - [ ] Publication and CAS success/failure modes have a JMM proof.
 - [ ] ABA, wrap, reuse, reclamation and off-heap lifetime are handled.
 - [ ] Backoff/help/cancel/shutdown have explicit progress and observability contracts; individual
       retries may be unbounded under lock-freedom, and a retry cap changes the operation's outcome.
-- [ ] Library and lock-based alternatives are compared under representative topology.
-- [ ] Safety/history/stress plus performance/fairness/memory evidence support the claim.
+- [ ] A custom design has considered library and lock-based alternatives; performance claims
+      compare them under representative contention/topology.
+- [ ] Relevant safety/history/stress and performance/fairness/memory evidence support the claim.
 
 ## References
 

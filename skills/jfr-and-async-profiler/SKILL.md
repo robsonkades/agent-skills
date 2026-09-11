@@ -37,7 +37,10 @@ that separates hypotheses.
 
 ## Question contract
 
-Before selecting a tool, write:
+Reuse supplied recordings, commands, project/runtime facts, and applicable calibration before
+asking for context or collecting again. Fill the relevant parts of this contract; request only
+missing facts that could change selection, safety, or the conclusion, and continue independent
+artifact checks while they remain unresolved:
 
 ```text
 symptom, decision, outcome metric, and affected window:
@@ -84,7 +87,7 @@ Wall is not off-CPU-only: it includes execution as well as waiting. A dedicated 
 mechanism observes descheduled intervals with its own coverage; do not subtract unrelated
 CPU and wall percentages to derive blocked time.
 
-For latency, combine:
+For latency, select the evidence that distinguishes the remaining hypotheses from:
 
 - end-to-end latency/trace/queue measurement for critical path;
 - JFR I/O/monitor/park/safepoint/GC events for typed intervals;
@@ -120,9 +123,10 @@ Map the code mechanism to target-JDK event types rather than one generic “bloc
 - virtual-thread pinning/scheduling/submit failures where supported;
 - application/executor/connection/remote queues not automatically represented by JVM events.
 
-Check event existence, enablement, threshold, stack setting, and workload opportunity. Zero
-events can be a valid result only after positive-control/configuration/coverage validation.
-Lower thresholds on a canary or bounded window while measuring event volume and overhead.
+Check event existence, enablement, threshold, stack setting, and workload opportunity. Treat
+zero events as evidence of absence only within validated coverage and configuration. If shorter
+events matter, test a lower threshold on a canary or bounded window while measuring event volume
+and overhead; otherwise retain the current threshold and state its censoring limit.
 
 ## Warm-up and phase selection
 
@@ -141,7 +145,9 @@ Sample-count uncertainty is not universally `1/sqrt(n)`: samples can be weighted
 autocorrelated, batched, throttled, clustered, filtered, and lost. Report absolute count/weight,
 duration/work denominator, unknown/truncated/lost fraction, and independent recordings.
 
-Use synthetic positive/negative controls:
+Reuse relevant controls from the same capture configuration and environment when they still
+establish the required coverage. For new or uncertain coverage, choose the controls that can
+resolve that uncertainty, for example:
 
 - known CPU loop should appear in CPU sampling, not off-CPU;
 - known sleep/park/I/O should appear in appropriate wall/JFR event coverage;
@@ -199,8 +205,9 @@ rate and stack work. Neither is universally safe/unsafe in production. APM and J
 events can be production-appropriate when narrow, calibrated, bounded, and reversible.
 
 Use instrumentation when exact call/duration semantics are required and sampling cannot answer
-the decision. Measure control, enabled, burst, exception, retransformation, agent-interaction,
-and tail-latency arms. Never say “instrumenting agents are forbidden in production.”
+the decision. For a new or changed configuration, compare control/enabled outcomes and exercise
+relevant burst, exception, retransformation, agent-interaction, and tail-latency risks. Reuse
+applicable calibration. Never say “instrumenting agents are forbidden in production.”
 
 ## Thread dumps are not profiles
 
@@ -231,14 +238,20 @@ select the convenient graph.
 
 ## Capture workflow
 
+If existing evidence answers the question, finish with the supported result, its limits, and
+what would warrant another capture. Otherwise propose or execute only the bounded next capture
+needed; distinguish a proposal from work actually run. Do not delay authorized incident recovery
+to complete a profiling checklist.
+
 1. Preserve existing telemetry and incident window.
 2. State the question contract and surviving hypotheses.
 3. Select least-risk event/clock/tool and target cohort.
-4. Discover target capabilities/settings/access; run controls.
+4. Discover target capabilities/settings/access; validate unresolved coverage with relevant controls.
 5. Bound duration, event/sample rate, disk/memory, privilege, and abort threshold.
 6. Capture workload/outcome markers and profiler/JFR health concurrently.
 7. Verify file/readability, counts/weights, loss, scope, timestamps, checksum, and privacy.
-8. Interpret through owning skill and validate any change with repeated external outcomes.
+8. Hand off interpretation with artifact/window, event/weight semantics, hypotheses, and limits;
+   validate any resulting performance change with comparable external outcomes.
 
 ## Anti-patterns
 
@@ -256,13 +269,15 @@ are version/workload dependent. Discover, calibrate, fingerprint, and preserve e
 
 ## Definition of done
 
-- [ ] Question names clock/event, population, weight, minimum contribution, and decision.
+- [ ] Result names the decision, relevant clock/event, population, weight, and detection limit.
 - [ ] Tool choice and alternatives are justified by information gain and risk.
-- [ ] Runtime/tool/settings/access were discovered from pinned target versions.
-- [ ] Positive/negative controls, adequate observation count/weight, and loss checks pass.
-- [ ] Capture aligns to workload/lifecycle/outcome and has bounded overhead/storage/privilege.
-- [ ] Artifact is readable, checksummed, provenance-bearing, privacy-classified, and durable.
-- [ ] Cross-tool results are reconciled by semantics before causal interpretation.
+- [ ] Runtime/tool/settings and relevant access facts are established; material unknowns are explicit.
+- [ ] Adequacy and coverage cite applicable controls, counts/weights, and loss evidence; unsupported
+      conclusions remain conditional rather than treating unavailable checks as passed.
+- [ ] Any new capture aligns to workload/lifecycle/outcome and has bounded overhead/storage/privilege.
+- [ ] Artifacts used are readable and have checksum/provenance and handling appropriate to privacy,
+      retention, and recovery requirements; missing evidence limits the result.
+- [ ] When results are compared across tools, reconcile their semantics before causal interpretation.
 
 ## References
 

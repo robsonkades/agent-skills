@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: leader-election
-version: 1.3.1
+version: 1.3.2
 description: >-
   Electing one active instance for work that must not run concurrently: the lease renewal
   model and the rule that failed renewal never extends the leader's conservative deadline;
@@ -43,6 +43,8 @@ files:
 
 dependencies:
   - name: distributed-locks-and-leases
+    version: ^1.0.0
+  - name: idempotency
     version: ^1.0.0
   - name: sharding-and-partitioning
     version: ^1.0.0

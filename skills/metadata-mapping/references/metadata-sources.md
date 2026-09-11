@@ -2,15 +2,18 @@
 
 ## The four sources compared
 
-| Dimension                        | Annotations                              | External XML (`orm.xml`) | Programmatic                        | Generated from schema             |
-| -------------------------------- | ---------------------------------------- | ------------------------ | ----------------------------------- | --------------------------------- |
-| Coupling of the domain class     | high                                     | none                     | none                                | n/a (it is generated)             |
-| Discoverability                  | excellent                                | poor                     | good                                | good                              |
-| Refactor safety (rename a field) | typed references only; strings can drift | startup/tool validation  | depends on typed API versus strings | regenerate then compile consumers |
-| Varies per deployment            | no                                       | yes                      | yes                                 | no                                |
-| Verbosity                        | low                                      | high                     | high                                | none (generated)                  |
-| Review burden                    | low                                      | high                     | medium                              | reviews the schema                |
-| Typical fit                      | most applications                        | multi-tenant/OEM mapping | Data Mapper by hand                 | schema owned elsewhere            |
+These are composable mechanisms, not exclusive architectures. Compare the mapped type's
+dependencies and the actual build/deployment path; generation can feed programmatic mappers.
+
+| Dimension                        | Annotations                              | External XML (`orm.xml`)  | Programmatic                        | Generated from schema             |
+| -------------------------------- | ---------------------------------------- | ------------------------- | ----------------------------------- | --------------------------------- |
+| Coupling of the mapped class     | persistence API imports                  | avoids annotation imports | depends on mapped type/API          | generated API dependencies        |
+| Discoverability                  | excellent                                | poor                      | good                                | good                              |
+| Refactor safety (rename a field) | typed references only; strings can drift | startup/tool validation   | depends on typed API versus strings | regenerate then compile consumers |
+| Varies per deployment            | needs another artifact or override       | yes                       | yes                                 | if regenerated/selected per build |
+| Verbosity                        | low                                      | high                      | high                                | none (generated)                  |
+| Review burden                    | low                                      | high                      | medium                              | reviews the schema                |
+| Typical fit                      | most applications                        | multi-tenant/OEM mapping  | Data Mapper by hand                 | schema owned elsewhere            |
 
 ## Annotations: the default, with its coupling stated
 
@@ -34,10 +37,10 @@ public class Order {
 The mapping is visible beside the field, but explicit column names, `mappedBy` and index
 column lists remain strings that can drift. The price is that `Order` imports `jakarta.persistence`.
 
-That price is only worth arguing about when a separate domain model exists. If these
-entities _are_ the persistence model and a distinct domain model sits beside them, then
-annotations on the entity are correct and annotations on the domain type are the actual
-defect (`data-source-patterns`).
+If these entities are the persistence model and a distinct framework-free domain model sits
+beside them, annotations belong on the persistence model. When the domain type is mapped
+directly, assess the accepted dependency and entity-shape constraints rather than infer that
+either model is redundant (`data-source-patterns`).
 
 **Index and constraint declarations in annotations are documentation, not enforcement**
 where migrations own the schema — the ORM will not create them under `validate`. Either keep
@@ -46,6 +49,9 @@ migration be the single statement. Choose one and be consistent; the failure mod
 `@Index` that nobody created and everybody believes in.
 
 ## External metadata: the case that justifies it
+
+Partial Jakarta Persistence 3.0 XML override: the persistence unit supplies the remaining
+identity/access mapping. Match its namespace and merge rules to the target API/provider.
 
 ```xml
 <!-- orm.xml — a mapping that varies per deployment -->
@@ -61,18 +67,25 @@ migration be the single statement. Choose one and be consistent; the failure mod
 
 Real use cases: one codebase deployed against several customer schemas; a product shipped to
 customers who own their database; a legacy schema whose column names cannot be brought into
-the code. Outside those, the cost — invisible mapping, breaks silently on rename, painful
-review — outweighs the decoupling.
+the code; or a mapped model whose dependency contract excludes persistence annotations.
+Compare discoverability, rename validation and maintenance cost with that concrete need.
+Avoiding annotation imports does not remove entity-shape, lifecycle or provider constraints.
 
-**The mixed strategy is usually the right one:** annotations as the base mapping, plus a
-small `orm.xml` that overrides only what varies. XML overrides annotations, so the file
-stays short and the common case stays discoverable.
+When annotations are an acceptable base, a small XML override can keep common mapping
+discoverable. External-only mapping or supported programmatic configuration can also fit.
+Apply the specification's element-level override/default rules and metadata-complete settings;
+do not assume omitted XML values always preserve annotations or that XML alone selects tenants.
 
 ## Programmatic mapping
 
 A hand-written Data Mapper, Spring Data JDBC's conventions, MyBatis or jOOQ. The mapping is
 code: explicit translation can be debugged and tested. Frameworks may still use reflection,
 conventions or generated accessors; programmatic configuration does not imply zero reflection.
+
+Partial translation sketch; domain/row types, imports and `toLine` are omitted. `Stream.toList()`
+requires Java16+. Adapt to the project's supported collection API and required mutability
+without upgrading it. The sketch assumes stored status names match `OrderStatus`; otherwise
+use an explicit code converter with defined null, unknown-code and historical-value behavior.
 
 ```java
 @Component
@@ -122,16 +135,20 @@ the alternatives are:
 
 Entity ↔ DTO mapping is metadata mapping of a different kind, and the same trade applies.
 
-| Approach                         | Failure mode                                                                        |
-| -------------------------------- | ----------------------------------------------------------------------------------- |
-| Hand-written                     | Verbose; a forgotten new field is silent                                            |
-| Annotation processor (MapStruct) | Generated at build time; an unmapped field is a **build** warning or error          |
-| Reflection-based deep mapper     | An unmapped or mistyped field is a **runtime** surprise, sometimes only on one path |
-| Constructor/record-based mapping | A new component is a compile error at every construction site                       |
+| Approach                         | Failure mode                                                                                          |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Hand-written                     | Verbose; a forgotten new field is silent                                                              |
+| Annotation processor (MapStruct) | Generated at build time; an unmapped field is a **build** warning or error                            |
+| Reflection-based deep mapper     | An unmapped or mistyped field is a **runtime** surprise, sometimes only on one path                   |
+| Constructor/record-based mapping | Changed required signatures fail affected call sites; overloads/defaults can keep old calls compiling |
 
-Prefer generation or explicit construction; both move mismatches to build time. Configure a
-generated mapper to fail on unmapped target properties rather than to warn, which is what
-makes it better than hand-writing.
+Generation and explicit construction expose some structural mismatches at build time.
+For MapStruct, use `unmappedTargetPolicy = ERROR` when every target property must be accounted
+for, with intentional omissions explicit. That checks coverage, not semantic correctness:
+same-typed fields can have different meanings, and automatic conversions can lose precision
+or use the wrong units. Verify applicable null/default, unit/rounding, enum/code and nested
+mapping contracts with representative and boundary values. Keep adequate hand-written
+translation; strict processor settings do not establish superiority or validate business rules.
 
 Whichever is used, keep the mapper free of business logic: a mapper that computes a total or
 decides a status is a domain rule hiding in a translation layer
@@ -153,6 +170,10 @@ Must the same code map to different schemas per deployment?
           external metadata can also isolate framework dependencies.
 
 Do column or attribute names appear as strings anywhere?
-└── yes → generate a metamodel; leave the remaining strings covered by
-          startup validation and executed-in-CI queries.
+└── yes → use a metamodel where the API accepts typed references and it improves this path;
+          validate relevant remaining strings through supported bootstrap/query checks.
 ```
+
+Sources: [Jakarta Persistence 3.2 XML descriptor rules](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#use-of-the-xml-descriptor),
+[MapStruct 1.6 reference](https://mapstruct.org/documentation/1.6/reference/html/),
+[Java17 Stream.toList API](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html#toList()>).

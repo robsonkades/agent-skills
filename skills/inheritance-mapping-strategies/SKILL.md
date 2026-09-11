@@ -19,9 +19,9 @@ description: >
 ## Purpose
 
 Choose a subtype mapping with its query cost, its constraint capability and its evolution
-cost all on the table, and challenge the hierarchy itself first. Inheritance is the sharpest
-edge of the impedance mismatch: relational schemas have no subtypes, so every strategy is a
-compromise, and the compromise is a schema commitment that costs a migration to revisit.
+cost all on the table. A Java subtype hierarchy does not determine one portable relational
+representation: each strategy trades query shape against constraints and schema evolution.
+Revisiting a populated mapping can require a migration even when the Java change is small.
 
 Challenge hierarchies introduced only to share fields, but do not infer that a data-oriented
 subtype is invalid: substitutability and distinct invariants matter as well as methods.
@@ -51,20 +51,29 @@ Concrete table        one table per concrete subtype, each with every
 
 ## Workflow
 
-1. **Challenge the hierarchy.** Do subtypes differ in _behaviour_, or only in which fields
-   are populated? Inspect substitutability and invariants; field-only differences invite comparison with
-   composition but do not alone disprove a subtype.
+Reuse the consumer queries, existing schema/constraints, public subtype contracts and change
+goal before choosing annotations. Keep a mapping that already satisfies them. Ask only about
+unresolved query, integrity or rollout requirements that could change the recommendation;
+continue inspecting SQL and mappings while those answers are pending.
+
+1. **Check the hierarchy's contract.** Inspect substitutability, identity and invariants as
+   well as behaviour. Field-only differences invite comparison with composition but do not
+   alone disprove a subtype or justify breaking existing consumers.
 2. **Count the shape.** How many subtypes, how many columns each, how many are
    subtype-specific? Measure populated row width, indexes, constraints and query plans; column count alone
    does not determine cost.
-3. **Establish the query mix.** Mostly polymorphic reads ("all payments") favour single
-   table; mostly per-subtype reads with heavy write integrity favour joined.
+3. **Establish the query mix.** Include selected fields, root versus subtype queries, write
+   paths and incoming references. Compare a projection or index within the existing mapping
+   with changing storage; polymorphic entity reads often favour single table, while joined
+   can simplify subtype-local constraints. Check the actual provider SQL and database plan.
 4. **Establish whether the database must enforce the subtype's required fields.** If yes,
    single table is out unless you are prepared to write check constraints.
 5. **Establish the evolution rate.** A hierarchy that gains a subtype every quarter pays a
    migration per subtype under joined and concrete table, and may require columns, discriminator checks and indexes under single table.
-6. **Decide, and pin the discriminator values** explicitly, so a class rename is not a data
-   migration.
+6. **Decide or retain the mapping, and pin discriminator values** where used, so a class
+   rename need not migrate data. Verify the relevant reads/writes/constraints and rollout
+   contract; stop when the requirement is met. Record what missing evidence or workload
+   change would warrant revisiting a conditional recommendation.
 
 ## Decision rules
 
@@ -77,12 +86,14 @@ Few subtypes, few subtype-specific columns, polymorphic queries common,
 performance matters
         → SINGLE_TABLE often minimizes joins for polymorphic reads. Confirm
           row width, indexes, predicates and workload before claiming speed.
-          Pay with nullable columns and weak database-level constraints.
+          Pay with nullable columns and explicit conditional-constraint design.
 
 Many subtype-specific columns, or the database must enforce them, or
 subtypes are large and distinct
-        → JOINED. Normalised and constrained; measure joins for entity loads and inserts across mapped tables;
-          base projections need not load every subtype.
+        → compare JOINED's subtype-local constraints with SINGLE_TABLE checks
+          and the actual workload. Joined FKs alone do not prove sibling
+          exclusivity or base-row completeness; verify required invariants.
+          Base projections need not load every subtype.
 
 Subtypes are genuinely unrelated in storage terms, never queried
 polymorphically, and no other table needs a foreign key to the base
@@ -95,8 +106,10 @@ The hierarchy is deep (3+ levels)
 
 Variation is per-tenant or per-configuration, and new variants must ship
 without a deploy
-        → not inheritance at all: data-driven variation, with the
-          variant part in a serialized LOB (orm-structural-mapping).
+        → compare data-driven policy/composition using supported operations.
+          Choose relational fields/rows versus JSON or serialized data from
+          validation, query/index, update and compatibility needs; configuration
+          alone does not implement new behaviour (orm-structural-mapping).
 ```
 
 ## Rules
@@ -118,9 +131,10 @@ without a deploy
 - Query costs depend on selected attributes, predicates, fetches and provider SQL. A root
   SINGLE_TABLE query need not filter the discriminator at all; fewer joins do not guarantee
   a cheap plan. Inspect plans and representative workload before comparing strategies.
-- A hierarchy that only shares fields wants `@MappedSuperclass` (shared mapping, no
-  polymorphism, no base table) or composition. `@MappedSuperclass` is under-used and is
-  exactly right for audit columns and shared identifiers.
+- For mapping reuse without a subtype contract, compare `@MappedSuperclass` (shared
+  mapping, no entity-root polymorphism or base table) with composition. Audit fields and
+  shared identifiers can fit it; do not remove a legitimate persistent hierarchy merely
+  because its fields look similar.
 - Adding a subtype may need new columns/checks/indexes (single table), a new mapped table
   and FK (joined), or a concrete table. Locking and scan/rewrite costs depend on the exact
   database/version and DDL; additive does not mean online. Changing
@@ -130,13 +144,15 @@ without a deploy
 - Choose indexes from predicates and selectivity. Partial/filtered indexes can help sparse
   subtype data where supported and where the query implies their predicate; inspect the
   generated, possibly parameterized SQL and plan.
-- The domain question comes first. If `PremiumCustomer` and `StandardCustomer` differ only
-  in a discount rate, they are one type with a policy, and no mapping strategy will make the
-  subtype earn its keep (`domain-logic-organization`).
+- If `PremiumCustomer` and `StandardCustomer` differ only in a configurable discount rate
+  and have no distinct substitution/invariant contract, one type with a policy may be enough.
+  Preserve actual business and consumer distinctions; hand off unresolved domain meaning to
+  `domain-logic-organization`.
 
-For a recommendation, report query/DDL evidence, the integrity and migration trade-offs,
-and the targeted validation that would confirm it. Without plans or workload data, keep
-performance conclusions conditional.
+For a recommendation or no-change result, report query/DDL evidence, the integrity and
+migration trade-offs, actual checks and any targeted validation still needed. Without plans
+or workload data, keep performance conclusions conditional; a proposed migration is not
+completed implementation.
 
 ## References
 

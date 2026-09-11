@@ -37,6 +37,11 @@ The detailed source model here is OpenJDK 25; older/newer releases are labelled 
 Inspect target vendor/update, effective flags and collector before using internal names or defaults.
 These are HotSpot implementation details, not Java language guarantees; do not upgrade to apply them.
 
+Reuse supplied logs, launch settings and workload context. Establish whether the task is a mechanism
+explanation, a regression diagnosis or a proposed tuning change; ask only for missing evidence that
+would change that answer. Use the relevant branches below, with capture scope and cost matched to the
+question. An explanation or a justified unchanged configuration can complete the task.
+
 1. **Read young and mixed collections separately.** They are different events with
    different budgets; grep them apart before computing any statistic.
 2. **Break the pause into phases** with `-Xlog:gc+phases` and identify which one dominates.
@@ -54,16 +59,20 @@ These are HotSpot implementation details, not Java language guarantees; do not u
 6. **Sample representative workload windows**, separating pause types and reporting event count,
    duration, distribution and maxima. Ten mixed cycles is not a statistical guarantee; omit or label
    unsupported tail estimates. A mean can supplement, not replace, the distribution.
-7. **Confirm every flag default in the target runtime** with `-XX:+PrintFlagsFinal
--version` before quoting it, and show the arithmetic behind any number you report.
+7. **Distinguish defaults from effective service settings.** `-XX:+PrintFlagsFinal -version`
+   describes that fresh launch, including its ergonomics; it does not recover an existing service's
+   overrides or learned policy state. Match the target build and launch context when checking defaults,
+   and show the arithmetic behind any number you report.
 
 ## Rules
 
 - On OpenJDK 25, automatic region sizing uses `clamp(1 MiB, 32 MiB, roundup_pow2(max_heap / 2048))`,
   targeting about 2048 regions. The 32 MB ceiling applies to the **automatic ergonomic
   selection only**: since JDK 18 (JDK-8275056) `-XX:G1HeapRegionSize` accepts manual
-  values up to **512 MB**, powers of two.
-- An object is humongous when its size exceeds `G1HeapRegionSize / 2`. Humongous objects
+  values up to **512 MB**. The effective size is a power of two: requests are rounded up within
+  supported bounds (`3m` becomes 4 MiB on the checked Temurin 25.0.3 build). Use the effective size.
+- An object is humongous when its allocated size, including header and alignment, exceeds
+  `G1HeapRegionSize / 2`; payload length alone is insufficient. Humongous objects
   skip Eden and occupy one or more contiguous humongous regions in the old-generation address
   space. Eligible short-lived humongous objects can be eagerly reclaimed during an ordinary
   young pause; otherwise liveness comes from a marking cycle. Contiguous free-region demand can
@@ -71,13 +80,16 @@ These are HotSpot implementation details, not Java language guarantees; do not u
 - Young GC is always stop-the-world and always collects **every** Eden and Survivor
   region. G1 sizes young dynamically between `G1NewSizePercent` (default 5) and
   `G1MaxNewSizePercent` (default 60), aiming at `MaxGCPauseMillis` (default 200).
+  The two percentage flags are experimental on JDK 25; setting them requires the preceding
+  `-XX:+UnlockExperimentalVMOptions`.
 - Avoid `-Xmn` under G1 in normal operation: it constrains young sizing and can defeat the
   adaptive pause/throughput trade. A fixed young size is defensible only as a measured diagnostic
   or tightly controlled workload choice with promotion, pause and throughput validation;
   percentage bounds preserve more ergonomics across heap sizes.
 - `MaxGCPauseMillis` is a best-effort goal, not a hard limit. Allocation failure, to-space
-  exhaustion and a pressured old generation all force collections that violate it,
-  including mixed collections; no universal ranking of pause overruns follows from the type.
+  exhaustion and old-generation pressure can lead to pauses outside the goal, including mixed
+  collections. Compare the actual duration with the target: pressure or a failure label alone
+  proves neither an overrun nor a universal ranking of pause types.
 - Through JDK 25, the post-write barrier does **not** update the RSet directly: it dirties the
   card and normally enqueues it for concurrent refinement; pause-time merging handles remaining
   work. JDK 26's delivered JEP 522 replaces the per-store fence/queue path with dual card tables
@@ -98,10 +110,10 @@ These are HotSpot implementation details, not Java language guarantees; do not u
   compact. Reconstruct the following events; none of these labels alone means a full GC occurred.
 - "Initial Mark" does not appear in a modern log. The phase is
   `Pause Young (Concurrent Start)`; searching for the old name returns nothing.
-- G1 has been the standard HotSpot default since JDK 9, so `-XX:+UseG1GC` usually does not change
-  an otherwise default launch. Keeping it can make collector intent explicit and guard against an
-  inherited alternative flag; verify the effective collector rather than calling explicit config
-  universally redundant.
+- G1 became HotSpot's default for server-class configurations in JDK 9. On JDK 25, resource
+  ergonomics and collector availability in the build still matter: a constrained launch can select
+  Serial instead. `-XX:+UseG1GC` makes intent explicit and can change that choice; inspect inherited
+  flags and the effective collector before treating it as redundant or recommending a change.
 - `System.gc()` triggers a full GC by default. Decide explicitly:
   `-XX:+ExplicitGCInvokesConcurrent` makes it a concurrent cycle,
   `-XX:+DisableExplicitGC` ignores it.
@@ -116,12 +128,17 @@ These are HotSpot implementation details, not Java language guarantees; do not u
 
 ## Decision and validation ledger
 
+Finish with the observed phase or allocation behavior, its supported mechanism, remaining uncertainty
+and a relevant next discriminator only if needed. Retain adequate settings; hand off flag selection
+against an actual SLO to `g1-tuning-for-slo` with the evidence already gathered.
+
 For any change record `(JDK vendor/update, heap/container limit, region size, workload,
 hypothesis, evidence, flag, expected mechanism)`. Compare allocation and old-allocation rates,
 post-GC live set, CSet composition, phase percentiles, concurrent/total GC CPU, application
 throughput/tail latency, evacuation failure and recovery. Larger regions raise the humongous
-threshold but reduce collection granularity and make each coarse/full card-set scan cover more
-bytes; a lower pause target can increase collection frequency/overhead. No flag is one-dimensional.
+threshold but reduce collection granularity and can increase coarse/full card-set scan coverage;
+check the actual card ranges. A lower pause target can increase collection frequency/overhead.
+No flag is one-dimensional.
 
 GC logs and recordings may reveal class-loader, path and workload metadata. Restrict collection
 and access, rotate/encrypt captures, and avoid shipping diagnostic verbosity indefinitely.

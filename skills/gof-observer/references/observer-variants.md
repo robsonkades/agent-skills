@@ -33,16 +33,21 @@ private final PriceListener listener = this::onPrice;
 void close() { feed.unregister(listener); }
 ```
 
-Options, in order of reliability:
+Choose a lifecycle mechanism that matches the registration's actual end:
 
 1. **Explicit lifecycle.** Registration is paired with deregistration in a `close()`,
    `@PreDestroy`, or the framework's own lifecycle. The owner is named. Boring and correct.
 2. **Scoped registration.** `try (var subscription = feed.subscribe(this::onPrice)) { ... }` —
-   the subscription object is `AutoCloseable` and removal cannot be forgotten. This is the design
-   to prefer for new code.
+   try-with-resources invokes the subscription's `close()` when this lexical scope exits.
+   Use it when the registration's useful lifetime matches that scope; an escaping subscription
+   still needs an owner, and the close implementation must honor the promised removal semantics.
 3. **Weak references.** Tempting and treacherous: a lambda listener with no other referent is
    eligible for collection at an unspecified time, so the listener silently stops firing and nothing indicates why.
    Use only when callers understand and test the requirement to retain their own strong reference.
+
+A bounded set of application-lifetime listeners may intentionally remain registered for the
+subject's whole lifetime. Confirm that it does not capture shorter-lived state or accumulate
+across reloads; no separate removal API is needed solely to satisfy the pattern.
 
 ## Ordering, errors, reentrancy
 
@@ -72,17 +77,19 @@ Reject null registrations and define duplicate registration/removal identity.
 
 **Errors.** Three policies, each right somewhere:
 
-| Policy                         | Right when                                 | Consequence                                   |
-| ------------------------------ | ------------------------------------------ | --------------------------------------------- |
-| Propagate (fail the publisher) | The listener is essential to the operation | One listener can break an unrelated feature   |
-| Isolate and record             | Listeners are independent side effects     | Failures need a metric, or they are invisible |
-| Isolate and retry              | The work must not be lost                  | You need durability; this is really a queue   |
+| Policy                         | Right when                                          | Consequence                                                                   |
+| ------------------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Propagate (fail the publisher) | The listener is essential to the operation          | One listener can break an unrelated feature                                   |
+| Isolate and record             | Independent failures must be visible                | Use an observable signal with an owner and response policy                    |
+| Isolate and retry              | A repeat-safe attempt can recover within its budget | Bound attempts and delay; crash recovery needs durable work or reconciliation |
 
 The loop isolates RuntimeException only, not Error. failures.record must be bounded and reliable;
 if it throws, this loop also aborts. Test that failure or explicitly define a fallback policy.
 
-Whichever is chosen, **record it**. A `catch (Exception e) { log.warn(...) }` with no counter is
-how a listener stops working for three weeks unnoticed (`slo-and-alerting`).
+Whichever is chosen, document it and make required failures observable. Reuse an adequate caller
+error, monitored log, metric or recovery record; a discarded warning is not an operated policy.
+Failure propagation or recording alone does not undo earlier state changes or listener effects
+(`slo-and-alerting`).
 
 **Reentrancy.** A listener that causes the subject to publish again produces nested notification —
 observers see events in an order that does not match the state changes, and a listener may observe
@@ -219,18 +226,19 @@ Check change amplification and how easily maintainers trace an event through its
 Publisher edits may reflect an evolving event contract rather than prove the design worthless.
 Use observed debugging delays to improve subscriber introspection and tracing.
 
-Two affordances worth building before you need them:
+When reentrant delivery or subscriber discovery is hard to reason about, consider these controls;
+reuse adequate framework facilities and tests before adding instrumentation:
 
 - **A dispatch-depth counter** with a limit chosen for the documented call graph. Synchronous reentrancy is a
   recursive call on one stack; the loud version is a `StackOverflowError` with a repeating frame
   cycle, and the quiet version terminates after a couple of hundred iterations because a value
-  converges, showing up only as latency. In Spring this is reachable **by accident**: a listener
-  whose return type stops being `void` has just become a publish site, because a non-null return
-  value is published as a new event.
+  converges, showing up only as latency. In Spring 7.0.9 a synchronous `@EventListener` can become
+  a publish site when changed to return a non-null value (array/collection elements are published
+  individually). An `@Async` listener cannot use its return value to publish subsequent events;
+  it must publish explicitly.
 - **Subscriber introspection** — a way to ask, at runtime or in a test, which listeners are
-  registered for a type. Every frame between the business call and a listener failure belongs to
-  the dispatcher, so the stack trace names the multicaster and the reflection layer but not the
-  reason the listener ran. With `@Async` even the publisher's frame is gone.
+  registered for a type. A stack trace may show dispatch and business frames without explaining
+  why that subscription exists. Async execution can also lose the publisher's calling stack.
 
 ## Testing the two things nobody tests
 
@@ -269,6 +277,7 @@ Primary sources: [CopyOnWriteArrayList](https://docs.oracle.com/en/java/javase/2
 [SubmissionPublisher](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/SubmissionPublisher.html),
 [PropertyChangeSupport](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/beans/PropertyChangeSupport.html),
 [Spring transaction events](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html),
+[Spring EventListener](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/event/EventListener.html),
 [Guava EventBus](https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/eventbus/EventBus.html),
 and [Spring Modulith publication registry](https://docs.spring.io/spring-modulith/reference/events.html).
 Spring references checked against Framework 7.0.9 and Modulith 2.1.1; verify deployed versions.

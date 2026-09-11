@@ -147,8 +147,9 @@ a change detector, and it will be deleted by the first person it annoys.
 
 ## When characterisation is not worth it
 
-- The code is about to be deleted or wholesale-replaced with an approved behaviour
-  change — characterise nothing; write acceptance tests for the _new_ behaviour.
+- Internals are about to be deleted or replaced with an approved behavior change — avoid
+  pinning disposable internals; write acceptance tests for the new behavior and retain evidence
+  for public, wire or effect contracts that survive the replacement.
 - The behaviour is dominated by I/O and wall-clock effects: pin at a coarser seam
   (record/replay at the port) instead of unit-level pinning.
 - Output is intentionally unstable (timestamps, ids): pin the stable projection of the

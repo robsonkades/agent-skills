@@ -53,13 +53,17 @@ transition and map external reason strings to bounded classes.
 
 ## Distribution decision
 
-Prefer:
+Choose from the affected query and population:
 
-- native histogram when end-to-end support, accuracy and cost are verified;
+- native histogram when end-to-end support, accuracy and cost meet the decision's needs;
+  include migration cost when replacing an existing representation;
 - classic histogram for aggregatable populations with carefully selected SLO/range buckets;
 - client quantiles/summary only when local preselected quantiles and windows are acceptable
   and cross-instance aggregation is unnecessary;
 - raw event sampling when distribution attribution needs dimensions unsuitable for labels.
+
+Keep an adequate representation when no requirement warrants a change. Support for another
+form alone is not a migration reason; include consumer compatibility and transition cost.
 
 Pair completed distributions with timeout/cancellation counters and in-progress age so the
 slowest work is not censored away.

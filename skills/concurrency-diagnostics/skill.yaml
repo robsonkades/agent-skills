@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrency-diagnostics
-version: 1.3.1
+version: 1.3.2
 description: >-
   Evidence-led diagnosis of deadlock, starvation, livelock, saturation, leaks and virtual-thread
   scheduler problems. Compares traditional platform-thread dumps, jcmd all-thread dumps,

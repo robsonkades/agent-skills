@@ -40,7 +40,7 @@ Do not paste a monolithic shell script into production. The incident automation 
 each tool with:
 
 ```text
-unique artifact path created on approved volume
+unique owned directory on approved volume; fresh target-visible output path
 UTC and process uptime before/after
 tool/JDK version and exact arguments
 per-command timeout and cancellation behavior tested
@@ -50,6 +50,17 @@ application SLO/CPU/I/O abort guard
 checksum and format/readability verification
 upload with retry, remote verification, and no premature local deletion
 ```
+
+Resolve output paths in the target's filesystem/namespace, not merely the operator's shell.
+Protect the directory from unrelated writers and do not precreate a file when the capture
+tool requires a nonexistent destination. Overwrite behavior differs: on tested Windows
+Temurin 25.0.3+9, `Thread.dump_to_file` refused an existing file while `jcmd` returned zero; `JFR.dump`
+could replace an existing file. Use new paths and inspect command output plus artifact
+identity/readability, rather than retrying with overwrite against prior evidence.
+
+Reconfirm the approved process-start/container identity before a disruptive escalation;
+an earlier PID can be reused after restart. Do not broaden a PID-targeted capture to a
+main-class match or PID `0`, which can target multiple JVMs.
 
 Timeout utilities can terminate the client while the JVM-side VM operation continues. Test
 this for each command/JDK; “client timed out” does not prove capture stopped. Avoid issuing a

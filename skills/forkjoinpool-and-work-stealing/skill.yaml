@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: forkjoinpool-and-work-stealing
-version: 1.1.1
+version: 1.1.2
 description: >-
   Design and diagnose ForkJoinPool workloads using work-stealing topology, task graphs,
   granularity, common-pool interference, managed blocking, compensation limits and approximate

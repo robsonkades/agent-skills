@@ -36,6 +36,11 @@ deployed readers before choosing an API. This skill has no universal Java/librar
 documentation examples are not authorization to upgrade the target. Missing measurements leave
 performance benefits hypothetical; missing compatibility evidence can block a format migration.
 
+Use the contract fields and checks relevant to the requested decision. Adequate existing evidence
+can support a narrow API, ownership or no-change conclusion. A new boundary can be selected from
+hard constraints without inventing a predecessor or migration benefit; a performance claim needs
+the corresponding measurements.
+
 ```text
 boundary and trust zone: in-process/cache/process/network/storage/topic
 producer/consumer languages, versions, ownership and deployment skew
@@ -51,20 +56,22 @@ migration, dual-read/write, replay, rollback and retained-data horizon
 
 ## Cost model
 
-Measure stages separately and together:
+Separate resource dimensions from elapsed time. The relevant contributors are:
 
 ```text
-end-to-end serialization cost =
-  object/model construction
-  + encode/decode CPU
-  + allocation, retention and GC consequence
-  + buffer growth/copy/reference-count/lifetime cost
-  + compression/decompression
-  + framing/checksum/encryption
-  + wire/storage bytes and downstream I/O
-  + schema lookup/validation/conversion
-  + queueing/backpressure/retry/replay effects
+object/model construction and encode/decode work
+allocation rate, retained capacity and GC consequence
+buffer growth/copies/reference counting and lifetime
+compression/decompression, framing/checksum/encryption
+wire/storage bytes and downstream I/O
+schema lookup/validation/conversion
+queueing/backpressure/retry/replay
 ```
+
+Report CPU time, allocation per message, retained bytes, wire/storage bytes and latency with their
+own units and populations. These are not terms in one arithmetic sum. For end-to-end latency,
+measure the actual elapsed boundary/critical path; overlapping work and component percentiles
+cannot simply be added. A weighted decision model must state its normalization and preferences.
 
 Normalize per business message and per useful byte/field where appropriate. Batch-level results can
 hide per-message tail and oversized-item failure.
@@ -144,6 +151,10 @@ release artifact and supported JDK/platform matrix.
 
 ## Measurement ladder
 
+Select the levels needed for the claim or changed boundary; this is not a mandatory full campaign.
+A mechanism benchmark can answer a local cost question. System-impact and format-migration claims
+need the corresponding pipeline and compatibility evidence. Reuse adequate supplied results.
+
 1. **Corpus characterization:** production-derived, privacy-safe cohorts for size, nesting, values,
    optional/unknown fields, compressibility, malformed and maximum inputs.
 2. **Semantic/conformance tests:** an independent contract oracle plus round-trip and
@@ -184,7 +195,9 @@ Treat all deserialization across a trust boundary as parser attack surface:
 
 Avoid Java native serialization for new external boundaries. If legacy `ObjectInputStream` remains,
 use `ObjectInputFilter` with class and resource constraints, per-context policy where applicable,
-and a migration plan; follow `java-serialization-hardening` and official serialization-filter docs.
+and assess the retention or migration decision for that boundary; follow
+`java-serialization-hardening` and official serialization-filter docs. A narrow filter review need
+not invent a migration, and filtering alone does not establish safety.
 
 ## Decision framework
 
@@ -198,9 +211,11 @@ Prefer a candidate when it:
 
 Reject or defer when the measured benefit is below migration risk/cost, only a toy corpus was tested,
 the producer/consumer rollout cannot be made compatible, or buffer/native headroom is unbounded.
-Return the contract, deployed baseline, supported observations, proposed change and validating
-experiment. Mark failed/missing measurements inconclusive; report measured gains separately from
-unexecuted rollout or failure tests. Scale the checks below to the changed boundary.
+Return the relevant contract, target baseline, supported keep/change conclusion and material limits.
+Propose an experiment when a consequential unknown needs one. A failed/missing observation limits
+the claim that depends on it; retain independently valid results, while missing successful-work
+denominators or semantic validation prevent a valid performance comparison. Report measured gains
+separately from unexecuted rollout or failure tests.
 
 ## Anti-patterns
 
@@ -216,21 +231,24 @@ unexecuted rollout or failure tests. Scale the checks below to the changed bound
 
 ## Definition of done
 
-- [ ] Contract, trust boundary, compatibility horizon and migration are explicit.
-- [ ] Representative corpus includes size/value/schema/malformed/max cohorts.
+Apply these checks to the actual decision/change. A narrow explanation or adequate boundary can
+finish without a new benchmark, deployment or migration.
+
+- [ ] Relevant contract, trust boundary and compatibility/retention horizon are explicit; migration is covered when proposed.
+- [ ] Measurements use representative cohorts; semantic/security checks cover relevant malformed/max cases separately where appropriate.
 - [ ] Encode, decode, round trip, bytes, allocation, copies, compression and failure are measured as relevant.
-- [ ] Buffer ownership, retention, backpressure, cancellation and shutdown are bounded/tested.
-- [ ] JMH results preserve fork/corpus identity and component/load behavior validates impact.
-- [ ] Cross-version/language, rollback/replay and registry/dependency failures pass.
-- [ ] Security/resource limits and observability exist in production.
+- [ ] Changed buffer/lifecycle behavior has bounded ownership and relevant reuse/failure controls.
+- [ ] JMH comparisons preserve fork/corpus identity; claimed system impact has corresponding component/load evidence.
+- [ ] Compatibility/migration claims cover reachable versions/languages, rollback/replay and applicable dependencies.
+- [ ] Relevant security/resource limits and operational observability are established or explicitly unverified.
 
 ## References
 
-- [Format-selection scorecard](references/format-selection.md)
-- [Benchmarking and profiling serializers](references/benchmarking-serialisers.md)
+- [Format-selection scorecard](references/format-selection.md) — when comparing formats or changing codec configuration.
+- [Benchmarking and profiling serializers](references/benchmarking-serialisers.md) — when designing or interpreting a codec experiment or profile.
 - [Java serialization filtering](https://docs.oracle.com/en/java/javase/25/core/serialization-filtering1.html)
 - [Protocol Buffers encoding](https://protobuf.dev/programming-guides/encoding/)
-- [Apache Avro specification](https://avro.apache.org/docs/current/specification/)
+- [Apache Avro 1.12.0 specification](https://avro.apache.org/docs/1.12.0/specification/)
 - [FlatBuffers internals](https://flatbuffers.dev/internals/)
 - [Cap'n Proto encoding](https://capnproto.org/encoding.html)
-- [Kryo documentation](https://github.com/EsotericSoftware/kryo)
+- [Kryo 5.6.2 documentation](https://github.com/EsotericSoftware/kryo/tree/kryo-parent-5.6.2)

@@ -22,7 +22,8 @@ guidance.
 ## Status-first workflow
 
 1. Record the exact claim and whether it concerns language semantics, class-file format, library
-   specialization, storage layout or measured performance.
+   specialization, storage layout or measured performance. Identify the decision it affects;
+   inspect existing workload evidence and consumer contracts before proposing a representation change.
 2. Check the current JEP header, project page and target-build release notes. Record status and target
    release; never infer availability from a JEP number or old design note.
 3. Inspect the project's supported Java/toolchain first. If executable behavior matters, pin the
@@ -31,12 +32,15 @@ guidance.
    to its build merely to run an experiment. If no suitable build is available, report that limit.
 4. Separate guaranteed absence of identity from optional flattening or specialization. State what
    remains implementation-dependent.
-5. Measure the current supported baseline, then ordinary-class and value-class variants on the
-   same EA build. The first comparison includes JDK changes; the second better isolates the
+5. For a justified layout/performance experiment, measure the current supported baseline, then
+   ordinary-class and value-class variants on the same EA build and preview mode. The first
+   comparison includes JDK changes; the second better isolates the
    representation change. Primitive-array or Structure-of-Arrays alternatives must preserve the
    required semantics. Compare workload and layout evidence, not just allocation counts.
-6. Produce a migration watch item, not production code, unless the project's supported JDK really
-   contains the required feature and preview risk is explicitly accepted.
+6. An availability/semantics question can end with a sourced answer and its limits. For migration,
+   recommend retaining the current design, an isolated experiment, or a watch item with a concrete
+   revisit condition. Production changes require the feature in the project's supported JDK and
+   explicit acceptance of any required preview use.
 
 ## Decision rules
 
@@ -45,6 +49,9 @@ guidance.
   consult its own sources and documentation; a newer JEP does not retroactively change that build.
 - A value class is about identity semantics. It does not by itself promise flattened storage in
   every field, array, generic container or calling convention.
+- An ordinary record declaration or a library's “value-based” label is not evidence of a value
+  class. Check the actual build and preview mode; value-based API contracts already discourage
+  relying on identity even where their implementation still has it.
 - Reduced headers/indirection are analytical opportunities until the exact build's layout and
   workload are measured. Use JOL, JMH and allocation/cache evidence appropriate to that build.
 - Do not claim arbitrary generic specialization or zero boxing unless the specific proposal and
@@ -60,9 +67,9 @@ guidance.
 
 ## Output
 
-Report `verified current status`, `observed on pinned EA build`, `inference`, and `unresolved` as
-separate sections. Every performance recommendation names the control, raw evidence, confidence and
-what would falsify it.
+Keep verified current status, observations on a pinned EA build, inference and unresolved claims
+distinct; omit unused categories for a narrow question. A performance recommendation names the
+control, raw evidence, uncertainty and what would falsify it. An unexecuted experiment remains a plan.
 
 ## References
 

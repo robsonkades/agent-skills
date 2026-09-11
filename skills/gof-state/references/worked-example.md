@@ -130,7 +130,8 @@ in the authoritative decision. This sketch assumes a non-null numeric version co
 
 ## The side effect, made safe
 
-Shipping notifies the customer. The first version sent the email from the service after saving:
+Shipping must eventually notify the customer in this example. The first version had no retry or
+reconciliation protocol and sent the email from the service after saving:
 
 ```java
 orders.save(order);
@@ -140,6 +141,8 @@ notifications.sendShipped(order);        // process dies here → no email, ever
 and the second version sent it before, which emailed customers for shipments that then failed.
 The outbox coordinates both only when status and event writes share the effective database
 transaction. Relay retries/acknowledgements, monitoring and idempotent effects are still required (`event-driven-architecture`, `idempotency`).
+This example's durable notification requirement justifies that machinery; a deliberately
+best-effort local observation need not adopt the same persistence protocol.
 
 ## Persistence and migration
 

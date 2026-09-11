@@ -4,8 +4,10 @@
 
 `poll()` returns buffered/fetched records, advances client coordination work and proves the
 application is still polling; it does not prove asynchronous effects are progressing.
-The contract is therefore _temporal_: **call `poll()` again within `max.poll.interval.ms`.**
-Everything the handler does between two polls is spent against that budget.
+For subscribed group members, the contract is _temporal_: **call `poll()` again within
+`max.poll.interval.ms`.** Everything the handler does between two polls consumes that budget.
+Manual `assign()` has no group-coordination eviction; investigate its processing progress
+without attributing reassignment to a group timeout.
 
 ```java
 // Conceptual: error handling, DLQ routing and metrics omitted.
@@ -19,12 +21,18 @@ try (var consumer = new KafkaConsumer<String, Payload>(props)) {
         }
         consumer.commitSync();                           // after the side effects
     }
-} // bounded close releases resources; membership departure depends on protocol/static identity
+} // default close budget; membership departure depends on protocol/static identity
 ```
 
 `poll(Duration)` controls the poll call's wait budget, not the permitted processing interval.
 Rebalance callbacks can extend the call beyond that duration. Include the observed total
 poll cycle in the interval budget; do not treat this argument as a handler deadline.
+The sketch uses no-argument `close()`, whose Kafka 4.1 default cleanup timeout is 30 seconds.
+For a shorter remaining shutdown budget, use the target client's explicit timeout API
+(`close(CloseOptions.timeout(remaining))` in 4.1; `close(Duration)` on older clients).
+Reserve time for drain and commit first; `wakeup()` cannot interrupt close. In Kafka 4.1,
+callback execution time does not consume the close timeout, so bound callback work separately;
+the timeout alone is not a wall-clock shutdown guarantee.
 
 ## What each timeout bounds
 
@@ -53,9 +61,11 @@ returned by one poll, not bytes already fetched into client buffers.
 
 ## Moving work off the poll thread
 
-When one record can exceed the interval on its own, the loop must keep polling while the work
-happens elsewhere. `pause()` stops records being returned for the given partitions without
-leaving the group; `poll()` still runs, so the member stays alive.
+When one record cannot fit the allowed poll interval and the recovery contract rules out
+raising it, offload the work while keeping the loop responsive. `pause()` stops records being returned for the given partitions without
+leaving the group; timely `poll()` calls avoid poll-interval eviction while heartbeat/session
+liveness still applies. Pause does not bound handler duration or establish progress: track
+oldest in-flight age and bounded processing/retry deadlines, including external-effect semantics.
 
 ```text
 State per partition: ownership epoch, retained delivered records, completion outcomes,
@@ -107,16 +117,19 @@ necessarily require partition reassignment.
 ```
 1  member B joins the group
 2  coordinator begins the rebalance
-3  EAGER: every member revokes EVERY partition and stops consuming (group-wide stall)
-   COOPERATIVE: only partitions that must move are revoked; other members keep going
+3  EAGER: every member revokes EVERY partition before assignment redistribution
+   COOPERATIVE: decide which partitions must move, revoke only those; retain the others
 4  onPartitionsRevoked → last chance to commit what has been processed
-5  assignment computed and distributed
+5  ownership transfer completes according to the protocol; cooperative transfer may take rounds
 6  newly acquired partitions initialise from a checkpoint/reset/explicit seek policy
    retained cooperative partitions keep their position and local processing state
 7  records after the last committed next offset may be delivered again
 ```
 
-Step 7 is the duplicate source, and it exists with zero retries and zero broker faults. Two
+This is a conceptual handoff, not one callback timeline shared by every protocol. Classic
+eager revocation occurs at rebalance start; cooperative revocation follows the decision to
+move partitions. Kafka's consumer group protocol has its own coordination flow. Step 7 can
+occur with zero retries and zero broker faults. Two
 levers narrow it, neither closes it: committing in `onPartitionsRevoked` before the partition
 moves (which fails when the member was evicted for being slow — the callback may run too late
 to be honoured), and committing more often, per record or per small batch, at the cost of round
@@ -127,23 +140,28 @@ trips. Correctness still rests on the handler being repeat-safe.
 Described by role — check the names and defaults against your client version rather than
 copying numbers:
 
-- **Incremental cooperative assignment.** `CooperativeStickyAssignor` revokes only moving
-  partitions, so a rebalance no longer stops the whole group. Switching from an eager assignor
-  is itself a staged rolling change; do it as a planned migration.
+- **Incremental cooperative assignment for the classic protocol.** Consider
+  `CooperativeStickyAssignor` when retaining unchanged partitions would reduce observed
+  disruption. Check every member's supported assignor list and migration state; a rollout
+  may require stages, while a fleet already advertising both assignors can need only the
+  final switch. Under `group.protocol=consumer`, inspect the server-side assignor and
+  `group.remote.assignor`; do not copy classic `partition.assignment.strategy` settings.
 - **Static group membership** (`group.instance.id`). A stable instance that disappears without
   a graceful leave can rejoin before session expiry without immediate reassignment. A graceful
   close can still leave the group; duplicate IDs fence one member. Cost: a genuinely dead
   instance can stall partitions until session expiry, so align orchestrator identity and
   shutdown behavior deliberately.
-- **Smaller `max.poll.records`** — the cheapest lever for a poll-interval eviction, and the
-  first to try, because it changes no code. A poll interval, if raised, comes from the measured
-  handler tail rather than a copied number. Raising it delays detection of a live member
-  that stops polling; process death is normally detected by heartbeat/session expiry.
+- **Smaller `max.poll.records`** — a candidate when the measured batch exceeds the interval
+  but individual records fit. It cannot fix a single record that exceeds the budget; check
+  throughput and poll/commit overhead after reducing the batch. A raised poll interval must
+  fit legitimate bounded processing and acceptable recovery time. Raising it delays detection
+  of a live member that stops polling; process death is normally detected by session expiry.
 - **Fewer, longer-lived members.** Aggressive autoscaling of a consumer group buys throughput
   and pays rebalances; with many partitions and a short scale interval a group can spend more
   time rebalancing than consuming.
 - **Instrument it.** Rebalance rate, rebalance duration and time-since-last-rebalance per group
-  turn "the consumer is slow sometimes" into a diagnosis in one look.
+  distinguish group churn from slow processing when correlated with poll-cycle and effect
+  completion evidence; rebalance rate alone does not identify the cause.
 
 ## Shutdown and rebalance checklist
 
@@ -162,5 +180,5 @@ documented cross-thread escape hatch.
 - [KafkaConsumer API (Kafka 4.1)](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
 - [ConsumerRebalanceListener: revoked versus lost partitions](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/ConsumerRebalanceListener.html)
 - [Kafka 4.1 consumer configuration](https://kafka.apache.org/41/configuration/consumer-configs/)
-- [Kafka 3.8.1 source: poll callback timeout and pause state](https://github.com/apache/kafka/blob/3.8.1/clients/src/main/java/org/apache/kafka/clients/consumer/KafkaConsumer.java)
+- [Kafka 4.1.0 source: poll, pause, commits and close](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/KafkaConsumer.java)
 - [KIP-848: the next-generation consumer rebalance protocol](https://cwiki.apache.org/confluence/display/KAFKA/KIP-848%3A+The+Next+Generation+of+the+Consumer+Rebalance+Protocol)

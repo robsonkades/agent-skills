@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: metrics-and-cardinality
-version: 1.3.1
+version: 1.3.2
 description: >-
   Designing bounded, decision-oriented metrics for Java services: selecting counters,
   gauges and histogram forms; defining RED, USE and business outcomes; budgeting active
@@ -43,6 +43,7 @@ dependencies: []
 suggests:
   - distributed-tracing-design
   - latency-statistics
+  - opentelemetry-performance
   - rate-limiting-and-load-shedding
   - slo-and-alerting
   - structured-logging

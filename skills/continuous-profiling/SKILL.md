@@ -114,7 +114,7 @@ short-lived/rare stacks invisible. Estimate the number of weighted observations 
 the smallest contribution worth detecting, then validate with synthetic known workloads.
 
 JFR sampling details can change between JDK releases. JDK 25 introduced experimental CPU-time
-profiling (JEP 509) and cooperative sampling (JEP 518), and experimental method timing/tracing
+profiling (JEP 509), cooperative sampling (JEP 518), and method timing/tracing
 (JEP 520); event availability, defaults, settings, platform support, and implementation caps
 must be discovered from the deployed JDK. Internal constants are not stable coverage SLAs.
 
@@ -161,10 +161,12 @@ Use two horizons:
 - **incident/legal hold snapshots** immutable, access-controlled, checksum/provenance-bearing,
   and explicitly expired/released.
 
-Local JFR `maxage`/`maxsize` or profiler loops bound a process-local repository only. They do
-not guarantee export, cluster-wide retention, or survival of pod/node loss. Define behavior
-for disk full, clock change, restart/PID reuse, exporter outage, backend throttling, partial
-upload, duplicate delivery, schema change, and encryption-key loss.
+JFR `maxage`/`maxsize` limit a recording's retained chunks, not independent dumps or export
+spools. Profiler loops rotate output; timestamped files do not impose cumulative disk retention.
+Bound aggregate local disk use separately, including concurrent recordings, dump copies and
+spools. None of these local controls guarantees export, cluster-wide retention, or survival of
+pod/node loss. Define behavior for disk full, clock change, restart/PID reuse, exporter outage,
+backend throttling, partial upload, duplicate delivery, schema change, and encryption-key loss.
 
 Retention must preserve deploy markers and enough pre/post history for the comparison cadence.
 Long retention without symbol/build provenance can leave undecodable addresses; retain image

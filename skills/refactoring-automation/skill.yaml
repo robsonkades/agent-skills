@@ -1,20 +1,16 @@
 schemaVersion: 1
 
 name: refactoring-automation
-version: 1.1.1
+version: 1.1.2
 description: >-
-  Applying a code change by machine rather than by hand: choosing between an IDE
-  refactoring, an OpenRewrite recipe, structural search-and-replace, a compiler-driven
-  change and hand-editing; what each tool can and cannot see; checking rename coverage
-  beyond resolved symbols; making a change spanning hundreds of files reviewable, reproducible and
-  revertible; and proving a mechanical change was mechanical. Use when one edit must land
-  across many files, when a framework or library migration must be applied repo-wide (javax
-  to jakarta, JUnit 4 to 5, a Spring major version), when a rename must reach names that
-  live in strings and configuration, when someone is about to run sed or a regex over Java
-  source, when a tool-generated diff is too large to review line by line, when an automated
-  refactoring changed behaviour, or when a cleanup keeps regressing because nothing stops it
-  coming back. Which refactoring to apply is java-refactoring, what to detect is
-  java-code-smells, and the CI gates the result must pass are quality-gates.
+  Applying repeatable Java changes with IDE refactoring, OpenRewrite, structural search,
+  compiler tooling or hand edits; checking tool coverage and making large diffs reviewable,
+  reproducible and reversible. Use when one edit spans many files, a framework or library
+  migration must run repo-wide, a rename reaches strings and configuration, regex is proposed
+  for Java source, a generated diff is too large to review line by line, automated refactoring
+  changed behaviour, or a cleanup needs recurrence prevention. Which refactoring to apply
+  belongs to java-refactoring, what to detect to java-code-smells, and which CI gates to require
+  to quality-gates.
 
 license: Apache-2.0
 

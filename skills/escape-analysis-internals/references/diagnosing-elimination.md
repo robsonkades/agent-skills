@@ -10,12 +10,22 @@ Reproduce a relevant case on the target before using its number to choose a chan
 
 ## Procedure
 
+For `getThreadAllocatedBytes`, check support and enablement first and validate both endpoints
+before subtracting. On JDK 25 the method returns `-1` for a virtual-thread ID, a dead/missing
+thread or disabled measurement; unsupported implementations can throw. Two unavailable readings
+subtract to zero without measuring anything. Use valid, nondecreasing endpoints for the same
+live platform-thread population with unchanged enablement; a caller's counter does not include
+work offloaded to other threads. Preserve existing measurement configuration unless changing it
+is part of the authorized check. State the measured window and actual operation denominator;
+partial averages are not evidence of partial objects or absence of allocation.
+
 ```
 Suspicion: this object should be eliminated and is not
   |
   1. Measure: gc.alloc.rate.norm (JMH -prof gc) or bytes/op from getThreadAllocatedBytes.
      |-- ~0 ......... go to 1b before concluding anything
-     +-- full size .. continue at 2
+     +-- nonzero .... continue at 2, including partial averages; identify the contributing
+                     sites, execution frequency and compilation/window scope
   |
   1b. Control: rerun with -XX:-DoEscapeAnalysis.
      |-- still ~0 ... EA dependence not demonstrated. Inspect unused removal, caching,
@@ -272,7 +282,10 @@ DEOPT PACKING thread=0x00000206e9fd2930 vframeArray=...
 
 `-Xlog:deoptimization=debug` gives the reason and site (`Lab.rareNever(I)I trap_bci=13
 unstable_if reinterpret`) without the object list. In production correlate the JFR
-`jdk.Deoptimization` event with allocation samples rather than tracing.
+`jdk.Deoptimization` event with allocation samples rather than tracing. These signals cover
+uncommon traps on this baseline; dependency invalidations can leave both quiet. Use the
+compilation/dependency evidence described by `deoptimization` when that path matters, rather
+than inferring no rematerialisation from an empty trap stream.
 
 ## Checklists
 
@@ -287,9 +300,12 @@ unstable_if reinterpret`) without the object list. In production correlate the J
 
 **A "0 bytes/op" result**
 
+- [ ] Counter endpoints are available and cover the work's actual threads/window; `-1 - -1`
+      is not an allocation measurement
 - [ ] Reproduced with `-XX:-DoEscapeAnalysis`? Then EA dependence is unproven; check other
       elimination/caching and measurement explanations without forcing the object to escape
-- [ ] `<eliminate_allocation>` present in the tier-4 task for that class and `bci`
+- [ ] If claiming scalar replacement, positive compiler evidence matches the allocation's
+      method/BCI, inline context and relevant installed C2 version; zero alone is insufficient
 
 **An ArgEscape that BCEA should have classified**
 
@@ -304,11 +320,14 @@ unstable_if reinterpret`) without the object list. In production correlate the J
 - [ ] Every use of the merged value is a field load, a null compare, a safepoint or a cast to
       an instance type — anything else (a call, a store, `==` against a non-constant) blocks it
 - [ ] Not an array
-- [ ] `-XX:-ReduceAllocationMerges` reproduces the allocation, proving the merge is the site
+- [ ] A controlled `-XX:-ReduceAllocationMerges` contrast is correlated with this site's
+      compile/log evidence; a process-wide flag difference alone does not identify the site
 
 **Deoptimisation in a method with aggressive scalar replacement**
 
-- [ ] Correlated with `jdk.Deoptimization` or `-Xlog:deoptimization`, not with JMH
+- [ ] Uncommon traps correlated with `jdk.Deoptimization` or `-Xlog:deoptimization`;
+      dependency invalidation checked separately when relevant, not inferred absent from
+      empty trap signals or priced from JMH alone
 - [ ] Number of materialized objects read from actual `REALLOC OBJECTS` blocks on a controlled
       run; static `<eliminate_allocation>` counts do not tell how many are live at a given trap
 - [ ] Rematerialisation counted as an additional cost per event, not dismissed as recompilation
@@ -320,6 +339,7 @@ unstable_if reinterpret`) without the object list. In production correlate the J
 
 ## Primary references
 
+- [JDK 25 ThreadMXBean allocation counters](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html) — support, enablement, unavailable readings and platform-thread scope.
 - [JDK 25 compile-task logging](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileTask.cpp): highest-tier task level omission.
 - [HotSpot escape analysis source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
 - [HotSpot macro expansion source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)

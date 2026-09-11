@@ -18,7 +18,7 @@ C refuses because its admission policy judges the chance/value of completion bel
 forwarded budget decreases only when every hop subtracts its own elapsed time/reserve and never
 regenerates a default.
 
-Two measured constants carry the design. The **return reserve** is time withheld at each hop
+Two evidence-based policy inputs carry the design. The **return reserve** is time withheld at each hop
 so the response or failure can travel back before the caller gives up, including serialization
 and cleanup measured for that boundary. It is not universally one RTT. **Minimum useful budget** comes from the conditional duration distribution,
 current queue state, business value, partial-work reuse and cancellation cost—not mechanically
@@ -128,9 +128,10 @@ are refused because they cannot be represented conservatively in whole milliseco
 units and zero/infinite sentinels for every target API; do not copy this rule blindly to gRPC's
 encoding. Refresh the budget after any intervening queue/wait before sending.
 
-The two lines must agree within the documented rounding. Setting the header without the request timeout leaves the caller
-waiting past its own deadline; setting the timeout without the header leaves the callee
-working past it. Inside the process the `Deadline` is per-request state: a `ScopedValue` is final
+The two lines must agree within the documented rounding, but the request knob may not bound body
+consumption on the target JDK; the Java timeout surface explains the additional lifetime control.
+The header alone does not bound caller wait, and the local timeout alone does not establish a
+callee work bound. Inside the process the `Deadline` is per-request state: a `ScopedValue` is final
 in JDK 25 (JEP 506) and suits a deeply nested synchronous call tree; an explicit parameter makes
 ownership obvious and works across asynchronous messages. `ThreadLocal` does not automatically
 follow arbitrary executor/reactive handoffs and must not leak into a reused pooled thread.
@@ -149,16 +150,20 @@ Use a propagated deadline when:
   measurable loss of capacity
 - the same dependency is called from paths with materially different budgets
 
-Avoid a propagated deadline when:
-- the graph is one hop deep and one team owns both ends
+An existing fixed policy may be adequate when:
+- the graph is one hop deep, its local bounds already fit the caller's budget, and callee work
+  has an acceptable bounded lifetime; one-team ownership alone is not a reason to omit propagation
+
+Use a distinct contract when:
 - the asynchronous acceptance contract deliberately separates enqueue timeout from job expiry;
   if queued work has a business deadline, carry that separately with its own clock/trust policy
 - the header would be trusted unvalidated across an organisational boundary; clamp it to a
   local maximum or do not accept it
 
-Prefer a fixed per-hop timeout instead when:
-- the hop is a leaf with a measured, narrow distribution and no downstream of its own
-- the protocol is a third-party API where no header may be added
+When a third-party API cannot accept a deadline header:
+- still clip the local call/body/cancellation budget to the caller's remaining time
+- document the unbounded or independently bounded remote work; a fixed local maximum can be
+  useful for a leaf, but it must not reset a smaller inherited budget
 ```
 
 ## Testing it

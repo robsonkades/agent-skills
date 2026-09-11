@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrent-collections-and-synchronizers
-version: 1.2.2
+version: 1.2.3
 description: >-
   Choosing between the members of java.util.concurrent once the family is settled, and the
   parameter that makes it correct: which BlockingQueue and which of its four insert and
@@ -42,7 +42,23 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: structured-concurrency
+    version: ^1.0.0
+
+suggests:
+  - architecture-testing
+  - cancellation-and-interruption
+  - cascading-failures
+  - concurrency-diagnostics
+  - concurrency-limiting-and-bulkheads
+  - executors-and-task-lifecycle
+  - java-memory-model
+  - java-thread-safety-contracts
+  - littles-law-and-queueing
+  - lock-free-patterns
+  - lock-inflation
+  - virtual-threads-internals
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: framework-coupling-and-independence
-version: 1.2.2
+version: 1.2.3
 description: >-
   Deciding how much of a system may depend on its framework, and pricing that dependency
   honestly: which couplings are cheap and correct, which are expensive and reversible, which
@@ -52,6 +52,7 @@ dependencies:
 suggests:
   - architecture-testing
   - blocking-and-nonblocking-io
+  - caching-strategies
   - component-and-release-boundaries
   - data-source-patterns
   - distributed-systems-testing
@@ -65,8 +66,10 @@ suggests:
   - patterns-and-modern-frameworks
   - reactive-and-virtual-thread-selection
   - remote-facade-and-dto
+  - retries-and-backoff
   - rpc-and-api-contracts
   - service-layer-design
+  - timeouts-and-deadlines
 
 agentOverrides:
   codex:

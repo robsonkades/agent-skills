@@ -8,8 +8,8 @@ description: >
   differ only in constants and may be configuration, how shared state changes concurrency
   obligations, and the contract test implementations can share. Use when an algorithm must vary
   at runtime, when a switch over a type code keeps growing, when a class hierarchy exists whose
-  members are one-line methods, or when strategy classes differ only in a rate or a threshold. Does not cover behaviour that changes with the
-  object's own state (gof-state), two independently varying hierarchies (gof-bridge), an
+  members are one-line methods, or when strategy classes differ only in a rate or a threshold.
+  Does not cover lifecycle-governed legal operations and transitions (gof-state), two independently varying hierarchies (gof-bridge), an
   algorithm skeleton with varying steps (gof-template-method), or choosing which object to create
   (gof-factory-method).
 ---
@@ -25,8 +25,8 @@ while a class hierarchy, lambda, enum strategy, table or direct branch is the be
 Three things share the name, and separating them settles most arguments:
 
 ```text
-The concept        "This algorithm varies, and callers should not know
-                   which one runs." Nearly always sound.
+The concept        "This algorithm varies; callers rely on a shared
+                   contract." Selection may still be explicit.
 
 The class          interface + N implementations + a selector. One
 hierarchy          expression of the concept, and the heaviest.
@@ -38,6 +38,10 @@ value              algorithm is needed. Another expression of the same
 
 A `Comparator` lambda is Strategy. Say so in review — recognising the intent is what keeps the
 design legible; hand-building the hierarchy is what makes it bulky.
+
+Start with consumer calls, required inputs/results/failures, the extension model and existing
+selection/configuration evidence. Reuse accepted contracts before asking about material gaps;
+keep an adequate branch or function. A changing policy reference alone does not justify a new pattern.
 
 ## When it is the answer
 
@@ -62,10 +66,11 @@ Callers must be able to supply their own algorithm
 - **The variants differ only in data and share identical rules.** Prefer typed configuration.
   Separate named policies can still be warranted when validation, authorization, rollout,
   compatibility or lifecycle differs.
-- **The algorithm depends on the object's own state and changes as that state changes.** That is
-  State (`gof-state`).
-- **Only part of an algorithm varies, inside a fixed sequence.** That is Template Method — or,
-  better, a fixed method taking the varying part as a function (`gof-template-method`).
+- **The behavior governs lifecycle-dependent operations and valid transitions.** That is State
+  (`gof-state`). Interchangeable policies may still be selected internally or adapt to current data/load.
+- **Only part of an algorithm varies, inside a fixed sequence.** Compare Template Method with
+  a fixed method taking the varying part as a function, preserving existing extension contracts
+  (`gof-template-method`).
 - **The branches are not self-contained.** If each `switch` arm mutates shared state and depends
   on the others, extracting them into strategies moves a tangle rather than resolving it.
 
@@ -77,8 +82,8 @@ A lambda / method reference is enough when:
     selection/metadata can live in a registration rather than the implementation
 
 A named type earns its place when:
-    the strategy has more than one operation
-      (apply, plus supports(...), plus a name for logging)
+    related operations and invariants are clearer together in one implementation
+      (apply and supports(...), for example)
     key/metadata and related operations belong together for cohesion
     its injected dependencies or implementation are clearer as a class
     it must appear in stack traces, thread dumps and metrics by name
@@ -115,7 +120,7 @@ ShippingCost costFor(ShippingMethod method) {
 Spring can inject eligible registered beans as a list or string-keyed map; classpath presence alone
 does not register every implementation. Conditions, qualifiers and scanning affect the set, so an
 accidental extra bean silently joins it and a missing one silently does not. Build the map from an
-explicit key the strategy declares, and fail at startup if a key is duplicated or a required key is
+explicit key the strategy or registration declares, and fail at startup if a key is duplicated or a required key is
 absent.
 
 For a closed key set, compare an enum or compatible exhaustive switch with a validated registry.
@@ -138,8 +143,9 @@ THEN compare an exhaustive switch for a closed set with a validated map/registry
      open contributions. Define unknown/default semantics explicitly.
 
 IF a strategy needs to know whether it applies
-THEN it has two operations (supports + apply) and wants a named type,
-     not a lambda. Consider Chain of Responsibility if several may
+THEN compare a cohesive named implementation with a predicate/function registration;
+     metadata and applicability need not be abstract methods on the public functional interface.
+     Consider Chain of Responsibility if several may
      apply in order (gof-chain-of-responsibility).
 
 IF strategies are selected from data crossing a trust boundary
@@ -156,7 +162,9 @@ THEN that is a template, and it belongs in the caller once — not
 
 IF the strategy choice changes system behaviour beyond this call —
 partitioning, routing, serialisation
-THEN changing it is a migration, not a configuration flip
+THEN inspect persisted data, in-flight work and old/new coexistence requirements.
+     Incompatible placement or format changes need migration; a compatible stateless policy
+     change can use a validated configuration rollout
      (message-ordering-and-partitioning).
 ```
 
@@ -170,7 +178,8 @@ THEN changing it is a migration, not a configuration flip
   chosen by configuration and have system-wide effects: the partitioning strategy determines
   ordering guarantees, the serialisation strategy determines compatibility, the retry policy
   determines amplification under failure, the load-balancing strategy determines tail latency.
-  Changing one is a migration with a compatibility window, not a switch to be flipped
+  Assess coexistence, rollback and retained effects before choosing a rollout or migration;
+  a strategy label alone does not require data migration or a compatibility window
   (`sharding-and-partitioning`, `load-balancing-and-routing`, `retries-and-backoff`).
 - **Performance.** Dispatch and inlining depend on receiver profiles, compilation tier and code
   shape rather than a fixed implementation count. Non-capturing lambdas may be cached; capturing
@@ -191,7 +200,7 @@ THEN changing it is a migration, not a configuration flip
 - [ ] Diagnostic identity is available through named methods/types or bounded registration metadata
 - [ ] Shared pre/post processing lives in the caller, not duplicated per strategy
 - [ ] A contract test runs against every implementation
-- [ ] Strategy choices with system-wide effects are treated as migrations
+- [ ] System-wide policy changes have an evidence-based rollout or migration that preserves required contracts
 
 ## References
 

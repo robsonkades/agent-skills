@@ -15,8 +15,10 @@ compressibility_and_entropy_cohorts: []
 malformed_truncated_oversized_bomb_cases: []
 ```
 
-Keep object construction outside an encode benchmark only when production also receives the object
-already built. For decode, use immutable source bytes and ensure buffer position/state is reset.
+An encode-only mechanism benchmark can exclude object construction if its boundary is explicit.
+For a claim about a production path that constructs objects, include that cost in the relevant
+pipeline experiment; do not attribute the isolated encode result to the whole path. For decode,
+use immutable source bytes and ensure buffer position/state is reset.
 Keep corpus size bounded and report its working set: a tiny repeatedly reused object can fit caches
 while production's variable strings, numbers and schemas do not. State whether setup/schema lookup
 is amortized or cold. Include the deployed implementation/configuration as the baseline.
@@ -70,23 +72,34 @@ separate codec execution from collector consequences.
 
 ## Avoid mutable-buffer traps
 
-For each invocation verify:
+Establish these invariants through appropriate correctness controls, including checks outside the
+timed body or in a separate run. Preserve observable output and the actual lifecycle work included
+in the claimed boundary; validation need not become measured codec work. Invocation fixtures are
+not free of timing/arbitration effects (`jmh-advanced`).
 
 - input buffer position/limit/order and source bytes are reset;
 - output writer index/position is reset without exposing stale tenant data;
-- returned bytes remain valid after buffer reuse/release;
+- returned bytes remain valid for the promised consumption lifetime;
 - growth/oversize path is exercised and included/excluded deliberately;
-- pooled codec state, references, class registrations, dictionaries and caches do not leak between
-  payloads or forks;
+- pooled message/graph state resets according to the codec contract; intentional registrations,
+  configuration and caches may persist, with compatible protocol and tenant isolation;
 - checksum/semantic oracle consumes the correct number of bytes.
 
-A benchmark that returns a view into a buffer immediately reused by the next invocation may be fast
-and semantically invalid.
+A borrowed view is valid when its consumer finishes before backing storage is mutated/reused.
+Returning or passing the view to a Blackhole does not by itself validate its contents or prove an
+asynchronous consumer has finished. A view still needed after reuse can silently observe new bytes.
 For an asynchronous component test, deliberately delay consumption, encode another message, and
 verify the first message's bytes stay unchanged until actual consumption finishes. Exercise timeout
 and cancellation while that consumer still owns the bytes; releasing a lease at caller completion
 can be too early. After mid-write failure, reject partial output and discard or reset the codec
 according to its contract before it re-enters the pool.
+
+Reset is not universal erasure or deallocation. In Kryo 5.6.2, `Kryo.reset()` clears graph state
+including references/unregistered-name state; the default resolver keeps explicit registrations.
+`Output.reset()` sets position and total to zero without wiping or shrinking the backing array.
+`Output.getBuffer()` exposes that array; only `[0, position)` is current output. `toBytes()` copies
+that range. Inspect the actual version, custom serializers and transport lease before choosing a
+reset/copy/reuse policy; reset alone does not establish safe cross-tenant access.
 
 ## Production evidence map
 
@@ -98,6 +111,11 @@ according to its contract before it re-enters the pool.
 | GC consequence      | GC logs/JFR with workload timeline                           | correlation alone is not causation        |
 | wire/storage impact | bytes/message, compression ratio, network/storage counters   | protocol framing/retries must be included |
 | buffer pressure     | pool acquire/wait/miss, capacity retained, direct/native use | cardinality and instrumentation cost      |
+
+Use existing adequate recordings, or explicitly start and complete a bounded recording when the
+claim needs one. JFR metadata describes available events, not enabled or recorded observations;
+check settings and actual counts. Missing/failed optional diagnostics limit their own attribution
+claims without erasing independently valid results.
 
 Run positive controls and validate event settings, weights, loss, and target population. Comparing
 two codecs simultaneously inside one JVM does not remove environment: order, compilation, GC,
@@ -113,13 +131,18 @@ Use realistic concurrency, arrival rate and backpressure. Include:
 - buffer-pool size, miss/fallback and direct-memory limit;
 - consumer processing and acknowledgement/retry behavior;
 - CPU quota, memory limit, network bandwidth and downstream bottlenecks;
-- an arrival model representing production; closed-loop generators suppress offered work during
-  stalls, and histogram correction does not recreate omitted requests or overload behavior.
+- an arrival model representing production: a closed population can correctly model workers/users
+  whose next request depends on completion. For independently scheduled arrivals, record scheduled
+  and started work, lateness, drops and generator capacity; closed feedback reduces offered work
+  during stalls. Histogram correction does not recreate omitted requests or overload behavior.
 
 Measure successful useful messages/s, end-to-end percentile distribution, CPU/message, allocated
 and retained memory, GC, wire bytes, errors/retries/drops, queue depth, and pool pressure.
 
 ## Failure tests
+
+Choose the failures relevant to the changed codec, trust, ownership or compatibility contract;
+this list does not require every format/API review to exercise every dependency.
 
 - truncated, corrupt, invalid tag/offset/length and unsupported schema/version;
 - deeply nested, huge array/map/string and decompression expansion;
@@ -132,6 +155,9 @@ and retained memory, GC, wire bytes, errors/retries/drops, queue depth, and pool
 - shutdown while buffers/messages are in flight.
 
 ## Comparison report
+
+Report the fields needed for the claim, including a supported keep/no-change conclusion. Distinguish
+mechanism results, system-impact evidence and pending experiments rather than filling unrelated cells.
 
 ```text
 decision and practical threshold:
@@ -148,8 +174,11 @@ selected candidate, rejected alternatives and residual risks:
 ## Authoritative references
 
 - [OpenJDK JMH](https://github.com/openjdk/jmh)
-- [JFR runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [JFR API Programmer's Guide, Java 25](https://docs.oracle.com/en/java/javase/25/jfapi/index.html)
+- [Java 25 JFR recording API and settings](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html)
 - [async-profiler](https://github.com/async-profiler/async-profiler)
 - [Protocol Buffers Java generated code](https://protobuf.dev/reference/java/java-generated/)
-- [Apache Avro Java API](https://avro.apache.org/docs/current/api/java/)
-- [Kryo documentation](https://github.com/EsotericSoftware/kryo)
+- [Apache Avro 1.12.0 Java API](https://avro.apache.org/docs/1.12.0/api/java/)
+- [Kryo 5.6.2 reset](https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/Kryo.java)
+- [Kryo 5.6.2 Output](https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/io/Output.java)
+- [JMH 1.37 invocation fixture contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Level.java)

@@ -62,7 +62,12 @@ state, writer count, one-shot/repeated operation, and access modes alongside eac
 
 ## Fix validation
 
-- run the minimized jcstress test across supported JDKs/architectures/configurations;
+Select checks for the changed protocol and unresolved integration risks; record actual executions
+and unexecuted checks. A straightforward review of an unchanged documented handoff may need only
+its proof and relevant existing checks.
+
+- run a minimized jcstress test when a custom or changed primitive protocol warrants schedule
+  exploration, using supported JDKs/architectures/configurations;
 - run semantic concurrency tests and production-like load/failure/shutdown;
 - verify no new deadlock/starvation/contention or allocation regression;
 - review compatibility/serialization/public API if state representation changed;

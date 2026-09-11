@@ -19,8 +19,14 @@ availability. Cost per successful business operation includes compute, storage p
 throughput, network, sidecars, failover reserve and interruption waste.
 
 Spot/preemptible capacity is interruptible, not committed headroom. Keep a measured stable floor or
-degradation policy, test correlated reclamation and prove drain/replacement inside the provider's
-effective notice—not its nominal maximum. Prefer managed interruption handling when available and
+degradation policy and test correlated reclamation. Use any notice for graceful drain or checkpointing,
+but cover late/absent notice and replacement lag in the recovery envelope; replacement capacity may
+not become available before loss. AWS Spot notices are best effort, and Google's preemptible shutdown
+period is best effort and up to 30 seconds. Prefer managed interruption handling when available and
 validate the pod/application shutdown path through `kubernetes-service-lifecycle`.
+
+Check the target offering's current contract:
+[AWS Spot interruption notices](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html)
+and [Google preemptible VMs](https://docs.cloud.google.com/compute/docs/instances/preemptible).
 
 Re-evaluate on price/spec, instance generation, JDK, native dependency or workload changes.

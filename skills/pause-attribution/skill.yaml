@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: pause-attribution
-version: 1.4.1
+version: 1.4.2
 description: >-
   Attributing an observed production pause to a layer: decomposing it across
   time-to-safepoint, safepoint operation, cleanup and host effects, correlating the GC log,
@@ -46,22 +46,36 @@ dependencies:
   - name: gc-log-analysis
     version: ^1.0.0
 
-suggests:
-  - allocation-profiling
-  - blocking-and-nonblocking-io
-  - concurrency-diagnostics
-  - container-awareness
-  - cpu-cache-and-numa
-  - deoptimization
-  - epsilon-and-shenandoah-internals
-  - jni-and-ffm
-  - jvm-class-loading
-  - jvm-gc-tuning
-  - linux-for-jvm
-  - lock-inflation
-  - thread-sizing-and-virtual-threads
-  - virtual-threads-internals
-  - zgc-and-shenandoah
+  - name: allocation-profiling
+    version: ^2.0.0
+  - name: blocking-and-nonblocking-io
+    version: ^1.0.0
+  - name: concurrency-diagnostics
+    version: ^1.0.0
+  - name: container-awareness
+    version: ^1.0.0
+  - name: cpu-cache-and-numa
+    version: ^1.0.0
+  - name: deoptimization
+    version: ^2.0.0
+  - name: epsilon-and-shenandoah-internals
+    version: ^2.0.0
+  - name: jni-and-ffm
+    version: ^1.0.0
+  - name: jvm-class-loading
+    version: ^1.0.0
+  - name: jvm-gc-tuning
+    version: ^2.0.0
+  - name: linux-for-jvm
+    version: ^1.0.0
+  - name: lock-inflation
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+  - name: virtual-threads-internals
+    version: ^1.0.0
+  - name: zgc-and-shenandoah
+    version: ^1.0.0
 
 capabilities:
   - reads-source

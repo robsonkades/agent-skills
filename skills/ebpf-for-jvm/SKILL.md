@@ -52,6 +52,12 @@ privilege, duration, stop and rollback plan:
 If the script cannot describe which population contributes to numerator and denominator, it
 is exploratory—not a quantitative production result.
 
+Reuse supplied incident context and recordings first. Ask only for missing facts that change
+the probe, target scope, interpretation or collection authority. If existing JFR/profile/OS
+evidence already answers the question, interpret it without a new kernel capture. When a live
+incident's recovery budget cannot accommodate collection and validation, preserve available
+evidence and proceed with authorized recovery; leave the kernel hypothesis unresolved.
+
 ## Choose the least fragile probe
 
 | Probe            | Strength                                                      | Main compatibility risk                                     |
@@ -215,14 +221,21 @@ default.
 
 ## Decision and validation workflow
 
-1. Collect baseline JVM/OS evidence and define the missing layer/question.
-2. Select the least fragile probe and inspect its runtime schema.
-3. Define target scope, pairing keys, map/buffer bounds, loss counters, and stop condition.
-4. Validate against synthetic positive and negative controls, including dynamic threads.
-5. Measure overhead and lost-event behavior at peak event rate.
-6. Capture alongside timestamped JVM/application/cgroup evidence.
-7. Report population, coverage/loss, units, kernel/tool versions, and confounders.
-8. Change one suspected mechanism and verify the user/resource outcome independently.
+1. Assess existing JVM/OS evidence and define the unresolved question and decision it changes.
+2. If new collection is needed, select the least fragile probe and inspect its runtime schema.
+3. Define target scope, pairing keys, map/buffer bounds, loss counters, and stop condition within
+   the available privilege, overhead and recovery budget. Unavailable access is a limitation,
+   not evidence of an absent event or a reason to change host policy automatically.
+4. For a new or changed collector, validate the relevant lifecycle and population with positive
+   and negative controls, including dynamic threads when membership can change. Reuse a
+   validated tool's evidence only within its tested kernel/tool/scope conditions.
+5. Establish overhead and lost-event behavior at the intended event rate before relying on a
+   production capture; do not force a new peak-load experiment for interpretation alone.
+6. If capturing, align timestamped JVM/application/cgroup evidence where it adds discrimination.
+7. Report population, coverage/loss, units, versions, confounders and supported conclusions.
+8. Recommend a mechanism change only when the evidence warrants it, then verify the user/resource
+   outcome independently. A supported no-change decision or a bounded unresolved hypothesis is
+   valid; identify the smallest missing evidence and stop instead of expanding the capture bundle.
 
 ## Troubleshooting
 

@@ -6,7 +6,7 @@
 | ------------------- | ---------------------------- | ------------------------------------------------ | --------------------------------------------------------- |
 | **Virtual**         | When the subject is created  | Expensive resources; JPA lazy associations       | Publication races; work triggered from an innocent getter |
 | **Remote**          | Where the subject lives      | RPC stubs, service clients                       | Latency and partial failure presented as local behaviour  |
-| **Protection**      | Who may call                 | Authorisation wrappers                           | Bypassable when the subject is reachable directly         |
+| **Protection**      | Who may call                 | Authorisation wrappers                           | Protected callers can bypass through unchecked access     |
 | **Smart reference** | Bookkeeping around each call | Caching, counting, logging, `synchronized` views | Becomes a decorator in disguise; hidden cost per call     |
 
 ## Proxy against Decorator
@@ -43,6 +43,17 @@ Foo foo = (Foo) Proxy.newProxyInstance(loader, new Class<?>[]{ Foo.class },
 // CGLIB / ByteBuddy: generates a subclass, so it can proxy classes
 ```
 
+The handler deliberately uses proxy identity for equality and hashing; it is not a universal
+entity-equality policy. Blindly forwarding `equals` to an identity-based target can make
+`proxy.equals(proxy)` false. Preserve the consumer's equality/hash and registration contract.
+
+Unwrapping `InvocationTargetException` preserves the target cause, but a checked exception still
+must fit the interface's `throws` contract or the proxy throws `UndeclaredThrowableException`.
+For duplicate method signatures across interfaces, it must fit all applicable declarations.
+A returned `CompletionStage` can fail after `invoke` returns: observe the stage when the policy
+concerns completion, and preserve its failure/cancellation contract. Invocation return alone does
+not justify releasing resources still used by that work.
+
 | Mechanism         | Requires                                    | Cannot intercept                                                          |
 | ----------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
 | JDK dynamic proxy | Eligible interfaces                         | Target-only methods; Object.equals/hashCode/toString do reach the handler |
@@ -50,6 +61,9 @@ Foo foo = (Foo) Proxy.newProxyInstance(loader, new Class<?>[]{ Foo.class },
 
 Consequences that bite in practice:
 
+- Java 17 JDK proxies require non-hidden, non-sealed interfaces visible to the selected loader;
+  a sealed interface directly in the proxy-interface array is rejected. Check package/module and
+  method-signature restrictions before changing a public interface or proxy mechanism.
 - Making a service class `final` — a reasonable default otherwise — disables Spring's
   subclass-based proxying for it.
 - A private method is not intercepted by ordinary proxy-based Spring advice; weaving differs.
@@ -77,13 +91,18 @@ The annotation works by the caller holding the proxy. An internal call goes stra
 target, so that method's proxy advice does not run. Existing transaction/context may still apply;
 this example assumes proxy mode, not AspectJ weaving.
 
-Three fixes, best first:
+First establish the required unit of work and which advice is missing. An effective outer
+transaction may already satisfy the contract; self-invocation alone does not require a refactor.
+When a boundary is missing, compare these options without changing batch atomicity or propagation
+by accident:
 
-1. **Move the annotated method to another bean.** The call then crosses the proxy. This is
-   usually also the better design, because the annotated behaviour is a different responsibility.
-2. **Inject a proxy reference to self when supported by the configuration.** Use an interface
+1. **Move the annotated method to another bean** when it is a useful responsibility boundary.
+   The call then crosses the proxy; verify that its actual advice gives the intended transaction.
+2. **Use an explicit programmatic transaction boundary** when transaction scope is the problem
+   and it fits the existing design, for example Spring's `TransactionTemplate` for imperative work.
+3. **Inject a proxy reference to self when supported by the configuration.** Use an interface
    compatible with proxy kind; verify circular-reference and initialization behavior.
-3. **`AopContext.currentProxy()`.** Requires `exposeProxy = true` and couples the code to Spring
+4. **`AopContext.currentProxy()`.** Requires `exposeProxy = true` and couples the code to Spring
    AOP. Last resort.
 
 Detection: any annotated method invoked without a receiver from within its own class. Worth an
@@ -145,11 +164,13 @@ Do not call the entire path lock-free without a progress argument (`java-memory-
 ## Protection proxies that do not protect
 
 ```java
-// the check is advisory if this is possible anywhere in the codebase
+// bypass: a caller subject to the guard can obtain the unchecked target
 DocumentStore raw = context.getBean(FileDocumentStore.class);   // bypasses SecuredDocumentStore
 ```
 
-A protection proxy is only a control if the subject is unreachable. Ways to make that true:
+A protection proxy needs every relevant caller to pass the required check. A separately authorized
+maintenance path is not itself a defect; an unchecked path exposed to protected callers is.
+Ways to enforce that boundary:
 
 - Restrict subject visibility and wiring within the relevant trust boundary; package-private alone
   does not protect against all same-package code, reflection or other raw-object access paths.
@@ -173,5 +194,8 @@ Restrict unwrap to justified infrastructure use. Never expose an authorization/l
 merely to support identity checks; test policy through the proxy itself.
 
 Sources: [Java 17 Proxy contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/Proxy.html),
-[Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html), and
+[InvocationHandler exception contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/InvocationHandler.html),
+[CompletionStage outcomes](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html),
+[Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html),
+[programmatic transaction boundaries](https://docs.spring.io/spring-framework/reference/data-access/transaction/programmatic.html), and
 [Hibernate 6.6 proxy/enhancement behavior](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Hibernate.html).

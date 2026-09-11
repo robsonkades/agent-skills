@@ -41,8 +41,9 @@ reproduction, state a proposed selection and its evidence gap, not a verified di
 2. **Find the narrowest scope in which that risk is real.** A rounding rule is real inside
    one method. A lazy-loading failure is not real until a real persistence context exists.
    Push down as far as the risk survives, and no further.
-3. **Read what that level cannot prove** (`references/test-levels.md`) and decide whether
-   the gap needs covering. It usually needs one test elsewhere, not a second suite.
+3. **Read what that level cannot prove** (`references/test-levels.md`) and inspect existing
+   evidence for the same boundary, versions and assumptions. Add focused coverage only for a
+   material remaining gap, or make its acceptance explicit; do not add a test per mock.
 4. **Price it**: feedback latency, probability of flaking, and how tightly it binds to
    structure that will change. A test that must be rewritten by every refactoring is a
    change detector, and it will be deleted under deadline pressure.
@@ -69,14 +70,19 @@ is enough for a single change.
   Skip trivial getter/setter tests unless the accessor enforces a meaningful contract.
 - Keep the smallest end-to-end portfolio covering distinct critical risks. One case can
   suffice for a simple journey; different authorization or payment paths may require more.
-- A bug gets a regression test at the narrowest level that reproduces it, written before the
-  fix and observed failing. If no level below end-to-end reproduces it, that is a finding
-  about the design, not a licence to skip the test.
+- Prefer a regression test before the fix, with an observed failure for the reported reason.
+  When that run is unavailable, distinguish current passing evidence from unverified defect
+  detection as in step 5. Retain the narrowest reproduction that preserves the risk;
+  end-to-end-only reproduction is a lead about wiring, state or environment, not proof of a
+  design defect or a reason to skip coverage.
 - Coverage diagnoses unexecuted code; it does not measure assertion strength. Keep existing
   gates unless their change is in scope. A gate may detect lost coverage, but hitting its
   percentage is insufficient: inspect uncovered risks and whether assertions detect defects.
-- Never test private methods directly. Behaviour unreachable through the public surface is
-  either dead or evidence the class boundary is wrong (java-cohesion-coupling).
+- Prefer observable behavior through the actual entrypoint over direct private-method tests.
+  Private callbacks can be reached by serialization or frameworks; visibility alone does not
+  prove dead code or a wrong boundary. A focused direct test may be a useful legacy seam, but
+  carries coupling and does not prove invocation by the real caller. Do not expose methods or
+  extract classes solely to satisfy a testing rule (java-cohesion-coupling).
 - Diagnose slow or flaky tests before deleting coverage. Temporary quarantine needs an
   owner, repair deadline and explicit risk; it is not a pass. A slow valuable test may belong
   in a scheduled suite with a defined release policy.

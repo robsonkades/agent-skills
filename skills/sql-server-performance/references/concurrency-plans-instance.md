@@ -5,6 +5,8 @@
 Inspect active requests, open transaction age, lock resources, and the head blocker. Lock escalation
 is statement- and memory-sensitive; batching can reduce footprint, while row/page hints do not
 guarantee escalation cannot occur.
+An old or quiet transaction is a lead, not proof that it holds the blocking lock or retains the
+versions in question; correlate the actual transaction, requests, generation and cleanup evidence.
 
 For deadlocks, read the resource list and access paths that close the cycle, then the process order.
 Choose deterministic access order, a narrower lock range, shorter transaction, or bounded retry from
@@ -17,10 +19,13 @@ active transactions, version generation and cleanup, not just readers. Use
 `sys.dm_tran_persistent_version_store_stats` for PVS; detailed version-store scans can be expensive.
 Versioning does not eliminate writer conflicts or schema locks. Verify application isolation
 assumptions before enabling and monitor store growth and SNAPSHOT update conflicts afterwards.
+Keep the target version explicit: later optimized-locking or `tempdb` ADR features do not establish
+SQL Server 2022 behavior merely because they appear in a shared documentation page.
 
 ## Plans and grants
 
-Read the application plan with actual rows and executions. Diagnose:
+When the question depends on plan execution, reuse or obtain representative application plans and
+parameters with actual rows/executions where needed. Investigate the applicable evidence:
 
 - first estimate divergence and the statistic/expression/parameter causing it;
 - parameter skew and whether one, several, or per-execution plans are justified;
@@ -29,8 +34,11 @@ Read the application plan with actual rows and executions. Diagnose:
 - requested/granted/used memory, spills, and concurrent grant pressure;
 - worker/scheduler pressure and distribution of rows between parallel branches.
 
-Use Query Store forcing or hints as scoped, monitored mitigation. Check force failures and remove the
-control after the underlying distribution/statistics/query issue changes.
+Use Query Store forcing or hints as scoped, monitored mitigation. Check force failures and reassess
+the control after distribution/statistics/query changes. Retain a still-effective control when its
+current workload and maintenance contract justify it; remove or replace it using relevant evidence,
+with a way to recover the prior behavior. An underlying change alone does not establish that unforcing
+will improve the workload.
 
 PSP starts with SQL Server 2022 and compatibility level 160; check the database-scoped setting,
 query/predicate eligibility and actual dispatcher/variant plans. Engine version alone does not
@@ -40,8 +48,11 @@ Query Store holds compiled plans and aggregated execution statistics, not an act
 for every call or a complete runtime-parameter log. Check capture mode, read/write state, retention
 and replica support before treating missing history as meaningful. Aggregate active-interval rows
 by plan, execution type and interval; weight averages by execution count. Means/min/max do not
-recover p99. Obtain request-level latency and representative parameters through an appropriate
-capture, and separate aborted/exception executions from successful ones.
+recover p99. `first_execution_time` and `last_execution_time` are execution end times within the
+interval; whole-interval aggregates do not reconstruct an arbitrary subwindow of an incident.
+Reuse or obtain request-level latency and
+representative parameters when the question requires them; separate aborted/exception executions
+from successful ones and keep duration units explicit (`avg_duration` is in microseconds).
 
 ## Instance resources
 
@@ -64,4 +75,4 @@ capture, and separate aborted/exception executions from successful ones.
 - [MAXDOP](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/configure-the-max-degree-of-parallelism-server-configuration-option?view=sql-server-ver16) — task scope and overrides.
 - [Query Store runtime statistics](https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-query-store-runtime-stats-transact-sql?view=sql-server-ver16) — aggregation keys and execution types.
 - [PSP optimization](https://learn.microsoft.com/en-us/sql/relational-databases/performance/parameter-sensitive-plan-optimization?view=sql-server-ver16) — eligibility and compatibility.
-- [Wait statistics](https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-os-wait-stats-transact-sql?view=sql-server-ver17) — completed waits and reset history.
+- [Wait statistics](https://learn.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-objects/sys-dm-os-wait-stats-transact-sql?view=sql-server-ver16) — completed waits and reset history.

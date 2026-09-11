@@ -16,10 +16,11 @@ description: >
 
 ## Purpose
 
-Handle the concurrency that database transactions cannot reach. A transaction protects a
-unit of work measured in milliseconds; the business problem is two people editing the same
-order over ten minutes. No isolation level addresses that, and reaching for one is the most
-common wrong turn in this area.
+Protect a business edit whose original read and eventual write span separate database
+transactions. Two people may edit the same order over ten minutes; isolation of each short
+transaction does not carry the earlier editor's precondition into the later save. Preserve
+that original version or an enforced ownership protocol. Transaction duration is a design
+choice, with resource and recovery costs, not a fixed number of milliseconds.
 
 The second failure this prevents is treating a conflict as an infrastructure error: an
 `OptimisticLockException` surfacing as a 500 with a stack trace, or being silently retried
@@ -35,8 +36,9 @@ t2  edits address, saves → writes over v8 with data derived from v7
 ```
 
 Nothing here is a database anomaly: both writes are perfectly serialisable transactions.
-The loss happens between them, in application time. The four patterns below are the
-available answers.
+The stale snapshot crosses the transaction boundary in application time. The four patterns
+below organize common responses; the authoritative write still has to enforce the chosen
+precondition and invariant.
 
 ## The four patterns
 
@@ -61,59 +63,69 @@ Implicit lock              the mechanism is applied by the framework or a
 
 ## Workflow
 
-1. **Establish that the conflict spans transactions.** If both writes are in one
-   transaction, this is an isolation or row-locking question
-   (`enterprise-transactions`), not an offline one.
-2. **Measure or estimate the conflict rate** on the actual data. Two users editing the
+Scope the work to explanation, diagnosis, protocol selection or implementation. Reuse matching
+code and integration evidence; retain an adequate design and a supported no-change result.
+Do not require a new abstraction, workload measurement or database campaign for a narrow review.
+
+1. **Locate the original read and authoritative write.** If stale application state crosses
+   their transaction boundary, preserve its edit precondition. If each operation's relevant
+   read and write are inside its transaction, investigate interference between those
+   transactions with `enterprise-transactions`; counting writes alone does not identify the problem.
+2. **When choosing a protocol, assess conflict frequency and cost** on the actual data. Two users editing the
    same order or jobs touching the same summary row have workload-dependent overlap.
    Combine observed conflict frequency with the cost of discarded work and waiting.
-3. **Choose the lock granularity from the invariant**, not from the table layout: whatever
-   must stay consistent together should be versioned together.
+3. **Choose the coordination boundary from the invariant**, not from the table layout.
+   A shared root version is one option; an existing atomic constraint or conditional operation
+   may already enforce the invariant without versioning every related row together.
 4. **Design the conflict experience before the mechanism.** What does the user see, and
    what can they do about it? A pattern that produces an unusable error is not implemented.
-5. **Make the mechanism implicit** once chosen — a mapped superclass, a repository base, a
-   framework feature — and audit bypass paths such as bulk/native writes. Make it observable so it can
-   still be diagnosed.
-6. **Verify with a concurrent test**, not by reasoning. Two threads, real transactions,
-   synchronized after both load the same version, asserting exactly one commits.
+5. **Ensure every affected write path participates.** A mapped superclass, repository base
+   or framework feature can reduce omissions; explicit conditional SQL is also valid.
+   Audit bulk/native and external paths and make conflict handling observable.
+6. **Verify the property at issue.** A sequential stale-client replay can test the original
+   version contract. A flush race needs independent real transactions synchronized after
+   both loads; competing writes with the same required version must not both commit.
+   Use the relevant recipes in the reference and distinguish existing evidence from new tests.
 
 ## Decision rules
 
 ```text
 Conflicts are rare; users can redo the work; edits are short
-        → optimistic. Default choice; costs one column and one branch.
+        → consider optimistic version checks; include client-version propagation,
+          atomic writes and useful conflict recovery in the implementation cost.
 
 Conflicts are frequent, or the work lost on conflict is expensive
 (a long form, a document, a manual reconciliation)
-        → pessimistic. The user is told up front the record is busy,
-          instead of after the effort is spent.
+        → consider pessimistic checkout to expose contention before editing;
+          compare its waiting/recovery cost with validated merge or collaboration.
 
 Conflicts are frequent AND the work is cheap to redo
         → consider optimistic merge or retry when intent remains valid on fresh state.
 
 Several people must work on different parts of one consistent whole
-        → coarse-grained lock on the aggregate. Accept that they will
-          conflict or wait; that is the invariant's concurrency boundary.
+        → enforce the shared invariant at the authoritative write. A coarse root
+          version/lock is one option; preserve a narrower protocol only when it
+          enforces that invariant across all participating writers.
 
 An unattended process (batch, integration) competes with users
-        → optimistic for the process too; retry only valid intent in fresh
-          transactions. Any pessimistic checkout needs abandonment recovery.
+        → include it in the chosen version/ownership protocol; retry only
+          valid intent in fresh transactions. Checkout needs abandonment recovery.
 
 The mechanism can be forgotten on a new write path
-        → make it implicit, and add a test that fails when a versioned
-          type is written by a path that bypasses it.
+        → centralize participation where useful, and test the affected bypass
+          paths. A mapped base class alone does not prove all writers participate.
 ```
 
 ## Rules
 
-- Optimistic locking **detects**, it does not prevent. Its value is entirely in what
-  happens next: a conflict must reach the user or the calling system as a meaningful
+- Optimistic offline locking allows concurrent editing, then detects conflicts and rejects
+  stale writes. A conflict must reach the user or the calling system as a meaningful
   outcome ("this order changed while you were editing; here is what changed"), never as a
   500 and never as a silent overwrite.
 - **Do not blindly retry an optimistic conflict.** A retry that re-reads and re-applies the
   user's _intent_ may be correct after domain revalidation and effect deduplication. A retry that re-applies the user's _stale data_ is a lost
-  update with extra steps, and it is the most common misuse of `@Retryable` in this area.
-- A version column must be checked in the `WHERE` clause of the update and the update's
+  update with extra steps; `@Retryable` does not make the intent safe.
+- Version-based SQL must check the expected version in the `WHERE` clause and the update's
   affected-row count must be tested. Normal versioned entity writes get this from the ORM; hand-written SQL and bulk
   updates need explicit participation. Incrementing the version invalidates old snapshots,
   but does not replace a predicate protecting the bulk operation's own expected state (`orm-behavioral-patterns`).
@@ -121,17 +133,20 @@ The mechanism can be forgotten on a new write path
   expiry and safe renewal; a durable checkout may instead require explicit release plus an audited
   administrative recovery procedure. Expiry is valuable but unsafe if work can outlive it without
   fencing, because two owners may then act concurrently.
-- Do not implement a pessimistic offline lock with a database transaction held open across
-  requests. It holds a pooled connection for a human's thinking time, and it will exhaust
-  the pool long before it will protect data.
+- Prefer an application-managed checkout over a database transaction held across human
+  thinking time. A held transaction can retain locks, connections and snapshot resources;
+  evaluate a deliberate long transaction's bounds, recovery and capacity with
+  `enterprise-transactions` instead of treating it as a cost-free offline lock.
 - Lock granularity follows the invariant. Versioning rows independently reduces conflicts but can
-  permit combinations that violate an aggregate-wide invariant. One root version protects the
-  invariant but can create false conflicts between independent edits
+  permit combinations that violate an aggregate-wide invariant. A shared root version can
+  protect it when every related write participates atomically, but can create false conflicts
+  between independent edits. Other authoritative protocols must enforce the same invariant
   (`domain-logic-organization`).
 - Coarse granularity trades throughput for correctness, and the trade is real: one version
   on a hot aggregate makes its writers compete. If that hurts, measure contention and
   reconsider boundaries only where the required invariant remains enforceable.
-- **Implicit locking is a safety property, not a convenience.** Its cost is diagnosability:
+- **Complete writer participation is the safety property.** Implicit locking can reduce
+  omissions, but does not replace verification of explicit/bulk/external paths. Its cost is diagnosability:
   when a conflict fires, the reason is in a superclass or an interceptor and not in the
   code being read. Pay that cost back with logging that names the entity, the version
   expected and the version found when known; a later read observes a later state.
@@ -140,14 +155,15 @@ The mechanism can be forgotten on a new write path
   successful update increments the version, a duplicate carrying the old version normally fails
   optimistic locking rather than returning the original result
   (`idempotency`).
-- Test concurrency with concurrency. A unit test with a mocked repository cannot observe a
-  lost update; two threads against a real database can.
+- Test transaction races with controlled concurrency on the actual provider/database.
+  Mocks cannot prove database conflict handling; a sequential replay tests a different,
+  useful property: whether an already-stale client request is rejected.
 
 Before proposing a change, inspect the Java toolchain, ORM/provider, database dialect and
-isolation level, client version contract and all affected write paths. Return the chosen
-concurrency boundary, conflict/recovery behavior and a test exposing stale-client or
-stale-owner writes. Treat missing mapping or database evidence as a reason to keep the
-implementation recommendation conditional, not to assume a generic SQL/JPA guarantee.
+isolation level, client version contract and affected write paths. Return the justified
+change or no-change, concurrency boundary, conflict/recovery behavior, evidence and checks
+run versus pending, proportionate to the request. Missing provider/database evidence limits
+claims that depend on it; it does not invalidate an independently supported explanation.
 
 ## References
 

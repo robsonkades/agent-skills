@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: slo-and-alerting
-version: 1.4.1
+version: 1.4.2
 description: >-
   Engineering service-level contracts and actionable alerting: defining user-centered
   SLIs and SLOs with explicit populations and windows, negotiating error-budget policy,
@@ -45,9 +45,12 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - capacity-planning
   - cascading-failures
   - distributed-failure-catalogue
+  - distributed-tracing-design
   - latency-statistics
+  - structured-logging
 
 capabilities:
   - reads-source

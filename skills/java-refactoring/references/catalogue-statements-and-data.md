@@ -35,8 +35,8 @@ which each extracts cleanly into a named method.
 source must be **re-traversable** — a `Stream`, `Iterator`, `Scanner` or streaming
 `ResultSet` is consumed by the first loop and the second sees nothing. The collection must
 not be mutated during iteration **by any thread**: over a shared collection the split adds
-a second traversal that can legally observe a different element set (concurrent collections
-have weakly consistent iterators and throw nothing), so "A and B saw the same elements"
+a second traversal that can legally observe a different element set (for example with weakly
+consistent iterators or two snapshots taken at different times), so "A and B saw the same elements"
 stops holding. And there must be no early exit — a `break` or `return` in body A currently
 truncates body B, and splitting silently extends body B to the whole collection.
 
@@ -136,7 +136,7 @@ Records make the healthy form obvious: components are the state, derived values 
 
 **Into function** when _every_ caller performs the same statement before or after the call.
 Close the caller set both ways before believing "every" — reduce visibility and compile for
-the static callers, string-search the name for the framework-reached ones
+affected static callers, inspect overload/inheritance fallback, and string-search the name for framework-reached ones
 (`behaviour-preservation.md`). A missed caller silently loses the statement.
 
 **To callers** when only some callers want it. This is the honest fix for a function that
@@ -182,10 +182,13 @@ after construction; if you cannot name one, there is no identity to key on. Then
 scopes: the owner must be at least as long-lived as its longest-lived holder — a
 request-scoped owner with a singleton holder is the failure.
 
-The instance is now shared mutable state, so the owner must be thread-safe and every
-mutation needs a documented guard. In a persistence codebase this is rarely a code
+If instances are shared across threads, the owner and mutations need an explicit concurrency
+contract; a confined owner need not become concurrent merely because it shares identity within
+its scope. In a persistence codebase this is rarely a code
 refactoring: the owner that returns one instance per identity already exists and is the
-persistence context, which is neither thread-safe nor longer-lived than the transaction. A
-static map of entities is a leak, not a registry — the real question is whether the concept
+persistence context. Jakarta Persistence requires single-threaded access; transaction-scoped,
+extended and application-managed contexts have different lifetimes, and some span transactions.
+Preserve the actual owner and cleanup policy. An unbounded static map can retain entities and
+stale managed-state assumptions — the real question is whether the concept
 is an `@Embeddable` or an `@Entity`, and answering it changes the schema
 (orm-structural-mapping).

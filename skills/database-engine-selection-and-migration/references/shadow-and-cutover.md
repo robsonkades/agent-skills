@@ -35,6 +35,10 @@ the selected connector may not transfer them. PostgreSQL 18 native logical repli
 example, does not replicate DDL, sequence state or large objects; it is not a cross-engine
 conversion pipeline by itself.
 
+When CDC or downstream events change Avro, Protobuf or JSON payload contracts, use
+`schema-evolution-and-compatibility` for their writer/reader rollout; assess relational DDL with
+the destination's rules and project migration conventions.
+
 ## Cutover contract
 
 Specify:

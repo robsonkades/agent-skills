@@ -6,7 +6,8 @@ Status: documented, not executed. No measured improvement is claimed.
 Run each request below in a fresh session. For a paired comparison, hold model/version,
 tool access, system instructions and supplied context constant. In the baseline omit this
 skill; in the treatment provide SKILL.md and allow its referenced resources. Keep these
-expectations out of both prompts. Record outputs, tool calls, model/settings, date and
+expectations out of both prompts and exclude this evaluation file from task-runner access;
+the treatment's technical resources are the other two references. Record outputs, tool calls, model/settings, date and
 pass/fail per required characteristic with evidence. For selection cases, provide the same
 neighboring descriptions to both runs, adding this skill's description only in the treatment.
 Do not count repository verification or fixture tests as these runs.
@@ -104,3 +105,23 @@ its exceptions. This is entirely in-process; no Kubernetes or telemetry is invol
 **Required output:** In-process interface/error adaptation, without telemetry topology work.
 
 **Failure:** Proposing a sidecar or requiring Kubernetes/log fixtures for this request.
+
+## 7. Backpressure, recovery and storage lifetime
+
+**Request/context:** “The adapter has 100 MiB of usable queue capacity with 10 MiB already
+queued. Input is 4 MiB/s and impaired drain is 1 MiB/s, measured at that queue in encoded bytes.
+Once full, the producer's blocking writes stop accepting new work; no other queue grows.
+Recovery can drain 8 MiB/s while input remains 4 MiB/s. The queue is a disk-backed `emptyDir`.
+Can this avoid drops during a long sink outage and survive replacing the Pod?”
+
+**Expected behavior:** Separate finite buffering, verified producer backpressure, availability
+and durable recovery. Treat the supplied rates as a constant-rate scenario, not measurements
+of a real deployment.
+
+**Required output:** Capacity fills in 30 seconds; from a full queue, catch-up takes 25 seconds
+under the stated recovery rates. Backpressure can prevent overflow by stopping admission, with
+an explicit application impact; `emptyDir` does not preserve the queue across Pod removal.
+
+**Failure:** Ignoring existing backlog, claiming continuing availability at a blocked producer,
+declaring drops inevitable despite the stated backpressure, or treating a disk-backed `emptyDir`
+as durable across Pod replacement.

@@ -30,6 +30,10 @@ group resets to earliest.
 
 ## Workflow
 
+Use the steps that establish the requested claim. Reuse supplied pair tests, immutable artifacts
+and inventory; retain an adequate decoder or gate without forcing a migration. A narrow explanation
+can finish with its supported conclusion and the uncertainty that could change it.
+
 1. **Name the pair and the direction**: which reader schema, which writer schema, who deploys first.
 2. **Inventory reachable writers and stored data**: deployed and rollback builds, retries, lag,
    compacted latest values, backups and replay paths. Compaction can retain an old value indefinitely;
@@ -37,15 +41,19 @@ group resets to earliest.
    versions before choosing a gate or waiting period (`references/runbook-and-ci.md`).
 3. **Look the change up in the format table**, carry its condition and not only its verdict, and take
    the deploy order from the level table — never from the level's name.
-4. **Confirm the reader actually resolves**: `specific.avro.reader`, the mapper the consumer really
-   uses, the age of its generated code. One that does not voids everything above it.
-5. **Stage expand and contract**, gate the required pairs in CI, and verify migration inventory.
+4. **Confirm the actual decoder path**: `specific.avro.reader`, explicit reader selection, deliberate
+   writer-aware handling, the injected mapper and generated-code version. A mismatch limits the
+   affected decoding claim; it does not erase independently established schema-pair evidence.
+5. **For a change, choose a verified transition**, gate the required pairs and verify any migration
+   inventory. Expand/contract is one bridge; tested aliases, adapters or controlled cohort replacement
+   can avoid dual writes or backfill when the actual contract permits it.
 
 Inspect compiler/toolchain, generated-code and serializer/runtime versions before applying the
 versioned examples. Transcripts below are historical observations on their stated versions, not
-validation of the target project. Do not upgrade dependencies just to match them. Return required
-reader/writer pairs, semantic assertions, rollout/rollback prerequisites and executed versus pending
-checks. If inventory or decoder configuration is missing, keep the safety verdict conditional.
+validation of the target project. Do not upgrade dependencies just to match them. Return the conclusion
+and evidence proportionate to the task. For a rollout, include required reader/writer pairs, semantic
+assertions, rollout/rollback prerequisites and executed versus pending checks. Missing inventory or
+decoder configuration leaves claims that depend on it conditional.
 
 ## Compatibility levels: who upgrades first
 
@@ -73,25 +81,28 @@ Named for the **new schema**, not for who moves: new reader reads old data → r
 
 ## What a change does, by format
 
-Avro rows verified on 1.12.0, Protobuf rows on protobuf-java 4.32.0, Jackson claims on 2.19 and 3.0;
-JSON Schema is Confluent's `STRICT` checker on `kafka-json-schema-provider` 8.3.1.
+Historical probes used Avro 1.12.0, protobuf-java 4.32.0, Jackson 2.19.0 and 3.0.0, and Confluent's
+`STRICT` checker on `kafka-json-schema-provider` 8.3.1. Table orders concern the stated format
+transition, not every application: actual reader projections, adapters, allowed values and retained
+semantics can change the required pairs or order.
 
 | Change            | Avro                                                                                                                                     | Protobuf                                                                                                                                                                                                                                     | JSON Schema (Confluent)                                                                                             |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Add a field       | both ways **with a default**; reader-hostile without one                                                                                 | binary-compatible on a new number; test required semantics and ProtoJSON                                                                                                                                                                     | restrictive property can break backward compatibility with an open writer; inspect content models and actual values |
-| Remove a field    | reader-first always; writer-first only if it **had** a default                                                                           | binary-compatible for non-required fields; reserve number and name; ProtoJSON readers may reject the old key                                                                                                                                 | mirror of add                                                                                                       |
-| Rename a field    | reader-first **with `aliases` on the reader**; otherwise add+remove                                                                      | free on the wire, **breaks ProtoJSON** unless `json_name` keeps the old key                                                                                                                                                                  | add+remove; there is no alias                                                                                       |
+| Remove a field    | new readers can ignore removed writer fields; old readers that still expect a missing field need a meaningful default or adapter         | binary-compatible for non-required fields; reserve number and name; ProtoJSON readers may reject the old key                                                                                                                                 | mirror of add                                                                                                       |
+| Rename a field    | reader-first alias resolution when the implementation honors reader aliases; otherwise verify an add/remove or adapter bridge            | free on the wire, **breaks ProtoJSON** unless `json_name` keeps the old key                                                                                                                                                                  | add+remove; there is no alias                                                                                       |
 | Widen a scalar    | reader-first only (`int`→`long`→`float`→`double`); `string`↔`bytes` resolves both ways; arbitrary bytes need not preserve text semantics | wire-compatible but potentially lossy across `int32`/`int64`/`uint*`/`bool`; constrain values during rollout                                                                                                                                 | reader-first (`integer` → `number`)                                                                                 |
 | Narrow a scalar   | writer-first only                                                                                                                        | same undetectable set; another **same-wire-type** change reads a plausible _wrong_ value (`int32(300)`→`sint32` = 150) with an **empty** unknown-field set, a wire-type change reads zero with the bytes in `unknownFields` — neither throws | writer-first                                                                                                        |
 | Add an enum value | new reader first; old readers need a suitable enum default to accept new symbols                                                         | wire-safe, but a Java reader gets `UNRECOGNIZED` — reader-first, or read `getXValue()`                                                                                                                                                       | reader-first; **JSON Schema has no enum default**, so no fallback exists                                            |
 | Reuse a number    | n/a — fields match by name, so reordering is free                                                                                        | **never**: the same wire type reinterprets old bytes into a valid-looking object                                                                                                                                                             | n/a                                                                                                                 |
-| Change a default  | `COMPATIBLE` in every checker, yet it changes what old data _means_                                                                      | proto3 has implicit defaults; proto2 can declare explicit defaults; test presence/meaning                                                                                                                                                    | `default` is an annotation, not automatic value insertion; inspect binder/adapter behavior                          |
+| Change a default  | accepted by the recorded structural checks, yet can change what old data _means_; semantic gates can reject it                           | proto3 has implicit defaults; proto2 can declare explicit defaults; test presence/meaning                                                                                                                                                    | `default` is an annotation, not automatic value insertion; inspect binder/adapter behavior                          |
 
 ## Expand then contract
 
 Separate compatibility bridges from removal so rollback retains a version that understands both
 shapes. Additive and subtractive do not universally mean BACKWARD and FORWARD: format, defaults,
-content model and application behavior decide. This is a replacement-field recipe; verify its pairs.
+content model and application behavior decide. This is a replacement-field recipe; verify its pairs
+and perform backfill only for stores that require it. An already compatible change needs no bridge.
 
 ```text
 Release N — EXPAND (additive, readers first)
@@ -122,8 +133,9 @@ written without the old field; old readers need tested meaningful defaults/adapt
   writer-aware generic handling and test the actual configured path.
 - **Unexpected registrations may bypass schema review.** `auto.register.schemas` defaults to `true`
   and overrides `use.latest.version`
-  and `latest.compatibility.strict`. Register from CI when schema changes need review, then choose
-  lookup of the application's registered schema or an explicitly intended latest schema.
+  and `latest.compatibility.strict`. Bind runtime schemas to reviewed source or generated artifacts;
+  CI registration is one enforcement path. Choose lookup of the application's registered schema,
+  a supported explicit schema ID, or an intentionally selected latest schema.
   Normalization reduces supported syntactic differences; whitespace alone need not create versions.
 - **`UnrecognizedPropertyException` identifies the effective reader policy, not its origin.**
   Bare Jackson 2.x defaults to failing on unknown properties; Jackson 3.0 changes that default.
@@ -144,7 +156,8 @@ written without the old field; old readers need tested meaningful defaults/adapt
 - **`IllegalArgumentException: Can't get the number of an unknown enum value.`** Java closes proto3's
   open enums with an `UNRECOGNIZED` constant whose `getNumber()` and `getValueDescriptor()` throw,
   while `forNumber` returns `null` and a `switch` falls to `default`. Adding a symbol is
-  consumer-first in Java; a reader that must tolerate unknowns reads the generated `getXValue()` int.
+  consumer-first when existing readers cannot handle unknowns; a tolerant reader can use the
+  generated `getXValue()` int with the declared unknown-value policy.
 - **proto3 presence is a decision, not a detail**: an implicit scalar cannot distinguish "cleared"
   from "the producer's build predates this field" — an explicit `0` puts zero bytes on the wire and
   `hasField()` is `false`. `optional` has been GA since **3.15.0** ("proto3 removed optional" is 2015
@@ -155,19 +168,23 @@ written without the old field; old readers need tested meaningful defaults/adapt
   Under a backward STRICT gate, adding a restrictive property can fail; an unconstrained property
   need not narrow the accepted language. Do not edit published v1 to erase the problem. Use a tested
   bridge/migration or a new contract; LENIENT changes enforcement, not existing data.
-- **An Avro enum without a `default` symbol is the cheaper mistake**: adding the `default` in v2 is
-  `COMPATIBLE` both ways, so the schema edit is free — but every reader deployed on v1 must be
-  replaced before a new symbol can be written. A consumer-first deploy, not a topic rewrite.
+- **An Avro enum default can be added in a reader transition**: the recorded v2 addition is
+  `COMPATIBLE` both ways. Before emitting a new symbol, each reader that can receive it must have
+  tested handling, such as a suitable default or adapter. This often needs a consumer-first deploy;
+  it does not inherently require rewriting the topic.
 - **`BACKWARD` alone leaves a replay evidence gap** when old compacted values survive outside the
   compared history. Check their actual pairs; incompatibility is a possibility, not a consequence
   of the mode name. `kafka-consumers-in-java` owns offset resets.
 
 ## Verification
 
-- **Offline, no registry, no network**: keep every historical schema in the repo and validate the
-  current one against all of them. On Avro 1.12.0 `new SchemaValidatorBuilder().canReadStrategy()`
+- **Offline checks**: preserve immutable schemas/references for the required supported and reachable
+  history, in the repository or a controlled artifact store. Test the relevant pairs and any broader
+  published compatibility policy; every schema ever created need not remain a required pair.
+  On Avro 1.12.0 `new SchemaValidatorBuilder().canReadStrategy()`
   with `.validateAll()` is `BACKWARD_TRANSITIVE`, `.validateLatest()` `BACKWARD`, mutual read `FULL`.
-  **Match the strategy to the registry's level**, or CI is greener than production.
+  Check the intended registry policy as well as actual runtime obligations; neither substitutes for
+  the other when their comparison sets differ.
 - **`mvn io.confluent:kafka-schema-registry-maven-plugin:8.3.1:test-compatibility`** against the intended
   registry checks registered history, as can the compatibility REST API (`verbose` defaults to
   `true`); `test-local-compatibility` is the offline goal to start CI with.
@@ -177,9 +194,9 @@ written without the old field; old readers need tested meaningful defaults/adapt
   topic, so it complements `test-compatibility` rather than replacing it.
 - **Test the actual rollout matrix.** Serialize with deployed, candidate and retained writer schemas,
   decode with supported/rollback readers, and **assert values, not merely absence of exceptions** — that is
-  what catches a changed default (`COMPATIBLE` from every API, different value) and a same-wire-type
-  reinterpretation, which no metric below can see. For Protobuf use `DynamicMessage` over two
-  descriptors.
+  what exposes a changed default or same-wire-type reinterpretation in the exercised cases.
+  Structural/default-change rules can also detect these edits. `DynamicMessage` over two descriptors
+  tests Protobuf runtime resolution; use actual generated clients when their API behavior is the claim.
 - **Signals guide investigation, not proof of completion.** Unknown Protobuf field counts can show
   added/removed fields or wire-type mismatches, including legitimate history. They miss same-wire
   reinterpretations. Count schema identifiers only after validating framing, excluding tombstones

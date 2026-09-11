@@ -3,17 +3,17 @@
 Read the left column as something a person could witness and file a bug about. Never start
 from the model name.
 
-| Observable requirement                                                                                                           | Sufficient guarantee under the stated scope                                            | What it costs                                                                                                 | Failure without the needed guarantee                                                                                               |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| "Two users must never both be assigned seat 14C."                                                                                | One authoritative atomic conditional write; linearizable register/CAS when distributed | Coordination with the write authority; partitioned contenders may be rejected or unavailable                  | Two winners when stale reads are followed by unconditional writes. Seats, idempotency keys, uniqueness and leases share this shape |
-| "A successful debit must never make the authoritative balance negative."                                                         | Atomic invariant-preserving write/transaction; recency model alone is insufficient     | Contention/serialization or conditional-update failures at the authority                                      | A linearizable read followed by an unconditional write still races; validity and read freshness are different requirements         |
-| "Operations must fit one legal sequential history preserving each client's program order; real-time precedence is not required." | Sequential consistency                                                                 | Ordering across all objects in the specified history; implementation determines coordination cost             | Individually plausible object histories can form a cycle when combined with client program order                                   |
-| "A reply must never appear before the message it replies to."                                                                    | Causal consistency                                                                     | Metadata carried with each operation (vector clocks, dependency stamps) and the storage for it                | Out-of-order rendering. The classic symptom is a threaded UI where a reply is orphaned until a refresh                             |
-| "A session must never read a state that predates its own committed write."                                                       | Read-your-writes (session guarantee)                                                   | Select a path proven to include the write for the guarantee's lifetime; wait or reject when none is available | A bounded primary window expires while the replica still lags; a reload loses the comment and prompts a duplicate post             |
-| "A session must never read an older state than one it already read."                                                             | Monotonic reads (session guarantee)                                                    | Preserve a read watermark across routing/failover; stickiness helps only while the replica does not regress   | A refresh returns an older version from another replica; legitimate deletes or lower numeric values do not alone prove a violation |
-| "Two writes from the same user must apply in the order they were issued."                                                        | Monotonic writes (session guarantee)                                                   | Serialising that session's writes through one path                                                            | "Set profile private" then "post" apply in the wrong order and the post is public                                                  |
-| "The report may be up to 60 seconds behind, including during deploy/rebalance."                                                  | Bounded-staleness contract implemented over replication/projection                     | Capacity, monitoring, fallback/rejection when the bound cannot be met                                         | Plain eventual convergence permits four hours of lag and does not satisfy the number                                               |
-| "The count may lag and may be approximate within ±1%."                                                                           | Two separate contracts: convergence/recency plus approximation error                   | Reconciliation and error-bound measurement; async writes still consume resources                              | Eventual consistency alone says nothing about numerical approximation, and an approximate algorithm says nothing about staleness   |
+| Observable requirement                                                                                                           | Sufficient guarantee under the stated scope                                            | What it costs                                                                                                            | Failure without the needed guarantee                                                                                               |
+| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| "Two users must never both be assigned seat 14C."                                                                                | One authoritative atomic conditional write; linearizable register/CAS when distributed | Coordination with the write authority; partitioned contenders may be rejected or unavailable                             | Two winners when stale reads are followed by unconditional writes. Seats, idempotency keys, uniqueness and leases share this shape |
+| "A successful debit must never make the authoritative balance negative."                                                         | Atomic invariant-preserving write/transaction; recency model alone is insufficient     | Contention/serialization or conditional-update failures at the authority                                                 | A linearizable read followed by an unconditional write still races; validity and read freshness are different requirements         |
+| "Operations must fit one legal sequential history preserving each client's program order; real-time precedence is not required." | Sequential consistency                                                                 | Ordering across all objects in the specified history; implementation determines coordination cost                        | Individually plausible object histories can form a cycle when combined with client program order                                   |
+| "A reply must never appear before the message it replies to."                                                                    | Causal consistency                                                                     | Metadata carried with each operation (vector clocks, dependency stamps) and the storage for it                           | Out-of-order rendering. The classic symptom is a threaded UI where a reply is orphaned until a refresh                             |
+| "A session must never read a state that predates its own committed write."                                                       | Read-your-writes (session guarantee)                                                   | Select a path proven to include the write for the guarantee's lifetime; wait or reject when none is available            | A bounded primary window expires while the replica still lags; a reload loses the comment and prompts a duplicate post             |
+| "A session must never read an older state than one it already read."                                                             | Monotonic reads (session guarantee)                                                    | Preserve a read watermark across routing/failover; stickiness helps only while the replica does not regress              | A refresh returns an older version from another replica; legitimate deletes or lower numeric values do not alone prove a violation |
+| "Writes ordered within one session must be applied and exposed in that order at relevant replicas."                              | Monotonic writes (session guarantee)                                                   | Preserve session dependencies through acceptance, replication and application; one ordered ingress alone is insufficient | A replica exposes the second write before its predecessor even though the primary accepted both in order                           |
+| "The report may be up to 60 seconds behind, including during deploy/rebalance."                                                  | Bounded-staleness contract implemented over replication/projection                     | Capacity, monitoring, fallback/rejection when the bound cannot be met                                                    | Plain eventual convergence permits four hours of lag and does not satisfy the number                                               |
+| "The count may lag and may be approximate within ±1%."                                                                           | Two separate contracts: convergence/recency plus approximation error                   | Reconciliation and error-bound measurement; async writes still consume resources                                         | Eventual consistency alone says nothing about numerical approximation, and an approximate algorithm says nothing about staleness   |
 
 ## Two rules for reading this table
 
@@ -21,6 +21,9 @@ from the model name.
 They may use sticky routing or a per-session watermark rather than a quorum on every read, while
 still needing durable session identity, failover behavior and bounded metadata. “The user who
 just…” is a prompt to investigate, not proof of scope.
+
+Define which operations share a session and how their order is established. Concurrent requests
+from two devices using the same user ID do not acquire a program order from that identity alone.
 
 **Scope is explicit.** Linearizability composes across objects for individual operations, but it
 does not make a sequence of operations atomically update an order and payment. Multi-object
@@ -33,12 +36,13 @@ the returned zeros require `Wx < Ry < Wy < Rx < Wx`, an impossible global order.
 
 ## Failure modes of the surrounding system, not the store
 
-The chosen model is a property of the whole read path. These downgrade it silently:
+The chosen model is a property of the whole read path. These paths can weaken it when their
+visibility behavior is not checked against the required contract:
 
 - **Uncoordinated reads from asynchronously replicated nodes.** May miss a completed write.
   Replica topology alone does not identify the model: token checks or coordinated reads can
   provide stronger guarantees without session affinity.
-- **A cache in front of the store.** TTL bounds residence after filling, not source age. Filling
+- **Unchecked mutable cache reads.** TTL bounds residence after filling, not source age. Filling
   from a stale replica can extend visibility lag; invalidation races can repopulate old data.
   Check versions or use a path proven to include the session's write.
 - **A CDN or a browser cache on a GET.** Same mechanism, one layer further out, and usually
@@ -59,10 +63,14 @@ Route reads to replicas when:
 - measured read load cannot meet capacity/SLO economically on the authoritative path
 - session requirements are absent or enforced through a commit-linked token/routing policy
 
-Avoid replica reads when:
-- the read decides a write (read-modify-write, uniqueness check, balance check) — a stale
-  read here is a correctness failure, not a freshness one
+Avoid relying on replica reads when:
+- a decision is acted on without atomic validation of the relevant invariant at the authority;
+  stale data followed by an unconditional write or external side effect can violate correctness
 - the same session writes and reads, but the replica path cannot enforce the session contract
+
+A replica may supply a proposal when the authority atomically checks all required predicates or
+versions, every relevant write path participates, and the caller handles conflicts before effects.
+Freshness can reduce retries, but a fresh read alone does not eliminate the read/write race.
 
 Prefer a bounded authoritative-read window when:
 - only the writing session needs a probabilistic freshness SLO; size the window from measured
@@ -85,3 +93,8 @@ Write the boundary into the response, not into a design document nobody reads at
   rejects when that bound cannot be established" is an explicit contract.
 - Expose replication lag as a metric with an alert. An unmeasured eventual-consistency
   bound has no operational evidence; test enforcement under lag and failed freshness checks.
+
+For the distinction between a stale proposal and authoritative validation, see the
+[PostgreSQL transaction-isolation documentation](https://www.postgresql.org/docs/18/transaction-iso.html).
+Its `UPDATE` predicate recheck and snapshot rules are engine-specific; verify the chosen product's
+atomicity, conflict and affected-row contracts.

@@ -28,11 +28,12 @@ var records = consumer.poll(Duration.ofMillis(500));
 for (var record : records) {
     handler.apply(record.value());     // must be safe to run twice — see idempotency
 }
-consumer.commitSync();                 // crash before this replays the whole batch
+consumer.commitSync();                 // crash before commit can replay completed work
 ```
 
-This is the usual loss-averse choice. The replay window is every completed record after the
-last committed offset **in each partition**. A batch can span partitions, and Kafka offsets
+This is the usual loss-averse choice. The replay window is completed work at or after the
+committed next-to-process offset **in each partition**, if recovery resumes there. An uncertain
+commit may already have advanced that position; inspect authoritative progress. A batch can span partitions, and Kafka offsets
 are positions within a partition, not batch-level or record-level acknowledgements. Explicit
 per-partition commits can shrink that window but add calls and coordination; commit the next
 offset to process, preserve contiguous completion, and never jump over unfinished work.
@@ -45,7 +46,9 @@ Requires one atomic commit covering both durable effect and authoritative progre
   inside the transaction. Scope and limits: `exactly-once-boundary.md`.
 - **Side effect in a database** — write the business row and the consumed offset in the
   _same_ database transaction, and restore the consumer position from that table on
-  every assignment, not just process startup. Fence stale owners, serialize progress updates,
+  every assignment, not just process startup. Fence stale owners at the protected database
+  writes, with ownership validation atomic with the effect/progress update; an earlier
+  ownership lookup is insufficient. Serialize progress updates,
   and key progress by stream/topic/partition plus logical subscriber/group identity, not an
   ephemeral process ID. The broker's own offset
   store is advisory. Seeking alone does not fence a worker still writing after revocation.
@@ -56,7 +59,7 @@ SQS-style visibility leases and JMS/RabbitMQ acknowledgements are not one protoc
 same effect-before-progress reasoning, but verify the provider's exact redelivery contract.
 
 ```java
-// Jakarta Messaging: CLIENT_ACKNOWLEDGE puts acknowledgement under application control,
+// Java SE: CLIENT_ACKNOWLEDGE puts acknowledgement under application control,
 // but acknowledging one consumed message acknowledges all consumed messages in the session.
 // Connection is already started and owned by the caller; destination is supplied.
 try (var session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
@@ -69,6 +72,11 @@ try (var session = connection.createSession(false, Session.CLIENT_ACKNOWLEDGE);
 }
 ```
 
+This sketch also fits a Jakarta EE application client container. In a web/Enterprise Beans
+container, an active Jakarta transaction overrides session parameters; without one,
+`createSession` with client acknowledgement is provider-dependent and not portable.
+Inspect the actual container/framework transaction and acknowledgement contract.
+
 For an asynchronous Jakarta Messaging listener, `AUTO_ACKNOWLEDGE` acknowledges after the
 listener returns successfully; for synchronous `receive`, it acknowledges when `receive`
 returns, before subsequent application work. That distinction changes the failure window.
@@ -76,8 +84,9 @@ returns, before subsequent application work. That distinction changes the failur
 acknowledgement and possible redelivery. Transacted sessions acknowledge through commit.
 
 For visibility-lease queues such as SQS, **timeout expiry under a slow handler** means the
-timeout elapses while the handler is still running, the message becomes visible, a second
-consumer picks it up, and both complete. No retry occurred and nothing failed.
+timeout elapses while the handler is still running and the message becomes eligible for
+another consumer. Both handlers may then complete. Lease expiry neither cancels the old
+handler nor fences its effects; that protection must be enforced where the effect occurs.
 
 - Size the initial lease from measured distributions and operational recovery needs; a
   percentile is not an upper bound. A long lease reduces concurrent duplicates but delays
@@ -109,3 +118,4 @@ consumer picks it up, and both complete. No retry occurred and nothing failed.
 ## Source
 
 - [Jakarta Messaging 3.1 receive timeout and consumer lifecycle](https://jakarta.ee/specifications/messaging/3.1/apidocs/jakarta.messaging/jakarta/jms/messageconsumer)
+- [Jakarta Messaging 3.1 specification, section 12.3: container acknowledgement and transactions](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.pdf)

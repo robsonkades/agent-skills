@@ -1,5 +1,10 @@
 # Service Boundaries and Responsibilities
 
+Java examples are partial domain-model/Spring sketches: imports, application types and
+configuration are omitted. The `var` loop needs Java 10+; use the target's supported syntax
+and resolved Spring/security APIs. Source checks below use Spring Framework 6.2.12 and do
+not establish that any project's proxies, security, transactions or delivery are configured.
+
 ## An application service that is doing its job
 
 ```java
@@ -40,10 +45,10 @@ public class PlaceOrder {
 }
 ```
 
-Read the method against the two-column table in the skill body. Every line is transaction
-demarcation, authorisation, loading, delegating, saving or publishing. No line decides a
-business question: `Order.confirm` decides whether the credit limit permits the order, and
-if it does not, no caller can proceed by accident.
+Read the method against the two-column table in the skill body. Its intended responsibilities
+are loading, delegating, saving and publishing under a configured transaction/security boundary.
+`Order.confirm` owns the local credit-limit decision if its implementation enforces that
+contract; this sketch alone does not establish equivalent enforcement on every write path.
 
 The sketch requires configured transaction management and method security, proxy-mediated
 invocation and domain validation. A coarse ORDER_PLACE authority alone does not authorize
@@ -96,14 +101,14 @@ a deliberate Transaction Script can legitimately own that logic (`domain-logic-o
 The table describes the domain-model separation used by these examples. A domain service
 may use domain-owned ports; a pure calculation needs fewer collaborators than an IO-backed policy.
 
-|               | Application service                          | Domain service                                                     |
-| ------------- | -------------------------------------------- | ------------------------------------------------------------------ |
-| Answers       | "run this use case"                          | "what is the correct business outcome, given these domain objects" |
-| Knows about   | repositories, ports, transactions, the actor | domain types only                                                  |
-| Transaction   | demarcates it                                | never                                                              |
-| Framework     | may use it (`@Transactional`, security)      | none                                                               |
-| Testing       | fakes plus integration checks for boundaries | unit tests; doubles if domain ports participate                    |
-| Typical count | one per use case; many                       | few; some systems have none                                        |
+|             | Application service                          | Domain service                                                     |
+| ----------- | -------------------------------------------- | ------------------------------------------------------------------ |
+| Answers     | "run this use case"                          | "what is the correct business outcome, given these domain objects" |
+| Knows about | repositories, ports, transactions, the actor | domain types and domain-owned port contracts                       |
+| Transaction | demarcates the application unit              | states required consistency; does not own application demarcation  |
+| Framework   | may use it (`@Transactional`, security)      | independent under this chosen separation                           |
+| Testing     | fakes plus integration checks for boundaries | unit tests; doubles if domain ports participate                    |
+| Grouping    | cohesive use case or capability              | domain operation that fits neither entity nor value object         |
 
 A domain service is justified when a rule genuinely belongs to no single object:
 
@@ -132,10 +137,11 @@ This example performs no repository or transaction operations.
 The application service loads both accounts, calls this, and saves — and that separation is
 what makes the policy testable without a database.
 
-**Before writing one, check the alternatives**: the behaviour usually belongs on one of the
-objects (with the other passed as an argument), or it is really a use case and belongs in
-the application service. Domain services that turn out to be neither become the anaemic
-model's hiding place.
+**Before writing one, check the alternatives**: an object may own the behaviour (with the
+other passed as an argument), or the work may be application orchestration. A domain policy
+can use a domain-owned lookup port when the decision needs it; specify unavailable/stale
+information, latency and concurrency semantics. A fake port can test policy branches without
+proving the real adapter or transaction contract.
 
 ## Orchestrating more than one aggregate
 
@@ -158,9 +164,12 @@ consistency is required. Lock timing depends on SQL, isolation and lock mode; op
 conflict detection requires versioning or another protocol. Eventual coordination can reduce
 coupling but adds delivery, retry and reconciliation costs; it is not universally cheaper.
 
-Fixed lock ordering matters here: two use cases that lock the same pair of aggregates in
-opposite orders can deadlock under load, and the failure is load-dependent, so it reaches
-production.
+Consistent lock acquisition order reduces cycles for the actual resources and lock modes
+covered. Java load order alone may not determine database lock order: generated SQL, indexes,
+constraints and lock upgrades matter. It does not prove freedom from all deadlocks, which
+can occur with only a few concurrent transactions. Preserve engine-appropriate rollback and
+bounded retry handling; inspect actual lock evidence before attributing a failure
+(`enterprise-transactions`).
 
 ## Translation at the boundary
 
@@ -169,18 +178,22 @@ The service layer is where infrastructure failures become domain-meaningful outc
 ```java
 try {
     inventory.reserve(order.id(), order.lines());
-} catch (InventoryUnavailable e) {          // adapter already translated the transport
+} catch (InventoryRejected e) {             // authoritative rejection: reserve had no effect
     throw new OrderCannotBeFulfilled(order.id(), e);
 }
 ```
 
-A timeout during reserve may mean the remote reservation succeeded; preserve UNKNOWN outcome
-and use operation identity/reconciliation instead of declaring definite non-fulfillment.
+`InventoryRejected` is an illustrative port contract, not a framework exception: the adapter
+must have authoritative evidence that this operation was rejected without reserving. Do not
+classify a timeout, connection loss or generic unavailability this way. Those may follow a
+successful remote reservation; preserve UNKNOWN outcome and the original operation identity
+for reconciliation or contractually safe replay instead of declaring definite non-fulfillment.
 
 The adapter translates `RestClientException`/`SQLException` into a port-level failure; the
-service translates that into something the use case's caller can act on. What must not
-happen is a `DataAccessException` or an HTTP status reaching the domain, or a
-`ResponseEntity` being constructed here (`layering-and-boundaries`).
+service translates that into something the use case's caller can act on without discarding
+outcome certainty or cause. Keep infrastructure/protocol types out of the independent domain
+contract. At the application boundary, decide whether a framework type is accepted coupling
+or needs adaptation for the actual callers (`layering-and-boundaries`).
 
 ## Read paths
 
@@ -193,5 +206,10 @@ do not return lazy resources whose owning context has already closed.
 ## Primary references
 
 - [Fowler: Service Layer](https://martinfowler.com/eaaCatalog/serviceLayer.html) — application boundary and coordinated operations.
-- [Spring transaction-bound events](https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html) — listener phases and transaction-context requirements.
-- [Spring transactional annotations](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html) — proxy interception and configuration.
+- [Evans: Domain-Driven Design Reference (2015), Services and Modules, pp. 14–15](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf) — domain operations and cohesive concepts, not a service-count rule.
+- [Cockburn: Ports and Adapters (2005)](https://alistair.cockburn.us/hexagonal-architecture) — technology-independent port contracts; deciding which domain/application owner consumes a port still requires the chosen model.
+- [Java SE 10 language specification, enhanced for](https://docs.oracle.com/javase/specs/jls/se10/html/jls-14.html#jls-14.14.2) — `var` in the illustrative loop; framework compatibility is a separate constraint.
+- [Spring Framework 6.2.12 transaction-bound listener contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalEventListener.java) — phases, fallback and transaction-context requirements.
+- [Spring Framework 6.2.12 event publisher contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java) — publication is a handoff, not a durability promise.
+- [Spring Framework 6.2.12 transactional annotations](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc) — proxy interception and configuration; verify the actual target version.
+- [MySQL 8.4: minimizing and handling deadlocks](https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html) — an engine-specific example of hidden index locks and recovery despite ordering precautions, not a substitute for the target engine's contract.

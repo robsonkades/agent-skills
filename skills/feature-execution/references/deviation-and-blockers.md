@@ -2,9 +2,9 @@
 
 ## Deviation
 
-The plan will be wrong somewhere. That is not a failure of planning — it is what implementation
-is for. The failure is deviating without recording it, because then the plan, the decisions and
-the code all describe different systems and nobody knows which is current.
+Implementation can reveal a mistaken premise or an omission in the plan. That does not make every
+deviation a plan defect: the code may be wrong. Unrecorded changes leave the plan, decisions and code
+describing different systems, so classify the evidence before amending any of them.
 
 When implementation contradicts the plan, pause the affected decision-dependent action and
 classify it. Continue independent authorized work; fix an implementation bug rather than
@@ -12,12 +12,12 @@ rewriting the decision to excuse it.
 
 | What happened                                          | Do this                                                                                                                       |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| A resource needs another resource that was not planned | Add it with its dependency; re-derive the order                                                                               |
-| A resource turns out to be unnecessary                 | Mark CANCELLED with the reason; do not delete it                                                                              |
+| A resource needs another resource that was not planned | Trace it to accepted scope or resolve a scope change; add its validation/dependency and re-derive the order                   |
+| A resource turns out to be unnecessary                 | Establish continued acceptance coverage or an authorized scope revision; mark CANCELLED with reason and preserve history      |
 | A file needs changing that no resource names           | Amend the impact map, or recognise it as scope and decide                                                                     |
 | The planned approach appears not to work               | Distinguish an implementation bug from evidence invalidating a decision; supersede only the latter with appropriate authority |
 | The validation cannot be run as planned                | Record the gap; use a justified equivalent or leave required validation pending                                               |
-| A risk that was rated LOW turns out not to be          | Re-rate it; if it is now HIGH it needs a mitigation                                                                           |
+| A risk that was rated LOW turns out not to be          | Reassess the evidence and impact; mitigate or record a valid GAP accepted by its accountable owner where policy permits       |
 
 An implementation correction preserves the accepted decision and contract. A plan amendment
 changes how that contract is implemented. A supersession changes the decision because its
@@ -82,8 +82,8 @@ IF a blocker is resolved
 THEN record the answer and its source before resuming, so the resumed work is
      traceable to the answer rather than to a memory of it.
 
-IF a blocker has been open across two sessions
-THEN raise it as the headline of the report, not as a line in a status table.
+IF a blocker threatens the next required outcome or handoff
+THEN surface its impact and decision/evidence needed prominently; age alone does not set priority.
 
 IF work continues around a blocker
 THEN distinguish implemented-but-unvalidated resources from DONE ones, with the missing

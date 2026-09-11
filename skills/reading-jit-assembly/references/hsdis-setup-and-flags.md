@@ -1,23 +1,25 @@
 # hsdis setup and print flags
 
-Everything marked "verified" was run on Temurin 25.0.3 (`25.0.3+9-LTS`, x86-64, Windows) —
+Historical observations marked "verified" were recorded on Temurin 25.0.3 (`25.0.3+9-LTS`, x86-64, Windows) —
 messages are quoted exactly. hsdis itself was not installed on that host; claims about the
 decoded output come from the JDK source (`src/utils/hsdis/README.md`,
 `src/hotspot/share/compiler/disassembler.cpp`) and are marked as such.
+The package retains excerpts, not the original raw capture logs or a tested hsdis binary.
+Treat these as recognition aids; a new capture needs its own target and decoder provenance.
 
 ## When assembly is the right level
 
-| Question                                                      | Answer it with                                                          |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Which tier is the method in; does it get recompiled           | `-XX:+PrintCompilation` (tier column, `made not entrant: <reason>`)     |
-| Did the hot call site inline, and if not, which limit refused | `-XX:+PrintInlining` on the tier-4 tree                                 |
-| Did this allocation disappear                                 | Assembly plus allocation profile and compiler evidence                  |
-| Where in the method the cycles go                             | JMH `-prof perfasm`, or a sampling profiler with `DebugNonSafepoints`   |
-| Is the bounds check inside the loop or hoisted above it       | **Assembly**                                                            |
-| Was the loop vectorised, and to which width                   | **Assembly** (lane-bearing opcode, register width and loop control)     |
-| Is the lock taken on the fast path or inflated                | **Assembly** (lock-stack push vs `ObjectMonitor` CAS), then lock events |
-| Which barrier did the GC emit around this store               | **Assembly**                                                            |
-| Is the branch a `jCC` or a `cmov`; is the null check implicit | **Assembly**                                                            |
+| Question                                                      | Answer it with                                                                          |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Which tier is the method in; does it get recompiled           | `-XX:+PrintCompilation` (tier column, `made not entrant: <reason>`)                     |
+| Did the hot call site inline, and if not, which limit refused | `-XX:+PrintInlining` on the tier-4 tree                                                 |
+| Did this allocation disappear                                 | Assembly plus allocation profile and compiler evidence                                  |
+| Where in the method the cycles go                             | JMH `-prof perfasm`, or a sampling profiler with `DebugNonSafepoints`                   |
+| Is the bounds check inside the loop or hoisted above it       | **Assembly**                                                                            |
+| Was the loop vectorised, and to which width                   | **Assembly** (lane-bearing opcode, register width and loop control)                     |
+| Which lightweight or inflated lock paths are emitted          | **Assembly** (lock-stack push vs `ObjectMonitor` CAS); execution needs dynamic evidence |
+| Which barrier did the GC emit around this store               | **Assembly**                                                                            |
+| Is the branch a `jCC` or a `cmov`; is the null check implicit | **Assembly**                                                                            |
 
 The first three are `compilation-and-inlining-logs`, allocation profiling and
 `c2-sea-of-nodes`. A listing cannot directly show a removed operation: absence is useful
@@ -44,7 +46,7 @@ make install-hsdis                        # copies the library into the JDK imag
                                           # tree builds — read the path it prints
 ```
 
-Backends per the README: `--with-hsdis=capstone` (recommended), `--with-hsdis=llvm`
+Backends in the pinned README: `--with-hsdis=capstone`, `--with-hsdis=llvm`
 (`--with-llvm=<LLVM home>` when `llvm-config` is not on `PATH`; on Windows the LLVM DLLs must
 be on `PATH` or in the JDK's `bin`), `--with-hsdis=binutils` (`--with-binutils-src=<dir>` or
 `--with-binutils=<dir>`, `--with-binutils=system` on Linux; on Windows it needs a mingw
@@ -69,10 +71,14 @@ Install into the search location for the actual image, not a guessed global JDK.
 plugin executes inside the JVM process: prefer a vendor artifact or reproducible build from
 trusted source, verify architecture and dependency loading, and never copy an untrusted
 binary into a production runtime. ABI/backend mismatch may fail loading or decoding; treat
-any warning or malformed output as an invalid capture rather than trying to interpret it.
+malformed decoding or ABI/load errors as limits on instruction decoding. A missing-plugin
+warning still permits the documented abstract annotations, and a `DebugNonSafepoints`
+side-effect warning does not by itself invalidate the capture. Classify the warning and
+check the evidence needed for the actual claim.
 
-Success prints `Loaded disassembler from <path>` (source, not verified here). Failure,
-verified on 25.0.3, is a single unified-logging line at the first method printed:
+With a diagnostic output stream, successful loading prints `Loaded disassembler from <path>`
+(pinned source, not observed here). Failure,
+verified on 25.0.3, is a single log line at the first method printed:
 
 ```
 [0.024s][warning][os] Loading hsdis library failed
@@ -86,8 +92,9 @@ OpenJDK 64-Bit Server VM warning: PrintAssembly is enabled; turning on DebugNonS
 
 `DebugNonSafepoints` asks the compiler for additional debug mappings away from safepoints.
 That improves source attribution but changes compilation metadata and can affect code-cache
-footprint or compilation conditions. Use the same diagnostic flags in compared forks; do
-not assume a diagnostic capture is bit-identical to the undecorated production run.
+footprint or compilation conditions. Keep diagnostics comparable except for an explicit
+treatment being tested; record intentional differences. Do not assume a diagnostic capture
+is bit-identical to the undecorated production run.
 
 ## What is printed without hsdis
 
@@ -247,12 +254,13 @@ java -jar benchmarks.jar SumArrayBenchmark -prof perfasm:intelSyntax=true,saveLo
 java -jar benchmarks.jar -prof perfasm:help
 ```
 
-Do not pass `-jvmArgs="-XX:+UnlockDiagnosticVMOptions"`: `-jvmArgs` **replaces** the
-benchmark's own `@Fork(jvmArgs…)`, and perfasm already adds what it needs. From
-`AbstractPerfAsmProfiler` (JMH source): `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation
+Do not pass `-jvmArgs="-XX:+UnlockDiagnosticVMOptions"` merely to add the unlock: `-jvmArgs`
+**replaces** the benchmark's own `@Fork(jvmArgs…)`, and perfasm already adds what it needs.
+An intentional replacement must retain the full intended fork configuration. From
+`AbstractPerfAsmProfiler` (JMH 1.37 source): `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation
 -XX:LogFile=<tmp> -XX:+PrintAssembly`, plus `-XX:+PrintInterpreter` unless
 `skipInterpreter=true`, plus `-XX:+PrintNMethods -XX:+PrintNativeNMethods
--XX:+PrintSignatureHandlers -XX:+PrintAdapterHandlers -XX:+PrintMethodHandleStubs
+-XX:+PrintSignatureHandlers -XX:+PrintAdapterHandlers
 -XX:+PrintStubCode` unless `skipVMStubs=true`, and `-XX:PrintAssemblyOptions=intel` when
 `intelSyntax=true`. Useful options: `hotThreshold` (default `0.10`, share of events a region
 needs to be expanded), `top` (`20` regions), `printMargin` (`10` context lines),
@@ -285,7 +293,28 @@ macOS; `jmh-advanced` owns the profiler matrix and the benchmark itself.
 ## Vector width on the host
 
 ```bash
-java -XX:+PrintFlagsFinal -version | grep -E "UseAVX|MaxVectorSize|UseSuperWord"
+# Run in a task-owned capture directory. Keep raw output and producer status.
+if java -XX:+PrintFlagsFinal -version >vm-flags.txt 2>vm-flags.stderr; then
+    vm_status=0
+else
+    vm_status=$?
+fi
+printf 'VM status: %s\n' "$vm_status"
+if [ "$vm_status" -ne 0 ]; then
+    cat vm-flags.stderr >&2
+    exit "$vm_status"
+fi
+if grep -E "UseAVX|MaxVectorSize|UseSuperWord" vm-flags.txt; then
+    filter_status=0
+else
+    filter_status=$?
+fi
+printf 'Filter status: %s\n' "$filter_status"
+if [ "$filter_status" -eq 1 ]; then
+    printf 'No selected flags matched; inspect the full capture and target port.\n'
+elif [ "$filter_status" -ne 0 ]; then
+    exit "$filter_status"
+fi
 ```
 
 | `UseAVX` | Highest AVX family HotSpot may use | What it permits, not guarantees                            |
@@ -310,8 +339,10 @@ the target build.
   diagnostics and is written to process output unless redirected by the harness.
 - Bound duration and log volume; verify that container logging, disk and stdout backpressure
   cannot destabilize the service.
-- Record `java -version`, `-Xlog:flags=info` or the relevant `PrintFlagsFinal` subset, CPU
+- Record `java -version`, the successful raw `PrintFlagsFinal` capture and relevant subset, CPU
   model/features, GC, command line, benchmark commit and hsdis backend/build provenance.
+  Check `java -Xlog:help` before using a logging tag; `-Xlog:flags=info` is rejected by the
+  tested Temurin 25.0.3 build. A filter match cannot establish that the JVM started successfully.
 - Treat absolute addresses, object metadata, symbol names and paths as operational data;
   follow the same access/retention controls as profiles and crash artifacts.
 
@@ -321,6 +352,6 @@ the target build.
 - [JDK 25 disassembler implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/disassembler.cpp)
 - [JDK 25 C2 flag definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/c2_globals.hpp)
 - [JDK 25 CompileCommand matching](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compilerOracle.cpp)
-- [HotSpot compiler directives reference](https://docs.oracle.com/en/java/javase/25/vm/compiler-control.html)
-- [JMH perfasm implementation](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)
+- [JDK 25 compiler directives reference](https://docs.oracle.com/en/java/javase/25/vm/compiler-control1.html)
+- [JMH 1.37 perfasm implementation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)
 - [JDK-8275128: build hsdis using the normal build system](https://bugs.openjdk.org/browse/JDK-8275128)

@@ -12,9 +12,10 @@ evidence. Untangling them is the whole technique.
 | "This is over-engineered"                    | Preference, until it names a cost | Ask which abstraction, and what it costs to keep                                                        |
 | "Nobody uses that pattern any more"          | Neither                           | Not an argument. Ask what problem it causes here.                                                       |
 
-Move every argument toward the first row. "What would we observe if you are right, and what
-would we observe if I am?" ends more disagreements than any amount of position-holding, because
-it converts a contest into a measurement.
+For a checkable claim, agree what evidence would distinguish the competing explanations.
+A measurement can test a latency claim; it cannot decide how much budget extra latency
+margin is worth. Make that trade-off explicit for the authorized decision owner rather than
+inventing a test that will choose the priority.
 
 When the disagreement genuinely is about preference — layout, naming style, which of two
 equivalent structures — follow established conventions and the decision owner's remit;

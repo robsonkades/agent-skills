@@ -12,9 +12,9 @@ description: >
 
 ## Purpose
 
-Be the first skill a cross-process question reaches, and the last one to stay loaded. Its job is
-classification: take a design question or a symptom, ask the two or three questions that separate
-the candidates, and hand off to the skill that owns the decision.
+Classify a cross-process design question or symptom when its owner is unclear. Use the available
+evidence and only the questions that separate the candidates, then hand off to the skill that
+owns the decision. An already established question can go directly to its owner.
 
 The failure this prevents is the answer given at the wrong altitude — debating retry policy for
 an operation nobody has established is idempotent, tuning a consumer whose real problem is that
@@ -28,6 +28,11 @@ This router has no Java language minimum. Before a specialist implementation, in
 project runtime/toolchain, resolved clients/frameworks and deployed broker/store versions;
 the specialist's compatibility contract applies. Routing does not authorize upgrades.
 
+Reuse the request, repository, incident packet and prior decisions before asking for context.
+Ask only unresolved questions that change the route, evidence collection or recovery decision.
+During an incident, preserve the existing action authority and recovery deadline; do not delay
+already authorized mitigation to complete intake or a design checklist.
+
 1. **Say which boundary is crossed.** Process, host, availability zone, region, or an
    organisational boundary. The answer changes the fault model, the latency budget and who can be
    trusted. Missing details permit a provisional route, not an unsupported guarantee.
@@ -35,8 +40,8 @@ the specialist's compatibility contract applies. Routing does not authorize upgr
    guarantee or when unknown outcomes are central. During an incident, do not delay a clear
    specialist handoff until a complete fault model has been written.
 3. **Route from the table below.** If it gives two candidates, use `references/triage-map.md`.
-4. **For a design or review rather than an incident**, walk `references/design-review.md` in
-   order instead — it asks the questions in the sequence that makes later ones answerable.
+4. **For a design or review rather than an incident**, select relevant sections from
+   `references/design-review.md`; use their order where later decisions depend on earlier ones.
 5. **Hand off.** The specialist skill carries the workflow, the decision block and the Java.
 6. **During an incident, use the catalogue only if the owner remains unclear.** Treat names
    from `distributed-failure-catalogue` as hypotheses requiring discriminating evidence;
@@ -53,7 +58,7 @@ the specialist's compatibility contract applies. Routing does not authorize upgr
 | How long may this call take, and who cancels it?        | `timeouts-and-deadlines`               |
 | Should this failure be retried, and how many times?     | `retries-and-backoff`                  |
 | What do we promise callers, and how does it change?     | `rpc-and-api-contracts`                |
-| Can old and new schemas coexist through rollout/replay? | `schema-evolution-and-compatibility`   |
+| Wire schemas for event/CDC rollout and replay?          | `schema-evolution-and-compatibility`   |
 | Probes, graceful shutdown, 502s during a deploy         | `kubernetes-service-lifecycle`         |
 | Add a capability to a container I cannot modify         | `sidecar-pattern`                      |
 | Mediate outbound calls, split traffic, route by shard   | `ambassador-pattern`                   |
@@ -93,6 +98,11 @@ the specialist's compatibility contract applies. Routing does not authorize upgr
 | Name this symptom — is it a known pattern?              | `distributed-failure-catalogue`        |
 | Prove it still works when the network or a node fails   | `distributed-systems-testing`          |
 
+For relational schema rollout, `database-performance` routes engine-specific DDL mechanics.
+Compatibility across application/rollback versions, backfill and cutover also needs the project's
+migration conventions and tests. The wire-schema owner applies separately when serialized event
+or CDC contracts change; it does not establish the relational rollout contract.
+
 ## Rules
 
 - Route the **decision**, not the technology. "We are adding Kafka" is not a question; "these two
@@ -124,7 +134,9 @@ the specialist's compatibility contract applies. Routing does not authorize upgr
 
 Return the primary owner, the separating evidence, any conditional secondary owner, and the
 next concrete question/check. Carry the boundary, effect, timestamps/IDs and unknowns into the
-handoff. Naming a skill is not evidence that the cause has been established.
+handoff, including prior checks and their limits so intake is not repeated. Naming a skill is
+not evidence that the cause has been established. If existing behavior already meets the goal,
+state the evidence for no change and what would reopen that decision.
 
 ## References
 

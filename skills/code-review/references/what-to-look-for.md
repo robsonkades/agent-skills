@@ -32,12 +32,23 @@ get imagined.
 
 - New shared mutable state? A field on a singleton, a static, a cached collection
   (java-concurrency, java-memory-model).
-- A check-then-act sequence across a transaction boundary — `existsBy` then `save` is a race.
+- A check-then-act sequence such as `existsBy` then `save`: what invariant must hold, and what
+  enforces it when concurrent callers both pass the check? Inspect constraints, atomic writes,
+  isolation/locking and conflict handling before asserting a data-integrity defect.
 - Lock scope: does anything hold a lock across an I/O call?
-- Is a resource closed on every path (try-with-resources), including the failure paths?
+- Who owns each resource, and when does its last consumer finish? Check cleanup by that owner
+  on success, failure and cancellation; do not close a borrowed resource or recommend
+  try-with-resources around work that continues using it after the block exits.
 - Unbounded anything: a queue, a thread pool, a list built from a query with no limit, a cache
   with no eviction.
 - Does a database change work against the data that already exists, and can it be rolled back?
+
+For example, a matching unique constraint may prevent duplicate committed keys even when both
+callers observe absence. Check whether the losing write produces the required conflict response
+and whether side effects occurred before the rejection. The interleaving alone does not prove
+duplicate data; a constraint alone does not prove correct application behavior. See
+[PostgreSQL's uniqueness checks](https://www.postgresql.org/docs/18/index-unique-checks.html)
+for one engine's enforcement; inspect the actual engine and schema before generalizing.
 
 ## 4. Contracts and compatibility
 

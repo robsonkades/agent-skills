@@ -61,7 +61,9 @@ breakpoint as a mechanism, not an outlier to remove.
 If the decision is “will exactly 12 pods carry target load?”, a production-shaped test at 12 plus
 nearby/failure configurations may be more direct. Fit USL when the decision concerns curve shape,
 marginal returns over several N, architectural comparison, or an unprovisionable scenario. The fit
-never replaces testing feasible high-risk points.
+does not by itself authorize a high-risk rollout. Use adequate existing evidence or require the
+relevant feasible validation before that rollout; an unavailable scenario can remain an explicitly
+conditional estimate without pretending the test ran.
 
 Choose N adaptively from uncertainty and model discrimination. More low-N repetitions may estimate
 `γ/α`; a safe high-N point may identify `β`. Do not demand crossing a harmful peak merely to satisfy
@@ -80,8 +82,10 @@ efficiency         X(N)/(Nγ)
 Propagate joint coefficient uncertainty. Compare gain with infrastructure and coordination cost,
 latency/error guardrails, failover reserve and placement constraints. The economically optimal N
 can be below the throughput peak; reliability reserve can require running above a pure cost optimum.
-Never recommend retrograde N solely because spare instances improve availability—separate active
-capacity from standby/failover architecture.
+Operating in a measured retrograde region can still be a deliberate reliability tradeoff if
+independent failure/availability evidence supports it and useful throughput, latency and cost remain
+acceptable. Compare active membership with standby/failover alternatives and capacity under failures;
+spare instances alone do not establish availability, and USL alone cannot justify the tradeoff.
 
 ## Superlinear observations
 
@@ -123,7 +127,9 @@ Every prediction beyond measured N must state:
 - coefficient/prediction interval and sensitivity to leaving out each N;
 - invariants assumed for per-unit resources, routing, data and workload;
 - whether `β`/peak is identified by actual curvature;
-- a breakpoint measurement that will accept/reject the projection before full rollout.
+- the relevant validation needed before a proposed rollout, or the unavailable evidence that keeps
+  a scenario conditional. Do not require an unsafe or presently impossible experiment merely to
+  state a bounded what-if result.
 
 Canary expansion should include stop/rollback thresholds on useful throughput, latency, errors,
 rejections, cost and downstream saturation. An autoscaler acting on a retrograde curve can amplify

@@ -3,7 +3,8 @@
 Every flag and message below was verified on GraalVM CE 25.0.2 (`25.0.2+10-jvmci-b01`,
 Windows x64) and Temurin 25.0.3 unless marked otherwise. Confirm option names against
 `-XX:+JVMCIPrintProperties -Djdk.graal.PrintPropertiesAll=true` on the build in use before
-they go into a script: an unknown Graal option is fatal at start-up.
+they go into a script. The tested CE 25.0.2 native configuration rejects an unknown Graal
+option even with `-version`; option parsing is distinct from lazy compiler initialization.
 
 ## Where the compiler comes from
 
@@ -18,8 +19,8 @@ What a GraalVM 25 distribution actually contains: the compiler as the `jdk.graal
 module in the runtime image (5,038 classes on CE 25.0.2 — that is jargraal) and the same
 compiler compiled ahead of time into `bin/jvmcicompiler.dll` on Windows
 (`lib/libjvmcicompiler.so` on Linux, not verified here) — that is libgraal. There is no
-`lib/jvmci/` directory and no `graal-compiler.jar` any more; material that injects one with
-`--module-path` describes the pre-22.x layout.
+`lib/jvmci/` directory or `graal-compiler.jar` in that distribution. Do not infer the layout
+or compatibility of separately supplied compiler artifacts from this bundled image.
 
 What a stock OpenJDK contains, verified on Temurin 25.0.3:
 
@@ -55,11 +56,15 @@ failure. Bootstrap adds work; use it for validation rather than automatically ad
 every production launch. On GraalVM the same three flags print as `{JVMCI product}` (`EnableJVMCIProduct=true
 {jimage}`), and `-XX:+UseGraalJIT` is accepted as a synonym for the default.
 
-Bringing the Graal compiler onto a stock OpenJDK through `--upgrade-module-path` with the
-`org.graalvm.compiler` Maven artifacts is the jargraal route that Truffle used to document;
-GraalVM 25.1's release notes withdraw support for it ("no longer supported ... on plain
-OpenJDK or Oracle JDK via jargraal"). It is not verified here and should not be a production
-plan.
+JVMCI permits externally built compilers; JEP 410 removed the bundled compiler, not that
+interface. External artifacts need a compatible JDK/JVMCI build, loading arrangement and
+support policy, none of which a flag supplies. The compiler project's own build instructions
+also require a compatible JDK; no external installation is exercised here.
+
+Polyglot 25.1's release notes withdraw the `org.graalvm.compiler`/`--upgrade-module-path`
+jargraal route specifically for its optimizing Truffle runtime, and point users needing that
+route to Polyglot 25.0 LTS. Do not apply this component/version restriction to every host-JIT
+integration or silently replace an established compatible setup.
 
 ## Confirming the mode and who compiled tier 4
 
@@ -118,8 +123,8 @@ $GRAALVM_HOME/bin/java -XX:-UseJVMCICompiler -XX:+UseG1GC -jar benchmarks.jar My
     -rf json -rff c2.json
 ```
 
-A second run of the C2 side on the production OpenJDK build is still worth doing once,
-because that is the binary the rollback lands on — but it answers "is this OpenJDK build
+A comparison with the production OpenJDK build is relevant when migration or rollback uses
+that image and suitable evidence is missing — but it answers "is this OpenJDK build
 different from GraalVM's OpenJDK base", a separate question from "is Graal faster than C2".
 
 Pin the GC and other non-treatment flags on both runs even when defaults currently match.
@@ -202,7 +207,7 @@ Sizes are graph nodes, not bytecode bytes: a Graal inlining verdict such as
 comparing `nodes=9` against `TrivialInliningSize`, and no C2 limit (`MaxInlineSize=35`,
 `FreqInlineSize=325`) maps onto it.
 
-Options that do **not** exist and will refuse to start the JVM: `CompilerThreads` (use
+Options that do **not** exist and refuse the tested CE 25.0.2 native launch: `CompilerThreads` (use
 `-XX:CICompilerCount` and `-XX:JVMCINativeLibraryThreadFraction`), anything named
 `Vectorization`, `OptDuplication` or `TuneInlinerExploration` on CE 25.0.2 (Oracle GraalVM
 only per the GraalVM options reference; GraalVM 25.4's changelog moves duplication into the
@@ -222,3 +227,5 @@ documentation for the GraalVM in use.
 - [Graal JIT Compiler Configuration](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/java/options/)
 - [GraalVM 25.3 release notes](https://www.graalvm.org/release-notes/25.3/)
 - [JMH project and samples](https://github.com/openjdk/jmh)
+- [JEP 410: retained external JVMCI compiler use](https://openjdk.org/jeps/410)
+- [Graal compiler build and runtime prerequisites, vm-25.0.2](https://github.com/oracle/graal/blob/vm-25.0.2/compiler/README.md)

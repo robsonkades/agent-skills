@@ -17,9 +17,9 @@ does not necessarily initialize the named class. The incident-producing steps ar
    assigned so far.
 3. If initialisation previously failed, throw `NoClassDefFoundError` — every time, for the
    life of the loader.
-4. Mark initialization in progress, release the protocol lock, and initialize required
-   superclasses and (for a class) recursively required superinterfaces declaring default
-   methods; then run `<clinit>`. Initializing an interface itself does not automatically
+4. Mark initialization in progress, release the protocol lock, and initialize constant-variable
+   static fields. Then initialize required superclasses and (for a class) recursively required
+   superinterfaces declaring default methods before running `<clinit>`. Initializing an interface itself does not automatically
    initialize its superinterfaces. Record success/failure under the protocol lock.
 
 Steps 1 and 2 are the two traps; step 3 is the confusing error.
@@ -76,10 +76,19 @@ static class R {
 
 The constructor executes while `R`'s `<clinit>` is still running on the same thread, so
 step 2 lets it through and it observes `INSTANCE == null`. `MAP` is non-null only because it
-is declared _above_ `INSTANCE`; `NAME` reads correctly only because `javac` inlined the
-constant into the constructor — it never touched the field. Reordering declarations "fixes"
-the symptom and leaves the hazard. Anything a static initialiser constructs must not read
-statics declared below it, and must not call into code that does; a `static` singleton whose
+is declared _above_ `INSTANCE`. The direct `NAME` read is inlined, but this is not the only
+reason its value is available: the initialization protocol assigns constant variables before
+ordinary field initializers, regardless of textual order (JLS 12.4.2 step 6; JVMS 4.7.2/5.5).
+As a counterexample, `R.class.getDeclaredField("NAME").get(null)` executed inside this constructor
+also returns `"r"`, without an inlined field read. That reflective access requests initialization;
+same-thread recursion returns immediately and the constant field already has its value. A later
+`static final String LATE = new String("r")` is not a constant variable and would still be `null`
+at that point. These are Java 17-compatible partial snippets; the reflective read requires
+handling `ReflectiveOperationException`.
+
+Reordering non-constant declarations can hide a partial-state read while leaving an initialization
+cycle. Anything a static initialiser constructs must not depend on non-constant statics whose
+initializers have not run, including through calls into other code; a `static` singleton whose
 constructor consults configuration held in another static field of the same class is the
 recurring case. The holder idiom (`static class Holder { static final R INSTANCE = … }`)
 separates the singleton's initialisation from the class that carries the other statics.
@@ -132,5 +141,7 @@ prove where initialization time was spent.
 ## Primary references
 
 - [JVMS 25 §5.5, initialization](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.5)
+- [JVMS 25 §4.7.2, ConstantValue](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.2)
+- [JLS 17 §12.4.2, initialization order including constant variables](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4.2)
 - [JLS 25 §12.4, initialization](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4)
 - [Java 25 `Class.forName`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html#forName(java.lang.String,boolean,java.lang.ClassLoader)>)

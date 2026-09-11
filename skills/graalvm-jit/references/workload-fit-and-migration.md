@@ -51,7 +51,7 @@ audited published methodology behind them; reproduce them for your own workload.
 | Compilation time          | Baseline                                           | Typically slower per compilation                                                   |
 | Peak throughput           | Baseline                                           | May exceed on allocation-heavy or polymorphic workloads                            |
 | Warm-up latency           | Baseline                                           | Typically higher; jargraal is a different regime, not a longer warm-up             |
-| Where it ships            | Every OpenJDK build                                | GraalVM distributions only (Oracle JDK 23–24 bundled it; 25 removed it)            |
+| Where it ships            | HotSpot server builds with C2                      | Bundled GraalVM distributions; compatible external JVMCI builds are also possible  |
 | Production maturity       | Very high, decades of hardening                    | High, GA since 2019; product line now detached from the Java SE train              |
 
 ## What partial escape analysis buys, concretely
@@ -107,13 +107,13 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
 
 ### Before measuring
 
-- [ ] The distribution actually ships the compiler — GraalVM CE or Oracle GraalVM — and
+- [ ] The runtime has an actual compatible compiler, bundled or externally supplied, and
       `-Djdk.graal.ShowConfiguration=info` prints a configuration line
-- [ ] A JMH benchmark exists that represents the real workload — not a synthetic
-      microbenchmark detached from the application's actual allocation pattern
-- [ ] The comparison is one binary with `-XX:-UseJVMCICompiler` on the C2 side, the same GC
-      pinned explicitly on both
-- [ ] The mode has been confirmed as libgraal before any warm-up number is interpreted
+- [ ] Existing representative workload evidence is sufficient, or a focused comparison is planned;
+      use JMH for unresolved hot-path questions rather than requiring a new microbenchmark
+- [ ] Compiler-only comparison uses one compatible binary with `-XX:-UseJVMCICompiler` on
+      the C2 side and the same GC; differing images are identified as a broader runtime comparison
+- [ ] The supported selected mode (libgraal or jargraal) is confirmed before interpreting warm-up
 - [ ] Warm-up convergence was inspected across iterations and independent forks; raw results
       and uncertainty were retained for both compilers
 - [ ] The GraalVM line is recorded with the result (25.0, 25.1, 25.3 ...), because the
@@ -123,8 +123,8 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
 
 - [ ] Measured savings repay compilation costs over the actual instance lifetime, including
       cold starts, reuse and restart/scale-out frequency
-- [ ] The benchmarked methods are the real hot paths, identified by profiling rather than
-      assumed
+- [ ] Any isolated benchmark methods are actual hot paths; application outcomes and lifetime
+      costs are covered by representative evidence
 - [ ] Results favour Graal consistently across runs, not in a single run
 - [ ] Native image was considered as the alternative if the critical metric is start-up rather
       than peak throughput
@@ -133,8 +133,8 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
       current official source
 - [ ] A support horizon exists: which GraalVM line the fleet will track, who ships its CPUs,
       and what happens when the JDK base moves off 25
-- [ ] Container CPU and memory limits were re-derived with JVMCI compiler threads and the
-      libgraal isolate included
+- [ ] Container CPU and memory limits remain adequate for measured compiler activity and the
+      selected mode, including the libgraal isolate where used
 
 ### After migrating
 
@@ -164,8 +164,10 @@ What changed in 2025–2026 and why it is now a gate rather than a footnote:
   platform blog): GraalVM for JDK 24 was the last version licensed and supported as part of
   Oracle Java SE products; Oracle points Java SE customers wanting start-up and footprint
   improvements at Project Leyden instead. The GraalVM team continued shipping: GraalVM 25
-  (September 2025), then 25.1, 25.2 and 25.3 as monthly innovation releases with quarterly
-  CPUs, all on a JDK 25 base. The blog text itself was not fetched directly for this
+  (September 2025), then 25.1, 25.2 and 25.3 as monthly innovation releases on a JDK 25 base.
+  Oracle's support roadmap distinguishes 25.0 LTS quarterly CPUs from 25.1+ innovation releases,
+  whose users must track the latest monthly line for fixes; do not transfer one support horizon
+  to the other. The blog text itself was not fetched directly for this
   revision; the openjdk.org Galahad page and the Oracle JDK 25 release notes corroborate it.
 - **OpenJDK Project Galahad was dissolved in March 2026** after losing its sponsoring group.
   Stock JDK 25 builds tested here contain JVMCI and a placeholder module but no Graal

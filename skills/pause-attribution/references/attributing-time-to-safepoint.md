@@ -33,11 +33,26 @@ Do not hoist a mutable bound or restructure concurrent iteration without preserv
 ## The flag, both ways round
 
 ```bash
-java <same target flags> -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version | grep -E "UseCountedLoopSafepoints|LoopStripMiningIter|GuaranteedSafepointInterval"
+# Bash fragment: run in a new diagnostic directory; files retain the complete output.
+# Call with the matched java executable followed by the target JVM options, not app arguments.
+capture_pause_flags() {
+    if "$@" -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version \
+            > flags.stdout 2> flags.stderr; then
+        grep -E 'UseCountedLoopSafepoints|LoopStripMiningIter|GuaranteedSafepointInterval' flags.stdout
+    else
+        pause_flag_status=$?
+        cat flags.stderr >&2
+        return "$pause_flag_status"
+    fi
+}
 ```
 
-Run this against the target runtime before prescribing **or** removing anything. Two symmetric
-failures:
+Prefer existing `jcmd <pid> VM.flags -all` output from the correct running process. A successful
+isolated launch establishes values for that invocation only: match the build, collector, JVM
+options, relevant environment and ergonomics before transferring the conclusion. Capture the
+producer's exit status before filtering; a failed JVM or no matching fields is missing evidence,
+not a zero/default result. The fragment assumes Bash and an already chosen diagnostic directory;
+use equivalent explicit producer-status checks on other shells. Two symmetric failures:
 
 - **Prescribing `-XX:+UseCountedLoopSafepoints`** as a TTSP fix without reading ergonomics.
   On the verified JDK 25.0.3 build it is true for G1/ZGC/Shenandoah and false for
@@ -49,16 +64,18 @@ failures:
   that scale. Do not convert that
   into “40% in safepoints” from a `jstack` cadence; trigger timing and overlap must be measured.
 
-The second case is only visible by reading the effective value out of the running process. The
-throughput gain that justified the flag was never revalidated against its production cost;
-the trade-off had been decided by measuring one side of it.
+Running-process evidence can confirm the second case; a genuinely matched launch is conditional
+support, not proof about a differently configured target. The old throughput result alone does
+not establish acceptable production TTSP. Retain an intentional, adequately validated setting
+instead of changing a flag solely because the example describes a failure.
 
 ## The `LoopStripMiningIter` trade-off
 
-Reducing the strip can lower the loop's TTSP ceiling and raises the poll rate. It may affect
-optimisation/vectorisation and throughput; the magnitude is workload/build-specific. Prefer a
-local code/work partition fix where possible, and compare both latency and throughput if a
-global compiler flag is evaluated.
+Reducing an active strip size can lower the loop-work component between polls; it does not
+bound scheduling stalls or total TTSP. It may affect optimisation/vectorisation and throughput;
+the magnitude is workload/build-specific. Compare a semantics-preserving local code/work
+partition change with a controlled compiler-flag experiment when either is justified, and
+measure both latency and throughput for a claimed improvement.
 
 ## When the profiler itself is the suspect
 
@@ -66,25 +83,26 @@ Two profilers that both claim to be free of safepoint bias can still disagree ab
 in tight counted loops. Before treating the disagreement as a finding, establish which
 mechanism each is using.
 
-|                                            | async-profiler (`perf_events`)             | JFR with JEP 518 (JDK 25 default)                                                                                       | JFR with JEP 509 (experimental, Linux)                            |
-| ------------------------------------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Depends on a safepoint-like stopping point | No — walks the stack in the signal handler | Yes, deliberately: PC/SP are captured immediately, but the stack is reconstructed at the target thread's next safepoint | Yes — same capture mechanics as JEP 518; only the trigger differs |
-| Sample trigger                             | `SIGPROF` or `perf_event_open`             | Wall-clock timer                                                                                                        | The thread's CPU time                                             |
-| Platforms                                  | Linux, limited macOS                       | Everywhere JFR runs                                                                                                     | Linux only                                                        |
-| Maturity on this baseline                  | External, mature                           | Default, stable                                                                                                         | Experimental                                                      |
+|                            | async-profiler, Linux `perf_events` CPU mode      | JFR execution sampling with JEP 518 (JDK 25)                  | JFR with JEP 509 (JDK 25)                                        |
+| -------------------------- | ------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Stack capture              | Asynchronous stack walk in signal handler         | Cooperative reconstruction for Java code; native path differs | Uses cooperative machinery; native CPU attributed to Java caller |
+| Sample trigger             | Selected Linux perf event, delivered by signal    | Real-time sampling cadence selecting running threads          | Per-thread CPU-time trigger                                      |
+| Platforms                  | Linux for this backend; other modes support macOS | Target JFR platform support                                   | Linux only                                                       |
+| Availability/configuration | Verify tool version, backend and permissions      | Default Java sampling mechanism; enable the needed events     | Experimental event, explicit opt-in                              |
 
 ### What JEP 518 actually changed
 
 Before it, the JFR method sampler suspended the target thread and walked its stack
-**immediately**, at whatever code point the suspension landed on — a point that, in the JEP's
-own words, is not necessarily a safepoint. The problem with that was not statistical bias: it
-was safety. Walking a stack where the JVM has no guarantee of consistent frame metadata could,
+**immediately**, at whatever code point the suspension landed on — not necessarily a safepoint.
+JEP 518 addresses the safety of that asynchronous stack walk while limiting bias.
+Walking a stack where the JVM has no guarantee of consistent frame metadata could,
 and occasionally did, crash the JVM.
 
-JEP 518 inverts the order in two phases: the asynchronous interrupt records only PC and SP,
+For sampled Java execution, JEP 518 changes the order in two phases: the sample request records PC and SP,
 walking nothing; the thread then runs on to its **next safepoint**, where the stack is
-reconstructed from that recorded state. So JEP 518 does not remove a safepoint dependency that
-already existed — it _introduces_ one, deliberately, as the price of safety.
+reconstructed from that recorded state. That cooperative Java-stack path deliberately uses
+a sampling-safe point. The JEP retains the prior sampling approach when the target is running
+native code; do not describe every execution sample as a deferred Java-stack reconstruction.
 
 Here a sampling-safe poll/handshake is not necessarily a global stop-the-world safepoint.
 Do not interpret a profiling request as an entry in the global safepoint log.
@@ -112,6 +130,12 @@ actual event populations and weights, not just the trigger clock's name.
 "I enabled JEP 518 to reduce safepoint bias" is not a coherent statement: it is the default
 method-sampler behaviour on JDK 25, with nothing to enable. JEP 509 is the one that requires
 explicit, experimental opt-in.
+
+The table's external-profiler column is scoped to the
+[async-profiler 4.3 profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.3/docs/ProfilingModes.md)
+and [Linux perf backend](https://github.com/async-profiler/async-profiler/blob/v4.3/src/perfEvents_linux.cpp).
+A signal is a delivery mechanism, not a substitute name for every sampling trigger; confirm
+the actual backend before comparing populations or platforms.
 
 ## What cannot be the answer on this baseline
 

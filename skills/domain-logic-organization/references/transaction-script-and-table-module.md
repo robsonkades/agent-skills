@@ -40,18 +40,19 @@ pattern.
 
 ### Keeping scripts healthy
 
-- **One class per transaction, not one class per subsystem.** The 4 000-line
-  `OrderService` is not the pattern; it is the pattern abandoned. The moment a script class
-  holds unrelated transactions, split it — the cost of splitting is near zero and it is the
-  only structural discipline the pattern demands.
+- **One procedure per business transaction; group classes by cohesion.** Related procedures
+  may share a class under project conventions. Split when unrelated dependencies or changes
+  make it harder to maintain; class length alone is not a defect. Preserve caller and
+  transaction/proxy behavior when extracting a class (`service-layer-design`).
 - **Extract shared computation as pure functions**, not as a base class. Duplication of a
-  _calculation_ is cheap to fix this way; duplication of a _rule with state_ is the signal
-  that you have outgrown the pattern.
+  _calculation_ can be fixed this way, even when several rules interact. Duplicated stateful
+  checks call for a shared owner; compare a policy with a model that owns the transitions.
 - **Keep the gateway thin.** The script owns the logic; the gateway owns SQL
-  (`data-source-patterns`). When conditionals start appearing in the gateway, logic is
-  escaping downward into the data layer, where it is hardest to find.
-- **Validate at the entry, not throughout.** Scripts that re-check the same precondition at
-  four depths are converging on the duplication failure mode.
+  (`data-source-patterns`). Distinguish misplaced business decisions from required database
+  predicates, constraints and concurrency checks; a conditional alone is not a defect.
+- **Validate at the boundary that can enforce the condition.** Avoid repeated pure input
+  checks within one trusted path, but retain independent entry-point enforcement and
+  authoritative checks on mutable state at the write. An earlier check may become stale.
 
 ### Where it actually breaks
 
@@ -62,10 +63,11 @@ Not at a line count. It breaks when rules begin to depend on each other:
 > before the discount, except for contracted customers whose contract predates the
 > surcharge.
 
-Each script that touches pricing must now encode the whole chain. There will be four of
-them (register, amend, quote, re-rate), they will be written by different people, and they
-will diverge. That is the point to convert (`architecture-refactoring-paths`), and the
-evidence is textual: the same rule appearing in three files.
+If register, amend, quote and re-rate each encode this chain, compare extracting one pricing
+policy with a model that owns the relevant state. Calls to one shared calculation are not
+four copies of the rule. Divergent decisions or repeated coordination despite that shared
+owner justify reconsidering the organization (`architecture-refactoring-paths`); an occurrence
+count does not establish the need to convert.
 
 ### What it is genuinely good at
 
@@ -131,29 +133,32 @@ version-column policy; `indexed_year < :year` applies one factor even when sever
 ### Living beside a domain model
 
 This is the common and correct arrangement, and it needs one rule to stay safe: a
-set-based module that bypasses the domain model also bypasses its invariants and its
-optimistic locking. Therefore —
+set-based module does not automatically execute the domain model's checks or ORM optimistic
+locking. It must preserve the required invariants through its own predicates, constraints and
+concurrency policy. Therefore —
 
 - Bulk operations must be **explicitly named as such** in the API, never dressed as
   ordinary domain operations.
-- They must state which invariants they assume and which they cannot check.
+- They must state which invariants they enforce and which preconditions they rely on;
+  an unenforced required invariant is a gap, not permission to violate it.
 - They must consider stale in-memory state: a running persistence context does not see the
   bulk update, and a subsequent flush can overwrite it. Coordinate transaction/flush ordering
   and clear or refresh affected contexts without discarding pending changes. A separate
   transaction does not refresh other active contexts or shared caches
   (`orm-behavioral-patterns`).
-- Version columns must be handled deliberately — a bulk update that ignores them silently
-  defeats optimistic locking for every row it touches (`offline-concurrency-control`).
+- Version columns must be handled deliberately — a bulk update outside an entity's version
+  policy can let stale entity writers overwrite it (`offline-concurrency-control`).
 
 ### The honest limitation
 
-Table Module scales with table count, not with concept count, so a business rule spanning
-six tables has no natural owner and lands in whichever module the author touched first.
-That is the same failure as the god service, arriving from a different direction. Where
-rules span tables and interact, a Domain Model earns its keep (`domain-model.md`).
+Table ownership may obscure a business concept that spans several tables. Identify whether
+one set-oriented module or shared policy still expresses the rule clearly; table count alone
+does not require a Domain Model. Where interacting state transitions need their own owner,
+compare the model's benefits and load costs (`domain-model.md`).
 
 ## Sources
 
+- [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — procedures per business transaction, with shared subtasks where useful.
 - [JdbcClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
 - [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.
 - [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.

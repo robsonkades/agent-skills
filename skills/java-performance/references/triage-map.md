@@ -160,5 +160,8 @@ When several branches survive, write a table:
 | ---------- | -------- | ----------------- | --------------------------- | ------ |
 
 Rank by information gained per risk/cost in the current environment. Several existing signals
-can be read in parallel; intrusive collection remains serialized and budgeted. Stop collecting
-when one mechanism is sufficiently established for a reversible causal experiment.
+can be read in parallel; intrusive collection remains serialized and budgeted. Choose the next
+discriminator that can change the route or decision, rather than collecting for every imaginable
+branch. Hand off once the question and evidence are sufficient for a specialist to advance it;
+confirmation of the whole mechanism can remain that owner's work. If available evidence already
+supports the goal, record no change and a condition for reopening the investigation.

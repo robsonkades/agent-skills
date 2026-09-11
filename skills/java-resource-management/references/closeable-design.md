@@ -35,13 +35,13 @@ material failure propagate and let try-with-resources establish primary/suppress
 
 ## Ownership rules
 
-| Shape                                                            | Who closes                                                                        |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Method acquires it                                               | the method, in `try`-with-resources                                               |
-| Method receives it as a parameter                                | caller by default; callee only under explicit consume/ownership-transfer contract |
-| Method returns it                                                | the caller, and the Javadoc must say so                                           |
-| Constructor receives it and the object's lifetime is bound to it | the object, in its own `close` — and it must document that it takes ownership     |
-| It came from a pool                                              | the borrower, by `close()`, which returns rather than destroys                    |
+| Shape                                                            | Who closes                                                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Method acquires it                                               | the method unless it explicitly transfers ownership                                |
+| Method receives it as a parameter                                | caller by default; callee only under explicit consume/ownership-transfer contract  |
+| Method returns it                                                | caller only for an ownership transfer; a borrowed view retains its existing owner  |
+| Constructor receives it and the object's lifetime is bound to it | the object only if it takes ownership; a borrowing wrapper must preserve its owner |
+| It came from a pool                                              | the borrower ends its lease under the pool's release/eviction contract             |
 
 The rule that gets violated most is the second. A `void process(InputStream in)` that closes
 `in` works fine until a caller wants to read a header first, or to process two sections of
@@ -90,10 +90,11 @@ Points that generalise:
 
 - **Narrow the declared exception.** `close() throws Exception` propagates to every caller's
   catch clause. Declare `IOException`, or nothing at all when the close genuinely cannot fail.
-- **Idempotent, and cheap on the second call.** Decorators, error paths and pools all
-  double-close.
-- **A closed object rejects use.** `IllegalStateException` with the resource named, not an
-  NPE from a nulled field three frames deeper.
+- **Idempotent where the contract permits.** Decorators and error paths can double-close;
+  arbitrary `AutoCloseable` or reference-counted releases need their own protocol. This
+  confined wrapper marks itself closed before release and does not blindly retry a failed close.
+- **Specify post-close use.** This wrapper rejects writes with a named `IllegalStateException`.
+  Preserve other APIs' actual post-close behavior; do not replace it with an accidental NPE.
 - **Take ownership visibly.** A constructor or factory that will close what it was given must
   say so; a factory that opens its own resource must release it if construction then fails.
 - **Say whether it is thread-safe.** A resource wrapper is usually confined to one thread and
@@ -121,11 +122,11 @@ resources.
 
 ## Returning a resource to the caller
 
-A method that returns an open resource is transferring ownership, and three things must be
-true:
+A method returning an open resource must distinguish a new ownership transfer from a borrowed
+view of an existing owner. For a transfer, make three things clear:
 
-1. The return type is `AutoCloseable` (or a `Stream` that holds one) so `try`-with-resources
-   is available at the call site.
+1. Prefer an `AutoCloseable` return type (including `Stream`) so `try`-with-resources is
+   available. Preserve an established explicit lease/release protocol when required.
 2. The Javadoc states that the caller must close it — including for streams, where the
    requirement is invisible in the type.
 3. Nothing partially opened leaks when the method throws after acquiring: acquire last, or
@@ -144,3 +145,4 @@ public Stream<String> lines() throws IOException {
 - [AutoCloseable contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html)
 - [Closeable idempotence contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html)
 - [JDBC Connection close/transaction contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#close()>)
+- [Cleaner explicit release and automatic fallback, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/Cleaner.html)

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-refactoring-paths
-version: 1.4.0
+version: 1.4.1
 description: >-
   Sequence a chosen enterprise architecture change into compatible, testable checkpoints:
   domain and persistence refactoring, remote boundaries, session state, locking or events.

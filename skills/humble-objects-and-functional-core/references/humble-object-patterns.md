@@ -82,9 +82,13 @@ The non-null `view` switch is exhaustive; adding a fifth outcome exposes the mis
 when this source is recompiled. `Order`, `Viewer` and `lineViews` must read stable data without
 lazy I/O; detach the required snapshot in the shell where ORM entities would violate that.
 
-**Payoff:** every rule about who sees what and in which shape is now a plain test over
-`OrderPresenter`, with no web layer. The remaining controller test asserts binding and status
-mapping only, which is what `architecture-testing` calls a boundary test.
+**Payoff:** the shown visibility and shaping rules can be tested directly on `OrderPresenter`.
+The shell still needs relevant binding, authenticated-viewer construction, security, status,
+serialization and transaction checks. The omitted `problem(...)` and view mappings must retain
+the established response bodies; serializing the new records is not automatically wire
+compatible. Moving a method also requires checking actual framework interception; in Spring
+proxy mode, a self-invoked `@Transactional` method does not start a transaction through the proxy
+(`architecture-testing`, `enterprise-transactions`).
 
 **When not to do this:** a controller with no branch — bind, delegate, return — is already
 humble. Adding a presenter to it produces a class that only renames fields
@@ -138,12 +142,12 @@ void expireTrials() {
 }
 ```
 
-Two things changed beyond testability. The rule is stated once, so the "and not already
-expired" clause someone adds next month cannot be applied to the expiry and forgotten for the
-notification — note that this only holds because the plan is **one** list; two independently
-populated fields would permit exactly the drift the sentence claims is now impossible. And the
-query is explicit: `dueForReview` rather than `findAll`, because writing the policy signature
-forced the question of what it actually needs (`architecture-and-performance`).
+One candidate list avoids independently selecting expiry and notification candidates, but
+it does not prevent drift between the planning predicate, query and authoritative eligibility
+check. Keep those contracts aligned; the winning expiry transition determines whether a
+notification event is written. The query is also explicit: `dueForReview` rather than
+`findAll`, because the policy's inputs expose what it actually needs
+(`architecture-and-performance`).
 
 **The limit to be honest about:** the shell still owns the hard part, and this shell is not yet
 complete without the service contract shown above. Multiple replicas or retries can process
@@ -156,10 +160,10 @@ notification handling still needs the appropriate idempotency contract (`idempot
 `enterprise-transactions`). A single plan list alone guarantees neither effect atomicity nor
 notification delivery.
 
-**Note the scaling limit.** `plan()` takes a `List`, which assumes the candidate set fits in
-memory. That is fine for thousands and wrong for millions. At that scale keep the policy pure
-but apply it per batch, or express the selection as a query and let the core decide only the
-per-record edge cases — do not load a million rows to preserve a pattern.
+**Note the scaling limit.** `plan()` takes a `List`; assess actual candidate size, object
+footprint and query/memory budget. Batch only when partial progress and recovery are allowed,
+or keep selection/set-based effects in the database and isolate only useful per-record rules.
+Do not materialize an unbounded result to preserve purity.
 
 ## Message listener
 
@@ -294,7 +298,7 @@ different answer:
 
 | Symptom                                                     | Cause                                                       | Answer                                                                                                                        |
 | ----------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| The decision needs to fetch mid-way, based on what it found | The shell's query is too narrow                             | Widen the fetch, or split into two decide/act rounds. Do not pass the repository in.                                          |
+| The decision needs to fetch mid-way, based on what it found | A pure split may need staged inputs                         | Compare bounded fetch or decide/act rounds with a testable effectful Humble Object; preserve query cost and consistency.      |
 | The decision needs to write mid-way to be correct           | It is not one decision; a transaction boundary is inside it | Preserve the atomic read/write or conflict check; sequencing outcomes alone is not a transaction (`enterprise-transactions`). |
 | Purity requires loading far too much data                   | The boundary is misplaced                                   | Push selection into the query; the core decides over the result (`architecture-and-performance`).                             |
 | The "decision" is a single `if` on a field                  | Judge the rule's significance, not branch count             | Extract if it isolates a consequential rule; otherwise leave it.                                                              |
@@ -305,3 +309,4 @@ direct tests, while a forwarding method may gain nothing from another abstractio
 ## Sources
 
 - [HTTP semantics, RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html) — idempotency (§9.2.2), Retry-After (§10.2.3), and conflict status (§15.5.10).
+- [Spring transaction annotation semantics](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html) — proxy interception versus self-invocation; inspect the target framework version and advice mode.

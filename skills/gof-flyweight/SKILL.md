@@ -5,7 +5,7 @@ description: >
   reduce retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the
   intrinsic/extrinsic split, why cheap TLAB allocation does not make reclamation free, the memory
   arithmetic deciding whether a cache entry costs more than the object it
-  saves, string deduplication and boundary canonicalisation as cheaper alternatives, the
+  saves, string deduplication and boundary canonicalisation as candidate alternatives, the
   unbounded intern map as a leak, and the == trap. Use
   when object pooling or interning is proposed, when a heap dump shows millions of duplicate
   values, when someone suggests caching small objects for speed, when a shared instance is
@@ -29,6 +29,12 @@ copying and allocation stalls are not free. Canonicalization can still lose thro
 retention and contention, so treat any flyweight proposal as a performance claim requiring
 live-set and CPU evidence
 (`allocation-profiling`, `heap-dump-analysis`).
+
+Reuse the workload, object graph, lifetime and memory/CPU budget already available. Identify which
+values really repeat, which backing objects are already shared, and what varies by request,
+tenant or configuration version. Ask only about material missing semantics or evidence. If ordinary
+objects already meet the requirements, retaining them is a valid outcome; an estimate can justify a
+focused experiment without being presented as a measured saving.
 
 ## When it is the answer
 
@@ -100,17 +106,19 @@ THEN measure first. A heap dump can establish retention; profiles can establish 
      (heap-dump-analysis).
 
 IF the duplicates are Strings
-THEN evaluate -XX:+UseStringDeduplication on a supported collector before writing
-     an intern table. It consumes concurrent GC CPU/table memory and only deduplicates
-     eligible backing arrays; compare retained bytes and GC overhead.
+THEN compare applicable GC deduplication, existing sharing and boundary canonicalisation.
+     Deduplication only shares eligible backing arrays and has GC/table costs; it is not a
+     mandatory experiment when object lifetimes or the target collector make it unsuitable.
 
 IF sharing is introduced
-THEN the shared type must be deeply immutable. Enforce it — final
-     class, final fields, no mutable components, defensive copies.
+THEN preserve immutable intrinsic state and safe use of its reachable graph. For owned types,
+     use defensive copies and prevent mutation through aliases; final fields alone are insufficient.
+     For library objects, verify the documented immutability/thread-safety contract.
 
 IF the cache is unbounded and keyed by data from requests
-THEN it is a memory leak with a slow fuse. Bound it and give it an
-     eviction policy, or restrict keys to a closed set.
+THEN inspect cardinality and lifetime: long-lived retention of arbitrary keys can grow without
+     limit. Bound admission/bytes, use eviction where appropriate, or validate a closed domain;
+     even operation-scoped pools need a peak-memory budget.
 
 IF the pool is on a hot path shared by many threads
 THEN test contention and mapping-function cost. `ConcurrentHashMap.computeIfAbsent`
@@ -118,12 +126,13 @@ THEN test contention and mapping-function cost. `ConcurrentHashMap.computeIfAbse
      implementation-specific; mapping functions must be short and non-recursive.
 
 IF any code compares flyweights with ==
-THEN require a documented identity contract (such as enums); otherwise use equals.
+THEN require a documented identity scope (such as enums); otherwise compare semantic values/keys.
+     equals is sufficient only when that type defines the required value equality.
      Integer.valueOf guarantees caching -128..127 but may cache more; 128 is not a portable miss.
 
 IF the "flyweight" must be seen by other processes
-THEN it is not this pattern. Serialisation recreates copies on the
-     other side; sharing does not survive the wire.
+THEN distinguish protocol value identity from process-local object identity. A receiver may
+     canonicalise locally, but a JVM reference does not cross the wire.
 ```
 
 ## Cross-cutting checks
@@ -131,42 +140,48 @@ THEN it is not this pattern. Serialisation recreates copies on the
 - **Concurrency.** Two hazards. The pool itself: a `synchronized` map serialises every lookup,
   while `ConcurrentHashMap.computeIfAbsent` may coordinate competing updates for a key. Expensive
   mapping functions stall peers, and recursive updates can fail or misbehave. The shared
-  objects must be deeply immutable and safely published; a mutable shared
-  flyweight under concurrency is both a race and, when it carries request data, a cross-request
-  leak (`java-memory-model`, `false-sharing-and-contended`).
+  intrinsic values must be immutable and safely published. Unsynchronized mutation can race;
+  even synchronized mutation of shared request data can leak it across consumers
+  (`java-memory-model`, `false-sharing-and-contended`). A shared immutable `Pattern` with confined
+  per-use `Matcher` state is a library example of the intrinsic/extrinsic split.
 - **Distribution.** Process-local, always. A flyweight pool is not a distributed cache: it shares
   references, and references do not cross a process boundary. Each node interns its own copies,
-  and anything sent over the wire is serialised and re-created by the receiver. Where an
+  and transmitted values are reconstructed or resolved within the receiver. Where an
   identifier must be canonical across nodes, canonicalise the _value_ (a code, an id), not the
   object (`caching-strategies`).
-- **Performance.** The pattern is a memory optimisation with a CPU cost. Judge it on the live-set
-  size before and after, measured from a heap dump, and on allocation rate and GC overhead
+- **Lifetime.** A resident-entry bound does not bound objects retained by callers after eviction;
+  re-creation may leave several equal instances live. If shared descriptors own native/rendering
+  resources, define who releases them after the last permitted use; eviction alone must not close
+  resources still in use (`java-resource-management`).
+- **Performance.** Lookup/retention costs compete with avoided construction and storage. Compare live-set
+  size before and after, measured from a heap dump, alongside allocation rate and GC overhead
   measured before and after (`gc-log-analysis`). Watch for the second-order effect that motivates
   it honestly: a smaller live set may reduce marking/copying work, but GC phase times also depend
   on graph shape, collector and workload; verify rather than promise shorter pauses.
-- **Testing.** Application behavior must use value equality unless identity is a documented
+- **Testing.** Application behavior must use semantic equality/keys unless identity is a documented
   contract (enums). Implementation tests may verify reuse itself. Exercise eviction or admission
   bypass according to the bound policy, and separate pools; all must preserve application results.
 
 ## Review checklist
 
-- [ ] A heap dump or allocation profile justifies the change
+- [ ] Available workload/graph evidence justifies a change or a focused experiment
 - [ ] Duplicate lifetimes or repeated construction costs justify lookup and retention overhead
 - [ ] Avoided duplicate bytes/construction costs are estimated from actual distinctness
-- [ ] The saving exceeds the cache's own overhead, with the arithmetic written down
-- [ ] The shared type is deeply immutable
-- [ ] The cache is bounded, or keyed by a closed set
-- [ ] Value comparisons use equals unless identity is an explicit stable contract
-- [ ] String deduplication was considered before hand-written interning
-- [ ] The pool's contention under the expected thread count was measured
+- [ ] Net memory/construction benefit includes the pool's overhead and is verified or explicitly hypothetical
+- [ ] Intrinsic state and reachable aliases satisfy the sharing contract; varying state stays per-use
+- [ ] Admission/retention and caller-held lifetimes fit the budget; semantic key scope is valid
+- [ ] Value comparisons use a suitable equality/key contract unless identity has an explicit stable scope
+- [ ] Relevant alternatives were compared without requiring an unrelated collector or representation change
+- [ ] Lookup cost is checked; contention is measured when the pool is actually shared and at risk
 
 ## References
 
-Deliver the sharing key and ownership scope, estimated net saving, correctness constraints and
-before/after evidence. Label unmeasured benefits as hypotheses rather than confirmed fixes.
+Deliver the sharing key and ownership scope, selected or retained design, estimated net benefit,
+correctness constraints and actual evidence or focused next check. Label unmeasured benefits as
+hypotheses rather than confirmed fixes.
 
 - [When sharing pays](references/when-sharing-pays.md) — the memory arithmetic per object and per
-  cache entry, the JDK's own flyweights and their limits, alternatives that usually win
+  cache entry, the JDK's own flyweights and their limits, relevant alternatives
   (deduplication, boundary canonicalisation, primitive and columnar layouts, enums), the
   measurement method before and after, and the leak and contention failure modes. Read before
   writing any pool.

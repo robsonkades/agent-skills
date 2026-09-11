@@ -144,5 +144,6 @@ refactor may need only one tested change, not a migration programme.
   optimistic locking, and synchronous call to event; each with its rollback story, its
   parallel-run policy where one applies, and the verification that the migration is
   complete. Read when changing a boundary or a concurrency mechanism.
-- [Validation cases](references/validation-cases.md) — read when evaluating the skill or
-  challenging a plan's rollback, side-effect and mixed-writer assumptions.
+- [Validation cases](references/validation-cases.md) — evaluator-only requests and criteria;
+  withhold from the task agent during scored comparisons. Use the path references above to
+  challenge an actual plan's rollback, side-effect and mixed-writer assumptions.

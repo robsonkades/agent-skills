@@ -1,19 +1,20 @@
 # Upcalls, arenas across threads, and what native code does to the collector
 
-Everything marked verified was compiled and executed on Temurin 25.0.3.
+Historical observations marked verified below were compiled and executed on Temurin 25.0.3;
+they are not universal guarantees or a claim that every path was exercised.
 
 ## Arenas at the interop boundary
 
 off-heap-memory owns the four arena kinds and their lifetimes; what belongs here is how each
 interacts with a call into native code.
 
-| Situation                                                                             | What happens                                                                                                                                                  | What to do                                                                                       |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Segment from `Arena.ofConfined()` created on thread A, used by a downcall on thread B | `WrongThreadException: Attempted access outside owning thread` before the call runs (verified) — the dedicated-pool mitigation hits this on its first request | Allocate on the pool thread, inside the task, or use `Arena.ofShared()` for the handoff          |
-| Shared arena closed while a downcall/access is active                                 | close/access coordination can fail with `IllegalStateException`; later access is invalid (verified for this build)                                            | establish one owner/protocol; close only after users/calls complete                              |
-| Upcall stub's arena closed while native code still holds the function pointer         | The next native call through that pointer is undefined behaviour — a crash, not an exception (`Linker` javadoc)                                               | Bind the stub to the arena that owns the native object registering it; close them together       |
-| Automatic-arena segment passed to native code that retains the address                | native retention does not keep the Java arena/segment reachable; cleanup may race later native use                                                            | keep an explicit strong owner for the full native lifetime, or use a closeable shared arena      |
-| Heap segment (`MemorySegment.ofArray`) passed to a plain downcall                     | Rejected — heap segments need `Linker.Option.critical(true)` (verified: the same call succeeds with it)                                                       | Copy into an arena, or `critical(true)` under the constraints in critical-and-decision-matrix.md |
+| Situation                                                                             | What happens                                                                                                                                                  | What to do                                                                                                                           |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Segment from `Arena.ofConfined()` created on thread A, used by a downcall on thread B | `WrongThreadException: Attempted access outside owning thread` before the call runs (verified) — the dedicated-pool mitigation hits this on its first request | Allocate on the pool thread, inside the task, or use `Arena.ofShared()` for the handoff                                              |
+| Shared arena closed while a downcall/access is active                                 | close/access coordination can fail with `IllegalStateException`; later access is invalid (verified for this build)                                            | establish one owner/protocol; close only after users/calls complete                                                                  |
+| Upcall stub's arena closed while native code still holds the function pointer         | The stub is deallocated; invoking the retained raw pointer is unsafe and can crash the JVM, without Java lifetime checks                                      | Stop new callbacks and wait for in-flight callbacks under the native unregister/quiescence contract before closing stub/state arenas |
+| Automatic-arena segment passed to native code that retains the address                | native retention does not keep the Java arena/segment reachable; cleanup may race later native use                                                            | keep an explicit strong owner for the full native lifetime, or use a closeable shared arena                                          |
+| Heap segment (`MemorySegment.ofArray`) passed to a plain downcall                     | Rejected — heap segments need `Linker.Option.critical(true)` (verified: the same call succeeds with it)                                                       | Copy into an arena, or `critical(true)` under the constraints in critical-and-decision-matrix.md                                     |
 
 ## Upcalls
 
@@ -22,13 +23,22 @@ An upcall stub is a native function pointer created by
 
 - **An exception escaping the target terminates the JVM.** The `Linker` javadoc: if the
   handle throws, "the JVM will terminate abruptly". Every upcall target catches `Throwable`,
-  translates it into a return code or a stored error, and never lets it propagate.
+  or uses an equivalent method-handle wrapper. The handler must also avoid throwing and
+  honor the native signature/error contract: return a supported error value or store an error
+  for its owner to observe. A callback without an error return needs an agreed separate
+  failure channel.
 - **No upcall from a `critical` downcall.** The API requires critical functions not to call
   back into Java. Violation can cause adverse effects including JVM crashes; do not rely on
   implementation-specific thread-state reasoning.
 - **Native-created threads require lifecycle/ABI care.** Linker-supported upcalls arrange a
   Java execution context, but callback thread identity, attachment cost, thread-local state,
   reentrancy and library shutdown must be tested. They are not virtual-thread continuations.
+
+Keep callback state, returned pointer storage and library code alive for the actual native
+use. Unregistering may prevent future callbacks without waiting for active ones; establish
+what completion guarantees the library supplies. If it cannot establish quiescence, retain
+the required lifetime or choose an explicit isolation/recovery design before freeing it.
+Java arena checks do not protect native code that retained a raw pointer after the downcall.
 
 Do not assume a universal cost order between upcall, JNI and FFM variants. A callback per
 element is usually a warning sign because transitions and loss of inlining can dominate;
@@ -62,12 +72,12 @@ heap data, but neither public contract promises the same mechanism. JNI may pin 
 copy; FFM marks the function critical and permits heap segment addresses. The following are
 HotSpot/version observations to investigate, not portable API guarantees:
 
-| Mechanism                                                         | Collector behaviour                                                                                                  | Observable as                                                                                             |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| FFM `critical(true)` on a HotSpot build that elides transition    | a long call may delay safepoint progress                                                                             | safepoint synchronization time and application tails                                                      |
-| JNI critical, G1 since JEP 423 (JDK 22)                           | The region holding the array is pinned; collection proceeds around it                                                | Nothing, unless pinned regions accumulate                                                                 |
-| JNI critical, ZGC and Shenandoah implementations                  | collector-specific pin/copy handling                                                                                 | pinned-memory/GC behavior requires collector-specific evidence                                            |
-| JNI critical, G1 before JDK 22 and the older Serial/Parallel path | The GC locker: a needed collection is deferred until every critical region exits; allocating threads stall meanwhile | `GCLocker Initiated GC` as the cause in the GC log (gc-log-analysis), allocation stalls no pause explains |
+| Mechanism                                                         | Collector behaviour                                                                                                  | Observable as                                                                                                 |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| FFM `critical(true)` on a HotSpot build that elides transition    | a long call may delay safepoint progress                                                                             | safepoint synchronization time and application tails                                                          |
+| JNI critical, G1 since JEP 423 (JDK 22)                           | The region holding the array is pinned; collection proceeds around it                                                | target-build pin/evacuation evidence; pinned young regions can be promoted and retained pins can add pressure |
+| JNI critical, ZGC and Shenandoah implementations                  | collector-specific pin/copy handling                                                                                 | pinned-memory/GC behavior requires collector-specific evidence                                                |
+| JNI critical, G1 before JDK 22 and the older Serial/Parallel path | The GC locker: a needed collection is deferred until every critical region exits; allocating threads stall meanwhile | `GCLocker Initiated GC` as the cause in the GC log (gc-log-analysis), allocation stalls no pause explains     |
 
 On the tested 25.0.3 build, `GCLocker*` flags and a `jdk.GCLocker` event were absent. That is
 not proof of every collector path; use GC/safepoint logs, allocation stalls and the exact
@@ -82,7 +92,7 @@ No fixed nanosecond threshold is portable.
 | Lever                                                                 | What it catches                                                                                                                    | Verified on 25.0.3 |
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `-Xcheck:jni`                                                         | Wrong `JNIEnv` usage, missing exception checks, bad references and local-reference leaks, at a speed cost — test environments only | starts             |
-| `--illegal-native-access=deny`                                        | Any module doing JNI or FFM without `--enable-native-access` fails with `IllegalCallerException` instead of warning                | yes                |
+| `--illegal-native-access=deny`                                        | Unauthorized restricted native operations fail with `IllegalCallerException`; ordinary segment access is not a new authorization   | yes                |
 | Explicit `jdk.VirtualThreadPinned` threshold in the chosen JFC/stream | Java blocking attempts below a broader configured threshold                                                                        | —                  |
 | JMH: JNI, plain downcall, `critical`, with `-prof gc`                 | Java allocation differences; native copying requires separate byte/copy instrumentation or implementation evidence                 | —                  |
 | Confined-arena handoff test: allocate on one thread, call on another  | `WrongThreadException` in CI rather than on the first production request                                                           | yes                |

@@ -22,25 +22,25 @@ and the exact error a stale client sees — is java-api-design's
 `references/compatibility.md`. That file is the single authoritative copy; do not
 reconstruct it from memory. Two of its rows matter most mid-refactoring:
 
-- Adding a variant to a sealed hierarchy is loud by design: source breaks at every
-  exhaustive switch, and a stale compiled exhaustive switch throws `MatchException` when
-  the new variant reaches it — never silent misbehaviour. That is the argument for
-  refusing `default` in those switches.
+- Adding a variant can make a recompiled switch non-exhaustive when existing cases no longer
+  cover the hierarchy; a supertype case or intentional fallback can already cover it.
+  A Java 21+ stale exhaustive switch can throw `MatchException` for an unhandled new variant.
+  Check the actual labels and supported evolution policy, not just the `sealed` modifier.
 - The silent rows are the ones review misses: reordering same-typed parameters and
   changing a `static final` compile-time constant (old clients keep the value inlined at
   their compile time, JLS 13.4.9) break behaviour while linking and compiling cleanly.
 
 ## Class ↔ record
 
-Converting a class to a record is a refactoring only under all of: the class was
-effectively final (records cannot be extended — existing subclasses break); equality was
-already value-based (records define state-based `equals`/`hashCode` — identity-equality
-users break behaviourally); accessors already followed the `x()` convention or all
-callers are in-reach (a `getX()`→`x()` rename is an ordinary breaking rename); and the
-type is not Java-serialised across versions (record serialisation goes through the
-canonical constructor, changing the compatibility story). Inside a module with no
-external consumers, all four are checkable and the conversion is routine; on a published
-type it is a major-version event.
+Converting a class to a record requires checking every retained contract: records are final,
+so supported subclasses cannot remain; constructor validation, mutability, equality/hash and
+`toString` must match the old semantics. A label such as "value-based" is insufficient (array
+components, for example, do not gain deep equality automatically). Preserve required accessors
+through bridges where useful; `getX()`→`x()` alone is a breaking rename. Record reflection and
+native serialization change too: deserialization invokes the canonical constructor.
+An internal conversion still needs this evidence. At a published boundary, follow the actual
+compatibility policy and stage any contract change; publication alone does not prove either
+equivalence or a mandatory major-version change.
 
 The reverse — record to class — requires explicitly retaining finality, component accessors,
 constructor and equality behavior if those contracts must remain. A final class with final

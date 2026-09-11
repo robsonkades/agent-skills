@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrency-testing
-version: 1.1.1
+version: 1.1.2
 description: >-
   Testing concurrent Java so failures appear in CI rather than in an incident: what a passing
   concurrency test does and does not prove, replacing sleeps with latches and deterministic
@@ -50,6 +50,8 @@ dependencies:
 suggests:
   - concurrency-diagnostics
   - varhandles-and-memory-ordering
+  - jmh-microbenchmarks
+  - load-testing
 
 capabilities:
   - reads-source

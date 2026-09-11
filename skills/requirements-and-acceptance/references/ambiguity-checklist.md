@@ -111,6 +111,8 @@ compatibility checks.
 Group the few unresolved questions that actually block a decision. Do not send the entire
 checklist when repository evidence or earlier instructions already answer it.
 
-Do not stop all work while waiting. Build everything that does not depend on the answer, and
-isolate what does behind the smallest decision point you can — that way one answer changes one
-place (clean-delivery-workflow).
+Do not stop all work while waiting. Continue inspection, tests or implementation whose
+contracts remain valid across the unresolved answers. If the answer could change ownership,
+the public API or data representation, defer that dependent implementation; a placeholder
+abstraction does not make it independent. Record which decision unlocks the remaining work
+(clean-delivery-workflow).

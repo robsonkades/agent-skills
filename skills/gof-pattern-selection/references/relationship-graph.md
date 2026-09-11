@@ -11,14 +11,14 @@ adding another pattern. Type-pattern switch requires the Java compatibility cond
 
 ```text
 Factory Method ──implies──► a creator with an inherited algorithm
-               ──combines─► Abstract Factory  (its methods are factory methods)
+               ──combines─► Abstract Factory  (family creation can use subtype hooks)
                ──replaced by─► Supplier / Map<Key,Supplier> / DI
                ──confused with─► static factory method (Effective Java Item 1)
 
 Abstract Factory ──implies──► a family invariant, or it is not this pattern
                  ──combines─► Builder      (a family member returns a builder)
                  ──combines─► Prototype    (a family may clone exemplars)
-                 ──replaced by─► one @Configuration per profile
+                 ──replaced by─► existing DI configuration when it preserves the family invariant
 
 Builder ──implies──► a construction/invariant contract; immutable output is optional
         ──combines─► Abstract Factory, Command (building a command)
@@ -37,7 +37,7 @@ Singleton ──implies──► global access, and every test consequence of it
 ## Structural
 
 ```text
-Adapter ──combines─► Bridge     (a bridge's backends are usually adapters)
+Adapter ──combines─► Bridge     (when a backend needs contract translation)
         ──confused with─► Facade, Decorator, Proxy  (see the confusion skill)
         ──scales to──► anti-corruption layer, at the module level
 
@@ -72,8 +72,8 @@ Proxy ──implies──► control over access, and a lifecycle it may own
 
 ```text
 Strategy ──replaced by──► a lambda, when there is one stateless operation
-         ──combines───► Template Method (steps injected rather than overridden)
-         ──confused with─► State (who changes it) and Command (what it is)
+         ──combines───► Template Method (an inherited skeleton may invoke injected policies)
+         ──confused with─► State (lifecycle vs policy) and Command (request vs behavior)
 
 State ──implies──► an explicit transition policy, including invalid events and duplicate handling
       ──combines─► Command (requested actions that drive transitions),
@@ -101,32 +101,37 @@ Observer ──implies──► subscription lifetime, error and ordering contra
          ──scales to─► reactive streams, then distributed pub/sub —
                        with different guarantees at each step
 
-Mediator ──implies──► a bounded hub, or a god object
+Mediator ──implies──► explicit protocol ownership and a cohesion check
          ──combines─► Observer (notification), State (protocol state),
                       Command (participants' requests)
          ──scales to─► an orchestrator; the alternative is choreography
          ──confused with─► Facade (direction), command dispatcher
 
 Memento ──combines─► Command (undo pairs)
-        ──confused with─► snapshot (durable) and event sourcing (history)
-        ──replaced by─► immutability with structural sharing
+        ──confused with─► snapshot (state capture) and event sourcing (authoritative history)
+        ──implemented with─► shared immutable captures; keep required opacity/restore ownership
 
 Iterator ──combines─► Composite (traversing a tree)
          ──alternative─► Spliterator + Stream when pipeline/lifetime semantics fit
          ──scales to─► pagination, which is remote iteration
 
-Visitor ──implies──► a stable element set; new types break every visitor
+Visitor ──implies──► an element/operation extension contract; verify required coverage and fallbacks
         ──combines─► Composite (the structure), Iterator (the walk)
         ──replaced by─► sealed interface + exhaustive switch
         ──confused with─► Iterator (traversal vs operation)
 
-Interpreter ──implies──► a parser (separate) and resource bounds
+Interpreter ──implies──► expression/evaluation semantics and resource bounds;
+                         a parser only when text input requires one
             ──combines─► Composite (the AST), Visitor (the folds),
                          Flyweight (shared terminal nodes)
             ──replaced by─► CEL, a rules engine, configuration
 ```
 
 ## Compositions worth naming
+
+Type growth need not break every visitor. For example, [Java 17 ElementVisitor](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html)
+uses default methods for newer kinds that call `visitUnknown`. Source compatibility does not
+establish semantic support; check the required specialized or fallback behavior.
 
 **Composite + Visitor + Iterator.** The canonical trio for tree-shaped domains: Composite is the
 structure, Iterator is the walk, Visitor is the operation. In modern Java the last becomes a fold
@@ -141,38 +146,43 @@ Compare snapshot size and sharing rather than assuming a fixed memory cost
 **State + Command + Memento.** These can model transitions, requested actions and snapshots, but
 do not create durability or a saga by composition alone. Commands request actions; events report
 facts. A restart-surviving distributed workflow additionally needs persisted progress, reliable
-effect delivery, deduplication and any required compensation
+effect delivery, safe repeat handling and any required compensation
 (`distributed-transactions-and-sagas`).
 
 **Abstract Factory + Builder + Prototype.** A family whose members are elaborate: the factory picks
 the family, a builder assembles a member, and a prototype supplies a configured starting point.
 Rarely all three; recognising which one you need is the point.
 
-**Decorator over Proxy.** A stack of behaviour over a controlled subject — the standard shape of an
-outbound client: retry and metrics decorate a proxy that stands in for a remote service. Keeping
+**Decorator over Proxy.** A possible stack of behaviour over a controlled subject: retry and
+metrics may decorate a remote client when existing mechanisms do not already meet the need. Keeping
 the two roles distinct is what makes the ordering discussion possible
 (`gof-decorator`, `gof-proxy`).
 
-**Strategy inside Template Method.** The modern form of both: a final class whose fixed sequence
-calls injected steps. It is Template Method's intent achieved with Strategy's mechanism, and it is
-the recommended replacement for a hook hierarchy (`gof-template-method`).
+**Strategy inside Template Method.** An inherited skeleton may also call injected policies. A
+final class calling composed steps is another way to retain a fixed sequence, but no longer uses
+the subclass-hook mechanism. Compare only when a change serves the actual extension/lifecycle
+contract; retain supported public hooks and callers rather than prescribing their replacement
+(`gof-template-method`).
 
 ## Conflicts, with the failure each produces
 
-| Pair                                        | Failure                                                                |
-| ------------------------------------------- | ---------------------------------------------------------------------- |
-| Singleton + a design meant to be testable   | The seam exists but the static bypasses it                             |
-| Observer + unstated required ordering       | Correctness depends on an ordering guarantee not yet established       |
-| Decorator + identity or `instanceof` checks | The wrapper is a different object of a different class                 |
-| Flyweight + mutable shared state            | One caller's mutation is another's data                                |
-| Visitor + a growing element set             | Every new type breaks every operation                                  |
-| Mediator + competing transition owners      | Two sources of truth for the same protocol                             |
-| Proxy + a fine-grained interface            | Hidden per-call remote cost; N+1 over the network                      |
-| Template Method + open subclassing          | Base changes may violate external extension contracts                  |
-| Prototype + new-entity intent               | Accidentally retaining an id/version rather than making a new identity |
-| Composite + lazily loaded children          | A walk becomes N queries                                               |
-| Chain + shared mutable context              | A mid-chain failure leaves partial effects                             |
-| Abstract Factory + unrelated products       | A service locator with a factory's name                                |
+Check whether the stated failure is present or possible under the actual implementation; these
+pairs do not establish a defect on their own.
+
+| Pair                                         | Failure                                                                     |
+| -------------------------------------------- | --------------------------------------------------------------------------- |
+| Singleton + a design meant to be testable    | The seam exists but the static bypasses it                                  |
+| Observer + unstated required ordering        | Correctness depends on an ordering guarantee not yet established            |
+| Decorator + identity or `instanceof` checks  | The wrapper is a different object of a different class                      |
+| Flyweight + unsafe shared intrinsic mutation | One caller can corrupt another's view                                       |
+| Visitor + a growing element set              | Required specialized coverage may be missing; test declared fallbacks       |
+| Mediator + competing transition owners       | Two sources of truth for the same protocol                                  |
+| Remote proxy + per-item requests             | Avoidable round trips may dominate; inspect actual call/load evidence       |
+| Template Method + open subclassing           | Base changes may violate external extension contracts                       |
+| Prototype + new-entity intent                | Accidentally retaining an id/version rather than making a new identity      |
+| Composite + lazily loaded children           | A walk may cause N+1 queries; inspect actual fetch, cache and batching      |
+| Chain + shared mutable context               | A mid-chain failure leaves partial effects                                  |
+| Abstract Factory + unrelated products        | Family invariant may be absent; inspect the actual lookup/construction role |
 
 Diagnose the conflicting contract first. Remove unjustified structure, translate incompatible
 boundaries, or define explicit composition according to the actual force. An adapter can resolve

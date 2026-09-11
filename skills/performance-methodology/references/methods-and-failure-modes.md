@@ -68,16 +68,17 @@ A predicted p99 improvement requires a separate workload/queueing or per-request
 an endpoint measurement. Label mechanism hypotheses, observed samples and predicted effects
 separately.
 
-Every investigation climbs the same ladder. Each rung has an artefact that proves it was
-climbed, and a way of being skipped that looks like progress.
+Use this ladder to distinguish supported claims, not to require every investigation to reach a
+code change or complete diagnosis. A useful observation, necessary mitigation or controlled
+treatment effect can precede a full mechanism explanation; keep that distinction in the report.
 
 | Rung             | Must produce                                                                                                               | Skipped when                                                                                    |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Observation**  | Baseline and workload recorded; USE/RED tables; a profile whose clock matches the symptom                                  | A suspicion was accepted as diagnosis without a discriminating observation                      |
-| **Hypothesis**   | Component, mechanism, predicted effect on the SLO metric, and the observation that would refute it                         | It cannot be wrong ("the system is under-provisioned")                                          |
+| **Observation**  | Baseline and workload recorded; relevant USE/RED or latency evidence whose clock matches the symptom                       | A suspicion was accepted as diagnosis without a discriminating observation                      |
+| **Hypothesis**   | Component, mechanism, predicted effect on the target metric, and the observation that would refute it                      | It cannot be wrong ("the system is under-provisioned")                                          |
 | **Measurement**  | The predicted observation taken, with tool, load, duration, sample count and interval                                      | A dashboard glance stands in for a measurement; the sample count is not on the page             |
 | **Diagnosis**    | The mechanism stated so that it explains the magnitude and the timing, not only the direction                              | The finding explains 5% of the gap and is accepted as "the cause"                               |
-| **Optimisation** | Treatment and estimand, expected practical effect, risks and fixed-work bound written before the run                       | Several changes form an unidentified treatment; the expected effect is written after the result |
+| **Optimisation** | Treatment and estimand, expected practical effect, risks and a fixed-work bound where valid, written before the run        | Several changes form an unidentified treatment; the expected effect is written after the result |
 | **Validation**   | Same estimand measured under a comparable protocol; mechanism and alternatives challenged with a defensible counterfactual | A better graph after a deploy; no control separates code, restart, traffic and host effects     |
 
 Diagnosis has to account for the size of the effect. A 2 ms lock hold is not itself a 400 ms
@@ -142,8 +143,10 @@ short and worth reading in full.
 Jain, _The Art of Computer Systems Performance Analysis_ (1991), Part IV, is the reference.
 The parts a production measurement cannot skip:
 
-- **A control.** The unchanged build, on the same hardware, under the same load, in the same
-  period. Without it the comparison is against memory or against yesterday's traffic.
+- **A defensible comparator.** Prefer a contemporaneous unchanged treatment with comparable
+  load and placement. A same-host crossover, restarted control or justified historical design may
+  answer another question; account for drift, carry-over and shared-resource interference. When
+  no credible counterfactual exists, report the observation and attribution limit.
 - **Experimental unit and replication.** Millions of requests from one process run do not
   replicate process startup, host placement or run-level drift. Name the independent unit.
   Choose the number of units or runs from observed variance and the precision or power needed
@@ -171,8 +174,9 @@ The parts a production measurement cannot skip:
 
 ## The danger of averaging
 
-A mean and a quantile answer different questions. The mean represents expected latency and,
-multiplied by rate, aggregate time demand; it is sensitive to extreme observations. A p99
+A mean and a quantile answer different questions. The mean represents expected latency; mean
+residence multiplied by matching throughput gives average occupancy in a stable population.
+CPU/service demand requires the corresponding resource clock. The mean is sensitive to extreme observations. A p99
 describes a distribution quantile but says nothing about the worst 1%, sample size or censored
 timeouts. Report the statistics the decision requires, their uncertainty, and error/timeout
 mass; `latency-statistics` owns the distribution mechanics. Three invalid aggregations belong
@@ -237,8 +241,8 @@ overhead and stop conditions, and retain a comparable unprofiled instance. A hea
 is a useful comparator, not automatically a control: placement, traffic and shard ownership may
 differ.
 
-**Experiment in staging, having stated the gap.** Staging is where a variable can be changed
-and the load replayed. It is a model of production, and every model must state what it does not
+**Experiment where exposure is controlled, stating the gap.** Staging can allow a variable to change
+and load to be replayed. It is a model of production, and every model must state what it does not
 reproduce; the four that most often decide a performance result are data volume (a plan that
 scans 1,000 rows and one that scans 50,000,000 are different plans), access pattern (hot keys,
 lock convoys, cache hit rate), concurrency (contention is non-linear in thread count) and
@@ -284,9 +288,10 @@ proves an architectural fix is necessary:
 - A dependency dominates measured request critical paths. Missing owner SLO evidence means
   its contract is unknown, not that capacity cannot improve. Compare dependency fixes with
   cache, batch or asynchronous boundaries only where freshness and semantics permit.
-- The same class of fix has been applied **per feature** more than twice — each new endpoint
-  needs the same N+1 repair, the same index, the same pool increase. The pattern is the
-  finding.
+- The same class of fix recurs across features. Check whether it exposes a shared design constraint
+  or normal local specialization; repeated N+1 repairs may warrant a shared fetch strategy, whereas
+  different indexes can be appropriate for different access paths. Repetition alone does not demand
+  an architectural change.
 - An option's fixed-work ceiling is below the required improvement. That rules out that
   option under those assumptions, not other local changes or queueing effects.
 

@@ -42,22 +42,28 @@ contracts while comparing alternatives.
 
 ## Workflow
 
+Use the steps relevant to the requested decision. Reuse adequate configuration, source and
+runtime evidence; a narrow explanation or justified no-change review does not require a
+new migration, full endpoint inventory or load campaign. Separate what configuration
+selects from what an observed invocation actually did.
+
 1. **Describe the workload, not the framework.** Request/response or a long-lived stream?
    Bounded work per request or unbounded? I/O-bound or CPU-bound? Thousands of active
    requests or millions of mostly-idle connections?
 2. **Find where the bound already comes from.** Inspect demand, operator concurrency, scheduler queues and admission separately;
    a platform pool bounds executing tasks but may leave an unbounded queue. If a migration
-   removes one, name its replacement before the migration, not after.
-3. **Price the migration honestly.** Rewriting a working pipeline costs the rewrite, the
+   removes a required property, establish an equivalent control before the migration. An
+   existing aggregate gate may suffice; document a justified removal of a redundant bound.
+3. **For a proposed migration, price it honestly.** Rewriting a working pipeline costs the rewrite, the
    regression risk and a period of two models — against measured benefits in this service, including diagnosability, capacity and latency.
 4. **Decide per boundary, not per service.** A streaming endpoint and a CRUD endpoint in the
-   same application can legitimately use different models; what must not vary is which one
-   a given path uses.
-5. **Configure the framework explicitly** and write down which requests run where. The most
-   common production surprise is a framework default that nobody chose.
-6. **Verify with load, not with reasoning.** Concurrency, tail latency and memory at the
-   target connection count settle this; a benchmark of a hello-world endpoint settles
-   nothing.
+   same application can legitimately use different models. One request can cross an
+   intentional handoff with stated execution, context and lifetime contracts.
+5. **Inspect effective framework configuration** for the affected paths; change it only
+   when the decision requires it. Defaults and custom executor selection both matter.
+6. **Validate the claim at its scope.** Capacity or latency comparisons need representative
+   dependencies, demand, concurrency and memory evidence, including overload outcomes.
+   A source-level routing explanation needs applicable source/configuration, not a new load test.
 
 ## Decision rules
 
@@ -71,11 +77,13 @@ Long-lived stream where the consumer can be slower than the producer
 
 Time-shaped composition: window, debounce, sample, buffer-with-timeout,
 groupBy over a live stream
-        → reactive. These operators are the reason the library exists.
+        → reactive operators are useful candidates. Compare composition and
+          lifecycle costs; retain an adequate bounded timer/buffer implementation.
 
 Request/response with blocking clients (JDBC, most SDKs, existing code)
         → consider virtual threads on a compatible stack. Thread-per-request with a real stack, ordinary
-          try/catch, and a stack trace that names the request.
+          try/catch, and a stack for the current task; request correlation and
+          child-task ownership still need to be established.
 
 Millions of mostly-idle connections on one process
         → measure. A parked virtual thread's stack is heap and a reactive
@@ -118,26 +126,29 @@ A new service, blocking dependencies, ordinary request/response
   correlation context, scheduler metrics and traces because no thread owns the request for
   its whole lifetime.
 - Neither model changes the downstream. A connection pool of 20, a vendor quota of 600
-  requests per minute, or a database that saturates at 4 000 IOPS bound both identically.
+  requests per minute, or a database that saturates at 4 000 IOPS constrains both. Effective
+  pressure can differ with hold times, batching, retries and fan-out; compare the actual use.
   A large measured improvement may remove a former bottleneck; distinguish useful completed
   throughput from shifted queues, dropped work and changed latency or correctness.
-- A mixed codebase is acceptable; an _undocumented_ mixed codebase is not. Every endpoint
-  should have a stated model, and the boundary between them should be one place where the
-  handoff is explicit.
+- A mixed codebase needs discoverable execution and handoff contracts for the affected paths.
+  Avoid accidental repeated conversions; an intentional multi-stage boundary can be valid
+  when admission, context, transactions and cancellation remain owned.
 - Framework behaviour is not platform behaviour. `spring.threads.virtual.enabled`,
   `@RunOnVirtualThread` and Helidon's virtual-thread server are decisions those projects
   made; none of them is something "Java does". State which layer a claim belongs to.
-- Do not benchmark the model. Benchmark the service, with the real dependencies, at the real
-  concurrency, measuring useful throughput, tail latency, errors, retained memory and overload recovery.
+- When comparing performance, benchmark the service with representative dependencies and
+  demand, measuring useful throughput, tail latency, errors, retained memory and overload recovery.
+  Reuse adequate measurements; a toy model benchmark does not establish a service benefit.
 - Changing threads does not propagate a transaction, security identity or Reactor Context
   automatically. State the context carrier and transaction owner at each asynchronous handoff;
   avoid sharing a persistence context across concurrent tasks.
 
 ## Deliverable
 
-Record the chosen boundary and retained contracts, compatible runtime/configuration, active
-and waiting limits with overflow behavior, evidence versus remaining hypotheses, and a load
-or slow-consumer check that could reopen the choice. A small change needs only a short note.
+Return the decision or no-change result, its supporting evidence and relevant limits. For a
+changed boundary, record retained contracts, compatible configuration, active/waiting limits,
+overflow and applicable validation. Name what would reopen the choice; a small review can
+close with a short note and explicit unknowns.
 
 ## References
 

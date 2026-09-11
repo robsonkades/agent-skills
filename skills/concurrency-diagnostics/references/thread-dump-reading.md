@@ -10,10 +10,13 @@ jcmd <pid> Thread.print -l
 jcmd <pid> Thread.dump_to_file -format=json dump.json
 ```
 
-`Thread.print`/`jstack` does not enumerate virtual threads. The Java 25 simple JSON dump is designed
-for large thread populations and structured containers but omits information found in traditional
-HotSpot dumps and does no automatic deadlock detection. Neither should be called “complete” without
-stating the question.
+`Thread.print`/`jstack` does not enumerate virtual threads, although a mounted virtual-thread stack
+can appear under its carrier on the examined HotSpot build. The simple JSON dump is designed for
+large thread populations and structured containers and does no automatic deadlock detection.
+The inspected 25.0.3 format includes per-thread timestamps/state, `blockedOn`, `waitingOn`,
+`parkBlocker`, `monitorsOwned` and carrier fields where applicable. Inspect the actual schema and
+lock identity/owner model; fields may be absent and object identifiers are not a universal resource
+ownership graph. Neither view should be called “complete” without stating the question.
 
 Collection is diagnostic work with operational cost. `Thread.dump_to_file` impact scales with thread
 count and its output file must be protected. Confirm attach permission, container PID namespace,
@@ -104,8 +107,10 @@ int mounted = scheduler.getMountedVirtualThreadCount();
 int parallelism = scheduler.getParallelism();
 ```
 
-Counts are estimates and may be `-1`. Interpret trends with CPU saturation, blocked/pinned event
-stacks and useful completion rate. Pool size above target may be compensation/capture behavior, not
+Parallelism is the target; mounted/queued are estimates, while pool/mounted/queued may be `-1`.
+Separate reads are not an atomic snapshot and do not count normally unmounted parked work.
+Interpret trends with CPU saturation, blocked/pinned event stacks and useful completion rate.
+Pool size above target may be compensation/capture behavior, not
 by itself a fault.
 
 ## JFR and profiles
@@ -154,3 +159,4 @@ policy.
 - [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
 - [Java 25 `StructuredTaskScope.Configuration` (preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Configuration.html)
+- [Pinned Java 25.0.3+9 thread-dump fields and collection](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/jdk/internal/vm/ThreadDumper.java)

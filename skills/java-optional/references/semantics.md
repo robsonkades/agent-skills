@@ -14,13 +14,13 @@ implement `Serializable`—one reason it is often a poor persistence/DTO field t
 
 ## Transformation
 
-| Method         | Contract                                                                               |
-| -------------- | -------------------------------------------------------------------------------------- |
-| `map(fn)`      | applies `fn` if present; a null result becomes empty (as if by `ofNullable`)           |
-| `flatMap(fn)`  | `fn` returns an Optional; returning null from `fn` throws NPE                          |
-| `filter(p)`    | keeps the value only if present and `p` holds                                          |
-| `or(supplier)` | this if present, else the supplier's Optional; supplier runs only when empty (since 9) |
-| `stream()`     | zero-or-one element stream; the flatten tool for pipelines (since 9)                   |
+| Method         | Contract                                                                                                               |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `map(fn)`      | applies `fn` if present; a null result becomes empty (as if by `ofNullable`)                                           |
+| `flatMap(fn)`  | `fn` returns an Optional; returning null from `fn` throws NPE                                                          |
+| `filter(p)`    | keeps the value only if present and `p` holds                                                                          |
+| `or(supplier)` | present value or the supplier's Optional; supplier runs only when empty (since 9), with no instance-identity guarantee |
+| `stream()`     | zero-or-one element stream; the flatten tool for pipelines (since 9)                                                   |
 
 ## Unwrapping — where the bugs live
 
@@ -54,20 +54,20 @@ blanket promise that passing a null callback is permitted.
 
 ## Common smells and exceptions
 
-| Pattern                                                   | Why it is wrong                                            | Replace with                                                                                                                                                     |
-| --------------------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `opt.isPresent() ? opt.get() : x`                         | null-check ceremony in new clothes                         | `opt.orElse(x)` / `orElseGet`                                                                                                                                    |
-| `if (opt.isPresent()) { use(opt.get()); }`                | same                                                       | `opt.ifPresent(this::use)`                                                                                                                                       |
-| bare `opt.get()`                                          | throws unguarded, name hides it                            | `orElseThrow()`                                                                                                                                                  |
-| `orElse(repository.findDefault())`                        | fallback query on every present value                      | `orElseGet(...)`                                                                                                                                                 |
-| `Optional.ofNullable(x).orElse(y)`                        | boxing a ternary                                           | `Objects.requireNonNullElse(x, y)` (stricter: throws NPE when both are null, where `orElse` returned null — usually the better contract, but a behaviour change) |
-| `Optional.ofNullable(x).map(f).orElse(null)`              | wraps to unwrap into null again                            | plain `x == null ? null : f(x)` — or fix the API to return Optional throughout                                                                                   |
-| `Optional<List<T>>` when absence means zero results       | absence has an emptier spelling                            | empty list; retain Optional only for a documented not-loaded/not-applicable state                                                                                |
-| Optional field in persistence/bean DTO                    | not Serializable, tooling friction, still nullable itself  | nullable/explicit result state; retain in internal immutable models only with a clear tool-compatible contract                                                   |
-| Optional parameter with no composition benefit            | forces wrapping; three states if null Optional is accepted | reject null and prefer overload/two named methods; retain when a functional API genuinely composes Optional                                                      |
-| `Optional.of(maybeNull)`                                  | NPE at the wrong place with the wrong message              | `ofNullable`, or `requireNonNull` first with a message                                                                                                           |
-| `opt == Optional.empty()`                                 | identity comparison on a value-based class                 | `opt.isEmpty()`                                                                                                                                                  |
-| stream: `.filter(Optional::isPresent).map(Optional::get)` | two steps, one of them `get`                               | `.flatMap(Optional::stream)`                                                                                                                                     |
+| Pattern                                                   | Review concern                                             | Alternatives                                                                                                                     |
+| --------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `opt.isPresent() ? opt.get() : x`                         | may be simpler as an unwrap                                | `orElse` for an already available value or `orElseGet` for conditional work; retain a clear ternary                              |
+| `if (opt.isPresent()) { use(opt.get()); }`                | may be simpler as one conditional action                   | consider `opt.ifPresent(this::use)`; keep a guarded block when it makes the work clearer                                         |
+| bare `opt.get()`                                          | absence may be unhandled                                   | establish presence or handle absence; `orElseThrow()` clarifies an intentional failure but still throws                          |
+| `orElse(repository.findDefault())`                        | query runs even when present                               | `orElseGet(...)` when the query is required only on absence                                                                      |
+| `Optional.ofNullable(x).orElse(y)`                        | wrapper may add no useful contract                         | a plain conditional; `Objects.requireNonNullElse(x, y)` (Java 9+) only when both-null must fail, since the original returns null |
+| `Optional.ofNullable(x).map(f).orElse(null)`              | wraps to unwrap into null again                            | plain `x == null ? null : f(x)` — or fix the API to return Optional throughout                                                   |
+| `Optional<List<T>>` when absence means zero results       | absence has an emptier spelling                            | empty list; retain Optional only for a documented not-loaded/not-applicable state                                                |
+| Optional field in persistence/bean DTO                    | native serialization unsupported; other codecs vary        | nullable/explicit result state, or retain Optional with a verified tool/consumer contract and a non-null Optional reference      |
+| Optional parameter with no composition benefit            | forces wrapping; three states if null Optional is accepted | reject null and prefer overload/two named methods; retain when a functional API genuinely composes Optional                      |
+| `Optional.of(maybeNull)`                                  | NPE if null occurs                                         | keep `of` for invalid null; use `ofNullable` only for legitimate absence, or an explicit check for the required diagnostic       |
+| `opt == Optional.empty()`                                 | identity comparison on a value-based class                 | `opt.isEmpty()`                                                                                                                  |
+| stream: `.filter(Optional::isPresent).map(Optional::get)` | two steps, one of them `get`                               | `.flatMap(Optional::stream)`                                                                                                     |
 
 ## When a chain loses to an if
 
@@ -77,17 +77,24 @@ evaluates only its selected branch: replace a computed/side-effecting fallback w
 `Objects.requireNonNullElse` would change it. `Optional.of` is appropriate when null is a defect,
 and an explicit guarded `get` can be the clearest way to express several related operations.
 
-`map`/`flatMap`/`filter` pay off while every step is a pure transformation. Signs the
+`map`/`flatMap`/`filter` pay off when transformations and predicates remain clear. Signs the
 chain has gone past its domain and an explicit conditional reads better:
 
-- a branch needs more than one statement, a local variable, or a try/catch — checked
-  exceptions do not pass through lambdas;
+- a branch hides state or failure handling in several statements. Optional's `Function`/`Predicate`
+  callbacks cannot directly propagate an unhandled checked exception; use a conditional or an
+  explicit adaptation policy. `orElseThrow(() -> new IOException(...))` instead returns an exception
+  value from its supplier, and `orElseThrow` propagates it through its generic `throws X` contract;
 - the same Optional is consulted twice ("if present do X, and separately if it matched Y
   do Z");
 - the chain exists to reach a side effect at the end (`.ifPresent(x -> repo.save(...))`
   buried after four transformations) — the reader loses the action in the plumbing;
-- you need the empty case to distinguish _why_ it is empty — Optional erases the reason;
-  a sealed result type carries it.
+- you need the empty case to distinguish _why_ it is empty — a single empty Optional erases the
+  reason; an existing domain result, enum/tagged state or sealed result may make it explicit.
+
+These are clarity and contract checks, not a statement-count limit. Preserve any meaningful
+missing/explicit-null/empty distinctions at a wire boundary; a codec must carry states that one
+Optional cannot distinguish. Do not flatten positional empty slots or nested absence states unless
+their loss is intended by the consumer contract.
 
 ## Source
 

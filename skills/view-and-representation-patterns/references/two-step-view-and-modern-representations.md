@@ -17,6 +17,7 @@ in one place. The cost is that the final output is not visible in any single fil
 ## Candidate shared rendering seams
 
 The labels below assume a logical first stage; ordinary helper reuse alone is not sufficient.
+Retain a simpler existing seam when it already supplies the required consistency.
 
 | Shared second step                                   | What it is                                  |
 | ---------------------------------------------------- | ------------------------------------------- |
@@ -69,7 +70,7 @@ from filters/security/container layers too: controller advice does not cover eve
 A trace ID helps correlate diagnostics when present; its absence is not proof that a request
 was untraced, and correlation identifiers need a deliberate exposure policy.
 
-## Response envelopes: usually not worth it
+## Response envelopes and the consumer contract
 
 ```json
 { "data": { ... }, "meta": { "requestId": "..." }, "errors": [] }
@@ -96,13 +97,13 @@ relevant tenant, role, locale and representation variants, or avoid caching sens
 
 ## Where the patterns land in modern architectures
 
-| Architecture                      | View layer on the server                                                    |
-| --------------------------------- | --------------------------------------------------------------------------- |
-| Server-rendered pages             | Template View + a layout (Two Step). Classic and still correct.             |
-| htmx / hypermedia fragments       | Template View per fragment, same layout discipline. The fragment is a view. |
-| SPA or mobile client              | Transform-style response shaping remains; UI rendering is client-side       |
-| BFF for one client                | Transform View shaped to that client's screens — legitimately view-driven   |
-| Public API with several consumers | Transform View shaped to its declared consumer contract                     |
+| Architecture                      | View layer on the server                                                     |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| Server-rendered pages             | Template View or explicit transform; layout composition need not be Two Step |
+| htmx / hypermedia fragments       | Template View per fragment, same layout discipline. The fragment is a view.  |
+| SPA or mobile client              | Transform-style response shaping remains; UI rendering is client-side        |
+| BFF for one client                | Transform View shaped to that client's screens — legitimately view-driven    |
+| Public API with several consumers | Transform View shaped to its declared consumer contract                      |
 
 The BFF row is worth stating explicitly because it resolves a common argument. A
 backend-for-frontend may legitimately shape responses around screens — that is what it is
@@ -153,16 +154,20 @@ resolvers). Separate handler methods are one option; a single handler with negot
 converters is also valid. Verify unsupported types, actual Content-Type, and cache variation
 (e.g. `Vary: Accept` when appropriate). Do not manually branch while bypassing this contract.
 
-Versioning is a different concern and does not belong in the view layer at all
-(`rpc-and-api-contracts`).
+Compatibility/version policy belongs to the API contract (`rpc-and-api-contracts`). A renderer or
+representation adapter may implement approved version-specific shapes or media types; it must not
+invent that policy independently. Preserve each selected version's field, error and cache contracts.
 
 ## Reviewing a representation layer
 
+Use the questions relevant to the requested change or uncertainty, and reuse adequate existing
+evidence. A narrow API/pattern explanation needs no fabricated endpoint or streaming campaign.
+
 1. Is any decision made in a template or a serialiser that is not purely presentational?
-2. Does rendering touch a lazy association or issue a query?
+2. Is any rendering-time loading unintended or outside its authorization, work or resource bounds?
 3. Do business, validation and framework errors satisfy the intended public contract,
    including permitted differences and failures outside controller advice?
-4. Would changing the envelope, layout or link format require editing more than one file?
+4. Is there actual inconsistency or change coordination that existing layout/helper reuse does not solve?
 5. Does any response contain a field nobody deliberately exposed? (A snapshot test with a
    complete field allowlist or reviewed schema helps catch this; one negative assertion
    protects only one name.)
@@ -171,5 +176,6 @@ Versioning is a different concern and does not belong in the view layer at all
    and partial-output detection covered?
 
 Sources: [Fowler Two Step View](https://martinfowler.com/eaaCatalog/twoStepView.html),
-[Spring error responses](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html),
+[Spring 6.1.14 response exception handling](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/web/servlet/mvc/method/annotation/ResponseEntityExceptionHandler.html),
+[Spring 6.1.14 ProblemDetail](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/http/ProblemDetail.html),
 [Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse).

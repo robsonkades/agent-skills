@@ -1,0 +1,774 @@
+{
+  "date": "2026-09-10",
+  "status": "executed and graded; no measured advantage established",
+  "skills": [
+    "performance-methodology",
+    "littles-law-and-queueing",
+    "latency-statistics",
+    "thread-sizing-and-virtual-threads",
+    "jvm-memory-regions"
+  ],
+  "design": {
+    "arms": ["no supplied skill", "immutable baseline skills", "revised skills"],
+    "assignment": "Three fresh agents, identical ordered cases and tools, one response per case per arm; forced full Markdown guidance for supplied arms. SKILL.md frontmatter is retained; manifests and external dependency contents are omitted.",
+    "grading": "Coordinator, unblinded, outcome criteria fixed here before runs. A case passes only when all applicable criteria are met; partial and failed criteria are retained. No exact wording or required new abstraction.",
+    "limits": [
+      "Single sample per arm; no random model replication.",
+      "Ordered cases may cause carryover.",
+      "Forced bundles do not test automatic activation or selective resource loading.",
+      "Response decisions do not establish runtime or performance results.",
+      "Case outputs are recommendations based on supplied evidence, not implementation execution."
+    ],
+    "holdout": "M6 is coordinator-defined and undisclosed to package reviewers; protocol stays in unique temporary directory until selected writers stop. No edits are made from it before comparison."
+  },
+  "cases": [
+    {
+      "id": "M1-capacity-versus-occupancy",
+      "skills": [
+        "littles-law-and-queueing",
+        "thread-sizing-and-virtual-threads",
+        "performance-methodology"
+      ],
+      "request": "Review a Java25 sizing proposal. Independent platform-worker tasks use a measured mean10ms CPU and90ms truly blocked time while occupying a worker, excluding admission and CPU-ready delay. Available task CPU budget is1.5 CPU equivalents. Target is300 completed tasks/s. The proposer calculates15 workers and calls this sufficient. In a second trace, the90ms instead consists of runnable/quota delay, with no observed blocking. Give the supported conclusion, relevant alternatives and smallest useful next validation. Do not invent a benchmark result.",
+      "criteria": [
+        {
+          "id": "cpu-bound",
+          "expected": "First case has a150 tasks/s CPU ceiling under assumptions;300 requires3 CPU equivalents and cannot be reached merely by adding workers or virtual threads."
+        },
+        {
+          "id": "occupancy-not-guarantee",
+          "expected": "15 is a conditional saturation hypothesis, not a validated pool size or latency guarantee; rate times matching mean residence is occupancy."
+        },
+        {
+          "id": "wrong-wait",
+          "expected": "Second trace does not justify using90ms as blocked W; distinguish CPU-ready/throttled time and relevant actual budget/demand."
+        },
+        {
+          "id": "decision-and-evidence",
+          "expected": "Compare relevant demand/capacity/admission options and bounded representative checks; no universal migration, invented speedup or mandatory broad diagnostic campaign."
+        }
+      ]
+    },
+    {
+      "id": "M2-non-jvm-cost-goal",
+      "skills": ["performance-methodology"],
+      "request": "A non-JVM nightly image-conversion job is meeting its6-hour deadline and output correctness checks. Cost per successfully processed image rose18% last week. Available artifacts show billed CPU hours, storage/network charges, retries, input image sizes and batch volumes by day. No request-latency SLO exists. The team asks whether to introduce a distributed cache now; the investigation budget is half a day. Recommend the first decision and evidence to inspect, with a stopping condition. You cannot run the job in this exercise.",
+      "criteria": [
+        {
+          "id": "actual-goal",
+          "expected": "Uses cost per useful completed work, comparable data mix and deadline/correctness guardrails rather than inventing p99 or JVM requirements."
+        },
+        {
+          "id": "existing-context",
+          "expected": "Inspects/reuses supplied cost, retry and input-mix evidence before asking questions it answers."
+        },
+        {
+          "id": "conditional-cache",
+          "expected": "Does not choose cache from the cost increase alone; compares retaining current design or a targeted cause-specific change, including cache applicability/cost only if evidence warrants."
+        },
+        {
+          "id": "bounded-transition",
+          "expected": "Gives a focused next check and decision/stopping condition within budget; labels hypotheses and unexecuted work honestly."
+        }
+      ]
+    },
+    {
+      "id": "M3-quantile-estimands",
+      "skills": ["latency-statistics", "performance-methodology"],
+      "request": "Two paired runs each contain complete request populations with equal A/B counts per run. Run1: A has1000 requests all10ms; B has1000 all20ms. Run2: A has10 requests all100ms; B has10 all60ms. For this exercise p99 uses nearest-rank rank ceil(.99*n). The reviewer claims averaging each run's B-minus-A p99 gives the same improvement as pooling all A requests and all B requests. Compute both contrasts, explain what they answer, and recommend what must be fixed before a confidence interval or release conclusion. These are synthetic two-run data, not a representative production experiment.",
+      "criteria": [
+        {
+          "id": "arithmetic",
+          "expected": "Mean paired run-level p99 change is(10-40)/2=-15ms; pooled A p99=10ms, B p99=20ms, pooled change=+10ms."
+        },
+        {
+          "id": "estimand",
+          "expected": "Both statistics are meaningful for distinct run-weighted versus request-weighted populations; no blanket ban on run-level quantile averaging."
+        },
+        {
+          "id": "inference",
+          "expected": "Fix target population/estimand, pairing and experimental unit/weights; two synthetic runs do not establish general confidence or release benefit."
+        },
+        {
+          "id": "verification-limits",
+          "expected": "Calculations are distinguished from measured agent/runtime performance; no invented interval or significance."
+        }
+      ]
+    },
+    {
+      "id": "M4-serial-migration-contract",
+      "skills": ["thread-sizing-and-virtual-threads"],
+      "request": "A Java17 service uses newSingleThreadExecutor so independent incoming requests update one mutable ledger sequentially; several tasks wait on a blocking provider. The measured peak workload and overload recovery meet accepted targets, with bounded ingress. The proposed replacement is Java25 virtual-thread-per-task execution guarded by a semaphore of8. The upgrade has not been authorized. Review whether the proposal is necessary and safe, including ordinary executor context/lifecycle assumptions. The only change requested is this review.",
+      "criteria": [
+        {
+          "id": "baseline",
+          "expected": "Preserves Java17 compatibility and identifies unsupported newer executor API; no automatic upgrade or preview enablement."
+        },
+        {
+          "id": "serialization",
+          "expected": "Eight-way limit does not preserve single-worker serialization/state confinement; ordering/ownership must be retained if changing execution."
+        },
+        {
+          "id": "adequate",
+          "expected": "Keeping current executor is acceptable given measured adequacy; describe what changed demand or evidence could justify reconsideration."
+        },
+        {
+          "id": "scoped-review",
+          "expected": "Avoids implementing migration or forcing a large study; context transfer and provider/task completion cannot be assumed merely from executor replacement."
+        }
+      ]
+    },
+    {
+      "id": "M5-memory-attribution",
+      "skills": ["jvm-memory-regions", "performance-methodology"],
+      "request": "An isolated Windows HotSpot25 G1 process has Xms=Xmx=256MiB and NMT enabled. Between two snapshots it allocates, touches and retains64MiB of byte arrays. NMT Java Heap committed stays262144KiB; total NMT committed rises4KiB; the process working set rises67,313,664 bytes. A reviewer calls this proof of a64MiB untracked native leak and proposes reducing Xmx in production. Assess the claim, identify the useful next evidence, and separate what this fixture establishes from a Linux pod memory budget. No production incident, cgroup data or heap dump is supplied.",
+      "criteria": [
+        {
+          "id": "residency",
+          "expected": "Committed allocation accounting and resident working set differ; newly touched pages in an already committed heap are a plausible explanation, so flat NMT is not proof of external native allocation or leak."
+        },
+        {
+          "id": "retention-versus-leak",
+          "expected": "Known retained arrays and one interval do not establish unwanted retention/leak; use lifecycle/representative trends or attribution evidence as needed."
+        },
+        {
+          "id": "platform-scope",
+          "expected": "Windows working-set observation is not Linux RSS/cgroup-charge equivalence or a validated container budget."
+        },
+        {
+          "id": "decision",
+          "expected": "No unjustified production Xmx reduction; targeted matched evidence and stated limit suffice rather than forced broad tuning."
+        }
+      ]
+    },
+    {
+      "id": "M6-holdout-complete-bucket-bound",
+      "skills": ["latency-statistics", "performance-methodology"],
+      "request": "A reporting-only service has no requested code or collector change. In a completed observation window all1000 eligible requests are recorded in a finite histogram bucket with upper bound100ms; there are no missing, dropped, clamped or overflow observations. Deadline is300ms. A reviewer refuses to report even a lower bound on the observed deadline-success fraction because the histogram lacks a300ms boundary. Separately, a degenerate population has every value exactly10ms;1000 draws therefore all equal10ms. The reviewer says exactly10 of those draws must be strictly above its population p99 because n*(1-.99)=10. Assess both claims and provide the proportionate result. Do not turn the finite-window result into a future population guarantee.",
+      "criteria": [
+        {
+          "id": "deadline-bound",
+          "expected": "At least/all1000 observed requests are within300ms, so observed deadline fraction has lower bound1; an exact300ms bucket is unnecessary for this conclusion."
+        },
+        {
+          "id": "ties",
+          "expected": "Degenerate10ms distribution has no values strictly above p99; n*(1-p) strict-tail expectation relies on appropriate continuous/no-atom conditions."
+        },
+        {
+          "id": "scope",
+          "expected": "Reports supported finite-window/descriptive conclusions without forced new histogram, runtime tuning, confidence interval or broader investigation."
+        },
+        {
+          "id": "honesty",
+          "expected": "Does not infer future SLO compliance or invent unobserved samples/performance results."
+        }
+      ]
+    }
+  ],
+  "baselineCommit": "e6ad4bdc2344f0d5aa61c63f810fbac464b59908",
+  "bundles": {
+    "a": {
+      "arm": "no supplied skill",
+      "sha256": "2d62c379c0e0af774a8a99ae6e03ef4847b7e71db85ad90b27cdc4c2c4aed61f",
+      "bytes": 4635
+    },
+    "b": {
+      "arm": "immutable baseline skills",
+      "sha256": "2e414867f6bd20ad2b1e96d41acf151cc312053f5de24e92b8cbc0ce60a55754",
+      "bytes": 185380,
+      "files": [
+        "skills/jvm-memory-regions/SKILL.md",
+        "skills/jvm-memory-regions/references/container-budget.md",
+        "skills/jvm-memory-regions/references/oom-triage.md",
+        "skills/latency-statistics/SKILL.md",
+        "skills/latency-statistics/references/comparing-two-measurements.md",
+        "skills/latency-statistics/references/coordinated-omission.md",
+        "skills/latency-statistics/references/histograms-and-aggregation.md",
+        "skills/littles-law-and-queueing/SKILL.md",
+        "skills/littles-law-and-queueing/references/sizing-worksheet.md",
+        "skills/littles-law-and-queueing/references/utilisation-curve.md",
+        "skills/performance-methodology/SKILL.md",
+        "skills/performance-methodology/references/folklore.md",
+        "skills/performance-methodology/references/investigation-checklist.md",
+        "skills/performance-methodology/references/methods-and-failure-modes.md",
+        "skills/performance-methodology/references/reporting-a-finding.md",
+        "skills/thread-sizing-and-virtual-threads/SKILL.md",
+        "skills/thread-sizing-and-virtual-threads/references/incident-triage.md",
+        "skills/thread-sizing-and-virtual-threads/references/sizing-and-adoption.md"
+      ]
+    },
+    "c": {
+      "arm": "revised skills",
+      "sha256": "60e6821475e65c9320b1a3408af007ca5d01c01508f212b6ed3e18337a610814",
+      "bytes": 196074,
+      "files": [
+        "skills/jvm-memory-regions/SKILL.md",
+        "skills/jvm-memory-regions/references/container-budget.md",
+        "skills/jvm-memory-regions/references/oom-triage.md",
+        "skills/latency-statistics/SKILL.md",
+        "skills/latency-statistics/references/comparing-two-measurements.md",
+        "skills/latency-statistics/references/coordinated-omission.md",
+        "skills/latency-statistics/references/histograms-and-aggregation.md",
+        "skills/littles-law-and-queueing/SKILL.md",
+        "skills/littles-law-and-queueing/references/sizing-worksheet.md",
+        "skills/littles-law-and-queueing/references/utilisation-curve.md",
+        "skills/performance-methodology/SKILL.md",
+        "skills/performance-methodology/references/folklore.md",
+        "skills/performance-methodology/references/investigation-checklist.md",
+        "skills/performance-methodology/references/methods-and-failure-modes.md",
+        "skills/performance-methodology/references/reporting-a-finding.md",
+        "skills/thread-sizing-and-virtual-threads/SKILL.md",
+        "skills/thread-sizing-and-virtual-threads/references/incident-triage.md",
+        "skills/thread-sizing-and-virtual-threads/references/sizing-and-adoption.md"
+      ],
+      "sourceHashes": [
+        {
+          "path": "skills/jvm-memory-regions/SKILL.md",
+          "sha256": "3913ea53faf6cf519b729959c2c8d988f9d12e76875974a544732180bc2d29dc"
+        },
+        {
+          "path": "skills/jvm-memory-regions/references/container-budget.md",
+          "sha256": "83b2c2c89ace89ab329cafcf8c9ce7eebde6ed9eea6bb28f2d05903e3364c454"
+        },
+        {
+          "path": "skills/jvm-memory-regions/references/oom-triage.md",
+          "sha256": "01372dabec74d67d0f29c8cf2c14899c3416fa5b0c1a8dc717115d10600f391f"
+        },
+        {
+          "path": "skills/latency-statistics/SKILL.md",
+          "sha256": "f156290c6974bdb3ccc7562b9ec888065981e2f3f10b9f5b11a3ae2bc556e56e"
+        },
+        {
+          "path": "skills/latency-statistics/references/comparing-two-measurements.md",
+          "sha256": "a762d38cf79e10fe468357d73c13e0155974ac29e476742d4f20bdf8715dbeab"
+        },
+        {
+          "path": "skills/latency-statistics/references/coordinated-omission.md",
+          "sha256": "9247ac41c53a2ba4ca2659399801be463a8d5ccc4c9d1e58242125b7e3343040"
+        },
+        {
+          "path": "skills/latency-statistics/references/histograms-and-aggregation.md",
+          "sha256": "b22c45b8b56f0a4ee8195db132deb2e952824dbe69d9b5c806e5fad5cbc491b0"
+        },
+        {
+          "path": "skills/littles-law-and-queueing/SKILL.md",
+          "sha256": "573fe0eadcd280188b70af65109232e224d709c39dad58d642e1a04eaa9b7e0e"
+        },
+        {
+          "path": "skills/littles-law-and-queueing/references/sizing-worksheet.md",
+          "sha256": "e3a0359a13d51c4b98a51863e36c58fad478fda7751cbda4f656f387e3a885e0"
+        },
+        {
+          "path": "skills/littles-law-and-queueing/references/utilisation-curve.md",
+          "sha256": "d295c1a66eff7cd9d5744a6c32bbe49d09995c98b7870ed807178ebe4d37f0fe"
+        },
+        {
+          "path": "skills/performance-methodology/SKILL.md",
+          "sha256": "4f22a5aa40c16ae02361793a4caafa85721ee37594f6edd7d9dcd520182666a9"
+        },
+        {
+          "path": "skills/performance-methodology/references/folklore.md",
+          "sha256": "4a157044f771f1f62c2f65ea05f952a3781b89c3107d28d194815bffd6a9ea9a"
+        },
+        {
+          "path": "skills/performance-methodology/references/investigation-checklist.md",
+          "sha256": "c925e035eeaecbc09060a4a6685fc8ad326768aaa3f5d7046333b8cadb0ca7f7"
+        },
+        {
+          "path": "skills/performance-methodology/references/methods-and-failure-modes.md",
+          "sha256": "09594262952531d61a0f06656457a44fc32a7243912c52d7fadd0b8f76fb4858"
+        },
+        {
+          "path": "skills/performance-methodology/references/reporting-a-finding.md",
+          "sha256": "001e4ac30d2bff9ecd99811c60aa8103650f44f3400512235cff45cefcfe8ddc"
+        },
+        {
+          "path": "skills/thread-sizing-and-virtual-threads/SKILL.md",
+          "sha256": "bb1398c06e96a24b64371e692ed0eb65b7aab48896c352fbb4590ca8fccafd8e"
+        },
+        {
+          "path": "skills/thread-sizing-and-virtual-threads/references/incident-triage.md",
+          "sha256": "adc4832813073190a20e5c1eb293b1c2d2ca42eee4088c6a5045de16673b21e4"
+        },
+        {
+          "path": "skills/thread-sizing-and-virtual-threads/references/sizing-and-adoption.md",
+          "sha256": "394fc8831406e76cee4449289c9c4e34a72a7430237c5bdd0e87e52a937010f3"
+        }
+      ]
+    }
+  },
+  "selectedWritersStopped": true,
+  "artifactDirectory": "C:/Users/robso/AppData/Local/Temp/catalog-measurement-evaluation-Qyvpgw",
+  "execution": {
+    "status": "completed",
+    "date": "2026-09-10",
+    "mechanism": "Three fresh default agents with fork_turns:none and no model/reasoning overrides. Exact deployment identifier was not reported by the tool. One sample per arm, six ordered cases.",
+    "agents": {
+      "a": "/root/measurement_sample_a",
+      "b": "/root/measurement_sample_b",
+      "c": "/root/measurement_sample_c"
+    },
+    "responses": [
+      {
+        "arm": "a",
+        "condition": "no supplied skill",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/catalog-measurement-evaluation-Qyvpgw/a-response.md",
+        "sha256": "7deefb56867b899fed941cd45f9222b6d048ec85ca242efaef0487c37ef2a2fa",
+        "rawResponse": "## M1-capacity-versus-occupancy\n\n**Fifteen workers cannot support the requested 300 tasks/s under the stated CPU budget.** Each task consumes 0.010 CPU-seconds, so the ideal CPU ceiling is `1.5 / 0.010 = 150 tasks/s`, before overhead or operating headroom. Reaching 300 tasks/s requires at least 3 CPU equivalents at that per-task cost.\n\nIn the first trace, worker occupancy is 100 ms. At 150 tasks/s, mean occupied workers would be `150 × 0.100 = 15`; this explains the proposal's arithmetic. At 300 tasks/s, the corresponding occupancy would be 30 workers, but supplying those workers alone cannot supply the missing CPU. These are mean service-demand calculations, not proof of sustainable throughput or acceptable queueing.\n\nAlternatives are to lower the admitted rate, increase CPU capacity, or reduce CPU work per task. With 1.5 CPU equivalents, 300 tasks/s requires at most 5 ms CPU per task before headroom. Virtual threads could reduce the platform-thread cost of genuine blocking, while leaving the CPU and downstream capacity constraints intact.\n\nIn the second trace, the 90 ms is runnable/quota delay, not blocked worker time suitable for the blocking compensation formula. It reflects scheduling contention or throttling and can change with concurrency. It does not justify 15 workers; adding workers could add contention. The measured 10 ms CPU demand still makes 300 tasks/s infeasible under the budget.\n\nThe smallest useful next validation is a bounded, representative concurrency sweep near the feasible rate, confirming completed throughput, CPU-seconds per completion, effective CPU quota, and actual blocking versus runnable delay. Keep admission bounded and check whether additional workers improve completions or merely increase waiting. No validation run is supplied here.\n\n## M2-non-jvm-cost-goal\n\n**Defer the distributed cache and spend the half-day budget attributing the 18% increase in cost per successful image.** The current deadline and correctness checks are satisfied; the decision criterion is cost efficiency subject to preserving those outcomes.\n\nUsing the supplied daily artifacts, compare last week with the preceding baseline and reconcile:\n\n- Total cost divided by successful image count, separating billed CPU, storage, and network contributions.\n- Billed CPU hours per successful image, alongside input-size distributions and batch volumes. Larger inputs or smaller batches can change this ratio without a regression in conversion efficiency.\n- Retry volume and its associated repeated CPU, storage, and network work. Ensure the denominator counts successful images consistently rather than processing attempts.\n- Changes in resource quantities versus effective charges, where the artifacts permit that distinction. Billed CPU hours alone do not establish useful CPU utilization.\n\nStratify comparisons by input size where possible so a changed workload mix is not mistaken for an implementation regression. Identify whether the increase is primarily repeated work, greater work per image, billing, or fixed costs spread over fewer images.\n\nA cache becomes a candidate only if evidence shows repeated, reusable conversions and plausible avoided cost exceeds cache operation, storage, and transfer costs. The supplied artifacts do not establish a reusable hit rate; retries alone do not prove cacheability.\n\nStop when a dominant contribution is reconciled sufficiently to select a small, measurable intervention with a cost-per-success target and the existing deadline/correctness guardrails. If attribution remains unresolved at half a day, record the unexplained amount and the smallest missing measurement needed. Do not use that uncertainty as a reason to introduce a distributed cache. This exercise provides no executed job or measured cache benefit.\n\n## M3-quantile-estimands\n\n**The contrasts disagree: averaging run contrasts gives a 15 ms improvement; pooling requests gives a 10 ms regression.** Positive B-minus-A means slower B.\n\n| Calculation | A p99 | B p99 | B minus A |\n| --- | ---: | ---: | ---: |\n| Run 1, rank 990 of 1,000 | 10 ms | 20 ms | +10 ms |\n| Run 2, rank 10 of 10 | 100 ms | 60 ms | −40 ms |\n| Equal-weight mean of run contrasts | — | — | −15 ms |\n| Pooled requests, rank 1,000 of 1,010 | 10 ms | 20 ms | +10 ms |\n\nThe pooled rank is `ceil(0.99 × 1010) = 1000`. Each pooled population contains 1,000 fast requests followed by 10 slower requests, so its p99 remains in the fast group.\n\nThe mean contrast answers how B changes each run's p99 when the two runs receive equal weight. The pooled contrast answers how the p99 changes in the combined request population, where Run 1 supplies 1,000 of 1,010 requests. Quantiles are nonlinear; averaging quantiles does not generally recover the quantile of the pooled data. Equal A/B counts within each run do not make these estimands equivalent.\n\nBefore a confidence interval or release conclusion, fix the intended estimand, production workload/run weights, release criterion, and independent experimental unit. Preserve run pairing and relevant dependence in any uncertainty analysis; treating requests as independent experimental replications could severely overstate precision. Collect representative independent paired runs under a suitable comparison design.\n\nThese are exact descriptive calculations for the supplied complete populations. Two synthetic runs do not establish production representativeness or support a production release conclusion. A confidence interval needs an explicit sampling or experimental target beyond these fixed observations.\n\n## M4-serial-migration-contract\n\n**The replacement is neither necessary on the supplied evidence nor safe as proposed.** The existing system meets accepted peak and overload-recovery targets. A Java upgrade is also outside the authorized scope.\n\nThe single-thread executor serializes ledger updates. A semaphore of eight permits up to eight concurrent tasks and therefore removes that protection. Independent incoming requests can still conflict through the shared mutable ledger. Virtual threads do not make its operations atomic or preserve the executor's task sequence.\n\nRetain the current design unless a measured requirement justifies changing it. If provider waits later become a demonstrated constraint, consider separating independent provider work from a serialized ledger update, but first specify ordering, stale-result handling, failure behavior, and the atomic ledger operation. A semaphore of one can provide mutual exclusion but does not by itself reproduce submission ordering or all executor behavior.\n\nThe review should also preserve these ordinary executor contracts:\n\n- **State and context:** Serial execution does not protect ledger access occurring outside the executor. A single-thread executor may replace a failed worker, so correctness must not require one physical thread forever. Carry request context explicitly and clean up thread-local state; neither submission nor virtual threads guarantee correct propagation of arbitrary context.\n- **Admission:** Preserve the accepted bounded-ingress behavior across queued and executing work. Acquiring a semaphore inside each virtual task bounds permit holders, not the number of created tasks waiting for permits.\n- **Completion and lifecycle:** Observe submitted-task failures, define rejection after shutdown, and retain explicit executor ownership and draining behavior. Cancellation and interruption are cooperative, blocking providers may not promptly respond, and interrupting a task does not undo a ledger update.\n\nDocument the current serialization and lifecycle guarantees as the review's next action. No migration, upgrade, or executed validation is warranted by this review request.\n\n## M5-memory-attribution\n\n**This does not prove an untracked native leak and does not justify reducing production `Xmx`.** It is consistent with touching previously nonresident pages in an already committed Java heap.\n\nWith `Xms=Xmx=256 MiB`, NMT's Java Heap committed value of 262,144 KiB already accounts for that committed heap capacity. Allocating Java objects inside it need not increase committed capacity. NMT committed memory is not a count of live Java object bytes or resident physical pages.\n\nThe retained arrays total 64 MiB, or 67,108,864 bytes. The working-set increase is 67,313,664 bytes: 64 MiB plus 204,800 bytes, or 200 KiB. That numerical proximity supports the heap-residency explanation, but does not attribute every page. The additional 200 KiB and NMT's 4 KiB committed increase measure different things and cannot simply be reconciled as an untracked allocation. NMT also does not cover every possible native allocation, so its small delta cannot independently exclude one.\n\nThe smallest useful next evidence is synchronized heap-used/committed measurements, an NMT baseline diff, and a Windows resident-memory breakdown locating the added pages in heap versus other regions. Confirm the intended retained payload through heap measurements; if retention is subsequently removed in the fixture, distinguish reclaimed objects from pages remaining resident. A working set that stays high after collection is not, by itself, a leak.\n\nThis fixture establishes that process residency can rise substantially while NMT committed heap stays constant during deliberate Java allocation and retention. It does not establish production leakage, production heap headroom, or safe heap reduction.\n\nA Linux pod budget requires separate workload and cgroup evidence: heap occupancy and GC headroom, native memory, thread stacks, buffers, code/metaspace, file-backed or page-cache charges, and other processes charged to the cgroup. Inspect the actual limit and memory accounting, including pressure/OOM events. Windows working set is not a substitute for those measurements, and no production budget can be derived from this fixture alone.\n\n## M6-holdout-complete-bucket-bound\n\n**The observed deadline-success fraction is exactly 100%: 1,000 of 1,000 eligible requests met the 300 ms deadline.** Every recorded value is bounded above by 100 ms, and the supplied completeness conditions exclude missing or concealed observations. Thus even a conservative lower bound is 100%. A boundary at 300 ms is unnecessary when every observation already belongs to a bucket wholly below the deadline.\n\nReport: “In this completed observation window, all 1,000 eligible requests met the 300 ms deadline.” This establishes the finite-window result; it does not guarantee the success fraction of future requests or an underlying population. No code or collector change is needed for this report.\n\n**The claim about exactly ten strictly greater draws is also false.** In the degenerate population, the population p99 is 10 ms and every draw is exactly 10 ms. Consequently, zero of the 1,000 draws are strictly above the population p99.\n\nA quantile can have probability mass at its value, so the probability strictly above p99 need not equal 1%. Even for independent draws from a continuous distribution with exactly 1% probability above its p99, `1000 × 0.01 = 10` would be an expected count, not a guaranteed count. Here that tail probability and expected count are both zero.\n",
+        "results": [
+          {
+            "caseId": "M1-capacity-versus-occupancy",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "cpu-bound",
+                "status": "met"
+              },
+              {
+                "id": "occupancy-not-guarantee",
+                "status": "met"
+              },
+              {
+                "id": "wrong-wait",
+                "status": "met"
+              },
+              {
+                "id": "decision-and-evidence",
+                "status": "met"
+              }
+            ],
+            "evidence": "Calculated150tasks/s CPU ceiling and3CPU equivalents for300; distinguished worker occupancy from capacity and rejected quota/runnable delay as blocked W. Alternatives and bounded checks remained proposed."
+          },
+          {
+            "caseId": "M2-non-jvm-cost-goal",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "actual-goal",
+                "status": "met"
+              },
+              {
+                "id": "existing-context",
+                "status": "met"
+              },
+              {
+                "id": "conditional-cache",
+                "status": "met"
+              },
+              {
+                "id": "bounded-transition",
+                "status": "met"
+              }
+            ],
+            "evidence": "Used cost per successful image with deadline/correctness guardrails, reused available billing/mix/retry evidence, deferred cache without reuse economics and bounded the next decision."
+          },
+          {
+            "caseId": "M3-quantile-estimands",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "arithmetic",
+                "status": "met"
+              },
+              {
+                "id": "estimand",
+                "status": "met"
+              },
+              {
+                "id": "inference",
+                "status": "met"
+              },
+              {
+                "id": "verification-limits",
+                "status": "met"
+              }
+            ],
+            "evidence": "Computed mean paired run-p99 contrast−15ms and pooled contrast+10ms, distinguished estimands/weights/pairing and declined production inference from two synthetic runs."
+          },
+          {
+            "caseId": "M4-serial-migration-contract",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "baseline",
+                "status": "met"
+              },
+              {
+                "id": "serialization",
+                "status": "met"
+              },
+              {
+                "id": "adequate",
+                "status": "met"
+              },
+              {
+                "id": "scoped-review",
+                "status": "met"
+              }
+            ],
+            "evidence": "Retained the currentJava17 design, rejected the unauthorizedJava25 migration and eight-way concurrency as preserving serialization, and addressed context, admission and provider/executor lifetimes."
+          },
+          {
+            "caseId": "M5-memory-attribution",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "residency",
+                "status": "met"
+              },
+              {
+                "id": "retention-versus-leak",
+                "status": "met"
+              },
+              {
+                "id": "platform-scope",
+                "status": "met"
+              },
+              {
+                "id": "decision",
+                "status": "met"
+              }
+            ],
+            "evidence": "Rejected native-leak/Xmx conclusions from flat commitment; considered touched precommitted heap residency and deliberate retention, with scoped Windows evidence rather than a Linux budget."
+          },
+          {
+            "caseId": "M6-holdout-complete-bucket-bound",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "deadline-bound",
+                "status": "met"
+              },
+              {
+                "id": "ties",
+                "status": "met"
+              },
+              {
+                "id": "scope",
+                "status": "met"
+              },
+              {
+                "id": "honesty",
+                "status": "met"
+              }
+            ],
+            "evidence": "Reported observed100%deadline compliance from the complete below-deadline bucket and zero strict-tail observations for the degenerate population; no new instrumentation or future guarantee."
+          }
+        ]
+      },
+      {
+        "arm": "b",
+        "condition": "immutable baseline skills",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/catalog-measurement-evaluation-Qyvpgw/b-response.md",
+        "sha256": "2e9161b0bec430b54c4607d2ead0334dc13d01ce5a3969d35c2662e68e060c2f",
+        "rawResponse": "## M1-capacity-versus-occupancy\n\n**Fifteen workers is a saturation hypothesis for about 150 tasks/s; it cannot establish capacity for 300 tasks/s.** With genuinely blocked time, the calculation is `1.5 × (1 + 90/10) = 15` workers. Each task occupies a worker for a mean 100 ms before additional queueing, giving `15 / 0.100 = 150 tasks/s`. Independently, the task CPU ceiling is `1.5 / 0.010 = 150 tasks/s`. Achieving 300 tasks/s would demand 3 CPU equivalents, twice the available task budget. These are conditional mean-demand calculations, not measured throughput or SLO guarantees; operation at the ceiling leaves no headroom.\n\nViable alternatives are to reduce admitted demand, increase task CPU capacity beyond the 3 equivalents required at the target to provide justified headroom, or reduce mean CPU demand below the 5 ms/task capacity boundary. Reducing blocking alone does not remove the CPU ceiling. Virtual threads may reduce the cost of waiting, but do not supply missing CPU capacity; retain ingress and dependency limits.\n\nIn the second trace, the 90 ms is runnable/quota delay. Treating it as independent blocking makes the sizing formula circular: adding workers can create more of the delay used to justify adding workers. The 150 tasks/s CPU ceiling still applies if 10 ms remains actual CPU consumption per task. Fifteen workers has no supported sizing justification from this trace.\n\nThe smallest useful next validation is a bounded comparison of nearby worker counts around 15 for the blocking trace, and a small CPU parallelism sweep starting at 1 and 2 for the runnable trace. Hold effective quota, workload and admission policy constant; verify CPU-time versus blocked/runnable-time accounting. Record useful completions, task CPU, throttling, queue age, deadlines and dependency occupancy, including recovery after a short bounded overload. Select against explicit throughput and tail targets; no such validation has been run here.\n\n## M2-non-jvm-cost-goal\n\n**Defer the distributed cache decision and use the half-day budget to explain the 18% increase in cost per successful image.** The decision metric is cost, with the six-hour deadline and output correctness retained as guardrails. A request-latency SLO is unnecessary for this investigation.\n\nFirst reconstruct each day's numerator and denominator: total attributable CPU, storage and network cost divided by unique successfully processed images. Count retry costs once in expenditure without counting retry attempts as additional successful images. Check billing rates, fixed charges and allocation rules; billed CPU hours alone do not identify CPU efficiency. Confirm the reported 18% change against comparable days.\n\nThen separate plausible drivers using the supplied daily artifacts:\n\n- Larger or more expensive inputs: compare size distributions and any recorded conversion classes, rather than only mean image size.\n- More retries: compare attempts per successful image and their CPU/network cost.\n- Lower batch volume: determine whether fixed costs are spread across fewer outputs.\n- Higher storage/network expenditure or prices: identify the category contributing the increase.\n\nDaily aggregates can locate an accounting change without proving its mechanism. Compare like input-size and volume cohorts where the artifacts permit; name missing resolution explicitly.\n\nOnly if repeated reusable conversions plausibly account for material expenditure should caching advance. Seek evidence of reuse for the same source content, conversion parameters and output-version semantics. Estimate avoided computation against cache lookup, storage, transfer and operating costs, including invalidation and correctness requirements. No reuse evidence is supplied, so expected cache savings remain unknown.\n\nStop within half a day when the increase is explained well enough to choose a targeted next action, or when even an optimistic cache benefit cannot justify its costs. If the evidence cannot distinguish causes, deliver the unresolved cost component and one targeted measurement needed next. A supported opportunity would justify a bounded comparison preserving deadline and correctness, not immediate cache deployment. The job has not been run in this exercise.\n\n## M3-quantile-estimands\n\n**The contrasts disagree: equal weighting of paired run p99 differences gives −15 ms; pooling requests gives +10 ms.** Signs below are B minus A, so negative means lower latency.\n\n| Population | Nearest-rank position | A p99 | B p99 | B − A |\n| --- | ---: | ---: | ---: | ---: |\n| Run 1, 1,000 requests per arm | 990 | 10 ms | 20 ms | +10 ms |\n| Run 2, 10 requests per arm | 10 | 100 ms | 60 ms | −40 ms |\n| Pooled, 1,010 requests per arm | 1,000 | 10 ms | 20 ms | +10 ms |\n\nThe equal-run contrast is `(+10 − 40) / 2 = −15 ms`. It answers the mean paired difference in per-run p99 when each run receives equal weight. It does not calculate a quantile of all requests.\n\nIn each pooled arm, the first 1,000 sorted observations come from Run 1. The ten slower Run 2 observations occupy ranks 1,001–1,010, above the pooled p99 rank. Thus the request-weighted mixture reports a 10 ms regression. Equal A/B counts within each run preserve matching mixture weights between treatments; they do not make a quantile linear across runs. Traffic-weighting the per-run quantiles would not generally recover the pooled quantile either.\n\nBefore an interval or release conclusion, fix the target: an equally weighted run-level effect, a request-weighted production mixture, or another explicitly weighted cohort. Also fix the practical regression/improvement margin, clock and outcome policy, workload/state, assignment and pairing design, and independent experimental unit. The nearest-rank convention is already specified.\n\nThese are exact descriptive calculations for the supplied finite populations. A population or treatment-effect confidence interval needs a defensible sampling/experimental design and replication of the relevant runs, hosts or periods; individual request resampling must not manufacture independent process runs. These two synthetic runs do not establish production representativeness or a release effect. Keep the descriptive disagreement and obtain an appropriately designed comparison before a release decision.\n\n## M4-serial-migration-contract\n\n**Keep the current execution model on the evidence supplied. The proposed migration is unnecessary for the accepted workload and does not preserve the ledger contract.** Peak and recovery targets already pass with bounded ingress. Although `newSingleThreadExecutor()` has an unbounded internal queue, the stated external bound can make total admission bounded; replacing it solely because of that queue would ignore the supplied operating evidence. The Java 25 upgrade is also outside the authorized scope.\n\nIncoming requests may be independent as business operations, but their shared mutable ledger makes execution coordination necessary. One worker serializes task execution. A semaphore of 8 permits concurrent ledger access and can introduce data races, lost updates and reordered effects. If the semaphore protects only provider calls, ledger updates remain unprotected; if it protects entire tasks, eight concurrent tasks still violate serialization. Even one permit does not automatically reproduce executor submission order, because virtual-thread scheduling can change semaphore acquisition order.\n\nIf a future requirement exposes provider blocking as a material bottleneck, consider separating concurrent provider work from an explicitly serialized ledger owner, preserving required ordering, visibility, atomicity and provider-side-effect semantics. Establish those contracts before selecting an execution model or runtime upgrade.\n\nOrdinary executor assumptions also need review:\n\n- Pass request context explicitly or install and clean it per task. Pooled `ThreadLocal` state can leak between requests; per-task threads change reuse and inheritance behavior. Confirm provider thread-safety and any affinity requirements. A single-thread executor can replace a failed worker, so it is not a permanent physical-thread identity guarantee.\n- Observe submitted futures and failures. Preserve ledger consistency on exceptions and cancellation. Caller timeout or `Future.cancel` does not establish that provider work has stopped; resource permits must cover its actual lifetime.\n- Keep bounded ingress and explicit rejection. A semaphore bounds holders, not arbitrarily many waiting tasks or retained contexts.\n- On Java 17, the lifecycle owner must stop admission, shut down, await bounded termination and handle interruption-resistant work. A future Java 25 executor `close()` waits orderly without a timeout and needs an external bounded shutdown policy.\n\nIf reconsidered later, validate ledger invariants and ordering under concurrent requests, blocked providers, cancellation, rejection and shutdown. Those checks are proposed; this review requests no implementation or upgrade.\n\n## M5-memory-attribution\n\n**The snapshots do not prove an untracked native leak and do not justify lowering production `Xmx`.** Java heap committed remains `262,144 KiB = 256 MiB`, consistent with the fixed initial/maximum heap. Allocation can consume already committed heap, and touching its pages can increase physical residency without increasing NMT heap commitment.\n\nThe supplied array payload is `64 MiB = 67,108,864 bytes`; working-set growth is `67,313,664 bytes`, approximately 64.195 MiB, or 200 KiB more than the payload. This is compatible with touched heap pages becoming resident. Array headers, other activity and working-set accounting prevent exact attribution from those totals alone. The 4 KiB NMT commitment increase measures a different quantity; subtracting it from working-set growth does not measure untracked native allocation.\n\nThe fixture establishes that retained, touched Java allocations and increased working set can coexist with unchanged heap commitment. Intentional retention is not itself a leak. It does not establish ownership of every additional resident page, eliminate every possible native allocation, or reproduce a production failure.\n\nNext, align process identity and timestamps and compare logical heap usage, allocation/GC evidence and the complete NMT category diff. For precise residency attribution, inspect Windows mapping and working-set evidence for the heap ranges, distinguishing private/shared resident pages from virtual reservation and commitment. Compare equivalent workload and reclamation points if investigating continuing growth. A heap dump is not the necessary first step. Reducing `Xmx` without a live-set and capacity assessment could instead create Java heap exhaustion or GC pressure.\n\nA Linux pod budget requires separate evidence: the deployed JDK/collector/flags and detected limits, container versus ancestor scope, `memory.current`, `memory.stat`, `memory.events`, process RSS/PSS, and representative simultaneous peaks. Account for heap residency, JVM/native regions, file/tmpfs/kernel charges and other processes within the applicable cgroup, without double-counting, then reserve recovery headroom. Windows working set and NMT committed are not Linux cgroup charge. No pod data or incident is supplied, so this fixture supports neither a production heap target nor an OOM diagnosis.\n\n## M6-holdout-complete-bucket-bound\n\n**Report an exact observed deadline fraction of 100% for the completed window.** All 1,000 eligible observations are at most 100 ms, hence below the 300 ms deadline:\n\n`observed fraction meeting deadline = 1,000 / 1,000 = 100%`.\n\nThat is also a tight lower bound. A bucket boundary exactly at 300 ms is unnecessary here because no observation lies in a bucket straddling the deadline. Completeness and the absence of clamping or overflow are explicitly supplied. This establishes deadline compliance for this observed window; it does not guarantee the fraction in future traffic. No instrumentation, code or collector change is needed for this report.\n\n**The number strictly above the degenerate population's p99 is zero.** Every population value is 10 ms, so its p99 is 10 ms and none of the 1,000 draws exceeds it.\n\n`n(1 − p)` does not prescribe an exact exceedance count. With an atom at the population quantile, the probability strictly above it can be smaller than `1 − p`; here it is zero. Even for independent draws from a continuous distribution with exactly 1% exceedance probability, ten would be an expected count, not a requirement on each sample. The supplied degenerate case requires neither extra sampling nor a more elaborate model to resolve this claim.\n",
+        "results": [
+          {
+            "caseId": "M1-capacity-versus-occupancy",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "cpu-bound",
+                "status": "met"
+              },
+              {
+                "id": "occupancy-not-guarantee",
+                "status": "met"
+              },
+              {
+                "id": "wrong-wait",
+                "status": "met"
+              },
+              {
+                "id": "decision-and-evidence",
+                "status": "met"
+              }
+            ],
+            "evidence": "Calculated150tasks/s CPU ceiling and3CPU equivalents for300; distinguished worker occupancy from capacity and rejected quota/runnable delay as blocked W. Alternatives and bounded checks remained proposed."
+          },
+          {
+            "caseId": "M2-non-jvm-cost-goal",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "actual-goal",
+                "status": "met"
+              },
+              {
+                "id": "existing-context",
+                "status": "met"
+              },
+              {
+                "id": "conditional-cache",
+                "status": "met"
+              },
+              {
+                "id": "bounded-transition",
+                "status": "met"
+              }
+            ],
+            "evidence": "Used cost per successful image with deadline/correctness guardrails, reused available billing/mix/retry evidence, deferred cache without reuse economics and bounded the next decision."
+          },
+          {
+            "caseId": "M3-quantile-estimands",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "arithmetic",
+                "status": "met"
+              },
+              {
+                "id": "estimand",
+                "status": "met"
+              },
+              {
+                "id": "inference",
+                "status": "met"
+              },
+              {
+                "id": "verification-limits",
+                "status": "met"
+              }
+            ],
+            "evidence": "Computed mean paired run-p99 contrast−15ms and pooled contrast+10ms, distinguished estimands/weights/pairing and declined production inference from two synthetic runs."
+          },
+          {
+            "caseId": "M4-serial-migration-contract",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "baseline",
+                "status": "met"
+              },
+              {
+                "id": "serialization",
+                "status": "met"
+              },
+              {
+                "id": "adequate",
+                "status": "met"
+              },
+              {
+                "id": "scoped-review",
+                "status": "met"
+              }
+            ],
+            "evidence": "Retained the currentJava17 design, rejected the unauthorizedJava25 migration and eight-way concurrency as preserving serialization, and addressed context, admission and provider/executor lifetimes."
+          },
+          {
+            "caseId": "M5-memory-attribution",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "residency",
+                "status": "met"
+              },
+              {
+                "id": "retention-versus-leak",
+                "status": "met"
+              },
+              {
+                "id": "platform-scope",
+                "status": "met"
+              },
+              {
+                "id": "decision",
+                "status": "met"
+              }
+            ],
+            "evidence": "Rejected native-leak/Xmx conclusions from flat commitment; considered touched precommitted heap residency and deliberate retention, with scoped Windows evidence rather than a Linux budget."
+          },
+          {
+            "caseId": "M6-holdout-complete-bucket-bound",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "deadline-bound",
+                "status": "met"
+              },
+              {
+                "id": "ties",
+                "status": "met"
+              },
+              {
+                "id": "scope",
+                "status": "met"
+              },
+              {
+                "id": "honesty",
+                "status": "met"
+              }
+            ],
+            "evidence": "Reported observed100%deadline compliance from the complete below-deadline bucket and zero strict-tail observations for the degenerate population; no new instrumentation or future guarantee."
+          }
+        ]
+      },
+      {
+        "arm": "c",
+        "condition": "revised skills",
+        "artifact": "C:/Users/robso/AppData/Local/Temp/catalog-measurement-evaluation-Qyvpgw/c-response.md",
+        "sha256": "46c4bcc94a6e24c1821c7ef19ea8b3e9512db372d1e6ffe8bdb3c8726b9eaa36",
+        "rawResponse": "## M1-capacity-versus-occupancy\n\n**Reject the claim that 15 workers suffice for 300 completions/s.** For the genuinely blocked tasks, `1.5 × (1 + 90/10) = 15` is a worker-count hypothesis for saturating the available task CPU budget. That budget supports at most `1.5 / 0.010 = 150 tasks/s` under the supplied demand assumptions, before operating headroom. At that rate, mean occupied workers would be `150 × 0.100 = 15`.\n\nAt 300 completions/s, the tasks require 3 CPU equivalents and approximately 30 occupied workers under unchanged timings. Configuring 30 workers cannot supply the missing CPU capacity. Relevant alternatives are reducing mean CPU demand to at most 5 ms/task, supplying at least 3 task CPU equivalents, or lowering admitted throughput; those equalities still leave no capacity margin. Bound backlog and define rejection/expiry while choosing among them. Virtual threads could reduce the cost of waiting but cannot close the CPU deficit.\n\nIn the second trace, the 90 ms is runnable/quota delay, so it cannot be used as blocked time in the worker heuristic. More workers may merely compete for the same CPU allowance. The CPU-demand ceiling remains 150 tasks/s; observed residence time also includes scheduling effects that can change with concurrency.\n\nThe smallest useful next validation is a short, bounded worker-count comparison under the same representative workload: around 15 for the truly blocked case, and small CPU-oriented parallelism such as 1 versus 2 for the second trace. Measure actual completions, task CPU demand, throttling, occupied workers, queue age and terminal outcomes at attainable load, including recovery after a bounded burst. Select from useful throughput and accepted latency/recovery targets; neither proposed range is a validated optimum. No benchmark has been run here.\n\n## M2-non-jvm-cost-goal\n\n**Defer the distributed cache and use the half-day budget to explain the cost increase.** The decision metric is total attributable cost per successfully processed image, with the existing six-hour deadline and correctness checks as guardrails. A cache is not yet supported by evidence of reusable work or net savings.\n\nReconcile daily billed CPU, storage and network costs with successful-image counts, batch volumes and retries. Use a consistent denominator so failed attempts consume cost without being counted as additional successful images. Separate price changes from resource-quantity changes where billing detail permits. Compare last week with comparable earlier batches, stratifying by image size and checking volume-dependent utilization and fixed-cost amortization. The observed 18% increase could reflect more expensive inputs, additional attempts, changed charges or less efficient execution; it does not identify a computation bottleneck.\n\nRank each component's contribution to the increase. Only pursue caching if repeated equivalent conversions account for enough avoidable cost: identical source content and conversion parameters/version must safely produce reusable results. Estimate plausible hits and avoided conversion cost, then subtract cache lookup, storage, network and operating costs. The supplied artifacts do not establish that reuse rate; identify it as missing evidence rather than inventing a benefit.\n\nStop once the decomposition supports a concrete, economically meaningful next action, or when the half-day expires and the next measurement would not change the cache decision enough to justify its cost. If the increase is explained by legitimate input mix or pricing, retain the architecture and address the relevant cost driver. If attribution remains incomplete, report the unexplained amount and the one missing measurement most likely to change the decision. No job execution or cost reduction is claimed.\n\n## M3-quantile-estimands\n\n**The contrasts differ, including their direction.** With nearest-rank p99:\n\n| Population | A p99 | B p99 | B minus A |\n| --- | ---: | ---: | ---: |\n| Run 1, 1,000 requests per arm | 10 ms | 20 ms | +10 ms |\n| Run 2, 10 requests per arm | 100 ms | 60 ms | −40 ms |\n| Equal-weight mean of paired run contrasts |  |  | **−15 ms** |\n| Pooled requests, 1,010 per arm | 10 ms | 20 ms | **+10 ms** |\n\nThe paired-run mean is `(10 − 40)/2 = −15 ms`: an improvement when each run receives equal weight. It answers the mean difference in run-level p99 for these two runs.\n\nFor each pooled arm, `ceil(.99 × 1010) = 1000`. A's first 1,000 sorted observations are 10 ms; B's are 20 ms. Thus the pooled-request p99 regresses by 10 ms. It answers the quantile contrast for the request-weighted mixture, dominated here by Run 1. Equal A/B counts within each run preserve matching mixture weights across treatments but do not make the two estimands equivalent. Traffic-weighting the run quantiles would not generally recover the pooled quantile either.\n\nBefore constructing an interval or making a release decision, fix the intended population and weighting: equal-weight run-level contrast or pooled-request quantile contrast. Also fix the practical regression/improvement threshold, outcome policy, workload/state and observation window.\n\nThese synthetic two-run data supply exact descriptive arithmetic, not representative experimental replication. A production comparison needs independently replicated units and a defensible allocation/control design, preserving run pairing and relevant host/time clustering. For a run-level estimand, analyze paired run differences; for a pooled estimand, recompute pooled quantiles within each design-respecting resample. Resampling individual request rows cannot manufacture independent runs or resolve treatment confounding. No production confidence interval or release conclusion follows from these figures alone.\n\n## M4-serial-migration-contract\n\n**Retain the Java 17 single-worker design on the supplied evidence.** It already meets accepted peak and overload-recovery targets with bounded ingress. No demonstrated benefit warrants changing its concurrency contract, and the proposed Java 25 upgrade has not been authorized. Virtual-thread-per-task execution requires Java 21 or later; it is unavailable on the current runtime.\n\nThe semaphore of 8 does not preserve ledger safety. Independent incoming requests still share one mutable ledger, whose sequential execution currently supplies confinement. Eight permits allow concurrent ledger access, introducing races and potentially changing update ordering and partial-failure behavior. A semaphore also provides neither thread affinity nor the old executor's ordering contract. Even reducing it to one permit would require checking those semantics and all ledger access paths.\n\nBlocking provider calls alone do not establish a capacity problem. If future measurements justify a redesign, retain one owner for ledger state and consider separating provider waits from serialized ledger transitions. That requires an explicit contract for ordering, stale results, cancellation and failed updates; it is not a drop-in executor replacement. Derive provider concurrency from provider capacity, retaining bounded ingress and waiters. A permit must remain held until the protected operation actually releases its resource, even if its caller has already timed out.\n\nContext and lifecycle also need explicit ownership. Ordinary executor submission does not generally propagate the submitter's thread-local context; inheritable state follows thread creation rather than per-task submission. Moving to one thread per task changes reuse and inheritance behavior. Java 25 scoped-value bindings likewise do not automatically cross ordinary executor submission; establish required context inside the executing task or through a supported propagation mechanism.\n\nAn application-owned executor must observe task failures, stop admission, cancel where appropriate and drain under a bounded shutdown policy. Virtual-thread executor `close()` waits for orderly termination; cancellation is not proof that provider work stopped. Do not create and close the executor casually per request.\n\nNo change is needed from this review. If migration is reopened, the first validation should demonstrate preserved ledger behavior under concurrent provider completion, failure and cancellation before comparing performance. No such validation has been performed here.\n\n## M5-memory-attribution\n\n**The fixture does not prove an untracked native leak and does not justify reducing production Xmx.** It explicitly allocates, touches and retains ordinary Java byte arrays inside an already committed heap.\n\n`262144 KiB` is 256 MiB. NMT heap commitment can remain unchanged while touching previously nonresident pages increases the Windows working set. The reported working-set increase is 64 MiB plus 200 KiB, approximately 64.195 MiB. That is consistent with the supplied heap activity, with additional allocation/runtime effects possible; it is not a measured native allocation total. NMT committed and resident working set measure different accounting sets, so subtracting their deltas does not identify untracked native bytes. Exact residency attribution remains unmeasured.\n\nThe useful next evidence is time-aligned heap used/committed values, NMT baseline/diff, GC activity and process mappings with residency information available on the target Windows build. Relate the growing resident ranges to the heap and compare equivalent collection/workload states. This would distinguish residency growth within precommitted heap from growth elsewhere. Retaining the arrays is deliberate fixture ownership, not evidence of an unwanted production retention defect; no heap dump or production ownership evidence was supplied.\n\nThis controlled fixture establishes that substantial working-set growth can coexist with almost flat NMT commitment during known heap allocation and touching. It does not establish that every extra resident byte belongs to those arrays, exclude all native activity, or describe a production leak.\n\nA Linux pod budget additionally requires the actual container/ancestor limits and aligned cgroup charges, process RSS/PSS, heap and non-heap peaks, other charged file/kernel/native memory, and their overlap under representative load. Derive a candidate heap ceiling by subtracting those allowances and uncertainty/recovery headroom from the relevant limit, then validate GC and service behavior. Windows working-set growth cannot supply those missing measurements or a safe production Xmx value.\n\n## M6-holdout-complete-bucket-bound\n\n**Report 100% observed deadline compliance for the completed window.** All 1,000 eligible requests are accounted for in a finite bucket whose upper bound is 100 ms, below the 300 ms deadline. Therefore at least `1000/1000 = 100%` met the latency deadline; because a fraction cannot exceed 100%, the observed fraction is exactly 100%. A boundary at 300 ms is unnecessary when an entirely compliant bucket already contains the complete population. This says nothing by itself about future windows or a future population guarantee.\n\n**The strictly-above-p99 claim is also false.** For the degenerate population, population p99 is 10 ms and no draw is strictly above 10 ms. The count is zero.\n\n`n(1 − p)` describes an expected tail count when the population has exactly probability `1 − p` strictly beyond its p-quantile, as in the usual continuous case. Even then it is an expectation, not a requirement that every sample contain exactly 10 exceedances. Atoms and ties can reduce the strictly-above probability; here it is zero.\n\nCorrect the report and the explanation. Neither claim requires a code, collector or histogram-schema change for the stated reporting question.\n",
+        "results": [
+          {
+            "caseId": "M1-capacity-versus-occupancy",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "cpu-bound",
+                "status": "met"
+              },
+              {
+                "id": "occupancy-not-guarantee",
+                "status": "met"
+              },
+              {
+                "id": "wrong-wait",
+                "status": "met"
+              },
+              {
+                "id": "decision-and-evidence",
+                "status": "met"
+              }
+            ],
+            "evidence": "Calculated150tasks/s CPU ceiling and3CPU equivalents for300; distinguished worker occupancy from capacity and rejected quota/runnable delay as blocked W. Alternatives and bounded checks remained proposed."
+          },
+          {
+            "caseId": "M2-non-jvm-cost-goal",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "actual-goal",
+                "status": "met"
+              },
+              {
+                "id": "existing-context",
+                "status": "met"
+              },
+              {
+                "id": "conditional-cache",
+                "status": "met"
+              },
+              {
+                "id": "bounded-transition",
+                "status": "met"
+              }
+            ],
+            "evidence": "Used cost per successful image with deadline/correctness guardrails, reused available billing/mix/retry evidence, deferred cache without reuse economics and bounded the next decision."
+          },
+          {
+            "caseId": "M3-quantile-estimands",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "arithmetic",
+                "status": "met"
+              },
+              {
+                "id": "estimand",
+                "status": "met"
+              },
+              {
+                "id": "inference",
+                "status": "met"
+              },
+              {
+                "id": "verification-limits",
+                "status": "met"
+              }
+            ],
+            "evidence": "Computed mean paired run-p99 contrast−15ms and pooled contrast+10ms, distinguished estimands/weights/pairing and declined production inference from two synthetic runs."
+          },
+          {
+            "caseId": "M4-serial-migration-contract",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "baseline",
+                "status": "met"
+              },
+              {
+                "id": "serialization",
+                "status": "met"
+              },
+              {
+                "id": "adequate",
+                "status": "met"
+              },
+              {
+                "id": "scoped-review",
+                "status": "met"
+              }
+            ],
+            "evidence": "Retained the currentJava17 design, rejected the unauthorizedJava25 migration and eight-way concurrency as preserving serialization, and addressed context, admission and provider/executor lifetimes."
+          },
+          {
+            "caseId": "M5-memory-attribution",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "residency",
+                "status": "met"
+              },
+              {
+                "id": "retention-versus-leak",
+                "status": "met"
+              },
+              {
+                "id": "platform-scope",
+                "status": "met"
+              },
+              {
+                "id": "decision",
+                "status": "met"
+              }
+            ],
+            "evidence": "Rejected native-leak/Xmx conclusions from flat commitment; considered touched precommitted heap residency and deliberate retention, with scoped Windows evidence rather than a Linux budget."
+          },
+          {
+            "caseId": "M6-holdout-complete-bucket-bound",
+            "status": "met",
+            "criteria": [
+              {
+                "id": "deadline-bound",
+                "status": "met"
+              },
+              {
+                "id": "ties",
+                "status": "met"
+              },
+              {
+                "id": "scope",
+                "status": "met"
+              },
+              {
+                "id": "honesty",
+                "status": "met"
+              }
+            ],
+            "evidence": "Reported observed100%deadline compliance from the complete below-deadline bucket and zero strict-tail observations for the degenerate population; no new instrumentation or future guarantee."
+          }
+        ]
+      }
+    ],
+    "grading": {
+      "grader": "coordinator",
+      "blinded": false,
+      "outcome": "All18case responses met the fixed outcome criteria;72criterion judgments met. No regression or behavioral advantage established in this sample.",
+      "observedDifferences": "The revised arm explicitly named virtual-thread APIs asJava21+ and absent onJava17, and explicitly named ScopedValue executor propagation. The other arms preservedJava17 and rejected the unauthorizedJava25 replacement while explaining general context/lifecycle limits; the rubric did not require exact API-introduction wording. All arms independently corrected the misleading native-leak and quantile claims.",
+      "limits": [
+        "Single sample per arm; no random model replication.",
+        "Ordered cases may cause carryover.",
+        "Forced bundles do not test automatic activation or selective resource loading.",
+        "Response decisions do not establish runtime or performance results.",
+        "Case outputs are recommendations based on supplied evidence, not implementation execution."
+      ]
+    }
+  },
+  "bundleIntegrity": "All three supplied-bundle hashes match the sealed protocol; all revised Markdown source hashes remain unchanged. The later scoped-values suggestion affected only the omitted manifest.",
+  "accessControls": {
+    "mechanism": "Fresh agents receive selected guidance and requests; judging criteria and unrelated repository artifacts are omitted from their prescribed inputs. Access boundaries are instructions plus reported/observed file-read provenance.",
+    "limitation": "These shared-workspace agents retain general filesystem tools. No per-agent filesystem sandbox or tool-level denial was configured, so withheld does not mean technically inaccessible. No enforced isolation claim is supported. Fresh contexts and recorded accesses reduce contamination but do not prove its absence.",
+    "scope": "Applies to response and coding-action samples in this review. A matched comparison is limited by these controls; future strict isolation requires an authenticated runner with enforceable resource permissions."
+  }
+}

@@ -1,8 +1,9 @@
 # Reducing allocation and validating the fix
 
 Read once evidence names a site, or when reviewing a proposed pool, TLAB flag or unmeasured
-“allocation-free” rewrite. A regression against comparable work or a breached service
-budget is the trigger; there is no universal GC CPU threshold that justifies optimization.
+“allocation-free” rewrite. Use the stated latency, memory, allocation or cost goal and a
+measured opportunity to justify work; a regression or breached service budget is not required
+for an explicitly requested improvement. There is no universal GC CPU threshold for action.
 
 ## From site to intervention
 
@@ -115,7 +116,8 @@ See [TLAB sizing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/shar
 ## Completion check
 
 A successful allocation reduction requires matched before/after total bytes/op and
-site-level evidence, with no semantic regression. If the original goal was latency or
-GC cost, report that outcome independently: lower bytes may be real while the service
+site-level evidence in the affected lifecycle phase, with no semantic regression. A warmed
+steady-state comparison does not establish a cold-start allocation improvement. If the original
+goal was latency or GC cost, report that outcome independently: lower bytes may be real while the service
 benefit remains unproven. For isolated-method experiments, use `jmh-microbenchmarks`;
 for changes in heap/collector policy, retain the relevant GC timeline and occupancy data.

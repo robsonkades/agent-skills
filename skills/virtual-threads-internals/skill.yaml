@@ -1,13 +1,14 @@
 schemaVersion: 1
 
 name: virtual-threads-internals
-version: 1.1.1
+version: 1.1.2
 description: >-
   Diagnose HotSpot virtual-thread mounting, heap stack chunks, FIFO work-stealing scheduling,
-  carrier capture, residual native/foreign pinning after JEP 491, scheduler compensation boundaries
+  carrier capture, residual native/VM-frame pinning after JEP 491, scheduler compensation boundaries
   and memory/GC effects without treating implementation details as API guarantees. Use when pin
-  events, scheduler queue/pool growth, native calls, CPU-ready virtual threads or retained suspended
-  stacks explain a scalability regression on Java 21–25.
+  events, scheduler queue/pool growth, native calls or class initialization, CPU-ready virtual threads
+  or retained suspended stacks explain a scalability regression on Java 21–25. Not introductory
+  adoption (thread-sizing-and-virtual-threads) or general work-stealing design.
 
 license: Apache-2.0
 
@@ -41,6 +42,7 @@ dependencies:
 
 suggests:
   - concurrency-diagnostics
+  - concurrent-collections-and-synchronizers
   - blocking-and-nonblocking-io
   - forkjoinpool-and-work-stealing
 

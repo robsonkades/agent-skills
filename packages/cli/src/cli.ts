@@ -1,6 +1,7 @@
 import { Command, CommanderError } from 'commander';
 import { ExitCode, exitCodeFor } from '@jvm-expert/core';
-import { createContainer } from './container.ts';
+import { createContainer, type Container } from './container.ts';
+import { shouldCheckUpdates, showUpdateNotifications } from './update-notifications.ts';
 import { configureUi, renderError } from './ui.ts';
 import { collect, type GlobalOptions } from './options.ts';
 import { runInstall } from './commands/install.ts';
@@ -16,7 +17,7 @@ import {
 } from './commands/system.ts';
 
 /** Kept equal to packages/cli/package.json by a test; the two ship as one artefact. */
-export const VERSION = '1.5.1';
+export const VERSION = '1.6.0';
 
 const DESCRIPTION = `Install, update and publish AI coding-agent skills.
 
@@ -46,6 +47,11 @@ Documentation: https://github.com/robsonkades/agent-skills`;
 export async function run(argv: readonly string[]): Promise<number> {
   const program = new Command();
   let exitCode: number = ExitCode.OK;
+  let context: Container | undefined;
+  const boot = async (command: Command, options: GlobalOptions) => {
+    context ??= await createContext(command, options);
+    return context;
+  };
 
   program
     .name('agent-skills')
@@ -56,6 +62,7 @@ export async function run(argv: readonly string[]): Promise<number> {
     .option('-v, --verbose', 'Verbose logging')
     .option('-q, --quiet', 'Only print results')
     .option('--no-color', 'Disable coloured output')
+    .option('--no-update-check', 'Skip update checks and interactive notices')
     .option('--allow-insecure', 'Permit plain-HTTP registries (development only)')
     .showHelpAfterError()
     // Without this, commander exits the process itself and our exit-code mapping never runs.
@@ -240,6 +247,27 @@ export async function run(argv: readonly string[]): Promise<number> {
     });
 
   try {
+    program.hook('preAction', async (_command, action) => {
+      if (action.parent !== program) return;
+      const options = action.optsWithGlobals<GlobalOptions & { offline?: boolean }>();
+      if (
+        !shouldCheckUpdates(
+          action.name(),
+          options,
+          {
+            stdin: process.stdin.isTTY === true,
+            stdout: process.stdout.isTTY === true,
+            stderr: process.stderr.isTTY === true,
+          },
+          process.env,
+        )
+      )
+        return;
+      const container = await boot(program, options);
+      if (await showUpdateNotifications(container.notifications, action.name(), options)) {
+        throw new CommanderError(0, 'agent-skills.updated', 'CLI updated');
+      }
+    });
     await program.parseAsync([...argv], { from: 'user' });
     return exitCode;
   } catch (error) {
@@ -263,7 +291,7 @@ function merge<T extends object>(program: Command, options: T): T & GlobalOption
   };
 }
 
-async function boot(program: Command, options: GlobalOptions) {
+async function createContext(program: Command, options: GlobalOptions) {
   const root = program.opts();
   const verbose = options.verbose === true || root['verbose'] === true;
   const quiet = options.quiet === true || root['quiet'] === true;

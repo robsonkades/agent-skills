@@ -28,30 +28,33 @@ JEP 491 then endorses JCiP §13.4 directly: "Use `synchronized` where practical,
 convenient and less error prone, and use `ReentrantLock` and the other APIs in
 `java.util.concurrent.locks` when more flexibility is required."
 
-| Need                                     | `synchronized`    | `ReentrantLock`   | `RRWL`     | `StampedLock`             |
-| ---------------------------------------- | ----------------- | ----------------- | ---------- | ------------------------- |
-| Reentrant                                | yes               | yes               | yes        | **no**                    |
-| Auto-release on scope exit or exception  | yes               | no (try/finally)  | no         | no                        |
-| Released if the thread dies abruptly     | yes               | no                | no         | no                        |
-| Timed acquisition                        | no                | yes               | yes        | yes                       |
-| Interruptible acquisition                | no                | yes               | yes        | explicit `*Interruptibly` |
-| Poll (`tryLock`)                         | no                | yes               | yes        | yes                       |
-| Fair ordering option                     | no                | yes               | yes        | **no**                    |
-| Non-block-structured (hand-over-hand)    | no                | yes               | yes        | yes                       |
-| Multiple condition queues                | no (one wait-set) | yes               | write only | **no**                    |
-| Concurrent readers                       | no                | no                | yes        | yes                       |
-| Optimistic read with no CAS at all       | no                | no                | no         | yes                       |
-| Visible to `jstack` deadlock detection   | yes               | yes (AQS-aware)   | yes        | **no** (no ownership)     |
-| Appears as `jdk.JavaMonitorEnter` in JFR | yes               | no (`ThreadPark`) | no         | no                        |
+| Need                                               | `synchronized`    | `ReentrantLock`   | `RRWL`                          | `StampedLock`             |
+| -------------------------------------------------- | ----------------- | ----------------- | ------------------------------- | ------------------------- |
+| Reentrant                                          | yes               | yes               | yes                             | **no**                    |
+| Auto-release on scope exit or exception            | yes               | no (try/finally)  | no                              | no                        |
+| Released if the thread dies abruptly               | yes               | no                | no                              | no                        |
+| Timed acquisition                                  | no                | yes               | yes                             | yes                       |
+| Interruptible acquisition                          | no                | yes               | yes                             | explicit `*Interruptibly` |
+| Poll (`tryLock`)                                   | no                | yes               | yes                             | yes                       |
+| Fair ordering option                               | no                | yes               | yes                             | **no**                    |
+| Non-block-structured (hand-over-hand)              | no                | yes               | yes                             | yes                       |
+| Multiple condition queues                          | no (one wait-set) | yes               | write only                      | **no**                    |
+| Concurrent readers                                 | no                | no                | yes                             | yes                       |
+| Optimistic read with no CAS at all                 | no                | no                | no                              | yes                       |
+| Platform-thread ownable/monitor deadlock detection | yes               | yes               | write ownership, not read holds | **no** (no ownership)     |
+| Appears as `jdk.JavaMonitorEnter` in JFR           | yes               | no (`ThreadPark`) | no                              | no                        |
 
-The last two rows matter operationally: after a migration to `ReentrantLock`, contention stops
-appearing in monitor events and shows up as `jdk.ThreadPark` with
-`parkedClass = ReentrantLock$NonfairSync`. Teams that keep watching only monitor events conclude
-the contention disappeared.
+The last two rows matter operationally: lock waits may appear in `jdk.ThreadPark` instead of
+monitor-enter events. The blocker depends on fairness mode and implementation, and capture depends
+on event settings/thresholds. `ThreadMXBean` deadlock detection covers platform threads, not virtual
+threads; absent reports do not exclude read-hold, non-ownable or virtual-thread stalls. Route
+runtime evidence collection to concurrency-diagnostics.
 
 ## ReentrantLock
 
 ```java
+import java.util.concurrent.locks.ReentrantLock;
+
 final class X {
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -121,6 +124,9 @@ Which acquisition form:
   a stress harness, but a finite run is evidence against one implementation bug, not proof of
   deadlock freedom for every caller protocol.
 
+  This illustrates locking, not a complete monetary transfer contract: amount/range invariants
+  and overflow policy remain the caller's. The retry loop is interruptible but has no total deadline.
+
   The method returns `void` on purpose. An earlier `boolean` version guarded the loop with
   `while (!Thread.currentThread().isInterrupted())` and returned `false` at the bottom — but every
   in-loop wait throws `InterruptedException` and clears the flag, so that guard can only be false
@@ -129,11 +135,11 @@ Which acquisition form:
   look like contention: throw it, or keep the `boolean` and bound the retries with an attempt
   budget so `false` means "gave up" and nothing else.
 
-- `tryLock(timeout, unit)` — honours fairness, responds to interruption, carries a deadline. The
-  right choice in a request path with an SLA.
-- `lockInterruptibly()` — blocks but stays cancellable. **This is the single capability with no
-  `synchronized` equivalent**, and it is why a task that must be cancellable cannot use
-  `synchronized` for a contended lock. See cancellation-and-interruption.
+- `tryLock(timeout, unit)` — honours fairness and bounds acquisition waiting. For an operation
+  deadline, include retries, the body and cleanup in the remaining budget; this call alone does
+  not establish an end-to-end SLA.
+- `lockInterruptibly()` — allows cancellation during acquisition, which monitor entry does not.
+  It does not make the subsequent body interruptible. See cancellation-and-interruption.
 
 Fairness costs throughput: "Programs using fair locks accessed by many threads may display lower
 overall throughput (i.e., are slower; often much slower) than those using the default setting, but
@@ -141,9 +147,9 @@ have smaller variances in times to obtain locks and guarantee lack of starvation
 names the mechanism — default barging is "also known as greedy, renouncement, and convoy-avoidance"
 and "Throughput and scalability are generally highest" with it.
 
-`getQueueLength()`, `hasQueuedThreads()`, `isLocked()` and `getHoldCount()` exist for monitoring.
-The javadocs say so explicitly: they are "designed for monitoring system state, not for
-synchronization control". A gauge, never an `if`.
+Queue-length estimates and `isLocked()` observations cannot replace acquisition. Distinguish them
+from `getHoldCount()` and `isHeldByCurrentThread()`: these describe this thread's ownership and can
+check a reentrancy/precondition contract. They still do not grant ownership to another thread.
 
 ## ReentrantReadWriteLock
 
@@ -213,8 +219,9 @@ Every constraint is a footgun:
 - **No fairness policy at all**, and all `try` methods are best-effort.
 - **Optimistic reads see torn state.** "Fields read while in optimistic read mode may be wildly
   inconsistent" — so the body may only copy fields into locals, must be side-effect-free, and must
-  validate before using anything. Dereferencing an object read optimistically before validating
-  yields an NPE, an `ArrayIndexOutOfBoundsException`, or a spin on a torn linked structure.
+  validate before acting on the result. Traversing mutable state before validating can throw or
+  loop on an inconsistent structure; only perform speculative reads known to be safe even if the
+  validation subsequently fails.
 - **Stamps recycle** after no sooner than a year of continuous operation and "a valid stamp may be
   guessable" — never a capability token across a trust boundary. Deserialization always yields an
   unlocked state.
@@ -238,8 +245,9 @@ double distanceFromOrigin() {
 }
 ```
 
-The verbosity is the point: if the read section cannot be written in this shape, `StampedLock` is
-not the tool. Under virtual threads its parking is cheap, but that does not improve fairness or
+The contract is safe speculative reads, validation, fallback and release of any acquired stamp;
+equivalent code is valid. If the data cannot be read safely before validation, choose a real read
+lock or another representation. Virtual-thread parking does not improve fairness or
 diagnosability. Evaluate it for small, hot in-memory structures with a stable field layout and
 measured optimistic-read success; compare with immutable snapshots and a plain lock.
 
@@ -248,25 +256,24 @@ measured optimistic-read success; compare with immutable snapshots and a plain l
 AQS provides "a framework for implementing blocking locks and related synchronizers … that rely on
 first-in-first-out (FIFO) wait queues", around "a single atomic `int` value to represent state".
 You redefine `tryAcquire`, `tryRelease`, `tryAcquireShared`, `tryReleaseShared` and
-`isHeldExclusively` using `getState`, `setState` and `compareAndSetState`; every other method is
-final. Those methods "must be internally thread-safe, and should in general be short and not
+`isHeldExclusively` using `getState`, `setState` and `compareAndSetState`; the framework supplies
+the acquisition/queueing algorithms. Those hooks "must be internally thread-safe, and should in general be short and not
 block". Subclasses "should be defined as non-public internal helper classes" — AQS is composed
 into a synchronizer, never exposed as one. `AbstractQueuedLongSynchronizer` is the same framework
 with a `long` state, which is what `ReentrantReadWriteLock` moved to in JDK 25.
 
-The skill body carries a ladder to walk down before allowing one. `ReentrantLock` plus one
+First compare the relevant existing primitive. `ReentrantLock` plus one
 `Condition` per predicate covers many application-level state machines with clearer ownership. AQS
 is justified for a reusable blocking synchronizer with a novel acquisition/release state machine,
-where timeout, interruption, shared/exclusive modes and queue machinery are all required and the
-maintenance burden is acceptable.
+where the needed timeout, interruption and shared or exclusive admission justify owning the
+protocol and its maintenance burden.
 
-Two obligations if you do write one. Call `setExclusiveOwnerThread` — the setter is inherited from
-`AbstractOwnableSynchronizer`, and it is `AbstractQueuedSynchronizer`'s own class javadoc that
-urges it: "You are encouraged to use them — this enables monitoring and diagnostic tools to assist
-users in determining which threads hold locks." Skip it and your lock is invisible to thread-dump
-deadlock analysis. And review it with a jcstress test and a documented state-word encoding, because
-the cost of getting AQS wrong is not a wrong answer — it is a permanently parked thread with no
-exception and no log line.
+Document the state-word encoding and acquisition/release invariants. For an exclusively owned
+lock, maintain `setExclusiveOwnerThread` on acquisition/release to support diagnostics; do not
+invent a single owner for a shared or semaphore-style protocol. Test cancellation, timeout,
+over-release, failure cleanup and progress with bounded controls; add jcstress when memory-ordering
+or interleaving claims require it. Correct owner reporting is useful evidence, not universal
+deadlock detection.
 
 ## Authoritative references
 
@@ -274,4 +281,6 @@ exception and no log line.
 - [Java 25 `ReentrantLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html)
 - [Java 25 `ReentrantReadWriteLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantReadWriteLock.html)
 - [Java 25 `StampedLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/StampedLock.html)
+- [Java 25 `ThreadMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadMXBean.html)
+- [Java 25 `AbstractQueuedSynchronizer`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/AbstractQueuedSynchronizer.html)
 - [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)

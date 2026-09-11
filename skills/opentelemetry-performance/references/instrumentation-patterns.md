@@ -3,7 +3,8 @@
 ## Span lifecycle
 
 Partial OpenTelemetry Java API snippets: imports, tracer acquisition and application methods
-are omitted. Compile against the project's resolved API/Context and JDK versions. These
+are omitted. API/Context behavior below is referenced against OpenTelemetry Java 1.62.0;
+compile against the project's resolved API/Context and JDK versions. These
 examples assume synchronous `validate`/`reprice`; a returned future is not operation completion.
 
 ```java
@@ -25,7 +26,8 @@ expose messages/stack data.
 
 ## Explicit async propagation
 
-Use this only after verifying automatic instrumentation does not already propagate:
+Use explicit propagation when the affected boundary needs it; verify automatic coverage
+before adding or removing wrappers:
 
 ```java
 Context submitted = Context.current();
@@ -49,13 +51,15 @@ For completion callbacks, capture at registration in the originating operation, 
 an unrelated thread that later completes the future. Keep Context as data across threads;
 open and close each Scope on its own executing thread.
 OpenTelemetry Java also exposes wrappers for Runnable, Callable, Executor and functions.
-Test cancellation, rejection, delayed execution and executor reuse. A scope leak can attach
+For a changed async boundary, select relevant cancellation, rejection, delayed-execution
+and executor-reuse checks; adequate existing tests can suffice. A scope leak can attach
 later unrelated tasks to the wrong trace.
 
 ## CompletableFuture and virtual threads
 
 Agent versions instrument supported concurrency libraries, so behavior cannot be inferred
-from ThreadLocal storage alone. Integration-test:
+from ThreadLocal storage alone. When propagation across one of these boundaries is the
+claim under review, inspect existing integration evidence or test:
 
 1. parent span current at submission/start;
 2. child created inside callback/thread;
@@ -63,8 +67,12 @@ from ThreadLocal storage alone. Integration-test:
 4. two interleaved requests do not cross-contaminate;
 5. exceptional/cancelled paths close scopes/spans.
 
-For StructuredTaskScope or virtual-thread APIs, pin JDK and instrumentation version. Avoid
-wrapping a callback already wrapped by the agent until duplicate behavior is understood.
+For StructuredTaskScope or virtual-thread APIs, pin JDK and instrumentation version.
+`Context.wrap` itself opens/restores a Scope; it does not start spans. Two wrappers do not
+by themselves prove duplicate spans. Verify captured parentage and overhead before changing
+an existing wrapper. The Java 1.62.0 [`Context` source](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/context/src/main/java/io/opentelemetry/context/Context.java)
+defines capture/wrapping behavior; [`Scope`](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/context/src/main/java/io/opentelemetry/context/Scope.java)
+defines restoration. Wrapper overloads and supported agent integrations remain version-specific.
 
 ## Messaging
 

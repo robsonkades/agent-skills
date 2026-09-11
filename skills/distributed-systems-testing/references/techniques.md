@@ -1,22 +1,27 @@
-# Techniques, what each proves, and what it costs
+# Techniques, what each checks, and what it costs
 
-| Technique                      | Proves                                                   | Cannot prove                                  | Cost            |
-| ------------------------------ | -------------------------------------------------------- | --------------------------------------------- | --------------- |
-| Unit test with mocks           | branching, mapping, arithmetic in one process            | concurrency, partial failure, ordering, time  | seconds         |
-| Testcontainers integration     | real broker, database and driver behaviour under failure | fleet-scale effects, production data shapes   | tens of seconds |
-| Proxy fault injection          | timeout, retry, breaker and fallback paths execute       | that the fault is the one production produces | minutes         |
-| Container kill / process pause | crash-recovery and lease behaviour under a stall         | correlated multi-node failure                 | minutes         |
-| Barrier race test              | the concurrent-duplicate case against the real store     | absence of races in general                   | seconds         |
-| Property-based order shuffle   | an invariant holds under many orders                     | it holds under all orders                     | seconds         |
-| Deterministic simulation       | invariants across enumerable interleavings, reproducibly | anything the abstraction did not model        | a design cost   |
-| Chaos experiment               | the system behaves as hypothesised in production         | anything, if there was no hypothesis          | risk            |
+| Technique                      | Can check                                                | Cannot establish                               | Cost            |
+| ------------------------------ | -------------------------------------------------------- | ---------------------------------------------- | --------------- |
+| Unit test with mocks           | branching, mapping, modeled policy/time in one process   | actual remote/store integration                | seconds         |
+| Testcontainers integration     | real broker, database and driver behaviour under failure | fleet-scale effects, production data shapes    | tens of seconds |
+| Proxy fault injection          | timeout, retry, breaker and fallback paths execute       | that the fault is the one production produces  | minutes         |
+| Container kill / process pause | crash-recovery and lease behaviour under a stall         | correlated multi-node failure                  | minutes         |
+| Barrier race test              | the concurrent-duplicate case against the real store     | absence of races in general                    | seconds         |
+| Property-based order shuffle   | an invariant holds under many orders                     | it holds under all orders                      | seconds         |
+| Deterministic simulation       | invariants over explored modeled interleavings           | omitted model behavior or unexplored schedules | a design cost   |
+| Chaos experiment               | behavior of the observed cohort under the injected fault | other conditions or general causal proof       | risk            |
+
+Each row is conditional on the actual assertion, injected fault and coverage. Costs are rough
+planning categories, not measurements. A finite run does not prove all distributed executions.
 
 ## Real infrastructure instead of mocks
 
 A mock returns the failures its author thought of. The ones that cause incidents are the ones
 nobody thought of: a rebalance mid-batch, a unique-constraint violation from a concurrent
 insert, a lock wait exceeded, a reset after the request bytes were written, a driver that
-reconnects and retries under you. Testcontainers reproduces these because the component is real.
+reconnects and retries under you. A real component permits tests of those behaviors, but provisioning
+it does not trigger the fault or establish production fidelity: match relevant versions/configuration
+and verify the intended event. Testcontainers is one way to provision that fixture.
 
 ```java
 @Testcontainers
@@ -28,8 +33,8 @@ class OutboxRelayTest {
 }
 ```
 
-Two rules keep this cheap: share one container per class or suite rather than per test, and
-never assert on an interaction where the real store can be queried for the resulting state.
+Reuse a container where state isolation/reset is reliable. Observe durable outcomes and any
+meaningful interaction budget; final state alone can hide repeated remote effects or extra attempts.
 
 ## Injecting latency, resets and partitions
 
@@ -109,9 +114,9 @@ for (long seed = 0; seed < 200; seed++) {
 }
 ```
 
-Print the seed in the failure message; without it the failure is not reproducible and the test
-is a rumour. A property-based library (jqwik and similar) generates and shrinks these cases,
-which earns its cost once the input space is larger than a list of four.
+Retain the seed, generated input and trace. A seed reproduces only the randomness and scheduling
+the harness controls. A property-based library can generate and shrink cases when that capability
+is useful; a small fixed set may already cover the relevant ordering contract.
 
 ## Controlling time
 
@@ -143,7 +148,8 @@ updates are atomic. It controls consumers that actually use this Clock. It does 
 Those need their own time/scheduler seam. It also does **not**
 control a TTL enforced by an external store — Redis expiry, a broker's visibility timeout, a
 database's lock timeout — which stays real time; those need a very short configured value, or
-the state driven directly.
+the state driven directly for a model-level check. Direct state mutation does not validate the
+store's real expiry mechanism; shortened values also change the tested timing conditions.
 
 ## Sources
 

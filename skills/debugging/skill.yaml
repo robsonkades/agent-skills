@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: debugging
-version: 1.1.1
+version: 1.1.2
 description: >-
   Finding the cause of a fault instead of a change that makes the symptom go away: reproducing
   before diagnosing, shrinking the reproduction until nothing is removable, stating a
@@ -43,7 +43,16 @@ files:
 dependencies: []
 
 suggests:
+  - concurrency-diagnostics
+  - distributed-systems-testing
   - heap-dump-analysis
+  - java-clean-code
+  - java-exception-design
+  - java-performance
+  - java-testing-strategy
+  - jvm-gc-tuning
+  - structured-logging
+  - tdd
 
 capabilities:
   - reads-source

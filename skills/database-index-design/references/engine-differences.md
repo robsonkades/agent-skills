@@ -50,11 +50,13 @@ actual clustered key before estimating secondary-index width.
 
 Time ordering is a property of the value plus the column's comparison semantics. SQL Server
 `uniqueidentifier` does not compare UUID v7 bytes in timestamp order; `BINARY(16)` preserves the
-chosen byte order. InnoDB pays PK width in every secondary index. PostgreSQL's native `uuid` lives
-outside the heap organization but still affects B-tree locality and index size.
+chosen byte order. InnoDB pays PK width in every secondary index. A PostgreSQL `uuid` primary key
+does not automatically cluster heap rows; its values still affect B-tree locality and index size.
 
 ## Sources
 
 - [PostgreSQL 18 CREATE INDEX, INCLUDE and uniqueness](https://www.postgresql.org/docs/18/sql-createindex.html)
 - [PostgreSQL 18 HOT eligibility](https://www.postgresql.org/docs/18/storage-hot.html)
+- [PostgreSQL 18 CLUSTER](https://www.postgresql.org/docs/18/sql-cluster.html) — explicit physical
+  reordering is separate from an index definition and is not maintained by subsequent writes.
 - [InnoDB clustered and secondary indexes](https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html)

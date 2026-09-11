@@ -35,11 +35,17 @@ identify the smallest check that could settle it and keep dependent selection co
 
 ## Workflow
 
-1. **State the choice as a question**, not as a proposal. "How does the caller learn the work
-   finished?" admits options; "should we use a webhook?" does not.
+1. **Frame the unresolved choice from the accepted baseline.** Inspect the request, prior
+   decisions, relevant implementation and acceptance constraints before asking. Distinguish a
+   required mechanism from an example or preference. "How does the caller learn the work
+   finished?" opens the choice; if webhooks are already mandated, compare designs within that
+   boundary. Revisit a settled premise only for material new evidence or an authorized scope change.
 2. **Generate options including the floor.** The floor is the simplest thing that satisfies the
    stated requirements — often "extend what already exists", sometimes "do nothing here". It is
    included when feasible; if it is only a candidate, label its unresolved constraints.
+   Treat supplied examples as seeds unless the option set is explicitly fixed. Consider materially
+   different placement, staged adoption or composed approaches when they meet the same obligation;
+   avoid adding variants that cannot affect the decision.
 3. **Keep the options comparable.** Describe complete alternatives for the same behavior, boundary
    and operating conditions. A library, pattern and service label alone are not comparable,
    but complete solutions using different technologies can be; split choices that can coexist.
@@ -57,12 +63,14 @@ identify the smallest check that could settle it and keep dependent selection co
 8. **Separate uncertainty from preference.** If evidence cannot distinguish viable options and a
    bounded pass/fail experiment would change the recommendation, hand one hypothesis to
    `feature-feasibility-experiment`; do not choose by confidence or prototype enthusiasm.
+   Stop when remaining uncertainty is unlikely to change the choice materially; a routine
+   preference does not need a prototype. Keep unresolved mandatory feasibility explicit.
 
 ## Decision rules
 
 ```text
-IF two options differ only in naming or internal structure
-THEN it is not a feature-level choice. Decide it while implementing.
+IF two options differ only in local naming or private structure while preserving contracts and accepted quality requirements
+THEN decide the routine detail during authorized implementation; public names, compatibility or changed runtime guarantees still need analysis.
 
 IF the recommendation is more complex than the floor
 THEN name the evidenced benefit on an accepted driver that justifies the added cost.
@@ -86,7 +94,7 @@ THEN compare evidenced reversal cost, then simplicity if reversal cost is compar
      Missing evidence is not equivalence; use a conditional choice or next check when material.
 
 IF the choice materially affects behaviour, data, operations or cost
-THEN name the role accountable for that consequence; the current participant is not automatically it.
+THEN name the role accountable for that consequence and reuse evidenced authorization or delegation; participation alone is not authority, nor does an existing delegation need fresh approval.
 ```
 
 ## Constraints
@@ -98,12 +106,14 @@ THEN name the role accountable for that consequence; the current participant is 
   costs; do not invent a disadvantage or a winning scenario for a dominated option to fill a template.
 - **Do not evaluate against a requirement nobody stated.** Every axis used must trace to a
   requirement, a constraint or a named risk.
-- **Do not present options you would refuse to implement.** A straw option makes the set look
-  considered and makes the analysis worthless.
+- **Exclude straw options, not credible alternatives you dislike.** Familiarity and preference
+  are not feasibility evidence. Include material learning/adoption costs and unresolved checks
+  rather than silently removing an unfamiliar option.
 
 ## Output
 
 ```text
+Baseline         <accepted scope/requirement/decision revisions or source links>
 Choice           <the question>
 Constraints      <what any option must satisfy, with source>
 
@@ -128,3 +138,6 @@ Experiment       <EXP-* when a bounded experiment is warranted; otherwise next c
 
 Hand the block to the decision phase; a small choice can use a concise paragraph with the same
 material evidence and limits. This skill produces the analysis; it does not record acceptance.
+When a premise changes, retain the earlier comparison and identify the changed evidence and
+affected recommendation for the decision phase. Do not silently replace an accepted decision
+or require unrelated analysis to restart.

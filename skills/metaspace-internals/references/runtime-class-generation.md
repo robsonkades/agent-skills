@@ -7,8 +7,8 @@ proxies, lambdas, mocks, scripts or templates are suspected of minting classes.
 ## What a generated class costs
 
 Every class occupies metadata for as long as its `ClassLoaderData` (CLD) lives. The following
-smallest-observed chunks are a measurement from one compressed-class-pointer JDK 25.0.3
-build, not an ABI or a sizing constant:
+smallest-observed chunks are a historical measurement from one compressed-class-pointer
+JDK 25.0.3 build whose vendor/architecture was not recorded here, not an ABI or a sizing constant:
 
 ```
 1: CLD 0x…: <hidden class>, loaded by "<bootstrap>", 1 class
@@ -61,7 +61,8 @@ jcmd <pid> VM.metaspace show-loaders show-classes   # names the classes — grep
 Generated class names often suggest their origin: `Foo$$Lambda/0x…` for lambdas, `jdk.proxy2.$Proxy12`
 for JDK proxies, `Foo$$SpringCGLIB$$0` / `Foo$ByteBuddy$…` / `Foo$HibernateProxy$…` for the
 frameworks, `Script1`, `Script2`, … for Groovy, `java.lang.invoke.LambdaForm$MH/0x…` for
-method-handle spinning. Count by pattern over two captures ten minutes apart; the pattern
+method-handle spinning. Count by pattern over comparable captures separated by the workload's
+generation interval; ten minutes is not a universal observation window. The pattern
 whose count grew is a hypothesis for the generator; confirm it with defining loader and stack.
 
 From a recording, `jdk.ClassDefine` (one event per defined class, with the defining loader
@@ -73,13 +74,13 @@ zero-tooling fallback; keep it short-lived, it is one line per class.
 
 ## Remediation, by finding
 
-| Finding                                         | Fix                                                                                                                                     | Verified by                                                                     |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Script or expression compiled per evaluation    | Cache the compiled form keyed by source text; bound the cache; parametrise instead of interpolating data into the source                | `VM.classloader_stats` class count flat across N evaluations of the same script |
-| Proxy per instance                              | Create the proxy class once per type; reuse; check the framework's own class cache is not bypassed by a fresh `ClassLoader` per request | Loader count flat under load                                                    |
-| Mock-driven CI failure                          | Fork the test JVM per module or per N classes; `MaxMetaspaceSize` sized from a measured run — a smaller value only fails sooner         | The build passes at the measured ceiling twice in a row                         |
-| Handle chains built from user input             | Precompute the finite set of shapes; reject or interpret unbounded input                                                                | `LambdaForm$MH` count plateaus after warm-up                                    |
-| Everything bounded but the ceiling is still hit | It is sizing: `MaxMetaspaceSize` and `CompressedClassSpaceSize` from the measured plateau (`sizing-and-flags.md`)                       | Plateau reproduced under the same load                                          |
+| Finding                                         | Fix                                                                                                                                 | Verified by                                                                                                                |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Script or expression compiled per evaluation    | Cache the compiled form keyed by source text; bound the cache; parametrise instead of interpolating data into the source            | `VM.classloader_stats` class count flat across N evaluations of the same script                                            |
+| Proxy per instance                              | Reuse the generated class for the actual bounded cache key; inspect cache bypass and changing keys/loaders                          | Class count per loader and metadata plateau for the tested key population; flat loader count alone is insufficient         |
+| Mock-driven CI failure                          | Bound fork lifetime/cardinality and size from representative evidence; retained generator state needs lifecycle/cache investigation | Complete the bounded workload within the budget; repeated passes alone do not prove unloading or bounded long-lived growth |
+| Handle chains built from user input             | Precompute the finite set of shapes; reject or interpret unbounded input                                                            | `LambdaForm$MH` count plateaus after warm-up                                                                               |
+| Everything bounded but the ceiling is still hit | It is sizing: `MaxMetaspaceSize` and `CompressedClassSpaceSize` from the measured plateau (`sizing-and-flags.md`)                   | Plateau reproduced under the same load                                                                                     |
 
 Raising a ceiling against unbounded generation moves the incident, and the ticket should say
 so. The structural fix depends on ownership: bound and validate input cardinality, cache with
@@ -87,6 +88,12 @@ an eviction/lifetime model, reuse or retire loaders, interpret instead of compil
 tenant, or reject work under pressure. User-controlled scripts/expressions are a resource-
 exhaustion boundary: cap source size, compilation rate, distinct keys and per-tenant budget;
 do not use an unbounded cache as the remedy.
+
+A fixed loader count can coexist with growing named classes in one long-lived loader. Compare
+class counts and metadata by defining loader as well as total loader/CLD counts. For a lifecycle
+fix, observe the relevant class/CLD reclamation under available collection opportunities; successful
+builds or a larger ceiling establish only the tested capacity window. Use `jvm-class-loading` for
+the reachability and retainer investigation.
 
 [Lookup API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html)
 distinguishes named definition, hidden-class identity and strong versus weak lifetime.

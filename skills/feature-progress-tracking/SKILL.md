@@ -33,7 +33,7 @@ entry point and find the current state, supporting evidence and next ready work.
 | **BLOCKED**     | Cannot proceed for a reason outside the work         | The blocker is identified              |
 | **DONE**        | Implemented and validated                            | The validation ran and passed          |
 | **SKIPPED**     | Deliberately not done in this feature; still wanted  | A decision, with a reason and an owner |
-| **CANCELLED**   | No longer needed at all                              | The reason it existed went away        |
+| **CANCELLED**   | Resource retired: no longer needed or replaced       | Reason or replacement is recorded      |
 
 Common transitions (additional evidence-based transitions are described below):
 
@@ -58,8 +58,9 @@ resumption, not workflow accounting for its own sake.
 
 ## Workflow
 
-1. **Create the table when resources are defined**, initially TODO for unstarted work. When
-   tracking begins later, reconstruct only evidence-supported state and label unknowns.
+1. **Reuse the established tracking location and record format.** The table and log are roles,
+   not mandatory separate files. Create entries when resources are defined, initially TODO for
+   unstarted work. When tracking begins later, reconstruct only evidence-supported state and label unknowns.
 2. **Update at durable handoff points and material transitions.** For multi-session or parallel
    work, update before ownership changes and before ending a session. Do not turn sub-minute local
    edits into an event stream that costs more than the work.
@@ -70,7 +71,9 @@ resumption, not workflow accounting for its own sake.
    change. The log is append-only; a correction is a new entry.
 6. **Leave the files true at the end of every session**, whatever state the work is in.
 7. **Track revision impact.** Record the Product/Engineering or Tech baseline and plan revision. When
-   either changes, reopen only traced `RES-*`, mark their prior `EV-*` stale, and name what triggered it.
+   either changes, trace the actual acceptance, implementation and evidence impact. Reopen `RES-*`
+   and mark `EV-*` stale only where their coverage is invalidated; a new revision label or reordered
+   plan alone does not invalidate a passing check. Name what triggered each state change.
 
 Formats for both files, and the resumption procedure, are in
 `references/artefact-formats.md`.
@@ -93,8 +96,9 @@ IF an accepted baseline or CT-* changes
 THEN trace the impact to RES-*/EV-*, reopen affected rows, and preserve unaffected DONE evidence.
 
 IF a resource is skipped
-THEN say who decided and why, and whether the feature is complete without it —
-     usually it means the scope table needs the item moved out of Required.
+THEN record who decided, why and which commitments remain. Skipping execution does not amend
+     Required scope: link equivalent accepted coverage or an authorized scope/acceptance revision;
+     otherwise report the feature incomplete against that commitment. Reuse existing authority.
 
 IF the same resource has been IN_PROGRESS across three sessions
 THEN inspect remaining work, session length and dependencies. Split only when useful;
@@ -106,7 +110,9 @@ THEN reconcile accepted scope, code revision and evidence before changing state.
      Record what was established and reopen affected work; do not rewrite acceptance to fit code.
 
 IF the feature is Light/Inline
-THEN there is no tracking artefact. Do not create one to have a process.
+THEN keep proportionate inline status; do not create a dossier for ceremony. If work must cross a
+     session or owner, change persistence to Dossier and preserve the current state before handoff;
+     this alone does not increase technical depth.
 ```
 
 ## Constraints
@@ -116,7 +122,11 @@ THEN there is no tracking artefact. Do not create one to have a process.
   conflict detection and reconcile from validation evidence; “one writer” is an operating choice,
   not a guarantee in a distributed workflow.
 - **Never mark DONE optimistically.** "It should work" is IN_PROGRESS with a note.
-- **Never delete a row.** Cancelled and skipped rows are the record of decisions.
+- **Preserve resource identity and history.** Never delete a row or reuse its ID for a different
+  obligation. For an accepted split/merge, link old and new IDs, the reason and updated dependencies;
+  retire replaced rows as CANCELLED with replacement links, without implying their obligations vanished.
+  Derive each resulting status from its actual scope and valid evidence; do not copy a parent's DONE
+  onto unverified children or reset unaffected completed work. Keep prior states and evidence in history.
 - **Preserve decision history.** Append corrections, identify actor/resource/revision, and
   distinguish event time from recording time. Concurrent wall-clock order is not dependency
   order. Avoid secrets and personal payloads; if sensitive material was recorded, follow the

@@ -168,7 +168,7 @@ For JDK 25 features:
   shipped enablement, throttle meaning, and lost-sample event in that build.
 - JEP 518 changes execution sampling internals to cooperative stack walking; do not convert
   implementation constants or an intended period into a per-thread coverage guarantee.
-- JEP 520 method timing/tracing is experimental instrumentation of selected methods; use a
+- JEP 520 method timing/tracing instruments selected methods; use a
   bounded target/window and measure perturbation at real invocation rate.
 
 Java 17 and 21 do not have these delivered features. A multi-JDK fleet needs explicit

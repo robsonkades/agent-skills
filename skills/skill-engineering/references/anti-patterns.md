@@ -5,33 +5,37 @@ Read before finalising any skill.
 ## The failure that produces all the others
 
 **Writing to look thorough rather than to change behaviour.** Nearly every anti-pattern
-below is a symptom of it. A skill is judged by the difference between what the agent does
-with it and without it — never by its length, its structure, or how authoritative it
-sounds.
+below can be a symptom of it. Structural correctness and useful guidance can be reviewed
+directly; a claim of behavioral improvement needs appropriate executed evidence. Length,
+structure and authoritative tone alone establish neither quality nor comparative benefit.
 
 ## Anti-patterns
 
-**The persona opener.** `You are an expert X specialized in Y.` It sets a register and
-changes nothing. If removing the first paragraph would not alter a single decision the
-agent makes, it is decoration. Replace it with the decision rules the expert would apply.
+**The persona as a substitute.** `You are an expert X specialized in Y.` A role sentence
+may establish audience or perspective, but does not supply the expert's decision rules.
+Assess its task-specific purpose; do not assert that it always helps or never affects behavior
+without evidence. Replace empty authority claims with the guidance the expert would apply.
 
 **Restating model capability.** "Analyse the code carefully." "Consider edge cases."
-"Follow best practices." The agent already does these, imperfectly, and the sentence does
-not improve the odds. Say _which_ edge cases, or _which_ practice, or say nothing.
+"Follow best practices." These do not identify which checks matter. Say _which_ edge cases
+or _which_ practice; retain material constraints even if they sound familiar. Do not infer
+their behavioral effect solely from assumed model competence.
 
 **The encyclopedia body.** Everything the author knows, in the entrypoint, loaded on every
-activation. Conditional detail belongs in a reference. The test is temporal: relevant
-every time, or not.
+activation. Move substantial conditional detail to a reference when that helps ordinary
+use; keep short consequential guards near the action, even if needed only sometimes.
 
-**Unreachable resources.** Files nothing routes to. The agent never opens them, so they
-are pure package weight and slowly drift out of date.
+**Unreachable resources.** Files with no discoverable use can drift. Check body routing and
+actual harness/user consumers before declaring them unused; add a useful route or remove
+unsupported duplication within the authorized scope.
 
 **Duplicated knowledge.** Detailed rules copied between files can diverge. Keep one
 authoritative explanation; a short guard or routing summary may need repetition so it is
 visible before the action it constrains.
 
-**Unfalsifiable rules.** "Ensure high quality." "Write maintainable code." Nothing can be
-checked against the output. Restate as something observable or remove it.
+**Unfalsifiable rules.** "Ensure high quality." "Write maintainable code." Specify observable
+criteria. Process constraints can be checked in tool traces or artifacts without repeating
+every step in the final answer; absence from final prose alone does not prove noncompliance.
 
 **Checklist inflation.** Twenty gates, of which four matter. The reader satisfies them
 mechanically and stops thinking. Keep the gates that would actually catch a bad result.
@@ -74,8 +78,8 @@ skill, and which should not?
 
 **Restraint** — Is conditional detail large enough to route away without hiding a guard?
 
-**Checkability** — Take three rules at random. Could you tell, from a piece of finished
-work, whether each was followed?
+**Checkability** — Sample consequential rules. Could the relevant output, artifact or trace
+show whether each was followed? State missing coverage rather than inventing verification.
 
 **Routing** — Is every supporting file reachable by a stated condition?
 

@@ -23,14 +23,14 @@ during a strangler migration. The third is the hand-off to `legacy-enterprise-mo
 Feathers's taxonomy (ch. 4, "Seam Types", from p. 33) is language-general. Its translation to
 Java is where most secondary write-ups stop.
 
-### Preprocessing seams — do not exist
+### Preprocessing and generated wiring
 
-The enabling point is `#define`/`#include`, resolved before compilation. Java has no
-preprocessor, and there is no substitute worth pursuing. **Annotation processors and code
-generation are not a testing seam**: they change what is compiled, not what is dispatched, and
-nothing in a test can select between two generated behaviours at the call site.
+Java has no built-in `#define`/`#include` preprocessor. A build can nevertheless select generated
+implementations or wiring before compilation. Identify that selection and verify the generated
+artifact and consumer path; annotation processing alone is not a seam. Prefer existing ordinary
+wiring over inventing a second test-only generation pipeline.
 
-### Link seams — available, weak, unidiomatic
+### Link seams — inspect the actual selection
 
 The enabling point is the classpath or module path chosen at assembly time. In Java that means:
 
@@ -39,9 +39,11 @@ The enabling point is the classpath or module path chosen at assembly time. In J
 - a different `ServiceLoader` provider registered on the test classpath;
 - a JPMS `provides`/`uses` binding swapped between module paths.
 
-Feathers's warning applies with extra force here: a link seam has **no enabling point in the
-source**, so a reader of the class cannot tell that its behaviour is substitutable at all. Use
-when nothing else reaches — and leave a comment naming the mechanism, because nobody will find it.
+Classpath shadowing can hide substitution from a consumer and depends on loader behavior.
+`ServiceLoader`/JPMS can instead be an explicit supported extension contract: inspect descriptors,
+provider choice, no-provider/multiple-provider behavior and the actual loader/module boundaries.
+Do not assume first-on-classpath shadowing describes provider selection. Retain adequate existing
+wiring and make test selection discoverable.
 
 ### Object seams — the default, and why
 
@@ -50,15 +52,15 @@ these _"pretty much the most useful seams available in object-oriented programmi
 and in modern Java the argument is stronger than he could have made it in 2004. Since constructor
 injection became the norm, the enabling point for most object seams is **the constructor call in
 the composition root** — which is both visible in source and already the place the application
-wires itself. The seam costs a parameter and nothing else.
+wires itself. Check the parameter's caller, ownership and initialization costs before changing it.
 
 ### Bytecode instrumentation — the modern fourth category
 
 An agent rewriting classes at load time. Mockito's inline mock maker (`mockStatic`,
 `mockConstruction`, mocking `final`) is exactly this, and so was PowerMock's classloader. It is
-_technically_ a seam whose enabling point is the `try`-with-resources block — but that enabling
-point is invisible from production source, which is why it sits at the bottom of every preference
-ordering. See `java-test-doubles` for the policy; the design argument survives the technical one.
+a seam whose enabling point is scoped mock setup, released by `close()` or managed teardown.
+It can be useful when a compatible legacy harness already uses it or production changes are
+constrained. Verify instrumentation and thread scope; see `java-test-doubles` for mechanism details.
 
 ## Effect analysis: what can this change possibly break?
 
@@ -95,17 +97,18 @@ that covers _several_ change points at once — a narrow place all the effects p
 
 **Not the same term as the strangler's.** `legacy-enterprise-modernization` uses "interception
 point" for a place to put a proxy that **redirects** traffic — an HTTP gateway, a facade, CDC.
-Feathers's interception point **observes**; the strangler's **diverts**. Same words, different
-jobs, and a class-level pinch point is not a candidate for either role in the other's sense.
+Feathers's interception point **observes**; the strangler's **diverts**. These are different jobs;
+a boundary suitable for observing a test is not automatically suitable for redirecting production
+traffic, though one location may support both with the appropriate contracts.
 
 The decision rule that follows from it:
 
-| Situation                                            | Test at                                                                                |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| One change point, effect visible in a return value   | The method itself                                                                      |
-| Several change points in one class, one public entry | That entry — the pinch point. One test covers all of them                              |
-| Effects spread across several classes                | The narrowest public API all of them pass through, even if it is a layer up            |
-| No narrow point exists                               | That is the finding: the design has no seam, and step 3 has more work than you thought |
+| Situation                                            | Test at                                                                                          |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| One change point, effect visible in a return value   | The method itself                                                                                |
+| Several change points in one class, one public entry | That entry may be a pinch point; choose inputs/assertions exposing each relevant effect          |
+| Effects spread across several classes                | The narrowest public API all of them pass through, even if it is a layer up                      |
+| No narrow point exists                               | Use an adequate coarser point, or identify the specific dependency preventing useful observation |
 
 The trap is testing at too high a level "because it is easier to reach": a pinch point one layer
 too high pins the behaviour of everything else that passes through it, so unrelated changes go
@@ -121,3 +124,5 @@ class-level pinch point, the owner is `legacy-enterprise-modernization`.
   Fowler, who cites Feathers directly. Chapter content for chs. 11–12 is **[secondary]**,
   corroborated across independent summaries. The primary text was not read for any of it.
 - [Martin Fowler, _LegacySeam_](https://martinfowler.com/bliki/LegacySeam.html)
+- [Java 21 ServiceLoader](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/ServiceLoader.html)
+- [Java 21 javac annotation-processing options](https://docs.oracle.com/en/java/javase/21/docs/specs/man/javac.html)

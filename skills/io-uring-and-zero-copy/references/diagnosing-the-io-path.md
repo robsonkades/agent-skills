@@ -10,11 +10,12 @@ ps -fp "$pid"
 
 ## Which syscalls dominate
 
-`trace=network` does not include `io_uring_enter`. Ask for the mechanisms being compared:
+`trace=%network` includes socket calls such as `sendmsg`/`recvmsg` that a read/write-only
+filter misses; it does not include `io_uring_enter`. Ask for the mechanisms being compared:
 
 ```bash
 strace -f -c -p "$pid" \
-  -e trace=read,write,readv,writev,sendfile,splice,epoll_wait,epoll_pwait,io_uring_enter
+  -e trace=%network,read,write,readv,writev,sendfile,splice,epoll_wait,epoll_pwait,io_uring_enter
 ```
 
 Tracing perturbs the process, and counts do not reveal bytes, batching efficiency or latency by
@@ -33,9 +34,14 @@ perf stat -p "$pid" \
   -- sleep 10
 ```
 
-An `io_uring_enter` count proves some ring activity. It does not prove all reads/writes use the
-ring, that submissions are well batched, or that payload copies were removed. Correlate counts
-with the exact traffic interval and native-transport metrics/logs.
+These are syscall-entry counts, including failed attempts. Inspect return/error information
+and operation completions before claiming the ring performed payload I/O; an enter can just
+wait or wake a poller. With `IORING_SETUP_SQPOLL`, an active kernel thread can consume
+submissions while the application reaps completions from shared memory without entering the
+kernel. A sleeping poller may still need an enter call to wake it. Zero observed enters therefore
+does not exclude ring I/O. Check the configured ring mode and capture coverage, then correlate
+operation/byte counts with the exact traffic interval and native-transport metrics/logs. These
+counters alone establish neither batching efficiency nor copy elimination.
 
 ## Finding ring descriptors
 
@@ -91,15 +97,22 @@ cache. Do not infer an end-to-end copy-free path from either counter alone.
 ## Troubleshooting flow
 
 ```text
-Expected io_uring but see no ring activity
+Expected io_uring but see no io_uring_enter calls
+    -> check SQPOLL mode, ring/completion evidence and trace coverage before inferring fallback
     -> verify loaded artifact, Netty era, kernel support and IoUring.unavailabilityCause()
     -> verify transport and channel classes agree
-    -> exercise real traffic while tracing
+    -> if still unresolved, observe representative traffic within the authorized capture budget
     -> inspect fallback metrics/logs
 
 Ring activity exists but CPU/latency does not improve
-    -> compare operations per io_uring_enter and queue depth
+    -> compare completion/byte counts, queue depth and enter counts for the configured ring mode
     -> check payload copies, framing, TLS, allocation and io-wq work
     -> check saturation and backpressure rather than mechanism presence alone
     -> retain the simpler path when the validated outcome is neutral or worse
 ```
+
+## Primary references
+
+- [liburing setup and submission-polling contract](https://man7.org/linux/man-pages/man2/io_uring_setup.2.html)
+- [liburing enter results and errors](https://man7.org/linux/man-pages/man2/io_uring_enter.2.html)
+- [strace filters, returns and summary counts](https://man7.org/linux/man-pages/man1/strace.1.html)

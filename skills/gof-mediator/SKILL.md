@@ -3,9 +3,9 @@ name: gof-mediator
 description: >
   Mediator in modern Java, treated as high-risk: replacing many-to-many collaboration with a hub
   that owns the interaction protocol, and the god object that hub becomes when nothing bounds it.
-  Covers the direction test that separates it from a facade, why an event bus is the decoupled
-  alternative and what it gives up, the reentrancy loop when a colleague notifies the hub that
-  notifies it back, the hub as a serialisation point, and orchestration versus choreography with
+  Covers the direction test that separates it from a facade, event-based alternatives and their
+  delivery coupling, the reentrancy loop when a colleague notifies the hub that
+  notifies it back, when the hub serializes work, and orchestration versus choreography with
   the availability coupling an orchestrator introduces. Use when collaborators reference each
   other in a web, when a coordinator class keeps growing, when a command bus is called a mediator,
   when a saga orchestrator is designed, or when a notification loops between two components. Does not
@@ -26,6 +26,12 @@ The trade-off is concentration: the mediator owns interaction rules and therefor
 coupling and operational hotspot if its protocol boundary is too broad. It need not know every
 participant implementation or all domain rules; ports, messages and protocol state can keep the
 hub focused.
+
+Start with an ordinary caller flow, a supported advanced interaction and a failure/misuse path.
+Reuse callers, tests and accepted protocol, lifetime and recovery constraints before asking about
+material gaps such as inline callbacks or cancellation authority. Preserve an adequate direct
+collaboration or existing coordinator; compare extraction only for an observed ownership/change
+problem. Keep uncertain changes conditional and continue independent review.
 
 ## The direction test
 
@@ -63,11 +69,12 @@ compensation and visibility
 - **A small stable interaction where direct collaboration is clearer.** Participant count alone
   does not decide it; cyclic coupling, protocol state, ownership and change rate do.
 - **The interaction is one-way notification.** "This happened, whoever cares may react" is
-  Observer or an application event, and it decouples further than a mediator does
+  Observer or an application event; it removes the publisher's choice of recipient reactions,
+  while retaining event and delivery contracts
   (`gof-observer`).
 - **It is dispatch, not coordination.** A class that routes a request to its single handler is a
   command dispatcher; the "mediator" label — borrowed from libraries in other ecosystems — hides
-  that there is no protocol and no participants calling back (`gof-command`).
+  that dispatch/result policy alone is not a peer collaboration protocol (`gof-command`).
 - **The same protocol rule remains owned in two places.** Direct calls outside the mediated
   protocol can be valid; duplicate authority over its transitions is the actual defect.
 - **It has become the application.** See the god-object criteria below.
@@ -100,8 +107,9 @@ THEN the protocol has results, not just notifications. Model the
      protocol explicitly rather than passing state through callbacks.
 
 IF the hub spans processes
-THEN it is an orchestrator: flows it coordinates depend on its durable progress and
-     recovery. Each remote step needs a deadline and explicit retry/terminal policy;
+THEN define the flow's required lifetime: accepted ephemeral read coordination need not
+     persist progress, while restart-surviving work needs durable progress and recovery.
+     Each remote step needs a deadline and explicit retry/terminal policy;
      compensation is needed only for effects that must be semantically undone
      (distributed-transactions-and-sagas).
 
@@ -118,24 +126,25 @@ THEN compare explicitly: choreography distributes coordination and failure handl
   touches every participant. Conversely, a deliberately single-threaded hub — a queue and one
   consumer, actor-style — serializes owned state only if callbacks and offloaded completions return
   through that queue. Capacity, failure and shutdown still need contracts. Reentrancy is another hazard: a
-  notification that re-enters the hub while it is mid-update sees inconsistent state
+  notification that re-enters the hub while it is mid-update may see inconsistent state
   (`java-memory-model`).
 - **Distribution.** The distributed mediator is an orchestrator, and the differences are
   operational rather than structural: it must survive its own restart (state persisted, steps
   resumable) when progress must survive restart; calls can fail or time out, compensation is a
   semantic policy rather than rollback, and dependent flows can stall while the hub is unavailable.
-  Choreography — participants reacting to each
-  other's events — distributes those duties; it still needs durable delivery, idempotency,
-  observability and can support cancellation only through an explicit protocol
+  Choreography — participants reacting to each other's events — distributes those duties.
+  Require durable delivery/progress when the flow must survive restart and idempotency where
+  retries/redelivery can repeat effects; choose observability to meet its operational contract.
+  Cancellation still needs explicit ownership and protocol
   (`event-driven-architecture`).
 - **Performance.** A hub is not necessarily a queue: stateless synchronous routing may run
   concurrently, while locks, shared state or a mailbox introduce queueing. A single consumer has
   one-at-a-time service semantics but can batch or delegate work; measure arrival rate, service
   time and queue growth
   (`littles-law-and-queueing`).
-- **Testing.** A well-bounded mediator is unusually testable: fake participants, drive the
-  protocol, assert the interactions — it is the one place where interaction-based testing is
-  clearly appropriate, because interaction _is_ the subject. Many test doubles are a cohesion
+- **Testing.** Drive the protocol with contract fakes: assert required state, effects and their
+  ordering, including duplicates, reentrant callbacks and failure after a claim. Do not fix every
+  incidental call sequence; return/admission is not necessarily downstream completion. Many test doubles are a cohesion
   smell, not a numerical failure criterion; shared protocol fixtures and contract fakes can keep
   tests expressive (`java-test-doubles`).
 
@@ -148,13 +157,15 @@ THEN compare explicitly: choreography distributes coordination and failure handl
 - [ ] Reentrant notification is prevented or explicitly safe
 - [ ] The hub's thread-safety model is stated (single-threaded queue, or synchronised state)
 - [ ] Restart-surviving flows persist progress and define retry, terminal and applicable compensation policies
-- [ ] Orchestration versus choreography was a stated choice
-- [ ] A command dispatcher is not described as a mediator
+- [ ] Where distribution is in scope, coordination and recovery ownership are deliberate
+- [ ] Dispatch alone is distinguished from GoF peer coordination, regardless of library naming
 
 ## References
 
-Deliver the protocol owner, state/effect ordering, callback/threading contract and checks for
-duplicates, failure and cancellation. State which guarantees remain unverified.
+Deliver the selected or retained protocol owner, state/effect ordering, caller outcome and
+callback/threading/lifetime contract with relevant checks for duplicates, failure and cancellation.
+Keep public entry points compatible when splitting internals. State which guarantees remain
+unverified and which missing contract would change the recommendation.
 
 - [Mediator against the alternatives](references/mediator-vs-alternatives.md) — the direction test
   in detail; Mediator against Facade, Observer, event bus and command dispatcher; god-object

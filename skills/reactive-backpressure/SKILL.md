@@ -23,11 +23,11 @@ explicit somewhere a reader can find it. The failure this skill prevents is the 
 regression to an unbounded queue: a concurrency limit that disappears during a refactor, or
 an `onBackpressureBuffer` whose real behaviour is not the one its name suggests.
 
-Concurrency and flow control are orthogonal axes. Concurrency answers "how does the system
-run many units of work without one blocked unit stopping the others". Flow control answers
-"how much pending work may accumulate before someone must act". A system can have excellent
-concurrency and no flow control at all — and that combination is exactly how memory grows
-linearly with time under load.
+Concurrency and flow control answer different, related questions: how work executes or
+occupies resources, and how much pending work may accumulate. Concurrency alone does not
+establish memory growth. Track admitted arrivals, actual departures and retained items/bytes
+at the same boundary over time; sustained excess retained input can grow backlog, while a
+finite burst may drain. A local limit may move waiting work to producers or another stage.
 
 ## Workflow
 
@@ -37,9 +37,13 @@ reactor-core-micrometer 1.2.5; core snippets are partial Java 8+ code, JFR uses 
 virtual threads require Java 21+. Structured concurrency remains version-sensitive/preview
 on JDK 25. Adapt to the existing stack without upgrading it just to use an example.
 
-1. **Classify the problem on the right axis first.** Is throughput limited because threads
-   or carriers are scarce (concurrency), or because pending work has no ceiling (flow
-   control)? The remedies do not substitute for each other.
+Use the steps needed for the question or changed pipeline contract. Preserve an adequate
+existing operator, admission policy and evidence; a narrow explanation or supported no-change
+review need not add instrumentation, migrate concurrency models or run a full test campaign.
+
+1. **Separate execution constraints from pending inventory.** Inspect thread/carrier and
+   downstream-resource availability alongside retained work, rates and queue bounds.
+   Constraints can interact; no ceiling alone does not explain an observed throughput limit.
 2. **Check the workload signals for real backpressure.** A sustained rate mismatch, a need
    to propagate flow control across a process or protocol boundary, or multiple stages with
    different sustainable rates each strengthen the case. They are decision signals, not a
@@ -55,13 +59,15 @@ on JDK 25. Adapt to the existing stack without upgrading it just to use an examp
    non-blocking threads, but arbitrary JDBC, file or vendor calls may merely stall the event
    loop. Push them to a bounded elastic scheduler or a deliberately bounded executor, and
    use BlockHound as a test aid rather than as proof that every blocking path is covered.
-6. **Instrument demand, not just latency.** The requested amount, dropped items and
-   protocol violations are the signals that show where flow control is or is not in force.
+6. **Check demand and inventory evidence, not just latency.** Requested amounts, dropped
+   items and observed malformed signals answer different questions from queued bytes,
+   active work and admission/completion rates. Add instrumentation where evidence is missing.
    See `references/instrumenting-backpressure.md`.
 7. **Trace the resulting bounds end to end.** A local bound can protect a stage, but inspect
    where rejected, delayed or cancelled work goes next. Return a per-subscription and shared
-   resource budget, overflow/cleanup policy and evidence that slow-consumer and cancellation
-   tests respect them.
+   resource budget and overflow/cleanup policy for changed bounds, with relevant slow-consumer
+   and cancellation checks actually run versus pending. For a narrow review, return the
+   supported keep/change decision and its material limits.
 
 ## Rules
 
@@ -73,7 +79,8 @@ on JDK 25. Adapt to the existing stack without upgrading it just to use an examp
   `onOverflow` and then **terminates with an overflow error after buffered values drain**
   in the pinned version. With no demand, downstream may not see the error yet. It is not drop-and-
   continue. If drop-and-continue is the intent, pass `DROP_LATEST` or `DROP_OLDEST`
-  explicitly, or use plain `onBackpressureDrop()`.
+  explicitly, or use plain `onBackpressureDrop()`. Keep the two-argument form when its
+  notify/error/drain and recovery contract is intended and adequate.
 - Never place argument-free `onBackpressureBuffer()` after a source that can outpace or
   ignore downstream demand without proving a finite bound. Hot/cold and backpressure-aware/
   unaware are different axes: some hot publishers honour per-subscriber demand, while a
@@ -98,8 +105,9 @@ on JDK 25. Adapt to the existing stack without upgrading it just to use an examp
   `.tap(Micrometer.metrics(registry))` include `%s.subscribed`, `%s.malformed.source`,
   `%s.requested`, `%s.onNext.delay` and `%s.flow.duration`; the older `.metrics()` operator
   is deprecated. `reactor.flow.demand` and
-  `reactor.flow.request.size` are not supplied by these versions — a dashboard querying them matches no
-  series, and the silence reads as "no traffic" instead of "wrong metric".
+  `reactor.flow.request.size` are not supplied by this listener in these versions. A query
+  for an absent meter is not evidence of zero traffic; inspect exporter names, instrumentation
+  and the dashboard/alert's missing-series behavior.
 - A `%s.requested` sample at `Long.MAX_VALUE` means that subscriber requested unbounded
   demand at the instrumented point. It does not prove the whole system lacks admission
   control: a broker, connection pool or upstream protocol may still bound it. A non-zero
@@ -111,10 +119,12 @@ on JDK 25. Adapt to the existing stack without upgrading it just to use an examp
 - For a custom backpressure JFR signal, instrument the local callback that owns the policy,
   enable the event before subscribing and keep the recording alive through the capture.
   Follow `references/instrumenting-backpressure.md`; a global dropped-signal hook is incomplete.
-- Under sustained `λ > μ`, source admission is the only in-memory option that both bounds
-  backlog and keeps every item. Durable spill/queueing can preserve data by moving the bound
-  to disk and recovery time; partitioning can raise `μ`; a drop policy accepts measurable
-  loss. An unbounded heap buffer only postpones failure.
+- Under sustained retained input above departures, bound admission at a source that can
+  actually slow down, or choose explicit rejection/drop or durable transfer. Bounded local
+  admission cannot preserve indefinitely growing external offered work in finite resources:
+  identify where unaccepted work waits or is disposed of, including producer waiters.
+  Durable queueing moves the capacity/retention bound to storage; partitioning can raise
+  service capacity. An unbounded heap buffer cannot absorb a sustained deficit indefinitely.
 
 ## References
 

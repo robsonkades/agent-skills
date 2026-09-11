@@ -34,10 +34,12 @@ not just configured connections.
 
 ## Version discipline
 
-MySQL 8.4 changed important InnoDB defaults, including flush method, adaptive hash, change buffering,
-and I/O capacity. An old configuration file can preserve old behavior across an upgrade. Query the
+MySQL 8.4 changed important InnoDB defaults, including the Linux flush method, adaptive hash,
+change buffering and I/O capacity. An old configuration file can preserve old behavior across an upgrade. Query the
 effective value and whether it was explicitly persisted; verify renamed/deprecated redo settings
 against the exact server build.
 
 [MySQL 8.4 clustered and secondary indexes](https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html)
 defines the clustered-key fallback and secondary locator.
+[MySQL 8.4 changes from 8.0](https://dev.mysql.com/doc/refman/8.4/en/mysql-nutshell.html)
+lists default changes and platform conditions; these do not override explicit effective settings.

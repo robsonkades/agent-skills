@@ -43,7 +43,8 @@ Three distinct nulls are conflated, and none has a stated meaning:
 
 1. **Error null.** `dto.id()` null means the payload was invalid — but it is accepted,
    stored under a null key, and the failure surfaces later as a lookup miss or an NPE.
-   Deserialisers populate whatever arrived; annotations would not have stopped this.
+   The assumed binder/store path permits this; actual missing/null handling depends on mapper
+   configuration. JSpecify annotations alone would not have stopped it.
 2. **Absence null, doubled.** `linesFor` returns null both for "unknown invoice" and for
    "invoice with a null lines field" — the caller cannot distinguish them and forgot to
    check either.
@@ -56,7 +57,7 @@ contract-carrying data.
 
 ## After
 
-One conversion at the adapter; `@NullMarked` domain types enforce their own contract:
+One conversion at the adapter; annotated domain types enforce their contract in constructors:
 
 ```java
 @NullMarked
@@ -136,8 +137,9 @@ reference is still a separate precondition of the downstream total method.
 
 ## Trade-offs
 
-- Invalid payloads now fail loudly at ingestion with a 4xx-shaped error instead of
-  storing garbage — a behaviour change that must be flagged, not smuggled in. Clients
+- Invalid payloads now fail at ingestion with a stable field/code exception; an exercised HTTP
+  exception mapping is still needed to establish a 4xx response. Rejection instead of storing
+  invalid data is a behaviour change that must be flagged, not smuggled in. Clients
   that depended on lenient acceptance will notice.
 - A DTO-to-domain conversion layer is real code: one more type per aggregate, one mapping
   function, kept in sync. For a two-endpoint service this can be ceremony; the trade pays

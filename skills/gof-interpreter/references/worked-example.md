@@ -6,8 +6,9 @@ Clients filter a document search with expressions like:
 status eq ACTIVE and (owner eq "ana" or tags contains "urgent") and createdAt gt 2026-01-01
 ```
 
-The requirements that ruled out configuration: arbitrary nesting, disjunction, and the need to
-push the filter into the database rather than evaluate it over loaded rows.
+For this example, clients require the text syntax above plus nesting, disjunction and database
+translation. Nested structured configuration or an existing query API could express related
+requirements; syntax and consumer needs must justify the custom language.
 
 Java 21 partial examples (no preview), requiring Objects, List, Set, ArrayList, ArrayDeque,
 AtomicInteger and Predicate imports; import Filter's nested node types for the folds. Field, Value, Document, Issue,
@@ -124,9 +125,9 @@ static boolean matches(Filter filter, Document doc) {
 }
 ```
 
-The whole evaluator in one place, exhaustive, with no `default`. Adding a `Between` node breaks
-this method at compile time — which is the point, because it also breaks the two folds below, and
-those are exactly the places that must be updated.
+The evaluator is exhaustive with no `default`. Adding a `Between` node exposes missing cases when
+these folds are recompiled. Independently released old binaries and folds with covering fallbacks
+still need compatibility checks; the compiler does not verify their new-node semantics.
 
 ## Fold 2 — compile to SQL
 
@@ -151,15 +152,23 @@ two-valued missing-value policy, ordinary SQL comparisons may require explicit n
 handling. List.of rejects Java null and cannot represent arbitrary nullable bind parameters.
 Test interpreter/SQL results on the target database with nulls, NOT, collation and timestamps.
 
+Parentheses and parameter order preserve grouping and binding, not evaluation order. PostgreSQL
+may reorder boolean subexpressions, so a preceding predicate cannot be assumed to guard a later
+division, cast or host function as Java `&&` would. Translate total, pure operations or use a
+dialect-specific construction whose error behavior is verified; reject unsupported semantics.
+`CASE` has planning/aggregate limitations too. Test error behavior on the target database rather
+than inferring it from matching successful booleans; see
+[PostgreSQL 18 expression evaluation](https://www.postgresql.org/docs/18/sql-expressions.html#SYNTAX-EXPRESS-EVAL).
+
 Two additional properties:
 
 - **Values are always parameters**, never concatenated. The enum `Field` supplies the column name,
   and the enum `Operator` supplies the SQL operator, so no user-supplied text ever reaches the
   statement text. This is what makes a user-authored filter language safe against injection: the
   only free-form data is bound.
-- **No `default` branch.** A new node type that nobody translated to SQL would otherwise silently
-  become "no filter", which widens the result set — the same class of failure as ignoring an
-  unknown node received from a newer producer.
+- **No silent fallback to "no filter".** That would widen the result set. These closed folds omit
+  `default` to expose missing cases on recompilation; explicit rejection remains appropriate at
+  an open or versioned boundary. A default that rejects is different from one that drops a rule.
 
 ## Fold 3 — validate before either
 
@@ -190,8 +199,8 @@ query and wants the whole list (`java-exception-design`).
 
 ## The hot path: closure compilation
 
-Filters are also applied in memory to a live event stream, millions of times per parsed
-expression. If profiling identifies tree dispatch as material, consider this specialization:
+Suppose the same parsed filters are also evaluated repeatedly in an event stream. If actual
+profiling identifies tree dispatch as material, consider this specialization:
 
 ```java
 static Predicate<Document> compile(Filter filter) {
@@ -246,8 +255,9 @@ trailing tokens, oversized literals, malformed/deep ASTs and cross-caller cache 
 - **An unrestricted SpEL application context.** Its capabilities exceed this filter language.
   Restricted modes still require a reachable-object and resource audit; rejecting this configuration
   does not imply that every expression engine invocation is code execution.
-- **CEL.** Genuinely close. It was rejected only because the SQL fold is the main requirement and
-  translating CEL's AST to SQL is more work than owning a five-node grammar. Had the filter been
-  evaluated in memory only, CEL would have been the better choice.
+- **CEL.** For this example, assume the four-form domain AST and SQL mapping are cheaper to own
+  than adapting CEL's syntax and semantics. That is a decision to validate, not a measured result
+  or a limit of CEL. In-memory-only evaluation makes CEL a stronger candidate, subject to the
+  actual context, functions, limits and dependency constraints.
 - **Unvalidated String identifiers.** A closed enum simplifies structural validation, but both
   enum and string designs still need current authorization, type checks and trusted SQL mappings.

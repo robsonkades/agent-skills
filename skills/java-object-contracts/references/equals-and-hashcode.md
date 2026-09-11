@@ -16,9 +16,9 @@ And the linked obligation: **equal objects must have equal hash codes**. Unequal
 _may_ share one — that is a collision, not a defect.
 
 Both contracts are enforced by nothing at compile time and by everything at runtime. The
-"consistent" property is the one people discover last: an `equals` that reads a mutable
-field is consistent only until someone mutates it, which in a hash-based collection means
-the entry is stranded in the wrong bucket.
+"consistent" property is conditional on equality-relevant state remaining unchanged. Mutable
+equality is not inherently illegal, but changing that state during hash-collection membership
+can break lookup; no particular failure is guaranteed.
 
 ## The canonical implementation
 
@@ -78,12 +78,18 @@ record Payload(byte[] bytes) { }                 // equals compares array identi
 new Payload(new byte[]{1}).equals(new Payload(new byte[]{1}));   // false
 ```
 
-Use an immutable byte-sequence value type, or override both methods with `Arrays.equals`/
-`Arrays.hashCode` _and_ copy the array in the compact constructor and accessor—`ByteBuffer` is
-mutable and its equality depends on remaining elements/position, so it is not a drop-in value.
-See
-java-immutability. An unaddressed array component in a record used as a map key is a defect,
-not a nuance.
+For immutable content-value semantics, use a suitable byte-sequence value type or override both
+methods with `Arrays.equals`/`Arrays.hashCode` and copy the array in the constructor and accessor.
+Copying alone retains array-identity equality and breaks the record reconstruction requirement
+`r.equals(new R(r.component1(), ...))`. Test that reconstruction explicitly. When custom content
+equality makes separate arrays equal, also provide compatible diagnostic text: equal records must
+produce equal strings, subject to the Record API's equal-component exception; array identity text
+does not express the custom content equality. A redacted constant can satisfy disclosure needs.
+
+Deliberate array identity can be a valid key contract and does not promise immutable contents.
+Do not replace a public binary API with `List<Byte>` without a consumer/compatibility reason.
+`ByteBuffer` equality depends on remaining elements/position, so it is not a drop-in immutable
+value. See java-immutability for ownership and defensive-copy details.
 
 ## Inheritance: the part with no free answer
 
@@ -97,8 +103,8 @@ transitivity with the superclass. The two defensible positions:
 2. **`getClass()` equality.** Can preserve symmetry/transitivity when implemented consistently;
    whether it violates substitutability depends on the supertype's promised equality:
    an instance of a subclass is never equal to an instance of the superclass, even when the
-   subclass adds nothing. This is the right choice for entity types under a proxying ORM only
-   if you disable proxies — otherwise it breaks (below).
+   subclass adds nothing. For entities, inspect the actual representation: an entity and its
+   subclass proxy have different runtime classes; other enhancement/identity contracts differ.
 
 The trap is the third option that looks like a compromise: `instanceof` in a non-final class,
 with the subclass overriding `equals` to also compare its own field. Then
@@ -133,7 +139,8 @@ Type checks are not interchangeable:
   reintroduce symmetry problems in inheritance hierarchies.
 - Hibernate/provider helpers can obtain an effective persistent class, but some operations may
   initialize a proxy or couple the domain model to the provider. Jakarta Persistence 3.2 exposes
-  `PersistenceUnitUtil.getClass(Object)`; test its loading/error behaviour in your context.
+  `PersistenceUnitUtil.getClass(Object)` for its open-context contract; it may load the entity.
+  Do not use that API on an earlier Persistence baseline; test loading/error behaviour in context.
 
 Do not traverse lazy associations in equality, hashing or diagnostics. Whether direct field or
 accessor access initializes/observes proxy state depends on access strategy and provider
@@ -145,6 +152,11 @@ orm-structural-mapping and repository-pattern cover the surrounding design. Enti
 identity/lifecycle question, not “compare all mapped columns.”
 
 ## What hash values are, and are not, stable across
+
+The within-run column assumes equality-relevant state remains unchanged; mutable record components
+can change their hashes. Cross-process use also needs a specified encoding and collision policy:
+a digest is not an automatic guarantee of unique business identity. The table is not a ban on
+a suitable existing protocol that explicitly fixes a reproducible algorithm and its limitations.
 
 | Source                                            | Stable within one JVM run | Stable across runs / JVMs             | Safe to persist or shard on                |
 | ------------------------------------------------- | ------------------------- | ------------------------------------- | ------------------------------------------ |
@@ -188,4 +200,4 @@ added later — including caches, back-references, and the lazy association that
 - [Object contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
 - [Record contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
 - [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
-- [Hibernate ORM 7 User Guide: implementing equals/hashCode](https://docs.jboss.org/hibernate/orm/7.0/userguide/html_single/Hibernate_User_Guide.html#domain-model-pojo-equalshashcode)
+- [Hibernate ORM 7 User Guide: implementing equals/hashCode](https://docs.jboss.org/hibernate/orm/7.0/userguide/html_single/Hibernate_User_Guide.html#mapping-model-pojo-equalshashcode)

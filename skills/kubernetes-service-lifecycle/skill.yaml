@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: kubernetes-service-lifecycle
-version: 1.3.1
+version: 1.3.2
 description: >-
   A Java service at the edges of its life under Kubernetes: liveness, readiness and startup
   probes as three different questions, probe timing arithmetic, graceful shutdown as a
@@ -44,11 +44,16 @@ files:
 dependencies: []
 
 suggests:
+  - cancellation-and-interruption
   - container-awareness
   - coordinated-omission
   - delivery-semantics
+  - idempotency
   - linux-for-jvm
+  - load-balancing-and-routing
   - rpc-and-api-contracts
+  - startup-cds-crac-leyden
+  - stateless-service-design
 
 capabilities:
   - reads-source

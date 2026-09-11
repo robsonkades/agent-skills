@@ -70,8 +70,10 @@ APIs on older stacks; adopting this skill does not authorize a dependency/runtim
 3. **Establish who owns the schema.** If it is yours and it can follow the model, Active
    Record may be economical. If it is externally owned, inspect actual constraints and change
    history: isolate translation when domain behavior needs independence, without inventing a domain model for reports.
-4. **Check the work shape.** Set-based and reporting work belongs in a gateway with SQL,
-   whatever the write side uses. Mixing is normal and correct.
+4. **Check the work shape.** Consider a SQL gateway for set-based or reporting work when
+   query control, translation or measured cost warrants it. An existing ORM projection or
+   bulk query may already fit; validate its invariant, versioning and managed-state effects
+   before adding another access layer. Mixing is normal and correct.
 5. **Decide per module.** A pricing engine with a mapper and an admin CRUD area with Active
    Record in one application is a reasonable design, provided the boundary between them is
    explicit.

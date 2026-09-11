@@ -1,9 +1,9 @@
 schemaVersion: 1
 
 name: performance-methodology
-version: 1.4.1
+version: 1.4.2
 description: >-
-  The investigation process for performance work: defining an SLO, recording a baseline,
+  The investigation process for performance work: defining measurable goals, recording a baseline,
   characterising before diagnosing, falsifiability, fixed-work speedup bounds,
   experimental design, and validating by mechanism rather than by coincidence.
   Use when starting a performance investigation, when a fix is credited to a deploy that

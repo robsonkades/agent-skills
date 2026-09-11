@@ -11,8 +11,8 @@ description: >
   decorated object fails an instanceof check, when retries appear at two levels, or when a
   wrapper is proposed that changes the interface. Does not cover changing an interface
   (gof-adapter), controlling access to an object (gof-proxy), one entry point over a subsystem
-  (gof-facade), or the retry and timeout policies themselves (circuit-breakers,
-  retries-and-backoff).
+  (gof-facade), or the individual protection policies (circuit-breakers,
+  retries-and-backoff, timeouts-and-deadlines).
 ---
 
 # Decorator
@@ -26,6 +26,13 @@ is what makes the layers stackable, and what makes their order meaningful.
 Order is not a detail. Retry outside timeout and timeout outside retry are both reasonable
 designs with different semantics, and a stack assembled without deciding which one is intended
 will behave in whichever way the wiring happened to produce.
+
+Start with the caller's contract and the effective client/framework configuration: ordinary
+success, failure, cache hit and cancellation may traverse different layers. Preserve accepted
+return values, nullability, failure classification, ownership and mandatory checks across that
+composition; implementing the same interface alone does not establish substitutability. Inspect
+existing tests and policies before asking about material gaps such as replay safety or cache
+eligibility. Keep an adequate existing client or simpler composed class when no added layer is needed.
 
 ## When it is the answer
 
@@ -86,9 +93,9 @@ Read a stack outermost-first. Each layer sees the one below it as
 | Timeout **outside** Retry      | Outer completion bound; inner work must honor deadline  | Propagate cancellation and remaining time        |
 | Cache **outside** Retry        | A valid hit avoids downstream retries                   | Hit semantics and cache failure policy permit it |
 | Cache **inside** Retry         | Each attempt consults cache; concurrent fill may matter | Explicit cache/load/concurrency contract         |
-| Breaker **outside** Retry      | The breaker sees logical operations                     | Normal                                           |
+| Breaker **outside** Retry      | The breaker sees logical operations                     | Operation-level failure isolation is intended    |
 | Breaker **inside** Retry       | Breaker counts attempts; rejection must not be retried  | Attempt-level failure isolation is intended      |
-| Metrics **outside** everything | Latency includes retries — the caller's true experience | Usually retain as logical-operation telemetry    |
+| Metrics **outside** everything | Latency includes work below this measurement boundary   | Usually retain as logical-operation telemetry    |
 | Metrics **inside** Retry       | Per-attempt counts and error rates                      | In addition, under a different metric name       |
 
 A common starting point is **logical metrics → propagated deadline/budget → breaker → retry →
@@ -108,7 +115,8 @@ THEN attempts can multiply: 3 at the client × 3 at the gateway = 9 requests
 
 IF a retry decorator wraps a non-idempotent operation
 THEN it can duplicate side effects. Require provider-enforced idempotency within its scope,
-     matching parameters/retention, or an independently safe operation; a key alone proves nothing.
+     matching parameters/retention, or an independently safe operation; a key alone proves nothing
+     (idempotency).
 
 IF callers use ==, instanceof or equals on the decorated object
 THEN inspect the actual identity/equality contract. Interface instanceof still works; concrete
@@ -116,8 +124,8 @@ THEN inspect the actual identity/equality contract. Interface instanceof still w
      unrestricted unwrap path that bypasses access, transaction or lifecycle policy.
 
 IF the decorator holds state — a cache, a counter, a breaker
-THEN the composed object is stateful and shared. Its thread safety is
-     now the decorator's responsibility, not the delegate's.
+THEN determine whether it is shared or confined. Shared composition must protect each layer's
+     invariants and relevant aliases; a thread-safe delegate does not protect wrapper state.
 
 IF the framework has a mechanism for this concern
 THEN prefer it when it satisfies the contract; verify ordering, metrics and tracing configuration.
@@ -128,8 +136,8 @@ THEN make wiring observable, collapse inseparable policies, or use a framework c
      Depth alone is not the decision criterion.
 
 IF a decorator swallows or translates the delegate's exceptions
-THEN it is changing the contract, not decorating it. State that
-     explicitly; it is the layer most likely to hide an outage.
+THEN compare the resulting outcome with the caller's documented contract. Permitted translation
+     can remain decoration; silent success or reclassification can hide failure or cause unsafe retry.
 ```
 
 ## Cross-cutting checks
@@ -144,28 +152,38 @@ THEN it is changing the contract, not decorating it. State that
   across layers, which converts a partial outage into a full one; and a timeout placed so that
   the total call time exceeds the caller's deadline, so the caller gives up while the work
   continues (`timeouts-and-deadlines`, `cascading-failures`).
+- **Lifecycle.** Specify owned versus borrowed delegates and who closes returned resources or
+  completes asynchronous work. Closing the wrapper, returning from a call or completing a caller
+  future must not prematurely close shared resources or release a still-used permit. Inspect all
+  entry points, including default/bulk methods and `close`/`flush`, for bypass or double application
+  (`java-resource-management`, `cancellation-and-interruption`).
 - **Performance.** Each layer adds a dispatch opportunity that HotSpot may inline at stable call
   sites. Costs that often matter more are allocation per call inside a
   layer (a new context object, a lambda capturing state, a `String` built for a log line that is
   then discarded), and lost inlining once the call site is megamorphic
   (`jit-inlining-and-escape-analysis`).
 - **Testing.** Test each decorator against a fake delegate — that is the pattern's dividend. Then
-  write one test for the composed stack that asserts the _order_: that a timeout during a retry
-  produces N attempts, that a cache hit performs zero calls. Order is the property nothing else
-  checks, and it is the one that regresses when someone reorders the wiring.
+  write a composed-stack test with discriminating observations: attempt versus logical counts,
+  zero downstream calls on an eligible cache hit, and no new attempt after the budget expires.
+  Include failure paths; best-effort telemetry must not replace a business result or mask its
+  failure. Mandatory audit behavior needs its own explicit contract.
 
 ## Review checklist
 
-- [ ] The wrapper implements the same interface as what it wraps
+- [ ] The wrapper implements the same interface and preserves the accepted caller contract
 - [ ] The stacking order is deliberate and documented at the wiring site
 - [ ] Retry ownership and the shared attempt/deadline budget prevent cross-layer amplification
 - [ ] Retry safety is established by the operation/provider contract, not merely the presence of a key
-- [ ] The total time of the stack fits the caller's deadline
+- [ ] Caller wait and remaining-work enforcement are verified separately against the deadline
 - [ ] Stateful layers state their thread-safety guarantee
+- [ ] Delegate, returned-result and permit ownership cover initialization, close and async failure
 - [ ] Identity-sensitive behavior is eliminated, explicitly delegated, or exposed through a
       constrained standard unwrap contract rather than concrete-type assumptions
 - [ ] No decorator silently swallows or reclassifies the delegate's failures
 - [ ] A test asserts the composed order, not only each layer alone
+
+Finish with the retained or revised stack, its observation/ownership boundaries, material unresolved
+policies and actual validation. Separate proposed tests from executed checks; a review need not add wrappers.
 
 ## References
 

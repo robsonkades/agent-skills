@@ -44,7 +44,7 @@ public record Signature(byte[] bytes) {}   // broken
   their hash codes need not agree. This violates an expected content-value contract; hash
   collisions themselves are legal and do not imply broken collections.
 
-Fix by copying both ways and overriding both methods:
+For this content-value contract, copy both ways and align equality, hashing and diagnostic text:
 
 ```java
 public record Signature(byte[] bytes) {
@@ -54,16 +54,26 @@ public record Signature(byte[] bytes) {
         return o instanceof Signature other && Arrays.equals(bytes, other.bytes);
     }
     @Override public int hashCode() { return Arrays.hashCode(bytes); }
+    @Override public String toString() { return "Signature[bytes=<redacted>]"; }
 }
 ```
 
-Prefer `List<Byte>`? No — prefer asking whether the component should be an array at all;
-for genuine binary payloads the pattern above is the price.
+The Record contract also requires equal records to produce equal strings, with a narrow exception
+for equal component values whose own strings differ. Default array-identity text does not describe
+this custom content equality; the bounded redacted form avoids exposing the bytes. This does not
+turn diagnostic text into a stable serialization format.
+
+Copying alone while retaining generated equality is insufficient: the record contract requires
+`r.equals(new R(r.component1(), ...))`. Cloned arrays have different identities. Intentional
+array identity is a different contract, not inherently broken equality, but does not promise
+immutable contents. Preserve that contract or explicitly change the API. For binary content,
+compare the array pattern with a suitable immutable byte value; boxing into `List<Byte>` is not
+automatically the right representation.
 
 ## Withers
 
-Java has no wither syntax. Evolving one component means a hand-written method calling the
-canonical constructor, which re-runs validation and copying:
+Java has no built-in wither syntax. One option is a method calling the canonical constructor,
+which re-runs validation and copying:
 
 ```java
 public Order withLines(List<OrderLine> newLines) {
@@ -125,9 +135,9 @@ the existing suite green.
 
 ## False positives — mutation that is not a violation
 
-- **A mutable builder feeding an immutable product.** The builder is confined to one
-  thread and dies at `build()`; only the product escapes. Mutability with a scope and an
-  end is not shared mutable state.
+- **A mutable builder feeding an immutable product.** A confined builder may be reused when
+  every product isolates its state. If building transfers mutable storage instead, prevent
+  later builder mutation of that storage; `build()` alone does not end an alias's lifetime.
 - **A local accumulator.** `ArrayList` filled in a loop then `List.copyOf`-ed (or
   `Stream.toList()`) on return is the idiomatic construction pattern, not a smell.
 - **A cached derived field.** A non-final field caching a value computed from final state
@@ -148,6 +158,7 @@ does not make mutable components safe or stabilize a wire schema.
 ## Authoritative references
 
 - [Collections.unmodifiableList](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List)>)
+- [Record equality and reconstruction contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html)
 - [JLS §8.10.4: Record Constructors](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
 - [Record serialization](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-records)
 - [List.copyOf contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

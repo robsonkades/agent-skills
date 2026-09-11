@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-fluent-apis
-version: 1.2.1
+version: 1.2.3
 description: >-
   Fluent interfaces and builders as API decisions: when a builder pays for itself versus a
   record, constructor or static factory; staged builders and their compatibility cost;
@@ -39,6 +39,10 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-api-design
+  - java-law-of-demeter
 
 capabilities:
   - reads-source

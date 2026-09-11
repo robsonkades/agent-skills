@@ -11,7 +11,7 @@ description: >
   rather than a profiler, when a log starts above zero uptime, or when an analysis script
   reports zero pauses. Does not cover collector mechanics (gc-fundamentals),
   collector choice and heap sizing (jvm-gc-tuning), or allocation profiling
-  (jfr-and-async-profiler). Syntax is unified-logging; cross-layer pause attribution is
+  (allocation-profiling). Syntax is unified-logging; cross-layer pause attribution is
   pause-attribution.
 ---
 
@@ -27,8 +27,10 @@ the missing interval, so a bounded baseline belongs in the service template.
 ## Workflow
 
 1. **Identify the JDK build, collector, process identity, decorators and captured window.**
-   Analyze available evidence with its limits; if logging is missing, arrange an authorized
-   bounded capture without claiming it reconstructs the past. Do not upgrade to match a recipe.
+   Reuse the incident question, SLO and available evidence with its limits. Java 25 is the
+   reference baseline, not a project upgrade requirement. If a material gap needs a capture,
+   use the known target, existing authorization and a bounded budget; it cannot reconstruct
+   the past. Adequate explicit tag selections do not need replacement with `gc*`.
 2. **Read the cause, collector, event type and adjacent lines before forming a
    hypothesis.** The cause routes the investigation but is not a root-cause verdict; one
    trigger can lead to several mechanisms and collectors use different vocabularies.
@@ -41,14 +43,20 @@ the missing interval, so a bounded baseline belongs in the service template.
    adaptive sizing, humongous occupancy and phase selection can change the number.
 5. **Check reported committed-capacity headroom** — capacity minus `after`, not necessarily
    distance to `-Xmx`, usable evacuation space or contiguous allocation capacity.
-6. **Reconcile with the observed pause.** If they disagree, go to the safepoint log; the
-   reported pause excludes Time-To-SafePoint.
+6. **Reconcile with the observed pause interval.** G1 pause timing excludes
+   time-to-safepoint; correlate the safepoint and request intervals, not just equal timestamps.
+   Use `pause-attribution` for the missing time; overlap alone does not establish causality.
 7. **If you need to know how much is allocated and how much survives**, the log can
    provide bounded proxies: Eden refill and old-region growth come from the `Eden regions`
    and `Old regions`
    lines and the region size in `gc,init` — see `references/rates-from-the-log.md`. **If
-   you need to know who allocated**, it cannot — take JFR with
-   `jdk.ObjectAllocationSample`.
+   you need to know who allocated**, hand off to `allocation-profiling` with the known
+   workload, log window and any existing recording. Sampled JFR attribution may help;
+   a fresh recording is needed only when existing evidence cannot answer the question.
+8. **Return the supported result.** Give the artifact/process/window, accepted and excluded
+   records, calculation or observation, hypothesis and the next discriminating check when
+   needed. A scoped interpretation or no-change conclusion can finish the task; do not turn
+   a parser failure or missing interval into a zero, a confirmed cause or a tuning result.
 
 ## Rules
 
@@ -84,6 +92,8 @@ the missing interval, so a bounded baseline belongs in the service template.
 - A first uptime above zero can reflect rotation, late activation, truncation or an excerpt.
   Inspect file continuity and process identity; rotated suffixes are a ring, not a chronological
   sort. Use measured window boundaries, not process lifetime, and avoid duplicate overlap.
+  Do arithmetic on a consistent process-uptime clock. Check the wall-time/uptime mapping
+  before cross-system correlation: clock adjustments and decorator precision can change it.
 - Treat log-derived rates as estimates with explicit blind spots: region rounding,
   humongous allocation, collector phase and rotation boundaries. Cross-check surprising
   values with JFR or another independent counter before changing capacity.

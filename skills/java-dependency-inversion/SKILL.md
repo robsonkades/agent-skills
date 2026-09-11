@@ -28,6 +28,9 @@ for a seam nothing ever uses.
    Java 9+, and `RandomGenerator` Java 17+. Do not upgrade or add a framework to apply DIP;
    ordinary constructors/interfaces work on older targets. If only imports are available,
    label the graph provisional rather than claiming deployment isolation.
+   Reuse the requested outcome and project conventions; investigate the affected edge, not
+   every dependency by default. Ask only for unresolved consumer or lifecycle contracts that
+   change the decision, and continue independent checks with stated limits.
 1. **Draw the actual direction.** Use compiled bytecode/package edges and JPMS `requires`, then
    add reflection, `ServiceLoader`, generated types, configuration and wire/schema dependencies.
    Imports can be unused; the compiler graph constrains source/link change but is not the only
@@ -36,12 +39,13 @@ for a seam nothing ever uses.
    eligibility); mechanism is _how_ (HTTP, SQL, SMTP, filesystem, message broker).
    Policy→mechanism edges are inversion candidates. Edges to stable platform types —
    `Instant`, `BigDecimal`, collections — usually need no local wrapper. An operation such
-   as obtaining the current time still benefits from injecting the existing JDK `Clock` seam.
+   as obtaining the current time may use the existing JDK `Clock` seam when control of time
+   matters to the contract or tests.
 3. **Apply the seam test before creating any interface.** Require concrete value: an external or
    separately released boundary, quarantined vendor types, an enforced dependency rule, multiple
    implementations, or deterministic/failure testing that the concrete mechanism prevents. No
    demonstrated change, ownership, failure or test seam means no interface.
-4. **Invert.** Define the port next to the policy, named in the policy's vocabulary;
+4. **Invert when the benefit justifies it.** Define the port next to the policy, named in the policy's vocabulary;
    implement it in an adapter beside the mechanism; construct and connect both in
    the composition root; hand the port in through the constructor.
 5. **Verify.** Compile policy with the mechanism absent, inspect full module readability
@@ -63,10 +67,12 @@ for a seam nothing ever uses.
 - Each executable/runtime entry point has a composition root (HTTP process, worker, CLI, tests).
   Keep concrete assembly at those outer boundaries. A service locator or static lookup inside
   policy code re-hides the dependency the constructor exposed.
-- A factory is itself a dependency. Inject a factory only when the policy must
-  create instances per request; when one instance serves, inject the instance.
+- A factory is itself a dependency. Inject one when policy legitimately controls creation
+  or acquisition timing/scope, including lazy or per-unit-of-work use. Define freshness,
+  reuse and cleanup; when one existing instance serves, inject the instance.
 - The JDK already ships some ports — `java.time.Clock` is one. Inject those rather
-  than wrapping them in project-local interfaces.
+  than merely renaming them in project-local interfaces. A business calendar or another
+  narrower policy contract may still justify its own abstraction.
 - Testability is one strong proof, not the only one. A port can pay through vendor quarantine,
   independent release, capability narrowing, security policy or failure simulation even when a
   concrete fake was already easy. State the benefit and verify it.
@@ -74,6 +80,9 @@ for a seam nothing ever uses.
   cross the port, whether completion means accepted or completed, and who closes resources.
   Translate vendor errors in the adapter; do not move transport exceptions into policy or
   introduce retries merely because the call is now behind an interface.
+- Changing an exported constructor or port signature is an API migration. Inspect old
+  callers, external implementors and framework wiring; successful policy isolation does
+  not prove those consumers remain compatible.
 
 ## Deliverable
 
@@ -81,6 +90,9 @@ Report the observed edge, seam benefit and cost, contract owner, smallest change
 actually run. For an implementation, include assembly and success/failure checks; distinguish
 policy isolation from adapter integration. Name missing runtime/build evidence instead of
 claiming a complete boundary from a clean import list.
+Keeping the existing dependency is a valid result when no worthwhile seam is missing.
+Stop after the relationship and affected contracts are verified, or state the remaining
+integration/migration work without reporting it as implemented.
 
 ## References
 

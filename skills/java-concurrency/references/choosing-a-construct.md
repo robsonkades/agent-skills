@@ -43,10 +43,13 @@ Boundaries must preserve deadline, cancellation, context and error semantics. A 
 a virtual-thread task does not automatically propagate cancellation to that task; a reactive
 wrapper around blocking I/O does not make the I/O nonblocking.
 
-`CompletableFuture.cancel(true)` completes the value exceptionally; it does not interrupt its
-supplier. `orTimeout` likewise times out the handle without stopping underlying work. A bridge
-must retain the task/call handle, propagate cancellation, handle completion races and account for
-work that ignores interruption. Route the mechanics to `cancellation-and-interruption` and
+The base `CompletableFuture.cancel(true)` completes the value exceptionally without interrupting
+its supplier. Provider-returned futures can differ: Java 25's default `HttpClient.sendAsync`
+returns futures whose `cancel(true)` attempts to cancel the exchange, with no immediate-release
+guarantee. Inspect the actual handle/provider contract. `orTimeout` does not universally stop
+underlying work. A bridge must retain the task/call handle, propagate cancellation, handle
+completion races and account for work that ignores interruption or has already caused effects.
+Route the mechanics to `cancellation-and-interruption` and
 `completablefuture-composition`; do not equate a cancelled handle with a released resource.
 
 When structured-concurrency preview is disallowed, an executor alone is not an equivalent
@@ -78,6 +81,7 @@ tests and observability:
 - [Java `java.util.concurrent`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [Flow API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Flow.html)
 - [CompletableFuture cancellation and timeouts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+- [Java 25 HttpClient exchange cancellation](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)
 - [ExecutorService lifecycle](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
 - [Reactive Streams specification](https://github.com/reactive-streams/reactive-streams-jvm)

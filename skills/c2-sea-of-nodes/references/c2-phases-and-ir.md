@@ -47,16 +47,19 @@ that look sufficient: the thresholds were temporarily higher. Read the queue wit
 
 ## Where the template interpreter fits
 
-Tier 0 is not a C `switch` and not computed goto. HotSpot generates one block of raw assembly
-per opcode (200+ of them) at JVM start-up, via its own built-in assembler (`TemplateTable`,
-`InterpreterGenerator`), into a dispatch table indexed by opcode. Two consequences matter for
+In the inspected HotSpot template interpreter, tier 0 uses generated machine-code handlers,
+rather than a C `switch` loop. `TemplateTable` and `TemplateInterpreterGenerator` build
+bytecode dispatch entries, including variants for top-of-stack states. Two consequences matter for
 diagnosis:
 
-- Each handler is born with the profiling counters already embedded — `invocation_counter`,
-  `backedge_counter`, and the type profile per `invokevirtual`/`invokeinterface` call site.
-  That type profile is the database C2 later uses for speculative inlining.
-- Handlers can be specialised for the actual CPU the JVM boots on, which an interpreter
-  compiled once ahead of time cannot do.
+- Profiling is distributed across generated paths: method entry updates invocation counters,
+  backward branches update backedge counters, and virtual/interface call paths collect
+  receiver profiles when profiling is enabled. Do not attribute all counters to every opcode.
+- Generation can specialize handlers for the runtime CPU and VM configuration. This describes
+  this HotSpot implementation, not every JVM interpreter or a limitation of all AOT code.
+
+See the pinned [interpreter generator](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/interpreter/templateInterpreterGenerator.cpp)
+and its [x86 entry implementation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/cpu/x86/templateInterpreterGenerator_x86.cpp).
 
 ## A seven-stage diagnostic map of the C2 pipeline
 
@@ -91,35 +94,43 @@ when choosing placement. Control and memory dependencies constrain motion, and t
 operations must preserve exception behavior. Do not infer that source-level loop hoisting
 is legal merely because the IR is a sea of nodes.
 
-Implementation reference: [OpenJDK 25u global code motion](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/opto/gcm.cpp).
+Implementation reference: [OpenJDK 25.0.3+9 global code motion](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/gcm.cpp).
 
 ## Inlining limits
 
 The refusal text is the limit's name in disguise. These are the exact strings C2 prints under
 `-XX:+PrintInlining` (`bytecodeInfo.cpp`, confirmed on Temurin 25.0.3):
 
-| Flag                      | Default                        | Effect                                                               | Refusal printed                       |
-| ------------------------- | ------------------------------ | -------------------------------------------------------------------- | ------------------------------------- |
-| `MaxInlineSize`           | 35 bytecode bytes              | Larger callees are inlined only at a hot site                        | `too big`                             |
-| `FreqInlineSize`          | 325 bytecode bytes             | Ceiling even at a hot site                                           | `hot method too big`                  |
-| `InlineSmallCode`         | 2500 bytes of **machine code** | A callee that already has an nmethod larger than this is not inlined | `already compiled into a big method`  |
-| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)  | Maximum nested inlining depth                                        | `inlining too deep`                   |
-| `MaxRecursiveInlineLevel` | 1                              | Recursion: only one level is inlined                                 | `recursive inlining is too deep`      |
-| —                         | —                              | Megamorphic or unprofiled receiver: size never considered            | `virtual call`, `no static binding`   |
-| —                         | —                              | Callee class not yet loaded or resolved at compile time              | `not inlineable` after `(not loaded)` |
-| `C1MaxInlineSize`         | 35 (C1 only)                   | C1's own limit, printed in **tier 2/3** trees, not a C2 verdict      | `callee is too large`                 |
+| Flag                      | Default                         | Effect                                                            | Refusal printed                       |
+| ------------------------- | ------------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
+| `MaxInlineSize`           | 35 bytecode bytes               | Base bytecode-size allowance                                      | `too big`                             |
+| `FreqInlineSize`          | 325 bytecode bytes              | Larger allowance for eligible sites                               | `hot method too big`                  |
+| `InlineSmallCode`         | 2500 adjusted instruction bytes | Eligible compiled-code size gate                                  | `already compiled into a big method`  |
+| `MaxInlineLevel`          | 15 (C1: `C1MaxInlineLevel` 9)   | Maximum nested inlining depth                                     | `inlining too deep`                   |
+| `MaxRecursiveInlineLevel` | 1                               | Recursion: only one level is inlined                              | `recursive inlining is too deep`      |
+| —                         | —                               | Megamorphic or unprofiled receiver: size never considered         | `virtual call`, `no static binding`   |
+| —                         | —                               | Callee class not yet loaded or resolved at compile time           | `not inlineable` after `(not loaded)` |
+| `C1MaxInlineSize`         | 35 (C1 only)                    | C1's own limit, printed in **tier 1/2/3** trees, not a C2 verdict | `callee is too large`                 |
 
-A verdict is uninterpretable until you know which compiler printed it. `PrintInlining` emits
-a tree for every compilation, and a tier-3 tree says `callee is too large` for anything over
-35 bytes regardless of hotness; the C2 tree for the same caller, a few lines later, says
-`inline (hot)` for the same callee. Read the tier column of the compilation line the tree hangs
+A verdict needs its compiler and compilation identity. In the recipe's example, C1 refuses
+the 85-byte callee with `callee is too large`; C2 later says `inline (hot)` for that callee.
+This is not a promise that C2 will inline every method C1 refused. Read the tier column of the compilation line the tree hangs
 from before reading the tree. A hot 40-byte callee refused with `inlining too deep` or
 `virtual call` is a depth or polymorphism problem, not a size problem.
 
-`InlineSmallCode` is the limit people forget: it is measured in machine-code bytes of the
-callee's existing nmethod, so a callee that was compiled first and grew large (unrolling,
-vectorisation) blocks its own inlining later, and with it every escape-analysis result that
-depended on the call boundary disappearing.
+On the inspected build, C2 can select the larger allowance for a frequent site, unboxing,
+or an eligible constructor under escape analysis. Neither `inline (hot)` nor
+`hot method too big` alone proves site frequency; the former is generic success text.
+Independent legality and profitability gates still apply.
+
+`InlineSmallCode` compares the callee's adjusted compiled instruction-size metric, not its
+total nmethod or `Compiler.codelist` address span. The inspected
+`ciMethod::inline_instructions_size()` uses the eligible nmethod's instruction end minus
+its verified entry and skipped instructions. A larger compiled callee can block later
+inlining and escape-analysis opportunities that depend on removing that call boundary.
+
+Implementation references: [C2 allowance selection](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp)
+and [the compiled instruction-size metric](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/ci/ciMethod.cpp).
 
 ## The three escape states
 
@@ -139,8 +150,8 @@ the elimination result and failed condition before changing source. The analyzed
 includes inlined callees, so returning an object from an inlined helper need not make it
 escape the caller's compilation.
 
-Implementation references: [OpenJDK 25u escape states and scalar-replaceable flag](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/opto/escape.hpp)
-and [allocation elimination checks](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/opto/macro.cpp).
+Implementation references: [OpenJDK 25.0.3+9 escape states and scalar-replaceable flag](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/escape.hpp)
+and [allocation elimination checks](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/macro.cpp).
 
 ## Strip mining
 
@@ -165,7 +176,7 @@ before the thread actually reaches a requested global safepoint.
   loading, `RedefineClasses` — invalidated from outside. Correlate the reason with the
   replacement compilation and deoptimization events before attributing a regression.
 
-  See [OpenJDK 25u nmethod transitions](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/code/nmethod.cpp).
+  See [OpenJDK 25.0.3+9 nmethod transitions](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/nmethod.cpp).
 
 - **`made zombie` no longer exists.** The sweeper thread and the zombie state were removed in
   JDK 20 (JDK-8290025). A not-entrant nmethod is unloaded by the GC once no frame references

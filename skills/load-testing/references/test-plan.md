@@ -1,5 +1,10 @@
 # Test Plan and Validity
 
+Use the applicable parts for the requested experiment or evidence review. Existing valid
+artifacts can satisfy these checks; a timing explanation or adequate-design review does not
+require a new pilot, parser, recording or full plan. For a new run, resolve the conditions
+that materially affect its claim before treating the result as evidence.
+
 ## Claim
 
 ```text
@@ -53,12 +58,16 @@ connections and overhead.
 
 For k6 arrival-rate executors, preallocate enough VUs to avoid allocation as a confound.
 Dropped iterations mean scheduled starts could not occur; retain the achieved arrival
-process and diagnose VU supply versus generator/iteration degradation.
+process and diagnose VU supply, target/client iteration occupancy and generator resources
+separately before choosing a remedy.
 
 For these executors, no free VU can mean the target slowed and existing iterations remain
 busy. In iteration-count executors the same `dropped_iterations` metric can instead mean
 `maxDuration` expired. Interpret it against the selected executor. Measure scheduled-to-actual
 start delay; dropped-start counts alone do not quantify arrival jitter or delayed catch-up bursts.
+An allocation increase can restore starts when VUs are occupied and generator resources permit
+it; extra generator hosts are justified by measured resource limits, not by dropped counts
+alone. Revalidate the achieved schedule and preserve any evidence of target degradation.
 
 ## Environment contract
 

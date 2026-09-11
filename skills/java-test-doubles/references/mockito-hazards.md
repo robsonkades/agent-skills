@@ -5,8 +5,8 @@ types; expected failures below must be reproduced in the project's actual test s
 
 ## Strict stubs, and what the failure means
 
-`MockitoExtension` applies `Strictness.STRICT_STUBS` by default. A stub that is never used
-fails the test:
+`MockitoExtension` applies `Strictness.STRICT_STUBS` by default. In an otherwise successful
+test, an unused non-lenient stub is reported during cleanup:
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -28,34 +28,45 @@ org.mockito.exceptions.misusing.UnnecessaryStubbingException:
 Please remove unnecessary stubbings or use 'lenient' strictness.
 ```
 
-Read it as a finding, not an obstacle. It means one of:
+Investigate the setup and intended assertion. Possible explanations include:
 
 - the test never reached the code path it claims to test — the important case;
 - the argument matchers do not match what the code actually passes, so the real call fell
   through to the default answer (`null`, `0`, empty) and the test passed for the wrong reason;
-- the stub is left over from a change and the test is now weaker than it looks.
+- the stub is redundant or left over from a change; that alone does not prove the test is weak.
 
-`lenient()` and `@MockitoSettings(strictness = LENIENT)` remove the message and keep all three
-defects. The only defensible use is a shared `@BeforeEach` stub that a minority of tests in the
-class do not use — and that is usually a sign the class should be split with `@Nested`.
+Prefer removing unnecessary setup or fixing the missed case. A deliberately optional/shared
+stub may justify per-stubbing `lenient()` when restructuring costs more than it clarifies;
+document why and keep the behavior assertion. Whole-test/class leniency disables more checks.
+In Mockito 5.23, an existing test failure or reported mismatch suppresses the additional
+unused-stub exception, so absence of that exception is not proof every stub was used.
 
-Strict stubs also produce `PotentialStubbingProblem` when a stubbed method is called with
-arguments no stub matches. That is the same signal arriving earlier, and it is the most
-common way an `equals`-mismatch (a `BigDecimal` scale, a rebuilt DTO) is caught.
+Strict stubs can also produce `PotentialStubbingProblem` for an unmatched invocation. This is
+a heuristic, not a guarantee for every wrong argument: Mockito 5.23 looks for unused,
+non-lenient stubbings with the same method name from a different source file. A same-file call
+or a previously used stub can instead fall through to the default answer. Check matchers and
+actual equality (for example, `BigDecimal.equals` includes scale). For repeated stubbing where
+`when` is mistaken for a real invocation, use `doReturn`/`willReturn`; deliberate unmatched
+calls may instead justify narrow leniency. Inspect the installed version's behavior and keep
+an assertion that detects the relevant wrong outcome.
 
 ## Spies and partial mocks
 
-`spy(realObject)` calls the real method for anything not stubbed. Two consequences that
+`spy(realObject)` calls the real method for anything not stubbed. Consequences that
 surprise people:
 
 - `when(spy.method()).thenReturn(x)` **executes the real method** while stubbing it. If it
   throws or has side effects, they happen. Use `doReturn(x).when(spy).method()` for spies.
 - Stubbing one method of an object while the rest runs for real means the test exercises a
-  configuration that never exists in production.
+  partly substituted configuration; state explicitly what the real calls still establish.
+- `spy(instance)` copies instance state rather than forwarding all calls to the original.
+  Mutable referenced objects can still be shared; do not assume later changes to the original
+  and spy are synchronized, or confuse which instance owns a real side effect/resource.
 
-A spy is defensible as a temporary tool while getting a legacy class under test
-(java-legacy-code-testing). As a design choice it says the class does two things and you wanted only
-one of them — split it instead.
+A spy can be a constrained seam while getting a legacy class under test
+(java-legacy-code-testing), or record calls while exercising useful real behavior. Prefer simpler
+real collaborators or explicit seams when they help, but require actual responsibility and
+compatibility evidence before demanding a class split.
 
 ## Static and constructor mocking
 
@@ -73,12 +84,15 @@ Static and construction mocks are thread-scoped; they do not automatically affec
 executor thread. Close both scopes deterministically and test asynchronous behavior through
 an injectable seam rather than assuming the scoped mock propagates.
 
-Prefer, in order: inject the dependency; wrap the static call in a small instance-side port;
-mock statically only for third-party code you cannot wrap and cannot avoid.
+Compare an existing injectable seam, a useful instance-side port, and a scoped static or
+construction mock under the current change/compatibility constraints. Instrumentation may be
+adequate for owned or third-party code even when wrapping is technically possible; no production
+redesign is required merely to avoid it. Keep thread scope, real side effects and cleanup explicit.
 
-`Instant.now()` and `LocalDate.now()` are the usual motivation. Inject a `Clock` instead — it
-is one constructor parameter and it fixes production reasoning as well as the test
-(java-test-design).
+For `Instant.now()` or `LocalDate.now()`, prefer an existing `Clock` seam when time control
+matters. Introduce one when its benefit fits the actual caller/compatibility contract; do not
+break exported constructors or replace an adequate scoped harness just to enforce injection.
+Preserve the required time-zone and clock semantics (java-test-design).
 
 ## `verify` patterns that become change detectors
 
@@ -92,6 +106,8 @@ is one constructor parameter and it fixes production reasoning as well as the te
 
 `InOrder` is justified when the order _is_ the requirement — write to the outbox before
 publishing, release the lock after the commit. Then say so in the test name.
+It verifies mocked call order, not a real durable commit or completion of asynchronous effects;
+those need the appropriate real-boundary evidence.
 
 ## Argument captors versus state
 
@@ -118,9 +134,10 @@ external broker — and assert on the captured payload's fields, not on the whol
 - `@MockitoBean` / `@MockitoSpyBean` are Spring Framework 6.2 annotations that replace or wrap a
   bean in the test `ApplicationContext`. Spring Boot deprecated `@MockBean` and `@SpyBean` in 3.4
   for removal in Boot 4; verify the actual Boot/Framework combination before migrating imports.
-- Every distinct combination of mocked beans and properties creates a **new cached application
-  context**. Ten test classes each mocking a different bean means ten context startups; this is
-  usually the largest single cost in a slow Spring test suite.
+- Distinct effective context keys do not share one cached context. Bean override definitions
+  and properties contribute to that key; different method-level stubbing answers alone do not.
+  Forks, cache eviction and `@DirtiesContext` can cause additional loads. Use cache statistics
+  and suite timings to determine the actual cost instead of inferring it from class count.
 - Cache reuse depends on the complete context key. Qualifiers, including fallback field names,
   can distinguish bean overrides; use consistent names when targeting the same bean and measure
   actual cache misses. Check replacement versus creation and singleton/spy constraints when
@@ -131,5 +148,7 @@ external broker — and assert on the captured payload's fields, not on the whol
 
 ## Primary references
 
-- [Mockito 5.21 API and agent setup](https://www.javadoc.io/static/org.mockito/mockito-core/5.21.0/org.mockito/org/mockito/Mockito.html) — verify the corresponding section for the installed version.
+- [Mockito 5.23 API and agent setup](https://www.javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/Mockito.html) — verify the corresponding section for the installed version.
+- [Mockito 5.23 argument-mismatch diagnostics](https://www.javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/exceptions/misusing/PotentialStubbingProblem.html) — intentional varying arguments and stubbing API trade-offs.
 - [Spring bean overrides and context reuse](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html)
+- [Spring context-cache key and lifecycle](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html)

@@ -17,17 +17,20 @@ description: >
 ## Purpose
 
 Give the application a boundary where a use case is named, its transaction is demarcated,
-its authorisation is decided, and its collaborators are orchestrated — and keep everything
-else out of it.
+its authorisation is decided, and its collaborators are orchestrated. Identify the chosen
+domain-logic style before deciding which business rules this boundary delegates or owns.
 
 Two failure modes bracket this layer. The **pass-through service**: one method per
 repository method without any distinct contract. A transaction, authorization or stable
 boundary alone may justify forwarding; inspect those duties before calling it redundant. The **god service**: the layer becomes where all
 logic lives, because it has the transaction, the repositories and the other services, and
-it is always the path of least resistance. The second is the more expensive, and it grows
-from the first.
+it is the easiest place to add them. Either failure can create change cost; a forwarding
+layer does not inevitably become a god service.
 
 ## What the layer owns
+
+This split describes domain-model orchestration. A deliberate Transaction Script can own
+business decisions in the application operation; apply the selected model consistently.
 
 ```text
 Application service (use case)          Domain (model or script)
@@ -41,9 +44,9 @@ publishing/collecting events
 translating infrastructure failures
 ```
 
-A method that does only the left column and delegates the right is a healthy application
-service. A method with no left column entries is a pass-through. A method with right-column
-entries inline is where the domain went.
+A method that does only the left column and delegates the right fits this separation.
+Before calling a forwarding method redundant, check its stable API and other boundary duties.
+Inline right-column decisions warrant an ownership review in a domain-model design.
 
 ## Model and target contract
 
@@ -52,13 +55,20 @@ it is not restricted to thin DDD orchestration. The separation above describes a
 style. Transaction Scripts can legitimately hold business logic; identify the selected model
 before moving rules. Inspect Java/framework versions, transaction manager, proxy configuration,
 security entrypoints and callers. Examples are partial Spring sketches with application types
-omitted, not an instruction to upgrade the stack.
+omitted, not an instruction to upgrade the stack. Preserve the target and its supported
+implementation; the sketches are not a complete build or proof of runtime interception.
 
 ## Workflow
 
-1. **Name the use case, not the entity.** `PlaceOrder`, `CancelSubscription`,
-   `SettleInvoice`. Services named after entities (`OrderService`) accumulate every
-   operation that mentions an order, which is how the god service forms.
+Use the steps relevant to the requested decision. Reuse adequate caller tests, architecture
+decisions and configuration evidence; retain a sound boundary when no material problem or
+new requirement justifies changing it. A narrow explanation need not become an extraction
+or integration-test campaign.
+
+1. **Name the intent and assess cohesion.** `PlaceOrder`, `CancelSubscription`,
+   `SettleInvoice` make operations explicit. A cohesive `OrderService` can group related
+   operations; split by demonstrated ownership/change or contract boundaries, not its name
+   or a one-class-per-use-case rule.
 2. **Establish the business transaction here by default.** Repository-local defaults and
    listener/job entrypoints can demarcate their own actual units; verify propagation rather than
    treating layer placement as the mechanism
@@ -70,9 +80,10 @@ omitted, not an instruction to upgrade the stack.
 4. **In domain-model style, delegate decisions and keep orchestration.** Load the aggregate, call one method
    on it, save. If the service is computing what the aggregate should become, the rule has
    moved out of the domain.
-5. **Translate at the edges.** Boundary types in, domain types through, infrastructure
-   exceptions to meaningful failures out. Nothing framework-specific escapes upward or
-   inward.
+5. **Translate according to the boundary contract.** Keep domain-facing types and failures
+   independent where the selected architecture requires it. An application API may accept
+   deliberate framework coupling; adapt when caller compatibility or domain independence
+   needs it, rather than requiring another wrapper for every framework type.
 6. **Justify the layer per module.** Inspect transaction semantics, authorization, audit,
    stable APIs and read consistency before deleting forwarding methods; write count is not
    the threshold.
@@ -93,9 +104,11 @@ or must be atomic across collaborators
 
 Logic belongs to the domain but fits no single object — a decision
 across two aggregates, an algorithm needing several roots
-        → domain service: framework-free, no transaction, no repository
-          orchestration, expressed in domain types. Rare; check first
-          that the logic does not belong on an object.
+        → consider a domain service expressed in domain terms. Check whether
+          an object already owns the rule. Domain-owned policy/repository ports
+          may supply needed information; make I/O, failure and consistency
+          requirements explicit and keep application transaction/lifecycle
+          coordination with its chosen owner.
 
 Business logic is accumulating in the application service because that
 is where the repositories are
@@ -124,12 +137,12 @@ An external caller needs a coarse-grained, network-shaped operation
 - **Do not add a service layer by default.** For read paths and single-write CRUD it is
   frequently pure indirection. State per module whether it exists and why
   (`architecture-decision-making`).
-- Application services depend on domain types; domain types never depend on application
-  services. A domain object calling a service is the inversion that ends with the model
-  unable to be tested alone.
-- Domain services are much rarer than their popularity suggests. Before writing one, check
-  whether the behaviour belongs on one of the objects it operates on — most candidates do,
-  and the ones that genuinely do not are typically policies over two aggregates.
+- In this domain-model separation, domain types do not depend on application orchestrators.
+  A call through a domain-owned policy port is a different dependency: inspect the actual
+  interface owner, vocabulary and effects rather than treating every service call as inversion.
+- Before introducing a domain service, check whether an existing object owns the behaviour.
+  Use one for a domain operation that fits neither entity nor value object; neither a rarity
+  quota nor a two-aggregate requirement determines that ownership.
 - Prefer protocol-independent application signatures. `ResponseEntity`,
   `HttpServletRequest` couples it to HTTP. `Pageable` introduces Spring Data coupling but
   is not inherently HTTP-only; decide whether that dependency fits the module contract (`layering-and-boundaries`).

@@ -52,9 +52,9 @@ This example uses the currency's default fractional digits as an explicit domain
 some pricing or settlement domains need another scale. Canonical scale makes record equality
 consistent for amounts such as 1.0 and 1.00; excess nonzero precision is rejected, not rounded.
 
-Two details that make this a value object rather than a wrapper: validation in the compact
-constructor, so an invalid instance cannot exist; and behaviour on the type, so callers stop
-writing currency checks.
+The compact constructor enforces this example's null/currency/scale policy, not every domain
+Money invariant: a nonnegative-balance rule would need separate enforcement. Behaviour on the
+type centralizes the currency checks required by these operations.
 
 **The trap:** a record component of a mutable type (`List`, `Map`, array, `Date`) is not
 deeply immutable. Copy mutable containers on input/output, or use `List.copyOf` for an
@@ -146,7 +146,7 @@ can still be justified by lifecycle, boundary or persistence independence requir
 
 ```java
 public interface Orders {
-    Optional<Order> byId(OrderId id);       // the caller must decide about absence
+    Optional<Order> byId(OrderId id);       // signals absence; callers can still ignore the result
 }
 
 @Entity
@@ -160,6 +160,8 @@ Use Optional primarily for return values signaling absence; fields and parameter
 design choices, not forbidden Java syntax. Avoid assuming portable JPA persistence or
 serialization support for Optional. A Special Case is useful only when absence has genuine
 uniform domain behavior (`enterprise-base-patterns`).
+The return type expresses intent; it does not enforce caller handling. Review use sites
+where dropping the result would violate the operation's contract.
 
 ## Virtual threads and the patterns
 
@@ -199,10 +201,18 @@ return db.sql("""
     .list();
 ```
 
-Readable SQL, bound parameters, a record result. Table Data Gateway is more attractive in
-current Java than it has ever been, and this is worth knowing when the alternative is a
-criteria query that expresses the same thing worse
+This illustrates readable SQL, bound values and typed results; it supplies no row bound or
+tenant/access policy. `.list()` collects the returned rows. Use it for an authorized,
+bounded cohort, or add the query's required scope and retrieval strategy. Interactive
+paging needs a suitable limit and stable order; a small, known all-results use case may
+already be adequate. Verify result-column/type mapping, null behavior and the target stack.
+Text blocks and `JdbcClient` do not establish lower cost than criteria or derived queries.
+Retain an adequate query and compare actual query shape, population and caller contracts
 (`query-objects-and-specifications`).
+
+The [Spring Framework 6.2.12 JdbcClient contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-jdbc/src/main/java/org/springframework/jdbc/core/simple/JdbcClient.java)
+and [implementation](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-jdbc/src/main/java/org/springframework/jdbc/core/simple/DefaultJdbcClient.java)
+support this API illustration; they are source-review baselines, not a target upgrade.
 
 ## What not to modernise
 
@@ -219,3 +229,6 @@ See [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/
 for exhaustiveness and null behavior, and [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
 for entity/access requirements. Structured concurrency APIs remain version-sensitive;
 consult the project's target release before adding an API or preview flags.
+For absence intent versus enforcement, see [Optional's Java 21 API note](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html)
+and [JLS 21 expression statements](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.8),
+which allow a method result to be discarded.

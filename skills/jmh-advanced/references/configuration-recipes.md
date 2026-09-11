@@ -48,10 +48,10 @@ public class ThreadState {
 }
 ```
 
-This shape still needs hit/miss distribution, read/write ratio, thread sweep, CPU placement,
-operation correctness, seed cohorts, and post-run invariants. Generating a random key inside the
-timed operation includes PRNG cost; precompute keys if production does not pay it, then validate
-cache/reuse effects.
+For the intended claim, establish hit/miss distribution, read/write ratio (including read-only),
+operation correctness and relevant seed, thread, placement or invariant checks. Generating a
+random key inside the timed operation includes PRNG cost; precompute keys if production does not
+pay it, then validate cache/reuse effects.
 
 This seed mapping makes each worker's input sequence reproducible for the same worker index,
 cohort and call count; it does not replay interleavings or imply statistically independent
@@ -206,13 +206,17 @@ short operation changes dramatically
 
 ## Publication checklist
 
+Apply the relevant checks to the claim being published. Reuse adequate artifacts; a missing
+measurement limits the claim rather than turning a design or source-contract review into a
+mandatory full experiment.
+
 - [ ] Generated benchmark source and effective command are retained.
 - [ ] State graph and actor topology are diagrammed or stated precisely.
 - [ ] Success denominator and auxiliary counter invariants reconcile.
 - [ ] Matrix, seeds, fork/block order, failed runs, and exclusions are preserved.
 - [ ] Cold/reset claims have evidence at every named layer.
 - [ ] Forced compiler/environment controls have representative companion runs.
-- [ ] Concurrency correctness and load/production impact are validated separately.
+- [ ] Any concurrency-correctness or load/production-impact claims have separate supporting validation.
 
 ## Authoritative references
 

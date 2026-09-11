@@ -8,7 +8,7 @@ semantics. These are language/API contracts. Fast-lock encodings, mark words, lo
 
 ## Source-reading protocol
 
-For an internals explanation:
+Identify the release/implementation first, then inspect the paths needed for the explanation:
 
 ```text
 exact JDK vendor/build/architecture and flags
@@ -22,7 +22,10 @@ virtual-thread mount/unmount integration
 ```
 
 Do not combine one release's `LockStack`, another release's `ANONYMOUS_OWNER`, and a third release's
-monitor-table behavior into a single timeless state machine.
+monitor-table behavior into a single timeless state machine. The linked 25 GA sources are examples;
+they do not establish which path a different vendor/update took. A source-scoped explanation can
+finish from the relevant code. Logs, debugger state or other runtime evidence are needed only when
+claiming that a particular execution followed that path or when the source alone cannot resolve it.
 
 ## Conceptual lifecycle
 
@@ -35,7 +38,8 @@ unlocked object
 ```
 
 Exact arrows and triggers are release-specific. Inflation races require ownership transfer/helping
-that preserves exclusion; explaining them requires the matching source and logs/debugger evidence.
+that preserves exclusion; explain the relevant matching source protocol and distinguish it from
+an observed runtime transition.
 
 ## Wait set versus entry contention
 
@@ -72,8 +76,8 @@ the matching JEP/source.
 
 ## Authoritative references
 
-- [OpenJDK synchronization source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)
-- [OpenJDK object monitor implementation](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/runtime/objectMonitor.cpp)
+- [OpenJDK 25 GA synchronization source example](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/synchronizer.cpp)
+- [OpenJDK 25 GA object monitor implementation example](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/objectMonitor.cpp)
 - [JEP 491](https://openjdk.org/jeps/491)
 - [JLS 17.1–17.2 monitors/wait sets](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [Java 25 Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)>) — release, reacquisition and timeout semantics.

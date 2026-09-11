@@ -25,7 +25,8 @@ thread pool being removed was the only thing bounding a downstream dependency.
 The migration itself is easy — that is the trap. The hard parts are the properties that were
 never written down: a pool size that was an admission limit, a single-threaded executor that
 was mutual exclusion, a `ThreadLocal` that was a cache, a thread name that was a log filter.
-Each of those is removed silently by a change that appears to be about performance.
+Those properties can change silently in a change that appears to be about performance;
+inspect which execution paths and contracts actually change.
 
 ## Workflow
 
@@ -34,24 +35,35 @@ executor configuration. Standard virtual threads require Java 21+; Java 17 canno
 factory examples. Java 24 removes monitor-only pinning, and ScopedValue is final only in Java 25.
 Do not upgrade Java/frameworks or enable preview merely to perform this migration.
 
-1. **Baseline first, and keep it.** Record p50/p99 at the target rate, in-flight concurrency,
-   thread counts, heap, connection-pool utilisation and the downstream's error rate. A
-   migration with no baseline cannot be evaluated and cannot be rolled back on evidence.
-2. **Inventory every pool and write down what it was limiting.** For each: how many threads,
+Apply the stages needed for the requested decision and affected execution paths. A narrow API,
+source or incident question can close from sufficient evidence without a service-wide inventory,
+new benchmark or migration. Retain adequate existing execution, limits and observability. Missing
+baseline data limits a comparative performance claim; it does not block independent reasoning or
+already authorized recovery through a validated rollback/drain path.
+
+1. **Keep the relevant baseline.** For a performance comparison, record p50/p99 at the target rate,
+   in-flight concurrency, thread counts, heap, connection-pool utilisation and downstream errors.
+   Reuse sufficient comparable data; do not invent a baseline or claim improvement without one.
+2. **Inventory affected pools and write down what they limit.** Include shared resources and
+   callers whose demand changes. For each: how many threads,
    what resource sat behind it, and what happens if that number becomes unbounded. This
-   inventory is the first deliverable; include queues, ordering, context and lifecycle ownership.
+   inventory supports the migration decision; include queues, ordering, context and lifecycle ownership.
 3. **Audit for blockers** — native/foreign pinning, carrier-capturing or file-heavy
    paths, `ThreadLocal` caches, thread-name dependencies, executors that encode ordering.
    The greps are in the playbook.
-4. **Declare the replacement limits** next to each scarce resource, and deploy _that_ change
-   first, on platform threads. Compare predeclared SLO, correctness and overload criteria;
-   two gates can change waiting, and unchanged throughput is not proof of equivalence.
-5. **Flip one workload, behind a flag**, starting with an I/O-bound path whose downstream has
-   a known bound. Canary at real load against the baseline.
+4. **Preserve required limits before removing the old enforcement.** A separate platform-thread
+   deployment can isolate limit-policy risk; an evidenced paired change can be appropriate when
+   coexistence changes queue/deadline semantics. Compare predeclared SLO, correctness and overload
+   criteria; unchanged throughput is not proof of equivalence.
+5. **Change one bounded workload**, using a flag or scoped deployment with owned drain/rollback.
+   Choose from actual objective, downstream bounds, blast radius and evidence. Validate the claimed
+   behavior under representative demand before widening.
 6. **Revalidate the connection pool deliberately**, using measured hold time, required throughput,
    queueing headroom and the database's aggregate capacity — not in proportion to new thread count.
+   Keep an adequate pool size; a review need not produce a resize.
 7. **Confirm the observability works** on the new model before widening: JSON thread dumps,
-   pinning events, carrier count, named thread factories.
+   pinning events, scheduler/resource metrics and request correlation as relevant. Names are one
+   diagnostic aid, not a mandatory replacement for adequate context and signals.
 8. **Widen one workload at a time**, with the rollback criteria stated before each step.
 
 ## Rules
@@ -74,8 +86,9 @@ Do not upgrade Java/frameworks or enable preview merely to perform this migratio
 - **Do not expect CPU-bound work to improve.** Virtual threads add no CPU capacity. A request can
   still use one virtual lifetime while CPU-heavy phases are isolated/bounded; migrate only for a
   demonstrated lifecycle/operability reason.
-- **Do not migrate to fix a slow dependency.** More concurrency against a saturated
-  dependency makes its queue longer, not its latency shorter.
+- **Separate waiting capacity from dependency latency.** Cheaper waiting can be a valid objective
+  when the dependency has measured headroom and demand remains bounded. It does not make an
+  individual slow call faster. More concurrency against a saturated dependency is not a remedy.
 - **Check the JDK baseline before auditing locks.** On JDK 21–23 a virtual thread that blocks while
   holding a monitor can pin; on 24+ (JEP 491) monitor use/`Object.wait` no longer causes pinning, and
   `-Djdk.tracePinnedThreads` was removed and does nothing. Migrating on 21 and migrating on

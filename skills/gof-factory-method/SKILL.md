@@ -4,8 +4,8 @@ description: >
   Factory Method in modern Java, and the three different things that share its name: the GoF
   pattern (a creation hook a subclass overrides inside an inherited algorithm), Effective Java's
   static factory method (a named constructor, not this pattern), and any method someone called
-  createX. Covers when the subclass hook is genuinely right, why an injected Supplier or a keyed
-  map replaces it in most application code, and the constructor-calls-an-overridable-method trap
+  createX. Covers when the subclass hook is genuinely right, when an injected Supplier or a keyed
+  map is a simpler alternative, and the constructor-calls-an-overridable-method trap
   it invites. Use when a protected createX() hook is proposed, when a class is subclassed only
   to change which type it instantiates, when tests subclass production code to substitute an
   object, when a static factory is being called Factory Method in review, or when deciding
@@ -35,8 +35,14 @@ before changing a public extension point. Examples are partial Java 17 sketches 
 types/imports omitted; pattern matching over a sealed kind requires Java 21 without preview.
 Keep the target baseline; do not upgrade it to adopt an alternative.
 
+Start with the ordinary consumer call, an advanced extension or resource-owning use, and a
+creation failure or misuse. Inspect who constructs and calls the creator, all supported hooks,
+creation frequency, arguments, checked failures and ownership. Preserve an adequate constructor,
+provider or existing hook; compare alternatives against those contracts. Ask only unresolved
+questions that could change extension compatibility or lifecycle.
+
 ```text
-An algorithm is inherited, and its only variation point is which
+An algorithm is inherited, and one variation point is which
 concrete product it creates
         → Factory Method (this is Template Method whose varying step
           is construction).
@@ -56,14 +62,15 @@ DocumentReader subtype pairs with its Document subtype
 
 - **The creator has no inherited algorithm.** Consider a `Supplier`, but keep a named domain
   provider when checked failures, arguments, lifecycle or a published SPI justify its contract.
-- **Subclassing exists only to change the created type.** Pass the creation function in. One
-  object with a field beats two types in a hierarchy (`java-composition-over-inheritance`).
+- **Application-controlled subclasses exist only to select products.** An injected creation
+  function may simplify this selection. Inspect supported external subclasses and useful
+  creator/product typing before replacing the hierarchy (`java-composition-over-inheritance`).
 - **The selection is data-driven.** `Map<Kind, Supplier<T>>` or a sealed `Kind` with an
   exhaustive `switch` is clearer than a subclass per kind, and the set of kinds is visible in
   one place.
-- **Tests are the reason.** Subclassing production code to override `createX()` couples the test
-  to the hierarchy and to `protected` members; an injected `Supplier` is a seam that costs
-  nothing to read (`java-test-doubles`).
+- **A new hook is proposed only for test substitution.** Prefer an existing injection seam where
+  it fits. A test subclass may legitimately characterize a supported extension contract; do not
+  remove that contract solely to change the test style (`java-test-doubles`).
 - **You mean a named constructor.** Write `static Money of(...)`. Do not build a hierarchy to
   get a name.
 
@@ -128,10 +135,11 @@ THEN it is a static factory method. Judge it by naming and instance
   the creator to escape. Avoid overridable constructor calls (`java-composition-over-inheritance`).
   Lazy caching needs safe publication and an initialization policy: a volatile field alone does
   not prevent duplicate creation. Specify failure/retry and disposal of losing instances.
-- **Distribution.** Nothing crosses a boundary here, with one exception: when the product kind
-  is chosen from externally supplied data (a message type header, a content type), that key must
-  be validated against a closed set before it selects a class. Reflective instantiation from an
-  unvalidated name is a deserialisation vulnerability, not a factory.
+- **External selection.** The pattern adds no remote boundary. When a product key comes from a
+  message header or other external input, select from the authorized supported registry before
+  loading a class. Plugins can register approved keys without a compile-time closed enum.
+  Arbitrary reflective loading can execute class initialization before a later type check;
+  validating the key does not replace payload validation or operation authorization.
 - **Performance.** The hook implies neither one allocation nor failed inlining: implementations
   may cache products, and HotSpot can inline stable virtual calls. A highly polymorphic hot call
   site can inhibit inlining, but only profiles and compilation evidence establish that
@@ -148,7 +156,7 @@ construction or external subclass usage is unknown, keep removal conditional unt
 
 - [ ] The creator has real inherited behaviour, not just the hook
 - [ ] No constructor calls the overridable factory method
-- [ ] The hook is not present solely to give tests a substitution point
+- [ ] A new hook earns its extension cost; existing supported hooks are not removed merely for test style
 - [ ] Subclassing is justified by an inherited algorithm, open extension constraint, or useful
       creator/product type relationship—not merely by a closed application selection table
 - [ ] Any externally supplied product key is validated against the supported registry; reflective

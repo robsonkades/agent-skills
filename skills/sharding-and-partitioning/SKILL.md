@@ -4,8 +4,8 @@ description: >
   Whether to split data across owners at all, and on which key: what sharding buys — write
   capacity, locality, data volume and isolation — against distributed transactions/indexes,
   non-local query routing, rebalancing as standing
-  work, and a shard map that is itself a distributed system; the alternatives that usually
-  win; the shard-key scorecard and classic wrong keys. Use when sharding is proposed for
+  work, and a shard map that is itself a distributed system; the alternatives and their
+  selection conditions; the shard-key scorecard and classic wrong keys. Use when sharding is proposed for
   future scale with no measured growth curve, when a table is called too big before
   retention is checked, when a shard key is chosen or changed, when a query appears that
   does not carry the key, or when cross-shard joins or unique constraints are discussed.
@@ -21,23 +21,29 @@ description: >
 
 Decide whether to distribute ownership and—only then—on what key and using which datastore
 semantics. Sharding is reversible only through an expensive data/contract migration: the key
-affects routing, locality, indexes, transactions and backfills. Preserve an abstraction and
-versioned mapping so evolution is possible; do not call any infrastructure alternative an
+affects routing, locality, indexes, transactions and backfills. Preserve adequate routing and
+versioned ownership controls, including those supplied by a datastore/router; do not call an
+infrastructure alternative an
 afternoon rollback without evidence.
 
-The failure this prevents is sharding a system that did not need it. A read-heavy service
-gets sharded, keeps its single-node write rate, loses joins and transactions, gains a shard
-map and a rebalancing story, and is _slower_ — the query that hit one index now fans out and
-waits for the slowest required shard. The second failure is a key chosen without comparing
+One failure this prevents is sharding without a justified ownership boundary. A read-heavy
+service can pay coordination and rebalancing costs without relieving its constraint: a query
+that hit one local index may now fan out and wait for the slowest required shard. Actual access
+paths and datastore support determine whether joins, transactions and latency change. Another
+failure is a key chosen without comparing
 domain consistency boundaries with the measured query/workload mix.
 
 ## Workflow
+
+Apply the steps needed for the requested decision. Reuse adequate workload, routing and recovery
+evidence; an existing topology or narrow explanation can close without a new key, migration or
+measurement campaign. For a material topology commitment, establish the affected contracts below.
 
 1. **Name the resource/SLO actually constrained**, with workload distribution: read/write
    CPU/IOPS, storage/working set, lock/index contention, locality/residency, restore time or
    blast radius. Sharding can scale reads and improve locality too, but replicas/cache/global
    indexes may be cheaper depending on consistency and query shape.
-2. **Exhaust the cheaper options first** and record why each was rejected: a bigger node,
+2. **Compare the relevant feasible alternatives** and record why they meet or miss the objective: a bigger node,
    read replicas, a cache, retention and archiving, or moving cold columns out. The table of
    alternatives and the condition that selects each is `references/deciding-to-shard.md`.
 3. **Combine query evidence with consistency boundaries.** Enumerate operations by rate, cost
@@ -54,16 +60,18 @@ domain consistency boundaries with the measured query/workload mix.
    hash for point routing with extra work for global ranges, a directory for flexibility with
    lookup/cache/fencing costs, per-tenant placement for isolation. The mapping function itself is
    `consistent-hashing`.
-7. **Plan migration and resharding before review ends**: authoritative change stream/outbox,
-   version-aware backfill, continuous verification, ownership epochs, cutover and a rollback
-   that includes post-cutover deltas — `references/what-sharding-forbids.md`.
+7. **Before committing to a topology change, establish its migration and recovery path.**
+   Choose a measured offline freeze or a supported online protocol. Preserve version-aware copy,
+   verification, enforced ownership transitions and rollback data, including post-cutover deltas
+   when writes resume — `references/what-sharding-forbids.md`.
 
 Inspect the target datastore/version, partitioner, driver/ORM and transaction configuration;
 logical partition, physical node and failure domain are not interchangeable. This skill has no
 Java API baseline or executable Java example: adapt guidance to the project's toolchain without
-adding libraries or upgrading it. Report the chosen boundary/key, rejected alternatives with
-evidence, operation-locality changes and migration/rollback checks. Missing workload or topology
-evidence makes the choice conditional; identify the measurement needed before commitment.
+adding libraries or upgrading it. Return the supported conclusion, change or no-change decision,
+evidence and remaining uncertainty. For a topology proposal, include the boundary/key, relevant
+alternatives, locality changes and migration/rollback checks. Missing evidence leaves the claims
+that depend on it conditional; identify what is needed before that commitment.
 
 ## Decision block
 
@@ -131,17 +139,24 @@ Prefer instead:
   all-shard query depends on all required shards and can amplify failures. Blast-radius isolation
   is a benefit only when routing/degradation contains the failure
   (`failure-models`).
-- The shard map is a distributed system: it must be versioned, readable when the data plane
-  is unhealthy, and able to stop a stale client writing to a former owner — the fencing rules
-  are `hot-partitions-and-rebalancing`.
+- Version the shard map and fence stale writes at the former owner's commit path. Distinguish
+  map needs for serving, startup, refresh and moves: supported cached routing can keep serving
+  while a topology service is unavailable, while changes may have to pause. Avoid dependencies
+  that prevent the required recovery when a shard is unhealthy; define fail-closed behavior when
+  safe ownership cannot be established. The fencing rules are `hot-partitions-and-rebalancing`.
 - Choose offline migration when a measured write freeze fits the agreed availability budget—it
   is simpler and can be safer. For online migration, avoid uncoordinated application dual-write;
-  use one authoritative commit plus outbox/CDC/log, resumable version-aware backfill,
-  reconciliation and fenced cutover.
+  use one authoritative commit plus outbox/CDC/log, or a proven transaction spanning both
+  representations and every mutation path. Independent local commits are not that transaction.
+  Both approaches still need resumable version-aware backfill, reconciliation and fenced cutover.
 
 ## Decision record requirements
 
-- forecast with ranges and trigger date, including skew/hot-key growth and restore time;
+For a material commitment, record the dimensions that can change its verdict. Reuse existing
+records. A capacity forecast is needed for a future-capacity claim, not to prove a supplied
+residency or recovery requirement; a narrow review need not produce every item.
+
+- for capacity commitments, forecast ranges and trigger date, including skew/hot-key growth;
 - query/workload coverage by rate, bytes and service cost—not only row count;
 - per-operation consistency, transaction and uniqueness scope;
 - mapping/directory availability, cache staleness and stale-client fencing;

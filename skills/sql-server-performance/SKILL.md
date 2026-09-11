@@ -13,10 +13,15 @@ description: >
 ## Purpose
 
 Identify whether SQL Server is waiting on data concurrency, plan quality, or a physical resource,
-then make the smallest engine-specific change whose effect can be measured. Wait names, plan
+then retain adequate behavior or choose a justified engine-specific change whose effect can be
+measured. Wait names, plan
 operators, and configuration values are evidence only in their time and workload context.
 
 ## Investigation contract
+
+Use the relevant parts of this inventory for the question. Reuse adequate supplied evidence;
+an API explanation, aggregate calculation or sound existing setup need not trigger a full engine
+capture, actual-plan execution or tuning change.
 
 ```text
 exact SQL Server version, edition/service tier, compatibility level, and topology:
@@ -30,12 +35,15 @@ mssql-jdbc version/properties, pool role, transaction/timeout and batch behavior
 
 The engine baseline is SQL Server 2022+; inspect the deployed build, database compatibility,
 Java runtime and resolved driver artifact before version-sensitive advice. This does not authorize
-upgrades. Missing or inaccessible plans, Query Store history or DMVs leave the diagnosis unknown.
+upgrades. Missing relevant plans, Query Store history or DMVs leave the affected mechanism
+unresolved; state what the available evidence still establishes.
 Use existing authorization for bounded captures; actual-plan collection can execute the statement,
 including its writes. DDL, configuration changes and production workload replay need their own
 authorized scope. Redact literals/parameters and plans that expose sensitive data.
 
 ## Workflow
+
+Use the applicable steps for the diagnostic question and available evidence.
 
 1. Bound the symptom to a query, session, database, replica, or instance and align its interval with
    workload and configuration changes. Use interval deltas with restart/reset history; cumulative
@@ -46,12 +54,16 @@ authorized scope. Redact literals/parameters and plans that expose sensitive dat
    - resource: CPU/scheduler, worker exhaustion, I/O, log, tempdb, memory, replica redo.
 3. Use live per-session/request evidence during the incident and Query Store for history. Treat
    instance-wide waits as a lead, not a root cause.
-4. Read the application's actual plan and parameters. Find the first bad estimate, repeated inner
-   work, waits/spills, memory grant, and `PlanAffectingConvert` before changing indexes or hints.
-5. Test one reversible intervention at the narrowest scope: statement/query hint or plan control,
-   database option, then instance configuration. Global changes require instance-wide evidence.
-6. Re-run the same workload and compare work, p99, waits, blocking, grant/spill, log/I/O, and replica
-   guardrails. A plan change without outcome improvement is not success.
+4. For a plan-quality claim, inspect representative application plans and parameters, using actual
+   rows/executions when that distinction matters. Find the estimate divergence, repeated inner
+   work, waits/spills, grant or seek-affecting conversion; a warning alone is not the diagnosis.
+5. When a change is justified and authorized, test the smallest reversible intervention supported
+   by the mechanism. Query/plan, application, database and instance controls have different costs;
+   a query hint is not automatically the safest first change. Retaining adequate behavior is valid.
+   Global changes require instance-wide evidence.
+6. Reuse representative validation or run an authorized comparison for the affected work, latency,
+   waits, concurrency and resource/replica guardrails. A plan change alone is not success;
+   distinguish an observed improvement from a proposed intervention or remaining evidence gap.
 
 ## Rules
 
@@ -72,7 +84,8 @@ authorized scope. Redact literals/parameters and plans that expose sensitive dat
 - A different plan in SSMS can be a different cache key because SET options differ from JDBC. Do not
   “fix” the application by copying `ARITHABORT` without explaining the underlying plan choice.
 - Verify mssql-jdbc conversion behavior. Unicode parameters against `VARCHAR` can convert the column
-  and prevent a seek; look for a seek-affecting conversion in the executed plan.
+  and affect access paths, depending on collation, types and plan. Inspect predicates and actual
+  work; neither the parameter type nor the presence/absence of a conversion warning proves a scan.
 - Index rebuild, statistics update, and page-density/fragmentation repair are different operations.
   Prove which side effect improved the workload before scheduling maintenance.
 - State version, edition, and compatibility prerequisites. Developer edition can make an online DDL
@@ -80,9 +93,10 @@ authorized scope. Redact literals/parameters and plans that expose sensitive dat
 
 ## Output
 
-Report evidence, direct observations, competing mechanism, confidence reason, intervention,
-predicted signal, validation result, guardrails, and rollback. Include exact scope—query, database,
-or instance—for every setting.
+Report the answer or retained/proposed decision with the evidence and uncertainty needed to assess
+it. For a change, include its scope, predicted signal, relevant validation, guardrails and rollback;
+do not invent an intervention or a full campaign for an adequate narrow result. Include exact
+scope—query, database, or instance—for every setting.
 
 ## References
 

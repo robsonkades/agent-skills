@@ -1,6 +1,6 @@
 {
   "name": "agent-skills-monorepo",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
   "description": "A cross-agent package manager for AI coding-agent skills",
@@ -22,8 +22,8 @@
     "clean": "tsc --build --clean",
     "rebuild": "npm run clean && npm run build",
     "typecheck": "tsc --build --force",
-    "test": "npm run build && node --test \"packages/*/test/**/*.test.ts\"",
-    "test:only": "node --test \"packages/*/test/**/*.test.ts\"",
+    "test": "npm run build && node --test \"packages/*/test/**/*.test.ts\" \"scripts/*.test.mjs\"",
+    "test:only": "node --test \"packages/*/test/**/*.test.ts\" \"scripts/*.test.mjs\"",
     "lint": "eslint packages scripts",
     "lint:fix": "eslint packages scripts --fix",
     "format": "prettier --write \"**/*.{ts,js,mjs,json,md,yaml,yml}\"",

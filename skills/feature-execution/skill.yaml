@@ -1,19 +1,15 @@
 schemaVersion: 1
 
 name: feature-execution
-version: 1.1.1
+version: 1.1.2
 description: >-
-  Implementing a planned feature one resource at a time: taking a single resource to done,
-  choosing the validation that resource actually warrants, running it and reading the output, and
-  handling the two things that always happen — the plan turning out to be wrong, and a resource
-  turning out to be blocked. Use when a plan exists and implementation is starting, when several
-  resources are half-finished at once, when implementation has diverged from the plan without
-  anyone recording it, when a resource is blocked and the work has quietly stopped, or when a
-  change is about to be reported as done on the strength of it compiling. Does not choose which
-  automated gates a change must pass (quality-gates), does not decide the test level or write the
-  tests (java-testing-strategy, tdd), does not own the status artefacts
-  (feature-progress-tracking), and does not own what may be claimed about the result
-  (coding-agent-discipline).
+  Implementing an authorized plan through coherent, verifiable resources: selecting ready work,
+  implementing within accepted scope, running relevant checks and reading their results, and
+  reconciling deviations and blockers. Use when implementation is starting, too many resources are
+  partly finished, code diverges from the plan, a blocked resource has stalled unrelated work, or
+  compilation is being treated as completion. Does not select repository gate policy (quality-gates),
+  own test-design methods (tdd; java-testing-strategy for Java), maintain the status format
+  (feature-progress-tracking), or define reporting discipline (coding-agent-discipline).
 license: Apache-2.0
 
 authors:
@@ -41,8 +37,6 @@ files:
 dependencies:
   - name: coding-agent-discipline
     version: ^1.0.0
-  - name: java-testing-strategy
-    version: ^1.0.0
   - name: quality-gates
     version: ^1.0.0
 
@@ -51,6 +45,7 @@ suggests:
   - feature-implementation-plan
   - feature-progress-tracking
   - java-refactoring
+  - java-testing-strategy
   - tdd
 
 capabilities:

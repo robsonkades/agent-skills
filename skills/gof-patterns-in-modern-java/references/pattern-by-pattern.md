@@ -7,9 +7,9 @@ still be written, and the residual case where it should.
 
 | Pattern              | Modern mechanism                                                   | Write the classical form?                                                                         |
 | -------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| **Abstract Factory** | One `@Configuration` per profile; a record of suppliers in a `Map` | **Sometimes.** When the family is chosen per request/tenant, or when third parties contribute one |
+| **Abstract Factory** | DI family assembly; related factories/suppliers when contracts fit | When family invariants, construction lifecycle or extension ownership require it                  |
 | **Builder**          | Record + compact constructor + named factories                     | When positional construction is ambiguous, staged, or one process builds multiple representations |
-| **Factory Method**   | Injected `Supplier`; `Map<Key, Supplier>`; sealed `switch`         | When inherited creation is a real framework/extension hook                                        |
+| **Factory Method**   | Supplier/map/dispatch as alternatives to subtype creation hooks    | Retain inherited creation when public/framework hooks and algorithm lifecycle require it          |
 | **Prototype**        | Immutability; copy constructors; explicit/generated withers        | Configured runtime templates or polymorphic copies; avoid introducing new `Cloneable` APIs        |
 | **Singleton**        | Container lifecycle scope or explicit owned instance               | Rare bridges where process/class-loader scoped global access is a real constraint                 |
 
@@ -23,15 +23,15 @@ Notes worth carrying:
 
 ## Structural
 
-| Pattern       | Modern mechanism                                                      | Write the classical form?                                                      |
-| ------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **Adapter**   | A lambda for single-method mismatches; generated Spring Data adapters | **Yes, routinely.** It is the standard shape for a vendor SDK behind your port |
-| **Bridge**    | Composition + DI; a one-method implementor can be a lambda            | **Yes, when two axes genuinely vary.** JDBC and SLF4J remain the model         |
-| **Composite** | Sealed interface + records + exhaustive `switch`                      | Choose sealed or open from extension needs; mutation API remains a choice      |
-| **Decorator** | Filters, interceptors, client builders, Resilience4j                  | When existing mechanisms do not meet the required contract                     |
-| **Facade**    | An application service / use-case class                               | **Yes, and it already exists** under another name in most codebases            |
-| **Flyweight** | String deduplication; enum constants; boundary canonicalisation       | When measured retention, allocation or construction cost justifies sharing     |
-| **Proxy**     | `@Transactional`/`@Cacheable` proxies; JPA lazy loading               | **Rarely by hand.** A virtual proxy for a genuinely expensive resource         |
+| Pattern       | Modern mechanism                                                                       | Write the classical form?                                                      |
+| ------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Adapter**   | A lambda for compatible single-method translation; generated adapters where applicable | When the existing port and collaborator contracts need translation             |
+| **Bridge**    | Composition + DI; a one-method implementor can be a lambda                             | When independent abstraction/implementation contracts warrant the boundary     |
+| **Composite** | Sealed interface + records + exhaustive `switch`                                       | Choose sealed or open from extension needs; mutation API remains a choice      |
+| **Decorator** | Filters, interceptors, Resilience4j                                                    | When existing mechanisms do not meet the required contract                     |
+| **Facade**    | An application service / use-case class                                                | When a consumer boundary simplifies actual subsystem use or coordination       |
+| **Flyweight** | String deduplication; enum constants; boundary canonicalisation                        | When measured retention, allocation or construction cost justifies sharing     |
+| **Proxy**     | Configured advice proxies; provider-specific JPA proxy/enhancement                     | When existing mechanisms lack required access, lifecycle or location semantics |
 
 Notes:
 
@@ -51,11 +51,11 @@ Notes:
 | **Interpreter**             | Sealed AST + folds; or CEL/JSONLogic/a rules engine                             | **For a small grammar you must control** — especially when the AST is translated     |
 | **Iterator**                | `Iterable`, `Stream`, `Spliterator`, Gatherers                                  | Implement the smallest pull/stream/splitting contract consumers actually need        |
 | **Mediator**                | Libraries can supply dispatch/orchestration; domain protocol still needs design | **Yes, bounded.** Its distributed form is an orchestrator                            |
-| **Memento**                 | Immutable state behind one reference; records                                   | **When the originator is genuinely mutable.** Otherwise share the reference          |
+| **Memento**                 | Immutable captures; records where their exposure contract fits                  | Retain required capture opacity, restoration ownership and history/lifetime policy   |
 | **Observer**                | `ApplicationEventPublisher`; reactive streams; brokers                          | Reuse a matching mechanism; implement when lifecycle/delivery contracts require it   |
 | **State**                   | Sealed states + one transition function                                         | Compare explicit transitions with per-state classes for behavior and extension needs |
-| **Strategy**                | A lambda; a domain functional interface; DI-selected map                        | When state, lifecycle or diagnostics justify a named implementation                  |
-| **Template Method**         | A `final` class taking composed steps                                           | **Framework extension points and contract test base classes**                        |
+| **Strategy**                | A lambda; a domain functional interface; DI-selected map                        | When consumer semantics, failures, state, lifecycle or diagnostics justify it        |
+| **Template Method**         | Composed steps as an alternative; injected policies within inherited templates  | Retain legitimate public/framework hooks and sequence/lifecycle contracts            |
 | **Visitor**                 | Sealed interface + exhaustive `switch`                                          | For stable element families, external operations or required accept APIs             |
 
 Notes:
@@ -68,13 +68,15 @@ Notes:
   Adapters do not supply resource cleanup or cancellation (`gof-iterator`).
 - Inspect a "mediator" library's behavior: command dispatch alone does not coordinate participant
   interactions, though a library may support both roles.
+- A final composed sequence retains an intent, not the subtype-hook mechanism of Template Method.
+  Compare an actual improvement before migrating supported extension APIs or renaming working code.
 
-## The six that should rarely be hand-written today
+## Six supplied mechanisms to check before duplicating
 
 ```text
 Iterator      use the existing traversal, or implement only the needed contract
 Singleton     one bean, injected
-Proxy         @Transactional, @Cacheable, JPA lazy loading
+Proxy         configured advice; provider-specific JPA proxy/enhancement
 Decorator     filters/interceptors for transport concerns
 Observer      application events; a broker beyond the process
 Chain         the framework's filter chain, for transport concerns
@@ -89,7 +91,7 @@ mechanism lacks required semantics; integrate and verify ordering, lifecycle, me
 Composite     recursion, depth bounds, cycles, mutation-during-traversal
 Bridge        two axes, an implementor contract designed for its worst
               backend
-Mediator      a bounded hub, or a god object
+Mediator      explicit protocol ownership and cohesive coordination
 Interpreter   a grammar, resource limits, and a security boundary
 Abstract      a family invariant enforced through types, assembly or validation
   Factory
@@ -103,5 +105,5 @@ Modern types change how these are written; none of them changes the analysis. Th
 
 The decision to use no pattern. Every feature in this reference makes "no pattern" easier to reach
 and none makes it less legitimate: an immutable record, a configuration value and a direct method
-call are still the answer to most design questions that get a pattern name attached
+call may already meet the design contract; retain adequate existing mechanisms
 (`gof-pattern-thinking`).

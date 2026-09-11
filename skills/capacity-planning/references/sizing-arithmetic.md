@@ -17,14 +17,17 @@ Retries are attempts, not new useful work. If a useful operation makes \(A\) att
 average, attempted rate is approximately \(A\lambda_a\); derive \(A\) from observed
 retry policy and outcomes rather than assuming independence.
 
-For a serial resource with stable demand, a necessary condition is:
+For a resource with stable demand and no indefinitely growing backlog, the necessary
+long-run rate-conservation ceiling is:
 
 \[
-a_j\lambda_a < C_j
+a_j\lambda_a \le C_j
 \]
 
-This is not sufficient for an SLO: variability, batching, skew, priorities and queue
-topology still matter.
+Equality is possible in an ideal deterministic schedule; it is not an operating target.
+Queue stability under variability and the required SLO generally require strict spare
+capacity. Derive that margin from the scenario: batching, skew, priorities and queue
+topology still matter. Neither inequality proves a latency distribution.
 
 ## 2. Build the empirical envelope
 
@@ -154,7 +157,8 @@ N^*=\sqrt{\frac{1-\alpha}{\beta}}
 \]
 
 It is not an allowed replica count or a safety boundary. Carry coefficient uncertainty,
-evaluate integer neighbors, and validate. Otherwise do not report a finite peak.
+evaluate feasible integer neighbors and boundaries, and validate. Otherwise do not infer
+an interior peak from this formula; the best feasible count may be a boundary value.
 
 Never calculate:
 

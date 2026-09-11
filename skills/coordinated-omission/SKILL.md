@@ -32,6 +32,11 @@ used for each value. Counts are necessary evidence, but they do not identify the
 
 ## Workflow
 
+Start with the claim being assessed and reuse matching schedules, traces, counters and tool
+configuration. A question about an already-valid closed experiment may need only a scoped
+explanation; run the audit or a new experiment only when missing evidence could change the
+decision. Keep a representative existing workload model rather than forcing open arrivals.
+
 1. **Establish the generation model explicitly** — closed-loop, open-loop, or semi-open.
    Whatever it is, it must be a decision, not the tool's default.
 2. **Write the stage and clock model.** Count scheduled/offered, generator-admitted, started,
@@ -54,7 +59,7 @@ used for each value. Counts are necessary evidence, but they do not identify the
 6. **Use HdrHistogram correction only as a sensitivity model for legacy omission-prone data.**
    It creates synthetic observations under a regular-interval counterfactual; it does not recover
    the requests or queue that never existed. See `references/post-hoc-correction.md`.
-7. **Report the evidence packet**, including raw and any corrected distributions, all stage
+7. **For an audit, report the evidence packet**, including raw and any corrected distributions, all stage
    counts, generator resource limits, arrival model, clocks and remaining threats.
 
 ## Rules
@@ -98,13 +103,15 @@ used for each value. Counts are necessary evidence, but they do not identify the
   independence, population and think/service times. Correlated clients, synchronized retries and
   admission queues violate that approximation; measure production arrivals.
 
-## Required audit artifact
+## Audit artifact
 
 For Java instrumentation, inspect the project's compiler/runtime and resolved HdrHistogram
 version before editing. The APIs shown are partial snippets, verified here with HdrHistogram
 2.2.2 on JDK 25; no Java baseline is otherwise imposed. Preserve the target toolchain and
 dependencies unless a change is authorized. If raw timing or generation evidence is absent,
 report the diagnosis as unresolved and identify the trace/counter needed to distinguish causes.
+For an audit, include the applicable fields below and distinguish observed results from a
+proposed validation run; a narrow explanation does not require collecting a fresh packet.
 
 ```text
 Target workload: open / closed / semi-open / replay; production evidence

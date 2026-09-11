@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: delivery-semantics
-version: 1.2.1
+version: 1.2.2
 description: >-
   Precise end-to-end delivery and processing semantics: acknowledgement placement, loss and
   duplicate windows, Kafka transactions, visibility leases, ambiguous outcomes and external
@@ -40,6 +40,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - idempotency
   - message-ordering-and-partitioning
   - poison-messages-and-dlq
 

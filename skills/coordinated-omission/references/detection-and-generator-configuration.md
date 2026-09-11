@@ -77,18 +77,23 @@ resource limits decide the needed pool. Validate actual starts and lag.
 
 ## Current tool semantics—verify deployed versions
 
-| Tool/configuration                                 | Workload semantics                                                                                                                                    | What must still be verified                                                                                                                                                                   |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **wrk2 `-R`**                                      | constant-throughput plan; connections remain serial, and reported latency is measured from intended transmission time to compensate for delayed sends | achieved request rate, calibration, connections/threads, socket errors, generator CPU/scheduling and exact fork/version                                                                       |
-| **k6 arrival-rate executors**                      | iterations are scheduled independently of response while VUs are available                                                                            | preallocated VUs, `dropped_iterations`, actual iteration/request mix, generator CPU; dynamic `maxVUs` allocation can itself perturb the run                                                   |
-| **Gatling `injectOpen(constantUsersPerSec...)`**   | open **user/scenario** arrivals                                                                                                                       | one injected user may execute many sequential requests, so user rate is not per-endpoint request rate; pauses are business semantics, and `.disablePauses()` is not what makes injection open |
-| **JMeter Open Model Thread Group**                 | schedules arriving users from a rate expression; current manual still labels it experimental                                                          | each user executes a test plan, thread creation/generator capacity, terminal counts and exact JMeter version                                                                                  |
-| **JMeter throughput timers + finite Thread Group** | timers pace available threads but do not create them; target can be missed when threads/samplers are busy                                             | planned schedule, enough threads, timer semantics and actual starts; official manual recommends considering Open Model Thread Group                                                           |
-| **Locust `constant_pacing`**                       | each user remains closed-loop; pacing targets time between that user's task starts and overruns start immediately after completion                    | aggregate arrival shape and user count; it is not a global open-arrival scheduler                                                                                                             |
+| Tool/configuration                                 | Workload semantics                                                                                                                                        | What must still be verified                                                                                                                                                                   |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **wrk2 `-R`**                                      | constant-throughput plan; default single-request connections wait for responses, but scripted pipelines are supported; latency uses intended-start timing | achieved request rate, calibration, pipeline/batch recording mode, connections/threads, socket errors, generator CPU/scheduling and exact fork/version                                        |
+| **k6 arrival-rate executors**                      | iterations are scheduled independently of response while VUs are available                                                                                | preallocated VUs, `dropped_iterations`, actual iteration/request mix, generator CPU; dynamic `maxVUs` allocation can itself perturb the run                                                   |
+| **Gatling `injectOpen(constantUsersPerSec...)`**   | open **user/scenario** arrivals                                                                                                                           | one injected user may execute many sequential requests, so user rate is not per-endpoint request rate; pauses are business semantics, and `.disablePauses()` is not what makes injection open |
+| **JMeter Open Model Thread Group**                 | schedules arriving users from a rate expression; current manual still labels it experimental                                                              | each user executes a test plan, thread creation/generator capacity, terminal counts and exact JMeter version                                                                                  |
+| **JMeter throughput timers + finite Thread Group** | timers pace available threads but do not create them; target can be missed when threads/samplers are busy                                                 | planned schedule, enough threads, timer semantics and actual starts; official manual recommends considering Open Model Thread Group                                                           |
+| **Locust `constant_pacing`**                       | each user remains closed-loop; pacing targets time between that user's task starts and overruns start immediately after completion                        | aggregate arrival shape and user count; it is not a global open-arrival scheduler                                                                                                             |
 
 `disablePauses()` and zero think time often make a closed model _more_ aggressive without making it
 open. Likewise, “constant throughput” in a UI may cap or pace work but cannot promise starts when
 the generator has no free execution context.
+
+Check the latency recording unit when using wrk2 pipelines. In upstream commit `44a94c17`,
+responses share the batch's expected start; default recording includes each response, while
+`-B` records only the last response of the batch. Request throughput and histogram count
+therefore need not have the same denominator. Verify the deployed fork before interpreting it.
 
 ## k6 example and guardrails
 
@@ -115,12 +120,17 @@ iteration schedule is not automatically endpoint arrival schedule.
 
 ## Validation protocol
 
+Use the checks needed to resolve the disputed claim, reusing valid artifacts. Before a new
+run or pause injection, set target scope, duration, arrival/concurrency caps, abort thresholds
+and drain policy; generator validation is not permission to increase load without a bound.
+
 1. Derive open/closed/semi-open/replay semantics from production arrival evidence.
 2. Pin tool and plugin versions; inspect defaults rather than copying a generic command.
 3. Generate a schedule with stable identifiers and monotonic due times. In distributed load,
    measure controller/worker clock alignment or keep comparisons local to one clock.
-4. Pilot generator-only overhead and raise concurrency/resources until target starts are met with
-   headroom without runtime allocation churn.
+4. Pilot generator-only overhead and adjust concurrency/resources within the declared bounds
+   to test schedule fidelity and headroom without runtime allocation churn. If the generator
+   cannot meet the target within those bounds, report the limitation.
 5. Inject a known service pause and a generator CPU/GC pause separately. Confirm stage counters and
    clocks distinguish server queueing from generator lag.
 6. Reconcile all terminal outcomes after the grace/drain policy. Report late starts and drops; do
@@ -131,6 +141,7 @@ iteration schedule is not automatically endpoint arrival schedule.
 ## Sources
 
 - [wrk2 README: constant-throughput model and intended-start latency](https://github.com/giltene/wrk2)
+- [wrk2 pipeline response recording, pinned implementation](https://github.com/giltene/wrk2/blob/44a94c17d8e6a0bac8559b53da76848e430cb7a7/src/wrk.c#L508-L558)
 - [Grafana k6: constant-arrival-rate executor](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
 - [Grafana k6: arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
 - [Gatling workload models](https://docs.gatling.io/testing-concepts/workload-models/)

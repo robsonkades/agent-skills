@@ -38,12 +38,14 @@ cannot.
 Inspect client/broker versions, key serialization/partitioner configuration, Java toolchain,
 consumer execution and sink transactions. Kafka references use 4.1 semantics; examples are
 partial and do not authorize upgrading a project or changing its delivery contract.
+Use the steps relevant to the question or change, and reuse adequate supplied contracts and
+validation. A supported existing ordering design can remain unchanged.
 
 1. **Write the required scope down as a sentence.** "Records for the same account id must be
    applied in authoritative account-version order at sink commit" identifies a scope and stage.
    Define the version authority as well. "The queue is ordered" does not, and it is
    the thing that ships.
-2. **Ask whether ordering is required at all before designing for it.** Commutative handlers,
+2. **Resolve an unclear ordering requirement before designing for it.** Commutative handlers,
    or a version guard on full snapshots, can relax arrival order for specified outcomes.
    Check intermediate transitions and external effects before relaxing keys or sequencing.
    See `references/designing-without-ordering.md`.
@@ -54,14 +56,20 @@ partial and do not authorize upgrading a project or changing its delivery contra
    ownership for that topic now; default modulo partitioners commonly remap keys when count
    changes. A stable custom mapping, quiescence or epoch/barrier migration can preserve a
    contract, but an uncoordinated count increase cannot.
-5. **Audit the consumer for the four things that break order inside a partition**: parallel
+5. **Audit the consumer for four ways order can break inside a partition**: parallel
    dispatch, republished retries, DLQ skips, and rebalance overlap
    (`references/where-ordering-breaks.md`).
 6. **Audit the producer**: a missing key, concurrent producers for one key, and in-flight
    retries that can be overtaken.
-7. **Test by shuffling and concurrency schedules.** Assert final state and every required
-   intermediate/external invariant. Failure can expose a handler bug, missing metadata or a
-   true domain ordering requirement; passing finite cases is evidence, not a general proof.
+7. **Validate the affected contract.** When relaxing order or changing dispatch, retries or
+   mapping, use relevant shuffle, completion/failure and concurrent-effect cases. Assert
+   final state and every required intermediate/external invariant. A narrow explanation or
+   review may close from adequate existing evidence. Passing finite cases is evidence, not
+   a general proof.
+
+Return the supported scope/stage and its evidence, any material gap and the change or
+keep-current decision. For a change, identify the affected invariant and checks actually run;
+do not claim runtime behavior from configuration or an in-memory model alone.
 
 ## Decision block
 
@@ -76,11 +84,10 @@ Avoid requiring ordering when:
 - complete snapshots have authoritative versions and an atomic guard; intermediate effects
   may be intentionally skipped (a versioned delta alone does not satisfy this)
 - a rebuildable projection also tolerates out-of-order intermediate behavior
-Prefer a version guard instead when:
-- per-key throughput exceeds what one handler can sustain, so ordering costs capacity
-- the chosen ordering key is skewed and the hot key would become a serial bottleneck
-- records arrive from more than one producer, where "the order they happened" is not
-  observable in the log anyway
+Consider a version guard only when the complete-snapshot and skippable-effect conditions above hold:
+- then throughput pressure, key skew or concurrent producers may motivate relaxing arrival order
+- those pressures alone do not authorize dropping required deltas or effects; preserve sequencing
+  and gap repair unless the domain contract can explicitly be relaxed
 Require a global total order only when:
 - the availability/throughput of one logical sequencer and ordered commit point is acceptable.
   Parallel compute may surround it, but visible ordered effects must serialize or buffer/reorder
@@ -98,16 +105,18 @@ Require a global total order only when:
   configurations that ignore keys; the presence of a key alone proves nothing.
 - With the default modulo-style mapping, per-key log ordering holds only while mapping is
   stable. **Adding partitions remaps some keys**: new records for key K can land on a different partition while K's earlier records
-  sit in the old one, and there is no ordering relation between two partitions. There is no
-  guarantee "across the change" to reason about — the two histories are simply unordered.
+  sit in the old one. The broker supplies no shared order across those partitions; preserving
+  an application order across the change requires an explicit cutover protocol.
 - Increasing count without a mapping/cutover protocol is safe only where cross-change per-key
   ordering is unnecessary. Otherwise use quiescence or a versioned migration with a per-key/
   global barrier (`references/where-ordering-breaks.md`).
-- Ordering is the order the broker **accepted** records, not the order events happened: two
-  producers writing one key have their relative order decided by arrival. Record timestamps are
-  not an ordering either — clock skew between producers is unbounded.
-- There is no ordering across topics, and none across partitions of one topic. A flow that
-  spans both has no order at all unless the records carry one.
+- Broker append order does not establish the order business events happened. Independent
+  producers can race unless an authoritative sequencing protocol constrains them. Wall-clock
+  timestamps alone do not establish that order: inspect clock error bounds, resolution and
+  tie behavior. Even bounded clock error can leave nearby events' real-time order ambiguous.
+- Kafka supplies no shared total order across topics or partitions. An application can impose
+  one with a sequencer and ordered application, or enforce a narrower causal order. State
+  that protocol explicitly; carrying sequence metadata alone does not enforce sink order.
 - **Consumer, parallel dispatch**: unordered concurrent execution of polled records can break
   per-partition completion order. Keyed dispatch — `hash(key) % workers`, one queue per worker —
   preserves _per-key_ order only with stable mapping, FIFO admission and completion before
@@ -126,7 +135,8 @@ Require a global total order only when:
   new owner resumes from a checkpoint. Group assignment does not fence late side effects.
   Stop admission, commit only the completed prefix of delivered records (offset numbers can
   have gaps), and make the sink reject stale ownership
-  epochs or tolerate duplicates.
+  epochs or enforce an equivalent effect-order contract. Duplicate safety is separate: it
+  does not prevent two distinct operations from applying in stale order.
 - **Producer, in-flight retries**: non-idempotent producers with multiple batches in flight can
   reorder a failed/retried batch behind a later success. Kafka's idempotent producer preserves
   order within its producer session subject to documented configuration; it does not order
@@ -172,5 +182,5 @@ Mapping change: close E, record barrier, drain through barrier, open E+1
 - [Designing for no ordering requirement](references/designing-without-ordering.md) — version
   guards, commutative operations, last-write-wins with its data-loss caveat, state-machine
   guards that reject invalid transitions, and shuffle tests that challenge whether handlers are
-  order-insensitive. Read before accepting an ordering requirement, and when per-key throughput
-  is the bottleneck.
+  order-insensitive. Read when deciding whether arrival order can be relaxed, including when
+  per-key throughput is the bottleneck; preserve already established domain requirements.

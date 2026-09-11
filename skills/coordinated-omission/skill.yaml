@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: coordinated-omission
-version: 1.3.1
+version: 1.3.2
 description: >-
   Coordinated omission in depth: response-coupled sampling, open/closed/semi-open workload
   models, scheduled-versus-actual clocks, generator saturation, correction at recording time versus at generation time,
@@ -43,6 +43,9 @@ files:
 dependencies:
   - name: latency-statistics
     version: ^1.0.0
+
+suggests:
+  - load-testing
 
 capabilities:
   - reads-source

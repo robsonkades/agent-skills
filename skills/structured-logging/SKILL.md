@@ -25,14 +25,19 @@ retention policy.
 
 ## Workflow
 
-Inspect the project's Java release, resolved SLF4J API/provider/encoder versions and effective
-configuration first. Examples are partial Java 17 snippets using SLF4J 2.x fluent APIs;
-adapt to the existing stack without assuming an upgrade is authorized. Missing configuration
-means delivery and JSON shape remain unverified, even when the application compiles.
+Start with the requested event, defect or decision; reuse adequate schema, configuration and
+fixture evidence. A narrow explanation or a sound existing design can close without a new
+schema, transport, benchmark or failure campaign. Apply the steps below to affected contracts.
+
+For version-sensitive API/output/delivery claims, inspect the project's Java release, resolved
+SLF4J API/provider/encoder versions and effective configuration. Examples are partial Java 17
+snippets using SLF4J 2.x fluent APIs; retain an adequate existing API and encoder, including
+parameterized calls, without assuming an upgrade is authorized. Missing configuration limits
+delivery and JSON-shape conclusions; it need not block an independent policy or source answer.
 
 ### 1. Define event classes and consumers
 
-For each event specify:
+For each new or changed event establish the relevant contract, using maintained definitions:
 
 - stable event name/version and producer;
 - operational, security, audit or business purpose;
@@ -61,9 +66,11 @@ copy stale context to satisfy a mandatory-field rule.
 
 ### 3. Choose API, encoder and transport together
 
-SLF4J fluent key-value APIs preserve field intent, but the selected provider/layout must
-serialize them as structured fields. Fixture-test the actual output. Parameterized messages
-avoid unnecessary formatting when disabled but do not replace typed fields.
+SLF4J fluent key-value APIs preserve field intent, but the selected provider/layout determines
+the emitted representation. Verify the required structure and types against actual output.
+Parameterized messages avoid unnecessary formatting when disabled; adequate existing APIs and
+encoder mappings may stay when they already produce the required event contract. Plain
+formatted prose alone does not establish typed fields.
 
 Choose synchronous, buffered/asynchronous or durable delivery from the loss/blocking
 contract. Queue capacity, discard/block policy, shutdown flush, sink failure, rotation and
@@ -94,11 +101,12 @@ Throwable messages and nested objects.
 
 ### 6. Budget and test failure
 
-Estimate events per logical operation, bytes/event, peak ingress, compression/index/storage
-and retention. Load-test normal and failure-path volume because stack traces and retry loops
-change size/rate. Inject sink outage, full queue/disk, slow stdout, forced termination and
-malformed/untrusted fields. Monitor emitted, queued, dropped, blocked, failed and delayed
-events independently.
+For changed cost or delivery claims, assess relevant events/operation, bytes/event, peak
+ingress and storage/retention costs. Exercise representative normal and failure-path volume
+when it affects the claim; stack traces and retry loops change size/rate. Select applicable
+sink outage, queue/disk saturation, slow stdout, termination and malformed-input controls.
+Use independent emitted/queued/dropped/blocked/failed/delayed evidence for the guarantees being
+reviewed; a field-only fix need not repeat an adequate transport campaign.
 
 ## Event selection
 
@@ -126,20 +134,22 @@ Levels are filtering/severity metadata, not automatically pager commands:
 Map levels to the organization's routing. A recovered retry might be DEBUG, WARN or a
 security-relevant ERROR depending on impact/rate; avoid a universal “at most WARN.”
 
-Log an exception object when stack/cause is needed. Avoid log-and-rethrow duplication by
+Log an exception object when stack/cause is needed and its content is permitted in that stream.
+An approved bounded classification/summary can be sufficient; do not attach prohibited message
+or cause data merely to obtain a stack trace. Avoid log-and-rethrow duplication by
 choosing an owning boundary, but multiple records can be justified for distinct security,
 audit and operational consumers if they share an event/cause identifier and do not inflate
 one metric accidentally.
 
 ## Delivery decision table
 
-| Requirement                    | Prefer                                                | Risk to test                                 |
-| ------------------------------ | ----------------------------------------------------- | -------------------------------------------- |
-| lowest loss for audit          | separate durable append/transactional design          | application coupling and availability        |
-| bounded app latency            | async bounded queue with declared loss policy         | dropped evidence during incidents            |
-| immediate local crash evidence | synchronous/stderr or crash-safe path                 | hot-path blocking                            |
-| high-volume access events      | structured buffered pipeline and sampling/aggregation | queue and sink overload                      |
-| container collection           | stdout/stderr when platform contract supports it      | blocking, multiline and rotation outside app |
+| Requirement                    | Prefer                                                 | Risk to test                                 |
+| ------------------------------ | ------------------------------------------------------ | -------------------------------------------- |
+| lowest loss for audit          | separate durable append/transactional design           | application coupling and availability        |
+| bounded app latency            | async bounded queue with declared loss policy          | dropped evidence during incidents            |
+| immediate local crash evidence | synchronous/stderr or crash-safe path                  | hot-path blocking                            |
+| high-volume access events      | structured buffered pipeline; sample only if permitted | queue and sink overload                      |
+| container collection           | stdout/stderr when platform contract supports it       | blocking, multiline and rotation outside app |
 
 No appender is crash-lossless by default. Async defaults vary by library/version; inspect
 effective configuration instead of encoding one Logback/Log4j behavior as universal.
@@ -183,9 +193,10 @@ and costly cardinality in backend indexes.
 - java-exception-design for exception contracts.
 - slo-and-alerting for paging.
 
-Return the affected event/consumer contract, evidence from the pinned configuration or
-encoded fixture, the proposed change and its loss/privacy trade-off, and checks run versus
-still pending. For a small fix, one concrete finding and its validation are enough.
+Return the requested conclusion and its evidence/limitations. For a proposed change, identify
+the affected event/consumer contract, relevant configuration or fixture evidence, loss/privacy
+trade-offs and checks run versus pending. A small fix needs only its concrete finding and
+validation; an adequate review may conclude with no change.
 
 ## Authoritative references
 

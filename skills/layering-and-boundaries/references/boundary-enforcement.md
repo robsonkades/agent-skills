@@ -6,7 +6,8 @@ bureaucracy; it is the cheapest part of the design.
 
 ## Layout that makes violations visible
 
-Prefer packaging by component, then by layer inside it:
+When component ownership/change locality is the driver, consider packaging by component,
+then by layer inside it. This Java example chooses a framework-free domain policy:
 
 ```text
 com.acme.orders            ← module surface: what other modules may call
@@ -40,9 +41,11 @@ Java package, not its subpackages or the whole component tree.
 
 Partial JUnit/ArchUnit example: resolve the project's JDK, ArchUnit/JUnit engine and
 Jakarta versus legacy `javax.persistence` API before use; imports/dependencies are omitted.
-This is one policy: web → app, app → persistence/domain, persistence → domain, with
+This is one policy: web → app/domain, app → persistence/domain, persistence → domain, with
 framework-free domain. It is not the classical domain → data-source diagram. Port calls
-can execute outward while their source dependencies point inward.
+can execute outward while their source dependencies point inward. Direct web → domain
+dependencies permit domain value types; these rules do not distinguish their use from a
+controller bypassing a use-case boundary. Add narrower rules if that distinction is required.
 
 ```java
 @AnalyzeClasses(packages = "com.acme")
@@ -81,9 +84,9 @@ class ArchitectureTest {
 }
 ```
 
-Two notes. The domain rule is the one that pays for itself immediately, and the one teams
-weaken first — when it is weakened, require the exemption to name the class and the reason,
-not to widen the package pattern. The entity rule is a proxy for a deeper decision
+For the chosen framework-free policy, require an exemption to name the class and the reason,
+not to widen the package pattern. Do not impose that policy on an accepted classical design.
+The entity rule is a proxy for a deeper decision
 (`remote-facade-and-dto`); it is worth enforcing even when the team has decided to expose
 entities on some paths, with the exemptions listed explicitly rather than by omission.
 
@@ -134,12 +137,15 @@ Ask, in this order:
 
 1. Use `rg` to find framework imports in domain packages; inspect consequences and accepted
    exceptions rather than treating the count as a health score.
-2. Look for cycles between top-level packages. A cycle means there is one module, not two.
+2. Look for cycles between top-level packages. They demonstrate source coupling, not that
+   the packages must be merged. Inspect the cycle and protected contracts before choosing
+   inversion, moving a shared contract, or consolidation.
 3. Find the type that appears in both a controller signature and a repository signature —
    that type is the system's real coupling, whatever the diagram says.
-4. Take the last ten feature commits and count files touched per feature. If every feature
-   touches every layer, the layers are not absorbing change and the boundary may be in the
-   wrong place — consider components or slices (`layering-styles.md`).
+4. Sample representative feature commits and inspect why files changed. A public-contract
+   or invariant change can legitimately span layers; distinguish that from repeated
+   passthrough-only edits. Missing history or co-change alone does not justify removal;
+   compare a focused component/slice change against the protected contracts (`layering-styles.md`).
 5. Ask which layer would survive replacing the web framework. Broad coupling weakens an
    independence claim, but other boundary benefits may still justify the design.
 

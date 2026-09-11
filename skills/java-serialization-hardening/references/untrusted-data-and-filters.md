@@ -57,10 +57,15 @@ Three ways to apply it (partial snippets; supply `java.io` imports and applicati
 var filter = ObjectInputFilter.Config.createFilter(
     "maxdepth=20;maxarray=10000;maxrefs=1000;maxbytes=1048576;"
   + "com.acme.cache.CachedOrder;com.acme.cache.CachedLine;"
-  + "java.base/java.lang.String;java.base/java.util.ArrayList;!*");
+  + "java.base/java.lang.String;java.base/java.lang.Object;java.base/java.util.ArrayList;!*");
 ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes));
 in.setObjectInputFilter(filter);
 ```
+
+On Java 25, `ArrayList` checks its backing `Object[]` allocation. Pattern filters match arrays
+by their element type, so this graph needs `java.lang.Object`; that exact pattern does not allow
+every subclass. Element classes are checked separately. Test the expected graph and an unlisted
+element with a harmless read hook; admitting the container must not admit that element.
 
 ```properties
 # 2. JVM-wide baseline in conf/security/java.security.
@@ -85,9 +90,12 @@ Rules for writing one:
   is what makes the filter closed. A filter that only lists forbidden classes stops yesterday's
   gadgets.
 - **Set the limits too**: `maxdepth`, `maxarray`, `maxrefs`, `maxbytes` defend against the
-  denial-of-service variant. Also bound compressed/container input before decompression; filter
-  byte counts cannot undo resource consumption in an upstream decoder.
-- **Compose, do not assume layering.** No filter is enabled by default. With the built-in factory,
+  denial-of-service variant. Bound compressed input and expanded output separately, before
+  unbounded buffering; a small compressed payload can expand past the deserialization byte cap.
+  Filter byte counts cannot undo resource consumption in an upstream decoder.
+- **Compose, do not assume layering.** A general JVM-wide filter is not configured by default;
+  RMI Registry/DGC, JMX and frameworks can supply their own entry-point filters. Inspect the
+  effective policy at each sink. With the built-in factory,
   setting a stream filter can replace the static JVM filter. If both constraints matter, install
   and test a factory that intersects/composes them. Factory/global configuration is process-wide
   startup policy; a stream filter may be set only once and before reading objects.
@@ -109,7 +117,9 @@ more times and sees classes/array lengths/graph metrics, not domain field validi
 validation and outer request-size/deadline controls.
 
 Primary API details: [ObjectInputStream filter invocation](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputStream.html#setObjectInputFilter(java.io.ObjectInputFilter)>)
-and [ObjectInputFilter factory/composition](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputFilter.html).
+and [ObjectInputFilter factory/composition](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputFilter.html),
+[pattern matching and array element types](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectInputFilter.Config.html),
+and [JDK entry-point filters](https://docs.oracle.com/en/java/javase/25/core/built-filters.html).
 
 ## Removing the mechanism
 
@@ -156,8 +166,11 @@ public sealed interface Payment permits CardPayment, PixPayment { }
 - A sealed interface makes Java's permitted set explicit and gives exhaustive `switch` on the
   consumer side (java-composition-over-inheritance covers sealed hierarchies).
 - If default typing cannot be removed immediately, a strict `PolymorphicTypeValidator`
-  allow-listing base types and packages is the interim mitigation — with the same caveat as
-  serialization filters.
+  restricting the concrete permitted subtypes is an interim mitigation. In Jackson 2.x,
+  `BasicPolymorphicTypeValidator.allowIfBaseType` permits all assignable subtypes; even
+  `allowIfSubType(SomeClass.class)` includes subclasses. Verify the reviewed subtype closure
+  and mapper version rather than treating a broad base type or package as a closed allow-list.
+  See the [Jackson 2.20 validator contract](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.20.0/src/main/java/com/fasterxml/jackson/databind/jsontype/BasicPolymorphicTypeValidator.java).
 
 The same review applies to YAML tags, `XMLDecoder`/XStream-style object construction, and any
 format with type resolution or executable setters. The mechanics differ, so use the parser's

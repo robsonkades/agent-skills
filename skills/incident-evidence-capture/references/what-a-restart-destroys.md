@@ -83,9 +83,12 @@ what is the reclaim/snapshot/backup policy?
 how are bytes encrypted and access audited?
 ```
 
-`kubectl cp` may require `tar` and can transfer a changing file. Freeze only through approved
-means or copy after producer completion, then compare source/remote size and cryptographic
-checksum. Streaming through `kubectl exec` needs exit-status/length/checksum handling and can be
+`kubectl cp` requires container-side `tar` and can transfer a changing file. Prefer completed
+rotated segments or a supported snapshot/export for an ongoing log or recording. If only a
+bounded prefix or partial copy is available, record its byte/time/rotation boundary and gaps;
+do not wait indefinitely for a continuous producer to finish or freeze it without authority.
+Compare checksums against the stable captured bytes, not a subsequently growing source.
+Streaming through `kubectl exec` needs exit-status/length/checksum handling and can be
 interrupted by API-server/network/pod lifecycle.
 
 ## Pre-incident evidence package
@@ -127,7 +130,8 @@ Create an explicit platform operation rather than generic label mutation:
 1. identify stateful/leader/shard/quorum and disruption constraints;
 2. verify remaining ready capacity and load headroom by failure domain;
 3. initiate approved connection draining/readiness route;
-4. verify new traffic stopped and in-flight policy completed/timed out;
+4. verify new traffic stopped and the in-flight policy was applied; a caller timeout alone
+   does not prove task/effect termination—record residual work and its authorized owner;
 5. prevent automatic termination only through an authorized bounded mechanism;
 6. launch/schedule replacement and verify readiness/capacity;
 7. capture while recording that workload changed after drain;
@@ -219,9 +223,10 @@ Do not respond by turning on every diagnostic channel fleet-wide.
 
 ## Authoritative references
 
-- [JFR runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/runtime.html)
+- [JDK 25 Recording lifecycle, destinations and retention](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Recording.html)
 - [JDK `jfr` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [Kubernetes volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
 - [Kubernetes pod lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/)
+- [Kubernetes file copy prerequisites](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_cp/)
 - [Kubernetes node-pressure eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/)
 - [Linux core dump](https://man7.org/linux/man-pages/man5/core.5.html)

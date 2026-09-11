@@ -14,12 +14,14 @@ provider sketch also needs `requires` on the service API module; its consumer ne
 | Class named in configuration                            | allow-list → `Class.forName` → `asSubclass` → interface        | for construction only              |
 | Mapping between types (DTO ↔ domain)                    | hand-written mapper, or an annotation processor                | no                                 |
 | Framework binding (DI, ORM, serialisation)              | the framework's own mechanism                                  | it is the framework's job          |
-| Test needs to see private state                         | test through the public API; make the seam explicit            | no                                 |
+| Test needs to see private state                         | public API or explicit seam; bounded legacy/tooling exception  | only for a justified seam          |
 | Tooling: agents, profilers, coverage, migration scripts | reflection, or bytecode tooling                                | yes — this is its home             |
 
-The recurring anti-pattern is the middle of the table: application code using reflection for a
-variability that is fully known at build time. The tell is a `getDeclaredMethod("handle" + type)`
-or a `Class.forName(prefix + name)` where the set of possibilities is enumerable.
+For variability fully known at build time, compare the reflective boundary with direct typed
+dispatch. A `getDeclaredMethod("handle" + type)` or `Class.forName(prefix + name)` is an investigation
+lead, not a defect by itself: existing framework contracts, validated startup discovery and
+compatibility can justify it. Post-build providers and runtime schemas need their actual inputs
+and lifecycle preserved before proposing generation.
 
 ```java
 // Reflective dispatch: nothing checks that a handler exists, or that its signature matches
@@ -114,20 +116,23 @@ Initialization/linkage failures can also propagate as errors outside `Invocation
 
 **Correctness and maintainability**
 
-- Renaming a method breaks reflective callers silently; the IDE reports no usages.
+- Renaming a method can break string-based callers without an ordinary compiler error;
+  specialized IDE/framework metadata support may track some edges. Verify the actual tooling.
 - A missing method or a changed signature fails at the moment of use, often deep in a request,
   not at startup — unless the code deliberately resolves everything eagerly at startup, which is
   a cheap and underused mitigation.
-- Static analysis, dead-code elimination and dependency analysis all lose the edge; unused-looking
-  code cannot be deleted safely, and used code appears unused.
+- Ordinary static/dead-code analysis can miss dynamic edges; specialized analysis or declared
+  metadata may recover them. Absence of reported uses alone does not justify deleting the member.
 
 **Runtime and packaging**
 
 - `Method.invoke` is a varargs API: ordinary primitive arguments require boxing and a call-site
   argument array, although escape analysis may remove some allocations. Target returns are boxed.
   Optimization depends on whether the reflected member is a compiler constant and on JDK policy.
-- Module encapsulation blocks access to non-open packages; `--add-opens` in a production launch
-  command is a maintenance liability tied to a specific JDK's internals.
+- Public reflection can use public members of public types in exported packages without `opens`.
+  Obtaining cross-module private reflective access requires an opening; an already-authorized
+  handle instead carries its resolved authority. Distinguish supported application/framework
+  access from reliance on unsupported JDK internals before proposing launch changes.
 - Native-image closed-world analysis needs discoverable reachability metadata for dynamic edges;
   omissions can fail during image build or on a native-only runtime path.
 - Classpath/module scanning performs archive/resource I/O and metadata parsing proportional to
@@ -152,8 +157,8 @@ contracts. Before accepting it for legacy characterization/tooling, compare thes
 3. **Inject the collaborator.** Most "must reflect to test" cases are really "the class
    constructs its own dependency" — see java-dependency-inversion.
 
-java-test-design covers what a test should assert; the point here is only that reflection in a
-test is a design signal, not a tool.
+java-test-design covers what a test should assert. Reflection is a design signal, not an automatic
+defect: a bounded legacy/tooling seam may be appropriate while a compatible alternative is unavailable.
 
 ## Primary references
 

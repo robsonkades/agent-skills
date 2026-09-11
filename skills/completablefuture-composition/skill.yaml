@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: completablefuture-composition
-version: 1.2.1
+version: 1.2.2
 description: >-
   Design and diagnose CompletionStage graphs with explicit execution, ownership, failure,
   timeout, cancellation, context and admission semantics. Use when a continuation runs on an

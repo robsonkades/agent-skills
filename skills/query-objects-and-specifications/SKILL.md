@@ -33,12 +33,13 @@ reading the call site.
 ## The options
 
 ```text
-Derived query method       findByStatusAndCustomerId(...). Zero code,
-                           self-documenting, not composable. Excellent
-                           for a small fixed set of queries.
+Derived query method       findByStatusAndCustomerId(...). Framework-derived
+                           implementation; readable for simple criteria. Suits
+                           a small fixed set of queries.
 
 Named query / explicit     JPQL or SQL, written once, named. Predictable,
-statement                  reviewable, optimisable. Not composable.
+statement                  reviewable, optimisable. Fixed statements or trusted
+                           fragments/templates can participate in composition.
 
 Query Object               an object holding criteria, translated to a
                            query by something that knows the storage.
@@ -54,16 +55,20 @@ Type-safe query DSL        a generated fluent API over the schema or the
 
 ## Workflow
 
-1. **Count the real variability.** A screen with three optional filters has eight
-   combinations, not infinite ones — and eight is often better served by two or three named
-   queries than by a composable framework.
+Use the steps relevant to the question or changed query contract. Preserve an adequate
+existing mechanism and evidence; a narrow explanation or supported no-change review need
+not introduce a new representation or a full query-test campaign.
+
+1. **Inspect the real variability.** Distinguish optional criteria, value distributions,
+   joins, sorting and result shapes. Compare named statements with composition from actual
+   reuse and reviewability; a count of on/off combinations alone does not choose the mechanism.
 2. **Name the business criteria.** `OverdueInvoices`, `ActiveSubscriptionsRenewingBefore`.
    If a criterion has a name in the business, it should have one in the code, whatever
    mechanism implements it.
 3. **Choose the mechanism per query**, not per project. A repository can hold derived
    methods, a named JPQL query and one specification-based search without inconsistency.
-4. **Decide the result shape first.** Most queries behind a screen want a projection, not
-   an entity — that decision usually matters more than the composition mechanism
+4. **Decide the required result shape and lifecycle.** Compare projection data with bounded
+   entity reads when their behavior is needed; check hydration and query cost
    (`architecture-and-performance`).
 5. **Read the generated SQL** for anything composed. Composition hides joins, and a
    specification that adds a join per predicate can change row multiplicity or existential
@@ -75,12 +80,12 @@ Type-safe query DSL        a generated fluent API over the schema or the
 
 ```text
 A handful of fixed queries, each used in one place
-        → derived methods or a named query. Adding a composition
-          framework here is pure overhead.
+        → consider derived methods or named statements; an adequate existing
+          DSL can also be clearer than adding a second mechanism.
 
 One search screen with optional filters
-        → a query object holding the filter values, translated in one
-          place. Readable, testable, and the SQL is predictable.
+        → consider a query object holding filter values, named statements or
+          the existing DSL. Keep translation reviewable and verify its SQL.
 
 The same business criterion is used in several queries and must stay
 consistent (what counts as "active", "overdue", "billable")
@@ -97,8 +102,8 @@ A report, an aggregation, a window function, a recursive query
           clearest supported expression and verify the generated plan.
 
 A count or an existence check
-        → a dedicated query. Loading entities to count them is the most
-          common needless cost in this area.
+        → query directly when only that answer is needed. Reuse already-required,
+          complete bounded data when it answers the question without another query.
 
 The query returns entities that are only read
         → consider a projection; bounded entity reads can also be appropriate.
@@ -107,9 +112,10 @@ The query returns entities that are only read
 
 ## Rules
 
-- **A query object is not a database abstraction.** Its purpose is composition and naming,
-  not portability. Designing one so the storage could be swapped produces a lowest-common-
-  denominator API and usually still fails to be portable
+- **A query object does not by itself provide database portability.** It can expose a
+  deliberate storage-independent search contract through adapters, but supported operators,
+  NULL/order/transaction semantics and capabilities must be defined and verified. Preserve
+  a useful existing abstraction; do not promise interchangeable databases from its shape
   (`architecture-decision-making`).
 - Derived query methods stop paying when names obscure intent, criteria repeat, optional parameters
   cause combinatorial methods, or generated SQL becomes hard to predict. There is no meaningful
@@ -126,14 +132,15 @@ The query returns entities that are only read
 - Allowlist sortable fields, directions and supported null semantics. Validated ORM property
   paths are not inherently raw SQL injection, but interpolated identifiers and unsafe sort
   expressions can be. Bind values and choose SQL fragments from trusted constants.
-- Dynamic queries with wildly different shapes make the optimiser's job harder — parameter
-  sniffing and plan reuse can produce a plan good for one filter combination and terrible
-  for another. When one combination dominates, a dedicated statement for it is a legitimate
-  optimisation.
+- Distinguish generated SQL shapes from values bound to one shape. Driver preparation,
+  parameter types and database plan policy determine reuse; data skew can make one plan
+  unsuitable for some values. A dedicated statement is an option when observed shape/plan
+  costs justify it, not a consequence of popularity alone.
 - Criteria, HQL and generated DSL support varies by version. Prefer explicit SQL when it
   expresses complex operations more clearly; do not infer performance from syntax alone
   (`data-source-patterns`).
-- Execute every materially distinct query shape in CI where feasible, prioritizing dynamic,
+- For a changed composition, access or result contract, exercise affected query shapes in CI
+  where feasible, prioritizing dynamic,
   privileged and high-traffic paths. Combinatorial searches may require pairwise/property-based
   coverage plus production telemetry rather than pretending every value combination was run
   (`metadata-mapping`).
@@ -148,8 +155,9 @@ scope to content, count, existence, export and subsequent fetch phases. An empty
 must deny results, not omit the restriction. Bound page size and query complexity.
 
 Inspect the Java toolchain, Spring/Data/provider versions, generated metamodel and schema
-before choosing APIs. Return the chosen representation, result/NULL/date/currency semantics,
-mandatory scope, predicted SQL and a test covering the material composition risk. Missing
+before choosing APIs. Return the supported representation or keep-current decision and its
+material limits. For a change, include affected result/NULL/date/currency semantics,
+mandatory scope, expected SQL and checks covering the composition risk. Missing
 schema or version evidence leaves those choices conditional; no dependency upgrade is implied.
 
 ## References

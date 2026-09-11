@@ -64,8 +64,8 @@ them is the tier, and the tier is never encoded in them.
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------ |
 | `made not entrant: not used`                                                | Often a higher tier replaced this code; confirm the successor compilation                               | Usually low signal |
 | `made not entrant: OSR invalidation of lower level`                         | Often retirement of lower-level OSR code; confirm the successor                                         | Usually low signal |
-| `made not entrant: uncommon trap`                                           | A speculation failed; recurring on one method is a deoptimisation loop                                  | Yes                |
-| `made not entrant: marked for deoptimization`                               | Invalidated from outside — class loading broke a dependency, `RedefineClasses`, a directive             | Yes                |
+| `made not entrant: uncommon trap`                                           | A speculation failed; repeated events warrant correlation with recompilation and workload changes       | Yes                |
+| `made not entrant: marked for deoptimization`                               | Marked invalid, for example after dependency changes or `RedefineClasses`; correlate the trigger        | Yes                |
 | `COMPILE SKIPPED: <reason> (retry at different tier)`                       | That compilation bailed out and policy may retry at another tier                                        | Yes                |
 | `made not compilable on level N  C::m (bytes)   excluded by CompileCommand` | `exclude` from a `CompileCommand` or a directive; printed once per level, with `### Excluding compile:` | Yes, deliberately  |
 
@@ -235,7 +235,8 @@ whether the method was invoked.
 
 ## Primary references
 
-- [HotSpot `compileTask.cpp`](https://github.com/openjdk/jdk/blob/master/src/hotspot/share/compiler/compileTask.cpp)
+- [JDK 25.0.3+9 `compileTask.cpp`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileTask.cpp)
+- [Compiler-mode and legacy threshold initialization](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)
 - [JDK diagnostic commands](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [JDK-8290025: remove the sweeper](https://bugs.openjdk.org/browse/JDK-8290025)
 - [JDK-8366118: huge-method guard in non-tiered mode](https://bugs.openjdk.org/browse/JDK-8366118)

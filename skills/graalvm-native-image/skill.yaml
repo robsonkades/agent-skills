@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: graalvm-native-image
-version: 2.0.1
+version: 2.0.2
 description: >-
   GraalVM Native Image: closed-world reachability, dynamic-feature metadata,
   class initialization and image-heap state, CPU targeting, GC and PGO choices,
@@ -40,6 +40,10 @@ files:
 dependencies:
   - name: graalvm-jit
     version: ^2.0.0
+
+suggests:
+  - jit-compilation
+  - startup-cds-crac-leyden
 
 capabilities:
   - reads-source

@@ -31,16 +31,16 @@ voter as three, with a quorum of three instead of two; six tolerates the same tw
 voters still require both for progress, though they may add a durable copy. Even counts can be
 transitional during reconfiguration, but need a purpose other than majority availability.
 
-Seven is defensible only when failure-domain analysis and recovery objectives require three
-simultaneous unavailable voters. Do not model nodes in one provider/control plane as independent
-merely because their instance lifecycles differ.
+Seven tolerates three unavailable voters; justify its failure-domain or other deployment benefit
+against five and its extra quorum/replication cost. Do not model nodes in one provider/control
+plane as independent merely because their instance lifecycles differ.
 
 ## Adding capacity without changing the quorum
 
 Read capacity and quorum size can be separable, but non-voter behavior is product/version-specific.
-ZooKeeper observers serve clients without voting. Current etcd learners primarily stage safe
-membership changes and accept only serializable reads/status; client routing and learner limits
-matter. Every non-voter still consumes leader replication resources. Adding voters does not shard
+ZooKeeper observers serve clients without voting. etcd 3.6 learners primarily stage safe
+membership changes and support serializable range reads/status, not linearizable reads; client
+routing and learner limits matter. Every non-voter still consumes leader replication resources. Adding voters does not shard
 the single leader's write path and increases replication/quorum work.
 
 ## `R + W > N` — what it gives and what it does not
@@ -77,12 +77,12 @@ the commit path also includes leader routing, log processing, durable-write poli
 queueing. With a stable Raft leader, one follower response can complete a three-voter quorum only
 after the leader's own durability requirements are met.
 
-| Placement                  | Typical RTT to the deciding peer | Consequence                                                                                 |
-| -------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
-| One AZ, 3 nodes            | sub-millisecond                  | Fastest decisions; an AZ failure takes the whole cluster                                    |
-| Three AZs, one region      | low single-digit ms              | Survives one AZ; every decision pays a cross-AZ hop, so keep decisions off the request path |
-| Three regions              | tens of ms                       | Survives a region; a lease renewal or lock acquisition now costs more than most SLOs allow  |
-| Two AZs, asymmetric voters | topology-dependent               | Can survive loss of the smaller side, not the larger; maintenance/failover is asymmetric    |
+| Placement                  | Illustrative RTT scale to check | Consequence                                                                              |
+| -------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
+| One AZ, 3 nodes            | sub-millisecond                 | No cross-AZ quorum hop; an AZ failure takes the whole cluster                            |
+| Three AZs, one region      | low single-digit ms             | Survives one AZ; quorum decisions cross AZs, so measure caller latency and availability  |
+| Three regions              | tens of ms                      | Survives a region; budget cross-region delay for callers, elections and recovery         |
+| Two AZs, asymmetric voters | topology-dependent              | Can survive loss of the smaller side, not the larger; maintenance/failover is asymmetric |
 
 Measure your own RTTs rather than trusting the column; the shape is what matters. The rule that
 follows is to budget latency and benchmark the offered write rate separately: increased RTT
@@ -94,13 +94,16 @@ correct quorum arithmetic.
 
 Split a five-node cluster 3/2:
 
-- **Majority side (3).** Elects or keeps a leader, commits writes, serves linearizable reads.
+- **Majority side (3).** Can elect or keep a leader and resume commits under the protocol's
+  timing and durable-state requirements; voter arithmetic alone does not guarantee progress
+  within a deadline. Linearizable reads also require the product's authority and applied-state checks.
 - **Minority side (2).** Cannot elect, cannot commit, and — this is the part that surprises —
   a _former_ leader stranded there may keep answering local reads until it notices, so a client
   pinned to it sees stale data unless it demands a linearizable read.
 
-Split 3-node cluster 2/1: same shape, and the singleton is useless. Split it 1/1/1: nothing
-proceeds anywhere, which is correct behaviour and total unavailability at the same time.
+Split a three-node cluster 2/1: only the two-voter side can form a majority. Split it 1/1/1:
+none can commit new consensus decisions. Permitted stale/local reads or work independent of
+new coordination may still proceed; do not describe loss of commits as loss of every operation.
 
 The minority cannot safely commit new consensus decisions. A client there may fail fast, serve a
 versioned/stale read under an explicit contract, or route elsewhere. Choose and test the product's

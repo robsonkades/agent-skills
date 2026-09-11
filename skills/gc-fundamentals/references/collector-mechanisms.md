@@ -4,6 +4,17 @@ Flag checks use Temurin 25.0.3 (`-XX:+PrintFlagsFinal`); diagnostic log excerpts
 that baseline. Timings and flags must be checked on the target collector/build. Other-release
 claims identify the JEP or JBS record, separately from local runtime validation.
 
+## Reachability, reclamation and resource lifetime
+
+An unwanted object can remain strongly reachable through a listener, cache or another live
+object; the collector cannot infer that the application no longer needs it. Conversely, a
+local variable's lexical scope does not guarantee its referent remains reachable until that
+scope ends. Eligibility depends on root reachability and reference semantics, not a desired
+business lifetime. Reclamation is a later collector action, with no fixed deadline from
+`System.gc()`. External resources require their own explicit ownership/close protocol; heap
+collection is not that protocol. Detailed retaining paths and reference levels belong to
+java-reference-types-and-leaks.
+
 ## The three base algorithms
 
 | Algorithm    | Moves objects | Fragments            | Cost proportional to                      | Space overhead      |
@@ -27,8 +38,10 @@ object-layout-and-footprint; fewer bytes alone does not establish a pause-time i
 ## Tri-colour marking and the two invariants
 
 Every marker, stop-the-world or concurrent, is the same abstraction: white (not yet seen),
-grey (seen, references not yet scanned), black (done). Marking finishes when no grey
-remains; whatever is still white is garbage. A concurrent marker can lose an object when
+grey (seen, references not yet scanned), black (done). On a stable graph after processing the
+roots, exhausting grey work identifies the unreachable white objects. Concurrent collection
+also has to account for mutation, allocation and reference processing before reclaiming them.
+A concurrent marker can lose an object when
 the application stores a white object's only reference into a black object and then
 overwrites the grey one that used to reach it. Two invariants prevent it, and the choice
 decides the barrier and the floating garbage:
@@ -51,9 +64,12 @@ See zgc-generational-internals for the exact fast/slow paths.
 
 ## Generations, survivors and promotion
 
-Serial and Parallel split the heap into Eden, two survivor spaces and old, with sizes
-from `NewRatio` (2), `SurvivorRatio` (8) and adaptive resizing (`UseAdaptiveSizePolicy`,
-true). G1 keeps the same roles but assigns them to regions, so the young generation is a
+Serial and Parallel split the heap into Eden, two survivor spaces and old. Configured bounds
+and ratios such as `NewRatio` and `SurvivorRatio` affect sizing, but their resizing policies
+differ: Parallel uses `UseAdaptiveSizePolicy`; JDK 25 Serial computes young capacity from old
+capacity, `NewRatio` and other bounds rather than that Parallel policy. A flag appearing as
+`true` in `PrintFlagsFinal` does not establish that the selected collector consumes it.
+G1 keeps the same roles but assigns them to regions, so the young generation is a
 set of regions whose count is adaptive. Generational ZGC and generational Shenandoah use
 different page/region aging and promotion policies; Shenandoah's default `satb` mode on 25
 is non-generational. The following survivor-space model applies to Serial/Parallel/G1:
@@ -198,9 +214,11 @@ but each allocation need not trigger a pause or that cause. Three costs follow f
 grep -i humongous gc.log
 ```
 
-If they are frequent, the fix is the allocation site (a large array, a big buffer, a
-`ByteArrayOutputStream` that doubles), not a collector flag. Raising the region size to
-make them ordinary is a g1-tuning-for-slo decision with its own costs.
+Frequency alone does not establish a problem. If reclaim, headroom and application outcomes
+are adequate, retain the existing design. When measured pressure warrants a change, compare
+allocation size/lifetime (for example buffer growth or bounded chunking) with relevant
+collector tradeoffs. Raising region size to make objects ordinary is a g1-tuning-for-slo
+decision with its own costs, not a universal fix or a forbidden alternative.
 
 ## Reference processing
 
@@ -209,9 +227,11 @@ are discovered and processed according to collector-specific phases; concurrent 
 can move processing outside pauses. G1 pause logs can show `SoftWeakFinalRefsPhase`,
 `KeepAliveFinalRefsPhase`, `PhantomRefsPhase`. `ParallelRefProcEnabled` is true for G1/Parallel
 but false for Serial in the tested 25 build. Finalization can delay reclamation and resurrect
-objects; it does not guarantee one extra collection or exactly two copies. A pause whose
-`Reference Processing` line dominates has a reference-heavy structure in the collection
-set — a `WeakHashMap`, a soft-reference cache, a finalizer-backed resource; the levels,
+objects; it does not guarantee one extra collection or exactly two copies. When
+`Reference Processing` dominates, a reference-heavy structure is one candidate — a
+`WeakHashMap`, a soft-reference cache, a finalizer-backed resource.
+Compare counts, processing phases and available CPU before attributing a long duration to
+more references. The levels,
 when each is cleared and the leak catalogue are java-reference-types-and-leaks, and the
 count per type is `jdk.GCReferenceStatistics`.
 
@@ -269,6 +289,13 @@ Baseline corrections; 25 behavior was checked on 25.0.3, later releases use prim
 
 ## Primary sources
 
+- [JLS 25 section 12.6.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.6.1),
+  [System GC contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html)
+  and [AutoCloseable](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html):
+  reachability, nondeterministic reclamation and explicit resource closure are separate contracts.
+- [Serial young sizing on JDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/serial/defNewGeneration.cpp)
+  and [Parallel adaptive sizing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/parallel/psScavenge.cpp):
+  shared flags do not imply shared collector policies.
 - [G1 mechanisms on JDK 25](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-g1-garbage-collector1.html)
   and [G1 tuning](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html):
   adaptive young sizing, marking versus reclamation and evacuation/humongous behavior.

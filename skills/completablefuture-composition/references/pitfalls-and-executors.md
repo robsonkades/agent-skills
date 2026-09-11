@@ -8,9 +8,12 @@ caller, but code must not depend on that implementation outcome. Instrument thre
 identity and operation at stage boundaries when diagnosing affinity.
 
 For async methods without an executor, inspect `defaultExecutor()` on the actual stage class. The
-standard class normally uses `ForkJoinPool.commonPool()` when it supports more than one parallel
-thread and otherwise a thread-per-task fallback. A subclass can override the facility. Common-pool
-parallelism can be configured and effective processor count is environment-sensitive.
+base Java 17/21 class uses `ForkJoinPool.commonPool()` when it supports more than one parallel
+thread and otherwise a thread-per-task fallback, even when that common pool is explicitly passed
+to an async method. OpenJDK 25 instead uses the common pool and can override configured zero
+parallelism for intrinsically asynchronous work. Its class-level API text and implementation
+reflect this change; the `defaultExecutor()` method detail still describes the older fallback.
+A subclass can override the default facility. Inspect the exact build and effective pool state.
 
 An explicit executor can execute inline, serialize work, reject, or queue without limit. The
 `CompletionStage` API deliberately does not promise concurrent execution merely because an executor
@@ -129,5 +132,8 @@ to their API contract; unrelated executor tasks do not.
 
 - [Java 25 `CompletionStage`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 - [Java 25 `CompletableFuture`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+- [OpenJDK 21 `CompletableFuture`: low-parallelism fallback](https://github.com/openjdk/jdk/blob/jdk-21-ga/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java)
+- [OpenJDK 25 `CompletableFuture`: default executor and copying](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java)
+- [OpenJDK 25 `ForkJoinPool`: async common-pool initialization](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java)
 - [Java 25 `StructuredTaskScope.Joiner` (preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html)
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)

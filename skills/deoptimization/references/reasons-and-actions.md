@@ -34,17 +34,17 @@ after sufficient traps. Every one of the five
 deoptimises the current frame — the thread continues in the interpreter from `trap_bci`
 regardless.
 
-| Action                | Effect on the nmethod                                                                 | Effect on the profile     | Cost                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
-| `none`                | Kept. C2 emitted the trap without requesting another recompile                        | Not updated               | Frame deoptimisation on each hit while that nmethod remains installed — see below |
-| `maybe_recompile`     | Initially kept; may become not entrant as trap limits are reached                     | Trap recorded at the bci  | Each hit reconstructs frames; no promise that early hits are cheap                |
-| `reinterpret`         | Made not entrant; invocation counters reset so the interpreter reprofiles for a while | Trap recorded; reprofiled | Interpreted until the counters climb again                                        |
-| `make_not_entrant`    | Made not entrant; recompiled as soon as the counters allow                            | Trap recorded             | One recompilation                                                                 |
-| `make_not_compilable` | Made not entrant and the loaded method is excluded from **C2**                        | —                         | Persistent for that loaded method; C1 can still compile it                        |
+| Action                | Effect on the nmethod                                                                  | Effect on the profile     | Cost                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------- |
+| `none`                | Kept. C2 emitted the trap without requesting another recompile                         | Trap state not updated    | Frame deoptimisation on each hit while that nmethod remains installed — see below |
+| `maybe_recompile`     | Initially kept; may become not entrant as trap limits are reached                      | Trap recorded at the bci  | Each hit reconstructs frames; no promise that early hits are cheap                |
+| `reinterpret`         | Made not entrant; invocation counters reset so the interpreter reprofiles for a while  | Trap recorded; reprofiled | Interpreted until the counters climb again                                        |
+| `make_not_entrant`    | Made not entrant; later compilation depends on counters, policy and available compiler | Trap recorded             | Frame reconstruction and possible later compilation                               |
+| `make_not_compilable` | Made not entrant and the loaded method is excluded from **C2**                         | —                         | Persistent for that loaded method; C1 can still compile it                        |
 
 `make_not_compilable` is almost never the action C2 requests. The give-up decision in
 production is the runtime's, taken in `uncommon_trap_inner` (`deoptimization.cpp`) when a
-bci exceeds `PerBytecodeRecompilationCutoff` or, in `MethodData::inc_decompile_count()`,
+MethodData overflow-recompile count exceeds `PerBytecodeRecompilationCutoff` or, in `MethodData::inc_decompile_count()`,
 when the method exceeds `PerMethodRecompilationCutoff`. Both call `set_not_compilable` with
 `CompLevel_full_optimization`: the method stays compilable by C1 and
 `CompilationPolicy::compile()` sends it to tier 1 when a tier-4 request is refused. It is
@@ -84,17 +84,20 @@ which are recorded per compiled root method and bci rather than per bytecode.
 
 The two shapes that do not converge:
 
-**The `none` storm.** `Compile::too_many_recompiles` returns true once the method has
-decompiled `PerMethodRecompilationCutoff / 2 + 1` times (201 by default) or a bci has
-`PerBytecodeRecompilationCutoff / 8` (25) overflow recompiles. C2 then emits the trap with
-`Action_none`: the nmethod is not invalidated by that action, the profile is not updated, and each hit
+**The `none` storm.** `Compile::too_many_recompiles` can return true with cumulative decompile
+count at least `PerMethodRecompilationCutoff / 2 + 1` (201 by default) and prior reason history,
+or a MethodData overflow count at least `PerBytecodeRecompilationCutoff / 8` (25) plus the
+required prior trap/recompiled-site evidence. The latter is not an independent per-bci count.
+Runtime C2 exclusion uses the separate strict `>400` / `>200` tests, not those earlier limits.
+C2 can then emit the trap with
+`Action_none`: the nmethod is not invalidated by that action, trap state is not updated, and each hit
 is a full deoptimisation of the frame — an interpreter round-trip per call. Forced with
 `-XX:PerMethodRecompilationCutoff=3`, the same method logged 11,843 `unstable_if none` lines
-at one `cid` and the run took 38 s instead of 2 s (executed, 25.0.3). This is what "never
+at one `cid` and the run took 38 s instead of 2 s (prior experiment, 25.0.3; forced flags and
+workload, not a representative production slowdown estimate). This is what "never
 stabilises" looks like in a real log, and it happens **before** the cutoff, which the method
-may never reach. Reaching it requires roughly 200 distinct decompilations of one method —
-generated code with hundreds of speculated sites, or a method whose MDO keeps being
-replaced.
+may never reach. The forced run illustrates one route into a storm, not a diagnosis from
+action `none` alone; inspect the retained history, generated code and profile lifecycle.
 
 **The C1 fallback.** The cutoff itself, described above. The prior tiered run settled at tier 1
 without further traps at the site; other compiler configurations need live-state verification.
@@ -133,8 +136,8 @@ Marked for deoptimization
   dependee = java.util.LinkedHashMap
 ```
 
-The signature is several unrelated methods marked within the same millisecond, right after a
-`-Xlog:class+load` line for the dependee. The `jdk.Deoptimization` event alone misses this
+Several methods marked near a class-load line are a lead; the failed dependency and named
+dependee establish the relationship, not timestamp proximity alone. The `jdk.Deoptimization` event alone misses this
 invalidation; other enabled JFR events may still supply class-loading or safepoint context.
 
 `RedefineClasses` (JVMTI: HotSwap, some instrumentation agents) is broader still: it flushes
@@ -156,7 +159,7 @@ or a dependency registered with no guard at all)
    |
    +-- the guard fails: uncommon trap, reason recorded in the MDO
           -> action:
-               none              -> nmethod kept, frame deoptimised, nothing learned
+               none              -> nmethod kept, frame deoptimised, trap state unchanged
                maybe_recompile   -> may retain code until trap limits cause invalidation
                reinterpret       -> not entrant, counters reset, reprofiled
                make_not_entrant  -> not entrant, recompiled
@@ -186,30 +189,30 @@ a method can allocate more than the method itself.
 
 ## Symptom to cause
 
-| Log or JFR signature                                                                        | Likely code shape                                                                      | What to change                                                                                   |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| A burst of `class_check` on one `cid`, then `made not entrant: uncommon trap`, then silence | A call site profiled monomorphic met its second implementation                         | Nothing, if once. If it is after every deploy: warm up with every type the site will see         |
-| `bimorphic_or_optimized_type_check` then silence, but the method got slower                 | A third receiver type; the site is now a virtual call and no longer inlines            | A decision, not a bug: peel the hot type into its own site, or accept                            |
-| Several methods `marked for deoptimization` in the same millisecond, after a `class+load`   | A new implementor of a still-single-implementor interface was loaded                   | Warm-up that loads it before traffic, or a static type that cannot gain implementors             |
-| The above, recurring for minutes after a deploy                                             | Lazy loading — plugins, proxies, generated classes, lambdas — under live traffic       | Preload / pre-generate at start-up; gate traffic on the invalidation rate reaching its floor     |
-| The above, recurring in steady state                                                        | Runtime class generation per request (scripting, per-tenant proxies, serialisers)      | Cache the generated classes; the invalidations stop when the hierarchy stops changing            |
-| `unstable_if` once per bci across many methods at start-up                                  | Branches first taken under real traffic                                                | Normal. Only a rate that does not fall to zero is a finding                                      |
-| `unloaded` / `uninitialized` at start-up                                                    | Classes loaded lazily after the caller compiled                                        | Normal. CDS / AOT class loading moves it earlier, nothing else                                   |
-| `null_check` or `range_check` once, then an exception with no stack trace                   | An exception used as control flow, now compiled as a fast throw                        | `-XX:-OmitStackTraceInFastThrow` to see it once; then remove the exception from the path         |
-| `action=none` at a steady rate on one `cid` and `trap_bci`                                  | Trap state and compiled code are retained; a recompilation limit is one possible cause | Inspect compile history, actual flags and the emitting compiler path before attributing a cutoff |
-| `made not compilable on level 4 … give up compiling`                                        | C2 exclusion; C1 may remain available                                                  | Verify live tier and policy; diagnose the compilation history before changing limits             |
-| `jdk.Deoptimization` and `jdk.CompilationFailure` on the same method                        | Compilation failure and a trap coexist; complexity is one hypothesis                   | Read failure text and compile history before changing bytecode shape                             |
-| `speculate_class_check` recurring across callers of one callee                              | Type speculation on arguments that differ per caller                                   | `-XX:-UseTypeSpeculation` as an experiment only; fix the API shape if confirmed                  |
+| Log or JFR signature                                                                        | Likely code shape                                                                          | What to change                                                                                         |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| A burst of `class_check` on one `cid`, then `made not entrant: uncommon trap`, then silence | A previously profiled call site encountered an unexpected type                             | Accept if cost is tolerable under continued demand; otherwise consider representative warm-up          |
+| `bimorphic_or_optimized_type_check` then silence, but the method got slower                 | A receiver guard failed; a changed inline shape is a hypothesis, not encoded by the reason | Inspect inline/profile evidence; accept or separate a hot site when the measured benefit justifies it  |
+| Several methods `marked for deoptimization` in the same millisecond, after a `class+load`   | Possible dependency invalidation                                                           | Confirm failed dependency and dependee before considering targeted loading or a compatible type change |
+| The above, recurring for minutes after a deploy                                             | Possibly lazy loading under live traffic                                                   | Identify the actual paths; evaluate targeted preload against startup cost and service readiness        |
+| The above, recurring in steady state                                                        | Possibly generation, reloading or agent activity that violates further dependencies        | Confirm the source and cost; bound any class reuse by loader/tenant lifetime, or retain the design     |
+| `unstable_if` once per bci across many methods at start-up                                  | Branches first taken under real traffic                                                    | Often normal convergence; startup impact can matter even if the later rate is zero                     |
+| `unloaded` / `uninitialized` at start-up                                                    | Classes first reached after the caller compiled                                            | Accept adequate startup behavior or evaluate targeted warm-up/loading; verify actual CDS/AOT coverage  |
+| `null_check` or `range_check` once, then an exception with no stack trace                   | An exception used as control flow, now compiled as a fast throw                            | `-XX:-OmitStackTraceInFastThrow` to see it once; then remove the exception from the path               |
+| `action=none` at a steady rate on one `cid` and `trap_bci`                                  | Trap state and compiled code are retained; a recompilation limit is one possible cause     | Inspect compile history, actual flags and the emitting compiler path before attributing a cutoff       |
+| `made not compilable on level 4 … give up compiling`                                        | C2 exclusion; C1 may remain available                                                      | Verify live tier and policy; diagnose the compilation history before changing limits                   |
+| `jdk.Deoptimization` and `jdk.CompilationFailure` on the same method                        | Compilation failure and a trap coexist; complexity is one hypothesis                       | Read failure text and compile history before changing bytecode shape                                   |
+| `speculate_class_check` recurring across callers of one callee                              | Type speculation on arguments that differ per caller                                       | `-XX:-UseTypeSpeculation` as an experiment only; fix the API shape if confirmed                        |
 
-## Mitigations, in order of preference
+## Mitigations to compare when cost warrants a change
 
 | Strategy                                                | Effect                                                                                                                                                            | When                                                                                       |
 | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | Statically resolved target at the call site             | Can remove receiver-type speculation for this call; other guards, dependencies and inlining limits remain. C2 may already infer an exact type behind an interface | Only when generated-code evidence supports the benefit and API semantics permit it         |
 | Warm-up exercising expected concrete types              | Can move known profile transitions before traffic; future types, profiles and invalidations remain possible                                                       | When types and representative frequencies are known; verify warm-up and steady-state costs |
-| Load or generate every class at start-up                | The CHA invalidation happens once, before traffic                                                                                                                 | Plugins, proxies, generated accessors, scripting                                           |
-| Accept the single deploy-time deoptimisation            | No code change                                                                                                                                                    | When the new class loads only at boot, not in steady state                                 |
-| Isolate the problem call site into its own small method | Limits the recompilation blast radius and the rematerialisation cost                                                                                              | When the affected method is large or scalar-replaces a lot                                 |
+| Load or generate known implicated classes at start-up   | Can move those transitions earlier; no guarantee about later types or dependencies                                                                                | When actual first-use cost exceeds the startup/retention trade-off                         |
+| Accept bounded or negligible-cost deoptimisation        | No code change                                                                                                                                                    | When measured startup and steady-state service criteria pass under representative demand   |
+| Isolate the problem call site into its own small method | May limit reconstruction work if the helper remains a compiled boundary; inlining can merge it again                                                              | When compiled-shape evidence and measured costs justify the additional boundary            |
 | Remove the exception from the hot path                  | No trap, no fast-throw                                                                                                                                            | `null_check` / `range_check` used as control flow                                          |
 
 Do not split an oscillating `if` solely because of an initial trap: check whether retained

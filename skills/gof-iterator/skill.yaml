@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-iterator
-version: 1.2.1
+version: 1.2.2
 description: >-
   Iterator in modern Java: traversing an aggregate without exposing it, and choosing between
   Iterator, Stream and Spliterator — external pull versus internal lazy pipeline versus the
@@ -12,7 +12,7 @@ description: >-
   collection from a type, when a custom traversal is being written, when
   ConcurrentModificationException appears, when a stream over a file or a result set leaks, when
   paging through a remote API, or when a parallel stream is not faster. Does not cover stream
-  pipeline design and collectors in general, the tree being traversed (gof-composite), adding
+  pipeline design and collectors in general (java-streams), the tree being traversed (gof-composite), adding
   operations over it (gof-visitor), or database paging strategy.
 
 license: Apache-2.0
@@ -43,7 +43,11 @@ files:
 dependencies: []
 
 suggests:
+  - gof-composite
   - gof-proxy
+  - gof-visitor
+  - idempotency
+  - java-streams
   - jit-inlining-and-escape-analysis
   - repository-pattern
   - rpc-and-api-contracts

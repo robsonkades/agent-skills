@@ -42,17 +42,21 @@ Database session state  the conversation's state is rows in the database,
 ```
 
 An external store (Redis, a session grid) is server session state that has been moved out
-of the process. It buys disposability and costs a network hop and a new dependency on the
-request path.
+of the process. It can remove instance affinity for that state, with storage operations and
+failure dependence on the paths that actually access it. Lazy lookup, caching and route
+exemptions change that exposure; they do not remove required authority/freshness checks.
 
 ## Workflow
 
 Inspect the target JDK, Servlet/framework versions, session repository and effective configuration;
 examples do not authorize upgrades. Preserve the existing authentication contract unless changing
 it is within scope. Separate evidence from suspected causes when logs or failure tests are absent.
+Use the steps relevant to the question and reuse adequate existing decisions/tests. Retaining a
+sound placement is a valid outcome; a narrow explanation need not inventory every item, migrate
+authentication or run a full outage/mixed-version campaign.
 
-1. **Inventory what is actually in the session**, item by item. Most sessions hold four
-   distinct kinds of thing and each wants a different placement — see the decision rules.
+1. **Inventory relevant session items and their actual authority**, using the categories below
+   as prompts. Items may share a store when their contracts fit; separation is not an end in itself.
 2. **Establish the state's lifetime and value.** Lost on restart: annoying, or a lost
    transaction? Must it survive a week? Must it be auditable?
 3. **Establish its size and change rate.** Kilobytes changing every request behave very
@@ -63,8 +67,10 @@ it is within scope. Separate evidence from suspected causes when logs or failure
 5. **Decide the failure behaviour** for whatever is remote: if the session store is down,
    does the request fail, or serve an explicitly public experience? Never bypass required
    authentication/authorization or silently turn a protected mutation into anonymous work.
-6. **Decide expiry and cleanup at design time.** Abandoned conversations accumulate;
-   without a TTL or a sweeper, the store grows without bound.
+6. **Decide access lifetime and retention.** Growing populations need storage bounds and
+   removal/archive policy. A TTL/sweeper is one mechanism; explicitly retained data may have
+   no automatic expiry under an authorized bounded retention policy. Retention does not
+   extend expired or revoked session authority.
 
 ## Decision rules
 
@@ -75,7 +81,9 @@ Identity and authorisation claims (who, roles, tenant)
           can change; define freshness and refresh/revocation behavior.
 
 Small preferences and UI state (locale, theme, last tab)
-        → client, in a cookie. No server involvement, survives restarts.
+        → client storage may suffice if client-local recovery/loss fits.
+          Use server-side preferences when cross-device or authoritative UX
+          requirements justify them; validate any client-supplied values.
 
 In-progress workflow whose loss costs the user real work
 (multi-step application, long form, basket that must survive days)
@@ -89,16 +97,18 @@ Short conversation state, small, no business value if lost
 
 Data derived from other state (totals, permissions computed from roles)
         → recompute, or cache with an explicit freshness/invalidation policy
-          (caching-strategies). Sessions rot mainly by accumulating this.
+          (caching-strategies). A deliberate conversation snapshot can preserve
+          continuity; do not confuse historical display state with current authority.
 
 Anything security-sensitive the client must not see or change
         → prefer server-side; signing alone cannot hide it. Authenticated
           encryption may fit a deliberate protocol with key/replay management.
 
-Large object graphs, entities, ORM-managed objects
-        → none of the placements. Store identifiers and reload. A
-          serialised entity graph in a session is a version-coupled
-          time bomb (orm-behavioral-patterns).
+Live ORM-managed/lazy graphs or independently shared mutable objects
+        → do not pass their persistence-context/mutation ownership into a
+          session. IDs plus reload or a fully materialized, independently owned
+          snapshot may fit; preserve unsaved drafts, version/freshness and
+          rolling-reader compatibility (orm-behavioral-patterns).
 ```
 
 ## Rules
@@ -108,7 +118,8 @@ Large object graphs, entities, ORM-managed objects
   server. Both are legitimate; neither makes the state disappear
   (`stateless-service-design`).
 - Sticky routing alone loses in-process conversations when their instance is lost. It may
-  coexist with replication or shared storage for locality; verify failover independently.
+  be adequate under accepted loss/recovery or coexist with replication/shared storage for
+  locality. Verify the actual contract; affinity alone is not durability.
 - Replication cost depends on replica count/topology, save policy and consistency. Test
   acknowledged-write loss, version skew and conflicting updates; a rolling deploy does not
   inherently imply split-brain. Compare the existing container facilities with external storage.
@@ -118,16 +129,16 @@ Large object graphs, entities, ORM-managed objects
 - Token size is paid wherever it is transmitted; redact it from logs. Claims accumulate; a
   4 KB token in a header multiplied by a service chain is a measurable cost and can exceed
   proxy header limits, which fails in a way that looks nothing like its cause.
-- Never put an ORM-managed entity into any session store. Serialisation drags the object
-  graph, lazy proxies fail outside their persistence context, and the class shape becomes a
-  compatibility contract across deploys. Store the identifier.
-- Database session state needs a cleanup strategy from day one — a TTL column and a
-  scheduled delete, or partitioning by date. Abandoned baskets are the commonest source of
-  a table that quietly reaches a hundred million rows.
-- Every remote session store is now on the request's critical path, with its own
-  availability, latency and failure mode. Give it a timeout and a defined degradation
-  (`timeouts-and-deadlines`); a session lookup with no timeout turns a store hiccup into a
-  full outage.
+- Keep live persistence contexts, lazy dependencies and uncontrolled mutable graphs out of
+  independently owned session state. A detached snapshot is a separate contract: bound size,
+  loaded data, mutation ownership, sensitivity, schema/version and staleness. Reloading only
+  IDs can lose unsaved edits or intended continuity; preserve those before replacing a payload.
+- Database session state needs a retention/growth policy. Verify population, size, access
+  expiry and authorized disposal before adding a TTL, sweeper or partition-retention scheme.
+- For paths that need a remote session operation, account its availability, latency and
+  timeout/degradation (`timeouts-and-deadlines`). Inspect actual filter/repository access;
+  lazy/exempt/cached paths may differ. Fail closed when required authority is unavailable,
+  even if that deliberately affects all protected application routes.
 - Session state that is only ever written and never read is common and invisible; audit it
   when a session grows. So is state written by one path and read by none after a refactor.
 - Concurrency inside one session is real: two browser tabs, or a double-submit, mutate the
@@ -136,8 +147,9 @@ Large object graphs, entities, ORM-managed objects
 - Rotation/invalidation must survive concurrent requests and replication: prevent a stale save
   from restoring an invalidated session. A version column alone does nothing without an atomic
   expected-version check. Enforce owner/tenant and expiry at access time, not only in cleanup.
-- Deliver a per-item placement, authority/lifetime, failure and concurrency policy, plus tests
-  for loss, outage, stale writers and mixed versions. Missing evidence remains a validation gap.
+- Deliver the retained/proposed placement and relevant authority/lifetime, failure and
+  concurrency decisions. For changes, select tests that could expose the affected loss,
+  outage, stale-writer or mixed-version contract; distinguish executed evidence from gaps.
 
 ## References
 

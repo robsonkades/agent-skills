@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { after, before, describe, it } from 'node:test';
 
@@ -41,13 +41,20 @@ interface CliResult {
  */
 async function cli(
   args: readonly string[],
-  options: { home: string; cwd?: string; env?: Record<string, string> } = { home: '' },
+  options: {
+    home: string;
+    cwd?: string;
+    env?: Record<string, string>;
+    choices?: readonly number[];
+  } = { home: '' },
 ): Promise<CliResult> {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     AGENT_SKILLS_HOME: join(options.home, '.agent-skills'),
     CLAUDE_CONFIG_DIR: join(options.home, '.claude'),
     CODEX_HOME: join(options.home, '.codex'),
+    HOME: options.home,
+    USERPROFILE: options.home,
     NO_COLOR: '1',
     ...(options.env ?? {}),
   };
@@ -59,6 +66,81 @@ async function cli(
     if (key.toUpperCase() === 'PATH') delete env[key];
   }
   env['PATH'] = join(options.home, '.empty-executable-path');
+
+  if (options.choices !== undefined) {
+    // Exercise the real startup hook and terminal menu in an isolated child, with pipe
+    // streams advertising TTY capabilities. No test-only switch exists in the product.
+    const script = `
+      for (const stream of [process.stdin, process.stdout, process.stderr]) {
+        Object.defineProperty(stream, 'isTTY', { value: true });
+      }
+      process.stdin.setRawMode = () => process.stdin;
+      const { run } = await import(process.argv[1]);
+      process.exitCode = await run(process.argv.slice(2));
+    `;
+    const module = pathToFileURL(join(repoRoot, 'packages/cli/dist/cli.js')).href;
+    const choices = [...options.choices];
+    return new Promise((resolve, reject) => {
+      const child = spawn(
+        process.execPath,
+        ['--input-type=module', '--eval', script, module, ...args],
+        {
+          env: {
+            ...env,
+            CI: options.env?.['CI'] ?? 'false',
+            TERM: 'xterm',
+            AGENT_SKILLS_NO_UPDATE_NOTIFIER: '0',
+          },
+          cwd: options.cwd ?? options.home,
+          windowsHide: true,
+        },
+      );
+      let stdout = '';
+      let stderr = '';
+      let pending = '';
+      let unexpectedMenu = false;
+      let redraws = 0;
+      const marker = 'Esc to continue.';
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error(`Interactive CLI timed out:\n${stderr}`));
+      }, 10_000);
+      child.stdout.on('data', (chunk) => {
+        stdout += String(chunk);
+      });
+      child.stderr.on('data', (chunk) => {
+        stderr += String(chunk);
+        pending += String(chunk);
+        let index;
+        while ((index = pending.indexOf(marker)) !== -1) {
+          pending = pending.slice(index + marker.length);
+          if (redraws > 0) {
+            redraws--;
+            continue;
+          }
+          const choice = choices.shift();
+          if (choice === undefined) {
+            unexpectedMenu = true;
+            child.stdin.end();
+          } else {
+            redraws = 1;
+            child.stdin.write(`${choice}\r`);
+          }
+        }
+      });
+      child.on('error', (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+      child.stdin.on('error', () => {});
+      child.on('close', (code) => {
+        clearTimeout(timer);
+        if (unexpectedMenu || choices.length > 0)
+          reject(new Error(`Unexpected interactive menus:\n${stderr}`));
+        else resolve({ code: code ?? 1, stdout, stderr });
+      });
+    });
+  }
 
   try {
     const { stdout, stderr } = await run(process.execPath, [bin, ...args], {
@@ -178,6 +260,142 @@ describe('cli basics', () => {
     const result = await cli(['install', 'demo-skill', '--global', '--project'], { home });
     assert.equal(result.code, 2);
     assert.match(result.stderr, /ASK_USAGE/);
+  });
+});
+
+describe('interactive update notifications', () => {
+  async function installedHome() {
+    const isolated = await mkdtemp(join(root, 'notifications-'));
+    await mkdir(join(isolated, '.claude'), { recursive: true });
+    await mkdir(join(isolated, '.agent-skills'), { recursive: true });
+    await writeFile(
+      join(isolated, '.agent-skills/config.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        registries: [{ name: 'test', kind: 'local', url: registry, trusted: true }],
+      }),
+    );
+    const installed = await cli(['install', 'demo-skill@1.0.0', '--global', '--json'], {
+      home: isolated,
+    });
+    assert.equal(installed.code, 0, installed.stderr);
+    const pkg = JSON.parse(await readFile(join(repoRoot, 'packages/cli/package.json'), 'utf8')) as {
+      version: string;
+    };
+    const statePath = join(isolated, '.agent-skills/updates.json');
+    const state = JSON.stringify({
+      schemaVersion: 1,
+      checks: { tool: { checkedAt: Date.now(), versions: [pkg.version] } },
+      dismissed: [],
+      deferred: {},
+    });
+    await writeFile(statePath, state);
+    return { isolated, statePath, state };
+  }
+
+  it('offers a startup menu, persists later, and continues the original command', async () => {
+    const { isolated, statePath } = await installedHome();
+    const first = await cli(['list', '--global'], { home: isolated, choices: [3] });
+    assert.equal(first.code, 0, first.stderr);
+    assert.match(first.stderr, /Skill updates available/);
+    assert.match(first.stdout, /demo-skill/);
+    const state = JSON.parse(await readFile(statePath, 'utf8')) as {
+      deferred: Record<string, number>;
+    };
+    assert.equal(Object.keys(state.deferred).length, 1);
+    assert.ok(Object.values(state.deferred)[0]! > Date.now());
+    const second = await cli(['list', '--global'], { home: isolated, choices: [] });
+    assert.equal(second.code, 0, second.stderr);
+    assert.doesNotMatch(second.stderr, /Skill updates available/);
+  });
+
+  it('updates through the real installer after selection and then lists the new version', async () => {
+    const { isolated } = await installedHome();
+    const result = await cli(['list', '--global'], { home: isolated, choices: [1] });
+    assert.equal(result.code, 0, result.stderr);
+    assert.match(result.stderr, /upgraded: demo-skill@1.1.0/);
+    assert.match(result.stdout, /1.1.0/);
+    const installed = await readFile(
+      join(isolated, '.claude/skills/demo-skill/skill.yaml'),
+      'utf8',
+    );
+    assert.match(installed, /version: 1.1.0/);
+  });
+
+  it('preserves locally modified files when Update now is selected', async () => {
+    const { isolated } = await installedHome();
+    const skillPath = join(isolated, '.claude/skills/demo-skill/SKILL.md');
+    const modified = `${await readFile(skillPath, 'utf8')}\nMy local instructions\n`;
+    await writeFile(skillPath, modified);
+    const result = await cli(['list', '--global'], { home: isolated, choices: [1] });
+    assert.notEqual(result.code, 0);
+    assert.match(result.stderr, /modified/i);
+    assert.equal(await readFile(skillPath, 'utf8'), modified);
+    assert.match(
+      await readFile(join(isolated, '.claude/skills/demo-skill/skill.yaml'), 'utf8'),
+      /version: 1.0.0/,
+    );
+  });
+
+  it('updates only the requested project and records its lockfile', async () => {
+    const { isolated } = await installedHome();
+    const projectRoot = join(isolated, 'project');
+    await mkdir(join(projectRoot, '.git'), { recursive: true });
+    const installed = await cli(
+      ['install', 'demo-skill@1.0.0', '--project-root', projectRoot, '--json'],
+      { home: isolated },
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const updated = await cli(['list', '--project-root', projectRoot, '--agent', 'claude'], {
+      home: isolated,
+      choices: [1],
+    });
+    assert.equal(updated.code, 0, updated.stderr);
+    assert.match(await readFile(join(projectRoot, 'skills.lock'), 'utf8'), /version: 1.1.0/);
+    assert.match(
+      await readFile(join(projectRoot, '.claude/skills/demo-skill/skill.yaml'), 'utf8'),
+      /version: 1.1.0/,
+    );
+    assert.match(
+      await readFile(join(isolated, '.claude/skills/demo-skill/skill.yaml'), 'utf8'),
+      /version: 1.0.0/,
+    );
+  });
+
+  it('offers the CLI release before skills and persists its dismissal', async () => {
+    const { isolated, statePath } = await installedHome();
+    const state = JSON.parse(await readFile(statePath, 'utf8'));
+    state.checks.tool.versions = ['999.0.0'];
+    await writeFile(statePath, JSON.stringify(state));
+    // This executable runs from source, so the tool update is manual (later/skip).
+    const result = await cli(['list', '--global'], { home: isolated, choices: [2, 3] });
+    assert.equal(result.code, 0, result.stderr);
+    assert.ok(
+      result.stderr.indexOf('Update available for agent-skills!') <
+        result.stderr.indexOf('Skill updates available'),
+    );
+    const saved = JSON.parse(await readFile(statePath, 'utf8')) as { dismissed: string[] };
+    assert.ok(saved.dismissed.includes(JSON.stringify(['tool', '999.0.0'])));
+  });
+
+  it('skips a version across invocations and leaves JSON and opt-out runs without checks', async () => {
+    const { isolated, statePath, state } = await installedHome();
+    for (const args of [
+      ['list', '--json'],
+      ['list', '--no-update-check'],
+      ['list', '--quiet'],
+    ]) {
+      const result = await cli(args, { home: isolated, choices: [] });
+      assert.equal(result.code, 0, result.stderr);
+      assert.equal(await readFile(statePath, 'utf8'), state);
+      if (args.includes('--json')) assert.ok(JSON.parse(result.stdout));
+    }
+    const skipped = await cli(['list', '--global'], { home: isolated, choices: [4] });
+    assert.equal(skipped.code, 0, skipped.stderr);
+    const persisted = JSON.parse(await readFile(statePath, 'utf8')) as { dismissed: string[] };
+    assert.equal(persisted.dismissed.length, 1);
+    const next = await cli(['list', '--global'], { home: isolated, choices: [] });
+    assert.equal(next.code, 0, next.stderr);
   });
 });
 

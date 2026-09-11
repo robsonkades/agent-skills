@@ -2,10 +2,11 @@
 name: virtual-threads-internals
 description: >
   Diagnose HotSpot virtual-thread mounting, heap stack chunks, FIFO work-stealing scheduling,
-  carrier capture, residual native/foreign pinning after JEP 491, scheduler compensation boundaries
+  carrier capture, residual native/VM-frame pinning after JEP 491, scheduler compensation boundaries
   and memory/GC effects without treating implementation details as API guarantees. Use when pin
-  events, scheduler queue/pool growth, native calls, CPU-ready virtual threads or retained suspended
-  stacks explain a scalability regression on Java 21–25.
+  events, scheduler queue/pool growth, native calls or class initialization, CPU-ready virtual threads
+  or retained suspended stacks explain a scalability regression on Java 21–25. Not introductory
+  adoption (thread-sizing-and-virtual-threads) or general work-stealing design.
 ---
 
 # Virtual Threads Internals
@@ -17,7 +18,7 @@ Distinguish four mechanisms that look like “carriers are busy” but require d
 - CPU-ready virtual threads waiting for scheduler capacity;
 - normal unmounted waiting, with pressure at a dependency/resource;
 - carrier capture by a blocking operation that cannot unmount but for which the runtime may compensate;
-- pinning by native/foreign execution, for which scheduler expansion is not a promised remedy.
+- native/foreign or VM-frame pinning, for which scheduler expansion is not a promised remedy.
 
 Introductory adoption belongs to `thread-sizing-and-virtual-threads`; evidence collection to
 `concurrency-diagnostics`; work-stealing in general to `forkjoinpool-and-work-stealing`.
@@ -25,7 +26,8 @@ Introductory adoption belongs to `thread-sizing-and-virtual-threads`; evidence c
 ## Diagnostic workflow
 
 1. Record exact JDK/vendor/build, effective CPU, scheduler properties and whether tasks truly execute
-   as virtual threads (`Thread.currentThread().isVirtual()`).
+   as virtual threads (`Thread.currentThread().isVirtual()`). Inspect project toolchains/runtime
+   images; Java 25 is the reference target, not authorization to upgrade an older project.
 2. Define the regression: throughput, scheduler queue, dependency wait, CPU, memory/GC or tail latency.
 3. Read `VirtualThreadSchedulerMXBean` time series (Java 24+): parallelism, pool size, mounted and
    queued estimates.
@@ -35,6 +37,9 @@ Introductory adoption belongs to `thread-sizing-and-virtual-threads`; evidence c
    impact is not automatically worth a rewrite.
 6. Test one mechanism-specific intervention: update/isolate native code, bound CPU phase, change I/O
    path, reduce admission or tune scheduler only with proven headroom.
+7. Return the observed mechanism and its evidence, remaining causal hypothesis, selected change or
+   no-change decision, and comparable validation. If capture is unavailable, name the missing evidence
+   and the next discriminating check rather than reporting a confirmed cause or completed fix.
 
 ## Stable execution model
 
@@ -110,23 +115,27 @@ read values do not form an atomic snapshot or count all live/parked virtual thre
 | many parked VTs, scheduler queue low           | normal unmounted wait at resource             | that more carriers help                                               |
 | submit-failed events                           | start/unpark resource failure                 | exact exhausted resource without associated exception/system evidence |
 
-`jdk.virtualThreadScheduler.maxPoolSize` bounds platform threads available to the scheduler for cases
-that expand the pool; it is not an admission limit for virtual threads. Raising it consumes native
-thread/address-space/kernel resources and cannot increase dependency or CPU capacity. Size/tune only
-after a capture mechanism and resource headroom are demonstrated.
+`jdk.virtualThreadScheduler.maxPoolSize` configures scheduler expansion at initialization; it is not
+virtual-thread admission or an immutable native-thread budget. On HotSpot 25, runtime MXBean
+parallelism changes can alter the effective ceiling: inspect current target/pool and tuning history,
+not startup properties alone. Reducing the target does not preempt current work or immediately retire
+carriers. Additional carriers consume native thread/address-space/kernel resources without creating
+dependency or CPU capacity. Tune only after a mechanism and resource headroom are demonstrated.
 
 ## Decision guide
 
 Prefer updating/reconfiguring a library or isolating work on a bounded platform executor when a
 blocking native/foreign call is frequent, causal and cannot be changed. The isolation size must still
-respect dependency/CPU/native-thread capacity and cancellation.
+respect dependency/CPU/native-thread capacity and cancellation. Verify that the waiting caller has
+left the native/VM frame preventing unmount; offloading only an inner call can leave it pinned.
 
 Prefer resource-local admission when many normally unmounted threads retain too much state or
 overwhelm a dependency. Prefer a bounded CPU executor/gate for long CPU phases. Prefer observation
 when pin volume is low and scheduler queue/SLO remain healthy.
 
 Do not replace `synchronized` with `ReentrantLock` for Java 24+ pinning. Lock choice still affects
-contention, timeouts, interruption, fairness and conditions; route that decision to concurrent locks.
+contention, timeouts, interruption, fairness and conditions; route that decision to
+`concurrent-collections-and-synchronizers`.
 
 ## Failure modes
 

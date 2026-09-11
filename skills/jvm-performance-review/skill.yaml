@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-performance-review
-version: 1.3.1
+version: 1.3.2
 description: >-
   Auditing JVM configuration evidence across the supplied command, effective runtime flags,
   target JDK build, container/cgroup envelope, workload lifecycle, and stated SLO. Classifies
@@ -36,6 +36,7 @@ files:
   - references/
 
 suggests:
+  - concurrency-diagnostics
   - container-awareness
   - gc-log-analysis
   - java-performance
@@ -43,4 +44,5 @@ suggests:
   - jfr-and-async-profiler
   - jvm-gc-tuning
   - jvm-memory-regions
+  - pause-attribution
   - unified-logging

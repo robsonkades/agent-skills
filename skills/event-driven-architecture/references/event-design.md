@@ -5,14 +5,16 @@
 `<Entity><PastTenseVerb>` in the **producer's** vocabulary: `OrderPlaced`, `PaymentCaptured`,
 `ShipmentDispatched`.
 
-Three names that are all the same mistake:
+Inspect the meaning behind these names:
 
 - `ShipOrder` — imperative. It is a command; see `references/choosing-the-style.md`.
-- `OrderSaved`, `CustomerRowUpdated` — the persistence mechanism, not the fact. A consumer
+- `OrderSaved`, `CustomerRowUpdated` — often the persistence mechanism, not the business fact. A consumer
   cannot tell an address correction from a cancellation, so every consumer reacts to every
-  write and then filters. The event type is the cheapest filter you will ever have.
-- `OrderReadyForShipping` — the _consumer's_ interpretation. The producer now has to be
-  changed when shipping's rules change, which is the coupling events were meant to remove.
+  write and then filters. Storage-change notifications can still be an intentional CDC contract;
+  do not rename them into domain facts they do not establish.
+- `OrderReadyForShipping` — valid when the publisher owns and records that readiness policy.
+  It couples domains when another producer embeds shipping's private rules solely to trigger
+  the consumer. Decide from authority and semantics rather than rejecting the name alone.
 
 ## Envelope and payload
 
@@ -99,8 +101,8 @@ Consequences to apply directly:
   changed meaning compatible.
 - Retire using owner acknowledgements, consumption evidence and the archive/DLQ/replay policy;
   zero recent traffic does not prove that an offline consumer or recovery path is retired.
-- A consumer that fails on an unknown property has silently made every producer change
-  breaking. The Jackson default and Spring Boot's override are in `rpc-and-api-contracts`.
+- A consumer rejecting unknown properties can break on an added field that newer readers
+  accept. The Jackson default and Spring Boot's override are in `rpc-and-api-contracts`.
 
 ## Payload contents
 
@@ -114,6 +116,13 @@ Consequences to apply directly:
   secrets, or personal/regulatory data lacking purpose, access, retention and erasure design.
   Encryption does not solve broad reader authorization; immutable logs, replicas, DLQs and
   backups all extend deletion scope.
+
+Historical truth is not authorization for a new action. Preserve past values when rebuilding
+a historical view; separately apply the required current cancellation, eligibility, access
+and retention contract before an external effect. An old `PaymentCaptured` remains a fact
+after cancellation, but does not by itself authorize shipping now. Define whether replay
+rebuilds projections or may reissue effects; enforce the latter at the action owner without
+requiring a synchronous publisher fetch for every event.
 
 With event-carried state transfer, **name the authority and the resync path** in the same
 document as the schema: which service owns the current value, and how a consumer that missed a

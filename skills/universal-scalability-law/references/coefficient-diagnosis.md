@@ -12,18 +12,20 @@ retrograde-like denominator term = βN(N−1)
 `α` and `β` are regression parameters shaped by workload, hardware, topology and measurement. They
 are not observed fractions of lock time, GC pause or network delay, are not generally additive by
 subsystem, and cannot identify a mechanism alone. Their labels come from the model's derivation;
-production attribution requires a second measurement and an intervention.
+production attribution requires independent mechanism evidence and an appropriate causal comparison.
+A descriptive fit or local prediction does not require an intervention; label mechanism explanations
+as hypotheses when that evidence is absent.
 
 ## Interpret shape with uncertainty
 
-| Fitted evidence                                                   | Safe reading                                                  | Do not conclude yet                                 |
-| ----------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------- |
-| `β` interval includes zero; curve saturates                       | compare beta=0 predictions/residuals before preferring it     | there is no coordination cost at larger N           |
-| positive stable `α`, `β≈0`                                        | diminishing returns consistent with a linear denominator term | a particular lock or serial fraction equals `α`     |
-| positive stable `β`; held-out throughput declines                 | USL represents a retrograde region over tested range          | pairwise network messages are the cause             |
-| coefficients unstable/correlated across bootstrap/leave-one-N-out | data do not identify the terms                                | choose an action from point estimates               |
-| negative coefficient/unconstrained superlinear fit                | standard nonnegative USL regime is unsupported                | “bad optimizer”; superlinearity is impossible       |
-| residual step at one N                                            | investigate phase change, drift, outlier or measurement fault | smooth contention/coherency coefficient explains it |
+| Fitted evidence                                                   | Safe reading                                                    | Do not conclude yet                                               |
+| ----------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `β` interval includes zero; curve saturates                       | compare beta=0 predictions/residuals before preferring it       | there is no coordination cost at larger N                         |
+| positive stable `α`, `β≈0`                                        | diminishing returns consistent with a linear denominator term   | a particular lock or serial fraction equals `α`                   |
+| positive stable `β`; held-out throughput declines                 | USL represents a retrograde region over tested range            | pairwise network messages are the cause                           |
+| coefficients unstable/correlated across bootstrap/leave-one-N-out | terms may be unidentified while local predictions remain useful | precise coefficients/peak or an action from point estimates alone |
+| negative coefficient/unconstrained superlinear fit                | standard nonnegative USL regime is unsupported                  | “bad optimizer”; superlinearity is impossible                     |
+| residual step at one N                                            | investigate phase change, drift, outlier or measurement fault   | smooth contention/coherency coefficient explains it               |
 
 Compare contributions at the actual operating N, with coefficient uncertainty:
 
@@ -57,6 +59,9 @@ causal path to throughput.
 
 ## Intervention protocol
 
+Use this protocol when testing a causal mechanism claim, within the existing change and safety
+scope. Reuse an adequate controlled comparison; do not require a new deployment for an explanation.
+
 1. State one mechanism and predicted direct metric: e.g. “striping this lock halves wait/hold
    demand per transaction at N=16–64 and lowers the alpha-like term without changing mix”.
 2. Preserve the original sweep design, useful-output definition, dataset and per-unit resources.
@@ -77,8 +82,9 @@ serial bottleneck independently before claiming that mechanism changed.
 
 - If the marginal `X(N+1)−X(N)` interval is below cost/guardrail value, stop adding units even when
   `N<N*`.
-- If retrograde behavior is measured but `β` is not identified, run targeted high-N comparisons or
-  diagnose direct scaling metrics before a broad redesign.
+- If retrograde behavior is measured but `β` is not identified, retain that observed decline while
+  keeping the precise peak/mechanism uncertain. Use safe targeted comparisons or direct scaling
+  metrics if needed before a broad redesign; an unavailable high-N test is a stated limit.
 - If a direct mechanism scales linearly/quadratically but the USL fit is poor, trust neither by
   rhetoric: the system may have multiple regimes; segment on the measured phase boundary.
 - If a change improves one workload class and harms another, fit/report classes and production mix;

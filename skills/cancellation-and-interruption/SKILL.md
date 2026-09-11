@@ -96,14 +96,18 @@ reuse are acceptable.
   interruption and work may continue even though the Future is cancelled.
 - `Future.cancel(true)` requests interruption when implementation can identify a running task;
   termination still depends on task/API cooperation.
-- `CompletableFuture.cancel(boolean)` treats cancellation as exceptional completion; its
-  `mayInterruptIfRunning` argument has no effect in the class contract. It is not automatically a
-  handle to the computation that will complete it.
+- The base `CompletableFuture.cancel(boolean)` implementation treats cancellation as exceptional
+  completion; its `mayInterruptIfRunning` argument does not interrupt a running supplier. A client
+  can return a specialized future: Java 25's default `HttpClient.sendAsync` futures support
+  `cancel(true)` as an attempt to cancel the exchange. Inspect the returned handle's contract;
+  neither behavior proves that the work or its effects have stopped.
 - wait timeouts such as `get(timeout)` bound the waiter, not the producer. `orTimeout` completes the
   stage exceptionally but does not universally stop underlying work.
 
 Bridge cancellation explicitly when adapting callback/client APIs: retain the underlying handle,
 propagate terminal state both directions once, and resolve completion-versus-cancel races.
+The `Future.cancel` return value alone does not necessarily report the current cancelled state.
+Inspect the public outcome separately from the underlying operation's termination and release.
 
 ## Structured ownership
 

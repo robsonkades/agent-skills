@@ -97,6 +97,11 @@ decisions.
 
 ## Safe run protocol
 
+For a new profiling experiment, use the steps below as applicable to the unresolved question.
+Reuse comparable prior controls and artifacts when they establish support, coverage and overhead;
+do not recapture solely to complete the sequence. If the available budget cannot resolve a
+material interaction, report the affected conclusion as unverified or inconclusive.
+
 ```text
 1. Run unprofiled pilot and retain raw fork trajectories.
 2. Discover profiler and its version-specific help.
@@ -151,4 +156,4 @@ unprofiled_comparison: ''
 - [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html)
 - [Linux perf event ABI](https://docs.kernel.org/userspace-api/perf_ring_buffer.html)
 - [async-profiler](https://github.com/async-profiler/async-profiler)
-- [JDK Flight Recorder](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [JDK 25 JFR recording commands and settings](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

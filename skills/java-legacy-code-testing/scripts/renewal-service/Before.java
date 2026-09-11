@@ -1,7 +1,7 @@
-// Before: RenewalCheck cannot be instantiated in a test at all.
+// Before: this synthetic gateway prevents constructing RenewalCheck in the fixture.
 // Two independent obstacles, and they need different techniques:
 //   1. the constructor builds its own RateGateway, which connects at construction time
-//   2. due() reads LocalDate.now(), so no assertion has a stable expected value
+//   2. due() reads LocalDate.now(), so fixed date-sensitive rows need controlled time
 // Run: java Before.java  -- it fails at construction, before any assertion is reached.
 import java.time.LocalDate;
 import java.util.ArrayList;

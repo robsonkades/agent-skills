@@ -498,7 +498,33 @@ agent-skills registry list|add|remove  manage registries
 
 The flag set is intentionally short. Notably absent: `--save`/`--save-dev` (scope already
 says this), `--registry-url` (registries are named and configured, so a lockfile can refer
-to them), and `--yes` (nothing prompts destructively without `--force`).
+to them), and `--yes` (update notices require an interactive choice and otherwise never run).
+
+### Update notifications
+
+Eligible top-level commands check for CLI and skill releases before their action in an
+interactive terminal. The menu offers update, a 24-hour reminder, or dismissal of the exact
+release; skill notices also offer details and a separate confirmation for versions outside
+`^installed`. `install` and `update` check only the CLI to preserve their requested skill
+resolution. Help, version, authoring, registry configuration, removal, dry runs, offline
+doctor, CI, pipes, JSON and quiet mode skip checks entirely. `--no-update-check` and
+`AGENT_SKILLS_NO_UPDATE_NOTIFIER=1` provide explicit opt-outs.
+
+`updates.json` under the manager's configuration home stores disposable metadata checks,
+dismissals and reminder deadlines. CLI metadata has a 24-hour TTL; skills follow the registry
+TTL with a 60-second minimum. Registry URL/ref changes invalidate skill metadata. Receipt
+versions are read live, so an update or removal cannot leave a stale actionable notice.
+Lookups stay with the recorded registry and filter deprecated and prerelease versions.
+Each notification HTTP/git operation has a two-second timeout; failures are advisory and
+do not affect the requested command. Checks fetch metadata, never skill payloads.
+
+An accepted skill update pins the displayed release and destinations, previews all groups,
+and uses the shared install pipeline. The preview refuses unapproved breaking dependency
+updates and downgrades. It does not force replacement of locally modified files. npm CLI
+self-updates require evidence of a global or direct local npm installation, preserve local
+dependency categories, and execute argument arrays without a shell. Other installation
+methods get manual instructions. Successful self-update exits before the requested command
+so the user can restart it under the new CLI.
 
 ### Error message standard
 

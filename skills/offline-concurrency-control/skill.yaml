@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: offline-concurrency-control
-version: 1.2.1
+version: 1.2.2
 description: >-
   Protecting data from concurrent edits that span more than one transaction: optimistic
   offline lock, pessimistic offline lock, coarse-grained locking at the aggregate, and
@@ -48,6 +48,8 @@ suggests:
   - architecture-decision-making
   - architecture-testing
   - domain-logic-organization
+  - distributed-locks-and-leases
+  - java-memory-model
   - orm-behavioral-patterns
   - remote-facade-and-dto
   - retries-and-backoff

@@ -2,18 +2,20 @@
 
 ## Distinguishing it from lock contention
 
-|                         | False sharing                                  | Lock contention                                     |
-| ----------------------- | ---------------------------------------------- | --------------------------------------------------- |
-| Synchronisation in code | may coexist with volatile/atomic operations    | `synchronized` / explicit `Lock`                    |
-| Correctness             | sharing alone establishes no correctness claim | depends on the locking protocol                     |
-| Signal in `perf`        | cache-to-cache/HITM evidence on supported PMUs | may show futex/parking; spin locks may stay on CPU  |
-| Signal in a profiler    | time on the access instruction                 | time in `park` / `monitorenter`                     |
-| Signal in JFR           | no dedicated false-sharing event               | qualifying `jdk.JavaMonitorEnter`, `jdk.ThreadPark` |
-| Fix                     | separate the data physically                   | shrink the lock scope, partition, go lock-free      |
+|                         | False sharing                                  | Lock contention                                              |
+| ----------------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| Synchronisation in code | may coexist with volatile/atomic operations    | `synchronized` / explicit `Lock`                             |
+| Correctness             | sharing alone establishes no correctness claim | depends on the locking protocol                              |
+| Signal in `perf`        | cache-to-cache/HITM evidence on supported PMUs | may show futex/parking; spin locks may stay on CPU           |
+| Signal in a profiler    | time on the access instruction                 | time in `park` / `monitorenter`                              |
+| Signal in JFR           | no dedicated false-sharing event               | qualifying `jdk.JavaMonitorEnter`, `jdk.ThreadPark`          |
+| Fix                     | separate independent hot data physically       | reduce contested work while preserving the guarded invariant |
 
 False sharing has no dedicated JFR event, but sampling and resource events can provide indirect
 evidence. Missing blocking events also permits spinning, short waits, bandwidth limits and other
 causes; it does not select false sharing as the diagnosis. Parking is not always lock contention.
+Shrinking lock scope or partitioning requires checking the protected invariant; a lock-free
+replacement needs its own correctness and progress argument, not just absence of blocking.
 
 ## The shape of the bug
 
@@ -43,7 +45,8 @@ volatile as either a cache-flush instruction or a fix for an atomic read-modify-
 - [ ] MPKI compared against the **application's own baseline**, not a published threshold
 - [ ] Coherence evidence collected with a supported PMU/`perf c2c`; LLC misses not used alone
 - [ ] Relative layout measured with compatible JOL; absolute line alignment remains explicit
-- [ ] Fix validated with JMH at the same thread count
+- [ ] Mechanism checked at matched concurrency where uncertain; application benefit validated
+      with representative load, not inferred from JMH alone
 
 ## Measuring relative layout
 
@@ -56,9 +59,11 @@ environment and trust the measured listing rather than the following common exam
 
 - **12-byte header**: common on 64-bit HotSpot with compressed class pointers and conventional
   headers; an aligned `long` may start at 16 and a smaller field may fill the preceding gap.
-- **8-byte compact header**: opt-in on JDK 24–26; JDK 24 additionally needs
+- **8-byte compact header**: opt-in on upstream HotSpot JDK 24–26; JDK 24 additionally needs
   `-XX:+UnlockExperimentalVMOptions` before `-XX:+UseCompactObjectHeaders`. Product in 25
-  (JEP 519), default in 27 (JEP 534). Inspect actual packing rather than assuming the first field.
+  (JEP 519); enabled by default in upstream 27's release candidate (JEP 534; status as of
+  2026-09-10). Check vendor backports/defaults and actual packing rather
+  than assuming support from the version alone or assuming the first field's offset.
 
 This is why mental arithmetic is unreliable and why the tool takes two minutes — and why a
 JOL listing is only meaningful alongside the JDK and the header mode that produced it.
@@ -78,9 +83,17 @@ Re-run JOL if you enable it.
    aggregate is acceptable. It does not replace an atomic sequence/value contract.
 3. **`@Contended`** when physical separation is justified. HotSpot commonly defaults
    `ContendedPaddingWidth` to 128; verify the effective flag and resulting layout. Application
-   code using `jdk.internal.vm.annotation.Contended` requires `--add-exports` **and**
-   `-XX:-RestrictContended` — without the second it is silently ignored. If the object is
-   allocated on a hot path, check that the padding is not multiplying GC pressure.
+   code directly using `jdk.internal.vm.annotation.Contended` needs a compile-time export
+   (`--add-exports java.base/jdk.internal.vm.annotation=ALL-UNNAMED` for classpath code).
+   HotSpot recognition needs `EnableContended` enabled and `-XX:-RestrictContended` for
+   application classes. Runtime export is not required solely for the VM to consume the
+   annotation; runtime code accessing its internal type must satisfy module access separately.
+   Read `false-sharing-and-contended` for grouping and layout validation when applying it.
+   If the object is allocated on a hot path, check that padding is not multiplying GC pressure.
+
+The annotation is an internal HotSpot hint, not a portable Java layout contract. The
+[JDK 25 annotation parser](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/classfile/classFileParser.cpp)
+checks `EnableContended` and `RestrictContended`; verify the target build's behavior.
 
 Do not rely on absolute addresses surviving a moving collector. Relative separation under the
 same layout survives relocation, but ordinary object alignment need not match cache-line size.
@@ -99,7 +112,11 @@ The difference is not only boxing. The reference array is contiguous and can be 
 but referenced objects need not be adjacent, adding dependent loads and less predictable
 locality than a primitive array.
 
-- [ ] Primitive arrays instead of object arrays where possible
-- [ ] Sequential rather than random traversal over large collections
-- [ ] Hot and cold fields separated, so a line is not wasted
-- [ ] The hot loop's working set compared with the LLC size
+Consider these changes only for a relevant bottleneck; retaining the current representation
+is valid when it meets the workload's needs.
+
+- [ ] Primitive arrays preserve required null/absence, identity and update semantics
+- [ ] Sequential traversal preserves required order and lookup behavior
+- [ ] Hot/cold separation's locality benefit outweighs extra indirection and footprint
+- [ ] Working-set size and access pattern are compared with target caches; LLC size alone
+      does not establish a miss or bandwidth bottleneck

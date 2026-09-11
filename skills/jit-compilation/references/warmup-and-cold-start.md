@@ -1,5 +1,8 @@
 # Warm-up and cold start
 
+The numerical lab/cache observations below are retained from the Temurin 25.0.3 baseline;
+they are not measurements of the current service or predictions for another workload.
+
 ## Warm-up is a rate, not a clock
 
 ```
@@ -40,8 +43,8 @@ correlate compiler-thread CPU with process quota/throttling before attributing r
 ## An observable readiness criterion
 
 `jcmd <pid> Compiler.queue` is **not** a warm-up criterion. It is an instantaneous
-snapshot; it empties and refills on every deoptimisation, and it asserts nothing about
-convergence.
+snapshot; later calls, class loading or deoptimisation may add work, and some deoptimisation
+actions do not enqueue recompilation. The snapshot alone establishes no convergence.
 
 For a controlled training or canary workload, look for correct responses and stable latency/
 throughput across predefined windows. Use compiler-statistics deltas and queue/code-cache state to
@@ -93,18 +96,20 @@ readiness gate itself are `kubernetes-service-lifecycle`.
 
 ## Autoscaled fleets and small pods
 
-A cold JVM is at its most CPU-hungry when it can serve least: interpreter, C1 and C2 all
-run at once. Three fleet-level failure modes follow, all reproducible from that one fact:
+A cold JVM can have substantial compilation work competing with application execution, but
+startup can also be idle or dependency-bound and need not be its CPU peak. Investigate these
+fleet-level failure mechanisms against actual startup CPU, traffic and service evidence:
 
 - **Cold-start cascade.** An HPA on CPU utilization can see the startup spike as load, add
   replicas, each of which is cold and takes a share of the traffic the warm ones needed.
   Evaluate request rate, concurrency, latency, CPU, stabilization windows, and warm minimum
   capacity together; no single signal works for every workload.
-- **Equal share for a cold pod.** A load balancer without slow-start sends a new pod the same
-  fraction of traffic as a warm one from its first second. Fleet p99 is the percentile of the
-  combined request distribution, weighted by each pod's completed/offered traffic and errors;
-  it is not the cold pod's p99 or an average of pod percentiles. Use slow-start or warm-up weighting,
-  or gate readiness behind self-training.
+- **Equal share for a cold pod.** A load balancer without slow-start may immediately give a
+  cold pod a warm pod's traffic share; inspect its actual routing policy. Fleet p99 comes from
+  pooled request latencies for a defined window and outcome/timeout policy, weighted by included
+  request counts. Track offered/completed traffic and omitted errors separately. It is not the
+  cold pod's p99 or an average of pod percentiles. Evaluate slow-start, warm-up weighting or
+  safe self-training when cold traffic violates the service contract.
 - **One C2 thread.** A pod limited to 1-3 CPUs gets two compiler threads (one C1, one C2),
   in the examined default mode. Queue congestion and tier 2 are possible while compiling and
   serving share quota; the slowdown depends on workload and throttling. More compiler threads
@@ -125,9 +130,10 @@ not compiled application methods**: the training run's
 `MethodTrainingData` is written into the cache (verified in the `-Xlog:aot` creation log)
 and replayed at start-up (`AOTReplayTraining=true`, ergonomic, in `PrintFlagsFinal` with the
 cache mapped), so C2 no longer waits for tier-3 statistics on methods the training run made
-hot. The compilations still run, on the same compiler threads, under the same CPU quota:
-expect a shorter curve, not a flat one, and measure `jdk.CompilerStatistics.totalTimeSpent`
-before crediting the cache with anything. JEP 514 (JDK 25) reduced cache creation to a
+hot. Compilations still consume compiler resources under the same CPU quota, although their
+number, timing and live thread count can change. Measure the service's startup/latency curve
+and compiler CPU before crediting a benefit; `jdk.CompilerStatistics.totalTimeSpent` is elapsed
+compilation time, not CPU consumption. JEP 514 (JDK 25) reduced cache creation to a
 single command (`-XX:AOTCacheOutput`). Caching compiled code itself is not delivered on the
 JDK 25 baseline (`AOTAdapterCaching` and `AOTStubCaching` exist as diagnostic flags, off by
 default, and cover adapters and stubs, not methods); check the JEP status for later releases

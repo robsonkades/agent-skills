@@ -9,8 +9,8 @@ description: >
   interceptor chains are this pattern already implemented. Use when a request must be offered to
   several possible handlers, when @Order values are tuned to make a chain work, when a request
   falls off the end of a chain and nothing happens, or when a chain is proposed for three fixed
-  cases. Does not cover the security framework's own filter configuration, the
-  retry and timeout policies applied around a call (gof-decorator, circuit-breakers), or
+  cases. Does not cover the security framework's own filter configuration,
+  call wrapping (gof-decorator), dependency failure protection (circuit-breakers), or
   message processing across services (streaming-pipeline-topologies).
 ---
 
@@ -34,11 +34,16 @@ middleware         interceptors, Netty handlers, Spring Security's chain.
                    All stages run unless one short-circuits deliberately.
 ```
 
-Most modern uses are the second. Deciding which you are building is the first design step,
+Deciding which contract you need is the first design step,
 because the unhandled case, the ordering rules and the error semantics all differ.
 The partial Java examples use Java 17 unless labelled otherwise. Pattern switches over sealed
 types are final in Java 21; on Java 17 use an enum switch or explicit dispatch without enabling
 preview merely for this pattern. Inspect actual framework versions and target toolchains.
+
+Start from a caller and an overlapping-handler example: what counts as handled, which rule
+has precedence, and which checks must succeed before a result is usable? Reuse existing wiring,
+tests and policy before asking about unresolved authority or fallback behavior. Keep changes
+conditional on material unknowns; a sound ordered loop or framework chain may need no redesign.
 
 ## When it is the answer
 
@@ -61,13 +66,15 @@ Cross-cutting work must wrap request handling
 
 ## When it is not
 
-- **Three fixed cases you own.** A `switch` over a sealed type is shorter, exhaustive and
-  readable; a chain hides the whole decision behind wiring (`java-composition-over-inheritance`).
+- **A few fixed cases you own.** Compare ordinary conditionals or a loop; use an exhaustive
+  `switch` when a discriminator expresses the decision. Overlapping predicates still need their
+  priority preserved; handler count alone does not decide (`java-composition-over-inheritance`).
 - **Every handler must run and none may decline.** This is the pipeline/middleware variant of CoR;
-  name its no-short-circuit contract so a handler cannot silently skip required stages.
+  name its no-short-circuit contract and failure policy. Required checks must succeed before
+  dependent effects/results; this does not promise every stage runs after an exception.
 - **The framework already provides it.** A hand-rolled chain beside servlet filters or
-  `HandlerInterceptor` duplicates ordering and is invisible to the framework's metrics and
-  tracing.
+  `HandlerInterceptor` needs a distinct domain purpose; otherwise it adds a second order and
+  integration work for metrics, tracing and lifecycle.
 - **Handlers need to know about each other.** Then the chain is a workflow with implicit
   coupling; make the sequence explicit or use a mediator (`gof-mediator`).
 - **The chain spans services.** A sequence of network hops is a workflow or a saga with partial
@@ -80,10 +87,9 @@ IF nothing handles the request
 THEN define whether this is a no-op/not-applicable result, a terminal default, or an
      error. Silent fallthrough is correct only when the API makes that outcome visible.
 
-IF handler order is expressed as @Order(100), @Order(200)
-THEN the ordering rationale exists only in someone's head. Name the
-     positions (an enum, an explicit list at the composition root) so
-     the reason survives.
+IF handler order is expressed as unexplained @Order(100), @Order(200)
+THEN make the precedence rationale and tie policy reviewable. Named positions or an explicit
+     list can help; retain documented framework ordering that already enforces the contract.
 
 IF a handler both handles and forwards, in a chain designed for
 "first match wins"
@@ -96,9 +102,10 @@ THEN the request leaves partial effects behind. Either make stages
      an applicable transaction/compensation boundary. Deferring effects alone does not make
      their final application atomic or idempotent under retry.
 
-IF handlers hold per-request state in fields
-THEN a shared chain is not thread-safe. State belongs in the context
-     object passed along the chain, not in the handler.
+IF concurrently shared handlers hold mutable per-request state in fields
+THEN establish confinement or synchronization throughout its use, including async work, or pass
+     state in a request/context. Request-confined handlers may have fields; a copied list or context
+     record does not make mutable handlers, dependencies or payloads thread-safe.
 
 IF the chain is assembled at every request
 THEN determine whether tenant, capability or request data genuinely changes membership.
@@ -132,6 +139,8 @@ per-request state in ThreadLocal     a context record passed along, or
 
 A `List<Handler>` plus `stream().flatMap(h -> h.handle(req).stream()).findFirst()` expresses
 sequential classical CoR with the order visible at the composition root and no successor wiring.
+The returned `Optional` must be non-null: empty means abstention; a present rejection is a handled
+decision, not permission to try a later approval. An exception is a failure, not implicit abstention.
 Do not use a parallel stream when later handlers must never execute after the first decision;
 ordered result selection does not guarantee exclusive invocation. Keep
 the linked form only when a handler must decide _how_ to invoke the rest — wrapping it in a
@@ -147,7 +156,7 @@ try/finally, running it on another thread, or skipping it — which is the pipel
   (`scoped-values`, `thread-sizing-and-virtual-threads`).
 - **Distribution.** Chains that process messages must define what a mid-chain failure means for
   acknowledgement: a stage that throws after a side effect has been applied, in an at-least-once
-  system, will re-run the earlier stages on redelivery. Make stages idempotent or apply effects
+  system, can re-run earlier stages under its redelivery policy. Make stages idempotent or apply effects
   through an idempotent/transactional commit boundary even if deferred until the end
   (`idempotency`, `delivery-semantics`, `poison-messages-and-dlq`). Cancellation
   must also propagate — a chain that ignores an expired deadline keeps working for a caller that
@@ -163,15 +172,19 @@ try/finally, running it on another thread, or skipping it — which is the pipel
 
 ## Review checklist
 
-- [ ] The shape is stated: first-match-wins, or every-stage-runs
+- [ ] The shape, handled/abstained/failed outcomes and permitted short-circuits are stated
 - [ ] The unhandled outcome is defined and covered by a test
-- [ ] Order is expressed as an explicit list or named positions, not bare numbers
-- [ ] Handlers hold no per-request state in fields
+- [ ] Precedence and ties are reviewable; mandatory checks cannot be bypassed by an early result
+- [ ] Handler/context ownership supports actual sharing and asynchronous lifetimes
 - [ ] Partial effects, final commit failure and redelivery have explicit transaction/idempotency/recovery contracts
 - [ ] Chain assembly lifetime matches actual variability and is measured/cached when request-specific
-- [ ] Deadlines and cancellation propagate through the chain
+- [ ] Deadlines/cancellation propagate; continuation and cleanup ownership follow actual work completion
 - [ ] The framework's own chain was considered for cross-cutting concerns
-- [ ] A closed set was compared with an exhaustive switch; chain ordering/composition still has a stated benefit
+- [ ] Relevant simpler conditionals, loops or a discriminator switch were considered without changing semantics
+
+Finish with the selected or retained contract, any material unresolved policy, and checks of
+precedence, no-handler, short-circuit and failure behavior. Report executed checks separately from
+proposed tests; a small review does not require a new chain implementation.
 
 ## References
 

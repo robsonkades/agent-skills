@@ -15,7 +15,8 @@ description: >
 
 Choose the least costly ingestion mechanism that still preserves the required validation,
 atomicity, recoverability, and online workload. “More threads” and “larger batch” are not goals;
-the job is done when useful rows per second rise without violating correctness or guardrails.
+success means meeting the actual load window and correctness contract. A safety review can
+retain an adequate mechanism without increasing throughput.
 
 ## Inputs required
 
@@ -28,28 +29,34 @@ current mechanism, batch size, transaction size, throughput, CPU/I/O/log/network
 window/SLO, staging/disk/log headroom, privileges, and rollback constraints:
 ```
 
+Reuse existing configuration, tests and measurements; ask only unresolved questions that change
+the mechanism, atomicity or recovery contract. Continue independent inspection while those are
+resolved. Collect the inputs relevant to the decision rather than requiring a new full study.
+
 For JVM implementation changes, inspect compiler release/toolchains, runtime images, resolved
 JDBC driver and ORM versions, connection properties and transaction-manager ownership. This skill
-imposes no Java baseline; preserve the project's target and dependencies. Without phase timings
-or failure semantics, propose a bounded pilot and mark mechanism/sizing conclusions conditional.
+imposes no Java baseline; preserve the project's target and dependencies. When missing timing or
+failure evidence could change the choice, propose a bounded pilot and keep those conclusions conditional.
 
 ## Workflow
 
-1. Measure rows/s and bytes/s by phase. Attribute time to client materialization, network
-   round-trips, statement processing, per-row engine work, log/WAL flush, indexes/constraints, or
-   replication. A single total duration cannot select a mechanism.
+1. For a performance question, measure rows/s and bytes/s by phase. Attribute time to client
+   materialization, network round-trips, statement processing, per-row engine work, log/WAL flush,
+   indexes/constraints, or replication. A single total duration cannot select a mechanism.
 2. Choose the mechanism level deliberately: individual statements, JDBC batch, driver statement
-   rewrite, native bulk API, or server-side set operation from staging.
+   rewrite, native bulk API, or server-side set operation from an existing source or staging table.
+   Preserve the current path when it meets the contract; compare only materially relevant alternatives.
 3. Define transaction and error semantics before tuning. `executeBatch()` is not atomic; verify
    an explicit transaction encompasses all intended writes on transactional storage, including
    native API participation. DDL, sequences and external trigger effects can escape rollback.
    Capture update counts, SQL state/vendor code, warnings, rejected rows, and what
    remains committable after an error.
-4. Prefer staging when validation, deduplication, transformation, index suspension, or online
-   isolation matters. Load into a table with intentionally minimal structures, validate, then move
-   with set-based SQL.
-5. Find the batch-size knee under representative data. Network benefit approaches saturation while
-   memory, lock duration, retry granularity, statement size, and replication lag keep growing.
+4. Use staging when it provides needed validation, deduplication, transformation, index suspension,
+   or online isolation that the direct path cannot supply adequately. Include load, validation,
+   promotion and cleanup costs; staging alone does not make publication atomic to readers.
+5. When changing sizing, find the batch-size knee under representative data. Network benefit
+   approaches saturation while memory, lock duration, retry granularity, statement size, and
+   replication lag keep growing.
 6. Pilot parallelism only with a bottleneck hypothesis, spare capacity and independently owned
    key ranges/partitions. It may overlap client waits or use idle server resources; it cannot
    remove a saturated shared log or lock bottleneck. Stop when CPU/I/O/log, lock waits, replica lag,
@@ -78,19 +85,21 @@ or failure semantics, propose a bounded pilot and mark mechanism/sizing conclusi
 - Dropping indexes on a hot final table can turn the load into an outage and alter constraints.
   Staging is the default location for aggressive optimization.
 - Upsert syntax is not portable: conflict target, row-locking behavior, triggers, no-op updates, and
-  races differ. Test concurrent writers and avoid rewriting unchanged rows.
+  races differ. Test concurrent writers; skip unchanged rows only when required trigger, version
+  and audit effects are preserved.
 - Do not materialize the entire source in the JVM. Stream with bounded buffers and account for
   driver buffering; a fetch/input API that accepts a size does not prove bounded memory.
-- Update optimizer statistics after the load and validate the first online plans. Completion before
-  statistics refresh can defer the incident until traffic resumes.
+- Verify optimizer statistics after the load, refresh where needed, and validate the first online
+  plans. Stale statistics can defer the incident until traffic resumes.
 - “No exception” is not data quality. Treat warnings and rejected rows as first-class outcomes.
 
 ## Output
 
-Produce a load plan with:
+Return the decision or load plan proportionate to the request, using applicable fields below.
+For implementation work, distinguish changes and checks actually completed from proposed work.
 
 ```text
-chosen mechanism and why the next simpler/faster level was rejected:
+chosen or retained mechanism and the material alternatives considered:
 transaction, partial-error, warning, retry, and idempotency semantics:
 staging/final-table design and index/constraint/trigger handling:
 batch/chunk/parallelism values as hypotheses with guardrails:

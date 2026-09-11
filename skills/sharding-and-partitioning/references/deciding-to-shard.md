@@ -1,8 +1,9 @@
 # Deciding to shard, and on what key
 
-Two decisions, in order. First prove which ownership/resource boundary must change with
-measured alternatives; then choose a key/strategy. “Not yet” is common, but do not make the
-answer dogmatic when residency, isolation or recovery—not raw capacity—is the driver.
+For a new topology decision, first establish which ownership/resource boundary must change;
+then choose a key/strategy. Compare the feasible alternatives against the actual requirement.
+Residency, isolation or recovery can justify a change without a capacity regression. An adequate
+existing boundary can remain; a narrow access-path explanation need not reopen the whole decision.
 
 ## The alternatives, and the condition that selects each
 
@@ -13,7 +14,7 @@ answer dogmatic when residency, isolation or recovery—not raw capacity—is th
 | Cache                       | Measured reuse avoids enough source cost to justify lookup/fill/invalidation work under the freshness contract    | Removes eligible reads before they reach the store  | Staleness, misses and invalidation — `caching-strategies` owns the decision                                             |
 | Retention / archiving       | Storage grows because nothing is deleted; queries touch only recent rows                                          | Storage and index size, restore time                | A deletion policy someone must own, and an archive read path                                                            |
 | Native table partitioning   | Time-based lifecycle/pruning is the requirement                                                                   | Partition detach/drop can avoid row-by-row deletion | Single-node partitioning does not distribute ownership; locking, index and uniqueness restrictions are product-specific |
-| Splitting off one hot table | One table dominates writes and is only loosely joined to the rest                                                 | Buys time without a key decision                    | Two stores to operate; the join you thought was loose usually is not                                                    |
+| Splitting off one hot table | One table dominates writes and its required operations can afford the boundary                                    | Relieves eligible load without row-level sharding   | Two stores to operate; verify joins, constraints and transaction scope across them                                      |
 | **Sharding**                | An acceptable ownership domain cannot meet measured capacity/locality/recovery objectives and a viable key exists | Distributed capacity/locality; potential isolation  | Coordination, placement and migration costs below                                                                       |
 
 Record evidence for rejecting relevant alternatives. Replicas may fail the required consistency,
@@ -29,7 +30,7 @@ seam rather than paying distributed cost now.
 
 ## The shard-key scorecard
 
-Score every candidate and record mitigations. Some failures are disqualifying (an unbounded
+When selecting or changing a key, score the relevant candidates and record mitigations. Some failures are disqualifying (an unbounded
 single hot key beyond shard capacity); others can be paid for with a global index or dedicated
 tenant placement. Make that cost visible rather than averaging scores blindly.
 
@@ -84,10 +85,13 @@ fit a fixed topology; changing N remaps many keys and needs an explicit migratio
 
 ## Capacity and skew proof
 
-For candidate key `K`, estimate the busiest logical key/range at peak, per-shard capacity at
+For a capacity or resilience claim about candidate key `K`, estimate the busiest logical key/range at peak, per-shard capacity at
 the target SLO, replication/migration overhead and failure headroom. Mean keys per shard is not
-the decision. Load-test a recorded or synthetic power-law distribution, membership change and
-one-shard loss; verify the remaining fleet can serve/recover without a cascade.
+the decision. Reuse representative checks; add a bounded workload/skew, membership-change or
+shard-loss check when its result is needed for the proposed capacity/recovery claim. Select the
+arrival/work distribution and failure domain from the contract; power-law traffic and one-shard
+loss are useful cases when representative, not a universal campaign. Run failure injection only
+in an authorized isolated environment and report any untested recovery claim.
 
 Also evaluate adversarial keys/hash flooding, null/canonicalization across languages, mutable
 tenant merges/splits, new region/residency placement and a tenant larger than one shard. A key
@@ -97,7 +101,11 @@ that works only for today's median tenant is already a migration plan.
 
 - [Google Cloud Spanner schema design](https://cloud.google.com/spanner/docs/schema-design)
 - [Amazon DynamoDB partition-key design](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
-- [CockroachDB transaction layer](https://www.cockroachlabs.com/docs/stable/architecture/transaction-layer)
+- [CockroachDB 25.4 transaction layer](https://www.cockroachlabs.com/docs/v25.4/architecture/transaction-layer)
 - [PostgreSQL 18 partitioning limitations](https://www.postgresql.org/docs/18/ddl-partitioning.html)
-- [MongoDB shard-key values and missing keys](https://www.mongodb.com/docs/manual/core/sharding-shard-key/) — verify the deployed release; the consulted manual is 8.3.
-- [MongoDB 8.3 shard-key update requirements](https://www.mongodb.com/docs/manual/core/sharding-change-shard-key-value/)
+- [MongoDB 8.0 shard-key values and missing keys](https://www.mongodb.com/docs/v8.0/core/sharding-shard-key/)
+- [MongoDB 8.0 shard-key update requirements](https://www.mongodb.com/docs/v8.0/core/sharding-change-shard-key-value/)
+
+These are source/documentation checks, not target-runtime observations. The versioned MongoDB
+8.0 and CockroachDB 25.4 examples do not require adopting those releases; inspect the deployed
+datastore and configuration. Spanner and DynamoDB documentation describe their managed services.

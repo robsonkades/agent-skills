@@ -21,9 +21,9 @@ The model may hold root/residual cost fixed only inside a narrow calibrated regi
 remembered sets, reference processing, worker imbalance and page state all move. G1 itself
 keeps a truncated history of real measurements per cost component
 and predicts the next value from its moving average and standard deviation, recalibrating
-every collection (`G1Predictions`, `G1ConfidencePercent` default 50). That is why a derived
-young size is usually an optimistic upper bound: the real policy runs slightly smaller to
-keep a confidence margin.
+at relevant updates (`G1Predictions`, `G1ConfidencePercent` default 50). That margin is a
+predictor input, not a statistical coverage guarantee. A hand-derived young size is a
+candidate for calibration, not an upper bound on actual size or pause time.
 
 Copy bandwidth is measured, not assumed. `Object Copy` from
 `-Xlog:gc+phases=debug` is the time signal; distinguish worker Sum from wall/critical-worker
@@ -45,8 +45,8 @@ max_young_size_mb = (T_slo − T_fixed) / 1000 × C
   max_young_size_mb = (30 − 5) / 1000 × 3000 = 75 MB
 
 In regions (region_size = 4 MB):
-  max_young_regions = 75 / 4 ≈ 18
-  G1MaxNewSizePercent = max_young_regions / total_regions × 100
+  max_young_regions = floor(75 / 4) = 18  (72 MiB after rounding)
+  percent estimate = max_young_regions / committed_regions × 100
 
 gc_interval_s = max_young_size_mb / A = 75 / 400 = 0.1875 s = 187.5 ms
 
@@ -54,12 +54,19 @@ GC overhead (%) = pause / (interval + pause) × 100
                 = 30 / (187.5 + 30) × 100 ≈ 13.8 %
 ```
 
+The interval above uses the unrounded 75 MiB illustration; an 18-region choice uses 72 MiB
+instead. Verify integer-percent rounding and both young bounds before proposing flags. In
+JDK 25's percentage-sizing path, each bound is `max(1, floor(committed_regions × percent/100))`;
+explicit `NewSize`/`MaxNewSize`/`NewRatio` settings change the path. On an 8 GiB fixed heap with
+4 MiB regions the default 5% floor is 102 regions, so a smaller nonbinding ceiling does not
+release that floor. A proposed maximum below the configured minimum is rejected.
+
 Two consequences of that arithmetic, both decisions rather than observations:
 
 - The model puts `T_object_copy` at `live_bytes_in_young / C`, so the young size the
   pause allows is really `survival_ratio × young ≤ (T_slo − T_fixed) × C`. The 75 MB above
   assumes everything in young is live at the pause — a worst case. With a measured
-  survival ratio of 10 percent makes a ten-times-larger young generation arithmetically
+  survival ratio of 10 percent, a ten-times-larger young generation is arithmetically
   possible **if other phase costs remain fixed**. They rarely do across that range. Derive
   from tail survival/cost regimes and retain burst margin; a 100%-survival bound is a
   stress scenario, not automatically the production ceiling.
@@ -81,7 +88,7 @@ pause share instead of extrapolating a universal overhead change from this simpl
 ## Region size — required before any calculation in regions
 
 ```
-region_size = -Xmx / 2048, clamped to [1 MB, 32 MB], then rounded UP to a power of two
+ergonomic region_size = -Xmx / 2048, clamped to [1 MB, 32 MB], then rounded UP to a power of two
 
   -Xmx4g  (4096 MB)  → 4096 / 2048  = 2 MB
   -Xmx5g  (5120 MB)  → 5120 / 2048  = 2.5 MB → 4 MB   (up, not nearest)
@@ -95,8 +102,10 @@ region_size = -Xmx / 2048, clamped to [1 MB, 32 MB], then rounded UP to a power 
 All executed on Temurin 25.0.3 with `-Xmx<n> -XX:+PrintFlagsFinal -version`; `-Xms` does
 not enter the computation (`-Xms512m -Xmx16g` still gives 8 MB). The source is
 `G1HeapRegion::setup_heap_region_size` in `g1HeapRegion.cpp`, which rounds up "since this
-is beneficial in most cases". Total regions is then `-Xmx / region_size`, and it is
+is beneficial in most cases". Maximum region capacity is then `-Xmx / region_size`, and it is
 **not** always 2048: `-Xmx5g` has 1280 regions of 4 MB.
+Young/mixed policy percentages use currently committed regions; explicit region-size
+requests must be resolved to their effective value before either calculation.
 
 Use binary GB. `-Xmx8g` is 8192 MiB; using 8000 MB in one step and 8192 MB in another
 produces a derivation whose numbers do not reconcile.
@@ -111,7 +120,8 @@ with total heap usage printed by the separate `gc+ihop` statistics.
 ```
 marking_time      = measured time relevant to the headroom model
                     — the JDK 25 IHOP predictor uses concurrent-start-to-first-mixed
-                      timing, not just the `Concurrent Mark Cycle <ms>` wrapper
+                      mutator timing (end of concurrent-start pause to first mixed,
+                      excluding intervening pauses), not the `Concurrent Mark Cycle` wrapper
 
 margin = old_gen_allocation_rate × marking_time
   80 MB/s × 10 s = 800 MB of old growth DURING marking
@@ -148,10 +158,10 @@ Two cases where IHOP alone is unlikely to solve the problem, and the derivation 
 ```
 Mixed_GC_pause ≈ young_and_base_cost + sum(predicted_old_group_costs)
 
-old_regions_in_CSet: at least  min = ceil(candidates / G1MixedGCCountTarget)
-                     at most   max = ceil(G1OldCSetRegionThresholdPercent% × total_regions)
-                     and the pause predictor fills between them while time remains —
-                     but max is really MAX(min, max): the minimum wins when they disagree
+marking candidates: nominal min = ceil(initial_candidates / G1MixedGCCountTarget)
+                    nominal max = ceil(G1OldCSetRegionThresholdPercent% × committed_regions)
+                    max is raised to min when they disagree; available candidates,
+                    group granularity and pause prediction affect actual selection
 copy_time_per_region ≈ live_bytes_in_region / effective_copy_bandwidth
                       plus attributable root scanning and other work
 ```
@@ -162,20 +172,23 @@ in `G1CollectionSet::select_candidates_from_marking` (`g1CollectionSet.cpp`). Ex
 `Min 1 regions, max 103 regions`; `G1MixedGCCountTarget=1` with
 `G1OldCSetRegionThresholdPercent=1` (a cap of 11) logs `Min 18 regions, max 18 regions`
 and `predicted initial time: 8.59ms ... time remaining: 0.00ms` against a 5 ms goal. The
-count target is therefore the flag that can _force_ a mixed pause past `MaxGCPauseMillis`;
-the percent cap only ever shortens one.
+count target can therefore require old work despite an exhausted predicted budget. These
+prediction lines do not establish the actual elapsed pause or the effect of reducing a cap.
 
 Three further facts that change the arithmetic:
 
-- `candidates` is not "old regions produced": a region with more than
-  `G1MixedGCLiveThresholdPercent` (85) live bytes is never a candidate, so a workload
+- `initial_candidates` is the marking list recorded after selection/pruning, not the number
+  remaining before each pause or "old regions produced". Marking candidates must have live
+  bytes strictly below the region-size-scaled `G1MixedGCLiveThresholdPercent` (85), so a workload
   whose old regions are mostly live can have few candidates and little reclaim. This does not
   guarantee short pauses: young work, incoming roots and other phases remain (`g1-internals`).
 - Efficiency ordering does not make a uniform-cost estimate a safe upper bound. Prediction
   error, skewed liveness, incoming roots and worker imbalance can make it optimistic.
 - On JDK 25 old regions enter the collection set in **groups** that share one remembered
   set (JDK-8343782; the log reads `available 18 regions (1 groups)`), so the number added
-  is a whole number of groups and can exceed the minimum by up to one group.
+  is a whole number of groups. The limit is checked before adding a group, so selection
+  can cross either nominal bound. Retained candidates have separate selection; these
+  calculations do not cap every old region in a pause.
 
 ## Worked case — mixed GC violating the SLO while young GC is healthy
 
@@ -201,7 +214,7 @@ Target 80 ms (margin under the 100 ms SLO):
   integer percent candidate = 2; ceil(2% × 2048) = 41 regions
   predicted pause = 36 + 41 × 0.8 = 68.8 ms, before group/prediction effects
 
-Candidate count from the policy log (assumed fixture): 450 regions.
+Initial marking-candidate count from the policy log (assumed fixture): 450 regions.
 Promotion × time is not a candidate-count bound: pre-existing old regions can qualify.
 
 The count target must not force a minimum above the cap:
@@ -228,10 +241,10 @@ for a promotion spike of about 1.6× the measured peak across one marking cycle.
 With adaptive IHOP enabled, 35 sets the initial threshold, not the steady-state threshold.
 Validate startup separately; do not combine an unneeded IHOP change with the mixed-cost experiment.
 
-A `G1MixedGCCountTarget` derived well above the default may never be realised:
-`G1HeapWastePercent` stops the phase once the remaining candidates are not dense enough in
-garbage to be worth collecting, and the log says which condition ended it (`do not continue
-mixed GCs (...)` under `gc+ergo=debug`).
+A `G1MixedGCCountTarget` derived well above the default may never be realised. In the
+25.0.3 implementation, waste allowance prunes marking candidates before grouping; the
+phase follows availability of the resulting list. Inspect pruning, group counts and
+exhaustion in the [policy log](policy-log-and-troubleshooting.md), not a promised count.
 
 ## Sanity rules for whatever parses the log
 
@@ -252,17 +265,21 @@ mixed GCs (...)` under `gc+ergo=debug`).
 
 ## Calibrating across load levels
 
-```bash
-for load_percent in 10 50 90 120; do
-  echo "=== Load: $load_percent% ==="
-  k6 run --vus $(($TARGET_VUS * $load_percent / 100)) --duration 15m k6_script.js &
-  K6_PID=$!
-  sleep 300                              # warm-up; ideally gate on a compilation metric
-  APP_PID=$(pgrep -f api-service.jar)    # explicit PID: several JVMs may share the host
-  jstat -gc "$APP_PID" 5000 120          # 10 minutes of GC metrics
-  wait $K6_PID
-done
+```text
+For each representative baseline/candidate regime:
+  reuse the known target identity, authorized environment and adequate recordings
+  use an arrival schedule for independent arrivals, or users/think times for closed demand
+  predeclare warmup/stability, duration, recovery and abort budgets
+  record offered/started/successful/failed/timed-out work and generator validity
+  associate GC/policy/request data with the same process and observation window
+  retain capture/generator exit status; missing or failed runs are not measured improvements
+  stop and reap any collectors/generators owned by this run on completion or failure
 ```
+
+Scaling k6 `--vus` scales a closed user population, not necessarily arrival rate. Reuse the
+project's validated harness; `load-testing` owns workload validity and `latency-statistics`
+owns estimator choice and comparison uncertainty. Preserve required startup observations;
+do not discard a bad window by extending warmup indefinitely.
 
 Include overload only when the environment can do so safely and the acceptance model
 requires it. The important requirement is to cover expected peak, burst and recovery
@@ -273,6 +290,9 @@ regimes—including admission control—and not extrapolate a predictor beyond s
 Observed client p99 contains normal processing, GC pause, safepoint overhead from other
 causes and OS scheduling. Attributing the whole tail to GC without correlating timestamps is
 the most common error in this investigation.
+
+The partial example below assumes parsers with aligned clock domains and returns one overlap
+per request. It neither sums all overlapping pauses nor estimates a causal latency contribution.
 
 ```python
 def correlate_gc_latency(request_log, gc_log):
@@ -308,7 +328,7 @@ While measuring:
 
 - [ ] Allocation, old-generation pressure and survival/copy-cost estimates measured across relevant load regimes, with uncertainty named
 - [ ] Analysis output validated against its sanity assertions
-- [ ] Percentiles computed with the rank method
+- [ ] Percentile estimator, sample count and uncertainty recorded consistently with the SLO
 
 When deriving:
 
@@ -318,7 +338,7 @@ When deriving:
 - [ ] Each flag's trade-off documented before it is applied
 - [ ] Region size confirmed before any calculation denominated in regions
 - [ ] IHOP set with an explicit safety margin, never at the theoretical ceiling
-- [ ] `ceil(candidates / G1MixedGCCountTarget)` checked against the percent cap
+- [ ] Initial marking-candidate count, committed-capacity cap and actual group selection checked
 
 When validating:
 

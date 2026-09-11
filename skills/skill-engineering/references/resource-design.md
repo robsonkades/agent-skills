@@ -5,12 +5,13 @@ past the point where the body is comfortable to read.
 
 ## The one question
 
-Every supporting file must answer:
+Each supporting file should answer:
 
-> **What capability does this provide that the body cannot?**
+> **What useful contribution justifies this file rather than keeping its content inline?**
 
-If the answer is "it explains the same thing in more words", the file should not exist.
-If the answer is unclear, the file should not exist yet.
+Conditional depth, a worked example or a reusable helper can justify separation even when
+the content could fit in the body. Repetition without teaching, safety or routing value does
+not. If the purpose is unclear, inspect existing consumers before adding or removing the file.
 
 ## Where things go
 
@@ -19,7 +20,7 @@ If the answer is unclear, the file should not exist yet.
 | **`SKILL.md` body** | Common path, short critical guards, decision rules, output shape and routing to conditional detail                                   |
 | **`references/`**   | It is needed for _some_ tasks: schemas, domain rules, detailed procedures, extended examples, format-specific guidance               |
 | **`scripts/`**      | Deterministic execution is more reliable than re-deriving the logic: validation, transformation, data processing, repeated API calls |
-| **`assets/`**       | The file is consumed by the output rather than read as instruction: templates, schemas, fixtures, images, boilerplate                |
+| **`assets/`**       | Used to produce or check output: templates, schemas, fixtures, images, boilerplate; procedural guidance belongs in instructions      |
 
 Keep the common path and short consequential guards in the body. Move substantial detail
 needed only for a particular mode into a routed reference; splitting a one-line prerequisite
@@ -57,8 +58,9 @@ Good: When the task involves database migrations, read references/migrations.md.
 Bad: Read all files under references/ before starting.
 ```
 
-A reference nothing routes to is dead weight the agent will never open. If you cannot
-write the condition that reaches a file, you have not established that it is needed.
+Without a stated route, ordinary skill use has no reliable reason to open a reference.
+Inspect actual harness or user entry points before declaring it unused. Establish why and
+when its content is needed; do not rely on a directory name to trigger a read.
 
 ## Examples
 
@@ -90,6 +92,9 @@ State interpreter/dependency requirements, inputs, outputs and side effects. Bef
 an unfamiliar helper, inspect its implementation and scope its writes; a skill instruction
 does not grant permission to publish, install or mutate external systems. Preserve the
 project's baseline and use isolated fixtures for checks that could touch real configuration.
+An asset may need to be read to use or validate it; its classification describes its purpose,
+not a ban on reading. Keep grading answers and other evaluator-only data separate from normal
+actor resources when evaluating behavior; see the evaluation reference routed by the body.
 
 ## Splitting a skill that grew too large
 
@@ -109,7 +114,7 @@ changes to neighboring descriptions when they are outside scope.
 
 - [ ] Every reference is reachable by an explicit condition in the body
 - [ ] Every script has a stated invocation point
-- [ ] Every asset is consumed by an output, not read as instruction
+- [ ] Every asset has an identified use in producing or checking output
 - [ ] Detailed rules have one home; repeated guards or summaries serve a clear purpose
 - [ ] No file exists "for completeness"
 - [ ] The body would still make sense if a reader stopped after it

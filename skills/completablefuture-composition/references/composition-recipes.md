@@ -57,19 +57,39 @@ head-of-line blocking; isolate by dependency or tenant where failure domains dif
 
 ## Apply timeout at all relevant layers
 
+For an operation whose owner must keep control of cancellation, relay outcomes into a fresh base
+future. `copy()` is sufficient for known base futures, but subclasses may preserve provider
+cancellation through `newIncompleteFuture()`; Java 25's default `HttpClient` does so.
+
 ```java
-CompletableFuture<Price> visible = operation.copy()
+static <T> CompletableFuture<T> callerView(CompletionStage<T> operation) {
+    var view = new CompletableFuture<T>();
+    operation.whenComplete((value, failure) -> {
+        if (failure == null) view.complete(value);
+        else view.completeExceptionally(failure);
+    });
+    return view;
+}
+```
+
+```java
+CompletableFuture<Price> visible = callerView(operation)
         .orTimeout(remaining.toMillis(), TimeUnit.MILLISECONDS)
         .exceptionallyCompose(failure -> recoverOrPropagate(unwrapKnownWrappers(failure)));
 ```
 
-This times out a caller-owned copy, preserving the internal `operation`. It does not bound
+This times out a caller-owned view, preserving the internal `operation`. It does not bound
 `visible` if recovery returns an unfinished stage: carry the same absolute deadline into recovery
 and apply the remaining budget to the final caller-visible result. Do not reset a full timeout
 after each fallback, and do not run blocking recovery inline on a timeout-completing thread.
 Neither timeout stops the supplier. Configure the HTTP/JDBC/client request deadline and design
-late side effects explicitly. Cancelling the copy also does not cancel `operation`; any such
-bridge must follow the operation owner's cancellation policy.
+late side effects explicitly. Cancelling this base view does not cancel `operation`; any such
+bridge must follow the operation owner's cancellation policy. The operation owner still observes
+late failures and owns cleanup of late resource-bearing results; relaying a value neither copies
+the resource nor creates another ownership claim.
+
+Provider boundary: [Java 25 HttpClient cancellation](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html#sendAsync(java.net.http.HttpRequest,java.net.http.HttpResponse.BodyHandler)>)
+and [its derived future implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.net.http/share/classes/jdk/internal/net/http/common/MinimalFuture.java).
 
 ## Adapt a callback with a race-safe contract
 

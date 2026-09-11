@@ -7,11 +7,14 @@ For two similar fragments, answer three questions:
 1. **Same reason to change?** Enumerate plausible changes (rate, field, channel, regulation).
    Mark which statements must co-change. A stable shared nucleus may exist even when the full
    fragments also contain independently varying policy.
-2. **Same owner?** If different teams, aggregates or bounded contexts own the copies, they
-   will diverge legitimately. Merging them makes one owner's release depend on another's.
+2. **Same owner?** Different teams, aggregates or bounded contexts may diverge legitimately;
+   check whether an explicitly shared authority instead governs this rule and its versions.
+   Merging implementations can make one owner's release depend on another's.
 3. **Is the sameness in the rule or in the shape?** Two methods that both "loop, filter,
-   map to `BigDecimal`, sum" share shape. Shape is free to duplicate; the standard library
-   already abstracts it. Only the domain rule inside the shape can be knowledge.
+   map to `BigDecimal`, sum" share shape; that syntax alone does not justify a helper.
+   Shared technical contracts — such as traversal order, precision or resource cleanup —
+   can also be knowledge. Inspect the actual semantics and whether an existing library
+   already supplies the needed operation.
 
 Merge only the knowledge for which authority, change reason and ownership align. A "no" narrows
 the extraction boundary; it does not automatically classify every common statement as incidental.

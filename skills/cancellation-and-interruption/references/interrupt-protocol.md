@@ -89,7 +89,10 @@ according to policy, then notify their waiters. Do not assume an arbitrary queue
 same object as the caller's Future. `awaitTermination` observes executor termination; the
 cancelled state of a Future alone does not establish it. On JDK 19+, `ExecutorService.close()`
 waits for termination without a timeout, so try-with-resources is not a bounded shutdown policy
-for uncooperative work.
+for uncooperative work. If interrupted while waiting, `close()` invokes best-effort cancellation
+as with `shutdownNow()`, continues waiting for executing tasks, and reasserts the owner's interrupt
+status before returning. It does not throw `InterruptedException` as an early exit. Check and honor
+the outer cancellation contract after cleanup; do not clear or restore status by blanket rule.
 
 ## Review checklist
 

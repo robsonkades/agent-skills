@@ -19,8 +19,8 @@ description: >
 
 ## Purpose
 
-Turn a stated latency SLO into specific G1 flag values, with a traceable measurement
-behind each one, and then prove the change helped. Every flag in this space moves the
+Derive candidate G1 flag values from a stated latency SLO, with a traceable measurement
+behind each one, and test whether the change helped. Every flag in this space moves the
 system inside a fixed triangle of pause, throughput and footprint — none of them removes
 the trade-off, so a change without a recorded trade-off is a change nobody can defend.
 
@@ -31,13 +31,20 @@ measurement, and at worst hides the actual cause behind a symptom that moved.
 
 ## Workflow
 
-1. **State the SLO as a metric, a threshold and an evaluation window.** "Low p99" is not
-   an SLO and cannot be derived from.
-2. **Collect enough complete cycles across representative regimes** with
-   `-Xlog:gc*` — the asterisk is required — plus the policy tags in
+1. **Reuse the stated SLO, workload and deployment context.** Confirm the request population,
+   clock, success/error treatment, threshold and window, plus CPU/memory budgets and the actual
+   JDK vendor/update, collector and flags. Preserve the project's target; the implementation
+   examples here use HotSpot JDK 25. Retain an adequate configuration; a flag change is not
+   required. If GC attribution is missing, carry existing evidence to `jvm-gc-tuning` or
+   `pause-attribution` before deriving values.
+2. **Use enough complete cycles across representative regimes.** Reuse adequate captures;
+   `-Xlog:gc*` supplies broad info-level coverage, while explicit tag selections can supply
+   the same required evidence. Add the policy tags in
    [the policy log](references/policy-log-and-troubleshooting.md) if the question is
    _why_ G1 chose a size. Confirm current defaults and the effective region size with
-   `-XX:+PrintFlagsFinal -version` on the target runtime. Thirty minutes may be adequate for a
+   `-XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal -version` with the target flags
+   on the target runtime. Bound any missing capture by existing authorization, known process
+   identity, overhead and storage constraints. Thirty minutes may be adequate for a
    steady high-rate service and useless for a diurnal/bursty one; justify sample/cycle count and
    include startup, peak, recovery or soak windows relevant to the SLO.
 3. **Measure the inputs**: allocation rate, old-generation allocation/promotion pressure,
@@ -45,9 +52,9 @@ measurement, and at worst hides the actual cause behind a symptom that moved.
    deltas are estimates, not exact byte ledgers; validate them against policy logs or JFR.
 4. **Name the failing event before choosing a lever.** Young pauses over budget, mixed
    pauses over budget, a full GC after marking, an evacuation failure and a GC-overhead
-   problem each have a different first flag; the
+   problem need different evidence and candidate controls; the
    [symptom table](references/policy-log-and-troubleshooting.md) maps them.
-5. **Derive, showing the arithmetic**: max young size and `G1MaxNewSizePercent` from the
+5. **Derive only the implicated controls, showing the arithmetic**: young bounds from the
    young SLO; `G1OldCSetRegionThresholdPercent` and `G1MixedGCCountTarget` together from
    the mixed SLO; IHOP from old-generation allocation rate and observed marking time, with an explicit
    safety margin below the theoretical ceiling.
@@ -59,18 +66,23 @@ measurement, and at worst hides the actual cause behind a symptom that moved.
 8. **Check for a regression elsewhere** — heap footprint, total CPU, latency on another
    route — before declaring the change good.
 
+Return the supported decision (retain, canary, revert or collect missing evidence), the
+candidate's measurement and prediction, actual validation scope/results and rollback conditions.
+
 ## Rules
 
 - `MaxGCPauseMillis` (default 200) is a goal, not a guarantee. It sizes the young
   generation through the G1 policy; it does not bound a mixed collection under pressure,
-  and `G1MixedGCCountTarget` can force a mixed collection past it (below).
+  and minimum old-region work can exceed its predicted budget (below). Actual pause and
+  request-SLO outcomes require elapsed-time evidence.
 - `G1NewSizePercent`, `G1MaxNewSizePercent`, `G1OldCSetRegionThresholdPercent` and
   `G1MixedGCLiveThresholdPercent` are **experimental** on JDK 25. Without
   `-XX:+UnlockExperimentalVMOptions` placed _before_ them the JVM refuses to start
   (`VM option 'G1NewSizePercent' is experimental and must be enabled via ...`, executed
   on 25.0.3). A command line copied from a document that omits the unlock is not a
   configuration; it is an outage at the next restart.
-- Every calculation denominated in "regions" requires the effective region size first:
+- Every calculation denominated in "regions" requires the effective region size first. The
+  ergonomic default, absent an explicit region-size request, is
   `-Xmx / 2048`, clamped to [1 MB, 32 MB], then rounded **up** to a power of two —
   `-Xmx5g` gives 4 MB, not 2 MB, and `-Xmx12g` gives 8 MB (executed on 25.0.3). `-Xms`
   plays no part. Confirm it with
@@ -104,25 +116,28 @@ interval` — and the heap from the live set plus that young generation plus
 - Do not set a static IHOP at a theoretical capacity ceiling. The ceiling assumes observed old-
   allocation rate and marking time repeat exactly. Adaptive IHOP incorporates predicted marking
   duration/allocation and reserve/waste/young constraints whose exact formula and flag names
-  evolve. Read effective threshold and target occupancy from `gc+ergo+ihop`; do not claim a
+  evolve. Read predictor state/target occupancy from `gc+ihop` and qualifying initiation
+  checks from `gc+ergo+ihop`; missing initiation lines do not prove no marking need. Do not claim a
   hand-calculated constant is a bound the JVM will “never” cross.
-- `G1UseAdaptiveIHOP` is `true` by default, but the first cycles — before
-  `G1AdaptiveIHOPNumInitialSamples` (default 3) samples exist — use the static IHOP. That
-  static value still matters at startup and after every restart.
-- `G1OldCSetRegionThresholdPercent` (default 10) caps **how many** old regions enter a
-  mixed collection — `ceil(percent × total regions)` — not **which**. G1 orders candidates
-  by efficiency — recoverable garbage divided by predicted cost — so the simple
-  uniform-cost model tends to be pessimistic, overestimating the real pause.
+- `G1UseAdaptiveIHOP` is `true` by default. The initial threshold applies until both
+  marking-time and allocation-rate histories have `G1AdaptiveIHOPNumInitialSamples`
+  (default 3) eligible samples. Completed cycles alone do not establish that state; check
+  `prediction active`. The static value still matters at startup and after restart.
+- `G1OldCSetRegionThresholdPercent` (default 10) sets a marking-candidate selection limit —
+  `ceil(percent × committed regions)` — not a pause bound. The count-target minimum and
+  indivisible groups can exceed that numeric limit; retained candidates have separate selection.
+  G1 orders candidates by efficiency, but a uniform-cost estimate can be optimistic or pessimistic.
 - `G1MixedGCCountTarget` (default 8) is a target for spreading candidate reclamation across
   mixed collections, not a guaranteed count. In the JDK 25 implementation it contributes
-  a minimum of `ceil(candidates / target)` old regions; that minimum can override the
+  a minimum of `ceil(initial marking candidates / target)` old regions, not recalculated from
+  the shrinking remainder; that minimum can override the
   percent cap when the two disagree
   (`G1MixedGCCountTarget=1` with a 1 percent cap of 11 regions logged
   `Min 18 regions, max 18 regions` and a predicted 8.59 ms against a 5 ms target,
   executed on 25.0.3). Lowering it tends to concentrate old-region work; raising it tends
   to spread work and is a candidate for mixed-pause overshoot. Policy prediction,
   candidate groups and `G1HeapWastePercent` can still produce fewer/different collections,
-  so confirm the actual `Min`, selected regions and termination reason in logs.
+  so confirm the actual `Min`, groups, candidate pruning/exhaustion and elapsed pauses in logs.
 - Reducing `MaxGCPauseMillis` usually selects smaller young/CSet work and therefore more frequent
   pauses; fixed per-pause work can raise total overhead and reduce throughput. Magnitude is
   workload/policy dependent, so predict direction, then measure pause distribution, frequency,

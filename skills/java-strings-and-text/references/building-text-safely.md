@@ -6,32 +6,35 @@
 // Single expression: modern javac commonly uses StringConcatFactory (invokedynamic)
 String line = name + ": " + value + " (" + unit + ")";
 
-// Loop: quadratic — each += copies the whole accumulated string
+// Loop: repeated prefix copying can make work quadratic as output grows
 String csv = "";
 for (Row r : rows) csv += r.toCsv() + "\n";              // O(n²) copying
 
-// Loop, correct
-var sb = new StringBuilder(rows.size() * 64);            // pre-size when you can estimate
+// Loop: preserves the trailing newline of the first loop
+var sb = new StringBuilder();                           // bounded capacity hint only if useful
 for (Row r : rows) sb.append(r.toCsv()).append('\n');
 
-// Collection: clearest of all
+// Collection: separators only, with no trailing newline
 String csv = rows.stream().map(Row::toCsv).collect(joining("\n"));
 ```
 
 The rule is about **shape, not about `+`**. A single concatenation expression is fine and
 readable; `javac` handles it well. The quadratic case is repeated concatenation into the same
-variable, and it is worth fixing on sight because the cost grows with data size, not with call
-frequency.
+variable. Prefer a builder for growing output; retain adequate tiny bounded constructions when
+a rewrite adds no useful benefit. These are independent sketches, not byte-equivalent alternatives:
+`joining("\n")` omits the loop's final newline for nonempty input. Preserve empty-input, delimiter,
+null and `toCsv()` escaping contracts. Avoid unchecked `rows.size() * 64` capacity arithmetic or
+unbounded speculative preallocation; a capacity hint is optional, not a size or work limit.
 
 Other composition tools, by purpose:
 
-| Purpose                              | Tool                                                              |
-| ------------------------------------ | ----------------------------------------------------------------- |
-| Join a collection                    | `String.join(sep, parts)`, `Collectors.joining(sep, pre, post)`   |
-| Multi-line literal (SQL, JSON, HTML) | text block `"""…"""`                                              |
-| Machine-readable formatting          | `String.format(Locale.ROOT, "%s=%d", …)`                          |
-| Human-readable message               | `MessageFormat` with the user's locale, or the i18n framework     |
-| Log message                          | the logger's own placeholders (`log.info("x={}", x)`) — never `+` |
+| Purpose                              | Tool                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------- |
+| Join a collection                    | `String.join(sep, parts)`, `Collectors.joining(sep, pre, post)`              |
+| Multi-line literal (SQL, JSON, HTML) | text block `"""…"""`                                                         |
+| Machine-readable formatting          | `String.format(Locale.ROOT, "%s=%d", …)`                                     |
+| Human-readable message               | `MessageFormat` with the user's locale, or the i18n framework                |
+| Log message                          | the logger's placeholders for dynamic fields; retain adequate fixed messages |
 
 `StringBuilder` is not thread-safe and should normally be method-confined. `StringBuffer` offers
 per-operation synchronization but cannot make a multi-call construction protocol atomic; use it
@@ -66,11 +69,13 @@ anticipation of one.
 // Compiles through the convenience API on every call
 if (input.matches("^[A-Z]{2}\\d{8}$")) { ... }
 
-private static final Pattern IBAN = Pattern.compile("^[A-Z]{2}\\d{8}$");
-if (IBAN.matcher(input).matches()) { ... }
+private static final Pattern REFERENCE_CODE = Pattern.compile("^[A-Z]{2}\\d{8}$");
+if (REFERENCE_CODE.matcher(input).matches()) { ... }
 ```
 
-`String.matches` and regex replacement convenience methods compile per invocation; `split` is
+This illustrative code grammar is two ASCII capitals followed by eight ASCII digits under the
+default regex flags; it is not bank-account validation. `String.matches` and regex replacement
+convenience methods compile per invocation; `split` is
 specified in terms of `Pattern.compile`, although a JDK may optimize simple separators. `Pattern`
 instances are immutable and thread-safe (a `Matcher` is not), so a `static final` field is a good
 home for a bounded set of frequently reused expressions. Keep dynamic expressions local or place
@@ -87,8 +92,9 @@ Pattern.compile("^(\\w+\\s?)*$").matcher("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!").matc
 
 Mitigations, in order:
 
-1. **Do not regex structured input.** Use a real parser for URLs, emails, JSON, dates, CSV.
-   Choose a parser matching the actual grammar and validation needs; `URI` parsing alone, for
+1. **Match the tool to the grammar.** Retain a simple bounded regex for a narrow code/lexical
+   check; use a parser when the actual URL, email, JSON, date or CSV grammar warrants it.
+   Choose a parser matching the actual validation needs; `URI` parsing alone, for
    example, is not URL authorization or SSRF protection. Measure performance separately.
 2. **Bound the input** before matching—a cap bounds damage only if it is small enough for the
    pattern's measured worst case. Enforce request deadlines/load shedding outside the matcher too;
@@ -97,8 +103,9 @@ Mitigations, in order:
    prefer possessive quantifiers (`\\w++`) or atomic groups (`(?>…)`), which forbid the
    backtracking that causes the blowup. These can change the accepted language and captures:
    `a+a` matches `aa`, but `a++a` does not. Test valid and rejected cases before substitution.
-4. **Treat a hung request with high CPU and a regex in the stack as ReDoS**, not as a slow
-   dependency — a thread dump names the `Matcher` frame directly (concurrency-diagnostics).
+4. **Treat high CPU and a regex stack as a lead.** Correlate the actual pattern, input and
+   repeated stacks before attributing cost; a frame alone proves neither an attack nor an
+   exponential growth rate. concurrency-diagnostics owns runtime attribution.
 
 `split` has its own trap: it takes a regex, so `split(".")` splits on every character and
 `split("|")` on nothing useful. For a literal separator, use `Pattern.quote`, or
@@ -112,15 +119,15 @@ interrupting a future does not reliably stop the matcher. A quick sample does no
 
 ## Injection: the rule is "never build the other language by concatenation"
 
-| Target        | Never                                     | Instead                                                            |
-| ------------- | ----------------------------------------- | ------------------------------------------------------------------ |
-| SQL           | `"… WHERE id = '" + id + "'"`             | `PreparedStatement` with `?`, or the framework's named parameters  |
-| Shell/process | `Runtime.exec("sh -c " + cmd)`            | `ProcessBuilder` with an argument **list**; no shell               |
-| Filesystem    | `Path.of(base + "/" + userName)`          | allowlisted names plus traversal anchored at a trusted real base   |
-| HTML          | `"<div>" + text + "</div>"`               | a template engine with contextual escaping                         |
-| LDAP/XPath    | filter built by concatenation             | the API's parameterised form, or escape with the library's encoder |
-| HTTP header   | header value from user text               | validate against a charset/pattern; reject CR/LF                   |
-| Logs          | `log.info("user " + name + " logged in")` | `log.info("user logged in", kv("user", name))` — structured fields |
+| Target        | Never                                     | Instead                                                                                  |
+| ------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| SQL           | `"… WHERE id = '" + id + "'"`             | PreparedStatement parameters for data; allowlist structural choices such as column names |
+| Shell/process | `Runtime.exec("sh -c " + cmd)`            | `ProcessBuilder` with an argument **list**; no shell                                     |
+| Filesystem    | `Path.of(base + "/" + userName)`          | allowlisted names plus traversal anchored at a trusted real base                         |
+| HTML          | `"<div>" + text + "</div>"`               | a template engine with contextual escaping                                               |
+| LDAP/XPath    | filter built by concatenation             | the API's parameterised form, or escape with the library's encoder                       |
+| HTTP header   | header value from user text               | validate against a charset/pattern; reject CR/LF                                         |
+| Logs          | `log.info("user " + name + " logged in")` | `log.info("user logged in", kv("user", name))` — structured fields                       |
 
 Two that are less obvious:
 
@@ -151,8 +158,9 @@ but it is the wrong default for arbitrary external data:
 - It adds shared-table lookup and changes reachability/GC behaviour in implementation-specific
   ways; cardinality and churn determine whether CPU or memory gets better or worse.
 - Attacker-influenced cardinality can turn an intended optimization into CPU and memory pressure.
-- The JVM already deduplicates identical string contents under G1 with
-  `-XX:+UseStringDeduplication`, without any code change, if that is the actual problem.
+- On supported G1 runtimes, `-XX:+UseStringDeduplication` can deduplicate eligible backing
+  storage without making distinct `String` objects identical. It is not a guarantee that every
+  duplicate is removed or that overhead is worthwhile.
 
 When repeated strings genuinely cost memory (parsed columns in a large batch, repeated header
 names), compare G1 deduplication with a cache that has an enforced maximum size and eviction—a
@@ -163,6 +171,6 @@ See java-reference-types-and-leaks.
 
 - [JLS §15.18.1: String Concatenation Operator](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.18.1)
 - [Pattern API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/regex/Pattern.html)
-- [OWASP ReDoS guidance](https://owasp.org/www-community/attacks/Regular_expression_Denial_of_Service_-_ReDoS)
+- [OWASP input validation and ReDoS guidance](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)
 - [ProcessBuilder API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ProcessBuilder.html)
 - [SecureDirectoryStream API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/SecureDirectoryStream.html)

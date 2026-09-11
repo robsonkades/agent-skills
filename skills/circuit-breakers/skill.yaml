@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: circuit-breakers
-version: 1.3.1
+version: 1.3.2
 description: >-
   The breaker as a state machine that stops calling a failing dependency: closed, open and
-  half-open; choosing rate windows versus consecutive failures; why half-open admits a bounded
-  number of probes; the failure predicate—classifying correlated dependency failures rather than
-  blindly counting status classes—and the distinction between protecting caller resources
-  by failing fast and providing a semantically valid fallback. Use when a breaker trips on
+  half-open; choosing rate windows versus consecutive failures; recovery probe limits and
+  in-flight work across state transitions; the failure predicate—classifying correlated
+  dependency failures rather than blindly counting status classes—and the distinction between
+  protecting caller resources by failing fast and providing a semantically valid fallback. Use when a breaker trips on
   consecutive failures, when it never
   trips or trips on one client's bad requests, when half-open sends full traffic at a
   recovering dependency, when a breaker sits on a call with no timeout under it, or when a
@@ -50,6 +50,7 @@ dependencies:
 suggests:
   - caching-strategies
   - cascading-failures
+  - concurrency-limiting-and-bulkheads
   - distributed-systems-testing
   - load-testing
   - rate-limiting-and-load-shedding

@@ -67,6 +67,11 @@ chain's stages are being used correctly.
 
 ## Workflow
 
+Start with the requested responsibility or ordering question. Reuse existing configuration
+and tests; an adequate handler or trivial redirect can close with no change. Apply only the
+steps needed for the actual contract, and state specific missing evidence without requiring
+a full request-chain redesign or an Application Controller on every review.
+
 1. **Check the handler's contents and runtime.** Inspect routing, security configuration,
    Java and framework versions first. Examples use Servlet Spring MVC; `ProblemDetail`
    requires Spring 6+ (Java 17+), not an implicit upgrade. A controller should bind input,
@@ -78,20 +83,23 @@ chain's stages are being used correctly.
 3. **Place it at the right stage.** Filter, interceptor, argument resolver, exception
    handler, advice: they see different things and run at different times. Choosing wrongly
    produces a concern that works until it does not.
-4. **Extract flow decisions.** If a handler decides which step comes next based on
-   application state, that is an Application Controller and it belongs outside the web
-   layer.
+4. **Assess flow decisions.** Repeated or independently changing journey decisions can
+   justify an HTTP-independent Application Controller. A local response choice may remain
+   in a handler; authoritative mutation rules still belong to the application/domain contract.
 5. **Keep the response shape a deliberate decision**, not the accidental serialisation of
    whatever the service returned (`remote-facade-and-dto`).
-6. **Test at the right level.** Handler tests should not need a database; the mapping,
-   validation and status codes are what the web layer is responsible for.
+6. **Test at the right level.** Focused handler tests cover mapping, validation and status
+   codes with application doubles where useful. Use integration tests when the actual
+   transaction, security or serialization contract requires them.
 
 ## Decision rules
 
 ```text
 A concern applies to every request (correlation id, security context,
 request logging, tenant resolution)
-        → the front controller's chain: a filter, before routing.
+        → an appropriate chain stage, with explicit route/dispatch coverage.
+          Order it after required identity/validation prerequisites and before
+          work that depends on it; a filter need not be first to be shared.
 
 A concern applies to a group of handlers and needs to know which handler
 was selected (authorisation on an annotation, feature flags per route)
@@ -110,8 +118,9 @@ A concern turns request data into a domain-shaped parameter
           hiding a business rule.
 
 The next step of a multi-step flow depends on state, not on a link
-        → Application Controller: a class that owns the flow, outside
-          the web layer, testable without HTTP.
+        → consider Application Controller when shared or complex journey
+          decisions need one owner, testable without HTTP. Keep simple
+          response choices local and mutation legality independently enforced.
 
 A screen is one page, one action, no shared concerns beyond the global
 ones
@@ -120,8 +129,8 @@ ones
 The API is REST over resources
         → routing is by resource and method, not by page. Page
           Controller and Front Controller both still describe what the
-          framework does; the patterns to reach for are Remote Facade
-          and DTO, not Two Step View.
+          framework does. Choose a deliberate representation; Remote Facade
+          applies when network granularity needs it, not from the REST label alone.
 ```
 
 ## Rules
@@ -130,8 +139,10 @@ The API is REST over resources
   protocol negotiation, optional input and response mapping legitimately branch. Trace whether the
   condition must hold for non-HTTP callers.
 - **A controller with a repository call is not automatically wrong.** For a pure read it can
-  be the honest design; for anything that writes, it puts the transaction boundary and the
-  invariants in the web layer (`service-layer-design`).
+  be the honest design. For writes, trace actual transaction, invariant and actor/resource
+  authorization ownership, including non-HTTP callers. An existing bounded operation may
+  already enforce the contract; extract a use-case boundary when coordination or independent
+  policy ownership requires it (`service-layer-design`).
 - Cross-cutting concerns implemented per handler can diverge. Repeated policy plus observed drift or
   ordering/security risk is the signal, and
   consider a shared chain stage or collaborator before a base controller: Java's single
@@ -160,7 +171,7 @@ The API is REST over resources
   doubles where useful. Separate integration tests may legitimately include a database to
   verify transaction, authorization or serialization behavior (`architecture-testing`).
 
-Return the observed responsibility/ordering issue, the proposed placement and its evidence,
+Return the observed responsibility/ordering issue or supported no-change verdict, its evidence,
 and the focused checks performed or still needed. Missing configuration makes claims about
 filter coverage, authorization and transaction scope conditional; inspect it before diagnosing.
 

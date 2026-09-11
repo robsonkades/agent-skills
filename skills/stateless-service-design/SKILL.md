@@ -26,39 +26,42 @@ reconstruction source/time and loss consequence. A local derivable cache can sta
 stateful actor/broker can also be correct, but it needs explicit ownership and recovery rather
 than interchangeable stateless routing.
 
-The failure this prevents is the bug that cannot appear in any environment you have.
-`replicas: 1` passes every test, because with one replica the process _is_ the shared store.
-The counter, the idempotency map, the scheduled job and the local cache stay correct until
-capacity is added, and then they are wrong quietly — a duplicate charge, a limit enforced at
-N times its value, a job that emails everyone twice.
+The failure this prevents is a hidden instance-ownership assumption. One-replica tests can
+miss cross-replica divergence, but concurrency, duplicate registration and restart loss can
+already fail within one instance. Adding capacity can expose further failures — a duplicate
+charge, a fleet limit enforced separately on each replica, or repeated job effects.
 
 ## Workflow
+
+Use the steps relevant to the question and reuse adequate existing evidence. A narrow
+explanation or sound stateful/session-loss contract need not trigger a complete inventory,
+new authority, migration or full fault/deployment campaign. Keep unknown guarantees explicit.
 
 1. **Apply loss, divergence and recovery tests.** If this JVM disappears, what correctness,
    accepted work, security decision, user journey or SLO changes? Can another instance rebuild
    from durable truth within RTO/RPO, and can copies diverge? Authoritative state may move to a
    shared store or become partitioned/replicated state with an explicit owner.
-2. **Inventory before you redesign.** Enumerate singleton bean fields, `static` collections,
+2. **Inventory the affected state before redesign.** Inspect singleton bean fields, `static` collections,
    `HttpSession` attributes, caches, scheduler and executor queues, local files and
-   long-lived connections; classify each as derivable, per-request or authoritative. The
+   long-lived connections; identify derivation, lifetime and decision authority separately. The
    table and the grep shapes are in `references/state-inventory.md`.
 3. **Place session state deliberately.** Sticky routing, an external session store and a
    signed token are three different failure and revocation profiles, not three flavours of
    one idea. See `references/session-placement.md`.
-4. **Name the new authority and guarantee**—database row, durable queue/outbox, replicated
+4. **Name the existing or proposed authority and guarantee**—database row, durable queue/outbox, replicated
    partition or client token. Product labels do not decide semantics: Redis can be a cache or
    configured data store; verify eviction, persistence, replication, consistency, backup and
    failover before assigning authority.
-5. **Hunt singleton assumptions.** Plain application-context schedulers/startup hooks run per
-   replica. Fleet-once work needs partitioning, a scheduler with documented coordination, or
+5. **Hunt singleton assumptions.** Inspect enabled schedule registrations, bean instances and
+   startup hooks in each application context. Fleet-once work needs partitioning, a scheduler with documented coordination, or
    `leader-election`; TTL leases, session locks and durable job claims have different stale-
    owner/recovery semantics.
-6. **Exercise multiple replicas.** Route named steps deliberately to different instances
-   (random balancing may miss the transition), overlap concurrent requests, then kill/restart
-   one during work and deployment. A green run at
+6. **Verify the claimed transition.** For cross-replica or replacement guarantees, route named steps deliberately to different instances
+   (random balancing may miss the transition), overlap relevant requests and test replacement
+   during the affected work/deployment phases. Reuse adequate evidence. A green run at
    `replicas: 1` does not establish cross-replica correctness. Fault injection belongs in an
    isolated or already authorized environment; successful cases cover only the paths exercised.
-7. **Check the next ceiling before celebrating.** Replication moves the bottleneck to what
+7. **Check relevant shared capacity when changing replication.** Replication can move the bottleneck to what
    the replicas share. `replicas × maximumPoolSize` is a number the database has an opinion
    about; that arithmetic is `connection-pool-sizing`.
 
@@ -66,14 +69,15 @@ N times its value, a job that emails everyone twice.
 
 ```text
 Make the instance stateless and scale by replication when:
-- every request's inputs are in the request plus a shared store, and the per-request
-  working set is small enough to fetch inside the latency budget
-- any instance may handle any key on the write path, with no ordering requirement the
-  storage engine does not already provide
+- each request's required inputs are available to eligible instances, from the request,
+  validated client state and/or shared authority, within the workload and trust contract
+- where writes exist, eligible instances can satisfy the required ownership and ordering
+  protocol without depending on one instance's volatile history
 Keep the state in the process when:
-- it is derivable from an authoritative source and its loss costs only latency (a cache)
+- it is derivable and freshness, loss and rebuild costs fit the contract, including
+  availability, upstream quotas and recovery load (a cache)
 - its lifetime is one request (a transaction, a request-scoped bean, a ScopedValue binding)
-Prefer partitioning by key (sharding-and-partitioning) instead when:
+Consider partitioning by key (sharding-and-partitioning) when:
 - the per-key working set is too large or too hot to load per request, or the key needs
   single-writer ordering that shared storage would otherwise have to serialise
 Prefer leader election (leader-election) instead when:
@@ -94,11 +98,14 @@ Prefer leader election (leader-election) instead when:
   separate budget per instance. Maximum aggregate allowance can approach N× under spread,
   though routing/skew changes observed behavior. Per-instance protective limits are valid when
   explicitly scoped (`rate-limiting-and-load-shedding`).
-- Plain Spring `@Scheduled` runs once per application context. With one context per replica it
-  runs N times unless an outer scheduler/claim/lease or idempotent work changes semantics.
-- An in-memory idempotency map deduplicates only the requests that land on the same
-  instance and retention window. Cross-replica/restart guarantees need an atomic shared claim
-  and effect/recovery protocol, such as a durable unique-key record; `idempotency`
+- Spring scheduling is local to enabled application contexts. Count bean instances and
+  schedule declarations: Spring 6.2.12 processes repeated `@Scheduled` declarations independently,
+  and multiple bean instances can each register callbacks. Replica count alone does not determine
+  invocation or effect count; an outer scheduler/claim/lease or repeat-safe work changes the contract.
+- An in-memory idempotency map can deduplicate only within its instance and retention window,
+  with an atomic local claim when attempts overlap. Cross-replica/restart guarantees need a protocol covering
+  the actual effects: natural idempotence, or an atomic claim and effect/recovery protocol such
+  as a durable unique-key record where required; `idempotency`
   owns the mechanics, this skill owns noticing that the map was never shared.
 - A local cache can diverge after update/invalidation for its refresh/eviction/restart horizon;
   no TTL makes staleness unbounded unless explicit invalidation or replacement succeeds, not
@@ -141,23 +148,27 @@ because an orchestrator can restart it erases its hardest contract.
 Inspect deployed Java, Spring/Session/Data Redis versions, storage mounts and routing before
 changing placement. No upgrade is implied; ScopedValue is final in Java 25 and preview/incubator
 in earlier supported releases. Missing recovery or durability evidence is unknown. Deliver the
-state inventory, chosen authority/loss contract, checks performed and remaining failure cases.
+supported conclusion, relevant authority/loss contract, checks performed and material gaps;
+include an affected-state inventory when the requested audit or change needs one.
 
 - Session/auth store failure must fail closed for protected actions. A separately authorized
   public/read-only degraded mode is possible; never reinterpret unknown authentication as
   authenticated.
-- Stop admission, durably hand off accepted queues/uploads, drain connections and only then
-  terminate. “No fields” does not prevent loss of in-flight accepted work.
+- For replacement, stop admission and preserve the promised acceptance contract: finish or
+  durably hand off/replay accepted queues/uploads before termination, with bounded drain and
+  recovery. Explicit best-effort loss is a different contract. “No fields” does not prevent loss
+  of in-flight accepted work.
 - Bind token/session to issuer, audience, tenant and key version; protect against fixation,
   replay, key rotation overlap and cross-tenant cache keys.
 
 ## References
 
-- [In-process state inventory](references/state-inventory.md) — every kind of in-process
-  state with its classification, the failure it produces at `replicas > 1`, the grep or code
-  shape that finds it, and where it moves. Read when auditing a service before scaling it
+- [In-process state inventory](references/state-inventory.md) — common in-process state,
+  authority/lifetime distinctions, potential failures, discovery shapes and placement options.
+  Read when auditing a service before scaling it
   out, or when a bug appears on some replicas and not others.
 - [Where session state lives](references/session-placement.md) — sticky routing, an external
   store and a signed token compared on replica-death behaviour, deploy behaviour, per-request
   latency and revocation, with the Spring Session and token shapes and a decision block.
   Read when the service holds a session, or when a deploy logs users out.
+  For detailed per-item conversation placement, use `session-state-strategies`.

@@ -32,6 +32,12 @@ Inspect target Java, framework, transaction manager and client versions before a
 Local sketches use Java 17 syntax; the remote scope example explicitly needs Java 25 preview.
 Do not upgrade or enable preview merely to adopt Facade. Use existing supported orchestration otherwise.
 
+Start with consumer code for the ordinary operation, an advanced supported use and a misuse or
+failure path. Identify the sequence being simplified, capabilities that must remain available,
+and who owns returned resources and failures. Inspect existing callers/tests before asking about
+missing contracts. Keep an adequate direct call or existing facade; compare extraction or internal
+delegation only where it solves an observed coordination or change problem.
+
 ## When it is the answer
 
 ```text
@@ -51,8 +57,8 @@ A library exposes forty types where callers need four operations
 - **It forwards to one already-simple collaborator.** That is likely a redundant wrapper. A
   facade over one externally complex object can still present a smaller use-case API, stabilize a
   boundary, or hide lifecycle sequencing; state which simplification it owns (`gof-adapter`).
-- **It accumulates unrelated responsibilities.** Method/dependency counts prompt inspection;
-  split when change reasons, collaborators or policy ownership diverge, not at a numeric threshold.
+- **It accumulates unrelated responsibilities.** Method/dependency counts and disjoint collaborators
+  prompt inspection; split when independent change or policy ownership justifies the extra surface.
 - **It absorbs domain invariants owned by entities/value objects.** Sequencing and translation
   belong naturally here; application policies spanning ports may also belong in an application
   service. Move rules according to data and consistency ownership, not every `if`
@@ -69,8 +75,8 @@ A library exposes forty types where callers need four operations
 Classical Facade                    Modern equivalent
 ──────────────────────────────────  ───────────────────────────────────
 class OrderFacade with N            an application service / use case
-collaborators and coarse methods    class per use case, each with the
-                                    collaborators that use case needs
+collaborators and coarse methods    entry point; separate implementation
+                                    classes when independent change warrants it
 
 one facade per subsystem            one or more use-case-oriented classes
                                     when responsibilities change independently
@@ -98,8 +104,9 @@ THEN it is a boundary. Enforce it (package-private types, module
      (architecture-testing).
 
 IF collaborators change for unrelated reasons or tests require unrelated setup
-THEN split by use case, capability, or subdomain. Dependency count is a review signal,
-     not a threshold.
+THEN consider splitting by use case, capability, or subdomain. A stable public facade
+     may delegate to those implementations; preserve caller compatibility.
+     Dependency count is a review signal, not a threshold.
 
 IF a facade method contains a business rule
 THEN place it with the component that owns the required data and invariant. Domain
@@ -116,8 +123,9 @@ THEN model the dependency graph, scheduling, deadline and partial effects.
      the slowest isolated call (scatter-gather).
 
 IF two callers need different subsets of the sequence
-THEN do not add flags to one method. Add a second method whose name
-     states the second intention.
+THEN distinguish two intentions (preview versus publish) from options of one
+     intention (render as HTML or PDF). Prefer named methods for distinct effects;
+     a clear option parameter can preserve one coherent operation.
 ```
 
 ## Cross-cutting checks
@@ -130,13 +138,21 @@ THEN do not add flags to one method. Add a second method whose name
   what a partial failure returns, whether the calls can run concurrently, and whether a retry of
   the facade method re-executes work already done (`scatter-gather`, `idempotency`). A local wrapper
   alone does not reduce downstream round trips; batching or moving a remote boundary can
-  (`remote-facade-and-dto`).
+  (`remote-facade-and-dto`). Preserve known partial effects and unresolved outcomes when
+  translating errors; a timeout or failed facade call does not establish that nothing happened.
+- **Resource lifetime.** A returned stream, cursor or lazy result may still depend on an open
+  resource and can fail during consumption. Define ownership, closure and cancellation beyond
+  method return; do not close a borrowed client or return a result backed by a resource already
+  closed inside the facade (`java-resource-management`).
 - **Performance.** Local dispatch is rarely the important cost. Remotely, granularity is the
   design: a coarse call can replace chatty round trips but may over-fetch, lengthen critical
-  sections, or create expensive fan-out. The opposite failure—a facade that loops issuing one downstream call
-  each — is the same mistake with the sign reversed.
+  sections, or create expensive fan-out. Per-item calls may be appropriate for independently
+  cached resources or distinct outcomes. Compare actual round-trip, payload and failure costs
+  before batching; a local wrapper alone is not evidence of a latency improvement.
 - **Testing.** The facade is the natural place for use-case-level tests: real domain objects,
-  fakes for the ports, with success and relevant failure cases per intention. Substantial
+  fakes for the ports, with success and relevant failure cases per intention, including bypass
+  paths and cleanup on partial/failed consumption when resources escape. Fakes do not establish
+  real transaction or transport behavior. Substantial
   unrelated setup deserves a cohesion review; count alone does not prove a defect
   (`java-testing-strategy`).
 
@@ -146,7 +162,7 @@ THEN do not add flags to one method. Add a second method whose name
 - [ ] Sequencing, application policy and domain invariants are placed with explicit ownership
 - [ ] Whether the subsystem remains accessible is a stated choice, and enforced if closed
 - [ ] Collaborators share a coherent change/use-case reason; unrelated setup is not accumulated
-- [ ] No boolean flag parameter selects between two different intentions
+- [ ] Options express one operation; distinct effects are discoverable to callers
 - [ ] The transaction boundary is deliberate and its span is justified
 - [ ] Remote fan-out has an overall deadline and a defined partial-failure result
 - [ ] Facade simplification is distinguished from gateway/BFF deployment or mediator coordination roles
@@ -161,7 +177,8 @@ assuming that one method call creates atomicity, safety or a strict latency boun
   against Adapter, Mediator, Service Layer, Remote Facade, API gateway and BFF; how to detect
   god-facade drift early and how to split one; the access-policy decision (simplify or forbid)
   and how to enforce it. Read when classifying or splitting a coordinating class.
-- [Worked example](references/worked-example.md) — a checkout facade over six collaborators: the
+- [Worked example](references/worked-example.md) — a checkout facade over seven collaborators: the
   repeated sequence it replaced, where the transaction boundary went, the split when a second
-  use case arrived, and the remote fan-out version with its deadline and partial-failure result.
+  use case arrived, a streamed-result ownership example, and the remote fan-out version with its
+  deadline and partial-failure result.
   Read when implementing.

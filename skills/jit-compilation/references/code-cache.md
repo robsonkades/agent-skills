@@ -1,6 +1,6 @@
 # Code cache
 
-Behaviour and messages below were reproduced on Temurin 25.0.3 with an undersized
+The retained lab behaviour and messages below were recorded on Temurin 25.0.3 with an undersized
 `-XX:ReservedCodeCacheSize`. Reclamation changed in JDK 20 when JDK-8290025 removed the
 sweeper. On this JDK 25 reproduction, pressure appeared in two useful shapes; treat them as
 diagnostic patterns, not an exhaustive state machine.
@@ -8,13 +8,14 @@ diagnostic patterns, not an exhaustive state machine.
 ## The two failure signatures
 
 **Shape 1 — thrashing under `UseCodeCacheFlushing` (the default).** Once allocations since
-the last unloading exceed a threshold — `SweeperThreshold=15`% of the cache when it is
-empty, shrinking towards zero as free space approaches `StartAggressiveSweepingAt=10`% —
+the last unloading exceed a threshold — initially `SweeperThreshold=15`% of capacity,
+then scaled by free-capacity ratio once used capacity exceeds that threshold —
 the JVM requests GC that can reclaim eligible code (`CodeCache::gc_on_allocation`; the log line
 below prints both percentages). If the cache is simply too small for the working set, the
 cache can enter a sustained reclaim/recompile loop. Confirm repeated compilations and reclaim
 activity; a GC request does not prove particular cold nmethods were removed. The signature is in GC and
-code-cache logs:
+code-cache logs. At or below `StartAggressiveSweepingAt=10`% free, a separate aggressive-GC
+branch applies; the allocation threshold does not simply shrink to zero:
 
 ```
 [0.086s][info][gc] GC(2) Pause Young (Concurrent Start) (CodeCache GC Threshold) 3M->1M(28M) 0.385ms
@@ -87,11 +88,12 @@ rebalancing.
 
 ## Configuration
 
-- `-XX:ReservedCodeCacheSize` — 240 MB by default under tiered compilation, and usually
-  enough; size it from measured `max_used` per heap, not from a rule of thumb.
+- `-XX:ReservedCodeCacheSize` — 240 MB in the examined default full-tiered configuration;
+  retain adequate sizing or derive a change from measured per-heap demand and the memory budget.
 - **`-XX:-TieredCompilation` and `-XX:TieredStopAtLevel=1` drop the default to 48 MB** and
   switch segmentation off. A service that changed the mode and then saw `CodeCache is full`
-  may have hit changed ergonomics; verify working-set growth/leaks independently and size explicitly.
+  may have hit changed ergonomics; verify effective settings and working-set growth independently.
+  Explicit sizing is warranted by headroom or a reproducibility/memory contract, not every mode change.
 - Segmentation is ergonomic: verified off at `-XX:ReservedCodeCacheSize=200m`, on at
   `240m`. Below that, `Compiler.codecache` shows one unnamed heap and per-segment
   monitoring shows nothing.
@@ -127,19 +129,21 @@ consumes code cache the flushed version gave back. The reason codes and mitigati
 
 ## Flags that are already default
 
-Check before adding any of these; re-enabling a default creates the feeling of having
-acted while the real problem stays undiagnosed.
+Check the actual target before adding any of these. The command below inspects a newly launched
+JVM; it cannot establish the deployed process's flags, collector or compilation mode. Reuse
+target launch records or supported `jcmd <pid> VM.flags -all` / `VM.command_line` evidence.
 
 ```bash
 java -XX:+PrintFlagsFinal -version | grep -E 'TieredCompilation|UseCodeCacheFlushing|UseCountedLoopSafepoints|SegmentedCodeCache|UseDynamicNumberOfCompilerThreads'
 ```
 
-All five are `true` on Temurin 25.0.3. `UseCountedLoopSafepoints` has been default since
-JDK 10; `UseDynamicNumberOfCompilerThreads` since JDK 11; `SegmentedCodeCache` since JDK 9
-whenever the reserved size allows it.
+All five were `true` in the recorded default G1/full-tiered Temurin 25.0.3 configuration.
+`UseCountedLoopSafepoints` defaults also depend on the collector (false with Serial/Parallel
+in the checked 25.0.3 controls). `UseDynamicNumberOfCompilerThreads` dates to JDK 11;
+segmentation additionally depends on mode, reserved size and explicit overrides.
 
 ## Primary references
 
 - [JDK-8290025: remove the HotSpot sweeper](https://bugs.openjdk.org/browse/JDK-8290025)
-- [HotSpot code cache source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/code)
+- [HotSpot 25.0.3 code cache source](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp)
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

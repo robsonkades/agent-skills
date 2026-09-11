@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: gof-flyweight
-version: 1.2.1
+version: 1.2.2
 description: >-
   Flyweight in modern Java: sharing one immutable instance across many logical occurrences to
   reduce retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the
   intrinsic/extrinsic split, why cheap TLAB allocation does not make reclamation free, the memory
   arithmetic deciding whether a cache entry costs more than the object it saves,
-  string deduplication and boundary canonicalisation as cheaper alternatives, the unbounded intern
+  string deduplication and boundary canonicalisation as candidate alternatives, the unbounded intern
   map as a leak, and the == trap. Use when object pooling or interning is proposed, when a heap
   dump shows millions of duplicate values, when someone suggests caching small objects for speed,
   when a shared instance is mutable, or when a flyweight cache is described as a distributed
@@ -48,9 +48,12 @@ suggests:
   - false-sharing-and-contended
   - gc-fundamentals
   - gc-log-analysis
+  - gof-singleton
   - heap-dump-analysis
   - java-memory-model
+  - java-resource-management
   - jfr-and-async-profiler
+  - object-layout-and-footprint
   - off-heap-memory
 
 capabilities:

@@ -25,16 +25,18 @@ provides asynchronous submission/completion and batching opportunities, not auto
 syscall elimination. Confusing those properties can add a native dependency without addressing
 the measured bottleneck.
 
-The second failure this prevents is the belief that `java.nio` reaches io_uring on its own.
-It does not, in any JDK up to and including 25: there is no `IoUringChannel`, JVM flag or
-integrated JEP. Every "io_uring in Java" claim resolves to a third-party native transport, an
-FFM/JNI binding, or an external component. Name and verify that route.
+The second failure this prevents is the belief that stock OpenJDK `java.nio` reaches io_uring
+on its own. Through JDK 25 it has no built-in io_uring transport or flag that enables one.
+A custom channel provider or vendor implementation needs separate verification; the Java API
+name alone does not identify its backend. Name and verify the native transport, FFM/JNI
+binding or external component behind an "io_uring in Java" claim.
 
 ## Workflow
 
-1. **Name the cost before naming the fix.** Combine profiles, syscall traces, CPU time per byte,
-   memory bandwidth, queue depth and tail latency. Page faults or cache misses alone do not prove
-   an application copy.
+1. **Name the cost before naming the fix.** Reuse existing workload and runtime evidence; select
+   profiles, syscall traces, CPU time per byte, memory bandwidth, queue depth or tail latency
+   only as needed to resolve the decision. Retain a path that already meets requirements.
+   Page faults or cache misses alone do not prove an application copy.
 2. **Try the stable JDK transfer APIs first.** `transferTo`/`transferFrom` may use an optimized
    kernel path for supported channel pairs, but the contract does not promise `sendfile` or
    `splice`, and a call may transfer fewer bytes or zero. Loop correctly and measure the actual
@@ -57,11 +59,12 @@ FFM/JNI binding, or an external component. Name and verify that route.
 
 - io_uring can amortize submission/completion transitions through batching and shared rings;
   ordinary operation still commonly uses `io_uring_enter`. Zero-copy is a separate property.
-- `java.nio` and `java.net` have no io_uring binding in any JDK through 25, and no flag turns
-  one on. Reject any design note that assumes otherwise.
-- Ordinary `READ`/`WRITE` operations copy payloads between kernel and user memory. `_ZC` send
-  operations and splice-style paths can avoid particular copies; registered buffers reduce
-  registration/pinning overhead but do not by themselves make payload movement copy-free.
+- Stock OpenJDK's `java.nio` and `java.net` have no built-in io_uring transport through 25.
+  Do not invent an enabling flag or infer a custom provider's backend from its Java API.
+- Ordinary socket and buffered-file I/O still copy payloads through kernel buffers. Direct
+  file I/O can bypass the page cache, so `READ`/`WRITE` opcodes alone do not establish the copy
+  path. `_ZC` sends and splice-style paths can avoid particular copies; registered buffers
+  reduce registration/pinning overhead but do not by themselves make movement copy-free.
 - `IORING_OP_SEND_ZC` is a Linux-kernel capability, not a JDK capability. Availability also
   depends on the native transport version, operation type and fallback behavior.
 - For send-zero-copy, an initial CQE with `IORING_CQE_F_MORE` does not release the buffer:
@@ -77,8 +80,10 @@ FFM/JNI binding, or an external component. Name and verify that route.
 - `SO_BACKLOG` is declared by `ChannelOption` and inherited by `IoUringChannelOption` in
   Netty 4.2. Qualify it with `ChannelOption` for clarity; subclass-qualified access alone is
   not an API/linkage error or an io_uring-specific option.
-- Presence of `io_uring_enter` proves ring activity, not that all I/O uses the ring or that
-  batching/zero-copy is effective. Correlate operations, queue depth and workload phase.
+- An `io_uring_enter` count records attempted calls, including failures; it does not prove
+  payload operations completed. Active submission polling can also perform I/O without an
+  enter call in the observed window. Correlate results, ring mode, operations and workload
+  phase before attributing traffic, batching or copy reduction.
 - Socket buffers and application watermarks jointly affect buffering, utilization and
   backpressure. Size them from bandwidth-delay product, concurrency, memory budget and latency
   objectives; "large for throughput, small for latency" is not a sufficient rule.
@@ -89,8 +94,9 @@ FFM/JNI binding, or an external component. Name and verify that route.
 
 Record the project's JDK/toolchain, resolved Netty/native versions, kernel/architecture and
 container restrictions before selecting a route. This skill does not authorize upgrades or
-relaxing sandbox policy. Return the measured bottleneck, selected mechanism/fallback, ownership
-contract and actual checks; distinguish source-supported expectations from measured benefits.
+relaxing sandbox policy. Return the supported bottleneck or specific evidence gap, selected or
+retained mechanism/fallback, ownership contract and actual checks; distinguish source-supported
+expectations from measured benefits.
 
 ## References
 

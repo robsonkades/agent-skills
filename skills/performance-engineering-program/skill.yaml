@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: performance-engineering-program
-version: 1.0.1
+version: 1.0.2
 description: >-
   Establishing an organization-wide performance engineering program through measurable maturity
   evidence, service ownership, SLO and baseline adoption, regression gates, incident learning and

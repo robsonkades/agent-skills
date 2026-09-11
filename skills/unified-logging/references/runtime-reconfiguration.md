@@ -2,6 +2,11 @@
 
 ## Safe procedure
 
+For authorized discovery, identify the process and inspect its version/help/list; these reads
+do not change the logging configuration. Use the subsequent change/trigger/restoration steps
+only for an authorized capture or configuration change. Existing authorization for that scope
+persists; do not ask again solely because the tool is jcmd.
+
 1. identify one process unambiguously;
 2. record jcmd target VM.version and help VM.log;
 3. capture VM.log list;
@@ -12,7 +17,8 @@
 8. archive command, operator, time and output.
 
 Do not use a broad class-name target where multiple JVMs exist. jcmd requires local
-permissions/attach availability and is a privileged operational action.
+permissions/attach availability; help/list inspection, output configuration, disable and
+rotation have different effects. Verify the requested command and its target.
 
 A list snapshot is evidence, not an automatically safe rollback script. Coordinate ownership
 of shared outputs and do not replay an old global configuration over another operator's

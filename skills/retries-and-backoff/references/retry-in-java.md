@@ -4,18 +4,20 @@
 
 ```text
 Retry when:
-- contract evidence says another attempt can succeed (possibly after delay/state refresh),
+- transport/contract evidence says another attempt can succeed (possibly after delay/state refresh),
   whether or not routing selects a different instance
-- faults are independent: a low, uncorrelated failure rate, so the second attempt has
-  materially different odds from the first
-- replay is safe for this intent (a pure read can still time out with an unknown response)
+- recovery odds justify the added work: independent faults or recovery after a temporary
+  shared outage can qualify; correlation alone does not decide
+- the prior attempt is reliably known not to have applied, or replay is safe for this intent
+  (a pure read can still time out with an unknown response)
 - the remaining deadline still fits one more attempt plus its backoff
 
 Avoid retrying now when:
 - the outcome is terminal, or a valid 429/503 `Retry-After` cannot fit the remaining deadline
-- the operation is a non-idempotent write and no idempotency key exists
+- the write may have applied and neither safe replay semantics nor authoritative
+  reconciliation establishes a safe next step; a key is not the only possible protocol
 - another layer retries without a coordinated total attempt/deadline budget
-- most attempts are already failing: retries are then a constant multiplier on a bottleneck
+- failures persist without useful recovery odds: retries then add work to the bottleneck
 
 Prefer instead when:
 - failures are correlated and sustained → a circuit breaker plus a fallback
@@ -47,8 +49,9 @@ static Duration fullJitter(int attempt, Duration base, Duration cap) {
 }
 ```
 
-The draw covers the **whole** window. `base × 2^attempt` with ±10% noise leaves every client on
-the same schedule, and is the variant that survives review looking correct.
+The draw covers the **whole** window. `base × 2^attempt` with ±10% noise uses a narrow band;
+aligned cohorts can remain clustered even though their wake times are not identical. Judge
+the distribution against actual retry arrivals, not merely the presence of randomness.
 
 ## Classify on a type, then loop against the deadline and the budget
 
@@ -65,15 +68,19 @@ public sealed interface Outcome<T> {
 The HTTP/gRPC adapter combines transport evidence with the operation contract when mapping to
 this type. Everything above switches exhaustively, so a new class becomes a compile error
 rather than silently falling through to retry.
-`Transient` must certify replay safety, not merely that failure might clear. Validate nonnegative
+`Transient` must certify that another attempt is safe from the phase/intent evidence, not merely
+that failure might clear. Validate nonnegative
 advice and bounded policy durations/counts before the loop. `Op`, `Policy`, `Deadline`, budget
 and exception types below are integration placeholders, not a complete retry library.
 The adapter/operation owner records ambiguous state against the stable intent ID before returning
 it; a local boolean is not durable storage. `maxAttempts` includes the first call and must be >= 1.
+`Op` is bound to that same intent. `Ok` must be an authoritative result under its replay/status
+contract that resolves any earlier ambiguity; success for an unrelated or independently applied
+effect does not qualify. Duplicate-effect prevention alone need not recover the original result.
 
 ```java
 // Conceptual: no metrics, no per-endpoint budget scoping.
-<T> T execute(Op<T> op, Policy policy, Deadline deadline, boolean idempotent)
+<T> T execute(Op<T> op, Policy policy, Deadline deadline, boolean replaySafe)
         throws InterruptedException {
     boolean unresolved = false;
     for (int attempt = 0; ; attempt++) {
@@ -90,7 +97,7 @@ it; a local boolean is not durable storage. `maxAttempts` includes the first cal
             case Outcome.Permanent<T> p -> throw stopped(p.code(), unresolved);
             case Outcome.Ambiguous<T> a -> {
                 unresolved = true;
-                if (!idempotent) throw stopped(a.code(), true); // pending/unknown, not definite failure
+                if (!replaySafe) throw stopped(a.code(), true); // pending/unknown, not definite failure
             }
             case Outcome.Transient<T> t -> advised = t.advisedDelay();
         }
@@ -103,13 +110,15 @@ it; a local boolean is not durable storage. `maxAttempts` includes the first cal
         }
         long waitNanos = wait.toNanos(); // validate conversion before reserving retry budget
         if (!budget.tryAcquire()) throw stopped("retry-budget-exhausted", unresolved);
-        TimeUnit.NANOSECONDS.sleep(waitNanos); // Java 17 API; virtual threads unmount on Java 21+
+        TimeUnit.NANOSECONDS.sleep(waitNanos); // Java 17 API; unmounting depends on JDK/context
     }
 }
 ```
 
 `InterruptedException` propagates deliberately: cancelling the caller must abandon the loop,
 not swallow the interrupt and start another attempt.
+On Java 21, sleeping in a pinned synchronized/native context does not free the carrier;
+check the target JDK and calling scope rather than assuming virtual-thread sleep is free.
 `stopped(reason, unresolved)` must preserve a durable unknown outcome when any prior attempt
 may have applied. The operation owner must preserve that state on interruption/transport throws
 too. The sketch's expected-cost check is admission evidence, not a hard timeout: `op.call` must
@@ -149,21 +158,25 @@ nonnegative ratio/tokens and capacity; NaN must not turn the comparison into unl
 
 ## Resilience4j and Spring Retry
 
-`RetryConfig` carries `maxAttempts`, an `IntervalFunction` for the schedule,
+In the inspected Resilience4j 2.3.0 source, `RetryConfig` carries `maxAttempts`, an `IntervalFunction` for the schedule,
 `retryOnException` / `retryOnResult` predicates, and `failAfterMaxAttempts`.
+Inspect the project's resolved library/JDK version and actual configuration before applying
+these examples; the Java 17 helper and Java 21 sketch do not authorize an upgrade.
 
-- Inspect library/version defaults; fixed unjittered schedules synchronize clients. Configure
-  and test the interval function implementing the intended jitter distribution.
+- Inspect library/version defaults; fixed unjittered schedules can retain synchronized
+  cohorts. Configure and test a distribution when the existing schedule does not meet the need.
 - `retryExceptions(Exception.class)` retries permanent failures too — use an explicit predicate
   over your own retryable property. And the module bounds attempts per call site with no notion
   of retries as a fraction of traffic, so a budget must come from the mesh, the proxy, or code.
 - Verify how predicates, retry-class lists and ignore lists combine in the deployed version;
   do not assume adding a narrow predicate makes a broad class list a whitelist. Test unrelated
   exceptions, interruption, breaker-open and ambiguous writes explicitly.
-- Retry normally sits **outside** the circuit breaker, so that attempts stop as soon as it opens;
-  the cost is that the breaker counts every attempt rather than every logical call
-  (circuit-breakers has the arithmetic). In the Spring Boot starter the aspect order is a
-  configuration property, so read it rather than assuming it matches your intent.
+- Choose breaker nesting from the intended admission and observation boundary. An inner
+  breaker sees each attempt; an outer breaker sees the aggregate result and duration.
+  Resilience4j 2.3.0 applies ignore/record predicates before updating outcome metrics, so
+  invocations are not automatically recorded failures. Keep open rejection out of the retry
+  predicate and let the breaker govern later probe permission. circuit-breakers owns those
+  settings. In the Spring Boot starter inspect configured aspect order rather than assuming it.
 
 ```java
 // Partial Spring Retry 2.x example (retryFor verified in 2.0.12); stable intent ID/replay safety required.
@@ -180,8 +193,8 @@ public PaymentReceipt authorise(PaymentCommand command) { ... }
 - `@Retryable` is proxy-based, so a call through `this` is never intercepted — no retry, no
   warning — and a `@Recover` whose signature does not match the thrown and returned types is
   not selected, surfacing the underlying failure instead of the fallback. Test both paths.
-- Check whether the advice sits inside or outside `@Transactional`: inside, the backoff sleeps
-  with the transaction and its connection held open.
+- Check whether the advice sits inside or outside `@Transactional`: inside, the backoff can
+  retain the transaction and any acquired connection.
   Outside advice still joins an ambient transaction with REQUIRED propagation. Ensure each attempt
   gets the intended fresh transaction/context; inspect callers, proxy invocation and propagation,
   rather than assuming annotation order alone guarantees it.
@@ -198,8 +211,12 @@ does not prove the peer failed to apply a write.
 
 - [RFC 9110 §9.2.2: idempotent methods and automatic retry](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
 - [AWS Architecture Blog: exponential backoff and jitter](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)
-- [gRPC retry design](https://github.com/grpc/proposal/blob/master/A6-client-retries.md)
-- [Spring Retry `@Backoff` API](https://docs.spring.io/spring-retry/docs/current/apidocs/org/springframework/retry/annotation/Backoff.html)
+- [gRPC A6 retry design at dc9fd4f](https://github.com/grpc/proposal/blob/dc9fd4fe5b94b90b82fe2833ad1d80938e6a49c1/A6-client-retries.md) — design reference; verify the deployed client's implementation/version
+- [Spring Retry 2.0.12 `@Backoff` source](https://github.com/spring-projects/spring-retry/blob/v2.0.12/src/main/java/org/springframework/retry/annotation/Backoff.java)
 - [Spring Retry 2.0.12 `@Retryable`](https://docs.spring.io/spring-retry/docs/2.0.12/apidocs/org/springframework/retry/annotation/Retryable.html)
 - [Resilience4j Retry configuration](https://resilience4j.readme.io/docs/retry)
-- [Java Duration conversions](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html)
+- [Resilience4j 2.3.0 RetryConfig](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-retry/src/main/java/io/github/resilience4j/retry/RetryConfig.java)
+- [Resilience4j 2.3.0 breaker classification and admission](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java)
+- [Java 17 Duration conversions](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html)
+- [Java 21 record patterns](https://docs.oracle.com/en/java/javase/21/language/record-patterns.html)
+- [Java 21 virtual-thread scheduling and pinning](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html)

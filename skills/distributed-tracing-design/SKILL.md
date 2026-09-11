@@ -23,7 +23,7 @@ The design must follow the pinned OpenTelemetry semantic-convention version. Pro
 domains have different stability and migration rules.
 
 This is a telemetry-modeling skill, with no Java syntax baseline or executable examples.
-Inspect the target Java runtime, resolved OpenTelemetry API/SDK, Java agent/instrumentation,
+Inspect the target language/runtime, resolved OpenTelemetry API/SDK and instrumentation,
 collector and backend versions, plus semantic-convention opt-ins and schema URLs. Their
 compatibility requirements govern implementation; do not upgrade to match the online docs.
 
@@ -51,7 +51,7 @@ data; govern them.
 
 ### 3. Select kind and semantic conventions
 
-SpanKind describes the operation's role across boundaries, not whether a Java method blocks:
+SpanKind describes the operation's role across boundaries, not whether a method blocks:
 
 - SERVER: inbound request/response;
 - CLIENT: outbound request/response;
@@ -100,10 +100,15 @@ Do not set status solely to satisfy a backend filter.
 
 ### 6. Validate with fixtures
 
-Export in-memory/test spans and assert names, kinds, parent IDs, links, timestamps,
-attributes, status and counts for success, error, timeout, cancel, retry, batch, redelivery
-and async completion. Test mixed instrumentation versions during migration and confirm the
-backend query/service-map behavior relied upon by runbooks.
+Use isolated SDK fixtures with explicit test recording/export settings to assert names,
+kinds, parent IDs, links, timestamps, attributes, status and counts. Select the relevant
+success, error, timeout, cancel, retry, batch, redelivery and async cases for changed span
+classes; preserve adequate existing instrumentation.
+
+Separately test deployed sampling/export behavior and actual propagation boundaries when
+those contracts change or remain uncertain. Test mixed instrumentation versions during
+migration and verify affected backend queries/service maps. Local span assertions alone do
+not establish transport propagation or backend retention; report each evidence layer.
 
 ### 7. Connect signals
 

@@ -129,10 +129,16 @@ than treating source exhaustiveness as runtime forward compatibility. Transactio
 loading, saving, event publication and translation to the API shape remain service concerns;
 `Account` knows none of them.
 
-`@Transactional` covers only enlisted resources. It does not make `events.publish(...)` and the
-database commit atomic. Persist an outbox record in the same transaction and publish it
-idempotently, or define another recovery protocol; otherwise a crash can lose the event or a
-retry can duplicate it.
+Establish what `events.publish(...)` promises: disposable notification, listener writes in the
+same transaction, or a required remote effect. `@Transactional` covers only actually enlisted
+resources; synchronous listener writes can participate when enlisted, while effects outside
+that enlistment (including ordinary remote calls) do not become atomic with the database.
+A publication call alone proves neither completion nor durability (see Spring's
+[`ApplicationEventPublisher` contract](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/context/ApplicationEventPublisher.html)).
+Keep an adequate local or explicitly best-effort path. When required downstream processing must
+survive crash/retry, reuse a sufficient recovery protocol or persist an outbox record with the
+balance change, accounting for duplicate delivery and repeat effects. Use `enterprise-transactions`
+for enlistment and `delivery-semantics` for the required delivery/recovery contract.
 
 ## Trade-offs
 

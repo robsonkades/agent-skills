@@ -20,8 +20,10 @@ order, because each step makes the next cheaper:
    other processes or prior corrupted state. A fully controlled sequential reproduction can
    demonstrate that the reproduced failure does not require concurrent execution.
 
-When shrinking stops working — the fault needs the full system — that is data too: the cause is
-in an interaction, and the candidates are the boundaries you cannot remove.
+When shrinking stops working, keep the smallest reproduction that still preserves the fault.
+An interaction is one candidate, but missing harness capabilities or the reduction budget can
+also explain why no smaller case was found. Test the boundaries you cannot yet remove rather
+than treating failed reduction as proof of a cross-boundary cause.
 
 ## Differential diagnosis: what changed
 
@@ -38,8 +40,9 @@ Enumerate systematically rather than starting with the most recent code change:
 | Traffic        | Volume, mix, a new client, a retry storm from upstream           |
 | Time           | Month end, DST transition, a certificate or token expiry         |
 
-The last row is the one people miss for longest. A fault that starts at exactly 00:00 UTC, or
-on the 1st, or the Sunday a clock changed, is telling you its cause in its timing.
+A fault that starts at exactly 00:00 UTC, on the 1st, or the Sunday a clock changed makes time
+boundaries worth testing. Compare clock/date handling with scheduled work and coincident changes;
+timing narrows hypotheses but does not by itself establish the cause.
 
 ## Bisection
 
@@ -90,8 +93,8 @@ structure. If you meet one while debugging, fixing it is the fastest available p
 
 ## Intermittent faults
 
-A fault that appears one time in N is a fault with an unstated input. Candidates, in the order
-they are usually the answer:
+A fault that appears one time in N may depend on an uncontrolled input or execution condition.
+Choose among these candidates using the observed distribution:
 
 - **Concurrency** — interleaving, visibility, a shared mutable field (concurrency-diagnostics).
 - **Ordering** — hash iteration order, a set where a list was assumed, parallel stream order.
@@ -99,9 +102,12 @@ they are usually the answer:
 - **Environment** — one node out of six with different config, an old pod, a stale image.
 - **Data** — one record with a null, an empty string, a non-ASCII character, a leap day.
 
-Raise the reproduction rate before investigating: run the case in a loop, shrink timeouts,
-increase concurrency, restrict to one node. A fault reproducing 50% of the time is tractable;
-one reproducing 1% will consume the investigation in waiting.
+When waiting dominates the investigation, consider a bounded experiment that raises the
+reproduction rate: repeat the case, vary timeouts or concurrency, or restrict to one node.
+Use an isolated environment or existing incident authority with explicit load, effect and time
+limits; replaying real requests can repeat their side effects. Preserve the original failure
+signature and compare controls: a shorter deadline or extra load may create a different failure.
+Existing evidence may already discriminate causes without amplifying the fault.
 
 ## Heisenbugs
 

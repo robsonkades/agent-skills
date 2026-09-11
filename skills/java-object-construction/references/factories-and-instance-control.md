@@ -2,36 +2,82 @@
 
 ## The decision table
 
-| Situation                                                                                            | Form                                                                                  | Why                                                                                                      |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| One meaningful way to create it, always a fresh instance, components are the state                   | record with canonical/compact constructor                                             | The compiler writes the accessors, `equals`, `hashCode`; the compact constructor is the validation point |
-| Same as above but arguments need normalising or a different external shape                           | record + named factory; canonical constructor remains accessible at record visibility | Factory names intent, but a public record cannot hide its public canonical construction path             |
-| Two or more creation paths that differ in _meaning_                                                  | named static factories                                                                | A name distinguishes `ofMinorUnits` from `ofMajorUnits`; overload resolution cannot                      |
-| Two or more paths that differ only in optionality/arity, ≥4 params or transposable same-typed params | builder                                                                               | See java-fluent-apis for the threshold; below it a builder is ceremony                                   |
-| The caller must not depend on the concrete class                                                     | static factory returning an interface or sealed supertype                             | The implementation can change, split by input, or become cached, without touching call sites             |
-| Instances are interchangeable and cheap to share                                                     | static factory with instance control                                                  | See below — this is a contract, not an optimisation                                                      |
+| Situation                                                                                   | Form                                                                                  | Why                                                                                                      |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| One clear creation path for an identity/behavior object or a framework-constrained type     | ordinary constructor                                                                  | Preserves class semantics without publishing record components or introducing an extra construction API  |
+| One meaningful way to create it, always a fresh instance, components are the state          | record with canonical/compact constructor                                             | The compiler writes the accessors, `equals`, `hashCode`; the compact constructor is the validation point |
+| Same as above but arguments need normalising or a different external shape                  | record + named factory; canonical constructor remains accessible at record visibility | Factory names intent, but a public record cannot hide its public canonical construction path             |
+| Two or more creation paths that differ in _meaning_                                         | named static factories                                                                | A name distinguishes `ofMinorUnits` from `ofMajorUnits`; overload resolution cannot                      |
+| Optionality, invalid combinations or transposable arguments impose demonstrated caller cost | compare named factories, distinct role types and a builder                            | Parameter count is a signal, not a threshold; java-fluent-apis owns builder mechanics                    |
+| The caller must not depend on the concrete class                                            | static factory returning an interface or sealed supertype                             | The implementation can change, split by input, or become cached, without touching call sites             |
+| Instances are interchangeable and cheap to share                                            | static factory with instance control                                                  | See below — this is a contract, not an optimisation                                                      |
 
-Two forms that look like alternatives but are not: a _constructor_ cannot be renamed, cannot
-return a subtype, and cannot decline to allocate; a _factory_ cannot be invoked by
-`super(...)`, by deserialisation, or by frameworks that reflectively call a constructor
-(JPA, Jackson without `@JsonCreator`, some DI containers). Choosing a factory-only surface
-for a type a framework must instantiate is the common way this decision goes wrong.
+A constructor cannot be renamed, return a substitute object or reuse an existing instance;
+a static factory cannot replace a superclass constructor invocation. Serialization and framework
+creation follow their own protocols: a mapper may support a configured factory, while another path
+requires a constructor. Java serialization may substitute an instance through `readResolve`; that
+does not make arbitrary static factories automatic construction hooks. Inspect and exercise the
+actual supported version/path before removing constructors.
+
+## Consumer calls before construction code
+
+For this unpublished example, the accepted contract is a nonnegative amount with exactly 100 minor
+units per major unit, stored as a `long`. This is a chosen unit model, not a general currency model.
+
+```java
+var ordinary = new MinorAmount(1050);
+var converted = MinorAmount.fromMajorUnits(new java.math.BigDecimal("10.50"));
+assert ordinary.equals(converted);  // compare values, not factory identity
+
+// Separate misuse cases: each call must fail, not silently normalize or truncate.
+new MinorAmount(-1);                                     // IllegalArgumentException
+MinorAmount.fromMajorUnits(new java.math.BigDecimal("10.501")); // ArithmeticException
+MinorAmount.fromMajorUnits(null);                         // NullPointerException
+```
+
+One complete declaration (`MinorAmount.java`, Java 21 baseline, no preview):
+
+```java
+import java.math.BigDecimal;
+import java.util.Objects;
+
+public record MinorAmount(long minorUnits) {
+    public MinorAmount {
+        if (minorUnits < 0) throw new IllegalArgumentException("negative minor units");
+    }
+
+    /** Exact conversion; rejects null, fractional minor units and values outside long range. */
+    public static MinorAmount fromMajorUnits(BigDecimal majorUnits) {
+        Objects.requireNonNull(majorUnits, "majorUnits");
+        return new MinorAmount(majorUnits.movePointRight(2).longValueExact());
+    }
+}
+```
+
+The constructor carries the shared invariant; the named factory adds an exact conversion without
+floating-point input. A public record cannot hide its canonical constructor, so validating only in
+the factory would leave a bypass. A builder adds nothing to this one-value contract. Prefer an
+ordinary class if representation hiding, framework constraints or identity semantics are required;
+changing an already published class into this record would need a separate compatibility review.
 
 ## Naming, as the platform uses it
 
-| Name                       | Meaning in the JDK                                                     | Example                                              |
-| -------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------- |
-| `of`                       | Concise factory, usually varargs or a small fixed arity                | `List.of`, `EnumSet.of`, `Duration.ofSeconds`        |
-| `from`                     | Type conversion from one argument                                      | `Instant.from`, `Date.from`                          |
-| `valueOf`                  | Verbose conversion, historically instance-controlled                   | `Integer.valueOf`, `BigDecimal.valueOf`              |
-| `instance` / `getInstance` | Returns _an_ instance, not necessarily new; may be parameterised       | `Calendar.getInstance`, `MessageDigest.getInstance`  |
-| `create` / `newInstance`   | Conventionally suggests a fresh instance; API contract decides         | `Array.newInstance`                                  |
-| `copyOf`                   | Copy/view with independent-enough semantics; may reuse immutable input | `List.copyOf`, `Arrays.copyOf`                       |
-| `parse`                    | Builds from a textual representation, throws on malformed input        | `LocalDate.parse`, `UUID.fromString` (the exception) |
+| Name                       | Meaning in the JDK                                                           | Example                                              |
+| -------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `of`                       | Concise factory, usually varargs or a small fixed arity                      | `List.of`, `EnumSet.of`, `Duration.ofSeconds`        |
+| `from`                     | Type conversion from one argument                                            | `Instant.from`, `Date.from`                          |
+| `valueOf`                  | Verbose conversion, historically instance-controlled                         | `Integer.valueOf`, `BigDecimal.valueOf`              |
+| `instance` / `getInstance` | Returns _an_ instance, not necessarily new; may be parameterised             | `Calendar.getInstance`, `MessageDigest.getInstance`  |
+| `create` / `newInstance`   | Conventionally suggests a fresh instance; API contract decides               | `Array.newInstance`                                  |
+| `copyOf`                   | Copy/snapshot under the documented aliasing contract; identity may be reused | `List.copyOf`, `Arrays.copyOf`                       |
+| `parse`                    | Builds from a textual representation, throws on malformed input              | `LocalDate.parse`, `UUID.fromString` (the exception) |
 
 `getInstance` conventionally permits reuse, while `newInstance`/`create` often suggests freshness;
 individual API documentation remains authoritative. Never infer mutability or lock suitability
 from a factory name alone, especially for value-based classes.
+For example, `List.copyOf` is an unmodifiable container snapshot and may reuse suitable input;
+it does not deep-copy mutable elements. A `copyOf` name alone promises neither deep ownership nor
+a fresh identity.
 
 ## Instance control is a published contract
 
@@ -42,17 +88,17 @@ A factory that does not always allocate is _instance-controlled_. This buys thre
   ordinary factory caches should rarely expose this guarantee.
 - **Memory sharing** for values that repeat heavily — currency codes, tenant identifiers,
   header names.
-- **The option to return a different class.** `EnumSet.noneOf` returns `RegularEnumSet` or
+- **The option to return a different class.** In OpenJDK 25, `EnumSet.noneOf` returns `RegularEnumSet` or
   `JumboEnumSet` depending on the universe size; callers need not depend on those concrete
   classes, though reflection, serialization and performance can still expose differences.
 
-And it costs three things:
+And it costs:
 
 - **A documented identity promise is difficult to withdraw.** Incidental caching is not such a
   promise; callers must not infer it from observation.
-- **Cache lifetime becomes your problem.** `Integer.valueOf` caches −128..127 (HotSpot can tune
-  the upper bound with `-XX:AutoBoxCacheMax`) precisely because the required range is fixed and
-  small. A cache keyed by anything the outside world controls — customer id, URL, header
+- **Cache lifetime becomes your problem.** `Integer.valueOf` guarantees caching −128..127;
+  additional values may be cached (HotSpot can tune the upper bound with `-XX:AutoBoxCacheMax`).
+  A cache keyed by anything the outside world controls — customer id, URL, header
   value — is an unbounded map that grows with traffic. If interning is genuinely wanted, use
   a bounded cache with an eviction policy, not a `ConcurrentHashMap` that only ever grows;
   java-reference-types-and-leaks has the failure shapes.
@@ -89,7 +135,7 @@ distinct things break:
   thread may observe fields in their default state — including `final` ones, because
   initialisation safety only applies once the constructor completes.
 - **Subclass semantics.** Calling an overridable method from a constructor runs the override
-  before the subclass's field initialisers, so the override sees `null`/`0` state. This is
+  before the subclass's ordinary field initialisers, so the override may see `null`/`0` state. This is
   the mechanism behind most "it works until someone extends it" bugs; java-composition-over-inheritance
   covers the wider decision.
 
@@ -104,6 +150,12 @@ public static Auditor started(Registry registry) {
 }
 ```
 
+This ordering sketch is not a complete registration protocol. The registry must publish through
+the required synchronization mechanism, and its contract must state whether failure leaves a
+registration behind. Specify who unregisters/closes on failure and on successful lifetime end;
+if registration can partially succeed, require a rollback/ownership mechanism instead of assuming
+that a thrown exception undoes its effects.
+
 If construction acquires multiple resources, failure halfway through must close everything
 already acquired in reverse order, preserving the primary failure. Plain try-with-resources
 closes its resources even on a successful return: returning an object that holds them does not
@@ -113,21 +165,21 @@ and usability after successful return; `java-resource-management` owns that prot
 
 ## Evolution
 
-- Adding a new static factory is normally binary-compatible and does not affect old call
-  resolution. Adding a constructor overload leaves existing binaries unchanged but is not always
+- Adding a static factory or constructor overload normally preserves existing binaries but is not always
   source-compatible: recompilation can select a different overload or become ambiguous, especially
   with `null`, lambdas, varargs and numeric conversions.
 - Removing or narrowing a public constructor is a breaking change even when a factory
   replaces it; frameworks and subclasses call constructors reflectively and via `super(...)`.
 - A record's canonical constructor is part of its API surface, generated from the component
-  list. Adding a component changes that signature — for a record used as a DTO across a
-  build boundary this is a breaking change, and for one deserialised by a framework it also
-  changes the wire contract. rpc-and-api-contracts owns the cross-service half of that.
+  list. Adding a component changes that signature; old binaries need the former constructor
+  descriptor retained explicitly if they call it. Also review component access, equality and
+  source use. Framework/wire compatibility depends on the actual mapping, defaults and consumers,
+  not the Java component list alone. rpc-and-api-contracts owns the cross-service half of that.
 - A factory returning an interface can change implementation only while preserving its
   documented behavior, identity, mutability, ordering, serialization and thread-safety contract.
   A factory declared to return the concrete class has given some of that freedom away, and
-  narrowing the return type later is a binary-incompatible change even though the source
-  still compiles.
+  narrowing the return type later is binary-incompatible when the old method descriptor no longer
+  resolves, even when the same consumer source still compiles.
 
 ## Authoritative references
 
@@ -135,3 +187,5 @@ and usability after successful return; `java-resource-management` owns that prot
 - [JLS §8.10.4: Record Members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
 - [Value-based classes, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/doc-files/ValueBased.html)
 - [List.copyOf contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)
+- [BigDecimal exact conversion, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html#longValueExact()>) — fractional or out-of-range results fail instead of truncating.
+- [JLS 21 §13.4: Evolution of Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4) — constructor signatures, access and method result types affect existing binaries.

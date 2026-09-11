@@ -6,11 +6,11 @@ description: >
   and EnumMap instead of bit fields and ordinal-indexed arrays, exhaustive switch and what
   separate compilation does to it, and what happens when an enum value crosses a database, a
   JSON payload or a topic. Use when int or String constants stand in for a closed set, when
-  ordinal() appears anywhere outside a library, when @Enumerated is declared ORDINAL or left
+  ordinal() encodes domain identity, when @Enumerated is declared ORDINAL or left
   at its default, when a switch over an enum has a default branch that hides new constants,
   when adding a constant breaks a consumer during a rolling deploy, when values() is called
   in a loop, or when a set of flags is packed into an int. Does not cover annotations
-  (java-annotations), sealed hierarchies and records as the open-data alternative
+  (java-annotations), sealed hierarchies and records as data-bearing alternatives
   (java-composition-over-inheritance), or equality and ordering contracts in general
   (java-object-contracts).
 ---
@@ -33,6 +33,9 @@ is referenced, while switch expressions require Java 14+, records Java 16+, and 
 copy factories Java 10+. `@EnumeratedValue` needs Persistence 3.2 support. Use the target's
 existing alternatives; do not upgrade or enable preview. If consumer/mapping evidence is
 missing, keep evolution claims conditional and state the checks needed before release.
+Reuse the stated consumer contracts, workload and project conventions; ask only about unresolved
+closure, unknown-value or compatibility requirements that change the choice. Retain an adequate
+enum, lookup, switch or external encoding rather than turning every review into a migration.
 
 1. **Confirm the set is closed for the compatibility horizon**—statuses and error categories may
    qualify; currencies and standards can evolve. If new values arrive independently from outside
@@ -44,12 +47,13 @@ missing, keep evolution claims conditional and state the checks needed before re
 3. **Place varying behaviour with its owner.** Constant-specific bodies or a strategy field fit
    intrinsic behavior; an exhaustive caller-side switch fits a concern owned by that caller.
 4. **Choose the collection by the type, not the habit.** `EnumSet` replaces bit fields;
-   `EnumMap` replaces arrays indexed by `ordinal()`.
+   `EnumMap` replaces arrays indexed by `ordinal()` when their contracts fit. Preserve public
+   masks/encodings through explicit conversion, including any unknown-bit forwarding policy.
 5. **Decide the external representation explicitly** before the first release: an explicit
    code field for storage and wire, `name()` only when you accept that renaming a constant is
    a breaking change.
-6. **Plan for a consumer that does not know a constant yet.** In a rolling deploy the producer
-   is ahead of the consumer for minutes to hours; decide now whether that is an error, a
+6. **Plan for a consumer that does not know a constant yet.** Independently deployed producers
+   and consumers can know different values; decide whether that is an error, a
    fallback, or a rejected message.
 
 ## Rules
@@ -58,21 +62,25 @@ missing, keep evolution claims conditional and state the checks needed before re
   type-safe identity. It buys compile-time checking and a namespace; `toString()` defaults to the
   identifier and is not automatically a user-facing label. Independent boolean dimensions may
   remain booleans or become `EnumSet`, not one mutually exclusive enum.
-- Never derive meaning from `ordinal()`. It changes when someone reorders or inserts a
-  constant — a source change that compiles cleanly and silently reinterprets existing data.
-  Declare an explicit field (`code`, `id`, `weight`) and a lookup map for the reverse
-  direction. `ordinal()` exists for `EnumSet`/`EnumMap` internals.
-- Do not persist an ordinal as domain identity. In common JPA mappings, `@Enumerated` defaults to
-  `ORDINAL` unless newer metadata such as `@EnumeratedValue` changes inference—declare the mapping
-  explicitly. `STRING` couples storage to `name()`; an `AttributeConverter` or explicit scalar
-  mapping can use stable codes. Verify provider/spec version, constraints and unknown-value policy.
+- Do not derive durable domain identity from `ordinal()`. Reordering or insertion can change
+  positions — a source change that compiles cleanly and silently reinterprets affected data.
+  Declare an explicit field (`code`, `id`, `weight`) and reverse lookup when needed.
+  Internal enum-indexed structures may legitimately use `ordinal()` within their
+  version/ownership contract; it is not automatically a stable external code.
+- Do not persist declaration position as domain identity. Bare `@Enumerated` defaults to `ORDINAL`;
+  Persistence 3.2 infers `STRING` from a final String `@EnumeratedValue` only when no explicit
+  annotation/converter applies. That version also supports explicit numeric `ORDINAL` codes,
+  which are not positions. Without an explicit value field, `STRING` uses `name()`. Preserve
+  effective mappings; verify provider/spec support, constraints and unknown-value policy before migration.
 - Prefer `EnumSet` to bit fields and to `HashSet` for enum elements: it is a bit vector
-  internally, so it is compact and fast, and it prints and iterates in declaration order.
+  internally and iterates in declaration order; workload and representation costs still matter.
   It is not thread-safe and it is mutable. A wrapper is a live unmodifiable view; copy then
   wrap for a snapshot, including the empty ordinary-set case described in the patterns reference.
-- Prefer `EnumMap` to `HashMap` for enum keys and to any array indexed by `ordinal()`. It is
-  array-backed with declaration-order iteration, and it removes the manual index arithmetic
-  that breaks when a constant is inserted.
+- Prefer `EnumMap` for suitable enum-keyed maps. It is array-backed with declaration-order
+  iteration and avoids hand-maintained index mappings that can diverge when constants change.
+  A correctly initialized internal array is not invalid merely because it uses `ordinal()`.
+  Check null contracts before either collection substitution: `EnumSet` rejects null elements,
+  `EnumMap` rejects null keys but permits null values. Neither makes contained mutable data safe.
 - `values()` exposes an array callers can modify without changing enum constants. javac
   commonly implements it by cloning a stored array; that lowering and allocation elimination
   are implementation details. Cache privately only when profiling shows repeated calls matter,
@@ -86,8 +94,9 @@ missing, keep evolution claims conditional and state the checks needed before re
   Declare the interface, let several enums implement it, and program against the interface
   (`<T extends Enum<T> & Operation>` when the code needs both). This allows several closed enum
   sets behind one contract; truly open plugin values may need ordinary classes/records and a registry.
-- Use an exhaustive `switch` expression without a catch-all for dispatch over an enum you own: the
-  compiler then fails source recompilation when a constant is added. Traditional statement
+- Prefer an exhaustive `switch` expression without a catch-all when each new constant needs an
+  explicit decision: recompilation then exposes uncovered constants. Preserve a deliberate
+  fallback when it satisfies the contract. Traditional statement
   switches may fall through; enhanced exhaustive switches can synthesize a runtime failure for an
   unforeseen constant. When the enum comes from another artifact, separate compilation means a
   new constant can reach old bytecode, so test the exact switch form and deployment policy.
@@ -99,15 +108,16 @@ missing, keep evolution claims conditional and state the checks needed before re
   process/class-loader singletons—see java-object-construction—and an
   enum with an abstract method is a compact state machine, but neither should be used where
   the set is genuinely open.
-- Do not switch on an enum in a `hashCode`, `equals` or `compareTo` implementation and expect
-  cross-JVM stability: `Enum.hashCode` is identity-based and differs per run, and
-  `compareTo` is defined by ordinal. Sorting by declaration order is legitimate _inside_ a
-  process; persisting or transmitting anything derived from it is not.
+- Enum `equals`, `hashCode` and `compareTo` are final. Hash codes have no cross-execution stability
+  guarantee; they need not differ on every run. Natural order is declaration order, meaningful
+  across processes only under an agreed compatible ordering. Use explicit stable codes/order
+  contracts for durable identity or independently evolving consumers.
 
 ## References
 
 Deliver the chosen set/representation, compatibility and unknown-value policy, and checks
-executed against old readers and representative stored/wire values. For collection changes,
+executed against relevant old readers and representative stored/wire values. No change is a valid
+result when the current contract is adequate. For collection changes,
 test empty input and alias mutation. Separate compiler checks, integration tests and measured
 performance from assumptions; written deployment cases are not executed verification.
 

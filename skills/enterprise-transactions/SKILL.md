@@ -49,14 +49,17 @@ transaction-context propagation. Do not upgrade the project to match an example.
 
 ## Workflow
 
-1. **State the unit of work in business terms.** "Reserve stock and record the order" is
-   one; "record the order and email the customer" is not — the email is not transactional
-   and pretending otherwise is where the bug will be.
+1. **Separate the business outcome from its atomic changes.** Reuse the use-case contract,
+   invariants, current boundaries and failure evidence. "Record the order and email the customer"
+   can be one business workflow, but an ordinary database transaction cannot roll back the email.
+   Ask only unresolved questions that change atomicity, acceptable intermediate states or recovery;
+   inspect enlistment and rollback behavior while those questions are resolved.
 2. **Prefer the application service for business atomicity**, while allowing repository-local
    read/write operations and listener/job entrypoints to demarcate when they are the actual unit.
-3. **Push non-transactional work out.** Network calls, message publication, file writes,
-   long computations and anything waiting on a human. Each of those inside a transaction
-   can extend acquired connection/lock occupancy; lazy acquisition and read-only work differ.
+3. **Minimize work holding transactional resources.** Prefer moving non-enlisted network calls,
+   message publication, file writes, long computations and human waits outside the boundary, with
+   durable recovery for the resulting gaps. Preserve an adequate existing transaction; verified
+   XA participation or required validation under a lock needs its own scope/cost assessment.
 4. **Choose isolation deliberately, once**, and record why if it is not the default.
    Raising isolation to fix a specific race is legitimate; raising it globally because a
    race exists somewhere is how throughput disappears.
@@ -77,7 +80,8 @@ that an annotation proves atomicity.
 
 ```text
 Two or more writes to one database that must both happen or neither
-        → one transaction, demarcated at the use case. Straightforward.
+        → one transaction, demarcated at the use case. Verify that both operations
+          actually enlist; the same database URL or an active transaction flag is not proof.
 
 A write plus a message or an HTTP call to another system
         → not atomic under an ordinary local transaction. Choose: outbox (write the intent in the
@@ -90,10 +94,10 @@ A read-only query or a report
           hint, not portable write enforcement or automatic replica routing.
 
 A long batch over many rows
-        → many transactions, one per chunk, with restartability. One
-          transaction over a million rows holds locks and undo for its
-          duration and rolls back the whole unit on failure. Chunking requires
-          accepting partial progress and recording durable checkpoints.
+        → chunk with durable checkpoints when partial progress is acceptable.
+          If all-or-nothing visibility is required, retain a feasible bounded
+          transaction or consider staged data with an atomic publication switch
+          honored by readers. Row count alone does not authorize weaker atomicity.
 
 A lock must survive a user's thinking time
         → do not keep a database transaction open across human delay.
@@ -131,8 +135,9 @@ Nested use cases where the inner must survive the outer's rollback
   are not applied. Method visibility/finality constraints depend on JDK versus class proxies and
   Spring version; `static` methods are not instance-proxied. AspectJ mode differs.
 - `readOnly = true` is not portable enforcement. Spring/provider integrations may adjust flush mode
-  and pass a JDBC read-only hint; replica routing requires separate routing configuration. Treat it as an optimisation
-  and a documentation of intent, never as a safety mechanism.
+  and pass a JDBC read-only hint; replica routing requires separate routing configuration. Some
+  configurations enforce database read-only transactions. If relying on that enforcement, test
+  attempted writes and its resource/transaction scope; the annotation alone does not prove it.
 - Isolation levels are defined by the anomalies they prevent, not by intuition, and
   engines interpret them differently — notably, `REPEATABLE READ` means different things in
   different databases, and `SERIALIZABLE` is implemented by locking in some and by

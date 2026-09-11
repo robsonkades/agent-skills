@@ -21,6 +21,9 @@ cat /proc/sys/kernel/perf_event_paranoid
 Also retain cgroup version/path, host/container PID mapping, effective capabilities/seccomp/LSM
 state, JVM/JDK build, target start time, and collector artifact digest. Do not print secrets or
 broader host metadata into an externally shared incident record.
+Missing tools or denied feature probes are unavailable evidence, not proof that the kernel
+lacks a feature. Use an authorized collector or reproduction if necessary; this preflight does not
+authorize adding host privileges, mounts or changing kernel security settings.
 
 Discovery:
 
@@ -223,7 +226,10 @@ question and validate loss.
 
 ## Positive and negative controls
 
-Every program needs:
+For a new or changed collector, choose controls that exercise its claimed scope and lifecycle.
+Validate filtering with a non-target workload where exclusion is promised; test dynamic identity,
+nesting and pairing where those states can occur. Reuse an upstream tool's applicable validation
+and add target-specific checks for uncovered risks. Relevant controls include:
 
 - a target workload that deterministically emits the event;
 - a same-host non-target workload that must be excluded;

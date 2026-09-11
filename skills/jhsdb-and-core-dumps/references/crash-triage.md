@@ -27,27 +27,30 @@ Java process died
 
 A crash forced by `-XX:+CrashOnOutOfMemoryError` has a different header — no signal,
 `Internal Error (debug.cpp:…)` and `fatal error: OutOfMemory encountered: Java heap space`
-(or `Metaspace`); everything below it is the same report.
+(or `Metaspace`); the remaining report uses the same fatal-report machinery, with sections
+depending on the failure context, initialized subsystems and reporting progress.
 
 The file is written in the order the JVM can still produce it, which is not the order
 that repays reading. The sections as JDK 25.0.3 writes them, with the reading order in
 the left column:
 
-| Read | Block                  | Sections                                                                                                                                                                                                                                                                                     | What it settles                                                                                                                                                                           |
-| ---- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1    | Header                 | signal or `fatal error:` line, `Problematic frame`, whether a core was written                                                                                                                                                                                                               | Native crash, JVM assertion, or a forced OOM crash; the frame letter                                                                                                                      |
-| 2    | `S U M M A R Y`        | `Command Line`, `Host` (cores, memory, OS), `Time` with `elapsed time`                                                                                                                                                                                                                       | Flags actually in effect; a crash at `elapsed time: 0.0…` is a start-up problem, not load                                                                                                 |
-| 3    | `T H R E A D`          | `Current thread` (state, stack bounds), `Stack`, `Native frames`, `Java frames`, `Lock stack`; for a signal also `siginfo`, `Registers`, `Top of Stack`, `Instructions`                                                                                                                      | Where it was and what it held. Native frames locate the failure but do not establish its origin                                                                                           |
-| 4    | `P R O C E S S` heap   | `Heap:` (per-generation occupancy), `Metaspace:` with `Usage`, `Virtual space`, `Chunk freelists`, the `CodeHeap` lines                                                                                                                                                                      | Whether memory was exhausted at the moment of death; code cache full                                                                                                                      |
-| 5    | `P R O C E S S` events | `Compilation events`, `Deoptimization events`, `Classes loaded`/`unloaded`, `Internal exceptions`, `VM Operations`, `Events`, and `GC Heap History` when present                                                                                                                             | What happened in the seconds before: a deopt storm, an `OutOfMemoryError` already thrown internally, a safepoint operation in flight                                                      |
-| 6    | `P R O C E S S` tail   | `Java Threads` and `Other Threads` (every thread, state and stack bounds), `Threads with active compile tasks`, `VM state`, `VM Mutex/Monitor`, `Dynamic libraries`, `VM Arguments`, `Logging`, `Environment Variables`, `Native Memory Tracking` (only with NMT on), `Periodic native trim` | Thread count against `ulimit -u`; a native library nobody expected; the last NMT decomposition                                                                                            |
-| 7    | `S Y S T E M`          | `OS`, `CPU`, `Memory` (physical, free, swap), `vm_info`, and on Linux the `rlimit` line and a `container (cgroup) information` block                                                                                                                                                         | `CORE 0` matters for direct-file cores; inspect piped collector limits; the cgroup block shows the limit the JVM saw — compare with `Memory:` and with the pod spec (container-awareness) |
+| Read | Block                  | Sections                                                                                                                                                                                                                                                                                            | What it can inform                                                                                                                                                                        |
+| ---- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Header                 | signal or `fatal error:` line, `Problematic frame`, whether a core was written                                                                                                                                                                                                                      | Native crash, JVM assertion, or a forced OOM crash; the frame letter                                                                                                                      |
+| 2    | `S U M M A R Y`        | `Command Line`, `Host` (cores, memory, OS), `Time` with `elapsed time`                                                                                                                                                                                                                              | Launch context and early versus later failure; `Command Line` is not a complete list of effective VM settings                                                                             |
+| 3    | `T H R E A D`          | `Current thread` (state, stack bounds), `Stack`, `Native frames`, `Java frames`, `Lock stack`; for a signal also `siginfo`, `Registers`, `Top of Stack`, `Instructions`                                                                                                                             | Where it was and what it held. Native frames locate the failure but do not establish its origin                                                                                           |
+| 4    | `P R O C E S S` heap   | `Heap:` (collector-specific occupancy), `Metaspace:` with `Usage`, `Virtual space`, `Chunk freelists`, the `CodeHeap` lines                                                                                                                                                                         | Reported region occupancy/capacity and candidate pressure; not proof of exhaustion, its cause, or total process/container memory use                                                      |
+| 5    | `P R O C E S S` events | `Compilation events`, `Deoptimization events`, `Classes loaded`/`unloaded`, `Internal exceptions`, `VM Operations`, `Events`, and `GC Heap History` when present                                                                                                                                    | Recorded recent activity; bounded entries need timestamps/coverage and corroboration before claiming a rate, storm or causal sequence                                                     |
+| 6    | `P R O C E S S` tail   | `Java Threads` and `Other Threads` (enumerated threads, states and stack bounds), `Threads with active compile tasks`, `VM state`, `VM Mutex/Monitor`, `Dynamic libraries`, `VM Arguments`, `Logging`, `Environment Variables`, `Native Memory Tracking` (only with NMT on), `Periodic native trim` | Enumerated thread/native-library state and available NMT summary; not every virtual task or the complete population charged to OS/cgroup task limits                                      |
+| 7    | `S Y S T E M`          | `OS`, `CPU`, `Memory` (physical, free, swap), `vm_info`, and on Linux the `rlimit` line and a `container (cgroup) information` block                                                                                                                                                                | `CORE 0` matters for direct-file cores; inspect piped collector limits; the cgroup block shows the limit the JVM saw — compare with `Memory:` and with the pod spec (container-awareness) |
 
 The table was taken from a report generated on Windows; the `rlimit` and cgroup lines are
 written by the Linux port and should be confirmed on a report from the target host.
 Reading it in that order identifies candidate failure paths before opening a core. Fatal
 reporting can fail or omit sections; bounded event buffers are not a complete history, and
 the crash location may be downstream of earlier corruption.
+On Linux, `RLIMIT_NPROC` counts threads for the real user ID across processes, while cgroup
+PID limits have their own scope. A report's thread count alone does not establish either limit.
 
 ### Problematic frame letters
 
@@ -98,7 +101,8 @@ does not distinguish kernel OOM from a manual/orchestrator kill; correlate cgrou
 
 ## Before blaming the container limit
 
-An OOM kill is a sizing conclusion only after the process's real footprint is known. Take
+An OOM kill does not by itself establish which budget should change. Reuse comparable existing
+footprint evidence first. If a relevant gap remains and capture is authorized, take
 `jcmd <pid> VM.native_memory summary` from a surviving replica under representative load —
 not once, at idle: Metaspace and code cache grow with process lifetime until they settle —
 and correlate its reserved/committed categories with measured RSS and cgroup memory charge.
@@ -109,6 +113,10 @@ When NMT was on, the `Native Memory Tracking:` section of an hs_err is that same
 when reporting succeeds; a fatal report can be partial or fail to collect that section.
 
 ## Checklist
+
+Select the checks relevant to the unresolved incident question or requested capture preparation.
+Reuse verified configuration and artifacts; invasive capture requires the target-specific authority
+and recovery budget described in the main workflow, not merely an available replica.
 
 ### Pre-crash, configured before any incident
 
@@ -129,7 +137,7 @@ when reporting succeeds; a fatal report can be partial or fail to collect that s
 ### Capture, during or just after the crash
 
 - [ ] hs_err preserved before any automatic log cleanup
-- [ ] If no core was generated automatically and the process is alive but misbehaving:
+- [ ] If a core is needed, none is usable, and authorized capture of the live target is appropriate:
       `gcore` or GDB `generate-core-file` — never `jcmd VM.native_memory summary`
 - [ ] If no artefact exists at all: `dmesg` / `journalctl -k` for an OOM kill before
       assuming any other cause
@@ -140,10 +148,16 @@ when reporting succeeds; a fatal report can be partial or fail to collect that s
 - [ ] hs_err read first: frame letter, thread state, heap section
 - [ ] Variable `V`/`J` failures: native/Unsafe/FFM corruption, JVM build and hardware RAS
       evidence assessed rather than selecting one from the frame letter
-- [ ] Core analysed with the correct `jhsdb` build for Java objects and threads, and GDB
-      for native registers and memory
+- [ ] When needed, usable core analysed with the correct `jhsdb` build for Java objects/threads;
+      native registers/memory inspected with GDB when they address the question
 - [ ] If virtual threads are involved: unmounted ones are invisible to both `jstack` and
       `jhsdb jstack` — either `Thread.dump_to_file` was taken while alive, or the gap is
       documented
 - [ ] Measured process/container charge correlated with NMT and its coverage gaps before
       any container-sizing conclusion
+
+## Sources
+
+- [JDK 25 fatal-error log](https://docs.oracle.com/en/java/javase/25/troubleshoot/location-fatal-error-log.html) — sections and possible incomplete reporting.
+- [OpenJDK 25.0.3 fatal-report implementation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/hotspot/share/utilities/vmError.cpp) — conditional sections and bounded event reporting; pair with the actual target report.
+- [Linux getrlimit(2)](https://man7.org/linux/man-pages/man2/getrlimit.2.html) — actual scope of process resource limits.

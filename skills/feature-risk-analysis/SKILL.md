@@ -113,8 +113,9 @@ THEN it is a constraint on the design, and it belongs back in the solution phase
   outside that authority remains pending, even if its likelihood is LOW.
 - **Do not restate the general failure modes of a technology.** The register is about this
   feature's use of it, in this system.
-- **Do not use the register to relitigate the design.** If the risk kills the option, that is a
-  solution-phase finding, not a row.
+- **Return disqualifying risks to solution analysis.** Preserve the concrete risk and evidence,
+  and link the decision that must change. Mark it avoided only when the revised scope or design
+  removes the failure path with supporting evidence; a handoff alone does not close it.
 
 ## Output
 

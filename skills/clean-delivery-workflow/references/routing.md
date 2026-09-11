@@ -6,6 +6,12 @@ if absent, report the unavailable handoff and continue work supported by project
 Do not fabricate its instructions or install it without authorization. Load only the
 skills needed for the current decision, not this entire map.
 
+This workflow is language-neutral. Use Java-specific routes only for applicable Java work;
+for other stacks, use their project conventions and relevant available specialists. Shared
+testing or design principles do not make Java libraries or runtime assumptions portable.
+Carry forward the established outcome, constraints and evidence during a handoff; reopen
+questions only when the specialist exposes a material gap.
+
 ## Before writing code
 
 | Situation                                               | Skill                        |
@@ -55,7 +61,8 @@ skills needed for the current decision, not this entire map.
 | Situation                                      | Skill                               |
 | ---------------------------------------------- | ----------------------------------- |
 | Restructuring without changing behaviour       | java-refactoring                    |
-| Code with no tests that must be changed        | java-refactoring                    |
+| Pinning behavior before an untested change     | java-refactoring                    |
+| Constructing the code opens real dependencies  | java-legacy-code-testing            |
 | Auditing for structural problems               | java-code-smells                    |
 | Moving from one architectural shape to another | architecture-refactoring-paths      |
 | Deciding whether a shortcut is acceptable      | technical-debt-decisions            |

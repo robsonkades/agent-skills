@@ -10,11 +10,17 @@ the full protected operation and its fan-out. Express every term in simultaneous
 
 ```text
 observed dependency concurrency
-  <= Σ (active local limit × simultaneous downstream operations per permit)
+  <= Σ (local admitted-work envelope × maximum simultaneous downstream operations per permit)
      + uncovered/other-client/late-server concurrency
 ```
 
-`limit × replicas` is only the equal-limit upper bound, not the actual concurrency. Traffic skew,
+The local envelope must include still-held work from earlier, larger allocations. Lowering a limit
+from ten to two while eight operations hold permits leaves eight potentially active until they
+drain; use that transient exposure in the aggregate budget. The new configured limit alone is not
+an immediate bound, and resizing must not return permits before protected work ends.
+
+With fixed equal limits and full lifetime coverage, `limit × replicas` is an upper bound, not the
+actual concurrency. Traffic skew,
 rolling overlap, retries/hedges, stale instances and partial gate coverage matter. Autoscaling changes
 the bound and may amplify load precisely when a dependency slowdown increases latency.
 
@@ -49,9 +55,9 @@ separate concurrency protocol. Batch leasing can reduce coordination round trips
 capacity. Oversubscription is not inevitable: it occurs if stale and replacement allocations can
 act simultaneously without enforcement/fencing. State whether the protocol prevents or tolerates it.
 
-Failure policy is more than a slogan: fail-closed protects entitlement but reduces availability;
-fail-open protects availability but can breach it; a bounded cached allocation can degrade between
-them but still needs expiry/fencing assumptions. Route protocol design to
+Failure policy is more than a slogan: fail-closed rejects work to preserve the enforced bound;
+fail-open continues admission but can breach the bound and worsen saturation. A bounded cached
+allocation can degrade between them but still needs expiry/fencing assumptions. Route protocol design to
 `distributed-locks-and-leases` and `failure-models`.
 
 ## Rate-limit boundary

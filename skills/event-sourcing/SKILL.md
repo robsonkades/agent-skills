@@ -33,6 +33,11 @@ to use them. With missing evidence, keep adoption/correctness claims conditional
 the store-level test needed. Return the driver, alternative, authoritative boundary,
 recovery/visibility contract and validation evidence.
 
+Reuse the request, current architecture, append/projection evidence and accepted replay,
+visibility and recovery targets before asking questions. Ask only for missing facts that change
+the recommendation or next check. During repair, preserve the existing action authority and
+recovery deadline; a design review must not delay an already authorized mitigation.
+
 ## Workflow
 
 1. **State the driver, and check it against the cheaper alternative.** Audit? A history
@@ -42,8 +47,9 @@ recovery/visibility contract and validation evidence.
 2. **Fix the stream boundary.** It is usually one aggregate's ordering/concurrency unit. Model
    maximum length, contention, invariant scope and migration strategy; changing it later is a
    data migration, not literally impossible.
-3. **Design events as facts, in past tense, in the business's language.** `FundsWithdrawn`,
-   not `BalanceUpdated`. An event named after a data change is a row update wearing a hat.
+3. **Design events as facts, in past tense, in the business's language.** `FundsWithdrawn`
+   preserves a decision that a generic `BalanceUpdated` may obscure. A balance reconciliation
+   can itself be a business fact; preserve its reason and required historical meaning.
 4. **Decide concurrency before writing code.** Appends carry an expected version; a mismatch
    is a conflict the caller must resolve. This is optimistic locking with a different name
    (`offline-concurrency-control`).
@@ -110,8 +116,9 @@ The domain is CRUD, and the state is the truth the business cares about
           versioning problem to store a form (domain-logic-organization).
 
 Event sourcing is proposed for the WHOLE system
-        → almost certainly wrong. Apply it per aggregate. Most systems
-          have one or two aggregates that deserve it and many that do not.
+        → justify each aggregate's replay/history need and operating cost.
+          Keep ordinary state storage where adequate; all aggregates in a
+          bounded system may qualify, but adoption elsewhere is not a reason.
 
 Personal data has erasure or retention obligations
         → resolve with privacy/legal owners before adopting. Minimise data;

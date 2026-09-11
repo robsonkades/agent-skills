@@ -2,7 +2,9 @@
 
 ## Evidence matrix
 
-Assess each critical service independently:
+Select services and dimensions from the assessment's decision and criticality; assess each
+independently. An explicit batch deadline, resource or cost requirement can serve as the objective
+when it fits the question; an unrelated request-latency SLO is not a prerequisite.
 
 | Dimension  | Minimum observable evidence                                          |
 | ---------- | -------------------------------------------------------------------- |
@@ -21,7 +23,8 @@ a single label hides too much.
 
 ## Adoption waves
 
-Start with a small cohort representative of the next expansion and a concrete artifact pack.
+When adopting or expanding a capability, start with a small cohort representative of that
+expansion and a concrete artifact pack; reuse an adequate existing practice or exercised pilot.
 Select checks for the capabilities being adopted: a dry-run incident for response, deliberate
 regression and missing/invalid-data cases for gates, an SLO rule test for alerting, or a baseline
 replay for measurement. Record skipped/inapplicable checks and their consequences. A failed
@@ -33,9 +36,10 @@ that permits expansion and what triggers revision or pause (for example false ga
 exceeding the agreed operational budget). Keep a safe fallback for a noisy pilot gate and record
 any authorized exception; do not silently weaken thresholds or replace the baseline with a regression.
 
-Champions need time, a real service, review by an experienced peer and a handoff artifact. Rotate
-slowly enough to acquire judgment and fast enough to distribute it. The central group owns
-standards and difficult escalation where that structure exists; small organizations may assign
+If a champion model addresses a demonstrated gap, champions need time, a real service, review by
+an experienced peer and a handoff artifact. Choose rotation from learning depth and continuity
+needs; stable maintainers with effective peer learning and handoffs may already suffice.
+The central group owns standards and difficult escalation where that structure exists; small organizations may assign
 these responsibilities to existing maintainers. Product teams retain service decisions. Reuse
 established authority and reserve central review for the cases that require its expertise.
 

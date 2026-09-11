@@ -138,10 +138,15 @@ more model detail creates unidentified precision.
 
 ## Production failure tests
 
-Exercise steady load, finite bursts, sustained overload, one service position lost, hot-key skew,
-dependency slowdown, retry wave, cancellation, autoscaler lag and recovery/drain. For every test
+Choose tests for the topology, failure policy and prediction being claimed; reuse adequate existing
+evidence rather than requiring a full production campaign for a narrow review. Relevant scenarios
+can include steady load, bursts, overload, lost capacity, hot-key skew, dependency slowdown, retry
+waves, cancellation, autoscaler lag and recovery/drain. For each selected test
 reconcile offered/admitted/completed/rejected/timed-out/cancelled work; report queue age, not only
-depth; verify stale work does not consume recovery capacity after callers leave.
+depth. Distinguish a caller leaving from work actually stopping. Some accepted operations must
+finish effects or cleanup after abandonment; account for their residual occupancy and recovery
+cost under the real contract. Verify termination where cancellation promises it, and bounded
+continuation where completion remains required. A timeout or cancelled handle alone proves neither.
 
 ## Sources
 
@@ -150,3 +155,4 @@ depth; verify stale work does not consume recovery capacity after callers leave.
 - Harchol-Balter, [_Performance Modeling and Design of Computer Systems_](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html)
 - Fendick and Whitt, [fluid reflection models, section 4](https://www.columbia.edu/~ww2040/FW112822_submit.pdf)
 - [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Oracle JDK 25 `Future.cancel`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)>) — cancellation state and interruption attempts are distinct from actual work termination.

@@ -15,10 +15,15 @@
 
 `toString()` gives a useful snapshot but is not a metrics schema. Export named accessors at a modest
 interval and retain pool identity. Avoid high-cardinality task labels.
-On Java 25, not-yet-enabled scheduled work is reported separately by `getDelayedTaskCount()`;
-ordinary queue counts alone cannot establish that all owned work is complete.
+On Java 25, not-yet-enabled scheduled work is estimated separately by `getDelayedTaskCount()`;
+that estimate is inaccurate while delayed tasks are being processed. Neither ordinary nor delayed
+queue counts establish that all owned work is complete; retain the actual task handles.
 
 ## Evidence sequence
+
+Select the steps that resolve the remaining question, reusing comparable supplied evidence and
+respecting the incident/capture budget. A supported no-change or conditional result is valid;
+profiling and a threshold matrix are not prerequisites for answering a lifecycle/API question.
 
 1. Record JDK build, CPU quota/affinity, pool constructor/effective settings, input size/distribution,
    and all known pool consumers.
@@ -79,6 +84,8 @@ overloaded dependency.
 - Interrupt/cancel a long leaf and measure residual work; do not assume interruption.
 - Inject worker-factory failure or compensation saturation in a dedicated test pool.
 - Close a dedicated pool with queued/running work and verify task ownership.
+- Exercise helping from an external caller with owned tasks and a bounded independent releaser;
+  observe the executing thread and body exit rather than inferring preemption from a wait timeout.
 - Demonstrate that common-pool `shutdown()` has no effect and that process exit can end daemon work.
 - Run parallel reductions with adversarial splits and validate associativity/identity, not just a
   happy-path total.

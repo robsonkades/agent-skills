@@ -34,7 +34,7 @@ Pause Young (Mixed) × N            selects candidates using the bitmap's livene
 is, by definition, not a pause; a report calling it a short STW pause is self-contradictory.
 `Concurrent Cleanup` without a suffix is a pre-JDK-20 name.
 
-## A complete cycle, captured on JDK 25
+## A complete-cycle excerpt, previously captured on JDK 25
 
 Written with `-Xlog:gc*,gc+marking=debug:file=gc.log:uptime,level,tags` (`time` omitted
 here for width). The marking phases sit under the `gc,marking` tag at `info`; `gc*` alone
@@ -76,7 +76,8 @@ Three things to read off it:
   humongous regions. Trend concurrent-start occupancy with effective threshold, current old
   capacity, old-allocation rate, cycle time and subsequent mixed reclaim; a rising series alone
   does not prove the predictor is behind.
-- With `-Xlog:gc+ergo+ihop=debug` every pause also logs the effective threshold:
+- `-Xlog:gc+ergo+ihop=debug` logs qualifying above-threshold initiation checks, not every
+  pause or every below-threshold decision:
 
 ```
 [gc,ergo,ihop] GC(2625) Request concurrent cycle initiation (occupancy higher than threshold) occupancy: 234881024B allocation request: 0B threshold: 120795955B (45.00) source: end of GC
@@ -84,8 +85,10 @@ Three things to read off it:
 [gc,ergo,ihop] Request concurrent cycle initiation (occupancy higher than threshold) ... source: concurrent humongous allocation
 ```
 
-The number in parentheses after `threshold:` is the effective IHOP as a percentage—the adaptive
-value once the predictor has samples, the configured initial value before.
+Here the parenthesized percentage divides the effective threshold by current total heap capacity.
+For predictor updates and `prediction active`, use `gc+ihop=debug`: its basic and adaptive rows
+use different denominators (target occupancy versus internal target occupancy). Compare bytes,
+the named denominator and predictor state; no ergo line is not proof that a cycle was unnecessary.
 
 ## Humongous allocation in the log
 
@@ -107,11 +110,11 @@ cycle. Inspect all eligibility fields and subsequent pauses before attributing r
 # base, needed for everything else to be interpretable
 -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=20m
 
-# marking mechanics, including mark stack expansion and overflow
--Xlog:gc+marking=debug:file=gc_mark.log
+# marking mechanics plus mark-stack expansion/allocation messages on plain gc
+-Xlog:gc=debug,gc+marking=debug:file=gc_mark.log
 
-# effective IHOP per pause
--Xlog:gc+ergo+ihop=debug:file=gc_ihop.log
+# qualifying initiation checks and predictor updates
+-Xlog:gc+ergo+ihop=debug,gc+ihop=debug:file=gc_ihop.log
 
 # humongous regions, per young pause
 -Xlog:gc+humongous=debug:file=gc_hum.log
@@ -134,7 +137,7 @@ Did you mean 'G1SummarizeRSetStatsPeriod=<value>'?
 Error: Could not create the Java Virtual Machine.
 ```
 
-So the boolean has not existed on any supported release; the JVM itself names the survivor.
+Those historical probes do not establish every vendor/update; check the target. The JVM names the survivor.
 `-XX:G1SummarizeRSetStatsPeriod=<n>` (diagnostic, default `0` = off) prints the summary every
 _n_ GCs. Paired with `gc+remset=trace` that covers RSet overhead.
 
@@ -156,29 +159,47 @@ ergonomic values change with the machine.
 | `-XX:G1AdaptiveIHOPNumInitialSamples`                             | 3, experimental                                 | Observation count before the adaptive predictor can replace the initial value                    |
 | `-XX:G1EagerReclaimRemSetThreshold`                               | experimental, ergonomic — 16 on 17–24, 32 on 25 | Remembered-set entry count above which a humongous region stops being eligible for eager reclaim |
 | `-XX:ConcGCThreads`                                               | `(ParallelGCThreads + 2) / 4`, ergonomic        | Threads dedicated to concurrent marking; 5 with `ParallelGCThreads=18` here                      |
-| `-XX:G1ConcMarkStepDurationMillis`                                | 10, product                                     | How long a marking thread works before checking for a pending pause                              |
-| `-XX:MarkStackSize` / `-XX:MarkStackSizeMax`                      | 4 MB / 512 MB, ergonomic                        | Initial and maximum mark stack; the restart happens only when the maximum cannot be expanded     |
-| `-XX:G1SATBBufferSize` / `G1SATBBufferEnqueueingThresholdPercent` | 1024 / 60, product                              | Per-thread SATB buffer capacity and the fill level at which it is handed to the marking threads  |
+| `-XX:G1ConcMarkStepDurationMillis`                                | 10, product                                     | Target concurrent marking step duration in milliseconds; not a fixed safepoint polling interval  |
+| `-XX:MarkStackSize` / `-XX:MarkStackSizeMax`                      | 4194304 / 536870912, ergonomic                  | Initial and maximum logical stack capacities; see the allocation-unit caveat below               |
+| `-XX:G1SATBBufferSize` / `G1SATBBufferEnqueueingThresholdPercent` | 1024 entries / 60%, product                     | Buffer capacity and retained percentage after filtering that selects enqueue versus buffer reuse |
 | `-XX:G1HeapRegionSize`                                            | ergonomic (heap/2048, clamped 1–32 MB)          | Sets the humongous threshold (`> size/2`); settable up to 512 MB since JDK 18                    |
 
 ```bash
 java -XX:+PrintFlagsFinal -version | grep -E "InitiatingHeapOccupancyPercent|G1UseAdaptiveIHOP|ConcGCThreads|MarkStackSize"
 java -XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal -version | grep -E "G1EagerReclaim|G1AdaptiveIHOP"
-java -XX:+PrintFlagsFinal -version | grep -i ihop
+java -XX:+PrintFlagsFinal -version | grep -Ei 'InitiatingHeapOccupancyPercent|IHOP'
 java -XX:+PrintFlagsFinal -version | grep SATB
 ```
 
 On JDK 27 `-XX:InitiatingHeapOccupancyPercent` is deprecated and aliased to `-XX:G1IHOP`
-(obsolete in 28, expired in 29). The `grep -i ihop` recipe above finds it under either
-name, which is why it is the one to keep in a runbook.
+(obsolete in 28, expired in 29). The explicit alternatives above find either name;
+`grep -i ihop` alone does not match `InitiatingHeapOccupancyPercent`. These probes describe
+their own invocation, so use the target executable and effective options when checking its configuration.
+
+In the pinned JDK 25.0.3 G1 allocator, mark-stack capacities are measured in task-entry slots,
+despite the shared flag help calling them bytes. Slots are grouped into chunks that include a
+link, and capacity is aligned/rounded before native allocation. With Temurin 25.0.3+9 on Windows
+x64, a 64 MiB heap, two active processors and `MarkStackSizeMax=131072`, startup probes using
+16,384 and 65,536 configured slots produced 16 and 64 chunks with 128 KiB and 512 KiB
+reserved/committed for their native backing. This corroborates that build's eight-byte slots,
+not a universal multiplier or a resident-memory ceiling. The maximum is a growth limit, not
+memory already allocated; account for rounding, chunk metadata and actual reserved/committed
+memory before changing a native budget. See the pinned allocator and structure sources below.
+
+For SATB, a full buffer is filtered before deciding whether to enqueue it or reuse its freed
+slots. The 60% setting tests retained entries after filtering; it is not a trigger that flushes
+every buffer when the mutator has merely filled it to 60%. Explicit flush paths also exist.
 
 ## How the adaptive predictor decides
 
 With `G1UseAdaptiveIHOP=true`, `InitiatingHeapOccupancyPercent` is the initial threshold used until
 the predictor has enough samples (`G1AdaptiveIHOPNumInitialSamples`). Once calibrated, G1
 estimates the old generation's observed growth rate in bytes per second and the historical
-duration of a complete marking cycle, then starts the next cycle early enough that marking
-finishes **before** old reaches capacity — which is generally not at 45%.
+mutator time from the end of concurrent-start GC to the first mixed collection (not just
+`Mark From Roots`, and excluding intervening pauses),
+then predicts a trigger intended to leave reclamation headroom — generally not at 45%.
+This is a prediction, not a guarantee that old cannot fill. Young-space allowance and reserve/
+waste margins also contribute; inspect the target's logged bytes and prediction state.
 
 Consequences worth predicting correctly:
 
@@ -191,7 +212,8 @@ Consequences worth predicting correctly:
   automatically. Compare reclamation headroom and application outcomes over representative bursts.
 
 The exact prediction formula (moving average, percentile, safety margin) is not stable across
-releases. Read the effective threshold from `gc+ergo+ihop=debug` on the runtime before
+releases. Read the effective threshold and predictor state from `gc+ihop=debug`, with qualifying
+initiation checks from `gc+ergo+ihop=debug`, on the runtime before
 deciding to disable the predictor.
 
 ## JFR
@@ -219,7 +241,7 @@ src/hotspot/share/gc/g1/
   g1ConcurrentMark.cpp             concurrent marking, mark bitmap, TAMS, mark stack
   g1ConcurrentRebuildAndScrub.cpp  rebuild remembered sets and scrub (JDK 20, JDK-8210708)
   g1IHOPControl.cpp                static and adaptive IHOP
-  heapRegion.cpp                   region management
+  g1HeapRegion.cpp                 region management (JDK 25 name)
   g1SATBMarkQueueSet.cpp           G1's specialisation of the SATB queue set
 
 src/hotspot/share/gc/shared/
@@ -229,3 +251,11 @@ src/hotspot/share/gc/shared/
 `g1SATBMarkQueue.cpp` is cited in older material and does not match the post-JDK-9 repository
 layout: the generic infrastructure lives under `gc/shared/`, the G1 specialisation under
 `gc/g1/`.
+
+Pinned checks for the consequential implementation details:
+
+- [JDK 25.0.3 mark-stack allocation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.cpp)
+  and [chunk structure and growth policy](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.hpp).
+- [SATB filtering/enqueue paths](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/satbMarkQueue.cpp).
+- [Initiation checks and cycle timing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1Policy.cpp)
+  and [adaptive threshold and logging denominators](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1IHOPControl.cpp).

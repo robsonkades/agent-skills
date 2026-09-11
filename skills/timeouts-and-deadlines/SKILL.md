@@ -9,8 +9,8 @@ description: >
   bound, when a timeout is a round number repeated across services, when three hops each
   wait five seconds, when a retry policy total exceeds the caller timeout, when a JDBC call
   has no setQueryTimeout, when a Kafka consumer rebalances during slow processing, or when a
-  timed-out request leaves work running downstream. Does not cover what to do after the
-  timeout fires (retries-and-backoff), percentiles (latency-statistics), tail decomposition
+  timed-out request leaves work running downstream. Does not cover retry-policy design
+  (retries-and-backoff), percentiles (latency-statistics), tail decomposition
   (tail-latency-analysis), tripping on repeated timeouts (circuit-breakers),
   or pool sizing (connection-pool-sizing).
 ---
@@ -25,11 +25,11 @@ when no outer bound exists; with a 5 s outer timeout the caller may return at 5 
 descendants continue toward their own bounds. A propagated deadline constrains both visible wait
 and useful downstream work only when every hop honors expiry and cancellation.
 
-The second failure this prevents is the timeout that saves nothing. A caller that stops
-waiting but does not cancel has freed no connection, no thread and no database session at
-the callee — it has put a retry on top of work that is still running, so the dependency now
-serves two requests for one. Bounding the wait and stopping the work are separate
-mechanisms; both have to be implemented.
+The second failure this prevents is mistaking a bounded wait for bounded callee work.
+Caller expiry alone does not establish that downstream threads, connections or database sessions
+were released; a retry can overlap the original work. Couple owned request work to best-effort
+cancellation and observe release. Work deliberately accepted under a separate asynchronous job
+contract has its own lifetime; request expiry must not silently cancel that accepted obligation.
 
 ## Workflow
 
@@ -39,9 +39,11 @@ Java 11+, while other APIs may require later releases. Missing fault evidence is
 Validate with isolated or authorized targets and report policy, observed release times and
 remaining server work separately.
 
-1. **Fix the caller's budget first.** The outermost bound comes from the user-facing SLA or
-   the upstream deadline. Everything inside is a division of that budget, never an
-   independent choice.
+1. **Establish the operation and caller's budget.** Reuse its contract, upstream deadline,
+   effective configuration and incident evidence. Distinguish request completion from durable job
+   acceptance. Ask only for unresolved budget, effect or cancellation constraints that change the
+   policy; inspect independent phase gaps meanwhile. Inner limits may be stricter for local
+   protection, but must not extend the remaining outer budget.
 2. **Use uncensored measurements and the consequence model.** A chosen percentile is evidence,
    not the timeout itself: include network phases, overload, cold paths and failure recovery;
    decide the tolerated abandonment rate and resource occupancy.
@@ -52,16 +54,19 @@ remaining server work separately.
    return reserve before each outbound call; clamp untrusted inputs to a local maximum. Refuse
    work only when its probability/value of timely completion no longer justifies its cost. See
    `references/deadline-propagation.md`.
-5. **Set every timeout layer the client actually has** — pool lease, connect, TLS, read or
-   inactivity, total request — and name the failure each one does _not_ prevent. See
+5. **Audit applicable timeout layers** — pool lease, connect, TLS, read or inactivity, total
+   request — and fix gaps according to the intended bound. Preserve an adequate existing policy;
+   name the failures its mechanisms do _not_ prevent. See
    `references/java-timeout-surface.md`.
 6. **Wire best-effort cancellation to expiry.** Signal the protocol/task, stop producing output,
    close/abort resources where safe and invoke database cancellation/server timeout. Cancellation
    is cooperative and races completion; verify bounded resource release and make effects safe
    for an unknown outcome.
-7. **Assert policy invariants and fault behavior.** Sequential configured maxima must fit the
-   outer budget or be clipped; then inject stalls in pool, DNS/connect/TLS, headers, body and
-   server work and observe cancellation/resource release.
+7. **Assert policy invariants and relevant fault behavior.** Sequential configured maxima must
+   fit the outer budget or be clipped. Select stalls from the affected phases and important
+   cancellation paths; observe caller release and residual work separately. Return the bound and
+   its scope, retained or changed policy, evidence and checks run versus pending. A narrow review
+   may finish with a supported gap and a discriminating check, without configuring every client.
 
 ## Rules
 
@@ -95,10 +100,11 @@ remaining server work separately.
   heartbeat/session limits are different. Static membership can defer reassignment until session
   expiry, and under the consumer group protocol the broker controls session/heartbeat settings.
   Raising `request.timeout.ms` does not make a slow handler safe.
-- `HttpClient.Builder.connectTimeout` and `HttpRequest.Builder.timeout` are different. In current
-  JDK built-in implementations the request timeout extends through body-subscriber completion;
-  a returned `InputStream` body shifts later consumption/close responsibility to the caller.
-  DNS behavior and implementation details still require fault testing.
+- `HttpClient.Builder.connectTimeout` and `HttpRequest.Builder.timeout` are different. The JDK 25
+  built-in request timer stops after response headers, so even `BodyHandlers.ofString()` can wait
+  on a stalled body beyond it. JDK 26 extends coverage through body-subscriber completion; do not
+  assume that change on older targets or custom implementations. Bound body consumption and
+  cancellation explicitly where needed; DNS and streaming behavior still require fault testing.
 - An unbounded `future.get()`/`join()` is acceptable only when a stronger task/request lifetime
   is guaranteed. Catching `TimeoutException` should normally initiate cancellation and preserve
   interrupt status where applicable, but cancellation does not prove the effect stopped. On a
@@ -128,7 +134,7 @@ remaining server work separately.
 ## Primary references
 
 - [gRPC deadlines](https://grpc.io/docs/guides/deadlines/) — propagation, elapsed-time deduction and cooperative server cancellation.
-- [JDK `HttpRequest.Builder.timeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)>) — specified request bound and JDK implementation behavior.
+- [JDK 25 `HttpRequest.Builder.timeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)>) — request-timeout API; see the Java timeout surface for version-dependent body coverage.
 - [JDBC `Connection.setNetworkTimeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setNetworkTimeout(java.util.concurrent.Executor,int)>) — network timeout versus query timeout.
 - [Apache Kafka consumer configuration](https://kafka.apache.org/41/generated/consumer_config.html) — poll interval, static membership and group-protocol distinctions.
 

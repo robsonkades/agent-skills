@@ -57,8 +57,10 @@ Guava `HashFunction`, for example `Hashing.murmur3_128()`. Node IDs must be uniq
 physical-node identities; duplicate IDs in the input must not become duplicate replicas.
 
 Lengths prevent ambiguous tuples such as (`"ab"`, `"c"`) and (`"a"`, `"bc"`) from hashing
-the same byte sequence. Pin the integer encoding used by the chosen library, and define a
-stable node-ID tie-breaker for the rare equal score.
+the same byte sequence. For this Guava example, integer lengths are little-endian; `asLong()`
+reads the first eight hash bytes little-endian. Java `String.compareTo` breaks score ties by UTF-16
+code-unit order, which a port must reproduce or replace through an explicit contract change.
+Define allowed key/ID encoding and normalization; include non-ASCII inputs and ties in agreement tests.
 
 Properties that fall out of the definition rather than out of tuning:
 
@@ -67,7 +69,9 @@ Properties that fall out of the definition rather than out of tuning:
   The ring needs virtual nodes to get that spreading; rendezvous has it inherently.
 - Sorting the nodes by weight gives the **ordered replica list** for a key directly, so
   primary and R−1 successors come from one computation, with distinct physical nodes by
-  construction.
+  construction when the input IDs are unique. Hashing costs O(N); fully sorting the scores adds
+  O(N log N) comparison work. Replica ranking is useful, not free. Enforce required failure domains
+  separately; physical distinctness alone does not provide zone or rack separation.
 - Capacity weighting is available too, but weighted rendezvous requires a mathematically
   valid transformation; multiplying a uniform score by a weight generally gives the wrong
   ownership probabilities. Use and test a documented weighted variant.
@@ -98,8 +102,8 @@ here. That is `hot-partitions-and-rebalancing`.
 
 Requirements, in order:
 
-1. **Specified value.** The same input must produce the same output in every process, on
-   every JDK, forever. Disqualified: `Object.hashCode()` (identity), record and enum
+1. **Specified value.** The same input must produce the same output in every participant using
+   the same placement-contract version. Disqualified: default `Object.hashCode()` (identity), record and enum
    `hashCode()` (unspecified), and `Objects.hash(...)` (only 32 bits, potentially allocating,
    and only as stable as every component hash), plus
    any library function documented as version-unstable — Guava's `Hashing.goodFastHash`
@@ -137,7 +141,8 @@ does not supply consensus, atomic membership, recovery or rollback.
 
 ```text
 Use rendezvous hashing when:
-- N is small (a handful to a few dozen) and you want an ordered replica list for free
+- the measured O(N) hashing and required candidate-ranking cost fit the lookup budget,
+  and avoiding virtual-point tuning or obtaining ranked replicas is useful
 Use a ring with virtual nodes when:
 - N is large enough that O(N) per lookup is measurable, or nodes are heterogeneous and
   capacity weighting by virtual-node count is the natural expression
@@ -150,3 +155,12 @@ Use bounded-load when:
 Reject direct hash(key) % physicalNodeCount when:
 - node count changes and the resulting rehash migration exceeds the disruption budget
 ```
+
+## Primary API references
+
+- [Guava 33.4.8 Hashing](https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/hash/Hashing.html) —
+  fixed Murmur3 variant/seed versus process-specific `goodFastHash`.
+- [Guava 33.4.8 HashCode](https://guava.dev/releases/33.4.8-jre/api/docs/com/google/common/hash/HashCode.html) —
+  little-endian `asLong` and hashing API byte order.
+- [Java 16 String](https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/lang/String.html) —
+  UTF-16 representation and lexicographic `compareTo` at the example's compatibility baseline.

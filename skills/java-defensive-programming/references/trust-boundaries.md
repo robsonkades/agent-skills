@@ -13,9 +13,11 @@ Always boundaries:
   are framework/configuration-specific: modern Jackson record binding normally invokes the
   canonical constructor, while field/unsafe/reflection-based mechanisms may bypass assumptions.
   Test the configured mapper and still enforce invariants in the domain construction path.
-- **Storage reads**: the database schema enforces less than the domain does (a `CHECK`
-  constraint rarely encodes "reserved ≤ onHand"), and yesterday's writer may predate
-  today's invariant. Reconstitution is a boundary, thinner than the request edge.
+- **Storage reads**: inspect the actual schema, constraint enforcement and writer versions.
+  A same-row constraint can enforce "reserved ≤ onHand"; other domain rules may remain
+  unenforced, and yesterday's writer may predate today's invariant. Reconstitution needs
+  checks for those gaps, not an assumption that database validation is always weaker.
+  A valid stored snapshot still does not establish that a later state transition is allowed.
 - **A published library's public API** — even inside "your own" monorepo. Its callers are
   by definition code the library does not control; today's disciplined caller is not
   tomorrow's. `Objects.requireNonNull` on every public parameter of a shared module is
@@ -53,8 +55,8 @@ This partial Java 16+ sketch assumes the validated `AccountId` constructor and i
 An inexpensive raw size/structure check prevents work amplification before normalization. A
 canonicalization policy can then produce one stored form, but it must be specific to the field:
 whitespace/case/Unicode changes are wrong for passwords, signatures and many opaque identifiers.
-Changing meaning (defaulting, clamping, truncating) requires an explicit compatibility rule rather
-than being smuggled in as cleanup.
+Defaulting, clamping or truncating needs an explicit domain/API policy rather than being
+smuggled in as cleanup; changing existing behavior also requires a compatibility decision.
 
 ## Checks that look redundant but are load-bearing — do not delete
 
@@ -88,8 +90,7 @@ Defence past the boundary is noise. Concretely:
 - Checking `assert x != null` _and_ throwing on null for the same parameter: pick one
   based on who supplies `x`.
 
-The cost is not the CPU (a branch on non-null data is nearly free and may be eliminated
-by the JIT — do not argue performance either way without a profile). The cost is that
+Do not argue CPU cost or JIT elimination without relevant evidence. The maintenance cost is that
 readers can no longer tell which checks encode real risk, and that the noise checks are
 never tested — the dead branches show up as uncovered lines and get cargo-culted into the
 next method.
@@ -110,13 +111,16 @@ Set limits from downstream capacity and protocol needs, not arbitrary “reasona
 
 - Do not sweep a codebase deleting "redundant" checks without tracing each one to the
   boundary that makes it redundant; the list above is exactly the set people delete
-  wrongly. Delete in the same change that hardens the boundary, never speculatively.
+  wrongly. Use evidence that the boundary is already adequate, or harden it in the same
+  change; retain coverage of the same invariant and failure contract.
 - In safety-critical or long-lived-state systems (ledgers, stock levels), belt-and-braces
   re-verification before an irreversible write is legitimate deliberate redundancy. Use
   an explicit runtime check if it must prevent corruption; `assert` may supplement
   diagnostics but cannot be the required protection because it can be disabled.
-- Generated code and DTOs that exist only to be mapped: leave them dumb; validate in the
-  mapper that produces the domain type, not by decorating the DTO.
+- Generated code and DTOs that exist only to be mapped need not own complete domain
+  invariants. Preserve working framework boundary validation when its invocation, groups
+  and error contract are known; partial input may intentionally differ from a complete
+  domain object. Validate the completed state in its owning construction/transition path.
 
 ## Authoritative references
 
@@ -125,3 +129,4 @@ Set limits from downstream capacity and protocol needs, not arbitrary “reasona
 - [Record invariants and shallow immutability, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
 - [CharsetDecoder malformed-input actions](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/charset/CharsetDecoder.html)
 - [OWASP Input Validation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)
+- [PostgreSQL 18 check constraints](https://www.postgresql.org/docs/18/ddl-constraints.html#DDL-CONSTRAINTS-CHECK-CONSTRAINTS) — one example of multi-column checks; inspect the actual engine and schema.

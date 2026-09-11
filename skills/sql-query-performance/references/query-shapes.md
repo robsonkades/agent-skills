@@ -1,6 +1,7 @@
 # Query shapes that fight the optimiser
 
-Cases where the fix is the statement, not an index.
+Shapes to inspect when the current path is inadequate. A semantics-preserving rewrite, a suitable
+expression/index path or keeping an already adequate query can each be the supported answer.
 
 ## A function or cast on the column side
 
@@ -29,15 +30,16 @@ extraction with arbitrary UTC midnights or add 24 elapsed hours without proving 
 
 The subtler form of the same defect, and harder to see because nothing in the SQL looks
 transformed. When a column and a parameter have different types, one side may be converted. Which
-side follows the engine's type-precedence, collation, and coercion rules; a column-side conversion is
-the harmful case because it can prevent use of the stored index expression.
+side follows the engine's type-precedence, collation, and coercion rules; a column-side conversion
+can prevent use of the stored index expression, but inspect supported transformations/access paths
+before diagnosing a defect.
 
 ```sql
 -- account_number is VARCHAR, the parameter binds as a number
 WHERE account_number = 4815162342     -- conversion direction or type error is engine-specific
 ```
 
-It appears in a plan as a scan on a table you were certain had a suitable index. Check the bound
+A resulting scan is one possible symptom, not proof of conversion. Check the bound
 parameter's type against the column type; in JDBC that means checking what `setObject` /
 `setLong` / `setString` actually sent, not what the entity field looks like.
 
@@ -60,7 +62,7 @@ WHERE tenant_id = ? AND (created_at, id) < (?, ?)
 ORDER BY created_at DESC, id DESC LIMIT 50;
 ```
 
-A matching index avoids rescanning prior offsets; residual filters, visibility checks or joins
+A suitable executed index path can avoid rescanning prior offsets; residual filters, visibility checks or joins
 can still examine more than a page. Nullable/mixed-direction sorts need explicit cursor predicates;
 row-value comparisons and LIMIT syntax are not portable to every engine. What it gives
 up: jumping to an arbitrary page number and snapshot-like navigation under concurrent inserts or
@@ -91,8 +93,8 @@ semantics are not equivalent to arbitrary substring matching; preserve the searc
 ## `SELECT *` on a wide table
 
 Three possible costs: a previously covering index stops covering,
-more bytes cross the network per row, and the ORM materialises columns nobody reads. It is also
-the reason a query gets slower after someone adds a column, with no change to the query.
+more bytes cross the network per row, and the ORM materialises columns nobody reads. These can
+explain a slowdown after adding a column, but the schema change alone does not establish that cause.
 
 ## `NOT IN` with a nullable subquery
 
@@ -101,6 +103,7 @@ false. A correlated `NOT EXISTS` may instead keep that row, and can keep an oute
 `NOT IN` rejects against a nonempty set. Neither spelling is universally the intended contract or
 faster. Define null policy and test matching/nonmatching/null x with empty, null and duplicate
 subquery rows before rewriting. Use an anti-join only when its semantics match the requirement.
+For an empty subquery, `NOT IN` is true even for an outer null; do not silently lose that case.
 
 ## Counting to decide
 

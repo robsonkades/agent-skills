@@ -25,6 +25,13 @@ declared maximum/growth model, owner, retention/churn behavior and containment.
 
 ## Workflow
 
+Use the steps needed for the affected metric or decision. Reuse matching exposition, queries,
+cardinality and overhead evidence; preserve instrumentation that already meets its contract.
+A narrow semantic review needs no new load test or schema migration. Missing evidence limits
+the claim that needs it, not independent observations. Return the justified change or no-change,
+its evidence and checks run versus pending. Inspect the target Java and telemetry versions
+before version-sensitive changes; this skill does not authorize upgrades.
+
 ### 1. Start from decisions
 
 For each metric name its consumer and action:
@@ -65,8 +72,11 @@ scope is desired. Across restarts/windows use reset-aware operations.
 
 For each label document source, allowed values, expected/worst cardinality, churn rate,
 privacy/attacker control and required queries. Template route identifiers and normalize
-bounded outcome classes at the source. Keep request/user/session IDs, raw URLs, payloads,
-SQL literals and exception text out of metric labels.
+bounded outcome classes at the source. Keep per-occurrence request/session IDs, raw caller
+identities, URLs, payloads, SQL literals and exception text out of metric labels. A controlled
+operational identity such as an approved logical queue alias can be a useful cohort when its
+population, churn, access/privacy and overflow contract fit the budget. Bounded cardinality
+alone does not make sensitive data suitable; hashing does not remove identity or churn.
 
 Estimate worst-case and realistic **active** combinations; labels are correlated, so the
 simple product is an upper bound, not the observed bill. Include targets/replicas as a label
@@ -80,8 +90,10 @@ See [cardinality budget](references/cardinality-budget.md).
 
 ### 5. Select distribution representation
 
-Prefer native histograms when the complete toolchain supports their required semantics and
-cost. Otherwise use classic buckets designed around SLOs and accuracy needs. Client-side
+Choose the representation from the query, accuracy and cost contract. Native histograms can
+be useful when the complete toolchain supports the required semantics and cost. When
+replacing a representation, weigh the benefit against migration cost. Retain adequate classic buckets, including known SLO boundaries;
+native support alone does not require conversion. Client-side
 quantiles can be appropriate for nonaggregated local views, but cannot be combined into a
 fleet quantile.
 
@@ -91,20 +103,23 @@ separate schemas.
 
 ### 6. Add containment
 
-Use design-time allowlists/normalization first, then library caps, scrape sample/label
+Select containment for the resources at risk. Use design-time allowlists/normalization first, then library caps, scrape sample/label
 limits, relabel drops, backend quotas and alerts on active series/churn/ingestion. Define
 whether overflow is dropped, collapsed to OTHER, sampled or fails the scrape. Dropping a
 meter can corrupt denominators; collapsing can hide cohorts.
 
 Collapse through an actual source aggregation: relabeling distinct exported series to one
 identity does not sum them. Backend drops also do not reclaim meters already registered in
-the application. Validate containment separately at registration, scrape and storage layers.
+the application. Validate the affected registration, scrape or storage boundary; evidence
+from one layer does not establish containment at another.
 
 ### 7. Validate and migrate
 
-Load-test instrumentation overhead and worst cardinality. Fixture-test label normalization,
-unknown values, meter lifecycle and query aggregation. Dual-publish/version schema changes
-when units, labels or histogram boundaries change, then migrate consumers atomically.
+Check changed normalization, unknown values, meter lifecycle and query aggregation with
+focused fixtures. Measure overhead or worst cardinality when existing evidence does not
+cover the proposed configuration/workload. For incompatible units, labels or histogram
+populations, plan a safe transition such as versioned dual publication and staged consumer
+migration without mixing schemas. A compatible addition need not migrate unchanged metrics.
 
 ## Label decision framework
 

@@ -9,11 +9,14 @@ observed bad ratio:
 e_{threshold}=b(1-S)
 \]
 
-For a window inside the reporting period, exact budget share from event counts is
-\(f=bV_w/V_T\). Approximating the event share by the time share gives:
+For a window inside the reporting period, actual consumed budget share is
+\(f_{observed}=b_{observed}V_w/V_T\), where observed burn comes from the measured bad ratio.
+The alert threshold \(b\) instead corresponds to the share \(bV_w/V_T\); crossing it does
+not mean consumption equals that threshold. Approximating event share by time share gives
+the threshold's corresponding fraction:
 
 \[
-f=bw/T
+f\approx bw/T
 \]
 
 With approximately stable event rate over a 30-day period, \(b=14.4\) over one hour
@@ -106,12 +109,24 @@ The 0.001 term is the budget for a 99.9% objective. Label matching for and/or op
 must be tested: inconsistent retained labels can make a rule silently fail or combine the
 wrong cohorts.
 
-A Prometheus for clause is not categorically forbidden. The window pair already supplies
-duration semantics, so an added for changes detection/recall and must be justified and
-replay-tested. Likewise, keep_firing_for changes resolution behavior and version
-requirements.
+A Prometheus `for` clause is not categorically forbidden. The window pair already supplies
+duration semantics; an added `for` requires the same resulting alert label set to stay active
+across evaluations for that duration before firing. A nonmatching evaluation while pending
+resets that wait. Check the added detection delay and missed short incidents against the policy.
+
+`keep_firing_for` holds an already firing alert after its condition stops matching; it does
+not delay initial firing or prove current impact. In the Prometheus 3.2.1 implementation,
+the hold starts at the first nonmatching evaluation, resets if the condition returns, and
+ends at an evaluation when that absence has lasted at least the configured duration.
+For example, with one-minute evaluations, `for: 2m`, `keep_firing_for: 3m`, true at minutes
+0–2 and false thereafter: firing starts at minute 2, persists through minute 5 and clears
+at minute 6. Pin the actual evaluator and test its timing; notification grouping/delivery
+and evaluator restarts are separate concerns.
 
 ## Verification
+
+Select checks for the changed rule or claimed guarantee, using applicable existing results.
+Do not require a new full campaign for an arithmetic explanation or an adequate unchanged rule:
 
 - unit-test recording/alert rules with promtool or the deployed equivalent;
 - fixture-test counter resets, missing series, zero traffic and label changes;
@@ -127,6 +142,7 @@ requirements.
 - [Google SRE Workbook: Alerting on SLOs](https://sre.google/workbook/alerting-on-slos/)
 - [Prometheus recording rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/)
 - [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
+- [Prometheus 3.2.1 alert evaluation implementation](https://github.com/prometheus/prometheus/blob/v3.2.1/rules/alerting.go)
 - [Prometheus query operators](https://prometheus.io/docs/prometheus/latest/querying/operators/)
 - [Prometheus histogram ratios and quantiles](https://prometheus.io/docs/practices/histograms/)
 - [Prometheus rule unit tests](https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/)

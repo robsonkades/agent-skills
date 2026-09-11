@@ -1,5 +1,11 @@
 # Test prompts — `java-application-security-basics`
 
+Historical prompts and expected verdicts from the 2026-08-27 review, preserved with its
+research and validation reports. The catalog review identified incorrect automatic verdicts
+here, including the bcrypt-parameter claim in prompt 1 and the wrapper-contract inference in
+prompt 5. Use the skill's current cases and execution status in the
+[catalog review inventory](../catalog-review-2026-09-09.json) for subsequent evaluation.
+
 Nine prompts for selection testing. Five must route to this skill; four are near misses that
 must route to a named neighbour instead. None of them names the skill.
 

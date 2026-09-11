@@ -19,24 +19,26 @@ concern goes in that chain, and they are made wrongly often enough to be worth s
 
 ## Placing a concern
 
-| Concern                                 | Stage                                          | Why there                                                                 |
-| --------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------- |
-| Correlation id into the logging context | Filter, first                                  | Must cover everything, including failures before routing                  |
-| Request/response logging, metrics       | Filter                                         | Needs the raw request and the final status                                |
-| Authentication                          | Filter (security chain)                        | Before any handler is selected                                            |
-| Tenant resolution from host or token    | Filter                                         | Everything downstream depends on it                                       |
-| Authorisation based on the operation    | Enabled method security, plus request security | Protect the operation; MVC interceptors can have path-matching gaps       |
-| Feature flag per route                  | Interceptor                                    | Sees handler metadata; do not substitute a flag for authorization         |
-| "Current user" as a typed parameter     | Argument resolver                              | Removes boilerplate without hiding a decision                             |
-| Parsing a custom range or filter header | Argument resolver                              | Same                                                                      |
-| Input validation (syntax)               | Bean validation on the request type            | Declarative, one place, produces a consistent error shape                 |
-| Exception → response mapping            | MVC advice plus filter/security handlers       | Advice does not automatically catch failures outside MVC                  |
-| Response envelope / HATEOAS links       | Return value handler or advice                 | Otherwise repeated per handler                                            |
-| Transaction demarcation                 | **None of these** — application service        | A transaction spanning rendering holds a connection through serialisation |
+| Concern                                 | Stage                                              | Why there                                                                                      |
+| --------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Correlation id into the logging context | Early filter before logs that need the id          | Cover configured routes/dispatches; validate or replace untrusted ids                          |
+| Request/response logging, metrics       | Filter plus async completion lifecycle             | Raw dispatch timing and final response completion are different events                         |
+| Authentication                          | Filter (security chain)                            | Before any handler is selected                                                                 |
+| Tenant resolution from host or token    | Stage with required validated host/identity data   | Authenticate before trusting identity-derived tenant authority                                 |
+| Authorisation based on the operation    | Enabled method security, plus request security     | Protect the operation; MVC interceptors can have path-matching gaps                            |
+| Feature flag per route                  | Interceptor                                        | Sees handler metadata; do not substitute a flag for authorization                              |
+| "Current user" as a typed parameter     | Argument resolver                                  | Removes boilerplate without hiding a decision                                                  |
+| Parsing a custom range or filter header | Argument resolver                                  | Same                                                                                           |
+| Input validation (syntax)               | Bean validation on the request type                | Declarative, one place, produces a consistent error shape                                      |
+| Exception → response mapping            | MVC advice plus filter/security handlers           | Advice does not automatically catch failures outside MVC                                       |
+| Response envelope / HATEOAS links       | Return value handler or advice                     | Otherwise repeated per handler                                                                 |
+| Transaction demarcation                 | Boundary owning the required application operation | Trace actual transaction/proxy and resource lifetime; avoid unintended scope through rendering |
 
 **Ordering matters and is a frequent source of confusion.** The correlation-id filter must
-run before the logging filter, or the first log lines have no id. The security filter chain
-must run before anything that reads the principal. An exception thrown in a filter is not
+run before log statements that rely on that id. Identity-dependent policy must run after its
+required authentication/context stage. A tentative host/tenant hint may select an authentication
+realm, but does not authorize tenant access. Inspect actual security-chain matchers and filter
+registration; a filter does not automatically cover every route or dispatch. An exception thrown in a filter is not
 seen by a controller advice — it needs its own handling, which is why an authentication
 failure often has a different error shape from every other error unless it is deliberately
 aligned.
@@ -68,7 +70,7 @@ class OrderController {
     @PostMapping
     ResponseEntity<Void> place(@Valid @RequestBody PlaceOrderRequest request,
                                @CurrentUser Actor actor) {          // argument resolver
-        OrderId id = placeOrder.place(request.toCommand(actor));    // one call
+        OrderId id = placeOrder.place(request.toCommand(actor));    // use-case transition
         return ResponseEntity.created(URI.create("/orders/" + id.value())).build();
     }
 
@@ -80,10 +82,11 @@ class OrderController {
 }
 ```
 
-Bind, call, map. No `if` on domain state, no repository write, no `@Transactional`, no
-try/catch. The read goes to a query interface rather than the write-side use case, which is
-the read/write separation applied at the boundary
-(`query-objects-and-specifications`).
+This example delegates mutation policy and its transaction to `PlaceOrder`; its read uses a
+query interface rather than the write-side use case. Call count and syntax alone do not prove
+the boundary: check atomicity, authorization, failure outcomes and required read consistency
+before changing an adequate handler. The separate query interface follows
+`query-objects-and-specifications`.
 
 ## The base controller anti-pattern
 
@@ -96,12 +99,14 @@ abstract class BaseController {
 }
 ```
 
-Inheritance for cross-cutting concerns fails predictably: a handler needing two base classes
-cannot have them; the "current user" becomes a static lookup that makes the handler
-untestable without the framework; and the audit call must be remembered in every method,
-which means it will be forgotten in one.
+This design risks independently varying policies competing for Java's single base class,
+hidden context dependencies and manually omitted audit calls. Verify those problems in the
+actual contract; a small tested base class with a pure response helper can be adequate.
 
-Each of those concerns has a chain stage that applies it without being remembered. Use them.
+Use chain stages or composed collaborators when they preserve required data, ordering and
+coverage. Transport logging can be shared in a filter; a business audit or resource permission
+check may need the application operation and its outcome, including non-HTTP callers.
+Moving it into an HTTP-only chain does not preserve that contract automatically.
 
 ## One error shape
 
@@ -130,21 +135,24 @@ client is both a leak and useless to the caller (`rpc-and-api-contracts`).
 
 ## Where controllers accumulate defects
 
-| Smell in a handler                                 | What it means                                                                                                                            |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `if` on domain state                               | Trace whether it enforces business legality or merely chooses a presentation response                                                    |
-| `@Transactional`                                   | Inspect the proxy boundary: normally the handler invocation, not MVC binding or later serialization; move use-case ownership when needed |
-| A repository call on a write path                  | The use case boundary is missing                                                                                                         |
-| A `try/catch` mapping to a status code             | Check for duplicated generic mapping; operation-specific recovery may belong locally                                                     |
-| An entity in the response                          | Serialized entity properties may become public contract; column names are not automatically JSON names (`remote-facade-and-dto`)         |
-| More than about five parameters                    | The request is a type waiting to be extracted                                                                                            |
-| A second call to the same service to "get it back" | The use case should return what the caller needs                                                                                         |
-| Building a URL by string concatenation             | Check escaping, context path and external prefix; URI builders still require trusted proxy configuration                                 |
+| Smell in a handler                                 | What it means                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `if` on domain state                               | Trace whether it enforces business legality or merely chooses a presentation response                                                       |
+| `@Transactional`                                   | Inspect the proxy boundary: normally the handler invocation, not MVC binding or later serialization; move use-case ownership when needed    |
+| A repository call on a write path                  | Trace transaction, invariant, authorization and caller coverage; extract coordination only when the actual boundary is missing              |
+| A `try/catch` mapping to a status code             | Check for duplicated generic mapping; operation-specific recovery may belong locally                                                        |
+| An entity in the response                          | Serialized entity properties may become public contract; column names are not automatically JSON names (`remote-facade-and-dto`)            |
+| Several related request values                     | Consider a cohesive request type for shared validation; framework context and independent inputs need not be wrapped due to parameter count |
+| A second call to the same service to "get it back" | Compare required snapshot/authorization semantics and call cost; an intentional separate query may be correct                               |
+| Building a URL by string concatenation             | Check escaping, context path and external prefix; URI builders still require trusted proxy configuration                                    |
 
 ## The same reasoning off the web
 
 A message consumer and a scheduled job are the same shape: an entry point, shared concerns,
-one call into the application.
+delegation to the application operation. Call count alone does not define that operation.
+
+Partial listener sketch: imports, event/application types and listener security, transaction,
+acknowledgement and retry configuration are omitted. Constructor injection is shown explicitly.
 
 ```java
 @Component
@@ -152,9 +160,13 @@ class OrderPlacedConsumer {
 
     private final AllocateStock allocateStock;
 
+    OrderPlacedConsumer(AllocateStock allocateStock) {
+        this.allocateStock = allocateStock;
+    }
+
     @KafkaListener(topics = "orders")
     void on(OrderPlacedEvent event) {                 // binding
-        allocateStock.allocate(event.orderId());       // one call
+        allocateStock.allocate(event.orderId());       // delegated operation
     }
 }
 ```
@@ -168,7 +180,9 @@ being idempotent (`idempotency`, `delivery-semantics`).
 
 ## Primary contracts
 
-- [Spring MVC interception](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-servlet/handlermapping-interceptor.html): interceptor security limitations.
-- [Spring declarative transactions](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-decl-explained.html): advice around method invocation; an outer transaction can extend that scope.
-- [Spring MVC asynchronous requests](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-async.html): dispatch and completion lifecycle.
+- [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations.
+- [Spring 6.2.7 declarative transactions](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/tx-decl-explained.adoc): advice around method invocation; an outer transaction can extend that scope.
+- [Spring MVC 6.2.7 asynchronous requests](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-ann-async.adoc): dispatch and completion lifecycle.
 - [ProblemDetail 6.2 API](https://docs.spring.io/spring-framework/docs/6.2.18/javadoc-api/org/springframework/http/ProblemDetail.html): available since 6.0.
+- [Spring Security 6.5.0 filter architecture](https://github.com/spring-projects/spring-security/blob/6.5.0/docs/modules/ROOT/pages/servlet/architecture.adoc): matcher coverage and prerequisite-based filter placement.
+- [Jakarta Servlet 6.0 AsyncListener](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/AsyncListener.html): completion/error/timeout and new async-cycle notifications.

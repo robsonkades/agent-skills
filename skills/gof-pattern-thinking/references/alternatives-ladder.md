@@ -1,10 +1,11 @@
 # The alternatives ladder
 
-Each rung is defined by the force it resolves and the force it does **not**. Climb only when the
-current option fails a relevant force. Rungs overlap and are not a measured cost ordering;
-compare only viable alternatives. Examples are partial: Discount uses Java 17, while pattern-switch
-state dispatch requires Java 21 without preview. Money, domain states/exceptions and imports are
-project-specific; inspect the target baseline before choosing a mechanism.
+Each rung is defined by the force it resolves and the force it does **not**. Start with the
+existing/direct implementation and compare materially relevant alternatives, including different
+ownership or extension contracts. Rungs overlap and are not a measured cost ordering; there is no
+need to visit every rung or stop at the first viable one. Examples are partial: Discount uses
+Java 17, while pattern-switch state dispatch requires Java 21 without preview. Money, domain
+states/exceptions and imports are project-specific; inspect the target baseline before choosing a mechanism.
 
 ## Rung definitions
 
@@ -25,9 +26,10 @@ Two rungs deserve their own warning:
 - **Rung 3 is not a demotion of rung 7.** A lambda passed as a `PricingRule` _is_ Strategy; the
   design intent survives, the class hierarchy does not. Say "Strategy, as a function" in the
   review — the name is how the next reader recognises the shape.
-- **Rung 5 is the most under-used.** A large share of "Strategy" and "Abstract Factory"
-  hierarchies in enterprise code encode values — a rate, a limit, a URL, a retry count — as
-  types. When every implementation differs only in constants, the design wanted a table.
+- **Rung 5 needs a change policy.** If implementations differ only in constants, compare a
+  value/table/enum or validated configuration with the existing types. Preserve supported identities,
+  invariants and approval/rollout controls. External configuration and runtime reload add ownership
+  and failure modes; neither follows merely from the variation being data.
 
 ## Worked elimination 1 — Strategy collapses to a function value
 
@@ -140,8 +142,9 @@ in either design. Multiple containers/class loaders may create separate instance
 
 **When this elimination is wrong:** when an explicit globally reachable instance or canonical token
 within a class-loader scope is the actual contract. State the scope and access constraint.
-ServiceLoader discovers/caches providers per loader and does not establish JVM-wide uniqueness;
-agent and plugin lifecycles need separate evidence (`gof-singleton`).
+Each ServiceLoader instance maintains its own provider caches; two instances using the same class
+loader do not thereby share a provider instance. Discovery does not establish JVM-wide uniqueness;
+actual provider construction, ownership and plugin lifecycles need separate evidence (`gof-singleton`).
 
 ## Worked elimination that failed — Decorator stayed
 

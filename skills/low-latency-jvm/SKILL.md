@@ -32,15 +32,27 @@ Java or a required Java baseline. Do not upgrade or enable experimental flags me
 
 ## Workflow
 
+Start from the requested claim and reuse applicable measurements, configuration and acceptance
+criteria. Preserve an adequate design and its workload model. A narrow statistical or mechanism
+review may need only a supported finding and remaining uncertainty; use the steps and campaigns
+that can change the decision, without requiring a new capture or tuning change on every activation.
+
 1. Allocate a distribution budget to application, queues, JVM pauses/compilation, scheduling,
    memory locality, kernel/network and dependencies without adding component percentiles.
-2. Capture open-loop latency with coordinated-omission protection plus timestamped JVM, scheduler,
-   CPU, NUMA, IRQ, page-fault and network evidence.
-3. Remove one identified source of jitter. Preserve throughput, correctness and overload behavior.
-4. Re-run long enough to observe periodic effects, warm-up transitions and rare pauses. Compare
-   distributions and raw outliers, not only means.
-5. Exercise restart, burst, saturation and recovery. A configuration that is smooth only below
-   admission capacity is not robust.
+2. Match latency generation to the actual workload: independent arrivals need a verified open
+   schedule; completion-paced populations need representative concurrency and think times.
+   Preserve scheduled/start delay and missing outcomes where applicable. For attribution, select
+   timestamped JVM, scheduler, CPU, NUMA, IRQ, page-fault or network evidence that distinguishes
+   the suspected causes; missing diagnostic data limits those claims.
+3. When a change is justified, address one evidenced source of jitter and compare its costs.
+   Preserve throughput, correctness and overload behavior; otherwise return no change or a
+   discriminating next check with the hypothesis explicit.
+4. Validate changed behavior over a window covering the relevant periodic effects, warm-up
+   transitions and rare-event objective. Reuse sufficient evidence; compare distributions and
+   raw outliers with their uncertainty, not only means.
+5. Select restart, burst, saturation and recovery scenarios for the lifecycle and capacity claims
+   being made. A steady-state result alone does not establish behavior through those transitions;
+   when overload behavior matters, verify admission, outcomes and recovery as well as latency.
 
 ## Decision rules
 
@@ -63,9 +75,11 @@ Java or a required Java baseline. Do not upgrade or enable experimental flags me
 
 ## Output
 
-Return the measured jitter source or explicit hypothesis, one justified control and its cost,
-the acceptance population/window, and observed versus pending validation. State the remaining
-failure modes and whether the result is statistical evidence or a separately justified guarantee.
+Return the scoped finding or verdict and its evidence, any justified control with its cost or
+an explicit no-change decision, and observed versus pending validation. For empirical claims,
+state the acceptance population/window and remaining failure modes. Distinguish a measured source
+from a hypothesis, and statistical evidence from a separately justified guarantee; a narrow review
+does not require a full design report.
 
 ## References
 

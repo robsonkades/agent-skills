@@ -34,6 +34,9 @@ Also expose, for continuous monitoring:
 
 ## Find the retainer
 
+Use an existing dump if its lifecycle point and retaining paths answer the question. Capture
+another only when it can resolve a material gap and the incident can tolerate the cost below.
+
 ```bash
 jcmd <pid> GC.heap_dump /secure/diagnostics/heap.hprof
 ```
@@ -52,8 +55,11 @@ the order they are usually found:
 
 A heap dump can pause a large JVM, consume disk comparable to live heap and expose credentials
 and customer data. Confirm capacity/access controls and use the repository's incident-evidence
-policy before capture. Follow the path from loader to a **parent- or bootstrap-owned root**; a
-cycle entirely inside the child is collectible.
+policy before capture. Follow the strong retaining path back to the actual GC root: for example,
+a live thread/stack local, a JNI reference, or a parent-owned registry reached from a root.
+The root need not be an instance of a parent- or bootstrap-defined class. A cycle entirely inside
+the child is collectible only when no root keeps it reachable; a child-defined running thread can
+keep that cycle alive.
 
 ## The two-part `close()` trap
 
@@ -91,3 +97,4 @@ retaining path rather than changing map type alone.
 - [Java 25 `ClassLoader`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ClassLoader.html)
 - [Java 25 hidden-class `STRONG` option](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.ClassOption.html#STRONG)
 - [JEP 371: Hidden Classes](https://openjdk.org/jeps/371)
+- [Eclipse MAT: GC root kinds](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/gcroots.html)

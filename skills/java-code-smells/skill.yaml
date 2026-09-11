@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-code-smells
-version: 1.4.1
+version: 1.4.2
 description: >-
   The detection catalogue for Java code smells: Long Method, God Object, Feature Envy,
   Primitive Obsession, Data Clumps, Shotgun Surgery, Divergent Change, Mysterious Name,
@@ -45,6 +45,19 @@ files:
 dependencies:
   - name: java-refactoring
     version: ^1.0.0
+  - name: java-dry-kiss-yagni
+    version: ^1.0.0
+
+suggests:
+  - java-api-design
+  - java-clean-code
+  - java-immutability
+  - java-law-of-demeter
+  - java-memory-model
+  - java-null-safety
+  - java-optional
+  - remote-facade-and-dto
+  - scoped-values
 
 capabilities:
   - reads-source

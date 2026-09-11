@@ -31,9 +31,9 @@ record Credentials(String username, String password) {
 ```
 
 Prefer a dedicated secret type with a redacting `toString` so the policy cannot be forgotten at
-each use site. A record with a `char[]` component is insufficient unless it defensively copies on
-construction/access, defines content equality deliberately, and controls erasure; arrays remain
-mutable and copies limit rather than guarantee memory clearing. structured-logging covers event
+each use site. A record with a `char[]` component alone does not establish secret handling:
+choose identity/content equality, access ownership and erasure policy deliberately. Arrays remain
+mutable and extra copies limit rather than guarantee memory clearing. structured-logging covers event
 design; the rule here is that defense belongs at both the type and sink.
 
 Verify with hostile username/password values (including line breaks) that neither appears
@@ -47,15 +47,17 @@ during exactly the session where you are trying to reason about a hang.
 
 ## Do not let anything parse it
 
-Once a `toString` is parsed anywhere — a test asserting on the exact string, a script
-scraping a log, another service reading a field — its format is a published API and cannot
-change. Two rules keep that from happening by accident:
+Parsing `toString` creates a format dependency; inspect whether it is a supported public contract
+or an incidental internal use before changing it. A diagnostic test alone does not publish an API.
+Two rules keep accidental coupling bounded:
 
 - If a textual representation is part of the contract, give it a named method with a
   documented grammar (`toIso8601()`, `format(Style)`), and state the grammar in the Javadoc.
-  `Instant.toString` and `UUID.toString` are specified precisely because they _are_ contracts.
+  `Instant.toString` and `UUID.toString` are specified contracts; preserve or explicitly migrate
+  any such existing API rather than renaming it unconditionally.
 - If it is not part of the contract, say so ("the format is unspecified and may change") and
-  write tests that assert on the fields you extracted, never on the whole string.
+  assert only intended diagnostic properties, such as redaction or bounded content. Exact-string
+  tests are appropriate when the format itself is deliberately promised.
 
 Records make the second rule easier to break: the generated format looks stable enough to
 assert on, and then adding a component changes every such assertion. Assert on components.
@@ -63,7 +65,8 @@ assert on, and then adding a component changes every such assertion. Assert on c
 ## Copying: what to do instead of clone
 
 `Cloneable` is a marker interface with no `clone` method; it changes what the protected
-`Object.clone` does. That indirection produces a contract nobody can honour cleanly:
+`Object.clone` does. Preserve a correct existing contract when consumers require it; audit these
+limitations before introducing or replacing one:
 
 - `Object.clone` creates a **shallow** copy by field-by-field assignment. Every mutable
   referenced object is shared with the original — the standard source of "modifying the copy
@@ -72,9 +75,9 @@ assert on, and then adding a component changes every such assertion. Assert on c
   shares their referents. That is safe for deeply immutable referents and wrong when “copy” means
   independent mutable state; immutability and cloning are not structurally incompatible, but an
   immutable object normally needs no copy.
-- A class that supports cloning constrains every subclass: `super.clone()` must be called, or
-  the subclass silently produces an object of the wrong class. Constructors are not run, so
-  invariants established in a constructor are not established in a clone.
+- `super.clone()` conventionally preserves the runtime subtype. A replacement constructor or
+  factory must separately honor any subtype contract. Object cloning does not rerun constructors;
+  copied valid state may preserve invariants, but independent resources/lifecycle need review.
 - The `clone` contract itself is stated in terms of "no constructor is called" conventions
   rather than semantics, and `x.clone() != x`, `x.clone().getClass() == x.getClass()`,
   `x.clone().equals(x)` are described as "not absolute requirements".
@@ -83,7 +86,7 @@ The replacements, in the order to prefer them:
 
 | Need                               | Use                                                                                                   |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| A copy of a value type             | make it immutable and share it — no copy needed (java-immutability)                                   |
+| A copy of a value type             | share an immutable value when identity/lifecycle permit it (java-immutability)                        |
 | A modified variant of a value type | a wither: `order.withStatus(SHIPPED)` returning a new instance                                        |
 | A copy of a mutable class          | a copy constructor `Foo(Foo other)` or a static factory `Foo.copyOf(other)`                           |
 | A shallow collection snapshot      | `List.copyOf`/`Map.copyOf` (unmodifiable, reject nulls) or mutable `new ArrayList<>(other)`           |
@@ -92,6 +95,8 @@ The replacements, in the order to prefer them:
 
 A copy constructor takes a parameter, so it can also convert (`ArrayList(Collection)`), it
 can be overloaded, it runs the constructor's validation, and it works with `final` fields.
+The partial Java 16+ example below assumes deeply immutable `Leg` elements. `List.copyOf`
+copies only the container; it does not make mutable elements immutable.
 
 ```java
 public final class Route {
@@ -107,10 +112,9 @@ public final class Route {
 }
 ```
 
-Note that a "copy" of a genuinely immutable object is unnecessary work: if the type is deeply
-immutable and safely published, sharing the reference is the copy. Reaching for a copy is a
-signal that something in the graph is mutable — fix that instead, unless the mutability is
-deliberate (a builder, an accumulator, a JPA entity).
+Sharing a deeply immutable, safely published value is adequate when consumers do not require a
+fresh identity or independent lifecycle. A copy request alone does not prove accidental mutation.
+Retain a suitable existing copy API; gof-prototype owns graph, subtype and resource-copy policies.
 
 ## Deep copy across a serialisation boundary
 

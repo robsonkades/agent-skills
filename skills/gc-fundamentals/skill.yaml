@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gc-fundamentals
-version: 1.4.1
+version: 1.4.2
 description: >-
   How JVM garbage collectors work, as the mental model behind every GC diagnosis: the
   generational hypothesis and where it fails, mark-sweep versus mark-compact versus copying,
@@ -42,12 +42,19 @@ files:
   - references/
 
 dependencies:
+  - name: container-awareness
+    version: ^1.0.0
+  - name: java-reference-types-and-leaks
+    version: ^1.0.0
   - name: jvm-memory-regions
+    version: ^1.0.0
+  - name: linux-for-jvm
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
     version: ^1.0.0
 
 suggests:
   - allocation-profiling
-  - container-awareness
   - epsilon-and-shenandoah-internals
   - g1-concurrent-marking
   - g1-internals
@@ -55,16 +62,13 @@ suggests:
   - gc-log-analysis
   - heap-dump-analysis
   - incident-evidence-capture
-  - java-reference-types-and-leaks
   - jdk-upgrade-impact
   - jni-and-ffm
   - jvm-gc-tuning
-  - linux-for-jvm
   - littles-law-and-queueing
   - object-layout-and-footprint
   - pause-attribution
   - safepoints
-  - thread-sizing-and-virtual-threads
   - zgc-and-shenandoah
   - zgc-generational-internals
 

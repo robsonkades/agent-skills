@@ -105,11 +105,13 @@ the subtype overrides equality differently.
   postcondition — the permitted direction.
 - **Immutable subtype of a mutable-looking supertype is not automatically safe**,
   but a subtype that narrows _its own new_ API while honouring the inherited one is
-  fine; only inherited methods carry the contract.
+  fine. New methods must still preserve inherited invariants and history constraints:
+  mutating a value the supertype promises never changes can break a supertype alias even
+  without an override. Subtype-only state may vary when those observations remain valid.
 - **`List.of(...).add(...)` throwing** is not an application LSP bug to fix — it is
-  a documented optional operation in the collections contract. Cite it as prior
-  art for why optional operations make painful contracts, not as a licence to add
-  your own.
+  a documented optional operation in the collections contract. For an application API,
+  judge whether an explicit optional-capability contract and its discovery/failure handling
+  serve consumers; neither an exception name nor optionality alone proves a defect.
 
 ## Interface segregation
 
@@ -125,10 +127,11 @@ unusable dependency is.
 - Recompilation ripples: a change for one client group forces every implementor
   and every other client to recompile.
 
-The fix is role interfaces named for the client's need (`OrderReader`,
-`OrderWriter`), with the full-service class implementing several. The replica
+When the client/implementation harm is established, role interfaces named for the client's
+need (`OrderReader`, `OrderWriter`) are one fix, with the full-service class implementing several. The replica
 repository above becomes an honest `OrderReader`, and `save` stops existing where
-it cannot work.
+it cannot work. For an exported API, add role views or stage a consumer/implementor migration;
+removing an existing method is not a mechanical compatibility-preserving split.
 
 ### Default methods: pressure valve and trap
 
@@ -154,3 +157,5 @@ behavioral compatibility.
 See [Collection optional operations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
 and [JLS 21 interface evolution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.7)
 when deciding whether throwing or adding a default is actually a contract defect.
+For inherited history constraints, see [Liskov and Wing, behavioral subtyping](https://www.cs.cmu.edu/~wing/publications/LiskovWing94.pdf),
+especially the distinction between mutations visible and invisible to supertype clients.

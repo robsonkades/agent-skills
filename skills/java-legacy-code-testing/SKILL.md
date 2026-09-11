@@ -33,8 +33,9 @@ his answer is a category of refactoring meant to be performed **before** any tes
 > "The refactorings in _Dependency-Breaking Techniques_ are special in that they are meant to be
 > done **without tests**, in the service of putting tests in place." — Feathers, p. xxi
 
-This skill owns that step and stops the moment the code is callable. What you do with the net
-once you have it is `java-refactoring`.
+This skill owns reaching a useful test point and demonstrating its first meaningful assertion,
+with any untested effects explicit. Building out the characterization net and changing behavior
+then belong to `java-refactoring`.
 
 ## Scope
 
@@ -57,12 +58,15 @@ Examples compile for Java 21 without preview; applying the skill does not requir
 legacy project. Inspect its release/toolchain, test framework, mock maker, runtime and build
 constraints first. Reuse compatible tooling and report missing evidence rather than importing
 the version table into the build. Prefer an already reachable boundary before editing a seam.
+Use existing caller tests, incidents and the requested assurance objective; ask only about a
+material unresolved behavior or ownership contract. No new seam is needed when current access
+already supports the required check.
 
-Feathers's Legacy Code Change Algorithm (ch. 2, p. 18), unchanged since 2004 because nothing has
-superseded it:
+Use Feathers's Legacy Code Change Algorithm (ch. 2, p. 18), adapted here to include an explicit
+assurance objective:
 
-1. **Identify change points.** Where must the behaviour differ? No change point, no work — see
-   Over-application.
+1. **Identify change points or the explicit assurance risk.** What must change or become verified?
+   Avoid structural work justified only by coverage counts — see Over-application.
 2. **Find test points.** Where can you observe the effect of the change? Not necessarily where
    you make it — if a coarser point is already reachable, pin there first and proceed. The
    deadlock below is only about the narrow test you cannot yet reach. `references/seams-and-interception.md` covers effect analysis and choosing the
@@ -86,20 +90,20 @@ Steps 3 and 4 are the ones people invert, and inverting them is the deadlock thi
 The distinction is the single most useful thing the vocabulary buys, because it diagnoses the
 commonest failed attempt: `Extract Interface` is applied, `PaymentGateway` now has one
 implementation and one mock — but the class under test still calls `new PaymentGatewayImpl()`
-internally. **The seam exists and the enabling point does not.** An interface whose only non-test
-implementor is constructed with `new` inside its own consumer has bought nothing.
+internally. **The interface alone has not enabled substitution.** Locate or add the point that
+selects the collaborator for this test; declaring a type does not supply that selection.
 
-Feathers names three kinds. In Java one of them is unavailable and a fourth has appeared, and the
-ordering below is not taste:
+Feathers names three kinds. Java has no built-in preprocessor; instrumentation adds another
+mechanism. Prefer the smallest suitable seam, including one the project already supports:
 
-| Seam                         | Enabling point                                        | Verdict                                                                                                                             |
-| ---------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Object seam**              | the constructor call in the composition root          | **The default.** Visible in source, and already where the application wires itself                                                  |
-| **Link seam**                | the test classpath — shadowing, `ServiceLoader`, JPMS | Last resort: no enabling point exists _in the source_, so a reader cannot see the swap                                              |
-| **Bytecode instrumentation** | the `try`-with-resources around `mockStatic`          | Technically a seam, invisible from production code — it removes the pressure that would have fixed the design (`java-test-doubles`) |
+| Seam                         | Enabling point                                             | Verdict                                                                                                    |
+| ---------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Object seam**              | the constructor call in the composition root               | **The default.** Visible in source, and already where the application wires itself                         |
+| **Link seam**                | test classpath/module configuration and provider selection | Existing provider wiring can suffice; verify discovery/selection and isolation before adding another seam  |
+| **Bytecode instrumentation** | scoped mocking setup and teardown                          | Can preserve a constrained legacy API; verify tool support, thread scope and cleanup (`java-test-doubles`) |
 
-Java has **no preprocessing seam**, and annotation processing is not a substitute
-(`references/seams-and-interception.md`).
+Build-selected generated wiring needs an actual enabling point and its own verification;
+annotation processing alone does not create one (`references/seams-and-interception.md`).
 
 ## Choosing the technique
 
@@ -122,8 +126,8 @@ costs in `references/dependency-breaking-catalogue.md`; read it before applying 
 Each technique's precondition and cost is in the catalogue reference; do not apply one without
 reading its cost. Time is the exception that is not in the table: `LocalDate.now()` and
 `Instant.now()` are answered by injecting a `java.time.Clock`, and how to do that is
-`java-test-design` (`references/determinism.md`) and `java-test-doubles` — this skill only records
-that Feathers's hand-rolled time abstraction is dead.
+`java-test-design` (`references/determinism.md`) and `java-test-doubles`. Retain an adequate
+existing time abstraction, especially for monotonic elapsed time or business-calendar policy.
 
 ## What you may change before a test exists
 
@@ -153,8 +157,9 @@ commit is requested). If it cannot be justified, first find a coarser test point
 
 ## Before and after
 
-Run `scripts/renewal-service/verify.sh` when you need to show a sceptic that the obstacle is real
-rather than stylistic — it asserts that the before state cannot be constructed at all.
+Run `scripts/renewal-service/verify.sh` for the isolated teaching fixture: its synthetic gateway
+throws at construction, while the injected alternative reaches assertions. It does not contact a
+database or prove that every real constructor needs a seam. Requires a POSIX shell and JDK 21+.
 
 ```java
 // Before — two obstacles, needing two different techniques.
@@ -167,10 +172,9 @@ final class RenewalCheck {
 }
 ```
 
-The first line of any test — `new RenewalCheck()` — throws before an assertion is reached:
-measured, `IllegalStateException: RateGateway: cannot connect to policy-db`. And `LocalDate.now()`
-leaves the assertion with no stable expected value, so a test that passes today and fails in
-thirty days is worse than no test at all.
+In this fixture `new RenewalCheck()` throws `IllegalStateException: RateGateway: cannot connect
+to policy-db` before the policy assertion. The live date also makes fixed date-sensitive rows
+unstable; it does not make every possible assertion impossible.
 
 The after state applies **Extract Interface** under a _new_ name — `interface Rates`, with
 `RateGateway implements Rates` keeping the name it already had — and **Parameterize Constructor**,
@@ -187,8 +191,8 @@ Naming the interface `RateGateway` and renaming the class would have been **Extr
 in the codebase then stops compiling.
 
 The test then needs no mocking framework: a lambda stub for `Rates`, a fixed clock, and the answer
-is `[P1]` on every machine on every date — measured. `mockStatic(LocalDate.class)` also makes that
-test pass, and leaves the design exactly as broken.
+is `[P1]` for the supplied fixed-clock inputs. Static interception is another possible seam, but
+would require compatible instrumentation and deliberate stubbing; this verifier does not test it.
 
 ## When there is no time: Sprout and Wrap
 
@@ -220,9 +224,9 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
   the corollary this skill adds is the replacement case. If the code is being _replaced_ rather
   than deleted, characterise at the boundary that survives — the HTTP contract, the batch output — which is
   `legacy-enterprise-modernization`'s move, not this skill's.
-- **A harness around genuinely stable code.** A tax-table lookup untouched for six years with no
-  pending change and no incidents. The algorithm starts at "identify change points": no change
-  point, no work. Coverage of stable code is a metric, not a benefit.
+- **A harness around genuinely stable code.** A tax-table lookup untouched for six years may
+  need no seam work. An explicit assurance objective or uncovered consequential risk can still
+  justify tests; age and coverage counts alone decide neither outcome.
 - **Seams for their own sake.** Every `new` becomes a factory method, every static a delegator,
   in code nobody is changing — indirection with a testing justification attached.
 
@@ -235,16 +239,16 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
   and the narrowest reachable checks; the compiler cannot find reflective or external callers.
 - A seam without an enabling point is not a seam. Before declaring one done, name the line that
   chooses the behaviour.
-- Do not add `setXxxForTest`, a public mutable static, or a `protected` factory method without a
-  ticket to remove it. These leak into production and become permanent mutable globals — the one
-  place an ArchUnit rule earns its keep here is failing the build when production code reaches one
-  (`references/tooling-and-modernization.md`).
-- `mockStatic` is the last option, not the first. It is a real seam with an invisible enabling
-  point, so it removes exactly the pressure that would have fixed the dependency
-  (`java-test-doubles`). If you use it, ticket the wrap.
-- Reject any advice built on **PowerMock** (last release 2020, pins Mockito 3.3.3, documents
-  JDK ≤ 9) or on adding **`mockito-inline`** (the inline mock maker has been Mockito's default
-  since 5.0.0; the artifact is frozen at 5.2.0). Both dominate the online corpus for this topic.
+- Distinguish temporary test hooks from supported extension points. A mutable global override
+  needs isolation/reset and production-access controls; a `protected` factory is not itself a
+  mutable global. Track removal when the seam is temporary, and retain a useful owned contract.
+  Architecture checks can enforce the chosen boundary (`references/tooling-and-modernization.md`).
+- Compare visible injection or a wrapper with retaining a supported instrumentation seam under
+  actual compatibility/change constraints (`java-test-doubles`). Static mocks are thread-scoped;
+  close them and do not assume they intercept worker-thread calls. Track a wrap only when warranted.
+- Do not import old **PowerMock** or **`mockito-inline`** instructions into a newer stack by
+  habit. Check the resolved versions/mock maker; preserve a working legacy harness while changing
+  its seam. The tooling reference distinguishes artifact age from demonstrated incompatibility.
 - "We'll write the tests after the refactor" ends with unfamiliar untested code, which is
   strictly worse than the familiar untested code you started with.
 
@@ -254,15 +258,15 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
   this means constructing the class without a database; a static or coarser seam can also meet
   the objective. Show the first meaningful assertion, not just successful construction.
 - **The enabling point is a line you can point at.** If nobody can name it, the seam is decorative.
-- **The test fails when the behaviour changes.** The mutation check is
-  `java-refactoring/references/safety-workflow.md`'s; run it here too, because a suite that stays
-  green through a deliberate mutation means step 4 did not happen.
+- **The test detects a relevant wrong behavior.** Use a targeted negative control such as the
+  cutoff mutation in `java-refactoring/references/safety-workflow.md`. A surviving equivalent or
+  deliberately unobserved mutation does not establish a missing test; inspect what changed.
 - **The step is one reviewable, reversible diff.** Inspect signatures plus construction order,
   exceptions, dispatch and resource ownership; do not infer preservation from compilation alone.
-- **`grep -c 'mockStatic('` is not rising** across the module, and no identifier matching
-  `*ForTest*` is reachable from production code.
-- **Time is injected, not frozen by luck.** `grep` for `LocalDate.now()`, `Instant.now()` and
-  `System.currentTimeMillis()` in the class you just covered.
+- **The chosen seam stays within its ownership and lifetime.** Review new static mocks and test
+  hooks by effect, isolation and cleanup rather than occurrence counts.
+- **Time-sensitive assertions control their relevant time source.** Inspect clock reads and
+  retain actual time-zone, elapsed-time and business-calendar semantics.
 
 ## Review prompts
 
@@ -270,7 +274,7 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
 - Where is the enabling point for this seam, and can a reader of the class see it?
 - Is this change behaviour-preserving by construction, or does it need the net first?
 - Did any signature change in this commit? If so, why was that necessary now?
-- Is this `protected` method, test-only setter or interface going to be deleted, and when?
+- Is this hook temporary or a supported extension contract, and who owns its lifetime?
 - Are we pinning behaviour we are about to delete?
 - What is the change point? If there is none, why are we here?
 
@@ -282,8 +286,8 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
   himself disliked.
 - [Seams and interception points](references/seams-and-interception.md) — read when the question
   is _where_ to put the test rather than how to reach the code: the seam taxonomy in Java detail,
-  what replaces preprocessing seams, effect analysis, and choosing a pinch point so one test
-  covers a cluster of changes.
+  what replaces preprocessing seams, effect analysis, and choosing a pinch point whose tests
+  expose the relevant effects of a cluster of changes.
 - [`scripts/renewal-service/`](scripts/renewal-service/) — `Before.java`, `After.java` and
   `verify.sh`. Run it when someone argues the obstacle is a matter of taste: the before state
   throws at construction, the after state is deterministic, and the script fails if that stops

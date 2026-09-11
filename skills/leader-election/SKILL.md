@@ -31,27 +31,31 @@ instances (`sharding-and-partitioning`). **Consensus** is how the election is ac
 Two failures. The first is the one that brings people here: a `@Scheduled` job that ran once
 becomes a job that runs N times when the deployment scales to N replicas, silently — the problem
 statement is `stateless-service-design`. The second is worse and is what this skill is really
-about: the leader that has already lost its lease and does not know yet. Between the instant a
-lease expires and the instant its former holder notices, two instances are both acting as
-leader, and neither logs anything unusual.
+about: the leader that has already lost its lease and does not know yet. Between expiry and
+the former holder noticing, a successor may begin work while the old holder still acts as
+leader. Their activity then overlaps, even if neither logs anything unusual.
 
 ## Workflow
 
 Inspect the project's Java baseline, election-library/provider versions, grant/renewal
 semantics and every protected sink before adapting an example. The Java deadline illustration
 uses Java 17 language features; it does not authorize a runtime or dependency upgrade.
+Reuse the supplied ownership, workload and failure evidence. For a focused review, examine the
+affected invariant and lifecycle path; an adequate existing coordinator can remain in place
+without a new mechanism comparison or full fault-injection campaign.
 
 1. **Ask whether the work needs a singleton at all.** If it can be partitioned by key, every
    instance owns a disjoint subset and the global singleton disappears. Running everywhere
    additionally requires concurrency-safe effects and acceptable duplicate load; repeatability
    alone does not prove either. One active worker can be a capacity ceiling; an elected
    coordinator can also delegate partitioned work.
-2. **State the failover budget as a number.** Detection + election + warm-up is a period with no
-   leader, user-visible if anything waits on the leader's work. That number sets the lease
-   length, not the other way round.
-3. **Size the lease against the measured pause distribution**, not a round number: a lease
-   shorter than the worst stop-the-world pause or network blip produces failovers that are pure
-   churn (`pause-attribution`). Arithmetic in `references/lease-and-split-brain.md`.
+2. **State the failover budget as a number.** Budget detection + election + recovery/warm-up
+   until correct useful work resumes after an interruption; a local leader flag does not prove
+   availability. This budget constrains the lease/detection settings and recovery path.
+3. **Use measured pause/network tails to estimate churn and failover**, not as hard safety bounds.
+   Longer unseen stalls remain possible. State the provider, clock-rate and quiescence assumptions
+   behind a local lease budget and preserve sink-side safety even when a holder cannot run its
+   stop check (`pause-attribution`). Arithmetic in `references/lease-and-split-brain.md`.
 4. **Write the leader loop to stop before its conservative local validity deadline.** A single
    timed-out renewal is ambiguous and need not stop work immediately if sufficient lease budget
    remains; it must never extend that deadline. Stop admission early enough for in-flight work
@@ -60,12 +64,13 @@ uses Java 17 language features; it does not authorize a runtime or dependency up
    fence at every mutable resource, put the effect and authority check in the same transaction, or
    ensure repeated and concurrent effects preserve the required invariant, including any
    reconciliation window. Local leader belief is never the enforcement boundary.
-6. **Handle the rolling deploy explicitly.** Stop new work, quiesce or hand off in-flight work,
+6. **When changing the ownership or deployment lifecycle, handle the rolling deploy explicitly.**
+   Stop new work, quiesce or hand off in-flight work,
    persist a checkpoint, then release/transfer authority. Releasing first can overlap the
    successor with unfinished effects (`kubernetes-service-lifecycle`).
-7. **Instrument and test the split.** Export an `is_leader` gauge per instance; in a test,
-   partition the leader from the store and assert both that it stopped and that its late write
-   was rejected.
+7. **Validate the affected failure path.** For new or changed election safety, test an isolated
+   store partition or paused holder and assert local admission and the sink invariant separately.
+   Reuse adequate prior evidence; a narrow arithmetic review does not need a live cluster test.
 
 ## Decision block
 
@@ -77,10 +82,10 @@ Elect a leader when:
 - a duplicate run is expensive and the work can be fenced or made idempotent
 - one instance's throughput is sufficient for the whole workload, now and after growth
 Avoid electing when:
-- the work is already idempotent and safe on every replica: coordination buys nothing
-- one instance cannot keep up — a leader does not scale, and adding replicas adds standbys,
-  not capacity
-- the failover window (lease + election + warm-up) is longer than the work's tolerance for
+- the work is safe under repeated concurrent execution and duplicate load/cost is acceptable,
+  so the singleton has no remaining operational purpose
+- one worker cannot keep up and the elected role cannot delegate partitioned work
+- the failover window (detection/remaining grant + election + recovery/warm-up) exceeds the tolerance for
   having no owner
 Prefer instead when:
 - the work is per-key and the key space can be split: partitioned ownership gives one owner per
@@ -114,15 +119,17 @@ Prefer instead when:
   With an exclusive lease, a successor may need to wait up to the remaining duration, not at
   least the full lease. Session failure detectors may react earlier. Measure time to first
   correct useful result, not time to set a leader flag.
-- The lease-length trade is explicit: **short leases give fast failover and false failovers**
-  under a GC pause or a network blip, each of which costs a warm-up and a burst of churn; long
-  leases give stability and a longer outage. Pick from the pause distribution and the budget.
+- The lease-length trade is explicit: short leases can reduce detection delay and increase
+  false failovers under pauses or network blips; longer leases can reduce churn but delay recovery.
+  Use measured distributions and the failover budget to choose an operating point, not to prove
+  exclusive effects. Observed maxima do not bound future pauses or delayed requests.
 - **ShedLock and equivalents are not leader election.** They are "do not run this twice"
   mechanisms built on a database row with an expiry (`lockAtMostFor`), and the expiry is a lease
   with the usual defect: a node still executing after it expires is not stopped, and there is no
   fencing token. That is _adequate_ for a job that is idempotent or tolerant of a skipped or
   duplicated run, and _not_ adequate when a second concurrent run corrupts data — set
-  `lockAtMostFor` above the job's worst observed duration and treat overlap as possible anyway.
+  `lockAtMostFor` from the job-duration evidence and justified margin, and treat overlap as possible
+  even when no observed run has exceeded it.
 - The Kubernetes `Lease` object is a renewable record of a holder identity and a duration, and
   the basis of the lease-based election controllers use. Same property: it establishes who
   _should_ lead and does not stop a stalled former holder from writing.
@@ -146,6 +153,10 @@ after the new term is installed at that sink; it does not itself reject every po
 write. Establish the sink's authority transition before successor work, or atomically validate
 current authority with the effect when strict expiry exclusion is required. If a sink cannot
 enforce or tolerate the required invariant, election alone is insufficient.
+
+For a review, return the affected invariant, supporting evidence, any gap and the smallest
+correction/check. Separate observed timing from assumptions and unexecuted scenarios; a supported
+no-change conclusion is sufficient when the current design meets its contract.
 
 ## References
 

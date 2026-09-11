@@ -34,8 +34,8 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
    branch on are often data—a sealed result can make handling explicit. Exceptions suit rare
    failures where stack unwinding is useful. Programming errors are normally unchecked and
    fail-fast; catch only at a boundary/cleanup point with a concrete policy.
-3. **Size the hierarchy from the handlers.** Introduce a type only where some real catch
-   block needs to distinguish it; attach everything else as fields on fewer types.
+3. **Size the hierarchy from the handlers and public contract.** Introduce a type where a
+   handling policy or supported semantic distinction needs it; attach other facts as fields.
 4. **Define the translation at each layer boundary**: which lower-level exceptions cross
    unchanged, which are wrapped — always constructed with the original as cause.
 5. **Verify the surface**: every `catch` handles, translates or rethrows; causes and suppressed
@@ -45,9 +45,9 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
 
 - Checked exceptions are useful when the supported caller population should be forced to
   acknowledge/recover/translate a condition. They become costly through intermediate layers and
-  broad APIs, and compose poorly with lambdas and streams (`Function` and friends declare no `throws`),
-  so a checked exception on a frequently mapped-over API forces a wrapper at every call
-  site. That is the trade, not a law: a checked exception on a narrow, directly-called
+  broad APIs. Standard `Function` and similar interfaces do not declare checked exceptions,
+  so those boundaries need handling or adaptation, which may be reusable. A throwing functional
+  interface can fit an API you control. A checked exception on a narrow, directly-called
   API whose caller genuinely branches on it is still legitimate.
 - Unchecked is conventional for programming errors and many framework/domain APIs, but
   it moves discovery away from checked-call-site enforcement to documentation, tests and
@@ -55,10 +55,10 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
   failure modes belong in its Javadoc `@throws`.
 - Preserve the cause when translating: `throw new PaymentFailedException(msg, e)`. Building a
   new exception from `e.getMessage()` discards the stack trace and the causal chain —
-  the most expensive information loss there is in production debugging.
-- Messages carry the failing values: id, state, limit and actual. "amount exceeds limit"
-  costs a log-diving session; "amount 1050.00 exceeds limit 1000.00 for account 8291"
-  does not. Never include credentials, tokens or full card numbers.
+  useful evidence for production debugging.
+- Messages carry bounded context approved for their audience: a safe id, state or limit can
+  explain the failed condition. Do not assume account identifiers, amounts or upstream text
+  are safe merely because they are not credentials; never include tokens or full card numbers.
 - Expose typed failure facts—transport phase, status/code, `Retry-After`, whether the remote
   outcome is known—not a universal `isRetryable` verdict. Retry is decided by combining those
   facts with operation idempotency/deduplication, attempt budget, deadline and load policy. A
@@ -76,9 +76,9 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
   owning boundary record the failure; duplicate stack traces inflate cost/cardinality and obscure
   the causal event. Metrics may be emitted at a stable classification boundary without logging
   sensitive payloads.
-- Exceptions capture stack state and are expensive when thrown at high frequency. Do not use them
-  for routine per-element branching on hot paths; model frequent outcomes as data and verify with a
-  profile. Do not depend on VM fast-throw/omitted-stack optimizations for correctness or diagnosis.
+- Exception construction normally captures stack state; frequent creation/throwing can be costly.
+  On a measured hot path, compare data outcomes with the existing exception contract and profile
+  the result. Do not depend on VM fast-throw/omitted-stack optimizations for correctness or diagnosis.
 - `CompletionException`/`ExecutionException` are transport wrappers, not domain vocabulary.
   Inspect and translate at the async boundary without discarding the original cause; preserve
   cancellation distinctly. Avoid recursive “unwrap until unknown” utilities that erase which
@@ -86,14 +86,16 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
 - Keep detailed causes and diagnostic fields inside the trust boundary. HTTP/RPC responses expose a
   stable error code and safe message/correlation id, not stack traces, SQL, filesystem paths or
   upstream response bodies. java-serialization-hardening owns hostile serialized exception graphs.
-- A method that throws leaves its receiver as it found it: validate before mutating, order the
-  unfailable mutation last, or build the new state and install it with one assignment. Where
-  that is deliberately not true — a batch that keeps partial progress — say so in the Javadoc.
+- Where the contract promises unchanged state on failure, validate before mutating, order the
+  unfailable mutation last, or build the new state and install it with one assignment. Explicitly
+  specify alternatives such as partial progress or an invalidated/closed receiver when they fit
+  the operation; throwing alone establishes none of these outcomes.
   In-memory atomicity is not transactional atomicity and neither is atomicity across a network.
 
 - Treat interruption/cancellation as control flow, not ordinary transient failure. Propagate
-  `InterruptedException` when the API permits; if converting to an unchecked outcome, restore the
-  interrupt flag and ensure retry loops stop. Do not relabel it as a retryable dependency outage.
+  `InterruptedException` when the API permits; if converting for an outer owner, restore the
+  interrupt flag and ensure retry loops stop. A terminal task owner may consume it after cleanup
+  and termination. Do not relabel it as a retryable dependency outage.
 
 ## Deliverable
 

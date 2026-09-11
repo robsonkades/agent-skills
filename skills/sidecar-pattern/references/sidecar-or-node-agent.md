@@ -8,12 +8,12 @@ table when it should be.
 
 | Option                     | Select it when                                                                                                                                                    | Costs you                                                                                                             |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Library, in process**    | One or two languages, you own every call site, the capability is on the hot path, and the latency budget is tight                                                 | A dependency in every service, coordinated upgrades, no isolation — a bug in it is a bug in the app process           |
+| **Library, in process**    | A maintained implementation covers the required languages/call sites, ownership and isolation permit it, and its path cost fits the budget                        | A dependency in every service, coordinated upgrades, no process isolation — a bug in it can affect the app process    |
 | **Sidecar, per pod**       | Separate per-Pod process/lifecycle is justified by language coverage, isolation or policy; workload identity alone does not decide placement                      | Memory and CPU per replica, a loopback hop, a second image to patch, an ordering problem, a second thing on the graph |
 | **Node agent (DaemonSet)** | The input is already at the node boundary (stdout, cgroup metrics, host network) and required workload identity/policy can be isolated and enforced by that agent | One agent's failure affects every pod on the node; noisy-neighbour coupling; usually needs elevated host access       |
 | **Nothing new**            | The platform already meets the requirement, or expected benefit does not justify cost; no past incident alone does not invalidate preventive controls             | Residual risk and continued reliance on existing controls; state what is accepted                                     |
 
-## The arithmetic that usually decides it
+## Resource arithmetic within the hard constraints
 
 Per-pod cost scales with replicas; per-node cost scales with nodes. For a fleet of 40
 services at an average of 8 replicas on 25 nodes:
@@ -24,7 +24,8 @@ node agent at 512 MiB:     25 × 512 MiB ≈ 12.5 GiB
 ```
 
 The illustrative sidecar total is 3.2 times the agent total; actual growth depends on node
-and replica scaling, packing and workload. A node agent can maintain distinct workload
+and replica scaling, packing and workload. These are assumed per-instance costs, not measurements
+or proof either placement satisfies capacity, privilege or failure constraints. A node agent can maintain distinct workload
 identities; it must prove isolation, credential protection and policy attribution. Do not
 confuse one agent per node with one shared identity for all workloads.
 
@@ -38,11 +39,13 @@ cores of requested capacity across that fleet whether or not it is used.
   sidecar image in an existing supported Pod can restart that container only; inspect the
   actual controller/update mechanism and compatibility.
 - **Image sprawl.** Every pod spec grows a container block. Left to teams, the sidecar list
-  diverges — three versions of the same proxy in one namespace is the normal end state
-  without an admission-time injector to own it.
+  can diverge. Give version/configuration ownership an effective mechanism: a supported injector,
+  controller or managed template may fit. Injection is not the only way to maintain consistency.
 - **A hop, priced honestly.** Connection reuse, scheduling, serialization, TLS and policy
-  processing determine cost; no generic microsecond range is a capacity input. Measure with an
-  open-loop client; the aggregation discipline is `latency-statistics`.
+  processing determine cost; no generic microsecond range is a capacity input. Measure with a
+  workload model matching production: independent arrivals need offered/start/outcome evidence,
+  while a real completion-paced population can use a closed model. The aggregation discipline
+  is `latency-statistics`.
 - **A wider blast radius per pod.** Two processes that can each fail means the pod's
   availability requires joint success when both are required. Multiplying availabilities
   assumes independent failures and aligned definitions; shared nodes/resources correlate
@@ -50,19 +53,21 @@ cores of requested capacity across that fleet whether or not it is used.
 - **Debugging cost.** Every incident now begins with "which container?" — and that question is
   only cheap if the logs and metrics were labelled by container from the start.
 
-## Log shipping, the case that is usually decided wrong
+## Log shipping and placement
 
-A per-pod log sidecar tailing a shared `emptyDir` is the textbook example and is the wrong
-default in most fleets: the app must write to a file instead of stdout, the volume can fill,
-and you pay a shipper per replica. If the application can write to stdout, the container
-runtime already collects it and a node agent reads it once per node. Choose the sidecar form
-only when the app cannot be made to write to stdout, when a single pod's log volume is large
-enough to hurt the shared node agent, or when per-pod parsing rules differ. The normalisation
-question inside that decision belongs to `adapter-sidecar-pattern`.
+A per-pod log sidecar tailing a shared `emptyDir` requires a file path, bounded volume/rotation
+and a shipper per replica. If the application can write to stdout and an existing node collector
+meets the contract, retain that path. Per-Pod parsing differences alone do not require per-Pod
+placement: an agent may already route by workload with adequate isolation and capacity. Choose
+a sidecar when an actual access, capability, ownership, isolation or capacity constraint justifies
+it, and account for volume-full, outage and flush behavior. The normalisation contract belongs
+to `adapter-sidecar-pattern`.
 
 ## Reviewing an existing sidecar
 
-Ask these against the running system, not the design document:
+Use the questions relevant to the review. Source/configuration can support a narrow contract
+explanation; incident, cost and performance claims need corresponding runtime evidence. Keep an
+adequate placement when its requirements are met.
 
 - What is the sidecar's effect on request latency under a representative workload? Use
   matched traces or controlled comparisons; subtracting unrelated p99 values does not yield
@@ -72,12 +77,13 @@ Ask these against the running system, not the design document:
 - What is its memory working set versus its request? A request set to a round number nobody
   measured is how a fleet loses tens of gibibytes.
 - If the sidecar were stopped right now, what would the app do — fail closed, fail open, or
-  hang? A "hang" answer means a missing timeout, not a missing sidecar.
+  hang? For a hang, inspect waits, deadlines and cancellation/recovery behavior before assigning
+  a cause; a configured timeout may not cover the blocked phase.
 - Is there a second sidecar doing an overlapping job (two log shippers, a mesh proxy plus a
   hand-rolled proxy)? Overlap is the signal that policy now lives in two places.
 
 ## Primary example
 
-- [Istio ztunnel architecture](https://github.com/istio/istio/blob/master/architecture/ambient/ztunnel.md)
+- [Istio 1.25.0 ztunnel architecture](https://github.com/istio/istio/blob/1.25.0/architecture/ambient/ztunnel.md)
   illustrates a node proxy selecting workload credentials; per-workload identity does not
   inherently require a per-Pod proxy. Verify the deployed implementation and policy scope.

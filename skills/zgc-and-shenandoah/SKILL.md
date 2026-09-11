@@ -30,12 +30,18 @@ the pod had no spare cores to pay for them in the first place.
 
 Use JDK 25 HotSpot as the examples' baseline, then inspect the deployed vendor/build, OS/architecture,
 container settings and effective flags. Collector inclusion is a build choice; a product JEP does
-not guarantee every distribution supplies that collector. Smoke-test the actual binary before
-planning a workload experiment. Do not upgrade the runtime merely to match this guide.
+not guarantee every distribution supplies that collector. Establish actual binary support before
+planning a workload experiment, reusing sufficient existing evidence. Do not upgrade the runtime
+merely to match this guide.
+
+Follow the steps relevant to the requested claim. A flag/API explanation, supplied-log review or
+adequate existing configuration can close without a new capture, migration or benchmark. Missing
+measurements limit the claims that require them; preserve independent conclusions and already
+authorized mitigation through a validated recovery path.
 
 1. **Separate the three cost axes before reading any number.** STW pause, concurrent work
-   (CPU while the application runs), and per-access barrier overhead. Conflating them is the
-   most common source of a wrong conclusion about these collectors.
+   (CPU while the application runs), and per-access barrier overhead. Conflating them can
+   lead to wrong conclusions about these collectors.
 2. **Check effective CPU quota, throttling and topology in the target environment.** Small
    quotas increase contention, but no core-count threshold selects a collector. Compare
    throughput and tail latency under the actual quota and overload policy.
@@ -45,7 +51,8 @@ planning a workload experiment. Do not upgrade the runtime merely to match this 
    `gc+init` logs and `jcmd <pid> VM.flags -all`; plain `VM.flags` can omit defaults.
 4. **Audit every carried flag.** G1-specific flags may remain accepted yet be inert under
    another collector, while global flags can still apply. Prove effective relevance from
-   startup logs/flag metadata and remove only with a before/after launch and workload check.
+   matching source/flag metadata and startup evidence. Validate removal against its actual risk;
+   a proven inert-option cleanup need not run a workload benchmark or claim a performance benefit.
 5. **Capture logs per cycle/generation (where applicable) and phase** with
    `-Xlog:gc*,gc+phases=debug`, and read
    pauses separately from concurrent phase durations. See
@@ -71,12 +78,14 @@ planning a workload experiment. Do not upgrade the runtime merely to match this 
 - Shenandoah's load-reference barrier resolves forwarded references; its fast/slow paths and
   barrier set depend on mode and GC state. ZGC uses colored pointers and load/store barriers.
   Avoid universal branch/cycle claims: inspect generated code/profiles on the target build.
-- Classic Shenandoah layouts reserve forwarding metadata per object in the heap. Quantify the
-  effective heap/live-set cost from collector accounting and the target object mix; JOL's
-  ordinary shallow instance size need not include collector-private allocation overhead.
-- ZGC generational adds a **store barrier** on top of the load barrier, to maintain
-  per-page remembered sets for old→young references. That is real extra per-access cost
-  traded for young-allocation throughput.
+- On the JDK 25 baseline, Shenandoah forwarding uses the object's mark word; do not charge
+  every object a historical extra forwarding word. Quantify effective heap/live-set and native
+  costs from collector accounting and the target object mix; JOL's shallow instance size is
+  not the whole collector memory budget.
+- Generational ZGC uses **store barriers** for per-page remembered sets and marking work while
+  reducing load-barrier responsibilities. Fast paths, conditional remembered-set work and buffered slow
+  paths change the cost shape; there is no fixed added tax to multiply by every access. Attribute
+  actual cost on the target build/workload before claiming a regression or benefit.
 - Do not size a ZGC container from one `ps`/`top` RSS sample or from folklore about legacy
   heap multi-mapping. Multi-mapping history is not the same change as JEP 490's JDK 24 removal
   of non-generational ZGC. Reconcile target-build RSS/PSS, cgroup `memory.current`, heap
@@ -85,24 +94,31 @@ planning a workload experiment. Do not upgrade the runtime merely to match this 
   `ConcGCThreads`, CPU quota and allocation spikes interact; a copied knob can trade mutator
   CPU for fewer stalls or merely hide a capacity defect.
 - Use an arrival model that represents production and correct coordinated omission when
-  relevant. Report throughput, offered/achieved load, CPU throttling, allocation rate,
-  pause/stall distributions and p50/p99/p99.9/max. A JMH comparison can expose workload cost
+  relevant. For a measured performance claim, report the relevant throughput, offered/achieved
+  load, CPU throttling, allocation rate and pause/stall distributions with exposure, counts and
+  estimator limits. Select tail statistics needed for the decision; missing or insufficient
+  samples are not zero latency. A JMH comparison can expose workload cost
   but cannot isolate “barrier overhead” merely by changing collectors.
 
 ## Production acceptance
 
-- Exercise steady state, burst, live-set growth, large allocation, redeploy and CPU-throttle
-  scenarios. Set acceptable pause/stall/pacing and fallback behavior from the SLO; Shenandoah
+- For an adoption or material tuning claim, cover the affected steady-state, burst, live-set,
+  large-allocation, redeploy and CPU-throttle risks using sufficient existing or new evidence.
+  Set acceptable pause/stall/pacing and fallback behavior from the SLO; Shenandoah
   pacing can be normal allocation control, not automatically a failed migration. Distinguish
   pacing delay from degeneration/full fallback and inspect any consequential regression.
-- Compare declared collector modes and effective flags on the same JDK build/quota; include
-  warm-up and confidence/repetition rather than a single run.
+- For an isolated collector comparison, hold material factors such as build/quota comparable;
+  for a deliberately changed capacity scenario, declare those factors and limit the conclusion
+  accordingly. Include relevant warm-up and uncertainty/repetition rather than overgeneralizing
+  a single run.
 - Set rollback on SLO, achieved throughput, CPU throttling and memory headroom. Preserve GC,
   safepoint and OS/cgroup evidence for every failed run.
 
-Return the exact build/mode/flags, measured pause versus concurrent wall time and CPU evidence,
-the supported bottleneck hypothesis, proposed adjustment, and validation/rollback criteria.
-If measurements are missing, propose a bounded experiment rather than presenting a tuning fix.
+Return the supported answer or change/no-change decision, relevant build/mode/flags, evidence
+and limits. A measured diagnosis distinguishes pauses, concurrent wall time and CPU; a proposed
+change includes its relevant validation and recovery criteria. When material evidence is missing,
+name the smallest discriminating check without inventing measurements or withholding independent
+source/log conclusions.
 
 ## References
 
@@ -117,4 +133,4 @@ If measurements are missing, propose a bounded experiment rather than presenting
 
 Authoritative sources: [JEP 474](https://openjdk.org/jeps/474),
 [JEP 490](https://openjdk.org/jeps/490), [JEP 521](https://openjdk.org/jeps/521), and
-[Oracle JDK 25 ZGC guide](https://docs.oracle.com/en/java/javase/25/gctuning/z-garbage-collector.html).
+[Oracle JDK 25 ZGC guide](https://docs.oracle.com/en/java/javase/25/gctuning/z-garbage-collector1.html).

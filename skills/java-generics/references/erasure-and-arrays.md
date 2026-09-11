@@ -6,7 +6,7 @@ At compile time `List<String>` and `List<Integer>` are different types. At runti
 of the same implementation class need not carry distinct element arguments. Explicit type
 tokens and declaration metadata can still retain `String`. Consequences for this skill:
 
-The `instanceof List<String>` rejection below assumes an `Object` operand. Newer Java can
+The `instanceof List<String>` rejection below assumes an `Object` operand. Java 16+ can
 permit some parameterized type tests when the operand's static type already makes the
 conversion checkable; that still does not inspect list elements at runtime.
 
@@ -58,7 +58,8 @@ Every unchecked warning names an operation the compiler cannot verify. The order
 
 1. **Parameterise.** Most warnings come from a raw type or a missing type argument somewhere
    up the call chain. Fix the declaration and the warning disappears from all its uses.
-2. **Replace an array with a list.** `T[]` fields are the second largest source.
+2. **Check array representation.** A list may remove an unchecked `T[]` workaround; retain a
+   correctly reified array when its API/ownership contract warrants it.
 3. **Use a type token.** When the type genuinely arrives at runtime (deserialisation,
    reflection, a plugin registry), a `Class<T>` and `type.cast(...)` turn an unchecked cast
    into a checked one.
@@ -84,8 +85,8 @@ variable so that it can.
 ## Arrays and generics do not mix
 
 Arrays are **covariant** and **reified**; generics are **invariant** and **erased**. Both
-choices are defensible; combined they are unsound, so the language forbids the combination —
-mostly.
+choices are defensible. The runtime cannot check non-reifiable component arguments, so Java
+restricts array creation; reifiable arrays and carefully confined representations remain useful.
 
 ```java
 Object[] objects = new String[1];
@@ -107,9 +108,10 @@ public class Stack<E> {
 }
 ```
 
-This is safe **only while the array does not escape**. Returning it, storing it in a public
-field, or passing it to a caller as `E[]` results in `ClassCastException` at the caller's
-implicit cast (`Object[]` cannot be assigned to `String[]`). Keep the array private, or hold
+This proof relies on confinement and storing only `E`. An exposed `Object[]` alias could write
+the wrong element type; exposing the array as `E[]` can also fail when a caller requires a more specific
+array class (`Object[]` cannot be assigned to `String[]`; an `Object[]` consumer need not fail).
+Keep the array private, or hold
 `Object[]` and cast each element on the way out.
 
 ## Heap pollution and generic varargs
@@ -139,8 +141,10 @@ the varargs array. Strong sufficient rules are:
 Given a proof, annotate it to suppress declaration/call-site warnings. `@SafeVarargs` is permitted
 on constructors and on `static`, `final` and `private` instance methods, because an overridable
 instance method cannot promise anything about its overrides. The
-alternative — often better — is to take a `List<T>` parameter instead and let callers use
-`List.of(...)`, which loses nothing and removes the whole category.
+alternative is a collection parameter with appropriate variance, when its caller contract fits.
+`List.of(...)` rejects null elements and returns an unmodifiable list; replacing a public varargs
+API can also change source/binary compatibility, aliasing or snapshot behavior. Preserve an
+adequate audited varargs API rather than treating a collection conversion as lossless.
 
 ## Where erasure meets the network
 
@@ -161,9 +165,8 @@ List<OrderLine> lines = mapper.readValue(json, new TypeReference<List<OrderLine>
 ```
 
 Both work by capturing the type argument in an **anonymous subclass**, whose generic
-supertype _is_ recorded in the class file — the one place erasure leaks type arguments back
-at runtime. The same trick underlies typesafe heterogeneous containers for parameterised
-types.
+supertype _is_ recorded in the class file. This is declaration metadata, not reified validation
+of the object's elements. The same technique can support containers for parameterised types.
 
 The related failure is a cache or a shared map that hands back a `List<String>` written by
 another code path as a `List<Long>`. Nothing checks it, and the exception surfaces in the
@@ -175,3 +178,5 @@ element (and nested structure) at the boundary, copying when untrusted mutable a
 
 - [JLS 21 §4.6–4.8: erasure, reifiable and raw types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6)
 - [Java 21 Class.cast](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html#cast(java.lang.Object)>)
+- [Java 21 SafeVarargs contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/SafeVarargs.html)
+- [Java 21 List factories and their null/mutation contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html)

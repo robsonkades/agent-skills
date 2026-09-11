@@ -44,7 +44,7 @@ IS:     a collection-like interface over domain objects
 IS NOT: a per-table data access object
         a home for business operations
         a requirement that every reporting/screen query hydrate an aggregate
-        a portability layer over the database
+        an automatic guarantee of database portability
 ```
 
 ## Workflow
@@ -54,14 +54,18 @@ and the existing mapping model before recommending APIs. The examples are partia
 source shapes with application types omitted, not a complete Spring project. Spring metadata
 guidance was checked against Spring Data JPA 4.1.1 documentation. Adapt to the
 project baseline without adding libraries or upgrading Java for the example. Return the
-chosen write/read contract, object lifetime, transaction boundary and checks needed to prove it.
+supported keep/change decision and its material evidence/limits. For a changed boundary,
+include the affected write/read contract, object lifetime, transaction boundary and checks
+needed to verify it. A narrow review can reuse adequate evidence without a full mapping or
+database campaign.
 
 1. **Identify aggregate consistency boundaries.** A repository is normally per aggregate root.
    Dedicated child/query gateways may exist for bulk operations or read models without granting
    independent domain mutation (`domain-logic-organization`).
-2. **Write the interface in the domain's language**, in domain types: `Orders.byId`,
-   `Orders.overdueFor(customer)`, `Orders.save`. Not `OrderJpaRepository` with
-   `findAllByStatusIn`.
+2. **Establish the intended dependency contract.** For a framework-independent domain port,
+   use domain language/types: `Orders.byId`, `Orders.overdueFor(customer)`, `Orders.save`.
+   An intentionally framework-coupled application API can be valid; retain useful error,
+   lifecycle or testing seams and document the coupling rather than assume independence.
 3. **Choose the read path deliberately.** Screens and reports can use projections or query
    gateways when aggregate loading is unsuitable. Spring Data projection methods or a small
    shared interface can also be appropriate; separation is a design choice, not the definition
@@ -98,9 +102,9 @@ A CRUD module: no invariants, entity ≈ table, no aggregate
 
 A domain-owned interface with a single adapter implementation whose
 methods are identical to Spring Data's
-        → the wrapper is indirection unless it is doing something: type
-          translation, hiding framework types, or narrowing the surface.
-          Narrowing IS a real justification; identical signatures are not.
+        → inspect the contract: capability narrowing, dependency ownership,
+          stable testing/error/lifecycle seams or interception can justify it.
+          Identical signatures alone neither justify nor invalidate the boundary.
 
 A "generic repository" with type parameters serving every entity
         → reject a mandatory broad CRUD surface for unrelated aggregates.
@@ -108,8 +112,9 @@ A "generic repository" with type parameters serving every entity
           domain-specific interfaces; judge the exposed capabilities.
 
 Bulk or set-based work over the aggregate's table
-        → a gateway with SQL, named as such, with its interaction with
-          versioning and the persistence context handled explicitly
+        → an explicit bulk contract implemented with supported JPQL/Criteria,
+          SQL or another suitable API. Preserve domain eligibility/effects,
+          versioning and persistence-context semantics
           (offline-concurrency-control).
 ```
 
@@ -127,9 +132,10 @@ Bulk or set-based work over the aggregate's table
   for hidden eligibility, transition and event rules; the verb alone is not proof. A bulk
   adapter may execute a domain-defined operation only with equivalent invariant/concurrency
   and effect semantics explicitly established.
-- **Do not leak persistence types through the interface.** `Pageable`, `Specification`,
+- **Honor the intended dependency boundary.** `Pageable`, `Specification`,
   `Sort`, `EntityManager`, `Page` in a domain-owned interface mean the domain now depends on
-  persistence frameworks, undermining the intended dependency boundary.
+  persistence frameworks. They violate a framework-independent port contract; an explicitly
+  accepted framework-coupled API has different trade-offs and may still provide a useful seam.
 - Managed domain entities within a transactional use case are a valid JPA choice. Document
   dirty checking versus explicit save, detached results and lazy-access boundaries; transaction
   completion alone does not always end an extended persistence context. Map outward-facing
@@ -137,8 +143,10 @@ Bulk or set-based work over the aggregate's table
 - Reads and writes have different requirements and may legitimately use different paths.
   Measure query counts, fetched rows/bytes and hydration before attributing slow screens to
   the repository structure (`architecture-and-performance`).
-- `existsBy(...)` followed by `save(...)` is a race, not a check. Uniqueness is enforced by
-  a constraint; the repository call only produces a better error message
+- `existsBy(...)` followed by `save(...)` can race unless a verified protocol serializes
+  all relevant contenders across the complete check/write/commit boundary. Prefer a database
+  constraint for database-owned uniqueness with the required normalization/null semantics;
+  a precheck alone is advisory, and serialization/retry assumptions need evidence
   (`enterprise-transactions`).
 - Repositories may provide local transaction defaults, but an outer application transaction usually
   joins/overrides them under `REQUIRED`. Without an outer boundary, two sequential repository calls

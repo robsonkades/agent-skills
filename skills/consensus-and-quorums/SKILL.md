@@ -49,12 +49,14 @@ a reference. Missing membership, durability or read-contract evidence prevents a
    replication, durable-log latency, batching and the fastest quorum. Placement sets correlated
    failure tolerance and latency (`references/quorum-arithmetic.md`).
 4. **Decide, in writing, what each side of a partition does.** The minority side cannot form a
-   quorum and therefore cannot make progress; that is the design working, not an outage to
-   engineer around. CAP itself is `consistency-models`.
+   quorum for new consensus decisions; separately specify any permitted stale/local reads.
+   Do not bypass quorum safety to restore writes. CAP itself is `consistency-models`.
 5. **Choose product-specific read semantics per call site.** etcd linearizable and serializable
    reads differ; ZooKeeper member-local reads are not linearizable. Measure the actual path.
-6. **Keep traffic-proportional business data out and avoid synchronous coordination per request.** Cache the decision locally,
-   with a defined behaviour for "store unreachable" (`references/coordination-stores.md`).
+6. **Keep business traffic off the coordination path by default.** A synchronous dependency
+   needs a measured rate/retention/latency case and accepted outage behaviour. Cache a decision
+   only when its freshness and authority contract permits it; some decisions must fail closed
+   instead (`references/coordination-stores.md`).
 7. **Exercise failure behaviour in an isolated cluster.** With `2f+1` voters, remove `f` and
    assert eventual write progress within the recovery budget. Remove `f+1` and verify newly
    initiated writes cannot be acknowledged as committed without a quorum. In-flight writes
@@ -70,10 +72,11 @@ Use a consensus-backed coordination store when:
 - decisions are small and their measured rate/retention fit the product's tested envelope
 - you can tolerate the store being unavailable for the duration of an election
 Avoid it when:
-- the data is application state, an event stream, or anything whose volume grows with traffic
-- the write rate scales with request rate — every write is a majority round trip
-- it would sit on the synchronous request path with no cached fallback, making its availability
-  a hard multiplier on yours
+- bulk business state or event history exceeds the tested storage/retention envelope or belongs
+  in an existing database/broker
+- request-proportional writes have no capacity case for the quorum/durability path
+- request success would depend on the store but its latency/outage behaviour cannot meet the
+  accepted contract; a stale cached fallback is not automatically safe or required
 Prefer instead when:
 - the decision is a single-key compare-and-swap and the existing database's atomicity,
   durability and failover contract meet the need: use its conditional write rather than
@@ -127,7 +130,7 @@ Prefer instead when:
   the holder can believe it holds a grant the cluster has already regranted. Do not assume a
   synchronized ensemble clock. That gap is `distributed-locks-and-leases`.
 - A compare-and-swap has three outcomes. An acknowledged failed comparison is "rejected";
-  a timeout means unknown — it may have applied with only the response lost. Reconcile the
+  a timeout or other nondefinitive error means unknown — it may have applied. Reconcile the
   unique attempt with supported strong reads/history; retain unknown if evidence is ambiguous
   (`failure-models`). A matching holder name alone does not establish current authority.
 

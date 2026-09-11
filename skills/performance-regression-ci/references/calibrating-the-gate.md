@@ -5,13 +5,15 @@
 Calibration asks whether the experiment can make the required decision at tolerable error
 and cost. It does not begin by measuring a range and multiplying it.
 
-Record:
+For a new or changed gate, record the applicable fields below. Reuse an existing calibration
+when its rule, workload and environment still support the requested claim; a narrow formula
+or artifact review need not acquire new trials.
 
 ```text
 metric and direction:
 decision-relevant configurations:
 smallest practically important regression (MPIR):
-absolute guardrail:
+absolute guardrail, if required by the decision:
 maximum false-block probability:
 desired power at a declared effect above MPIR; decision rates at the margin:
 maximum inconclusive rate:
@@ -34,8 +36,9 @@ components; it is not proof that future environments are stationary.
 ### Injected effects
 
 Create known perturbations around the MPIR: for example deterministic extra work, a disabled
-optimization, or a controlled allocation increase. Verify with a profiler that the injection
-changes the intended mechanism rather than merely sleeping or measuring a timer artifact.
+optimization, or a controlled allocation increase. Verify that the injection changes the
+intended mechanism rather than merely sleeping or measuring a timer artifact. Use adequate
+deterministic work/counter evidence, or a targeted profiler when that mechanism remains uncertain.
 These runs estimate detection power and exercise the complete workflow.
 
 ### Experimental blocks
@@ -87,6 +90,12 @@ For positive scores, log ratios are often convenient: they model multiplicative 
 map back to percentages. For metrics that can be zero/negative or have censored/timeout
 values, use a domain model rather than adding an arbitrary epsilon.
 
+Keep the effect, interval and margin on the same scale. For a positive-worse log ratio `l`,
+the corresponding relative effect is `expm1(l)` and a relative margin `M` becomes `log1p(M)`.
+A 5% throughput loss has inverse-relative margin `1 / 0.95 - 1` and log margin `-log(0.95)`;
+neither is the unconverted value `0.05`. These are transformations of the declared effect,
+not a license to change the metric's estimand or average incompatible populations.
+
 ### Non-inferiority interpretation
 
 Let `d` be normalized so positive is worse and let `[L, U]` be the declared uncertainty
@@ -114,7 +123,7 @@ benchmark, and rerunning until a preferred result all change those rates.
 
 ## What JMH `scoreError` does and does not establish
 
-For AVG aggregation, current OpenJDK JMH `Result.getScoreError()` delegates to
+For AVG aggregation, OpenJDK JMH 1.37 `Result.getScoreError()` delegates to
 `statistics.getMeanErrorAt(0.999)`; `getScoreConfidence()` uses the corresponding 0.999
 confidence interval. Other aggregation policies can return `NaN` for score error. Verify the
 source for the pinned JMH release rather than encoding “99.9% forever” as a platform law.
@@ -168,10 +177,12 @@ dataset, and harness changes. Watch for:
 - host-specific clusters;
 - survivor bias when failed/timeout runs disappear from history.
 
-A green trunk run is necessary but not sufficient for promotion: if every merge becomes the
-new baseline, small regressions can compound. Keep immutable history and either a champion
-baseline or absolute guardrail alongside recent-history comparison. Expire baselines by
-policy and start a recorded calibration epoch after incompatible changes.
+Promotion must satisfy the trusted policy's evidence and authority requirements; a green
+run alone is insufficient. A policy may deliberately accept a changed performance budget
+with a recorded decision rather than require the old gate to pass. If every merge becomes
+the new baseline, small regressions can compound. Where cumulative degradation matters, use
+a champion, absolute budget or other calibrated trend policy alongside recent history.
+Retain immutable history and apply the declared baseline validity/review and epoch policy.
 
 ## Edge cases
 
@@ -189,7 +200,11 @@ policy and start a recorded calibration epoch after incompatible changes.
 
 ## Calibration checklist
 
-- [ ] MPIR and absolute guardrail trace to a product or operating consequence.
+Use this checklist for the calibration being claimed, not as a mandatory new campaign for
+every review. Simulation can assess a decision rule; actual trial and pipeline evidence is
+needed for claims about injected mechanisms and end-to-end operation.
+
+- [ ] MPIR and any required absolute guardrail trace to a product or operating consequence.
 - [ ] Independent unit, blocks, ordering, and carry-over controls are explicit.
 - [ ] Null and injected-effect trials exercise the same pipeline used for decisions.
 - [ ] False-block rate, power, inconclusive rate, and cost meet declared bounds.
@@ -200,6 +215,6 @@ policy and start a recorded calibration epoch after incompatible changes.
 ## Authoritative references
 
 - [OpenJDK JMH source](https://github.com/openjdk/jmh) — harness implementation and samples.
-- [JMH `Result` implementation](https://github.com/openjdk/jmh/blob/master/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java) — inspect the pinned tag for result semantics.
+- [JMH 1.37 `Result` implementation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java) — reviewed source baseline; inspect the target version for result semantics.
 - [NIST/SEMATECH e-Handbook: process/product comparison](https://www.itl.nist.gov/div898/handbook/prc/prc.htm) — experimental comparison and uncertainty methods.
 - [NIST/SEMATECH e-Handbook: process monitoring](https://www.itl.nist.gov/div898/handbook/pmc/pmc.htm) — control-chart assumptions and process change detection.

@@ -30,6 +30,8 @@ a hot call that was not inlined or an allocation that survived. The mechanism is
 Inspect the target compiler/JDK build, toolchain, flags and directives first; tier 4 denotes
 C2 here only under the stated HotSpot configuration, not when a different compiler is selected.
 JDK 25 observations do not authorize upgrading the project or changing production VM policy.
+Reuse supplied profiles, logs and workload goals; ask only for missing facts that could change
+the diagnosis or permitted action. If the current behavior meets the relevant budget, keep it.
 
 ## Workflow
 
@@ -50,11 +52,13 @@ JDK 25 observations do not authorize upgrading the project or changing productio
    cannot scalarize; or profile-dependent paths excluded from the current graph. Use the
    inlining log and `escape-analysis-internals`; do not infer an escape category from one
    source construct.
-4. **For a non-inlined hot call, pick the fix from the verdict**, not from the flag list:
-   `hot method too big` wants the callee's rare part extracted, `virtual call` wants fewer
-   types at that site, `inlining too deep` wants a flatter chain, `already compiled into a
-big method` means the callee grew. Refactor first; `CompileCommand` to confirm in the lab;
-   a global limit last, measured process-wide. See
+4. **For a non-inlined hot call, use the verdict to choose an experiment**, not as proof a fix
+   is needed: `hot method too big` suggests testing a cold split; `virtual call` needs the
+   actual receiver profile; `inlining too deep` identifies a depth limit. The verdict
+   `already compiled into a big method` concerns its compiled-instruction heuristic, not the
+   whole nmethod size. Compare keeping the call with a
+   semantics-preserving local change or scoped lab directive. A global limit is a last,
+   process-wide experiment. See
    `references/inlining-verdicts-and-fixes.md`.
 5. **Isolate factors in a disposable benchmark fork.** Compare EA/allocation/lock-elision
    switches only as diagnostic experiments; they are global and change many compilations.
@@ -83,7 +87,7 @@ big method` means the callee grew. Refactor first; `CompileCommand` to confirm i
   implementation policy: scope the 8,000-byte observation to JDK/build and check known
   version/policy exceptions in `compilation-and-inlining-logs`.
 - Pooling small objects often adds escape, retention, synchronization/cache traffic and stale
-  state risk. Consider it only for resources with measured construction/lifecycle cost and a
+  state risk. Consider it only with measured allocation/construction/lifecycle benefit and a
   bounded ownership protocol; compare against ordinary allocation plus GC under load.
 - Polymorphic sites can cost through dispatch and lost optimisation. C2 records a bounded
   receiver profile and may guard-inline dominant types; exact width/percent thresholds and
@@ -92,8 +96,10 @@ big method` means the callee grew. Refactor first; `CompileCommand` to confirm i
 - `@ForceInline` and `@DontInline` are unsupported internal annotations. The tested JDK 25
   build honored them only for privileged boot/platform classes; class-path use with exports
   changed nothing. Do not depend on that implementation detail. Application experiments use
-  `-XX:CompileCommand=inline|dontinline`, compiler directives and JMH `@CompilerControl`,
-  and all three are lab tools, not the fix.
+  `-XX:CompileCommand=inline|dontinline`, compiler directives and JMH `@CompilerControl`
+  as diagnostic tools. A justified compiler-bug mitigation is a separate, owned production
+  decision with acceptance evidence, rollback and revalidation; a refusal alone does not
+  authorize removing an existing rule.
 - A lambda/capture, `Optional` or stream is not intrinsically free or allocating. Its
   allocation depends on linkage, caching, inlining, escape and the exact pipeline. Use the
   reference's reproduction cases to test the actual pipeline, never as API cost guarantees.
@@ -122,8 +128,14 @@ big method` means the callee grew. Refactor first; `CompileCommand` to confirm i
 | JDK upgrade changes allocation/code shape              | compare compile logs, bytes/op, CPU and tails                       | pinning an obsolete compiler heuristic forever |
 
 The production acceptance test is not “0 B/op”. Require the same behavior, maintainable code,
-improved relevant SLO/resource metric under realistic concurrency, no code-cache/compile-time
-regression, and stable results across supported JDK/CPU variants.
+an improved relevant SLO/resource metric under representative load, and acceptable
+code-cache/compile-time and supported-runtime risks. Preserve constructor effects, exception
+order, identity and caller contracts when moving work across paths. Report the variants actually
+tested and remaining limits rather than implying an unexecuted matrix passed.
+
+Deliver the target build/compiler, allocation site or caller/BCI and compilation identity,
+observations versus mechanism hypothesis, and the smallest useful next check or justified
+no-change result. An inlining change is not a measured service improvement.
 
 ## Troubleshooting
 

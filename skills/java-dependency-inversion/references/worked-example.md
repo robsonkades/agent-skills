@@ -122,6 +122,12 @@ A DI framework can replace this method and add lifecycle, scopes, conditional as
 diagnostics; for one tiny graph it may not improve clarity. Adopt one for demonstrated graph and
 lifecycle needs, not merely to enable constructor injection.
 
+This sketch also changes the public constructor from `OrderConfirmer()` to
+`OrderConfirmer(ConfirmationSender)`. Update owned callers; published consumers may need a
+compatible facade or a staged migration. Keep the actual isolated policy boundary explicit
+if a legacy entry point still assembles transport. Compiling the policy alone does not prove
+that previously compiled clients or reflective wiring can still construct it.
+
 ## The double that proves the seam
 
 ```java
@@ -153,8 +159,10 @@ closing; a borrowed client must not be closed after each call by policy code.
   allowed to know everything; keep logic out of it.
 - `send` is an external effect. This port says nothing about retry, deduplication, transaction
   boundaries or an ambiguous SMTP outcome. If confirmation state and notification must be
-  reliable together, the application needs an outbox/idempotency design; dependency inversion
-  does not create delivery guarantees.
+  reliable together, establish the required atomicity, delivery and recovery contract and
+  what the existing participants already guarantee before selecting a mechanism such as an
+  outbox. Use `idempotency` when replay must not repeat effects; dependency inversion itself
+  supplies none of those guarantees.
 
 ## Verification
 

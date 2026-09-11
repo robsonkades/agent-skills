@@ -36,6 +36,9 @@ public enum Auditor {
 | 3. holder       | same                                                        | same                                       | deferred until holder class initialization | no                         |
 | 4. enum         | standard reflective construction rejects enum types         | enum deserialization preserves constants   | eager when enum class initializes          | no                         |
 
+The test-substitution column assumes callers use the shown static/enum access directly;
+passing the resulting instance through an injected contract is a separate option.
+
 Serializable forms 1–3 need this to preserve canonical identity, and it is routinely forgotten:
 
 ```java
@@ -64,21 +67,20 @@ configuration discovery inside a holder; make retry/backoff/lifecycle an explici
 
 ## What none of the forms defend against
 
-**Testability.** When used as a collaborator, every form above hard-codes its retrieval into
-callers. Substitution then requires the singleton itself to expose a seam or tests to use static
-mocking. Prefer injecting an interface or concrete class and let the composition root decide
-there is exactly one. "Singleton" then
-describes the _lifecycle a container gives the bean_, not a construction pattern welded into
-the type. This is the same argument as java-dependency-inversion's seam test — apply that
-skill's rule about not inventing an interface with no second implementation.
+**Testability.** Fetching the singleton directly in consumer code hard-codes retrieval. The enum
+or holder can instead supply a collaborator at the composition root, injected through an appropriate
+contract; a container is optional. Decide whether callers need substitution and what lifetime the
+owner supplies. An interface is useful for a real substitution/consumer boundary, not merely because
+the chosen instance is a singleton; java-dependency-inversion owns that boundary decision.
 
-**Scope.** A singleton is one instance per class loader, per JVM. Three consequences that
+**Scope.** A singleton is scoped to its class identity and defining loader in one JVM; loaders that
+delegate to the same defining loader can share that class. Three consequences that
 reach production:
 
 - In a service with `replicas: 3`, a static counter, a static rate limiter, and a
   "run-once" static flag exist independently; routing need not divide traffic evenly. Cluster-wide
-  uniqueness is leader-election or distributed-locks-and-leases; the local object is at most a
-  handle to it.
+  uniqueness needs a mechanism chosen for the actual invariant and failure model; a local object
+  alone establishes no cluster-wide guarantee. Route that choice to distributed-system guidance.
 - In an application-server or plugin deployment, an application redeploy leaves the old class
   loader alive if anything in a _shared_ loader still references an instance of an
   application class — a static registry, a `ThreadLocal` on a pooled container thread, a JDBC
@@ -91,9 +93,9 @@ reach production:
   the actual image/checkpoint policy; startup-cds-crac-leyden and graalvm-native-image own details.
 
 **Concurrency.** `INSTANCE` being final and safely published says nothing about the object's
-methods. A shared instance is by definition reached from every request thread at once, so
-either it is deeply immutable, or every piece of mutable state inside it is guarded — and
-that contract has to be written down where a caller will read it.
+methods. If callers use it concurrently, define how mutable state is protected (or require
+confinement); a singleton need not be concurrent merely because it is unique. State the caller's
+threading and lifetime obligations explicitly.
 
 ## Static mutable state, specifically
 
@@ -134,11 +136,14 @@ the port the JDK already ships.
       is audited for class-init failure, test isolation, image/checkpoint timing and refresh needs.
 - [ ] Anything the code treats as globally unique (a lock, a scheduler that "must run once",
       a sequence) is checked against the replica count; if it must be cluster-unique, it is
-      backed by a lease or an election, not by `static`.
-- [ ] Utility classes have a private constructor that throws, and are `final`.
+      backed by an appropriate distributed invariant/coordination mechanism, not by `static` alone.
+- [ ] Utility classes prevent unintended construction; private constructors suffice for ordinary
+      external access, while throwing bodies and `final` are optional intent/defense choices.
 
 ## Authoritative references
 
 - [JLS §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
 - [Java Object Serialization: enum constants](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants)
-- [ObjectInputStream readResolve model](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/ObjectStreamClass.html)
+- [Serialization §3.7: readResolve](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html#the-readresolve-method)
+- [JLS 21 §8.8.10: Preventing Instantiation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.10)
+- [JVMS §5.3: Creation and Loading](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.3) — class identity includes the defining loader.

@@ -19,10 +19,13 @@ worsen both throughput and tail latency.
 
 ## Workload contract
 
-Record model/version, engine/provider/version, target devices, input shapes and batch distribution,
-pre/post-processing, in-process or remote boundary, session/predictor ownership, engine thread
+Use the request and existing artifacts to identify the affected inference path and decision. For
+capacity or serving design, record model/version, engine/provider/version, target devices,
+input shapes and batch distribution, pre/post-processing, in-process or remote boundary,
+session/predictor ownership, engine thread
 settings, admitted concurrency/queue, warm-up state, latency SLO, useful throughput, heap/RSS/native
-memory and failure/fallback semantics.
+memory and failure/fallback semantics. For a focused correction, collect the subset needed to
+establish its contract; missing unrelated measurements need not block it.
 
 Inspect build toolchains, compiler release, runtime image, resolved Java/native artifacts and
 provider/device support. This skill prescribes no universal JDK baseline; engine requirements
@@ -31,25 +34,31 @@ Do not upgrade Java or the engine merely to apply an example from current docume
 
 ## Workflow
 
-1. Decide in-process versus remote serving from latency, isolation, scaling, model cadence,
-   accelerator sharing, failure domain and operational ownership.
-2. Inventory every native resource and lifetime. Bound sessions, predictors, arenas, tensors and
-   direct buffers; close resources that expose ownership/close contracts and bound retained
-   storage where reclamation is GC-managed. Reuse only after actual native completion.
-3. Build a concurrency matrix across outer requests, session count, intra-op/inter-op threads and
-   device streams. Measure absolute goodput and tail latency, not speedup alone.
+1. When choosing or reconsidering the serving boundary, compare in-process versus remote serving
+   from latency, isolation, scaling, model cadence, accelerator sharing, failure domain and
+   operational ownership. Preserve an adequate existing boundary.
+2. For native lifecycle changes or memory diagnosis, inventory the affected resources and lifetimes.
+   Bound sessions, predictors, arenas, tensors and direct buffers; close resources that expose
+   ownership/close contracts and bound retained storage where reclamation is GC-managed.
+   Reuse only after actual native completion.
+3. For concurrency tuning, use the relevant axes of outer requests, session count,
+   intra-op/inter-op threads and device streams. Start from current settings and a measured
+   bottleneck; measure absolute goodput and tail latency, not speedup alone.
 4. If batching is used, bound size/storage and maximum wait, and dispatch before the earliest
    member deadline minus the execution/remaining-work budget. Test sparse and burst traffic;
    full-batch throughput is not a latency policy.
-5. Warm the JVM code path and the model/engine separately, then gate readiness on a representative
-   successful inference rather than model-file load.
-6. Overload deliberately. Use bounded admission, deadline-aware rejection/cancellation and an
-   explicit fallback whose quality is part of the contract.
+5. For deployment/readiness changes, warm the JVM code path and the model/engine separately,
+   then gate readiness on a representative successful inference rather than model-file load.
+6. When changing admission or failure behavior, test overload in an isolated or authorized load
+   environment. Use bounded admission, deadline-aware rejection/cancellation and an explicit
+   fallback, if required by the contract, whose quality is also verified.
 
 ## Decision rules
 
 - Pool only resources documented as non-thread-safe or expensive to create. Pool size must match a
-  measured useful concurrency limit, not request concurrency.
+  measured useful concurrency limit, not request concurrency. A documented shareable session
+  with bounded admission may already suffice; non-thread-safe resources can also be confined
+  or serialized without a pool.
 - Reuse direct, native-order buffers when the API permits, with exclusive ownership across
   filling, native execution and result consumption. Moving allocation from heap to direct
   memory inside the hot path does not remove allocation or guarantee zero device copies.
@@ -57,6 +66,7 @@ Do not upgrade Java or the engine merely to apply an example from current docume
   threads. Isolate/admit it with a bounded executor when necessary.
 - NMT excludes many third-party native allocations. Compare process/cgroup RSS with NMT categories
   and application counters for live sessions/tensors; use native profilers where required.
+  RSS growth alone does not identify a leaking owner, and RSS minus NMT is not a leak-size metric.
 - `jdk.VirtualThreadPinned` absence cannot clear CPU-bound time inside native code; the event needs a
   relevant park/block path to become visible.
 - A cancelled Java future may not stop native computation. Define abandonment, late completion and
@@ -64,12 +74,17 @@ Do not upgrade Java or the engine merely to apply an example from current docume
 
 ## Evidence output
 
-Separate measured result from analytical ceiling. Pin environment and raw output; report confidence,
-what the experiment cannot prove, and the same metrics after a change.
+For a focused review, return the finding, supporting contract/evidence, consequence and smallest
+correction or check. When measurements are missing, keep causal diagnoses and sizing conditional
+and name the evidence that would distinguish the hypotheses. For experiments, separate measured
+result from analytical ceiling, pin environment and raw output, and compare the same metrics
+after a change. Report what was verified and what remains unknown; an adequate existing design
+is a valid outcome.
 
 ## References
 
 - [Native resources, parallelism and batching](references/native-resources-and-batching.md) — read
-  when sizing pools, engine threads, buffers or a dynamic batcher.
+  when reviewing native ownership, sizing pools, engine threads, buffers or a dynamic batcher;
+  includes versioned library sources and diagnostic coverage limits.
 - Use `jni-and-ffm`, `off-heap-memory`, `concurrency-limiting-and-bulkheads` and
   `load-testing-advanced` for their owning mechanisms.

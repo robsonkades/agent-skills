@@ -76,9 +76,14 @@ load-test design to `load-testing`; avoid turning a smoke test into a production
 For compatibility or integration, pin the exact supported versions and exercise the failing
 edge: old bytes, rejected inputs, timeouts, duplicate requests or partial failure as relevant.
 A successful connection alone does not establish the complete interaction contract.
+Mocks and simulations support conclusions about the modeled behavior; they do not establish
+the real dependency's integration behavior or production performance. If the required dependency
+is unavailable, preserve the original question and record what the substitute actually tested.
 
 Example decision test: "Existing consumer can read the proposed event" needs captured bytes
 from the proposed writer and the actual old consumer configuration, with expected meaning as well as
-decoding. A missing broker is inconclusive; a reproducible unsupported field in that valid
-configuration can refute compatibility. Changing the reader before retrying tests a different
-claim and requires a new recorded revision.
+decoding. A local check can answer that decoding question when the required schemas and reader
+configuration are available. A missing broker blocks conclusions that depend on broker behavior;
+it need not block decoding, and successful decoding does not prove delivery or live integration.
+A reproducible decoding or semantic failure in the valid configuration can refute compatibility.
+Changing the reader before retrying tests a different claim and requires a new recorded revision.

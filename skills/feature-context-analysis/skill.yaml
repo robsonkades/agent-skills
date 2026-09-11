@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-context-analysis
-version: 1.1.1
+version: 1.1.2
 description: >-
   Reading the repository for one specific feature: which technologies and patterns are actually
   present, which components the feature can reuse, which questions the code has already answered,
@@ -39,11 +39,8 @@ files:
   - skill.yaml
   - references/
 
-dependencies:
-  - name: enterprise-application-architecture
-    version: ^1.0.0
-
 suggests:
+  - enterprise-application-architecture
   - feature-architecture-analysis
   - feature-decision-analysis
   - feature-engineering

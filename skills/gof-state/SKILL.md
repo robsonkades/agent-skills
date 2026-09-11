@@ -10,7 +10,7 @@ description: >
   when boolean flags multiply on an entity, when a status field is checked in scattered ifs, when
   an illegal transition reaches production, when a workflow must survive a restart, or when two
   requests transition the same entity concurrently. Does not cover interchangeable algorithms
-  chosen by a caller (gof-strategy), saga orchestration across services
+  (gof-strategy), saga orchestration across services
   (distributed-transactions-and-sagas, gof-mediator), or optimistic locking mechanics
   (offline-concurrency-control).
 ---
@@ -30,6 +30,12 @@ Java a useful expression for small owned machines is a sealed set of states plus
 checks state-type coverage when recompiled. It does not prove guards, payload validity or effects.
 Pattern-switch snippets require Java 21 without preview; inspect target compiler/framework/database
 versions before applying them. Older targets can use enums or state methods without an upgrade.
+
+Start with caller operations, supported state/event extensions and invalid or repeated requests.
+Reuse existing guards, tests, ownership and recovery requirements; ask only about gaps that change
+legality, effect guarantees or representation. Distinguish required behavior from forecasts and
+keep recommendations conditional where evidence is missing. Retain an adequate boolean, enum,
+function or class design; a review need not introduce a machine, migration or workflow framework.
 
 ## State against Strategy
 
@@ -51,6 +57,8 @@ each other           State: transitions relate them, whether the states
 Choose by intent: domain lifecycle rules suggest State; interchangeable algorithms suggest Strategy.
 A terminal state need not transition, and policies can compose/reference one another without
 becoming a lifecycle (`gof-strategy`).
+Callers may request a State transition, and Strategy selection may be internal. Request origin
+does not choose the pattern; lifecycle guards still decide whether a requested transition is legal.
 
 ## When it is the answer
 
@@ -105,9 +113,9 @@ state stored as an ordinal           stored as a stable code, with an explicit
                                      mapping and a rejected-unknown case
 ```
 
-Prefer the transition function while you own every state. Keep behaviour on the state objects when
-each state has substantial behaviour of its own beyond transitioning — otherwise the `switch`
-grows into a god method (`java-composition-over-inheritance`).
+Compare a transition function when you own every state. Keep behaviour on state objects when
+their cohesive behavior or extension contract justifies it; closure alone does not make a rewrite
+beneficial. Price readability, state data and supported consumers (`java-composition-over-inheritance`).
 
 ## Decision rules
 
@@ -133,14 +141,16 @@ THEN check-then-act is a race. Use a conditional update (compare the
      (offline-concurrency-control).
 
 IF a transition has side effects
-THEN coordinate them with the state change: one local transaction where possible,
-     or transactional outbox plus idempotent consumer/deduplication. Do not claim
-     exactly-once across an uncoordinated external boundary.
+THEN define required completion, allowed loss/partial effects and recovery lifetime.
+     For atomic durable state/effects use actual enlisted local writes, or an outbox
+     with the required delivery/repeat protocol. Best-effort local effects may suffice;
+     do not claim exactly-once across an uncoordinated external boundary.
 
 IF time causes a transition (expiry, timeout, escalation)
 THEN it is an event like any other and needs something to deliver it.
-     Durable due-time records and catch-up semantics must survive scheduler outages;
-     an in-memory timer alone loses progress (distributed-locks-and-leases).
+     If progress must survive restart, retain due time and catch-up semantics across
+     scheduler outages. An in-memory timer may suffice for disposable process-local
+     state (distributed-locks-and-leases).
 
 IF the state machine coordinates multiple services with local transactions
 THEN evaluate saga semantics when compensation is appropriate; not every distributed
@@ -148,8 +158,9 @@ THEN evaluate saga semantics when compensation is appropriate; not every distrib
      (distributed-transactions-and-sagas).
 
 IF states hold references to each other
-THEN adding a state edits several classes. Prefer a transition function
-     or a table.
+THEN inspect actual change propagation and ownership. Compare a function/table when
+     scattered rules conflict or obscure the machine; retain cohesive state behavior
+     and valid extension contracts rather than removing links by rule.
 ```
 
 ## Cross-cutting checks
@@ -161,12 +172,11 @@ THEN adding a state edits several classes. Prefer a transition function
   locking on a version column. Which one depends on where the state lives — but "the transition
   method is `synchronized`" only helps if every path to the state goes through one instance in one
   process (`java-memory-model`).
-- **Distribution.** A durable state machine is the honest form of most business workflows: the
-  state is a row, transitions are transactional, and the process can restart mid-flow. What
-  changes from the in-memory version is that every transition may be retried (so it must be
-  idempotent), timeouts must be real scheduled events rather than in-memory timers, and a state
-  can be observed by another service — which makes the state names a published vocabulary
-  (`distributed-transactions-and-sagas`).
+- **Distribution.** When progress must survive restart, define persisted state, effective commit
+  boundaries and recovery for interrupted or ambiguous operations. Delivery may repeat: distinguish
+  a duplicate command/outcome from an illegal new transition (`idempotency`). Durable timeout
+  delivery and published state codes need their own contracts. A row or local CAS alone does not
+  make external effects atomic (`distributed-transactions-and-sagas`).
 - **Performance.** Enum constants are shared but dispatch/storage still has cost. Record states
   are allocation candidates per transition and buy per-state data; measure only on hot paths.
   Persistence indexes depend on query shape, selectivity, update rate and partial-index support—a
@@ -184,13 +194,14 @@ THEN adding a state edits several classes. Prefer a transition function
 - [ ] Invalid transitions have explicit rejection/idempotent-repeat semantics
 - [ ] Persisted states use stable codes and define unknown-value behavior during upgrades
 - [ ] Transitions are atomic under concurrency by a named mechanism
-- [ ] Side effects use a local transaction or durable outbox/idempotent delivery protocol
+- [ ] Side effects meet the actual completion, loss and recovery contract
 - [ ] Time-driven transitions have a real delivery mechanism
 - [ ] Every `(state, event)` pair is covered by a test
 - [ ] State/event evolution triggers compiler coverage or an explicit case-inventory check
 
-Deliver the transition/guard and repeat policy, persisted representation, concurrency/effect
-protocol, and executed checks or identified gaps. Keep the decision proportional to the machine.
+Deliver the transition/guard and repeat policy, any persisted representation, concurrency/effect
+protocol that applies, and executed checks or gaps. State what would change the decision; stop
+when the required contract is supported without forcing a representation change.
 
 ## References
 

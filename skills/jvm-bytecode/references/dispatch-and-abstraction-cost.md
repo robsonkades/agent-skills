@@ -21,7 +21,7 @@ runtime type, which is where inline caching applies.
 Since class file 55 (JDK 11, JEP 181 nestmates) javac emits `invokevirtual` for a private
 instance method of a class and `invokeinterface` for a private interface method; verified:
 `callsPrivate` compiles to `invokevirtual #13 // Method privateHelper:(I)I`. The JVM still
-binds a private method non-virtually (JVMS 5.4.3.3 selection never overrides a private
+binds a private method non-virtually (JVMS 5.4.6 selection never overrides a private
 method), so nothing changes at runtime — but a reader who expects `invokespecial` for every
 private call will misclassify a site. Nest membership grants private access; it does not
 generally authorize rewriting a cross-nestmate call to `invokespecial`. That instruction has
@@ -122,10 +122,11 @@ than the old `Unsafe::defineAnonymousClass`. Consequences worth knowing when aud
   class object, not a stable index across runs. `-Xlog:class+load` prints it as
   `Lab$$Lambda/0x0000000012040438 source: Lab`.
 - `LambdaMetafactory` defines its proxies with `ClassOption.NESTMATE` (so the body can be a
-  private method of the host) and `ClassOption.STRONG` (JEP 371), so a lambda class lives as
-  long as its defining loader like any ordinary class. Hidden classes defined **without**
-  `STRONG` — `MethodHandle` lambda forms, some framework proxies — are unloaded when their
-  `Class` object becomes unreachable, independently of the loader.
+  private method of the host) and `ClassOption.STRONG` (JEP 371), so its unloading is tied to
+  its defining loader's eligibility like an ordinary class. Hidden classes defined **without**
+  `STRONG` — `MethodHandle` lambda forms, some framework proxies — may become unloadable
+  independently of the loader when unreachable. Remaining references still matter; eligibility
+  does not guarantee prompt unloading.
 
 ```java
 // Partial methods: use a parameter so javac cannot substitute a constant variable.
@@ -137,7 +138,8 @@ Captured values appear in the invokedynamic factory descriptor and are retained 
 invocation. With javac 25, `final int x = 42` is a constant variable and `() -> x` needs no
 captured argument; the effectively final `int x = 42` does capture an `int`.
 Instance reuse/allocation is a runtime implementation choice, not an identity contract.
-Measure allocation with `-prof gc` in the actual escape context.
+An allocation claim needs evidence in the actual escape context; reuse suitable existing
+measurements or select a check such as JMH `-prof gc` when that claim remains unresolved.
 
 ## Records, sealed types and pattern switch
 
@@ -165,19 +167,22 @@ Measure allocation with `-prof gc` in the actual escape context.
 
 ## Choosing an abstraction
 
-| Abstraction                                    | Bytecode                                                | After JIT                                                                                                              | Prefer when                             |
-| ---------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Direct method (`invokestatic`/`invokespecial`) | No receiver dispatch                                    | Often easy to inline, subject to size, tier, profile and compiler policy                                               | No polymorphic substitution is required |
-| Interface call                                 | `invokeinterface`                                       | Can inline profiled targets or retain indirect dispatch; implementor count alone does not determine one site's profile | Substitution improves design            |
-| Non-capturing lambda                           | `invokedynamic`, commonly one reused instance           | Can optimize toward a direct call when linkage/profile are visible                                                     | Stateless callbacks                     |
-| Capturing lambda                               | `invokedynamic` plus possible per-invocation allocation | Depends on escape analysis removing the allocation                                                                     | Avoid creating in hot loops unmeasured  |
-| Reflection (`Method.invoke`)                   | Source call is ordinary invocation of reflection API    | JDK 18+ uses method handles internally; access, adaptation and varargs/boxing costs depend on usage                    | Dynamic metadata-driven integration     |
-| `MethodHandle.invokeExact`                     | Signature-polymorphic `invokevirtual` in class file     | A stable/constant handle and exact types can expose the target to optimization; mutable/adapted chains cost more       | Typed dynamic linkage                   |
+| Abstraction                                    | Bytecode                                                | After JIT                                                                                                                                              | Prefer when                             |
+| ---------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| Direct method (`invokestatic`/`invokespecial`) | No receiver dispatch                                    | Often easy to inline, subject to size, tier, profile and compiler policy                                                                               | No polymorphic substitution is required |
+| Interface call                                 | `invokeinterface`                                       | Can inline profiled targets or retain indirect dispatch; implementor count alone does not determine one site's profile                                 | Substitution improves design            |
+| Non-capturing lambda                           | `invokedynamic`, commonly one reused instance           | Can optimize toward a direct call when linkage/profile are visible                                                                                     | Stateless callbacks                     |
+| Capturing lambda                               | `invokedynamic` plus possible per-invocation allocation | Depends on escape analysis removing the allocation                                                                                                     | Avoid creating in hot loops unmeasured  |
+| Reflection (`Method.invoke`)                   | Source call is ordinary invocation of reflection API    | JDK 18+ uses method handles internally; access, adaptation and varargs/boxing costs depend on usage                                                    | Dynamic metadata-driven integration     |
+| `MethodHandle.invokeExact`                     | Signature-polymorphic `invokevirtual` in class file     | A stable/constant handle and exact types can expose the target to optimization; adaptation or changing targets may add work, depending on optimization | Typed dynamic linkage                   |
 
 "Reflection is 10-100x slower" is meaningless without a stated baseline: against an already
 inlined `invokevirtual`, on the same JDK, at the same call site, after warm-up. Compared cold,
 or against a call the JIT could not inline anyway, the gap can be far smaller. Measure the
-scenario in question with JMH. The per-operation cost model, and why a runbook that still sets
+scenario in question when a quantitative comparison is needed; reuse adequate measurements.
+Method handles themselves are immutable, even when they invoke changing call-site targets or
+operate on mutable bound data.
+The per-operation cost model, and why a runbook that still sets
 `sun.reflect.inflationThreshold` describes a JVM that no longer exists, are
 `java-reflection-and-method-handles`' subject.
 

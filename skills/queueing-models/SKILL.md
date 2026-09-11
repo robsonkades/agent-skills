@@ -19,8 +19,8 @@ description: >
 
 ## Purpose
 
-Use the smallest model that answers the decision, expose its assumptions, and try to falsify it on
-held-out operating points. The failure this skill prevents is a precise Erlang/Kingman output whose
+Use the smallest model that answers the decision and expose its assumptions. For a new predictive
+fit, try to falsify it on held-out operating points. The failure this skill prevents is a precise Erlang/Kingman output whose
 queue boundary, population, routing, service process or outcome policy does not match the system.
 
 Every model here is one formula plus a set of assumptions. The formula is the cheap part.
@@ -33,7 +33,12 @@ before applying Java examples. The lifecycle snippet is partial Java 8+ code; ma
 observations are scoped to JDK 25 and need verification on the deployed build. No model choice
 authorizes changing Java, dependencies or runtime configuration.
 
-1. **Write down the Kendall notation you are claiming** — `A/S/c` at minimum, plus `K` if
+Start from the requested calculation, explanation, model review or predictive fit. Reuse supplied
+parameters and adequate validation; retain a sound model. A narrow result can be the calculation
+or finding, its assumptions and limits, and any material missing check. It need not create a new
+model card, runtime capture or held-out campaign. Use the workflow below to resolve actual gaps.
+
+1. **State the selected model and assumptions.** Use Kendall notation where applicable — `A/S/c` at minimum, plus `K` if
    the system rejects and `N` if the population is fixed. Naming the arrival distribution,
    the service distribution and the number of servers forces each assumption into the open
    before any number is produced.
@@ -54,7 +59,7 @@ authorizes changing Java, dependencies or runtime configuration.
 6. **Parameterise from boundary-consistent measurements**, with uncertainty and censoring. Model
    servers are simultaneous service positions with the assumed service process—not “threads not
    currently blocked”. See `references/measuring-the-parameters.md`.
-7. **Calibrate and validate separately.** Predeclare acceptable error from the decision, fit on
+7. **For a new or changed predictive fit, calibrate and validate separately.** Predeclare acceptable error from the decision, fit on
    some operating points, predict held-out loads/topologies, and inspect residuals. A 30% rule has
    no universal meaning; direction of error suggests hypotheses but does not identify one.
 8. **Infer only metrics the model supplies.** M/M/c gives a point mass at zero plus an exponential
@@ -63,8 +68,8 @@ authorizes changing Java, dependencies or runtime configuration.
 
 ## Rules
 
-- State the model as `A/S/c` before quoting any number from it. A wait time with no declared
-  model is not a prediction.
+- Name the model and its relevant assumptions with a prediction; use `A/S/c` where applicable.
+  A measured wait or a narrow arithmetic check does not require inventing a new queueing model.
 - In M/G/1, P–K makes mean queue wait proportional to `(1+c_s²)/2` relative to M/M/1 at the
   same mean/utilisation; M/D/1 is exactly half. This does not generalise unchanged to multiple
   servers, non-Poisson arrivals, percentiles or load-dependent service.
@@ -72,7 +77,8 @@ authorizes changing Java, dependencies or runtime configuration.
   in Erlangs — not an ad-hoc ratio, and not rho.
 - For large `c`, compute Erlang C through the Erlang B recursion rather than the direct sum;
   `c!` overflows a double at `c = 171` and the running sum overflows past `a ≈ 700` even with
-  the term recurrence. Cross-check any published number by both methods where both run.
+  the term recurrence. For a new or changed numerical implementation, cross-check representative
+  small cases independently and test relevant boundaries; reuse adequate existing checks.
 - Pooling benefit depends on arrival splitting, server equivalence, load and discipline. Under
   M/M/c a shared queue reduces wait versus balanced independent M/M/1 queues, but not by a
   universal factor; isolation, affinity and head-of-line effects are competing objectives.
@@ -103,7 +109,11 @@ authorizes changing Java, dependencies or runtime configuration.
   cannot select one. Use a justified distributional solution, numerical method, simulation
   or measurement for their tail decisions.
 
-## Required model card
+## Model card
+
+For model construction or a material predictive review, record the applicable fields below.
+For a narrow explanation or arithmetic check, return only the assumptions, result and limits
+needed by that decision; do not fabricate missing validation or parameters.
 
 ```text
 Decision/metric: mean wait, wait probability, loss, tail, staffing or sensitivity
@@ -120,10 +130,10 @@ Decision limits: what the model cannot infer and conditions requiring re-fit
 
 - [Model selection and formulas](references/model-selection-and-formulas.md) — explicit formula
   contracts for M/M/1, M/M/c, M/G/1, Kingman/Allen–Cunneen, Erlang B and M/M/c/K; numeric
-  stability, topology, tails and the boundary where simulation is required.
+  stability, topology, tails and the boundary where simulation is required. Read when selecting or checking a formula.
 - [Measuring the parameters](references/measuring-the-parameters.md) — arrival-process evidence,
   service/occupancy boundaries, model-server capacity, censoring, task-queue instrumentation and
-  calibration/held-out validation.
+  calibration/held-out validation. Read when parameter meaning or observation coverage affects the decision.
 - [Production behaviour](references/production-behaviour.md) — structural mappings for executors,
   pools, partitions and routed/autoscaled fleets; open/closed/semi-open populations, retry
-  feedback, transient fluid bounds, residual diagnosis and failure tests.
+  feedback, transient fluid bounds, residual diagnosis and failure tests. Read when mapping a real topology or transient claim.

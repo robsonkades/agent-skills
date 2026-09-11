@@ -4,13 +4,13 @@
 
 A breaker's output is a fast failure. The fallback decides what that failure becomes.
 
-| Fallback                     | Honest when                                                                       | Dishonest when                                                             |
-| ---------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Stale cached value           | the caller can act on data known to be old, and the age is carried with the value | the age is dropped and stale reads look identical to fresh ones            |
-| Static default               | the default is safe in the restrictive direction (no discount, no entitlement)    | the default grants something — access, credit, a limit                     |
-| Degraded feature omitted     | the response is explicitly partial and the client can render it                   | an empty list is returned where "none" and "unknown" mean different things |
-| Queued write, applied later  | contract returns accepted/pending, queue is durable, request is idempotent        | caller is told committed success or queue is in heap                       |
-| Fail fast with a typed error | the caller upstream has its own fallback, or a human does                         | it is called a fallback; it is the absence of one, which is often correct  |
+| Fallback                     | Honest when                                                                       | Dishonest when                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Stale cached value           | the caller can act on data known to be old, and the age is carried with the value | the age is dropped and stale reads look identical to fresh ones             |
+| Static default               | the contract permits that default and its consequences are safe                   | the default invents entitlement, credit or another unsupported outcome      |
+| Degraded feature omitted     | the response is explicitly partial and the client can render it                   | an empty list is returned where "none" and "unknown" mean different things  |
+| Queued write, applied later  | contract returns accepted/pending, queue is durable, request is idempotent        | caller is told committed success or queue is in heap                        |
+| Fail fast with a typed error | the operation cannot be served correctly; no further fallback is required         | failure or an unknown effect is reported as successful or definitely absent |
 
 **The wrong-data rule.** A fallback that returns wrong data indistinguishably from right data
 converts an availability incident into a data incident, which is slower to detect, harder to
@@ -40,8 +40,11 @@ String render(Quote q) {
 
 A stale value needs a source that survives the dependency's outage — the staleness policy and
 the store are `caching-strategies`; the requirement that the age travels with the value is
-here. And never let a fallback perform the side effect the primary call would have performed
-under a different key or with different data: that is a second write path with no tests.
+here. A fallback that writes is a separate write path: define its acceptance, idempotency and
+duplicate-effect recovery contract and test it. After a dispatched call times out, opening the
+breaker does not prove that write failed. Preserve the unknown outcome; switching keys, data or
+providers does not reconcile the first attempt. An open-state rejection proves only that this
+attempt was not dispatched, not that earlier attempts had no effect.
 
 ## Testing a breaker
 
@@ -63,7 +66,7 @@ for (int i = 0; i < minimumCalls; i++) callReturning(422); // declared validatio
 assertEquals(State.CLOSED, breaker.getState());
 ```
 
-**2. Half-open admits only the configured number of probes.** Move the breaker to half-open
+**2. An isolated half-open round rejects excess pending probes.** Move the breaker to half-open
 directly — Resilience4j exposes `transitionToOpenState()`, `transitionToHalfOpenState()` and
 `transitionToClosedState()` for exactly this, which removes the need to sleep out the wait
 duration. Then submit more concurrent calls than the probe limit and assert the excess were
@@ -85,10 +88,14 @@ recovery path — the half that keeps an outage going after the dependency is ba
 
 Also run the half-open failure direction and an incomplete sample with a configured maximum
 half-open wait. Verify reopening, and separately whether outstanding client work terminated.
+Include ignored outcomes and calls admitted before a state transition. Check stub invocations,
+current-state metrics/permissions and still-pending work separately; a closing sample need not
+consist solely of fresh probes in Resilience4j 2.3.0. The isolated probe-gating test above assumes
+no earlier calls can complete into the new state.
 
-Do not sleep to cross the wait duration. Either drive the transitions directly, or inject the
-implementation's clock so time can be advanced; the general rule is in
-`distributed-systems-testing`.
+Prefer controllable time when supported. If the configured scheduler cannot be controlled, use a
+short bounded integration test with an event/latch deadline and cleanup; direct transitions alone
+do not test a timer. `distributed-systems-testing` owns the general technique.
 
 ## Fault injection at the integration level
 

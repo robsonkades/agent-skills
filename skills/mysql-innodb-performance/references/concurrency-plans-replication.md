@@ -18,8 +18,11 @@ transaction before a fresh whole-operation retry; inspect framework rollback-onl
 repeating external effects blindly. Client timeout or connection loss can leave commit outcome
 unknown and requires reconciliation, not automatic replay.
 
-Long transactions also retain undo history even when they hold no blocking lock. Track read-view age,
-history-list length, purge progress, and the application transaction boundary.
+An old consistent-read view can retain undo history even without blocking row locks. Transaction
+age alone does not establish that view: under REPEATABLE READ the first consistent read normally
+establishes the transaction snapshot; READ COMMITTED uses a fresh snapshot for each consistent
+read. Inspect isolation, read timing and active undo-producing writes as well as read-view age,
+history-list length, purge progress and the application transaction boundary.
 
 ## Plans and optimizer evidence
 
@@ -55,3 +58,5 @@ and the metric that proves replicas caught up.
 Sources: [InnoDB error handling](https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html),
 [EXPLAIN](https://dev.mysql.com/doc/refman/8.4/en/explain.html), and
 [semisynchronous replication](https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html).
+For history retention, see [InnoDB multi-versioning](https://dev.mysql.com/doc/refman/8.4/en/innodb-multi-versioning.html)
+and [consistent reads](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html).

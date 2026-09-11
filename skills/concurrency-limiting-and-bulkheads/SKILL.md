@@ -116,6 +116,10 @@ stability analysis, exploration policy and safe behavior when telemetry fails. A
 oscillate or chase downstream latency caused by unrelated load; start static when the ceiling is
 stable and revisit from evidence.
 
+Lowering a limit constrains new admission; it does not terminate already admitted work. Keep its
+permits until actual resource cleanup, pause new admission as needed to drain, and report the
+temporary outstanding work above the new ceiling instead of claiming an immediate hard bound.
+
 ## Bulkhead partitioning
 
 Partition by the failure domain that must be isolated: dependency, tenant, operation cost, priority,
@@ -123,7 +127,10 @@ or workload class. Partitioning trades utilization for isolation. A shared reser
 recovers utilization but must prevent one partition from permanently consuming it.
 
 Per-tenant maps require lifecycle/cardinality control; otherwise the bulkhead itself becomes an
-unbounded memory structure. Hashing tenants into cells bounds state but permits noisy-neighbor
+unbounded memory structure. Do not evict/recreate a tenant's limiter while old holders, waiters or
+admission lookups can still use it: two live limiter identities duplicate that tenant's capacity.
+Coordinate retirement with admission and draining, or reject new partitions/use fixed cells.
+Hashing tenants into cells bounds state but permits noisy-neighbor
 collisions. Dedicated limits fit a small set of high-value tenants; long-tail tenants can share a
 bounded pool.
 

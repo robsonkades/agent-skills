@@ -30,6 +30,9 @@ neither exclusive reachability nor future growth.
 
 Treat these as shortlist heuristics, not mutually exclusive type tests. Inspect callers,
 delegation, transitions, failure paths and ownership; one class can serve multiple roles.
+Inspect ordinary consumer calls, an edge/failure path and public extension contracts to distinguish roles.
+Keep useful established API names; if intent is still unknown, state the missing evidence rather
+than requiring a rewrite or an exclusive label.
 Examples are partial Java 17 sketches with domain types/imports/wiring omitted. Inspect the
 project release and actual framework APIs; classification does not authorize dependency upgrades.
 
@@ -156,8 +159,8 @@ THEN judge it as a named constructor, not by this pattern's criteria.
 
 IF a name is disputed in review and both parties agree on the
 behaviour
-THEN write the behaviour in the class Javadoc and move on. The name
-     matters only where it changes what a reader expects.
+THEN retain useful names and document the contract if it prevents a concrete
+     misunderstanding. A disputed label alone does not justify API churn.
 ```
 
 ## References

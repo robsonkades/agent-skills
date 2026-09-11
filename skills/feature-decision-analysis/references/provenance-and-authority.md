@@ -104,14 +104,18 @@ owns the consequence accepts it; mandatory legal/security obligations may remain
 ## Superseding
 
 A decision changes when the world does — a constraint is lifted, an assumption is falsified,
-implementation shows the choice does not work. Then:
+implementation shows the choice does not work. A deviation from a still-valid decision calls for
+correcting the implementation; a review trigger alone does not authorize a replacement. When the
+accountable decision process supports a change:
 
-- The original entry stays exactly as written, with its status changed to superseded and a
-  pointer forward.
+- Preserve the original rationale and link the replacement using the local status convention. For a
+  partial replacement, keep the original's unaffected scope explicitly applicable; do not retire the
+  whole decision when only one consumer or use case changed.
 - The new entry says **what changed**, not just what was chosen. "Implementation showed the
   batch endpoint cannot express partial failure" is the useful sentence.
-- The plan is updated in the same step, because a superseded decision usually invalidates a
-  resource.
+- Trace affected contracts, criteria and resources; update the plan when present and mark only
+  dependent artifacts stale. A record-only task reports the needed handoff without claiming those
+  downstream changes were implemented.
 
 Never edit a decision in place to make the record consistent with the code. The inconsistency
 was the information.

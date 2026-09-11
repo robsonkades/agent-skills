@@ -38,12 +38,14 @@ epoch or engine protocol. Test a late completion from an old attempt after recov
    combining function to be associative and commutative anyway. The read-side cost of
    salting and the rest of the skew repertoire are `hot-partitions-and-rebalancing`.
 3. **Speculative re-execution.** Start a duplicate of a task running far beyond the
-   distribution and take whichever finishes first. Only safe when **the task is idempotent
-   and has no external side effect** (`idempotency`) and only the first result is committed;
-   a speculative copy of a task that writes to a database or posts to an API applies the
-   effect twice. Commit one attempt by logical task identity, not by timing alone. Cap the
-   speculative fraction — uncapped speculation adds load exactly when the cluster is already
-   the constraint, and correlated storage/network slowness may make every copy slow.
+   distribution, preserving the input snapshot and required result equivalence. Atomically
+   select one output by logical task identity, not by completion timing alone. External effects
+   must be absent or independently retry-safe (`idempotency`): an enforced idempotency,
+   fencing or transaction protocol must cover each effect across concurrent attempts and late
+   arrivals. Selecting one aggregate output does not provide that protection. Cancelling the
+   losing attempt does not prove it stopped or released downstream resources; retain ownership
+   and account for residual work until the resource contract confirms release. Cap speculative
+   load — correlated storage/network slowness may make every copy slow and worsen the bottleneck.
 4. **Blacklist the node.** Repeated stragglers on one host are usually a failing disk or a
    noisy neighbour rather than a data property. Check per-host straggler counts before
    redesigning the partitioning.

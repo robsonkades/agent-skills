@@ -11,6 +11,8 @@ the ladder. The class is a plain object with a constructor; the annotation tells
 to discover it; wiring also depends on constructor/configuration rules. Constructor injection remains plain Java; removing Spring from an annotated class
 also requires removing/replacing the annotation dependency and wiring, though its business behavior
 can remain directly testable.
+`@Repository` can also enable exception translation when the corresponding post-processor is
+configured; inspect active advice before treating a stereotype as discovery-only metadata.
 
 The Java excerpts are partial examples; use the project's declared Java, Spring and test-library
 versions and supply imports/collaborator types. The final class below assumes no subclass-based
@@ -32,11 +34,14 @@ public final class PlaceOrder {                 // plain object, plain construct
 Field injection without an explicit constructor/setter leaves dependencies inaccessible through
 ordinary construction. It can still be unit-tested — with
 `ReflectionTestUtils` or `@InjectMocks` — but only by reaching around the type's own
-construction, and the class can never guarantee it was fully initialised. The cost has nothing
-to do with framework independence; it is a design defect the annotation happens to enable
+construction. A container can reject missing required collaborators and validate initialization
+within its owned lifecycle; that does not make arbitrary `new` or premature exposure safe.
+Prefer constructor injection when ordinary construction must establish required dependencies;
+price managed-only construction and its tests explicitly
 (`java-dependency-inversion`).
 
-**Verdict:** accept freely. Use constructor injection. Do not build an abstraction over DI.
+**Verdict:** accept simple wiring where framework dependencies are permitted. Prefer constructor
+injection for required collaborators; do not duplicate DI solely for portability.
 
 ## `@Transactional` and other declarative behaviour
 
@@ -99,10 +104,10 @@ change independently of the schema?
               (domain-logic-organization).
         yes ↓
 
-Do the schema and the domain model diverge in shape — legacy tables,
-a schema owned elsewhere, aggregates spanning several tables?
-        yes → two models. The mapping already exists; making it
-              explicit is cheaper than distorting the domain.
+Does the actual mapping distort the domain's invariants or couple
+independently owned/evolving contracts that need separation?
+        yes → compare two models with a narrower mapping seam;
+              price translation and consumer changes, not table count.
         no  ↓
 
 Will the invariants tolerate the target provider/specification's construction,
@@ -111,6 +116,10 @@ hydration, persistent-state and identity requirements?
         no  → two models. This is the strongest case: the domain type
               cannot be correct AND be an entity.
 ```
+
+Several tables do not alone require two object models: persistence mappings can represent
+associations or secondary tables. Check the actual mapping and reconstitution paths before
+claiming that a separate model is necessary or cheaper.
 
 The rung this really sits on is not "annotations present" but **"can persistence concerns
 change the domain's shape"**. `@Column(length = 40)` on a field is metadata. A `@PrePersist`
@@ -126,6 +135,10 @@ Prefer composition when business code does not need the inherited framework life
 // It remains directly constructible and configurable in a plain test.
 public class OrderService extends JdbcDaoSupport { }
 ```
+
+On Spring Framework 7.0+, `JdbcDaoSupport` is deprecated for removal in favor of injecting
+`JdbcTemplate` or `JdbcClient`. Check the target version and inherited behavior before migrating;
+the example remains a review target, not a reason to upgrade the project.
 
 Reasons, in order of importance:
 
@@ -220,6 +233,12 @@ defaults and isolated adapter transaction boundaries can be legitimate exception
 
 ## Sources and compatibility
 
+- [Spring injection and initialization](https://docs.spring.io/spring-framework/reference/core/beans/factory-nature.html):
+  initialization validation belongs to the container lifecycle, not arbitrary construction.
+- [Repository stereotype](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/stereotype/Repository.html):
+  exception-translation eligibility depends on configured post-processing.
+- [Jakarta Persistence 3.2 SecondaryTable](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/secondarytable):
+  one entity can map to several tables; this API capability is not a guarantee about a project's invariants.
 - [Spring scheduling](https://docs.spring.io/spring-framework/reference/integration/scheduling.html)
   and [caching](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)
   (consulted for Framework 7.0.9): task registration versus interception; cache synchronization

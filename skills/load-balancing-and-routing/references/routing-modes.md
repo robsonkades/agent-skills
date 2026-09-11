@@ -4,16 +4,16 @@
 
 Round-robin rows below describe request-level routing; at L4 their unit is a transport flow.
 
-| Algorithm                      | Equalises                                  | Right when                                                      | Fails when                                                                                                    |
-| ------------------------------ | ------------------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Round-robin                    | Request **count** per backend              | Request cost is uniform and backends are homogeneous            | Cost varies: counts are even, latency is not. A slow backend receives its full share until ejected            |
-| Weighted round-robin           | Count in proportion to a static weight     | Backends differ in capacity by a known, stable factor           | The weight is a guess that nobody revisits after the instance types change                                    |
-| Least-request                  | Outstanding request count (often weighted) | Duration varies and active count correlates with remaining work | Long streams, heterogeneous costs/capacity or cold endpoints distort the signal                               |
-| Least-connections              | Open transport connections                 | Connections are comparable units of work                        | HTTP/2 multiplexing or idle pools make connections incomparable                                               |
-| Power of two random choices    | Chosen load signal over two candidates     | Global load state is costly/stale and endpoint set is large     | Tiny/locality-constrained pools, bad load signal, or heterogeneous weights need adaptation                    |
-| Random                         | Nothing, in expectation everything         | Backends are homogeneous and you want zero coordination         | Small fleets: variance is high, and a hot backend gets no relief                                              |
-| Consistent hashing on a key    | Key → backend **placement**                | The backend caches or owns per-key state                        | A backend is added or removed: some fraction of keys move. This is `sharding-and-partitioning`, not balancing |
-| Session affinity (cookie / IP) | Client → backend stickiness                | State is per-connection and derivable                           | The backend dies, drains, or the affinity table rebuilds — see `stateless-service-design`                     |
+| Algorithm                      | Equalises                                              | Right when                                                             | Fails when                                                                                                    |
+| ------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Round-robin                    | Request **count** per backend                          | Request cost is uniform and backends are homogeneous                   | Cost varies: counts are even, latency is not. A slow backend receives its full share until ejected            |
+| Weighted round-robin           | Count in proportion to a static weight                 | Backends differ in capacity by a known, stable factor                  | The weight is a guess that nobody revisits after the instance types change                                    |
+| Least-request                  | Outstanding request count (often weighted)             | Duration varies and active count correlates with remaining work        | Long streams, heterogeneous costs/capacity or cold endpoints distort the signal                               |
+| Least-connections              | Open transport connections                             | Connections are comparable units of work                               | HTTP/2 multiplexing or idle pools make connections incomparable                                               |
+| Power of two random choices    | Chosen load signal over two candidates                 | Global load state is costly/stale and endpoint set is large            | Tiny/locality-constrained pools, bad load signal, or heterogeneous weights need adaptation                    |
+| Random                         | Expected routing-unit share under chosen probabilities | Backends are homogeneous and you want no load coordination             | Too few selections or unequal request cost can leave work skew; no load signal corrects it                    |
+| Consistent hashing on a key    | Key → backend **placement**                            | The backend caches or owns per-key state                               | A backend is added or removed: some fraction of keys move. This is `sharding-and-partitioning`, not balancing |
+| Session affinity (cookie / IP) | Client → backend stickiness                            | Locality is useful and loss/rebinding is allowed by the state contract | The backend dies, drains, or the affinity table rebuilds — see `stateless-service-design`                     |
 
 ### When random candidates reduce herding
 
@@ -50,9 +50,10 @@ Settings that decide the behaviour, by role:
 | Ejection duration / base    | How long an ejected backend stays out, usually growing per ejection    | Too long: capacity you still need is idle; too short: flapping                                            |
 | **Max ejection percentage** | Cap on passive outlier ejection, with implementation-specific defaults | Too permissive can remove excess capacity; other health/membership mechanisms are not bounded by this cap |
 
-**The fleet-ejection hazard.** Policies often behave as though failures are independent. When every
+**The fleet-ejection hazard.** A policy that assumes independent failures can mishandle a shared
+dependency. When every
 replica depends on the same database, the same cache or the same downstream, a blip fails all
-of them simultaneously and the balancer ejects all of them — turning a partial degradation
+of them simultaneously, the balancer can eject all of them — turning a partial degradation
 into a total outage exactly like a liveness probe that checks a dependency
 (`kubernetes-service-lifecycle`). Select controls by failure semantics:
 
@@ -67,8 +68,12 @@ into a total outage exactly like a liveness probe that checks a dependency
 
 Kubernetes readiness and balancer checks can be complementary: one reports endpoint lifecycle,
 the other observes a specific network path or request class. Align semantics/timing and expose
-why each excluded a host. Do not make readiness depend on a shared downstream whose failure
-would remove every caller simultaneously.
+why each excluded a host. Choose shared-downstream readiness from the service contract.
+If correct degraded/fallback responses remain available, retaining readiness may preserve
+useful service. If the required dependency is
+necessary to serve correct traffic, deliberate fail-closed readiness can be appropriate.
+Compare all-unready routing, retries/admission and recovery with application-level rejection;
+a passive ejection cap cannot override readiness or guarantee a usable backend.
 
 ## The drain sequence
 
@@ -85,8 +90,8 @@ from dependencies (stop producers before draining their executor), not a univers
 5. The process exits, inside `terminationGracePeriodSeconds`.
 
 Propagation exceeding the drain allowance is one hypothesis for deploy-time 502s; correlate
-arrivals, resets and shutdown timestamps. HTTP/2 GOAWAY directs new streams away while
-eligible existing streams may finish. It does not migrate an existing stream; bounded
+arrivals, resets and shutdown timestamps. HTTP/2 GOAWAY tells the peer to stop opening streams
+on that connection while eligible existing streams may finish. It does not migrate an existing stream; bounded
 termination may require application-level resume or an explicit interrupted outcome.
 
 ## Choosing among the three placements
@@ -104,17 +109,27 @@ termination may require application-level resume or an explicit interrupted outc
 An in-pod proxy (the ambassador form) is client-side balancing with the policy moved out of
 the application process — `ambassador-pattern` owns that shape.
 
-## Verifying the routing, not reviewing it
+## Verifying routing changes
+
+Choose tests for the behavior changed or claimed, and reuse adequate existing evidence.
+Configuration/source review can establish a supported option or identify a risk; it cannot
+prove runtime work distribution or rollout continuity. A narrow explanation needs no new
+rollout or fault injection. State the workload, endpoint eligibility, expected outcomes and
+coverage limits before interpreting a test as success.
 
 - **Skew test.** Under steady realistic load, report capacity-normalized work distribution,
   max/median and top-endpoint share. Avoid `max/min` when idle/zero endpoints make it infinite.
 - **Scale-up test.** Add a replica under load and watch how long it takes to reach its share.
   Existing flows do not move; new connections may use the replica. If the workload creates
   no new eligible flows, the added capacity may receive no work during the test window.
-- **Rollout test.** An open-loop client through a full deploy, counting HTTP errors, gRPC
-  terminal statuses, timeouts and resets. A
-  closed-loop client throttles itself against the disruption and under-reports it, which is
-  `coordinated-omission`.
+- **Rollout test.** Exercise the relevant deployment transition using the actual workload
+  model. For independent arrivals, keep an open schedule and reconcile offered versus
+  started work, start delay and dropped starts; a closed loop suppresses arrivals during
+  disruption and cannot establish that arrival-rate claim. For completion-paced users or
+  workers, a closed population with representative concurrency and think times is valid.
+  In either model, retain latency, unexpected HTTP outcomes, gRPC terminal statuses,
+  timeouts, resets and incomplete work. An open configuration alone does not prove schedule
+  fidelity; use `coordinated-omission` to assess missing arrivals and timing boundaries.
 - **Ejection drill.** Fault-inject errors into one backend and confirm it is ejected; then
   inject into all backends and confirm the chosen cap, admission and fail-open/closed contract.
   Assert survivor saturation and recovery hysteresis, not merely that traffic kept flowing.
@@ -125,3 +140,4 @@ the application process — `ambassador-pattern` owns that shape.
 - [Envoy outlier detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
 - [Kubernetes Services networking](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [The Power of Two Random Choices](https://www.eecs.harvard.edu/~michaelm/postscripts/handbook2001.pdf)
+- [k6 open and closed workload models](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/)

@@ -1,18 +1,21 @@
 # Reading an execution plan
 
-Read in this order. Most wrong conclusions come from starting at step 3.
+Use this as a reading structure, not a mandatory diagnostic order. Start from the relevant
+supplied evidence; a known wait or expensive operation need not restart a statistics-first review.
 
 ## 1. Is this the plan for the statement that runs?
 
-Three ways the plan in your hand is for a different query than the one in production:
+Check whether the evidence represents the requested execution:
 
 - **Literals substituted for parameters.** The optimiser can use a literal's actual value to
   estimate selectivity, and cannot do the same for a parameter it has not seen. The two plans can
-  legitimately differ.
+  legitimately differ. A custom/specialized plan may see the same value as a literal; inspect
+  actual parameter types, prepare mode, settings and plan before rejecting or accepting that comparison.
 - **A different data volume or distribution.** Plan choice is a function of the statistics, so a
   plan taken against a development schema answers a different question.
-- **An estimated plan rather than an executed one.** An estimated plan carries no actual row
-  counts and no actual timings, which removes the single most informative comparison there is.
+- **An estimated plan rather than an executed one.** It carries no actual row counts or timings,
+  but can support an access-path or semantic hypothesis. Do not label estimates as observations;
+  missing actuals do not erase independently supported findings.
 
 Availability and instrumentation prerequisites depend on engine/version. Typical forms:
 
@@ -39,19 +42,23 @@ Large divergence is a clue, not a universal tenfold threshold or proof of the bo
 Read it bottom-up to locate an early divergence, checking loops, partial execution and downstream
 effects before attributing every later choice to it.
 
-Common causes, in the order they are worth checking:
+Candidate causes; choose the next check from the evidence rather than this list's position:
 
 1. **Stale statistics.** The distribution the optimiser is reasoning about is not the one on
-   disk. Inspect freshness/sampling first; a scoped statistics refresh has load/plan effects
+   disk. Inspect freshness/sampling when relevant; a scoped statistics refresh has load/plan effects
    and must be an authorized experiment.
 2. **A predicate the optimiser cannot estimate** — a function result, a correlated subquery, a
    parameter whose value is unknown at plan time, or a comparison across columns of the same
-   table. It falls back to a fixed guess.
-3. **Correlated predicates.** `city = 'Porto Alegre' AND state = 'RS'` is estimated as if the two
-   were independent; they are not, so the estimate is far too low. Multi-column statistics, where
-   the engine offers them, are the direct answer.
-4. **Plan reuse across parameter values with different selectivity.** The plan is correct for the
-   value it was built for.
+   table. The estimate may use available statistics, expression support or a fallback heuristic;
+   which method applies depends on the engine/version and predicate, not one universal fixed guess.
+3. **Correlated predicates.** If `city = 'Porto Alegre' AND state = 'RS'` is estimated as independent
+   despite correlation, the result can be underestimated. Inspect existing multi-column statistics
+   and whether their type supports this predicate. PostgreSQL 17 dependency statistics, for example,
+   have restrictions on constants/equalities; they do not repair every expression, range or join estimate.
+4. **Plan reuse across parameter values with different selectivity.** A generic plan or one
+   specialized for another value may fit poorly. Neither selection nor prior reuse proves it was
+   optimal for an earlier value. PostgreSQL 17 distinguishes custom and generic plans; inspect the
+   actual prepared execution rather than assuming every parameter is invisible or every plan is sniffed.
 
 ## 3. Which operation actually costs
 
@@ -61,12 +68,11 @@ Inclusive parent/child timing overlaps, as can parallel workers: do not sum/subt
 Rows produced can be tiny for an expensive aggregate/filter; inspect input rows, reads, spills,
 rechecks and waits instead of ranking by output count. LIMIT/EXISTS can stop a node early.
 
-Two shapes account for most of what people miss:
+Two useful shapes to inspect when executions multiply work:
 
 - **A per-row lookup back to the table.** An index gave the engine row identifiers; it now
-  fetches each row separately. Cheap for 20 rows, ruinous for 200,000 — and it appears in the
-  plan as a small operation repeated many times, so it looks minor unless you read the loop
-  count.
+  fetches rows. The cost depends on pages, locality, batching and cache state, not a fixed row
+  threshold. A small per-execution operation can become costly when repeated; read the loop count.
 - **A join whose inner side is re-executed per outer row.** Same arithmetic. The per-execution
   cost is trivial and the number of executions is not.
 
@@ -97,3 +103,6 @@ than doing a random fetch for every candidate; an index-only plan may still perf
   A database buffer miss/read can still hit the OS cache; it does not prove physical device I/O.
 
 Source: [PostgreSQL 17 EXPLAIN semantics](https://www.postgresql.org/docs/17/using-explain.html).
+See also [PostgreSQL 17 prepared plans](https://www.postgresql.org/docs/17/sql-prepare.html) and
+[extended statistics and their limits](https://www.postgresql.org/docs/17/planner-stats.html), plus
+[the configurable cost scale](https://www.postgresql.org/docs/17/runtime-config-query.html#RUNTIME-CONFIG-QUERY-CONSTANTS).

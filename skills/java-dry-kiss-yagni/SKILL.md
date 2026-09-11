@@ -22,14 +22,15 @@ business rules, then feeding the resulting helper boolean parameters until every
 pays for every other caller's requirements.
 
 DRY is about knowledge, not text. Two fragments are duplicates only if they must change
-together because they state the same fact about the domain. Code that merely looks the
-same but answers to different rules, owners or schedules is coincidence; merging it buys
-coupling, not reuse.
+together because they state the same domain rule or technical contract. Code that merely looks
+the same but represents independently changing rules is incidental; merging it couples those
+policies. Separate teams or release schedules can still implement one explicitly shared contract.
 
 ## Workflow
 
 0. **Establish the target and authority.** Inspect compiler release/toolchains, callers,
-   tests and change history; identify who owns the rule and its effective version/date.
+   published APIs, resource/failure contracts, tests and change history; identify who owns
+   the rule and its effective version/date.
    Examples use Java 17-compatible syntax (records need Java 16+ without preview); on older
    targets use existing classes, without an implicit upgrade. If authority or caller behavior
    is unknown, document the gap and defer a merge that would silently decide policy.
@@ -47,9 +48,10 @@ coupling, not reuse.
      constraints permit, with mechanics from java-refactoring; otherwise share specification
      and conformance tests while retaining necessary execution points.
    - Incidental duplication → leave it.
-   - An existing abstraction whose callers fight it — flags, mode enums, callers using
-     half of it — → inline it back into the callers, then re-extract only what is
-     genuinely shared. Read [references/worked-examples.md](references/worked-examples.md)
+   - An existing abstraction whose callers fight it → compare a narrower shared core or
+     clearer entry points with inlining and re-extracting only the shared knowledge. Preserve
+     supported APIs through the applicable migration/compatibility policy; a costly split
+     need not beat retaining adequate code. Read [references/worked-examples.md](references/worked-examples.md)
      when performing either operation.
 4. **Verify.** After a merge, rule tests cover meaningful boundaries and consumer tests
    confirm each caller selects the right policy/version. Remove caller-identity flags, not
@@ -98,9 +100,12 @@ or useless; keep conclusions proportionate to the available caller and requireme
 - Shared code creates a release and incident blast radius. Before merging across modules/teams,
   define owner, compatibility policy, rollout order and rollback. A shared library that deploys
   at different cadences can increase live version skew even while deleting source duplication.
-- Performance duplication may be intentional specialization. Merge only after profiles show the
-  abstraction preserves the required data layout, inlining/vectorization and allocation behavior;
-  otherwise share tests/specification and allow separate implementations.
+- Performance duplication may be intentional specialization. Identify the behavior and budget
+  that must survive a merge. Use relevant representation/compiler evidence for layout or
+  inlining/vectorization claims, and representative measurements for allocation/performance
+  requirements; a CPU profile alone proves neither. Reuse adequate evidence, or leave preservation
+  unverified and retain separate implementations/shared contracts. java-performance owns a
+  deeper performance investigation when needed.
 
 ## References
 

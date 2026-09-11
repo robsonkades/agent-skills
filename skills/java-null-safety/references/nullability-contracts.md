@@ -24,15 +24,16 @@ import org.jspecify.annotations.NullMarked;
 
 What this buys, precisely: a machine-readable contract that compatible tools may check at build,
 edit or interop time. What it
-does not buy: any runtime behaviour. An annotated method still returns null happily if
-its body does; the JVM never reads the annotation. A codebase that adopts JSpecify
-without wiring a checker into CI has bought documentation, which is still better than
-nothing — but say which of the two you have.
+does not buy: built-in runtime enforcement. With ordinary `javac` and no generated validation,
+an annotated method can still return null. Runtime consumers can read retained annotations;
+credit enforcement only to an identified checker or validation path actually exercised.
+Documentation/interop benefits and a configured CI check are different outcomes; say which exists.
 
 ## Adoption strategy for an existing codebase
 
-1. Add a pinned `org.jspecify:jspecify` annotation dependency and a pinned checker/compiler
-   configuration. Decide whether annotations ship in published bytecode/module metadata.
+1. When adoption is in scope, add a pinned `org.jspecify:jspecify` annotation dependency and
+   checker/compiler configuration. Preserve annotations for published consumers; check dependency
+   exposure and bytecode/module metadata rather than assuming local source analysis covers them.
 2. `@NullMarked` one coherent package at a time, often starting with dependency-leaf value/core
    APIs where contracts are clearest. Boundary DTO packages may intentionally contain many legal
    nulls and need explicit modelling before marking.
@@ -71,15 +72,20 @@ trust boundary can invalidate the proof.
 - **A `@Nullable` field with a checked lifecycle.** A field null between construction and
   a framework-driven `init()`, or until a state machine reaches the state that sets it,
   is a documented phase, not a bug — provided every read either follows the lifecycle or
-  checks. Flag it only when a read can legally precede the write.
+  checks. Flag missing initialization, reset or publication rules when an allowed read can
+  observe an invalid state.
 - **Null as absence inside a private scope.** A local `Customer c = cache.get(id);`
-  checked on the next line is idiomatic and cheaper than wrapping. Locality is the
-  criterion: producer and check in the same screenful.
-- **A lazily computed cache field.** Null meaning "not computed yet" inside one class is
-  the single-check idiom, not a leak — java-immutability covers when that is safe.
+  checked before use can be adequate when it captures the intended lookup result. Line proximity
+  alone is not proof: callbacks or another writer can invalidate a field between check and re-read.
+  A non-null local does not prove that the referenced resource stays open or its state stays valid.
+- **A lazily computed cache field.** Null can legitimately mean "not computed yet"; it is not by
+  itself a safe single-check protocol. Establish confinement or the actual initialization and
+  publication contract — java-immutability covers derived-cache conditions and their limits.
 - **requireNonNull "missing" on a private method.** If every caller is inside the
   boundary that already validated, the check is redundant by design. The finding is real
-  only when the method is public or the boundary check is absent.
+  when an allowed call or intervening mutation can violate the precondition. Private visibility
+  alone proves neither valid input nor a stable lifecycle; an equivalent natural failure can
+  satisfy a public contract without a duplicate explicit check.
 
 The inverse false negative is worth naming too: `requireNonNull` immediately before the same natural
 dereference may mainly improve blame location/message and stabilize the public failure point. That

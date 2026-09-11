@@ -31,13 +31,14 @@ static String buildEmail(Customer customer, List<OrderLine> lines, BigDecimal am
 }
 ```
 
-**Analysis.** The knowledge test fails on every question. Dunning content is owned by the
+**Analysis.** The body policies fail the knowledge test. Dunning content is owned by the
 finance team and changes with collection policy; shipment content changes with logistics.
 `date` means "due date" for one caller and "ship date" for the other — one parameter,
 two meanings. Callers select behaviour through three booleans, so `finalNotice` is
 meaningful for one caller and a trap for the other (`buildEmail(c, lines, amount, date,
 false, true, true)` compiles and quietly ignores the last flag). What the copies actually
-shared was shape — "build a greeting, a body, maybe a list" — not a rule.
+shared was shape — "build a greeting, a body, maybe a list". That alone is not a shared
+rule; separately check whether, for example, one brand authority owns the salutation.
 
 **After.** Assume caller inspection proves reminders use `includeLines=false` and shipment
 confirmations use `includeLines=true`. The split below preserves those paths, including the
@@ -69,9 +70,10 @@ final class ShipmentEmails {
 }
 ```
 
-**Trade-offs.** The salutation line now exists twice; a tone-of-voice change touches both
-files. Total line count grew. Accepted: the two emails have never changed for the same
-reason, and each method is now readable without simulating flag combinations.
+**Trade-offs.** The salutation line now exists twice and total line count grew. Accept this
+when the greeting is incidental and the body policies change independently. If a confirmed
+brand rule must change both greetings together, share that small nucleus without recombining
+the bodies. Each method remains readable without simulating caller-identity flags.
 
 **Verification.** Compare exact output for regular/final reminders and empty/non-empty
 shipment lines against the mapped old calls, including newline layout. No call site chooses

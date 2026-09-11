@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: load-balancing-and-routing
-version: 1.2.1
+version: 1.2.2
 description: >-
   Getting a request to a replica that can serve it: L4 versus L7 by capability rather than
   layer number, why an L4 balancer in front of long-lived HTTP/2 or gRPC connections
-  balances connections instead of requests and pins a client to one replica, the balancing
+  balances connections instead of requests and pins each flow to one replica, the balancing
   algorithms and what each optimises, power-of-two-choices, health checking and outlier
   ejection with the fleet-ejection hazard, and connection draining. Use when per-pod request
   rate is skewed while connection counts look even, when one replica is hot after a
@@ -51,6 +51,7 @@ suggests:
   - ambassador-pattern
   - coordinated-omission
   - failure-models
+  - idempotency
   - kubernetes-service-lifecycle
   - rate-limiting-and-load-shedding
 

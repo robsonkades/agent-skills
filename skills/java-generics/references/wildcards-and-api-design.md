@@ -1,26 +1,30 @@
 # Wildcards and generic API design
 
-## PECS, stated as a mechanical rule
+## PECS and the required type relationship
 
 For a parameter of a generic type, ask what the **method** does with it:
 
-| The method…              | Parameter type           | Callers may pass                                  |
-| ------------------------ | ------------------------ | ------------------------------------------------- |
-| only reads T out of it   | `? extends T` (producer) | `List<T>` and `List<`subtype of T`>`              |
-| only puts T into it      | `? super T` (consumer)   | `List<T>` and `List<`supertype of T`>`            |
-| both reads and writes    | plain `T`                | `List<T>` only                                    |
-| ignores the element type | `?`                      | any list; no non-null element can be added safely |
+| The method…                                  | Parameter type                               | Callers may pass                                            |
+| -------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------- |
+| only reads T out of it                       | `? extends T` (producer)                     | `List<T>` and `List<`subtype of T`>`                        |
+| only puts T into it                          | `? super T` (consumer)                       | `List<T>` and `List<`supertype of T`>`                      |
+| reads T and inserts independently supplied T | plain `T` when exact correlation is required | `List<T>` for that relationship                             |
+| ignores the element type                     | `?`                                          | any list; no arbitrary non-null value can be added directly |
 
 ```java
 public void addAll(Collection<? extends Payment> source) { ... }   // reads from source
 public void drainTo(Collection<? super Payment> sink)     { ... }   // writes into sink
-public void rotate(List<Payment> both)                    { ... }   // reads and writes
+public void rotate(List<?> both)                         { ... }   // rearranges existing elements
 ```
 
 The payoff is not theoretical. Without `? extends`, a caller holding a `List<CardPayment>`
 must copy it into a `List<Payment>` before calling — a real allocation and a real annoyance,
 which is why the JDK's own signatures (`Collections.copy`, `Stream.forEach`,
 `CompletableFuture.thenApply`) are written this way.
+
+Mutation alone does not require an exact element type: rearranging existing elements can use
+wildcard capture or `Collections.rotate(List<?>, int)`. The list must still support the required
+mutation; accepting its type does not make an unmodifiable list writable.
 
 Two corollaries:
 
@@ -32,9 +36,9 @@ Two corollaries:
 
 ## Capture: when the wildcard has to become a name
 
-A wildcard is an unknown type, so the body cannot write into it. When an operation is
-provably safe but not expressible, delegate to a private generic helper — the compiler
-_captures_ the wildcard into a type variable:
+A wildcard is an unknown type, so an arbitrary independent non-null value cannot be inserted.
+When an operation safely reuses values of that same unknown type, a private generic helper lets
+the compiler _capture_ the wildcard into a type variable:
 
 ```java
 public static void swap(List<?> list, int i, int j) {
@@ -48,7 +52,9 @@ private static <E> void swapHelper(List<E> list, int i, int j) {
 ```
 
 The public signature stays wildcarded (any list is acceptable); the private one does the work.
-Seeing `capture of ?` in a compiler error is the signal that this helper is missing.
+A `capture of ?` error may instead expose a real mismatch. Two independent `List<? extends Number>`
+arguments need not have the same element type; a helper cannot make copying `Double` into a
+`List<Integer>` safe. Establish the required relationship rather than suppressing the error.
 
 ## Bounds on type parameters
 
@@ -71,13 +77,14 @@ Seeing `capture of ?` in a compiler error is the signal that this helper is miss
 
 ## Generic methods versus generic types
 
-Parameterise the **type** when instances hold or produce a single element type for their whole
-life (`Repository<Order>`, `Cache<K, V>`). Parameterise the **method** when the relationship
+Parameterise the **type** when callers need to choose an instance's element types for its whole
+life (`Repository<Order>`, `Cache<K, V>`); retain fixed domain types when no such variation is needed.
+Parameterise the **method** when the relationship
 exists only for the duration of one call (`<T> T firstOrDefault(List<T>, T)`).
 
-Static factories illustrate the difference and one useful trick — a generic static factory can
-infer what a constructor cannot (before the diamond operator this was its main advantage; the
-remaining advantage is naming and instance control, see java-object-construction):
+Static factories illustrate the difference: they can infer method type arguments, while
+constructor calls with diamond also support inference. Compare actual caller expressions;
+naming and instance control are separate benefits (java-object-construction):
 
 ```java
 public static <K, V> Map<K, V> newMap() { return new HashMap<>(); }
@@ -111,17 +118,19 @@ bridge methods remain compatible. Raw source callers often still compile with wa
 source/binary behavior can change through bounds, erasure clashes, overload resolution, return
 inference and bridges. Verify with old binaries and source rather than inferring compatibility.
 
-The staged approach the JDK itself used:
+For a staged change, use the actual compatibility contract:
 
 1. Add the type parameters, keeping the erasure identical (no changes to parameter counts or
    erased types).
-2. Leave the raw usage compiling with warnings for one release.
-3. Only afterwards tighten anything that changes erasure — that _is_ a breaking change and
-   needs the versioning discipline in java-api-design.
+2. Test retained raw source and old binaries for as long as they remain supported; a release
+   interval is not evidence that external consumers migrated.
+3. Treat bound/erasure changes as a separate compatibility decision. Preserve required entry
+   points/bridges or use the versioning discipline in java-api-design.
 
 For interfaces published to other teams or services, the type parameter is part of the
-contract. Prefer a new interface over reparameterising a widely implemented one; every
-implementor must otherwise change at once.
+contract. Existing raw implementations can remain compatible when the erased contract is
+preserved. Consider a new interface when required relationships cannot evolve compatibly;
+do not require every implementor to change merely because type parameters were added.
 
 ## Reviewing a generic signature
 
@@ -130,12 +139,14 @@ implementor must otherwise change at once.
 - [ ] Return wildcards have a deliberate covariance/unknown-subtype reason.
 - [ ] Single-parameter-only type variables are replaced by wildcards when no relationship is lost.
 - [ ] Bounds are `? super` where inheritance of the bound is plausible.
-- [ ] Callers can pass the collections they already hold, without copying or casting.
-- [ ] The signature is readable aloud. Three nested wildcards mean the design, not the
-      notation, is wrong — consider a small purpose-built type instead of a deeply
-      parameterised collection.
+- [ ] Callers need no type-workaround copies or casts; required ownership copies remain.
+- [ ] Representative consumer calls are understandable. Nested wildcards can warrant a
+      purpose-built type when they obscure the domain relationship; their count alone is
+      not a defect or permission to break an established API.
 
 ## Sources
 
 - [JLS 21 §15.12.2.1: potential applicability and lambda arity](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.2.1)
 - [JLS 21 §4.6: type-variable erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6)
+- [Java 21 Collections: rotation and supported mutations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html)
+- [JLS 21 §13: binary compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html)

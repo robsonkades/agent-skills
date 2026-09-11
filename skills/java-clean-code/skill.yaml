@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-clean-code
-version: 2.2.1
+version: 2.2.2
 description: >-
   Readability and intention-revealing structure in Java: method and class sizing — including
   the point where splitting becomes harmful fragmentation — abstraction levels within a
@@ -39,6 +39,15 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-api-design
+  - java-code-smells
+  - java-exception-design
+  - java-null-safety
+  - java-refactoring
+  - java-tell-dont-ask
+  - idempotency
 
 capabilities:
   - reads-source

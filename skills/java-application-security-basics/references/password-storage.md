@@ -26,10 +26,11 @@ Each row is an equivalent-security alternative — pick one row, do not mix.
 allow, with a minimum of 10." And: "bcrypt has a maximum length input length of 72 bytes for
 most implementations, so you should enforce a maximum password length of 72 bytes."
 
-**PBKDF2**, where FIPS certification forces it: HMAC-SHA256 **600,000** iterations;
-HMAC-SHA512 **220,000**. `UNVERIFIED:` the HMAC-SHA1 figure — the fetched summary reported
-both 1,300,000 and 1,400,000. SHA-1 is legacy-only; prefer omitting a number rather than
-quoting the wrong one.
+**PBKDF2**, where binding requirements call for a FIPS-validated implementation:
+HMAC-SHA256 **600,000** iterations; HMAC-SHA512 **220,000**. Verify the actual cryptographic
+module and approved operating mode; selecting PBKDF2 alone is not certification. SHA-1 is
+legacy-only and is deliberately omitted as a new-storage option. These SHA-256/SHA-512
+figures were rechecked against OWASP on **2026-09-10**.
 
 **Upgrading legacy hashes.** Two sanctioned routes: expire inactive users' passwords, or
 layer the hashes (`bcrypt(md5($password))`) and replace with a direct hash on next login.
@@ -98,9 +99,8 @@ Security.
 the OWASP _minimum_ with no headroom. `BCryptVersion` is `$2A`, `$2Y`, `$2B`. On a malformed
 stored hash `matches` logs `"Encoded password does not look like BCrypt"` and returns false.
 
-**The 72-byte limit — it throws; it does not silently truncate.** This is the opposite of what
-most write-ups (and this skill's own research brief, since corrected) claim. Verified in the
-7.1.1 sources jar, `…crypto.bcrypt.BCrypt.hashpw(byte[], String, boolean)`:
+**The 72-byte limit differs between encode and matches.** Verified in the 7.1.1 sources jar,
+`…crypto.bcrypt.BCrypt.hashpw(byte[], String, boolean)`:
 
 ```java
 // Enforce max length for new passwords only
@@ -115,22 +115,24 @@ over 72 characters sharing a 72-character prefix) and ships in every supported l
 consequences, all checkable:
 
 1. **`encode()` throws.** A registration form advertising 128-character passphrases produces an
-   `IllegalArgumentException` out of `PasswordEncoder.encode` and a 500 at sign-up. The finding
+   `IllegalArgumentException` out of `PasswordEncoder.encode` and, if uncaught, a 500 at sign-up. The finding
    is a **missing boundary check that fails loudly**, not a hidden compliance hole. Note that
    the ceiling is 72 _bytes_: 64 characters of non-ASCII UTF-8 can exceed it, so a form that
    satisfies ASVS 6.2.9 ("at least 64 characters permitted") on a character count can still
    throw.
-2. **`matches()` deliberately skips the guard** (`for_check == true`), so hashes written before
-   the upgrade still verify by truncated comparison — the ASVS 6.2.8 violation ("without any
-   modifications such as truncation") lives on the _verify_ path, for legacy hashes only.
+2. **`matches()` deliberately skips the guard** (`for_check == true`). This also affects
+   newly written hashes: a hash of a 72-byte password can accept that prefix followed by an
+   extra suffix. Check the byte limit on verification too; an encode-only guard does not
+   establish ASVS 6.2.8's exact-password contract. This was reproduced with 7.1.1 on 2026-09-10.
 3. **Any path that re-encodes an over-length password now throws**: a password change, a
-   re-registration, or a rehash under `upgradeEncoding` on successful login. Users whose stored
-   hash came from a >72-byte password must reset. Plan that before raising a bcrypt cost factor
-   on an old estate.
+   re-registration, or a bcrypt rehash under `upgradeEncoding` on successful login. Plan an
+   explicit reset/recovery path for users of old >72-byte passwords before enforcing a new
+   verification limit or raising bcrypt cost. A truncated match does not prove the original
+   password's suffix; do not silently truncate input or claim that a new KDF fixes old semantics.
 
 On versions predating the fix the classic silent-truncation reading is correct — so date the
 claim before repeating it. The remediation is unchanged and now fixes an availability bug as
-well as a correctness one: cap at 72 _bytes_ at the trust boundary, or use Argon2id.
+well as a correctness one: cap at 72 _bytes_ consistently, or migrate to a suitable KDF.
 
 Worth knowing because it is this skill's own subject arriving from the framework: the same
 max-length fix introduced **CVE-2025-22234** (MEDIUM, 22 April 2025), which broke
@@ -148,8 +150,9 @@ start, opening `{` and closing `}`. Built by
 `SHA-1` and `SHA-256`, all of which exist to _read_ legacy hashes, never to write new ones).
 **`idForEncode` is `"bcrypt"`** in 7.1.1 —
 not Argon2id. This is the format that makes migration possible: the algorithm identity
-travels with each stored hash, so two algorithms coexist during a rollout. A homegrown
-`CryptoUtils` that stores a bare hash throws that away.
+travels with each stored hash, so two algorithms coexist during a rollout. A wrapper that
+stores only a bare digest throws that away; a reviewed adapter preserving the versioned
+credential format can encapsulate this policy without losing it.
 
 **New in Spring Security 7.0**, all in `org.springframework.security.crypto.password4j` and
 confirmed absent from the 6.5.11 jar: `Argon2Password4jPasswordEncoder`,
@@ -205,12 +208,11 @@ from the password database", in a secrets vault or an HSM. NIST 800-63B-4 says *
 server in many architectures, so the extra boundary may collapse. A known password/hash pair
 provides an offline verification oracle, but a uniformly random high-entropy pepper is not
 made feasibly brute-forceable by that fact; human-memorable or low-entropy peppers are.
-**The case for**: it is the
-only control that helps in the specific, common scenario of a _database-only_ compromise — SQL
-injection, a leaked backup, a misconfigured replica. Where it lives is the sharper argument:
-HSM (NIST's preference, rare), a secrets manager (common), an environment variable
-(contradicted by OWASP's own advice, §6), or the config file — which defeats the point
-entirely, since config and DB dumps leak together.
+**The case for**: it adds a secret boundary beyond the salt and KDF in a _database-only_
+compromise — SQL injection, a leaked backup, a misconfigured replica. Compare the actual
+access and backup boundaries of an HSM, secret manager or protected configuration file.
+Co-leaking the pepper and database defeats that extra boundary; file storage alone does not
+prove they leak together. Account for environment-variable exposure (§6) and rotation costs.
 
 ## 5. Randomness
 
@@ -224,8 +226,13 @@ with a thin entropy pool that is a real startup hang.
 - `getInstanceStrong()` selects the algorithms/providers named by the runtime security property;
   it does not express a portable latency or strength profile. Use it only when that deployment
   choice was reviewed, and never first-touch an untested blocking provider on a request path.
-- `setSeed` "supplements, rather than replaces, the existing seed" — `new SecureRandom(seed)`
-  is not a way to make it deterministic, and a test that assumes so is confused.
+- **Do not seed credentials with a timestamp, counter or fixed bytes.** The Java 21 API warns
+  that calling `setSeed` before automatic seeding makes the caller responsible for sufficient
+  entropy. Supplementing an existing seed does not establish that a fresh generator already
+  has one. The seeded constructor has the same responsibility. Some provider/algorithm pairs
+  reproduce output from the same explicit seed; this is not a portable deterministic-test API.
+  Leave production seeding to the reviewed provider and use a separate injected test double
+  when reproducibility is needed.
 - `Random` (and the shared generator historically used by `Math.random()`) is a 48-bit LCG.
   `ThreadLocalRandom` is implemented differently, but its Javadoc explicitly says it is not
   cryptographically secure. Java 17's `RandomGenerator` supertype makes misuse easier because
@@ -236,8 +243,8 @@ with a thin entropy pool that is a real startup hang.
   an ASVS L2 assessment, because 11.5.1 ends: _"Note that UUIDs do not respect this
   condition."_ — the standard names them explicitly as not meeting the 128-bit bar. So: where
   ASVS L2 is claimed or audited, emit 16 bytes from `SecureRandom` and Base64url-encode them;
-  everywhere else leave an existing `UUID.randomUUID()` token alone rather than spending a
-  change on 6 bits. `UUID.nameUUIDFromBytes` (v3/MD5) is deterministic and unsuitable for
+  otherwise retain an existing `UUID.randomUUID()` token if its entropy meets the actual
+  guessing/collision budget and other binding requirements. `UUID.nameUUIDFromBytes` (v3/MD5) is deterministic and unsuitable for
   unguessable credentials; this is not a ban on non-secret deterministic identifiers.
 
 ## 6. Secrets in the running system
@@ -305,6 +312,7 @@ The incident-response ordering and wrapped-key distinction were checked on 2026-
 - [Spring Security `Argon2PasswordEncoder` API](https://docs.spring.io/spring-security/site/docs/current/api/org/springframework/security/crypto/argon2/Argon2PasswordEncoder.html)
 - [Spring advisory CVE-2025-22228](https://spring.io/security/cve-2025-22228/)
 - [Java SE 25 `SecureRandom`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/security/SecureRandom.html)
+- [Java SE 21 `SecureRandom`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/security/SecureRandom.html) — manual versus automatic seeding, rechecked 2026-09-10.
 - [Java SE 25 `MessageDigest.isEqual`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/security/MessageDigest.html#isEqual(byte%5B%5D,byte%5B%5D)>)
 - [Java SE 25 `Cipher` and AEAD requirements](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/javax/crypto/Cipher.html)
 - [OWASP Cryptographic Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html)

@@ -42,8 +42,9 @@ and aliases with periodic drift. Pilot data estimates variance for sample-size p
 ## Quantile resolution and rank uncertainty
 
 A sample quantile exists for any nonempty sample under a declared convention. Near the sample
-edge it changes in large steps and estimates the population quantile imprecisely. `n(1−p)` is the
-expected number beyond a population p-quantile, not a theorem declaring a result defined at 10 and
+edge it changes in large steps and estimates the population quantile imprecisely. For a continuous
+population, `n(1−p)` is the expected number strictly beyond its p-quantile; atoms/ties can make that
+count smaller. This is a resolution warning, not a theorem declaring a result defined at 10 and
 publishable at 100.
 
 For independent identically distributed observations, binomial order-statistic intervals provide
@@ -56,9 +57,13 @@ interpolation add separate value-scale uncertainty.
 
 ### Randomised or paired experiment
 
-Estimate the predeclared contrast directly. For paired host/time blocks, calculate a within-block
-quantile or threshold-fraction difference and aggregate those differences with an interval. For
-many randomised requests, a cluster-aware quantile method or hierarchical bootstrap can retain
+Estimate the predeclared contrast directly. For paired host/time blocks, aggregate within-block
+quantile or threshold-fraction differences only when the target is that run-level contrast; name
+its summary and weighting (for example, the mean paired difference with equal block weights).
+For a pooled-request quantile contrast, recompute each arm's quantile and their difference within
+each design-respecting resample, preserving pairing and the target population's weights. Averaging
+block quantile differences does not estimate this pooled contrast and can even reverse its sign.
+For many randomised requests, a cluster-aware quantile method or hierarchical bootstrap can retain
 connection/process/time clustering. A randomisation/permutation test should permute at the level
 where treatment was assigned, not individual requests when pods were assigned.
 
@@ -124,12 +129,14 @@ successful-latency distribution, not a fabricated completion time.
 
 ## Reporting template
 
+Illustrative numbers only; this is not an executed experiment.
+
 ```text
-Decision:       rule out a p99 regression > +15 ms at 800 offered rps
+Decision:       rule out a mean run-level p99 regression > +15 ms at 800 offered rps
 Population:     route=/pay, production-shaped mix; timeouts remain terminal outcomes
 Design/unit:    8 paired host/time blocks; JVM run independently restarted; A/B order randomised
 Representation: raw monotonic durations; type-1 q(.99); timeout deadline 1 s
-Estimate:       A 212 ms, B 219 ms; paired Δp99 = +7 ms
+Estimate:       mean run-level p99 A 212 ms, B 219 ms; mean paired Δp99 = +7 ms
 Uncertainty:    95% interval for paired contrast [−2, +13] ms; hierarchy/block method attached
 Guardrails:     offered/completed/error counts, throughput, CPU and timeout rate unchanged
 Threats:        shared database interference; one region only

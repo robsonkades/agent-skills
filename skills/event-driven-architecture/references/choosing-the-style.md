@@ -13,9 +13,9 @@ remains a fact; `ShipOrder` requires a recipient. Tense is not a proof—`OrderR
 still be a command disguised as a noun—so inspect ownership, rejection and required outcome.
 
 A command over a broker is legitimate, and common: deferred work, back-pressure absorption, a
-retry surface the caller need not own. What is not legitimate is calling it an event, putting
-it on a fan-out topic, and then discovering that exactly one consumer must exist for the
-system to work. Work distribution to interchangeable workers is
+retry surface the caller need not own. Calling it a fact can hide recipient/outcome ownership;
+document those contracts regardless of topic or queue transport. Conversely, a fact may
+currently have one consumer without becoming a command. Work distribution to interchangeable workers is
 `task-queues-and-competing-consumers`.
 
 ## Choreography versus orchestration
@@ -43,6 +43,10 @@ Choose orchestration when:
 - the flow itself changes on a business schedule and needs one place to change it
 ```
 
+Status queryability alone does not require orchestration: choreography can maintain a durable
+process view. Prefer an explicit coordinator when that view must also own sequencing,
+deadlines or cross-step recovery; retain an adequate derived view for independent reactions.
+
 Two things that are true of both, and are usually what actually hurts:
 
 - **Identity fields have distinct jobs.** Event/message ID supports deduplication, causation ID
@@ -51,7 +55,11 @@ Two things that are true of both, and are usually what actually hurts:
   labels.
 - **A coordinator is a state machine, and it will be restarted mid-flow.** Its state must be
   durable, its steps re-issuable, and the participants' handlers repeat-safe (`idempotency`).
-  A coordinator holding progress in memory is a saga that loses flows on deploy.
+  A coordinator holding progress in memory is a saga that loses flows on deploy. Persisted
+  intent or a timeout does not establish whether a remote effect happened. Use stable step
+  identity and the participant's status/idempotency/compensation contract to reconcile or safely
+  retry ambiguous effects; timeout alone is not rejection. `distributed-transactions-and-sagas`
+  owns that recovery protocol.
 
 The common right answer is a hybrid: orchestrate the part that needs compensation and a
 deadline, and let purely reactive consequences — notifications, projections, analytics —
@@ -92,4 +100,5 @@ What FaaS costs a **Java** consumer specifically:
 Prefer a long-lived consumer when protocol control, predictable warm latency, custom
 backpressure/commit behavior or connection limits dominate. Prefer managed functions when its
 scaling, failure and ordering contract fits and reduced runtime ownership outweighs platform
-constraints. Benchmark backlog catch-up and failure paths, not only one warm invocation.
+constraints. When measurement is needed, cover backlog catch-up and failure paths, not only
+one warm invocation; reuse representative existing evidence before adding a benchmark.

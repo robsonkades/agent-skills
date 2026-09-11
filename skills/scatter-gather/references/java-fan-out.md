@@ -41,6 +41,10 @@ record Gathered<T>(
 Failure codes must distinguish admission rejection, transport ambiguity, remote rejection
 and local cancellation. If callers need peer-response identity, record that separately.
 Collections are shallow copies; generic values must also have safe ownership.
+This owner-bearing record is an internal illustration, not a required public wire format.
+Map it to authorized coverage/status or an opaque completeness/reconciliation token where
+exposing shard identities would leak topology. A token needs defined integrity, scope and
+interpretation; it does not establish exactness merely by being present.
 
 `values.size()` is not completeness. A successful leaf may return zero values, a failed leaf
 may respond with an error, and replicas may answer at different data versions. Define whether
@@ -130,11 +134,17 @@ final class QuoteFanOut implements AutoCloseable {
 
     @Override public void close() throws InterruptedException {
         executor.shutdown();
-        if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
-            executor.shutdownNow();
-            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                reportResidualTasks();
+        try {
+            if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    reportResidualTasks();
+                }
             }
+        } catch (InterruptedException interrupted) {
+            executor.shutdownNow();
+            if (!executor.isTerminated()) reportResidualTasks();
+            throw interrupted;
         }
     }
 }
@@ -169,6 +179,10 @@ This is a decision skeleton, not drop-in code:
   duration after the root response.
 - If the owner thread is interrupted, cancellation runs and the interrupt propagates. Do not
   convert it into a partial success unless the API explicitly defines cancellation that way.
+- Component shutdown also escalates when either wait is interrupted, reports observable
+  residual state and propagates interruption. `reportResidualTasks` must be bounded and
+  non-throwing; its snapshot is not proof of remote termination. The grace durations are
+  lifecycle-policy examples, not per-request deadlines or guarantees that hostile tasks stop.
 
 ## Why per-call executor close is a trap
 
@@ -183,7 +197,10 @@ Keeping a lifecycle executor lets the root return after signaling cancellation, 
 residual-work budget/monitor prevents leaked tasks from accumulating silently. At shutdown,
 use a bounded grace policy and report tasks that did not terminate.
 
-## Tests that prove the real properties
+## Checks for the relevant properties
+
+Select checks for changed or unresolved claims and reuse adequate evidence. These are test
+options, not results already established by this partial sketch.
 
 - delay one leaf and assert k-of-N returns at k, not at all-N/deadline;
 - have a leaf ignore interruption and assert root response is bounded while residual-work
@@ -191,12 +208,15 @@ use a bounded grace policy and report tasks that did not terminate.
 - interrupt the root while waiting and assert cancellation is attempted on all outstanding
   futures; account for racing starts and already completed tasks rather than asserting every
   future becomes cancelled;
+- interrupt component shutdown during its grace wait; assert escalation and residual reporting
+  still occur before interruption propagates, without waiting indefinitely for a hostile task;
 - return empty success, explicit failure and timeout from different owners; assert `completedOwners`,
   `missing`, failures and exactness remain distinguishable;
 - return inconsistent replica watermarks and assert first-success/quorum policy rejects a fast
   but invalid answer;
-- load-test N, nested fan-out and cancellation at constant offered rate; assert leaf-call count,
-  pool/connection use, root tail and downstream residual work.
+- when changing capacity or hedge policy, test the relevant N/nesting/cancellation at the
+  actual arrival model; distinguish independent offered arrivals from completion-paced users.
+  Observe started/delayed/dropped load, leaf calls, pool/connection use, root tail and residual work.
 
 ## Primary references
 

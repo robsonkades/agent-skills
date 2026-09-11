@@ -26,6 +26,11 @@ worth writing down because the discriminating questions are few and the wrong on
 
 Output the selected approach (including no pattern), any meaningful competing candidate and why
 the simplest viable alternative was retained or rejected. Do not invent rejected options.
+Reuse settled forces, consumer examples and project conventions. If they are incomplete, inspect
+available callers and design evidence; ask only for missing extension, lifecycle or failure
+requirements that could change the choice. A small discriminating check can resolve uncertainty.
+State the contract to preserve, what would change the recommendation and proportionate validation;
+a selection is not completed implementation and does not require a new checklist or ADR.
 
 Java 17 supports records and sealed classes; type-pattern switch is final in Java 21 (earlier
 versions require the applicable preview support). Inspect target toolchains/framework versions;
@@ -48,10 +53,10 @@ Use these questions to narrow the relevant dimension; they are not sufficient co
      which concrete type         → factory; Factory Method if subclass creation hook
      a whole family of types     → Abstract Factory
 
-3. Does something cross a boundary you do not own?
-     a foreign interface         → Adapter
-     a subsystem you own         → Facade
-     a process                   → not an object problem
+3. What boundary must be handled?
+     an incompatible interface   → Adapter
+     subsystem complexity/workflow → Facade, regardless of authorship
+     a process                   → distributed contracts also need review
                                    (gof-patterns-and-distribution)
 
 4. Same interface in and out?
@@ -59,17 +64,17 @@ Use these questions to narrow the relevant dimension; they are not sufficient co
      yes, access controlled               → Proxy
      no, different interface              → Adapter or Facade
 
-5. Who decides what happens next?
-     the caller                  → Strategy
-     the object's own state      → State
+5. What interaction contract is needed?
+     interchangeable policy      → Strategy; selection may be internal
+     lifecycle-dependent legality/behavior → State; transitions may be requested externally
      a chain of candidates       → Chain of Responsibility
      a hub owning the protocol   → Mediator
-     unknown subscribers         → Observer
+     subscribers notified of changes → Observer; listeners may be known
 
 6. Is the structure recursive, or a stable set of types?
      recursive part/whole        → Composite
      stable types, growing ops   → Visitor (or compatible exhaustive dispatch)
-     growing types, stable ops   → polymorphism, not Visitor
+     growing types, stable ops   → compare polymorphism with the existing extension/fallback contract
 ```
 
 ## The decision tree, used honestly
@@ -81,7 +86,7 @@ Is there a real, present variation or a named force?
 
 Would a language feature, composition, a function value, DI,
 configuration or a framework mechanism resolve it?
-  yes → use that. Name the intent ("Strategy, as a function") and stop.
+  yes → retain it if consumer/lifecycle contracts fit; state consequences and validation, then stop.
   no  ↓
 
 Which family? (question 1)
@@ -90,7 +95,7 @@ Which discriminator? (questions 2–6)
   ↓
 Shortlist of 1–3 candidates
   ↓
-Separate them with gof-pattern-confusion
+If their roles remain ambiguous, use gof-pattern-confusion
   ↓
 Name the consequences you are accepting, then decide.
 ```
@@ -127,7 +132,8 @@ THEN that is precedent, not a reason. Re-derive it, or state that the
      consistency itself is the justification.
 
 IF the same selection is being made repeatedly across modules
-THEN it is a convention worth writing down once
+THEN reuse the existing convention. Document a missing shared decision only
+     when it helps future choices; consequential ADRs follow project conventions
      (architecture-decision-making).
 ```
 
@@ -141,23 +147,26 @@ Reinforcing
   Command + Memento              local undo where restoring owned state is sufficient
   Command + Chain                a request offered to handlers in turn
   State + Command                requested actions drive validated transitions
-  Strategy + Template Method     a fixed skeleton whose steps are injected
+  Strategy + Template Method     an inherited skeleton may also call injected policies
   Decorator + Proxy              a stack of behaviour over a controlled subject
-  Adapter + Bridge               the backends of a bridge are usually adapters
+  Adapter + Bridge               an adapter translates an incompatible backend contract
   Observer + Mediator            the hub notifies; participants do not couple
 
 Fighting
   Global static Singleton + isolated tests hidden mutable state defeats the seam
   Observer + assumed ordering     ordering is absent unless the implementation contracts it
   Decorator + identity checks    wrappers change `==`/runtime type; equality needs an explicit policy
-  Flyweight + mutable state      shared mutation across unrelated callers
-  Visitor + a growing type set   every operation breaks on every new type
+  Flyweight + unsafe shared state mutation leaks across unrelated callers
+  Visitor + a growing type set   review required specialization, fallback and compatibility
   Mediator + duplicate owners    competing decisions for the same protocol transition
-  Proxy + a chatty interface     hidden per-call remote cost
+  Remote proxy + per-item calls  may add avoidable network round trips
   Template Method + open         base changes may break external extension contracts
     subclassing
   Prototype + new-entity intent  accidentally retaining the original's id/version
 ```
+
+These are composition opportunities and conflict signals, not proof that a pattern must be added
+or removed. Inspect the actual contract and retain an adequate existing design.
 
 ## References
 

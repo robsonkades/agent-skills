@@ -37,7 +37,7 @@ export const options = {
       preAllocatedVUs: 800, // derived from a pilot, not copied
     },
   },
-  summaryTrendStats: ['avg', 'med', 'p(95)', 'p(99)', 'max'],
+  summaryTrendStats: ['count', 'avg', 'med', 'p(95)', 'p(99)', 'max'],
   thresholds: {
     // Acceptance: the service objective.
     http_req_duration: ['p(99)<500'],
@@ -74,23 +74,33 @@ concurrent-user injection. A user scenario that loops internally can add closed 
 even if users were initially injected openly. Record requests per user and scenario
 duration.
 
-JMeter's Open Model Thread Group is documented as experimental in current releases. Pin
-the version, seed/schedule and test a small fixture. A traditional looping Thread Group
+JMeter 5.6.3 documents its Open Model Thread Group as experimental. Check the target
+version, seed/schedule and test a small fixture. A traditional looping Thread Group
 with a throughput timer is still bounded by available threads and response duration.
 
 ## Raw versus aggregated output
 
-Never infer schema from a filename or CLI flag. For every tool/version:
+Never infer schema from a filename or CLI flag. For each consumed tool/version and
+summary/export mode:
 
 1. generate a deterministic fixture with known outcomes;
 2. retain the raw output and the human summary;
-3. assert required fields, units, populations and non-empty counts;
+3. assert required fields, units and population accounting; require positive counts only
+   for statistics/predicates that need observations;
 4. compare parser output with an independently calculated result;
 5. fail on unknown schema versions or histogram range overflow.
 
 k6 raw sample/event streams are not the same as summary aggregation. Explicitly configure
 summary statistics only when consuming the summary; calculate from raw samples using a
 documented estimator when consuming events.
+
+Keep confirmed zero occurrences separate from absent instrumentation or missing fields.
+A zero-rejection cohort can be valid while its rejection-latency quantile is unavailable.
+Conversely, zero observed requests/checks cannot establish an HTTP acceptance pass. Even
+if a tool emits a numeric default for an empty statistic, preserve the count and mark the
+estimate unavailable: k6 1.3.0's trend sink returns zero for an empty percentile. Its summary
+code also has distinct summary paths, so a tool version alone does not identify every export
+schema. The example includes trend counts to make that population check possible.
 
 ## Distributed generators
 
@@ -139,6 +149,14 @@ so inspect the effective implementation and metrics before attributing a plateau
 - [k6 arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
 - [k6 built-in metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
 - [k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
+- [k6 summary trend statistics options](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#summary-trend-stats)
+- [k6 1.3.0 trend/rate sink semantics](https://github.com/grafana/k6/blob/v1.3.0/metrics/sink.go)
+- [k6 1.3.0 summary paths and metric aggregation](https://github.com/grafana/k6/blob/v1.3.0/internal/js/summary.go)
 - [Gatling injection](https://docs.gatling.io/concepts/injection/)
 - [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)
+- [JMeter 5.6.3 Open Model Thread Group documentation source](https://github.com/apache/jmeter/blob/rel/v5.6.3/xdocs/usermanual/component_reference.xml)
 - [JDK jcmd](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [Java 17 ThreadPoolExecutor queuing contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+
+Versioned references record the checked contract, not a requirement to upgrade the tested service
+or generator. Recheck the actual deployed tool and output mode before adapting a parser.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-immutability
-version: 1.2.1
+version: 1.2.3
 description: >-
   Immutable objects in modern Java: records in depth, defensive copies, immutable collection
   factories versus unmodifiable views, deep versus shallow immutability, final-field
@@ -38,6 +38,10 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-null-safety
+  - java-optional
 
 capabilities:
   - reads-source

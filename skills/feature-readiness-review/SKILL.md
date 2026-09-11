@@ -87,7 +87,8 @@ AND every applicable acceptance criterion is satisfied, with what checked it
 AND every applicable BAC-* and TC-* traces through RES-* to observed passing EV-*
 AND every changed CT-* matches its accepted authoritative version
 AND every significant decision is recorded, and the records match what was built
-AND every HIGH risk is mitigated or linked to a valid GAP-* accepted by its accountable owner
+AND every HIGH-impact risk is avoided with evidence, mitigated with verified controls,
+    or linked to a valid GAP-* accepted by its accountable owner
 AND no blocking question is open
 AND the feature-attributable diff contains nothing that no resource names
 AND the plan, progress and log are current
@@ -134,8 +135,8 @@ THEN record it as future work. Do not implement it and call it part of this feat
 - **This is not a code review.** Defects, design and readability belong to a review of the diff;
   this gate checks the feature against what was agreed.
 - **Do not pass an item because it is probably fine.** PASS means checked.
-- **Do not soften the report.** What failed and what could not be run go before the summary of
-  what worked.
+- **Make the outcome and material gaps prominent.** State how failures and unavailable checks
+  affect completion alongside what passed; give limitations detail proportionate to their impact.
 
 ## Output
 
@@ -158,7 +159,7 @@ Scope          <anything in the diff that no resource names>
 Validation     <EV-* observed; what did not run, and why>
 Acceptance     <each BAC/TC-* -> EV-*>
 Decisions      <recorded; any recorded retrospectively, marked as such>
-Risks          <mitigated | accepted, by whom>
+Risks          <avoided | mitigated | accepted | open, with evidence and authority where needed>
 Follow-ups     <future work, with what it waits on>
 Unverified     <everything that could not be checked>
 ```

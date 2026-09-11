@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gc-log-analysis
-version: 1.4.1
+version: 1.4.2
 description: >-
   Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and
   rotation, the cause field, the before->after->capacity triple and headroom, pause
@@ -13,7 +13,7 @@ description: >-
   rather than a profiler, when a log starts above zero uptime, or when an analysis script
   reports zero pauses. Does not cover collector mechanics (gc-fundamentals),
   collector choice and heap sizing (jvm-gc-tuning), or allocation profiling
-  (jfr-and-async-profiler). Syntax is unified-logging; cross-layer pause attribution is
+  (allocation-profiling). Syntax is unified-logging; cross-layer pause attribution is
   pause-attribution.
 
 license: Apache-2.0
@@ -49,6 +49,24 @@ dependencies:
     version: ^1.0.0
   - name: jvm-class-loading
     version: ^1.0.0
+  - name: container-awareness
+    version: ^1.0.0
+  - name: g1-concurrent-marking
+    version: ^1.0.0
+  - name: g1-internals
+    version: ^1.0.0
+  - name: heap-dump-analysis
+    version: ^1.0.0
+  - name: linux-for-jvm
+    version: ^1.0.0
+  - name: safepoints
+    version: ^1.0.0
+
+suggests:
+  - allocation-profiling
+  - jvm-gc-tuning
+  - pause-attribution
+  - unified-logging
 
 capabilities:
   - reads-source

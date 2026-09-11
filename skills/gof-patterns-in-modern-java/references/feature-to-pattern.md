@@ -10,12 +10,15 @@ immutability, for one line. The consequences:
 - **Builder** is useful when staged construction, ambiguous positional values or invariants
   justify it. No component-count threshold proves the choice; constructor type checking does
   not catch swapped same-typed arguments.
-- **Prototype** mostly dissolves: an immutable record needs no copy, and where a variant is needed
-  a `withX` method beats a copy step that must be kept in sync with the field list.
-- **Memento** becomes "hold the previous reference", and an undo stack becomes a stack of
-  references with structural sharing rather than a stack of copies.
+- **Prototype** may use immutable sharing when callers do not require a distinct identity or
+  owned copy. Compare copy factories and withers against the actual copy/validation contract;
+  record syntax does not make either maintenance-free.
+- **Memento** may capture an immutable state reference, while retaining required opaque handles,
+  originator-owned restoration and history/lifetime policy. Records do not provide structural
+  sharing, restoration authority or undo of external effects by themselves.
 - **Command** can be a record; persistence still requires schema, validation, compatibility and
-  idempotency contracts. A Java record alone is not a durable wire format.
+  repeat/effect contracts. Use `idempotency` when repeated effects need that mechanism; it is not
+  implied by every record or persistence use. A Java record alone is not a durable wire format.
 
 The caveat that survives: a record component holding a mutable `List` is not immutable. `List.copyOf`
 in the compact constructor snapshots list structure, not mutable elements. Deep immutability,
@@ -25,9 +28,9 @@ sharing, record rendering and ownership still need review (`java-immutability`, 
 
 **Changes:** Visitor, State, Composite, Interpreter, Strategy, Chain of Responsibility.
 
-Sealing a hierarchy makes the variant set known to the compiler. That single fact is what makes an
-exhaustive `switch` a completeness check rather than a hope, and it is the property Visitor's
-double dispatch was buying.
+Sealing constrains permitted direct subtypes and can support an exhaustive `switch` coverage check.
+That is not a check of operation semantics. Visitor double dispatch selects an operation for an
+element; its coverage and fallback guarantees depend on the actual visitor API.
 
 The trade is explicit and worth stating in review: a sealed set makes **new operations cheap** (one
 more function) and **new variants loud** (affected exhaustive switches without catch-all cases
@@ -46,7 +49,7 @@ and domain types are omitted. No preview flags are needed for record patterns/pa
 return switch (node) {
     case Text(String value, var emphasis) -> render(value, emphasis);
     case Section(var title, var children) -> renderSection(title, children);
-};      // no default: adding a variant breaks this at compile time
+};      // no default: recompiling against a new uncovered variant fails
 ```
 
 Deconstruction invokes record component accessors; it does not bypass or restore encapsulation.
@@ -69,16 +72,18 @@ State, identity or lifecycle may still justify named classes:
 ```text
 Strategy         Comparator, UnaryOperator, a domain DiscountRule
 Command          Runnable, Callable, or a record + a handler function
-Factory Method   Supplier<T>, Function<Args, T>, T::new
+Creation         Supplier<T>, Function<Args, T>, T::new (not necessarily a subclass hook)
 Observer         Consumer<Event>
-Template Method  a final class taking its steps as function parameters
+Fixed sequence   composed functions; an inherited template may also invoke injected policies
 ```
 
 Use a domain-named functional interface when it adds semantics or a checked-failure contract;
 standard Function/Comparator types are suitable when their contracts already fit.
 
-The cost to weigh: lambdas have no useful class names, so `lambda$price$3` appears in stack traces,
-thread dumps and profiles. Compare real diagnostics before replacing functions with classes.
+Generated lambda class/frame names are implementation details, and a named method reference may
+already give useful diagnostics. Compare actual traces before replacing functions with classes;
+do not depend on lambda object identity or a particular synthetic name
+([JLS 17 §15.27.4](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.4)).
 
 ## Generics
 
@@ -109,9 +114,11 @@ portable contract; do not rely on `List.of()` identity or claim a guaranteed Fly
 
 **Changes:** Adapter, Visitor, Bridge.
 
-A default method adapts an interface to implementors that cannot supply a new operation, which
-removes one reason for an abstract adapter class. In Visitor, a `default visit` is a hazard rather
-than a convenience: it silently absorbs new element types.
+A default method can provide compatible fallback behavior and remove one reason for an abstract
+adapter class. In Visitor, distinguish silent omission from a declared rejection or generic visit:
+[Java 17 ElementVisitor](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html)
+uses defaults that call `visitUnknown`. Preserve accepted fallbacks; test required specialization
+and compatibility rather than assuming defaults guarantee or defeat semantic coverage.
 
 ## Dependency injection
 
@@ -121,9 +128,10 @@ Spring singleton scope is per bean definition/container. Profiles can assemble f
 active combinations need invariant checks. Autowiring Map<String,T> collects matching beans by
 bean name; an arbitrary domain-keyed Map<K,T> requires explicit construction/registration.
 
-The list contains eligible registered beans after configuration/qualifiers, not every class on
-the classpath. Build
-the map from a key the strategy declares, and fail at startup on a duplicate or a missing key
+Injected collections contain eligible registered beans after configuration/qualifiers, not every
+class on the classpath. Retain bean-name keys when they meet the routing contract. If domain keys
+are required, construct that registry explicitly and validate required coverage and the declared
+duplicate/unknown-key policy at the appropriate registration boundary
 (`java-dependency-inversion`).
 See [Spring autowiring](https://docs.spring.io/spring-framework/reference/core/beans/annotation-config/autowired.html).
 
@@ -160,8 +168,8 @@ See [JDK 25 API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/ja
 carries per-request context.
 
 ThreadLocal needs lifecycle cleanup and does not automatically follow arbitrary submitted tasks.
-`ScopedValue` is bound for a dynamic scope and is inherited by structured-concurrency forks, which
-is exactly the shape a request travelling through a chain of handlers needs
+`ScopedValue` is bound for a dynamic scope and can be inherited by structured-concurrency forks;
+compare this lifetime with the actual handler chain and any escaping work
 (`scoped-values`).
 ScopedValue is final in Java 25; inheritance through StructuredTaskScope still uses that release's
 preview API. Ordinary executor submissions do not automatically inherit bindings, and an immutable
@@ -174,24 +182,34 @@ binding does not freeze a mutable bound object.
 Gatherers are final in Java 24; earlier preview APIs differ. Keep Iterator when explicit pull
 control is required rather than introducing a stream merely for a new API.
 
-Stateful and windowing operations that previously required a hand-written `Iterator` with a buffer
-— sliding windows, run-length grouping, fold-with-emit — are expressible as a gatherer in a stream
-pipeline, keeping laziness and short-circuiting.
+Stateful/windowing operations can be expressed as gatherers, but stream laziness does not bound
+input work or buffering before the first output. For example, `Gatherers.fold` waits for upstream
+completion, whereas `scan` emits intermediate accumulations. A downstream `findFirst` does not make
+every gatherer suitable for an unbounded source. Compare emission, work/memory bounds, downstream
+rejection and resource cleanup with the existing traversal contract (`gof-iterator`). See the
+[Gatherer contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Gatherer.html)
+and [JDK 25 implementations](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Gatherers.html).
 
 ## Framework mechanisms, briefly
 
-| Mechanism                                | Pattern it supplies                                  |
-| ---------------------------------------- | ---------------------------------------------------- |
-| Singleton scope                          | Singleton (lifecycle half only)                      |
-| `@Transactional`, `@Cacheable`, `@Async` | Proxy                                                |
-| Servlet `Filter`, `HandlerInterceptor`   | Chain of Responsibility / Decorator                  |
-| `RestClient` interceptors and builders   | Decorator                                            |
-| `ApplicationEventPublisher`              | Observer                                             |
-| Spring Data repositories                 | Repository abstraction; may combine adapters/proxies |
-| JPA lazy associations                    | Proxy or enhancement; provider/mapping dependent     |
-| `Converter`/`Formatter` registries       | Strategy, keyed                                      |
-| Resilience4j decorators                  | Decorator                                            |
+| Mechanism                                           | Pattern it supplies                                                    |
+| --------------------------------------------------- | ---------------------------------------------------------------------- |
+| Singleton scope                                     | Singleton (lifecycle half only)                                        |
+| Proxy-mode `@Transactional`, `@Cacheable`, `@Async` | Proxy; actual advice activation and call path matter                   |
+| Servlet `Filter`, `HandlerInterceptor`              | Chain of Responsibility / Decorator                                    |
+| `RestClient` interceptors                           | Decorator / Chain of Responsibility; inspect wrapping and continuation |
+| `ApplicationEventPublisher`                         | Observer                                                               |
+| Spring Data repositories                            | Repository abstraction; may combine adapters/proxies                   |
+| JPA lazy associations                               | Proxy or enhancement; provider/mapping dependent                       |
+| `Converter`/`Formatter` registries                  | Strategy, keyed                                                        |
+| Resilience4j decorators                             | Decorator                                                              |
 
 Using these is not "not using patterns" — it is using the pattern the framework already
 implemented. Ordering, configuration, error handling and observability still require project
 validation; reactive streams and brokers add contracts beyond an in-process Observer.
+[Builders](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/web/client/RestClient.Builder.html)
+configure/create clients; they do not themselves establish decoration.
+[Interceptors](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/http/client/ClientHttpRequestInterceptor.html)
+may wrap requests/responses and choose whether to continue. Inspect the actual
+advice mode: proxy self-invocation bypass differs from AspectJ weaving, and annotations alone do not
+prove interception ([Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html)).

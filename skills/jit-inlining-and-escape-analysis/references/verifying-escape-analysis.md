@@ -15,6 +15,9 @@ For the ordinary C2 scalar-replacement experiment, confirm these optimisations a
 and record command-line origins. An inherited disable or `dontinline` directive changes the
 question being measured. Flag names/classes are implementation details; first check that the
 exact JDK recognizes them.
+The command above describes a fresh JVM with those launch options. It does not discover a
+running service's overrides or directive stack; use its recorded launch/configuration and
+targeted `jcmd` evidence where available before attributing behavior to defaults.
 
 | Flag                                    | Default | Class      | Controls                                                          |
 | --------------------------------------- | ------- | ---------- | ----------------------------------------------------------------- |
@@ -24,7 +27,7 @@ exact JDK recognizes them.
 | `-XX:+EliminateAutoBox`                 | `true`  | product    | Box–unbox elimination for `Integer` and friends                   |
 | `-XX:+ReduceAllocationMerges`           | `true`  | diagnostic | Scalar replacement across a `Phi` of allocations (JDK 22+)        |
 | `-XX:EliminateAllocationArraySizeLimit` | 64      | product    | Largest constant-length array eligible for scalar replacement     |
-| `-XX:EscapeAnalysisTimeout`             | 20 s    | product    | Analysis abandoned for a compilation unit that takes longer       |
+| `-XX:EscapeAnalysisTimeout`             | 20 s    | product    | Connection-graph build budget; projected work can trigger bailout |
 | `-XX:+PrintEscapeAnalysis`              | —       | develop    | Debug builds only; absent from `PrintFlagsFinal` on a product JVM |
 
 ## The measurement that answers the question
@@ -144,14 +147,18 @@ for other compilations too. Under default tiered policy, read the C2/tier-4 tree
 and follows C1's separate budgets/policy, which can also use profile information. On the
 hot path, three verdicts matter most:
 
-- `hot method too big` — the callee exceeds `FreqInlineSize` (325 bytecode bytes).
+- `hot method too big` — the callee exceeds the selected raised size policy (default
+  `FreqInlineSize` 325 bytecode bytes). Selected EA constructors/unboxing can also choose
+  that policy; the text alone does not prove a hot site.
   The caller loses visibility across that ordinary boundary; the callee can still optimize
-  its own compilation, and compiler-known calls are exceptions. Extract the callee's rare part so the hot remainder fits.
+  its own compilation, and compiler-known calls are exceptions. Test extracting the rare part
+  only when its semantics and measured workload benefit justify the change.
 - `virtual call`—C2 found no usable static/guarded target under the current bounded receiver
   profile and policy. Inspect the actual type distribution and profile-width overflow rather
   than applying a universal “three types/90%” rule.
-- `already compiled into a big method` — the callee's own machine code exceeds
-  `InlineSmallCode` (2500 bytes), usually because it was compiled first and grew.
+- `already compiled into a big method` — the callee's instruction-size heuristic exceeds
+  `InlineSmallCode` (default 2500 bytes). Use the metric described in the verdict reference,
+  not whole nmethod storage.
 
 C2 in this build did not print `megamorphic`, `too large` or `not inlined`. The full verdict list and the
 fix for each is `inlining-verdicts-and-fixes.md`.
@@ -167,14 +174,14 @@ fix for each is `inlining-verdicts-and-fixes.md`.
 - [ ] A baseline exists from before the change, under the same load
 - [ ] After the change, the **same** metric was measured again
 
-The last one is not ceremony. Manual object reuse routinely regresses
-`gc.alloc.rate.norm` by turning a scalar-replaced object into a pooled, escaping one.
+Manual object reuse can regress allocation or workload cost by changing escape, retention or
+ownership. Measure the actual effect; neither pooling nor scalar replacement guarantees a win.
 
 ## Primary references
 
 - [HotSpot C2 escape analysis source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
 - [HotSpot C2 macro expansion/scalar replacement](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
 - [ThreadMXBean allocated-memory API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html)
-- [JFR runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide.html)
+- [JDK 25 `jfr` artifact inspection](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [JEP 416: Reimplement Core Reflection with Method Handles](https://openjdk.org/jeps/416)
 - [JDK-8287061: reduce allocation merges](https://bugs.openjdk.org/browse/JDK-8287061)

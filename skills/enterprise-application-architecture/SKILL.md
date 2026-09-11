@@ -68,16 +68,21 @@ iteration—for example, concurrency or a fixed schema may reshape aggregate and
 8. Which boundaries are remote?         → distribution-boundaries
 ```
 
-Most architectural pain in enterprise systems traces to one of these being unmade — decided
-by default rather than by reasoning. Numbers 6 and 5 are the two most often skipped
-entirely.
+Use these as discovery questions for the affected use case, not evidence that an existing
+choice is defective. Prioritize the decisions that change the required outcome.
 
 ## Workflow for an unfamiliar system
 
-1. **Find the decisions as they were actually made**, not as documented: where the rules are,
+Start with the supplied business/consumer use case, desired outcome, acceptance criteria and
+binding constraints, including approved architecture decisions. Reuse repository and runtime
+evidence before asking; clarify only missing facts that change the choice or handoff. For a
+new module, inspect the surrounding contracts and supported framework before inventing structure.
+
+1. **Compare actual decisions with documented intent**: where the rules are,
    what the repositories return, where `@Transactional` appears, whether versioning exists,
    whether reads use the write model. Trace representative call paths and effective transaction
-   configuration; annotation presence alone does not prove a boundary is active. Inspect the
+   configuration; annotation presence alone does not prove a boundary is active. Observed behavior
+   does not override a requirement or establish that a deviation was accepted. Inspect the
    project's Java/framework/database versions before handing off version-sensitive advice;
    this routing skill imposes no Java baseline or upgrade.
 2. **Identify the application's kind** (`references/application-types.md`) — a batch-heavy
@@ -85,13 +90,16 @@ entirely.
    applying one's architecture to the other is a common source of accidental complexity.
 3. **Locate the pain**: what is slow, what breaks, what is expensive to change. Use evidence
    — files touched per feature, query counts, incident history.
-4. **Route to the specific skill** for the decision in question
-   (`references/navigating-the-family.md`).
-5. **Record what you learn as decisions with forces**, so the architecture becomes
-   re-openable rather than inherited (`architecture-decision-making`).
+4. **Route only the relevant question**, carrying existing evidence and constraints to its owner
+   (`references/navigating-the-family.md`); do not restart the investigation at each handoff.
+5. **Record the rationale proportionately** (`architecture-decision-making`). Consequential
+   decisions or project policy can warrant an ADR; routine orientation or an adequate existing
+   choice may need only a short explanation, not a new architecture record.
 
-Deliver a short map of the relevant decisions: observed code/runtime evidence, inferred force,
-unresolved constraint, specialist handoff and one check that could confirm or change the choice.
+Deliver a short map of selected or retained decisions: required outcome, observed evidence,
+inferred force, unresolved constraint, specialist handoff and an acceptance check that could
+confirm or change the choice. Stop routing once the bounded question, owner and check are clear;
+an explanation or supported no-change outcome is valid. A routed plan is not implemented architecture.
 If workload or implementation evidence is unavailable, keep the architecture proposal conditional
 and identify the smallest missing trace, representative use case or owner answer needed.
 
@@ -100,8 +108,9 @@ and identify the smallest missing trace, representative use case or owner answer
 ```text
 Starting a new module and the structure is open
         → use the eight decisions as a discovery guide, revisiting them
-          as constraints emerge. Do not begin with a
-          reference architecture (pattern-selection-and-composition).
+          as constraints emerge. Check an existing reference architecture
+          against the forces and honor binding project constraints
+          (pattern-selection-and-composition).
 
 An unfamiliar codebase, and the question is "how is this built?"
         → the seven-question description in
@@ -109,9 +118,11 @@ An unfamiliar codebase, and the question is "how is this built?"
           for anything that looks wrong.
 
 Something is slow
-        → count round trips and transaction duration first
-          (architecture-and-performance). Then attribute latency across
-          database execution, queues, network, CPU, allocation and contention.
+        → use the supplied operation/workload evidence to localize the cause
+          (performance-methodology). Route measured query/call multipliers,
+          resource hold intervals or data-boundary costs to
+          architecture-and-performance; do not infer an architectural defect
+          from latency alone.
 
 Something is expensive to change
         → count files touched per feature, then look for excessive
@@ -126,18 +137,20 @@ Something is wrong under concurrency
 A rewrite is being proposed
         → architecture-refactoring-paths for a pattern change;
           legacy-enterprise-modernization for a system-level programme.
-          The rewrite itself is almost never the cheapest option.
+          Compare retention, targeted changes and replacement where the choice
+          remains open, including compatibility, coexistence and recovery cost.
+          Do not reopen an accepted target without relevant new evidence.
 
 A pattern name is being used as a justification
-        → ask for the force it answers
+        → identify the force or binding constraint it answers
           (architecture-decision-making).
 ```
 
 ## Rules
 
 - **Enterprise architecture is decided by forces, not by fashion.** A pattern is the output
-  of reasoning about a problem; a design that starts from a pattern name is a preference
-  being defended.
+  of reasoning about a problem; a pattern without a relevant force or binding constraint is
+  a preference, not an engineering justification.
 - Data often outlives an application and may predate it. Destructive schema/data semantics can be
   highly irreversible, while additive schemas can evolve safely; classify reversibility instead of
   ranking every schema decision as the hardest
@@ -155,10 +168,11 @@ A pattern name is being used as a justification
   versions actually guarantee — prevents both rebuilding them and relying on guarantees
   nobody makes (`patterns-and-modern-frameworks`).
 - **The cost of an architecture is paid in change.** Judge a design by what a typical feature
-  costs, and measure that from history rather than from intuition.
-- Most enterprise systems are not new. Assume you are modifying something in production, and
-  prefer incremental paths with a shippable step over a target-state redesign
-  (`architecture-refactoring-paths`).
+  costs alongside its required user, correctness and operational outcomes; measure change cost
+  from history rather than treating a file count alone as a defect.
+- For an existing production system, prefer compatible, verifiable increments when coexistence
+  is viable. A bounded cutover may fit the actual constraints better; make its consumer and
+  recovery contract explicit (`architecture-refactoring-paths`).
 
 ## References
 

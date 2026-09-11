@@ -7,8 +7,11 @@ of a generated application. No paired agent runs have been executed for this rev
 
 Use fresh baseline and treatment sessions with the same model/version, reasoning settings,
 tools, permissions and supplied context. The treatment receives this skill's description,
-body and access to routed references; the baseline must not discover them automatically.
-Keep expected behavior and failure criteria out of both prompts. For activation tests,
+body and access to its technical references, excluding this evaluator-only file; the baseline
+must not discover the skill automatically. Supply the selected case's request/context as task input.
+Keep this file and expected/failure criteria outside both agents' accessible files and tools,
+not merely out of their prompts: the link in SKILL.md is for the evaluator, and an instruction
+not to read it is not access isolation. For activation tests,
 present only the description among the same neighboring descriptions before loading bodies.
 
 Save input, loaded resources, tool calls, output and pass/fail reasons. Judge observable

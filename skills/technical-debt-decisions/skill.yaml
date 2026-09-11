@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: technical-debt-decisions
-version: 1.1.1
+version: 1.1.2
 description: >-
   Deciding when a shortcut is a legitimate trade and when it is just damage: separating
   deliberate and inadvertent debt, constraints delivery pressure does not waive, containing a
@@ -43,6 +43,13 @@ files:
 dependencies: []
 
 suggests:
+  - architecture-decision-making
+  - architecture-refactoring-paths
+  - coding-agent-discipline
+  - debugging
+  - engineering-communication
+  - java-code-smells
+  - java-refactoring
   - quality-gates
   - code-review
 

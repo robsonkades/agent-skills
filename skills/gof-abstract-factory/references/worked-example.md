@@ -139,9 +139,29 @@ Two things to watch:
 | Classical Abstract Factory | Provider implementation and caller usage | Provider, products and registry             |
 | Family as a record         | Trusted assembly and contract tests      | Assembly method, products, key and registry |
 
-The record version is preferred while you own every family. Switch to the interface when a
-third party must supply one, or when a family needs behaviour beyond construction — a
-`supports(Report)` predicate, or resources to close.
+The record fits this transparent, stateless bundle when trusted assembly is sufficient. Keep an
+interface or encapsulated class when consumers need construction control, an extension contract or
+resource ownership; owning every implementation alone does not settle the choice.
+
+For products that must share one operation's session, open that family as one owned unit. This
+alternative Java 17 consumer sketch assumes `ReportSession` implements `AutoCloseable` and exposes
+`export`, with neither method declaring checked exceptions. The provider creates compatible products
+against that same session:
+
+```java
+static byte[] exportOwned(Report report, TenantId tenant, ReportSessionProvider provider) {
+    try (ReportSession session = provider.open(tenant)) {
+        return session.export(report);
+    }
+}
+```
+
+`open` must either return a valid owned session or clean up resources it acquired before failing;
+try-with-resources cannot close a resource that was never returned. `close` releases only resources
+owned by this session, including on export failure. Products must not escape their valid lifetime;
+shared injected resources remain with their owner. Independent suppliers opening different sessions
+do not satisfy a same-session invariant, even when the vendor matches. The stateless bundle above
+does not need this extra lifecycle.
 
 ## Testing
 

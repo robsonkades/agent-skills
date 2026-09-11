@@ -5,6 +5,8 @@
 Validation is proportional to what the resource can break, not uniform. Running the whole suite
 for a log-message change trains people to skip validation; running only a compile for a
 migration is how existing rows are lost.
+Apply repository-required checks even for small changes; risk-based selection chooses additional
+evidence or follows an existing scoped-check policy, not an unapproved exemption.
 
 The validation was written when the resource was defined. This reference is for choosing it
 then, and for the case where the planned validation turns out to be impossible.
@@ -28,16 +30,18 @@ then, and for the case where the planned validation turns out to be impossible.
 | Documentation              | Matches what shipped                                                                                              |
 | Refactor within a resource | Preserve behavior/contract assertions; move or adapt tests coupled to removed structure without reducing coverage |
 
-The negative case is the one most often missing. A security rule tested only on the allowed path
-establishes nothing about the rule.
+The negative case is the one most often missing. An allowed-path security test can establish
+permitted access; it does not establish that forbidden access is denied.
 
 ## Beyond the resource
 
-Some checks belong to the feature, not to a resource. Run them at the points named, not after
-every resource:
+Some checks cover more than one resource. Follow the project's required selection and cadence;
+the following are starting points when the project does not prescribe a different schedule:
 
 - **The module's test suite** — after the last resource of a story or a coherent group.
-- **The full build and the project's gate set** — before declaring the feature complete.
+- **The project's applicable build and gate set** — before declaring the feature complete.
+  Use its actual stack and accepted check-selection rules; documentation-only work need not
+  acquire a Java build, while a required full build cannot be replaced by focused tests alone.
 - **Contract or consumer tests** — when the changed boundary needs them; group related
   resources if a meaningful end-to-end check requires the complete path.
 - **A migration at representative scale** — early enough to change the plan before the
@@ -63,7 +67,9 @@ It happens: the test infrastructure does not exist, the dependency cannot be rea
 engine is not available locally. Then, in this order:
 
 1. **Say so** — this is the finding, and it does not go unmentioned.
-2. **Choose the strongest available substitute**, and name what it does not cover.
+2. **Run a useful bounded alternative when available**, and name the property it establishes
+   and what it does not cover. A narrower real interaction can answer a narrow contract question;
+   an unrelated passing test is not a reason to spend more effort or claim equivalence.
 3. **Keep it IN_PROGRESS or BLOCKED when required evidence is missing**, using BLOCKED only
    for an external impediment. Record DONE only when the required acceptance is established
    by the planned check or a justified equivalent. Changing acceptance needs the applicable
@@ -73,9 +79,9 @@ engine is not available locally. Then, in this order:
 RES-06 Dispatch repository query          BLOCKED
       Planned     integration test against PostgreSQL
       Ran         unit test over the specification; the project has no database test
-                  harness and adding one is out of scope (X-03)
+                  harness and adding one is out of scope (SC-03)
       Not covered whether the generated SQL is valid against the real engine
-      Follow-up   N-02 — database test harness
+      Follow-up   Q-09 — resolve the target-engine validation environment
       Completion  pending target-engine evidence; unit checks are partial evidence only
 ```
 

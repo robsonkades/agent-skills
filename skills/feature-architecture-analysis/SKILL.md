@@ -27,7 +27,7 @@ from outside.
 
 ## Workflow
 
-1. **Start from agreed scope**, not from a chosen design. Record the input revision and
+1. **Start from agreed scope and accepted decisions**, not an assumed design. Record the input revision and
    trace accepted items to `SC-*`; recommended work is conditional until included. If used
    alone, derive a small scope list from the request. Discovered impacts of accepted work
    remain relevant even if their files were absent from that list; surface new requirements
@@ -35,9 +35,9 @@ from outside.
 2. **Walk each item outward** — the component that changes, its callers, its persisted state,
    its contract, its configuration, its tests. `references/impact-map.md` gives the traversal
    and the shape of an entry.
-3. **Classify every touched element**: NEW, MODIFIED, or READ (unchanged, but its behaviour is
-   depended on). READ elements are why a change breaks something nobody edited.
-4. **Mark visibility.** INTERNAL if nothing outside the component can observe the change;
+3. **Classify every touched element**: NEW, MODIFIED (including explicit removals), or READ
+   (unchanged, but its behaviour is depended on). READ elements are why a change breaks something nobody edited.
+4. **Name the component boundary and mark visibility.** INTERNAL if nothing outside it can observe the change;
    EXTERNAL if a caller, a stored row, a message consumer, an operator or a dashboard can.
 5. **Find consumers and dependencies of relevant NEW, MODIFIED and READ elements.** Search
    source, schemas, configuration and registrations; trace changed data, load and failure
@@ -55,8 +55,9 @@ from outside.
 
 ```text
 IF a NEW or MODIFIED element affects an external contract
-THEN it is a compatibility question before it is an implementation task —
-     it needs a decision and CT-* definition, not just a file edit.
+THEN link the applicable accepted contract revision and record the compatibility question.
+     Changed or missing semantics need a decision/CT-* handoff through feature-contract-definition;
+     do not duplicate a settled contract or choose its new semantics while mapping impacts.
 
 IF an element is READ and its behaviour is being relied on more heavily
 THEN it belongs in the map. Load, contention and failure modes travel to callers
@@ -91,7 +92,7 @@ THEN say so with the search boundary; lower review depth only if risk evidence s
 - **Keep independently actionable impacts identifiable.** Group generated/repeated files
   under their source only when consumers, risks and verification remain traceable. File
   count is not a risk score. Map meaningful propagation without expanding every library call.
-- Inspect the target JDK/API/dependency versions and runtime wiring where compatibility
+- Inspect the target compiler/runtime and API/dependency versions and wiring where compatibility
   matters; source, binary, wire and behavioral compatibility are distinct. No Java upgrade
   is implied by this analysis, and a text search cannot prove absence of reflective or remote users.
 
@@ -120,10 +121,14 @@ tests/
   IMP-11 OrderDispatchContractTest.java NEW    INTERNAL   proposed endpoint/auth/state checks <- SC-01
 
 Boundary crossings   <IMP-*, who depends on it, and accountable owner>
-Contracts required   <IMP-* -> CT-* to define through feature-contract-definition>
+Contracts            <IMP-* -> existing CT/specification revision, or required definition and owner>
 Consumers/dependencies   <IMP-* -> locators, count type, searched scope and evidence>
 Verification points  <IMP-* -> existing test/contract evidence or required check>
 Unknowns             <what could not be established, next check/owner, and what it blocks>
 ```
 
-Close with one sentence: the blast radius if this feature is wrong.
+Before handoff, check that every accepted scope item maps to impacts or an evidenced no-impact
+conclusion, locators match the inspected revision, and affected consumers and verification points are
+traceable. Material unknowns name their next check/owner and dependent work; they do not prevent
+reporting the supported map or imply implementation readiness. A local feature may need only a few
+entries. Close with the affected parties and credible consequences if the feature is wrong.

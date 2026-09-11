@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-observer
-version: 1.2.1
+version: 1.2.3
 description: >-
   Observer in Java: choosing and reviewing in-process listener contracts for ordering,
   errors, threads, registration lifetime, reentrancy and notification outside locks.
@@ -46,10 +46,13 @@ suggests:
   - distributed-transactions-and-sagas
   - event-driven-architecture
   - gof-command
+  - gof-mediator
   - heap-dump-analysis
+  - idempotency
   - java-memory-model
   - message-ordering-and-partitioning
   - poison-messages-and-dlq
+  - reactive-backpressure
   - rpc-and-api-contracts
   - scoped-values
   - slo-and-alerting

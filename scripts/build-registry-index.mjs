@@ -48,7 +48,7 @@ function mentionedNames(pkg) {
     const isLadder = file.path.endsWith('references/depth-ladder.md');
     for (const line of decodeText(file.bytes).split('\n')) {
       const target = !isLadder && line.trimStart().startsWith('|') ? table : prose;
-      for (const match of line.matchAll(/`([a-z0-9]+(?:-[a-z0-9]+)+)`/g)) target.add(match[1]);
+      for (const match of line.matchAll(/`([a-z0-9]+(?:-[a-z0-9]+)*)`/g)) target.add(match[1]);
     }
   }
   for (const name of table) prose.delete(name);

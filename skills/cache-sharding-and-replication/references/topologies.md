@@ -24,8 +24,8 @@ and budget metadata, buffers and recovery headroom separately.
 **Client-side sharded.** The membership list is configuration in N applications, and they
 drift. Two clients with different node lists place the same key on different nodes: both
 believe they have a hit rate, and both serve values the other's writes never reached. The
-symptom is "the cache sometimes has stale data" with no pattern, and it is invisible to any
-cache-side metric. Distribute the node list from one versioned source, and log the version
+symptom is "the cache sometimes has stale data"; aggregate hit-rate metrics can hide it.
+Distribute the node list from one versioned source, and log the version
 the client is using so a mismatch is greppable. Define invalidation or migration behavior
 while versions overlap; distributing a version does not eliminate the transition window.
 
@@ -34,6 +34,10 @@ virtual-node count and the identical string format for a ring point. Two client 
 two languages "both using consistent hashing" are not interoperable unless that was designed.
 `consistent-hashing` owns the requirement; here it is the reason polyglot clients push you
 towards a proxy.
+
+Membership can be discovered dynamically; client-side ownership does not itself require a
+redeploy. Compare the existing client's discovery and migration contract with the proposed
+proxy or cluster before introducing another routing tier.
 
 **Proxy-fronted.** The hop is real and it is on the fast path — measure it against
 `T_source`, because a cache is chosen for latency and doubling its latency is a genuine cost.
@@ -49,6 +53,9 @@ the exact product/version and command, including behavior during resharding,
 before adopting the mode. Where replicas exist, be explicit about whether reads may be served
 from them — if they may, reads are subject to replication lag and read-after-write is not
 guaranteed (`consistency-models`).
+Server-owned placement still needs compatible clients: for Redis Cluster, verify `MOVED` and
+`ASK` handling and reachability/authentication of advertised target endpoints from every client
+network. A reachable bootstrap address does not prove resharding or failover will work.
 
 **Fully replicated.** Memory is approximately `N × W` plus metadata, and write propagation grows
 with replicas. It fits a small, read-dominated, slow-changing dataset when the convergence model is
@@ -66,7 +73,7 @@ belongs to `caching-strategies`:
 - For a key belonging to one shard, copies are at most `instances caching that key + RF`,
   excluding temporary migration copies. Shards multiply total nodes, not copies of one key.
   Invalidation must cover all copies directly or through verified propagation.
-- An L1 makes the shared tier's hit rate look worse, because the L1 absorbed the easy hits.
+- An L1 can make the shared tier's hit rate look worse, because the L1 absorbed the easy hits.
   Judge the L2 on origin request rate, not on its own hit rate.
 - Bound L1 memory and define missed-invalidation recovery. TTL is a possible stale-lifetime
   bound only when expiry reloads sufficiently fresh data; strict freshness needs a stronger

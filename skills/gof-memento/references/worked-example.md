@@ -121,6 +121,8 @@ All lists and elements must already be immutable. Read the volatile reference on
 multi-field observation. Volatile does not make read-modify-write edits atomic: serialize writers
 or use a CAS loop with pure transformations. Define whether restore intentionally overwrites
 intervening edits or rejects stale versions; do not reset a conflict counter as part of undo.
+Restoring the same prior State reference can make an identity-only CAS miss intervening edits
+(A → B → A). If the policy rejects such writers, carry a non-restored generation alongside the state.
 
 ## 2. A batch job checkpoint — deliberately not a memento
 
@@ -188,13 +190,13 @@ requirement changes — which is the point of writing it down rather than just c
 
 ## What the two examples share, and do not
 
-|                          | Claims form undo            | Reconciliation checkpoint             |
-| ------------------------ | --------------------------- | ------------------------------------- |
-| Crosses a process        | No                          | Yes                                   |
-| Opaque                   | Yes — sealed private record | No — deliberately readable            |
-| Versioned                | No                          | Yes, explicitly, with an upgrade path |
-| Failure of a bad capture | A wrong undo                | Double processing or skipped records  |
-| Retention concern        | Heap, per session           | Storage, negligible                   |
+|                          | Claims form undo            | Reconciliation checkpoint                |
+| ------------------------ | --------------------------- | ---------------------------------------- |
+| Crosses a process        | No                          | Yes                                      |
+| Opaque                   | Yes — sealed private record | No — deliberately readable               |
+| Versioned                | No                          | Yes, explicitly, with an upgrade path    |
+| Failure of a bad capture | A wrong undo                | Double processing or skipped records     |
+| Retention concern        | Heap, per session           | Storage, by payload and retention policy |
 
 Same idea, opposite engineering. Deciding which one is being built — before writing the class — is
 what the distinction is for.

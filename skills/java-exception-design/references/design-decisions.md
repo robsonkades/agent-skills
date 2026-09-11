@@ -13,9 +13,10 @@ Decide for the supported caller population and layering, not one hypothetical ca
 
 Costs to weigh honestly, in both directions:
 
-- **Checked** infects every signature between throw site and handler, and does not pass
-  through `Function`/`Consumer`/`Stream` without a wrapper at every lambda. On an API used
-  inside pipelines, that wrapper tax is paid forever.
+- **Checked** requires compatible declared propagation or handling. An existing broader `throws`
+  clause may already suffice. `Function`/`Consumer` boundaries need handling or adaptation;
+  a reusable adapter or an API with a throwing functional interface need not repeat wrappers
+  at every lambda. Count the actual caller and composition cost.
 - **Unchecked** removes the compiler's map of failure modes. Callers discover failures in
   production unless every public method documents its `@throws`. If a review finds an
   undocumented unchecked exception that callers clearly need to branch on, that is the bug.
@@ -25,17 +26,17 @@ Costs to weigh honestly, in both directions:
 
 ## Result type versus exception
 
-| Situation                                                                                     | Representation                                       |
+| Situation                                                                                     | Candidate representation                             |
 | --------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | Outcome is one of several _expected_ endings (approved/declined, valid/invalid-with-findings) | Sealed result type, exhaustive `switch`              |
 | Caller will _always_ branch on the outcome                                                    | Sealed result type                                   |
 | Failure is operational and rare; most callers only propagate                                  | Unchecked exception                                  |
 | Failure means a bug—broken invariant, illegal argument                                        | Unchecked exception; catch only at a policy boundary |
-| Absence in a single-value lookup                                                              | `Optional` return, not an exception and not null     |
+| Absence in a single-value lookup                                                              | `Optional` when absence is ordinary and the API fits |
 
-The test: if the "failure" appears in the business requirements ("declined payments are
-shown to the customer with the decline reason"), it is an outcome — data. If it appears
-only in the runbook ("when the gateway is down, retry"), it is an exception. A result type
+Business requirements and runbooks identify handling needs, not mandatory Java representations.
+For example, a decline shown to a customer makes explicit outcome data useful, but a supported
+exception-based API may already express it adequately. A result type
 costs an extra type and makes alternatives inspectable. Java permits ignoring a returned value
 or using a fallback branch, so the type does not force every caller to handle every outcome.
 Exhaustive switches help when callers choose them. If most callers only propagate failure,
@@ -87,9 +88,11 @@ Grep-able signals that this skill applies:
 - **Catch-and-ignore with a comment** for genuinely optional work (best-effort cache
   eviction, metrics emission) — correct when the ignoring is explicit, narrow in type,
   and the operation's failure truly changes nothing for the caller.
-- **`InterruptedException` propagated directly**—its flag is cleared when thrown and need not be
-  restored merely to rethrow the same checked exception. If the API cannot propagate it, restore
-  the flag before returning or wrapping so outer cancellation policy can observe it.
+- **`InterruptedException` propagated directly**—many interruptible blocking APIs clear the flag
+  when reporting interruption; constructing or throwing this exception alone does not. Follow
+  the actual API contract; restoration is not required merely to rethrow the same checked exception.
+  When returning or wrapping for an outer cancellation owner, restore the flag so that owner
+  can observe it; a terminal task owner may instead consume it after cleanup and termination.
 - **Wrapping without a message** (`new DomainException(e)`) is acceptable when the type
   itself says everything the extra sentence would; it is the missing _cause_ that is
   never acceptable.

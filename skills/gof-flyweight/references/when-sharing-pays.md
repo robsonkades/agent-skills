@@ -3,7 +3,8 @@
 ## The arithmetic
 
 Work it out before writing code. The following is only an illustrative HotSpot layout with
-compressed class/object references and 8-byte alignment; confirm it with JOL or a heap dump:
+conventional headers, compressed class/object references and 8-byte alignment; confirm it with
+JOL or a heap dump for the actual build/options (`object-layout-and-footprint`):
 
 ```text
 Object header                     12 bytes  (mark + compressed class word)
@@ -16,16 +17,20 @@ HashMap node/table/key            implementation- and load-factor-dependent
 ```
 
 The String estimate assumes compact Latin-1 storage as in OpenJDK 17, not a portable layout:
-[OpenJDK 17 String source](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/lang/String.java).
+[OpenJDK 17 GA String source](https://github.com/openjdk/jdk/blob/jdk-17-ga/src/java.base/share/classes/java/lang/String.java).
 
 Two consequences that decide most cases:
 
-- **Map entries must be amortised.** Small objects need enough avoided duplicate allocations to
+- **Map entries must be amortised.** Small objects need enough avoided retained duplicates to
   cover table/key costs; there is no fixed object size or repetition threshold.
-- **The saving is per avoided duplicate object.** 40 million records each holding a distinct
-  `String` costs 40 M × 48 B ≈ 1.9 GB. If there are 300 distinct values, canonicalising leaves
+- **Count distinct backing objects too.** Under that layout, 40 million distinct `String` wrappers
+  each owning a separate three-byte Latin-1 array cost 40 M × 48 B ≈ 1.9 GB. If there are 300
+  distinct values, canonicalising leaves
   40 M references (already paid for, inside the record) plus 300 × 48 B — a saving of essentially
-  the whole 1.9 GB. That ratio, occurrences ÷ distinct values, is the number that decides.
+  the whole 1.9 GB before pool overhead. Distinct wrappers alone do not establish that cost:
+  OpenJDK 17's `new String(existingString)` shares its backing array. Deduplication or an earlier
+  sharing boundary may already share arrays; count each reachable allocation once. Canonicalising
+  an already constructed input can reduce retention without reducing its allocation rate.
 
 There is no portable ratio threshold. Compute `(avoided duplicate bytes) - (canonical table,
 keys and retained-lifetime cost)` and include lookup CPU and contention. Large values can pay at
@@ -36,7 +41,7 @@ low ratios; tiny values can lose even at much higher ratios.
 | Mechanism                               | Shared set                 | Limit to know                                                           |
 | --------------------------------------- | -------------------------- | ----------------------------------------------------------------------- |
 | `Integer.valueOf`                       | At least −128..127         | More caching is permitted; never assume 128 misses                      |
-| `Boolean.valueOf`                       | `TRUE`, `FALSE`            | `new Boolean(...)` defeats it and is deprecated for that reason         |
+| `Boolean.valueOf`                       | `TRUE`, `FALSE`            | Constructors are deprecated for removal since Java 9; use the factory   |
 | String literals                         | JVM string table           | Equal literals are interned; identity is still the wrong value contract |
 | `String.intern()`                       | JVM-managed string table   | Retention, lookup and sizing behavior vary by JDK/collector             |
 | Enum constants                          | One per constant           | The closed-set case, and the best one                                   |
@@ -47,7 +52,7 @@ heap, while the table and its tuning/rehash behavior are JVM-version details. In
 of request-derived distinct values can increase retention and lookup/GC work. An application map
 is not automatically better, but it can express scope, bounds and eviction explicitly.
 
-## Alternatives that usually win
+## Alternatives to compare
 
 **GC string deduplication.** On collectors/JDKs that support it, `-XX:+UseStringDeduplication`
 can make equal `String`s share backing arrays in the background. It needs no application cache,
@@ -84,6 +89,13 @@ have headers and alignment. Narrowing one field may not change aligned object si
 **An enum.** When the distinct set is closed and known at compile time, an enum gives sharing,
 identity comparison that is actually safe, exhaustive `switch`, and no cache.
 
+For a reusable library descriptor, separate its documented immutable value from per-use state:
+Java's [Pattern contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html)
+permits concurrent sharing of a `Pattern`, while mutable `Matcher` state must stay confined to one
+use at a time. Do not mistake
+an internally maintained library cache for mutable application state, or a final reference for
+proof that caller-visible mutable data is safe to share.
+
 ## Measuring, before and after
 
 ```text
@@ -93,8 +105,8 @@ Before
   record: live set size, count and retained size of the candidate class,
           distinct-value count
 
-Change
-  canonicalise at the boundary
+Change, if justified
+  apply the selected sharing or representation change
 
 After
   same measurement, same workload
@@ -108,29 +120,30 @@ number alone (`heap-dump-analysis`, `gc-log-analysis`, `jfr-and-async-profiler`)
 
 ## Failure modes
 
-**The unbounded intern map.** Keyed by values derived from requests — customer references, URLs,
-message ids — it grows without limit and is a leak by construction. The symptom is a slow rise in
-old-generation occupancy that survives every full GC. Bound it, key it on a closed set, or scope
-it to the operation.
+**The unbounded intern map.** Persistent retention of arbitrary customer references, URLs or
+message ids can grow without limit. Confirm the retaining path, distinctness and intended lifetime;
+old-generation growth alone does not prove a leak. Bound admission/bytes, validate a closed domain,
+or scope it to the operation with a peak budget. A bounded cache can still leave evicted values
+live through callers, and fresh instances may coexist with them.
 
 **Contention on the pool.** `ConcurrentHashMap.computeIfAbsent` atomically installs a mapping and
 may coordinate callers contending for the same key/bin; the exact mechanism is JDK-specific. An
 expensive mapping function stalls peers, while recursive updates can throw or violate assumptions.
 Keep it short, side-effect-free and non-recursive, then profile the expected key distribution.
 
-**Mutation of a shared instance.** The failure that is a security incident rather than a bug: a
-flyweight carrying tenant-scoped data, mutated by one request, read by another. Require deep
-immutability for this design and include all tenant-dependent meaning in the key; immutability
+**Mutation or wrong semantic scope.** A flyweight carrying tenant-scoped data can expose one
+request's state to another. Preserve immutable intrinsic values for this design and include
+tenant/configuration-dependent meaning in the key or keep it extrinsic; immutability
 alone does not make cross-tenant reuse valid.
 
 **Accidental identity dependence.** Code that starts comparing with `==` because "they are
 shared" can fail after eviction or across pools. Use separately created equal strings for a
 deterministic test; Integer 128 may also be cached.
 
-**Pooling short-lived objects.** The inverse pattern, and still common. Object pooling promotes
-objects that would have died in the nursery into long-lived state, adds a synchronisation point,
-and reintroduces the lifecycle bugs (use-after-return, dirty state) that garbage collection
-removed. Consider reuse for expensive resources with explicit ownership and capacity. Plain-object
+**Pooling short-lived objects.** The inverse pattern, and still common. Object pooling can extend
+otherwise short lifetimes, add lookup or shared-pool synchronization, and introduce lifecycle bugs
+such as use-after-return or dirty state. Consider reuse for expensive resources with explicit
+ownership and capacity. Plain-object
 reuse needs measured benefit and a lifecycle correctness argument; flyweight does not imply it.
 
 Sources: [Integer.valueOf contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html#valueOf(int)>)

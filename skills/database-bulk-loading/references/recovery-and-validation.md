@@ -2,6 +2,12 @@
 
 ## Chunk transaction contract
 
+Chunk commits permit partial durable progress; use them only when the visibility/recovery contract
+allows it. For whole-job atomic visibility, retain a feasible bounded transaction or load a staged
+generation and publish it atomically through a boundary honored by every relevant reader. Include
+concurrent writes, publication failure and old-generation cleanup in that design; staging alone
+is insufficient.
+
 A restartable chunk commits these together:
 
 1. target mutations or a staging partition;
@@ -17,8 +23,11 @@ high-water mark must not advance past uncommitted lower ranges. An offset alone 
 order can change; use stable source identity and a versioned input snapshot.
 
 Connection loss during commit means the outcome may be unknown, not necessarily rolled back.
-Reconnect and reconcile the durable chunk identity before resuming. Capture rollback/cleanup
-failures without replacing the original error; close streams/statements and return pooled
+Reconnect and reconcile the durable chunk identity before resuming. A missing record, even from
+a fresh authoritative read, does not establish that the original attempt has finished. Reuse the
+same atomic claim/data boundary so competing attempts cannot both apply, or establish that the
+earlier attempt cannot still commit. A replica or old snapshot is not decisive absence evidence.
+Capture rollback/cleanup failures without replacing the original error; close streams/statements and return pooled
 connections only after transaction state is resolved or the connection is discarded. Do not
 commit or reset autocommit behind a framework transaction manager.
 
@@ -47,7 +56,8 @@ chain. Rewrites and upserts can prevent exact source-row accounting from JDBC co
 
 State the conflict key and concurrent-writer rule. PostgreSQL `ON CONFLICT`, MySQL `ON DUPLICATE KEY
 UPDATE`, and SQL Server approaches do not select conflicts or lock identically. Avoid no-op updates:
-they can create new row versions, fire triggers, generate log/WAL, and increase bloat.
+they can create new row versions, fire triggers, generate log/WAL, and increase bloat. Suppress them
+only when doing so preserves the required audit, trigger and source-version effects.
 
 Test two sessions racing on the same key and a table with more than one unique constraint. If order
 matters, encode and compare a source sequence/version; arrival order is not a correctness rule.
@@ -68,10 +78,14 @@ and count warnings separately: one row may produce multiple warnings and still b
 Document upsert affected-row semantics and deduplication before writing a reconciliation equation.
 Include a lost commit acknowledgment and overlapping-worker replay in interruption scenarios.
 
-Run an interruption test at chunk boundaries and inside a chunk, then restart twice. The second
-restart should be a no-op with the same final state.
+When implementing or validating restart behavior, reuse sufficient existing checks or run an
+interruption test at chunk boundaries and inside a chunk, then restart twice. The second restart
+should preserve the same final state and repeat no protected effects under the declared contract.
 
 ## Source
 
 - [JDBC BatchUpdateException contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/BatchUpdateException.html)
   — continuation, sentinel counts and large-batch counts; verify the actual driver's behavior.
+- [PostgreSQL unique-index checks](https://www.postgresql.org/docs/17/index-unique-checks.html)
+  — a concrete engine's wait/recheck behavior for conflicting in-flight claims; verify the chosen
+  engine and transaction boundary rather than inferring completion from a missing row.

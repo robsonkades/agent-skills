@@ -36,9 +36,10 @@ Three lookups where absence is a **normal outcome** — exactly Optional's case 
 one point where absence is a **failure** (an unpriceable SKU must not reach payment).
 The shown null-based version leaves that transition to callers (a null-based implementation
 could also enforce it centrally), so every caller re-decides it and
-one of them decided wrong. The fix is not "wrap everything": it is to put Optional on the
-lookup returns, resolve the fallback chain in one place, and end the chain with a throw so
-the failure semantics stop being the caller's guess.
+one of them decided wrong. This example chooses Optional lookup returns and resolves the
+fallback/failure contract in one place. An existing nullable port can instead retain its signature
+while a conditional or local adapter enforces the same policy; port migration is not required to
+fix the checkout's missing-price behavior.
 
 ## After
 
@@ -80,23 +81,24 @@ public Optional<Price> listPrice(String sku) {  // Optional at the boundary only
 }
 ```
 
-Wrapping the private `lookup` itself would allocate an Optional per index probe in a loop
-that runs per line item. Escape analysis may eliminate those allocations; on a batch this
-size, "may" is not a basis for either decision. No allocation profile is supplied here: profile
-the real pricing batch before making a performance claim, keeping versions, workload, bytes/op
-and escape behavior with the result. This example keeps the private null contract for local
-simplicity, not a demonstrated speedup. Without evidence, preserve the simpler existing code.
+Wrapping a present private lookup adds an allocation candidate; empty-instance reuse, call paths
+and JIT elimination determine actual allocation. No allocation profile is supplied here. When cost
+motivates a change, profile the real pricing batch, keeping versions, workload, bytes/op and escape
+behavior with the result. This example keeps the private null contract for local simplicity, not a
+demonstrated speedup. Preserve adequate existing code without inventing either allocation savings
+or a benchmark prerequisite for the missing-price correction.
 
 ## Trade-offs
 
 - Port signatures changed (`Price` → `Optional<Price>`): a source- and binary-incompatible change for
-  every implementer and caller — cheap inside one service, a versioning event on a
-  published API.
+  existing callers and implementers that use those descriptors. Inspect the actual consumer/release
+  boundary; even one service may have separately built consumers. Preserve a published API or plan
+  its migration explicitly.
 - The zero-substituting caller's behaviour changed from "silently free" to "aborts
   checkout". That is the bug being fixed, but it is a behaviour change to announce.
-- `MissingPriceException` now defines the failure mode once. Callers that legitimately
-  wanted "is this priceable?" semantics need a separate query method rather than catching
-  the exception — flow control by exception would be the next smell.
+- `MissingPriceException` now defines the checkout's failure mode once. Callers that legitimately
+  treat missing prices as normal need a suitable query/result contract; reuse an adequate existing
+  one or compare a separate query with the current failure handling instead of forcing a new API.
 - Two idioms now coexist in the adapter (null privately, Optional publicly). The comment
   and the `@Nullable` annotation are load-bearing; without them the mix looks like
   inconsistency instead of a decision.
@@ -109,5 +111,7 @@ simplicity, not a demonstrated speedup. Without evidence, preserve the simpler e
   silently break.
 - A test for the unknown SKU asserting `MissingPriceException`, replacing the three
   divergent caller behaviours.
-- The allocation claim re-checked after the change: profile the pricing batch before and
-  after; keep the numbers with the commit.
+- Propagated lookup failures and invalid null Optional/Price results must remain distinct from
+  normal absence; do not catch and flatten them merely to try the next source.
+- If performance motivates the change, profile the representative batch before and after and
+  retain the measured scope. No performance result is implied by these illustrative tests.

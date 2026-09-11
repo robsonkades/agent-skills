@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: component-and-release-boundaries
-version: 1.2.1
+version: 1.2.2
 description: >-
   Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a
   published library — and what that costs: the tension between reusing code and being able to
@@ -49,6 +49,8 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - architecture-decision-making
+  - architecture-refactoring-paths
   - distributed-tracing-design
   - distribution-boundaries
   - enterprise-architecture-smells

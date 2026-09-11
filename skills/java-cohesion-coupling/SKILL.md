@@ -23,35 +23,42 @@ from numbers with no observed change pain behind them.
 ## Workflow
 
 Inspect compiler release/toolchains, resolved dependencies, production artifacts, module
-descriptors and supported launch configuration first. No single authoring baseline is
-declared; tool references use JDK 25, JPMS requires Java 9+, and the example's `List.copyOf`
+descriptors and supported launch configuration first. Default to Java 25 only when no project
+baseline is specified; JPMS requires Java 9+, and the example's `List.copyOf`
 requires Java 10+. Use a compatible analyzer and the project's target versions; do not
 introduce modules, upgrade Java or add tools as an incidental cleanup.
+Reuse current scoped graphs and accepted constraints. Ask only for missing ownership,
+consumer or policy information that could change the decision; a small edge review need not
+inventory the whole application.
 
 1. **Build the real graph.** `jdeps -verbose:class -filter:none` over the compiled classes, plus
-   the `requires` edges under JPMS. Bytecode references are the compile/link graph;
-   imports can be unused and miss reflection, services, resources, schemas and shared
+   the `requires` edges under JPMS. Bytecode references are a static dependency projection;
+   source-only annotations can disappear, and constant inlining can erase field-level usage
+   even when a class edge remains.
+   Imports can be unused and miss reflection, services, resources, schemas and shared
    infrastructure. The architecture diagram remains a hypothesis, and runtime/semantic
    edges need separate evidence.
-2. **Find strongly connected components first.** A package cycle prevents a simple clean
-   topological build without prebuilt peers and can increase reasoning/migration cost,
-   but does not prove lockstep releases or changes. Treat the component as one candidate, identify its actual edges, and
+2. **Find strongly connected components first.** A package cycle prevents a topological ordering
+   of those packages, but they can compile together in one artifact. Separate build/module
+   constraints and migration costs require their own evidence; a cycle does not prove lockstep
+   releases or changes. Treat the component as one candidate, identify its actual edges, and
    break it when the benefit exceeds compatibility and ownership costs.
 3. **Classify the suspicious edges.** What kind of coupling does each carry —
-   content, common, control, stamp, data? The kind determines the fix.
-4. **Choose among the three moves** for each bad edge: move a misplaced class, invert the edge
-   (that mechanic is the java-dependency-inversion skill), or merge packages that always change
+   content, common, control, stamp, data? The kind informs the correction.
+4. **Choose a proportionate response.** Retain an adequate boundary or prevent new forbidden
+   edges when that meets the objective. For a harmful edge, consider moving a misplaced class or inverting the dependency
+   (that mechanic is the java-dependency-inversion skill), or merging packages that always change
    together and were never independently releasable concepts. Edge count alone does not choose.
 5. **Corroborate with metrics.** Afferent/efferent
    counts and instability support a case built from the graph and the change
    history; a metric can direct investigation but cannot establish a defect by itself.
-6. **Verify.** Recompute static and declared graphs, exercise runtime/service-loading paths, and
+6. **Verify.** Recompute affected static and declared graphs, exercise relevant runtime/service-loading paths, and
    confirm the motivating change or policy is easier to enforce. Inversion may add an interface
    edge while removing the harmful concrete edge, so "fewer packages" is not the universal test.
 
 ## Rules
 
-- Depend in the direction of stability. The most expensive edge in a graph runs
+- Depend in the direction of stability. An expensive edge can run
   from a widely-depended-on contract into a structurally unstable package. Martin's
   instability metric describes dependency shape, not empirical volatility; corroborate it
   with change history and contract compatibility before calling the target volatile.

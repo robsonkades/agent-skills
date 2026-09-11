@@ -1,5 +1,9 @@
 # Host and container configuration
 
+Review the areas affected by the requested change or observed failure. Reuse representative
+measurements already supplied; an adequate current configuration needs no tuning. The checklist
+below supports a full deployment review when that is the task, not every Linux/JVM question.
+
 ## Memory
 
 ```yaml
@@ -19,7 +23,11 @@ committed is not resident memory, and RSS minus NMT is not untracked native allo
 
 - Swap policy chosen at node/cgroup level from latency-versus-survival goals; monitor
   `memory.swap.current`, swap-in/out, faults and PSI where enabled.
-- `-XX:+AlwaysPreTouch` for predictability, understanding it pre-empts minor faults only.
+- Evaluate `-XX:+AlwaysPreTouch` against the workload's first-touch and startup requirements. Verify the
+  collector/build, initial and maximum heap, commitment behavior and page policy. It can move
+  work into startup or later heap commitment and increase resident-memory pressure; it does
+  not touch every process mapping, eliminate all later faults or prevent swap. Compare those
+  costs with the observed latency benefit before changing the setting.
 - Choose an OOME exit/capture policy for the deployed HotSpot build and failure path. These
   flags do not handle kernel SIGKILL or every Java-thrown OOME (for example, direct-buffer
   failures). Automatic heap dump attempts are not retried indefinitely; provide writable,
@@ -40,7 +48,7 @@ cat /sys/kernel/mm/transparent_hugepage/defrag
 ```
 
 Verify the current mode before changing it. "Disable THP" copied from a 2014 checklist
-throws away the TLB benefit to fix a problem the host may not have.
+can discard a TLB benefit to fix a problem the host may not have; measure both effects.
 
 ## CPU
 
@@ -95,6 +103,9 @@ Lifetime counters need rate/delta queries and workload baselines.
 
 ## Pre-deploy checklist
 
+Select applicable items for the changed configuration, workload and deployment environment.
+Record reused evidence and unresolved gaps; retain adequate settings rather than tuning by list.
+
 - [ ] NMT-tracked memory, process residency and cgroup charges compared under real load,
       with untracked coverage and scope differences recorded
 - [ ] `-Xmx` or `MaxRAMPercentage` leaves that measured headroom inside `memory.max`
@@ -111,6 +122,9 @@ Lifetime counters need rate/delta queries and workload baselines.
 
 ## Sources
 
+- [JDK 25 Java launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html): AlwaysPreTouch requests heap-page touching before application use.
+- [OpenJDK 25 G1 region commitment](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RegionToSpaceMapper.cpp): pre-touch on committed ranges; not a guarantee that all process faults disappear.
+- [Linux 6.12 THP](https://www.kernel.org/doc/html/v6.12/admin-guide/mm/transhuge.html): allocation, defrag modes and multiple page sizes; check the deployed kernel.
 - [Linux 6.12 OOM accounting](https://github.com/torvalds/linux/blob/v6.12/mm/oom_kill.c): `__oom_kill_process` records both VM and memcg kill events.
 - [systemd v257 limits](https://github.com/systemd/systemd/blob/v257/man/systemd.exec.xml): LimitNPROC scope and TasksMax preference.
 - [JDK 25 Linux ZGC NUMA](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp): actual UseNUMA consumption.

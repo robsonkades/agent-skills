@@ -29,6 +29,11 @@ reference uses the Java 25 API documentation for a long-standing contract. Inspe
 runtime, scheduler/framework, client retry defaults and deployment configuration before
 applying version-sensitive claims; this skill does not authorize upgrades or fault injection.
 
+Reuse the incident record, accepted service contract and known owner before collecting more
+evidence. During an outage, bound classification by the response time available and hand off
+to the authorized incident owner/runbook without delaying containment for a complete catalogue
+walk. Carry the evidence, unresolved discriminator and remaining time into that handoff.
+
 1. **Write down the observation, not the theory.** "Inbound rate rose while success rate
    fell", "the queue is empty and no alert fired", "duplicates 1.5 s apart". The index below
    is keyed on observations.
@@ -41,7 +46,8 @@ applying version-sensitive claims; this skill does not authorize upgrades or fau
 4. **Check "where it hides"** in code, config, sidecars, SDKs and control planes before accepting the match.
    A pattern you cannot locate in the system is a hypothesis, not a diagnosis.
 5. **Go to the owner skill for the fix.** Do not improvise a remedy from the entry — the
-   entries are deliberately too short to implement from.
+   entries are deliberately too short to implement from. Match any intervention to existing
+   authority, affected scope and recovery/stop conditions; naming a pattern grants none.
 6. **In a design review, walk the index as a checklist** and require an answer for each
    pattern the design can exhibit. "That cannot happen here" is an acceptable answer only with
    the reason.
@@ -70,7 +76,7 @@ Prefer instead when:
 | Synchronised spike after a restart, deploy, TTL expiry or recovery | Thundering herd                | `cascading-failures`                   |
 | Dependency inbound rate rises while its success rate falls         | Retry storm                    | `retries-and-backoff`                  |
 | Failure spreads to services that never call the failing one        | Cascading failure              | `cascading-failures`                   |
-| Caller gave up but downstream work is still running                | Timeout stacking               | `timeouts-and-deadlines`               |
+| Request-owned work continues beyond its accepted lifetime          | Timeout stacking               | `timeouts-and-deadlines`               |
 | Queue depth and latency grow without bound; goodput falls          | Unbounded queue growth         | `rate-limiting-and-load-shedding`      |
 | Pool acquisition timeouts on unrelated endpoints; FD or OOM errors | Resource exhaustion            | `concurrency-limiting-and-bulkheads`   |
 | Node is up, health check green, answering ten times slower         | Gray failure / slow node       | `failure-models`                       |
@@ -124,6 +130,8 @@ Prefer instead when:
 Return a small ranked hypothesis set with observed evidence, one discriminator and competing
 explanation per hypothesis, owner skill, and the next bounded evidence request. Missing
 telemetry must remain explicit. Do not claim a mechanism was confirmed by matching its name.
+For design reviews, distinguish possible failure surfaces from observed incidents and retain
+adequate existing controls. A supported no-change conclusion is a valid result.
 
 ## References
 

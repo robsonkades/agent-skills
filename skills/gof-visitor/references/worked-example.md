@@ -117,9 +117,10 @@ has been measured.
 removing an extra accessor is justified only if callers can use an appropriate existing interface,
 not because deconstruction bypasses the accessor or hides the components.
 
-**Completeness is still enforced.** When `CodeBlock` was added to `permits`, all four operations
-failed to compile — the same set of sites the classical visitor would have flagged, found by the
-compiler with no interface to maintain.
+**Coverage is checked on recompilation.** In this example, adding `CodeBlock` to `permits` would
+make the four exhaustive operations fail when rebuilt without matching cases or a covering fallback.
+Adding an abstract Visitor method similarly exposes missing implementations on recompilation.
+Neither mechanism proves semantics or makes separately compiled old consumers understand the new kind.
 
 ## The traversal, separated once
 
@@ -193,8 +194,8 @@ The Unknown sketch needs null/type/size checks and owned or immutable raw data: 
 made immutable by wrapping it in a record. Do not render raw markup or load referenced resources.
 Preserving an unknown node for editing/forwarding does not authorize incomplete billing or validation.
 
-The consequence is the point: all four operations failed to compile until each decided what an
-unknown node means for it.
+The consequence is the point: rebuilding these exhaustive operations after adding `Unknown`
+requires coverage; each operation must also decide what an unknown node means semantically.
 
 ```java
 // render: placeholder helper must escape the untrusted type for its output context
@@ -215,8 +216,9 @@ Count is an omitted immutable result; all branches/combination must propagate es
 Billing must reject or defer estimates; resetting a shared external flag is not an adequate result
 contract. Keep metric labels bounded; raw unknown types belong only in bounded/sanitized diagnostics.
 
-Four different, deliberate answers where "skip it" would have given four silent ones. Sealing the
-hierarchy is what forced the decision to be made four times rather than defaulted once
+Four different, deliberate answers where blanket skipping would have given four silent ones.
+Exhaustive switches without covering fallbacks expose the missing type cases on recompilation;
+the operation contracts and tests establish whether each answer is valid
 (`rpc-and-api-contracts`).
 
 ## Where the classical form stayed

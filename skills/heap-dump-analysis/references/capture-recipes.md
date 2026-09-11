@@ -2,6 +2,11 @@
 
 ## The four capture methods
 
+These are alternative recipes. Choose a fresh destination visible in the target JVM's
+filesystem/namespace and preserve prior incident artifacts. Add `-overwrite` only for an
+intentional, authorized replacement of owned disposable output; do not use it to replace
+previous incident evidence. Gzip compression does not require overwrite.
+
 ```bash
 # 1 — automatic on OOM (opt-in; off by default)
 -XX:+HeapDumpOnOutOfMemoryError
@@ -10,7 +15,7 @@
 # 2 — jcmd (modern, preferred interactively; options as printed by JDK 25 `help GC.heap_dump`)
 jcmd <pid> GC.heap_dump /path/dump.hprof                 # no -all: full GC before the dump
 jcmd <pid> GC.heap_dump -all /path/dump.hprof            # includes unreachable objects, no forced GC
-jcmd <pid> GC.heap_dump -gz=1 -overwrite /path/dump.hprof.gz   # gzip inline; 1 = fastest ("recommended"), 9 = smallest
+jcmd <pid> GC.heap_dump -gz=1 /path/dump.hprof.gz        # gzip inline; 1 = fastest ("recommended"), 9 = smallest
 jcmd <pid> GC.heap_dump -parallel=4 /path/dump.hprof     # dumper threads; default 1, the VM may use fewer
 
 # 3 — jmap (legacy, same underlying mechanism; also accepts gz=<1-9>)
@@ -151,9 +156,14 @@ capacity:
 - **jxray.com** — commercial, aimed at very large dumps, with common leak patterns
   pre-computed.
 
-JDK Mission Control and GCeasy.io are frequently cited as ways to "open the `.hprof`".
-Neither does. JMC views JFR recordings; GCeasy.io analyses GC logs.
+JMC's JFR views and GCeasy's GC-log analysis are different from HPROF analysis. JMC can
+also provide the **JOverflow** plug-in: its JMC 9.1.0 editor registers `.hprof` support.
+Check the installed distribution, plug-in and target-dump parser compatibility rather than
+assuming it is present or supports every layout. Its analysis is not a promise of MAT's
+OQL/retained-set workflow or of enough capacity for a particular large dump.
 
 ## Primary reference
 
 - [HotSpot 25 heap dumper: safepoint capture, virtual-thread roots and subsequent merge](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/heapDumper.cpp)
+- [HotSpot 25 VM-reported OOME once-only guard](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/utilities/debug.cpp)
+- [JMC 9.1.0 JOverflow HPROF editor registration](https://github.com/openjdk/jmc/blob/9.1.0-ga/application/org.openjdk.jmc.joverflow.ui/plugin.xml)

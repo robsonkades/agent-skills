@@ -32,11 +32,13 @@ Notes that decide the choice:
   make other effects atomic, and requires per-partition monotonic updates plus ownership
   control. Kafka transactions are another bounded case for consume-transform-produce within
   Kafka; external systems remain outside that transaction. See `delivery-semantics`.
-- In Spring Kafka inspect the actual container version, `AckMode`, listener type,
+- In Spring Kafka inspect the actual container version and managed Kafka client, `AckMode`, listener type,
   `syncCommits`, transactions and error handler. `MANUAL` queues an acknowledgement with
   batch semantics; `MANUAL_IMMEDIATE` commits immediately when acknowledged on the consumer
   thread. Off-thread acknowledgements, deferred/out-of-order acknowledgements and transactions
   change timing. An `acknowledge()` call is not universally a durable commit at that line.
+  The Spring 3.3 reference below describes that container's semantics; it does not establish
+  a supported Spring/Kafka 4.1 pairing. Preserve the project's dependency-management policy.
 
 ## `auto.offset.reset`
 
@@ -82,13 +84,15 @@ What to do with them:
 
 - **Alert on business delay plus inability to recover.** Use next-record/oldest-in-flight age
   where meaningful, and pair it with arrival rate, completion rate and catch-up estimate.
-- **Alert per partition, not on the group total.** One blocked partition is invisible in a sum
-  across fifty. A blocked partition is exactly the head-of-line case in
-  `poison-messages-and-dlq`.
-- **Plot lag in records for capacity**, alongside consumption rate and production rate. Lag
-  flat and non-zero means keeping up but behind; lag with positive slope means
-  `production rate > consumption rate` and no amount of waiting fixes it — that arithmetic is
-  `littles-law-and-queueing`.
+- **Inspect each partition alongside the aggregate.** A falling group total can hide which
+  partition has stopped progressing while others drain. Check its completion and in-flight
+  evidence before attributing it to a head-of-line failure (`poison-messages-and-dlq`).
+- **Compare backlog with arrival and completion rates over matching windows.** Stable
+  non-zero backlog can mean keeping up while behind; sustained arrivals above completion
+  prevent catch-up under those rates. A temporary burst can recover when the rates reverse.
+  Offset distance is not an exact count of consumable records, and fetched/committed progress
+  may differ from completed effects. Keep those boundaries explicit; the stable-system
+  arithmetic is `littles-law-and-queueing`.
 - Use bytes/work estimates when record cost varies. `records / net drain rate` predicts
   catch-up only while completion exceeds arrival and future rates remain comparable.
 - **Watch lag going to zero unexpectedly.** Catch-up, a changed group/reset, or a producer
@@ -96,6 +100,14 @@ What to do with them:
   backlog. Check production rate and expected business arrivals independently of consumer lag.
 
 ## Testing
+
+Choose cases that exercise the changed contract: crash/commit for delivery boundaries,
+rebalance/old epochs for assignment or offload, and bootstrap/retention for reset behavior.
+An alert-only change can use recorded metric windows, including skew, a burst and one stalled
+partition; it does not require a consumer migration or the entire fault matrix. Broker tests
+need an isolated fixture at the intended client/broker/protocol versions. Existing test
+infrastructure or Testcontainers can provide it; a local mock/API check cannot prove broker
+reassignment, replay, transaction durability or no-loss behavior.
 
 - **Kill the consumer mid-batch, assert no loss.** Testcontainers with a real broker. Produce N
   records, let the handler process part of a batch, then `Runtime.getRuntime().halt(1)` before
@@ -113,8 +125,8 @@ What to do with them:
   the failure mode as a test rather than as tribal knowledge, and it fails when someone raises
   `max.poll.records` without checking the budget.
 - **Start a group with no committed offset.** Assert the consumer starts where
-  `auto.offset.reset` says it should. It is a one-line test for a setting whose behaviour is
-  otherwise only observed during an incident.
+  `auto.offset.reset` says it should; include the intended subscription and retained data.
+  This makes the bootstrap policy observable before an incident.
 - **Complete out of order.** Delay a lower offset while a higher one finishes; crash after a
   commit attempt and prove the lower record is not skipped. This catches `max(completed)`
   offset trackers. Include delivered offsets 10 and 14 (no records 11–13), failed/cancelled
@@ -127,4 +139,5 @@ What to do with them:
 - [KafkaConsumer API: offset commits and auto commit](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
 - [Kafka 4.1 consumer configuration: reset and isolation](https://kafka.apache.org/41/configuration/consumer-configs/)
 - [Kafka design: delivery semantics and transactions](https://kafka.apache.org/documentation/#semantics)
-- [Spring Kafka container acknowledgement modes](https://docs.spring.io/spring-kafka/reference/kafka/receiving-messages/message-listener-container.html)
+- [Spring Kafka 3.3 container acknowledgement modes](https://docs.spring.io/spring-kafka/reference/3.3/kafka/receiving-messages/message-listener-container.html)
+- [Spring Kafka 3.3.10 acknowledgement dispatch](https://github.com/spring-projects/spring-kafka/blob/v3.3.10/spring-kafka/src/main/java/org/springframework/kafka/listener/KafkaMessageListenerContainer.java)

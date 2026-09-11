@@ -2,7 +2,7 @@
 
 ## Mapping contract elements to language mechanisms
 
-| Contract element                                                     | First choice                                                                                                                                                                                       | When that is impossible                                                                                             |
+| Contract element                                                     | Mechanism when it fits                                                                                                                                                                             | Relevant alternative                                                                                                |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Precondition on a value's _shape_ (positive, non-empty, well-formed) | Validating type with constructor checks, subject to non-null reference and ownership conditions below                                                                                              | Explicit entry check with a stable failure contract; actual values only when bounded and non-sensitive              |
 | Precondition on the _receiver's state_ ("must be open")              | Model states as types (sealed `Open`/`Closed` with the method only on `Open`)                                                                                                                      | `IllegalStateException` at entry, named in `@throws`                                                                |
@@ -43,9 +43,10 @@ The contract is the promise, not a description of the current code:
   Classify the behavioral and compatibility change separately.
 - Do not document incidental behaviour (iteration order, an accidental tolerance for
   null) unless you intend to promise it forever; once written, callers may rely on it.
-- In a JSpecify `@NullMarked` scope, unannotated type uses are non-null by default for compliant
-  tooling; outside such a declared convention, silence is ambiguity, not a portable non-null
-  contract.
+- In a JSpecify `@NullMarked` scope, unannotated class/array type uses normally exclude null,
+  while an unannotated type variable retains the substituted argument's nullness. Resolve the
+  actual type and annotation scope with compliant tooling; outside a declared convention,
+  silence is ambiguity, not a portable non-null contract. Annotations alone do not add runtime checks.
 
 ## Behavioural subtyping — the rules and their concrete violations
 
@@ -81,8 +82,9 @@ Violations that compile cleanly:
   — an invariant begging to be a type.
 - `assert` on a parameter of a `public` method — a precondition demoted to a sometimes-
   comment.
-- A sealed hierarchy consumed only through `default`-bearing switches — variant
-  contracts exist but totality is never checked.
+- A `default` or covering type-pattern case silently handles variants whose consumer contract
+  requires individual policy review. Source exhaustiveness alone does not establish that review;
+  a deliberately tolerant fallback can be correct.
 
 ## False positives
 
@@ -94,8 +96,9 @@ Violations that compile cleanly:
   of rejected inputs is unchanged.
 - **`UnsupportedOperationException` from an interface's documented-optional operation**
   (`List.add` on `List.of(...)` results) is within contract _because the interface says
-  so_; the smell is designing new interfaces with optional operations, not implementing
-  existing ones.
+  so_. For a new API, check whether clients can discover supported capabilities and handle
+  the documented failure. Separate capability interfaces when that improves actual use;
+  optional operations alone do not prove a substitutability defect.
 - **Constructor `requireNonNull` on values "already validated" at the boundary** is not
   redundant defence: the constructor is establishing its own invariant, independent of
   any particular caller's discipline. Where boundary validation itself belongs is

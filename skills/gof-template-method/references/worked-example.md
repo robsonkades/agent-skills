@@ -98,8 +98,9 @@ public interface SettlementSteps {
 
 What each change bought:
 
-- **`final` class, no inheritance.** Variants cannot replace the sequence. Completion audit runs
-  only after successful steps; failure audit is attempted without masking the primary exception.
+- **`final` class, no inheritance.** This is an eligible replacement after caller migration, not
+  an in-place compatible change. Completion audit runs only after successful steps; a caught
+  runtime failure attempts failure audit without masking the primary exception.
   Neither guarantees a durable audit across process crashes or audit outages. The ledger sweep's
   "no provider call" becomes a `SettlementSteps` implementation whose
   `settle` returns results directly — expressed in a step rather than by discarding the algorithm.
@@ -112,6 +113,14 @@ What each change bought:
   may become part of variant steps only after checking ordering/failure behavior. Moving afterRun
   into record changes its position relative to reporting, so requires an explicit contract decision.
 
+This sketch catches `RuntimeException` inside the `try`; start-audit failure and `Error` escape
+without that failure-audit attempt. A finish-audit exception can follow successful settlement and
+recording. A local failure report therefore does not prove business effects failed or rolled back.
+Resource owners still need their actual cleanup protocol; auditing is not cleanup.
+The suppression examples assume exceptions permit suppression. If a domain exception disables
+it, preserve required secondary diagnostics through the existing reporting path without replacing
+the primary failure; `addSuppressed` alone will not retain them.
+
 ## The remote step's failure semantics
 
 `settle` calls a provider. The template owns what individual steps cannot decide alone:
@@ -123,15 +132,27 @@ public RunReport run(LocalDate date, RunId logicalRunId, Deadline deadline) {
     try {
         results = steps.settle(validated, context);
     } catch (SettlementUnavailable e) {                 // may include unknown outcome
-        audit.runAbandoned(context, e);
+        try { audit.runAbandoned(context, e); }
+        catch (RuntimeException auditFailure) {
+            if (auditFailure != e) e.addSuppressed(auditFailure);
+        }
         throw new RunAbandoned(context.runId(), e);     // reconcile/retry under provider contract
     } catch (SettlementRejected e) {                    // permanent
-        audit.runFailed(context, e);
-        throw e;                                        // no retry; a human looks at it
+        try { audit.runFailed(context, e); }
+        catch (RuntimeException auditFailure) {
+            if (auditFailure != e) e.addSuppressed(auditFailure);
+        }
+        throw e;                                        // surface the declared rejection outcome
     }
     ...
 }
 ```
+
+`RunAbandoned` describes this local run's decision, not provider rollback or termination. The
+wrapper retains the settlement failure as its cause; with suppression enabled, a distinct runtime
+audit failure is attached to that cause. Rejection evidence is scoped to that attempt/effect; it
+cannot settle an earlier unknown attempt. Neither catch defines an `Error` recovery policy or a
+new retry layer.
 
 And the question a partial run raises is answered explicitly rather than discovered:
 
@@ -153,7 +174,8 @@ run is not safe merely because it carries an ID. One local transaction cannot co
 Provider contracts differ; for example, [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests)
 defines payload comparison and key retention. Do not assume that contract for another provider.
 
-The run deadline must be monotonic and propagated to blocking clients; passing Deadline alone
+Measure local remaining time monotonically and pass the shrinking budget to blocking clients
+under their protocol; a local clock origin is not a portable wire deadline. Passing Deadline alone
 does not enforce it. Resource-owning steps need cleanup on success/failure. The failure sketch is
 an alternative policy illustration, not an extra catch layer to paste into the first example.
 
@@ -163,11 +185,13 @@ An illustrative migration plan, after inspecting callers and compatibility:
 
 1. **Characterize run overrides and public contracts.** Move the ledger sweep's behavior into a
    real local settlement step; make run final only once permitted overrides are migrated.
-2. **`SettlementSteps` introduced**, with the abstract base implementing it by delegating to its
-   own hooks. Behaviour identical; nothing else changed.
-3. **Variants converted one at a time.** Each became independently testable at the moment it was
-   converted, which is what kept the work moving.
-4. **The abstract base deleted**, along with `protected Batch batch`.
+2. **A step adapter introduced**, translating the old hooks to the new contract where feasible.
+   The signatures and state protocol differ: preserve visibility, order, run identity and failure
+   behavior explicitly instead of claiming that implementing the interface is equivalent.
+3. **Eligible variants converted one at a time**, verifying sequence and failure behavior as
+   well as individual steps.
+4. **The abstract base deleted only if supported callers permit it**; otherwise retain its
+   compatibility role and remove internal state only after its consumers migrate.
 
 Making an externally overridable method final can break source and binary clients. Preserve a
 compatibility adapter/deprecation window when external subclasses cannot migrate together.

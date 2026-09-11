@@ -111,9 +111,15 @@ Details that affect correctness:
   An empty ring has no valid positive replica count. Arithmetic validation is not a memory
   budget: enforce a topology-size limit before accepting untrusted configuration, and build
   replacement snapshots off-path for all-or-nothing publication on allocation failures.
-- **`synchronized` on the whole class** is adequate only because membership changes are rare
-  and `owner` is short. For placement on the hot path, publish an immutable snapshot behind a
-  `volatile` field so readers never block; the visibility rules are `java-memory-model`.
+- **Per-method synchronization** keeps each call coherent, but separate calls may observe
+  different membership states. Capture one topology snapshot/epoch when several lookups must
+  agree. Keep this locking design if measured contention and rebuild time fit the budget; immutable
+  snapshot publication can remove reader lock acquisition when needed, not all latency or allocation
+  costs. The visibility rules are `java-memory-model`.
+
+This class selects distinct node IDs, not failure domains, residency or tenant permissions. Those
+constraints need an explicit placement policy; do not count two nodes in one failure domain as two
+independent copies. `owners` returns one coherent list per invocation, not a migration guarantee.
 
 ## Choosing V
 
@@ -161,6 +167,9 @@ The 2% tolerance is a fixture-specific statistical check, not a universal bound;
 keys and hash parameters before running it. Test removal separately: only keys previously
 owned by the removed node may move. Add deterministic collision, wrap-around, replica
 distinctness, rejected-overflow-then-valid-retry and conflicting-weight cases.
+Measure replica additions/removals separately: a stable primary can have changed successors.
+If placement filters replicas by zone, capacity or residency, test those rules and their movement
+properties rather than assuming the unconstrained ring's primary-owner invariants still apply.
 
 Two more worth having. **Balance:** with the chosen V, count/byte/rate/cost ratios stay under
 the recorded tolerance across several node counts and key sets. **Cross-process agreement:**
@@ -172,8 +181,8 @@ seed, encoding, framing, unsigned ordering and collision cases in those vectors.
 
 ## Membership handoff
 
-A deterministic ring is not a safe reconfiguration protocol. A production transition needs
-an explicit state machine, for example:
+A deterministic ring is not a safe reconfiguration protocol. Authoritative stored state needs
+an explicit transition state machine, for example:
 
 1. Propose epoch E+1 and reject concurrent incompatible topology changes.
 2. Copy newly owned ranges while E remains authoritative; checkpoint progress and verify
@@ -184,5 +193,7 @@ an explicit state machine, for example:
 5. Retire E only after in-flight requests, stale clients and rollback requirements are
    bounded; observe migration bandwidth, errors and per-owner load throughout.
 
+Recomputable cache entries can instead be discarded/refilled when the authoritative source,
+origin protection and recovery/staleness budgets support it; copying is not always necessary.
 The exact mechanism is datastore-specific. Merely broadcasting a new node list and copying
 in the background creates split ownership, stale reads and lost writes during the interval.

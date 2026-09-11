@@ -113,8 +113,10 @@ Four requirements to make explicit:
   same transaction as the effect (`idempotency`).
 - **A schema version in payload or envelope**, because deployments are independent; distinguish it
   from the per-policy state version used for ordering. The event is a contract (`rpc-and-api-contracts`).
-- **A dead-letter path** for permanently failing messages, or one poison message blocks its
-  partition indefinitely (`poison-messages-and-dlq`).
+- **An owned terminal/recovery policy** for permanently failing messages: quarantine, pause for
+  repair or explicit rejection as the effect contract permits. Advancing past a failed billing
+  delta can lose a required effect; a DLQ does not by itself make that gap safe
+  (`poison-messages-and-dlq`).
 - **Consumer lag and terminal failure monitoring.** Failure no longer shares the request stack;
   even in stage 1 an AFTER_COMMIT callback cannot roll back the completed renewal, and exception
   reporting depends on the transaction callback phase/configuration

@@ -2,13 +2,13 @@
 name: feature-requirement-clarification
 description: >
   Deciding what to ask the user about a feature, when to ask it, and what stops work until it is
-  answered: proving the repository cannot answer it first, pricing each question by what changes
+  answered: reusing supplied answers and checking relevant evidence first, pricing each question by what changes
   if the answer is the other one, batching questions into rounds instead of interrogating, and
   marking the few that are genuinely blocking. Use when a feature request is ambiguous and the
   choice is between asking and assuming, when a long list of questions is about to be sent at
   once, when work is stalled on a question that has no consequence, when implementation is about
   to start on a guessed answer, or when a question is being asked that a grep would have
-  answered. Does not investigate the repository itself (feature-context-analysis), does not
+  answered. Does not own the repository context report (feature-context-analysis), does not
   classify what is known from what is guessed (feature-discovery), and does not own the
   ambiguity catalogue or acceptance-criteria format (requirements-and-acceptance).
 ---
@@ -26,7 +26,8 @@ question nine, and still ends up guessing.
 
 The discriminator is not politeness or thoroughness. It is **consequence**: a question earns a
 user's attention only when the two answers lead to different work, and only when nothing else
-can answer it.
+available can settle the missing intent, evidence or authority. A focused search can establish a
+bounded gap; it need not prove that no answer exists anywhere.
 
 ## Workflow
 
@@ -42,8 +43,9 @@ can answer it.
    There is no target number of rounds.
 5. **Write each question so it can be answered in one line**, and state the consequence of each
    answer. A question whose consequence you cannot state is not ready to ask.
-6. **Proceed on the non-blocking ones** under a stated assumption, recorded as an assumption
-   rather than absorbed as a fact.
+6. **Proceed with independent authorized work.** Keep later consequential questions unresolved until
+   their answers are needed. Adopt a stated, bounded assumption only for a reversible choice within
+   existing authority; non-blocking for current work does not mean the missing answer was decided.
 
 ## The repository-first rule
 

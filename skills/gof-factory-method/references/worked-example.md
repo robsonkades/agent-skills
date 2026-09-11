@@ -7,6 +7,12 @@ are omitted. Assume eager parsing closes file resources before returning rows; p
 hold no closeable resources. A streaming or closeable parser needs explicit per-run cleanup,
 including parse/save failure paths.
 
+This refactor assumes inspection found all subclasses/callers application-controlled, no
+supported overrides of `isValid` or `run`, and no external extension/binary contract. These are
+preconditions, not conclusions from three example subclasses. If a plugin supplies validation,
+another algorithm step or covariant results, retain those hooks or migrate them explicitly
+before making the creator final.
+
 ```java
 public abstract class ImportJob {
 
@@ -38,8 +44,9 @@ question "which parsers do we support?" — the answer is spread across three fi
 wiring picks the subclass.
 
 There is real inherited behaviour here (`run`), so this is genuine GoF Factory Method, not a
-misnamed `Supplier`. It is still the wrong shape, for a different reason: the variation is one
-value per kind, and the kinds are data.
+misnamed `Supplier`. Here the observed cost is scattered format selection; under the stated
+closed-extension assumptions, a provider registry makes that selection visible. A small existing
+hierarchy can remain adequate when no coordination or maintenance problem warrants changing it.
 
 ## After — the per-run creation function is passed in
 
@@ -63,8 +70,8 @@ public final class ImportJob {
 }
 ```
 
-Three classes became one. `ImportJob` is now `final`, which removes the whole
-fragile-base-class surface. The supplier runs once per invocation, preserving the original
+The selection-only subclasses are no longer needed. `ImportJob` is now `final` under the closed
+extension assumptions above. The supplier runs once per invocation, preserving the original
 creation frequency when wired to constructors. A supplier returning a shared parser changes
 that lifetime and requires a separate justification.
 
@@ -157,7 +164,9 @@ that only exists in `src/test`.
 
 ## What it cost
 
-Nothing was lost that was being used. What would have been lost, had the subclasses carried
-real behaviour — a format-specific `isValid`, a different result shape — is polymorphism on the
-job itself, and then the right answer is to keep a small hierarchy or a sealed set of jobs and
-still pass the parser in. The hook was doing one job: choosing a value.
+Under the inspected assumptions, no used behavior was lost. A format-specific `isValid`, another
+algorithm hook or a public subclass contract would invalidate this replacement as written:
+`Row::isComplete` does not preserve an override, and `final` prevents existing subclasses from
+linking. Keep the supported hierarchy or provide an explicit compatible migration; a sealed set
+also restricts open extension. Verify creation count, returned rows/results, save behavior and
+creation/parse/save failures with the same consumer cases on both sides.

@@ -21,13 +21,19 @@ actual HTTP status for HTTP processing and handle inconsistencies conservatively
 }
 ```
 
-| Member                                                    | Contract?  | Consequence                                                             |
-| --------------------------------------------------------- | ---------- | ----------------------------------------------------------------------- |
-| `type`, `code`, `outcome`, `retryCondition`, `retryAfter` | yes        | meanings remain stable; new values require an unknown-value rule        |
-| `title`, `detail`                                         | no         | may be reworded, localised or redacted at any time — document this      |
-| `instance`, `correlationId`                               | diagnostic | for correlating with logs and traces; clients must never branch on them |
+| Member                                                    | Contract?            | Consequence                                                                   |
+| --------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| `type`, `code`, `outcome`, `retryCondition`, `retryAfter` | yes                  | meanings remain stable; new values require an unknown-value rule              |
+| `title`                                                   | advisory             | type summary; SHOULD NOT change between occurrences except localization       |
+| `detail`                                                  | human text           | occurrence-specific explanation; use structured fields for machine decisions  |
+| `instance`                                                | occurrence URI       | identifies this problem occurrence; documented dereference may return details |
+| `correlationId`                                           | diagnostic extension | opaque correlation value unless the API explicitly defines further semantics  |
 
 Documenting `detail` as non-contract is what stops clients parsing it. Left unsaid, they will.
+`type` remains the primary problem identifier. Do not infer an error class from an opaque
+instance path or correlation value. A documented instance navigation contract can be useful;
+apply the same origin, authorization and credential controls as other peer-supplied links.
+An instance link does not automatically provide authoritative operation status or retry safety.
 
 ## The record
 
@@ -61,8 +67,9 @@ documented conservative path.
 - Many codes map onto one HTTP status. Do not collapse them: the status tells an intermediary
   what happened, the code tells the client what to do.
 - Adding a code is additive only if clients handle unknown values. Preserve `UNKNOWN` outcome
-  rather than silently treating a possibly applied write as rejected. Automatic retry remains
-  off unless method/idempotency and retry condition prove it safe.
+  rather than silently treating a possibly applied write as rejected. Automatic retry requires
+  replay-safe semantics or reliable nonapplication evidence for the same intent, plus an
+  applicable recovery condition and remaining deadline/budget.
 - A code's outcome and retry-condition meanings are part of its identity. Changing them
   silently rewrites client recovery and is breaking.
 
@@ -74,11 +81,11 @@ the domain failure type:
 ```text
 Read actual HTTP status, media type and bounded body.
 If absent, malformed, inconsistent or not an accepted problem contract:
-    preserve status; classify mutation outcome as UNKNOWN after dispatch.
+    preserve status; keep a dispatched mutation UNKNOWN unless independent reliable evidence resolves it.
 Resolve the problem type; do not automatically fetch its URI.
 Interpret known extensions using the method's published contract.
 For unknown/missing code, outcome or retry condition, use conservative defaults.
-Validate delay and operation-status URI before returning a domain failure.
+Validate delay and any navigation/status URI before returning or throwing a typed failure.
 ```
 
 Do not trust an arbitrary non-null body as retry authority. Status URIs need the client's
@@ -99,7 +106,10 @@ or non-negative integer seconds, not a Java Duration JSON value. For relative ad
 positive fractional seconds up (1 ms → 1 s, 1001 ms → 2 s), reject invalid/overflowing input,
 and respect the remaining deadline; do not shorten the hint just to fit it. Define clock-skew
 handling for dates and precedence if both header and extension advice exist. An unstructured HTTP failure after
-dispatch is `UNKNOWN` for a mutation, even if the status often suggests transient infrastructure.
+dispatch leaves a mutation `UNKNOWN` unless reliable protocol/operation evidence resolves it.
+Proven non-dispatch or authoritative nonapplication with no possible late effect can permit a
+bounded same-intent retry without an idempotency key. A negative status lookup that still
+allows the first attempt to apply later is insufficient.
 
 Classifying the outcome for retry purposes — transient, permanent, ambiguous — and acting on
 it is retries-and-backoff's; this reference only defines what the wire must carry so that the
@@ -109,18 +119,21 @@ classification does not have to be invented at the client.
 
 The status enum provides vocabulary, not method-specific outcome certainty for free.
 
-| Status                | Means                                              | Client action                                                          |
-| --------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
-| `INVALID_ARGUMENT`    | The request is wrong and will stay wrong           | Permanent. Fix the input                                               |
-| `FAILED_PRECONDITION` | System state forbids it right now                  | Do not retry until the state changes                                   |
-| `ABORTED`             | Concurrency conflict, typically a transaction      | Restart enclosing operation only when safe under its contract          |
-| `ALREADY_EXISTS`      | Resource already exists; identity/cause may differ | Treat as prior success only after matching operation/resource identity |
-| `UNAVAILABLE`         | Service currently unavailable or path failed       | Retry safe operation within policy; mutation outcome may be unknown    |
-| `RESOURCE_EXHAUSTED`  | Quota or capacity limit                            | Back off; honour any advice the server attached                        |
-| `DEADLINE_EXCEEDED`   | The wait failed; the work may or may not be done   | **Ambiguous** — retry only under idempotency                           |
-| `INTERNAL`, `UNKNOWN` | Unclassified/internal failure                      | Preserve ambiguity; do not retry mutation blindly; alert               |
+| Status                | Means                                              | Client action                                                                                           |
+| --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `INVALID_ARGUMENT`    | The request is wrong and will stay wrong           | Permanent. Fix the input                                                                                |
+| `FAILED_PRECONDITION` | System state forbids it right now                  | Do not retry until the state changes                                                                    |
+| `ABORTED`             | Concurrency conflict, typically a transaction      | Restart enclosing operation only when safe under its contract                                           |
+| `ALREADY_EXISTS`      | Resource already exists; identity/cause may differ | Treat as prior success only after matching operation/resource identity                                  |
+| `UNAVAILABLE`         | Service currently unavailable or path failed       | Retry safe operation within policy; mutation outcome may be unknown                                     |
+| `RESOURCE_EXHAUSTED`  | Quota or capacity limit                            | Follow the method's recovery condition; fixed quota may need a state/plan change rather than backoff    |
+| `DEADLINE_EXCEEDED`   | The wait failed; the work may or may not be done   | Preserve ambiguity; require replay-safe idempotency semantics or reliable nonapplication before retry   |
+| `INTERNAL`, `UNKNOWN` | Unclassified/internal failure                      | Preserve ambiguity; no blind mutation retry; observe and alert according to severity/operational policy |
 
 ## Testing the error contract
+
+Apply these checks to the affected code classes and client paths; reuse adequate tests for a
+scoped review. Written cases are not evidence that the deployed decoder or retry policy passed.
 
 - **Known mappings plus extensibility.** Walk known codes and assert stable status/outcome/
   retry condition; feed an unknown code/enum and assert conservative forward-compatible behavior.
@@ -128,7 +141,9 @@ The status enum provides vocabulary, not method-specific outcome certainty for f
   the happy path. The error surface is the part clients branch on and the part suites usually
   omit.
 - **Unknown-code handling.** Feed the client a code it does not know and assert it applies the
-  documented default rather than throwing. This is the test that makes adding a code additive.
+  documented conservative path. A deliberate typed exception/result carrying status, bounded
+  unknown code and unresolved outcome can be correct; a parser/closed-enum crash before that
+  path, silent success or blind retry is not. Test the real decoder and consumer handling.
 
 ## Security and observability
 

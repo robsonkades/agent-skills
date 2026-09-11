@@ -31,10 +31,11 @@ extract below the level at which invariants live.
 The Feature Envy fix: behaviour moves to the class whose data it reads. Steps: extract
 the envious part if only part envies; recreate it on the target (taking former `this`
 data as parameters if needed); delegate from the source; retarget callers; delete the
-delegate. Moving _up_ an existing hierarchy is binary-compatible — unless the member is
-package-private and the superclass sits in another package, or something reflects on it
-via `getDeclaredMethod`/`getDeclaredField`; moving to an unrelated class breaks every
-external caller — check `compatibility.md` at public boundaries.
+delegate. Moving _up_ can preserve binary member lookup when descriptor, access and staticness
+remain compatible; check inherited dispatch and declaration-sensitive reflection separately.
+Package-private access across packages and `getDeclaredMethod`/`getDeclaredField` are common
+breaks. An unrelated owner needs a retained bridge or migration for existing callers — check
+`compatibility.md` at public boundaries.
 Cost: the target class grows a dependency it may not want (e.g. domain type gaining a
 rendering method — sometimes the envy is the lesser evil).
 
@@ -51,8 +52,9 @@ there.
 
 ## Introduce Parameter Object
 
-For Data Clumps and long signatures. A record with a validating
-compact constructor, which moves an inter-parameter invariant out of every caller:
+For Data Clumps and long signatures. A record can carry an existing invariant in a compact
+constructor; the following check is a refactoring only if it preserves the previously accepted
+inputs and failure behavior. Introducing validation is a separate contract change:
 
 ```java
 record Parcel(double weightKg, Dimensions dimensions) {
@@ -67,7 +69,8 @@ the same smell with a constructor.
 
 ## Replace Conditional with Polymorphism — vs sealed + exhaustive switch
 
-Both eliminate repeated type dispatch; they place code on opposite axes:
+Retain a small adequate conditional when neither alternative solves a concrete problem.
+For repeated type dispatch, these alternatives place code on opposite axes:
 
 - **Polymorphism** puts each _variant_ in one place, spreading each operation across
   variants. Choose it when variants are added often and operations are stable, when
@@ -76,8 +79,8 @@ Both eliminate repeated type dispatch; they place code on opposite axes:
 - **Sealed + exhaustive switch** puts each _operation_ in one place, spreading each
   variant across operations. Choose it when operations are added often and the variant
   set is closed and owned by one team, when variants are data-shaped (records) and
-  behaviour lives outside them, or when exhaustiveness checking is the point: adding a
-  variant must produce a compile error at every dispatch site.
+  behaviour lives outside them, or when exhaustiveness checking is the point: an uncovered
+  new variant must be handled when the affected exhaustive switch is recompiled.
 
 Prefer no `default` in a switch that intentionally relies on sealed exhaustiveness — it converts future
 compile-time "you missed a case" into a silent wrong branch. The one exception is a
@@ -98,7 +101,8 @@ BigDecimal apply(Discount discount, BigDecimal price, int units) {
 ```
 
 Cost either way: polymorphism scatters an algorithm; switches concentrate coupling to
-the whole hierarchy. Migrating between them later is mechanical but wide.
+the whole hierarchy. Migrating between them later can change dispatch, identity or lifecycle
+as well as many callers; verify those contracts rather than assuming a mechanical move.
 
 ## Replace Type Code
 
@@ -112,7 +116,9 @@ formats keep the raw code, so mapping stays at the edge — do not leak the enum
 
 ## Encapsulate Collection
 
-When a getter hands out the mutable collection that backs an invariant. Return a copy —
+When a getter hands out the mutable collection that backs an invariant. First establish whether
+caller mutation or a live view is supported; replacing either with a snapshot changes that
+contract. Once the required access semantics permit it, return a copy —
 `List.copyOf(stops)` may avoid copying an already unmodifiable implementation, but callers must
 not rely on that implementation optimization. **Precondition: no element is null** —
 `List.copyOf` throws `NullPointerException`, so a getter that returned a list containing a

@@ -32,7 +32,8 @@ remains unresolved. Recovery still follows the authorized deadline.
 
 ## First-minute contract
 
-State and record:
+Reuse the incident's recorded context and authority; add missing material fields without
+delaying recovery to complete a template. State unknowns rather than inventing measurements.
 
 ```text
 incident ID, UTC time source, commander, capture operator:
@@ -60,6 +61,7 @@ expected diagnostic value
   / (user-impact risk + runtime perturbation + time + storage + privilege/privacy risk)
 ```
 
+Use this as a qualitative trade-off, not a score requiring invented probabilities.
 The ordering is conditional, not a fixed “rows 1–9” list. A deadlock can be proven by one
 thread dump; a fast-growing heap may justify an early histogram or dump; a JVM that cannot
 attach may require OS/core evidence immediately. See [Adaptive capture protocol](references/capture-order.md).
@@ -75,7 +77,8 @@ should produce bounded instructions and pending drills, not execute incident act
    autoscaling events, affected instances, UTC/monotonic offsets, workload and SLO state.
 2. **Preserve evidence that already exists.** Snapshot backend queries/dashboard definitions,
    logs, metrics, traces, continuous profiles, GC/JVM logs, fatal-error files, prior dumps, and
-   JFR repositories/files. Record query/filter/time zone, not only screenshots.
+   JFR repositories/files. Record query/filter/time zone, not only screenshots. If this evidence
+   already answers the capture need, hand it off without forcing fresh captures or a new control.
 3. **Check survivability and capacity.** Confirm whether pod/node/process replacement will
    delete local artifacts; verify durable path, quota, inode/free space, upload path, and
    encryption. Never write a heap/core dump to a nearly full application filesystem.
@@ -90,7 +93,9 @@ should produce bounded instructions and pending drills, not execute incident act
 7. **Escalate by hypothesis.** Histograms, NMT detail, high-frequency profiles, heap dumps,
    process freezes, and core dumps need explicit cost/risk approval and fallback.
 8. **Verify artifacts before remediation.** File closed/readable, nonzero/expected size,
-   checksum, tool/runtime metadata, capture status, and durable remote receipt.
+   checksum, tool/runtime metadata, capture status, and durable remote receipt, within the
+   remaining budget. An existing readable file and client exit zero do not establish that this
+   attempt produced it; check tool output and target/window provenance.
 9. **Restore service on deadline.** Record what was not captured and why. Afterward, route each
    artifact to its owning diagnostic skill and repair pre-incident observability gaps.
 
@@ -198,7 +203,8 @@ can fail mid-transfer and needs checksum verification.
 
 ## Integrity and correlation
 
-Every artifact needs a sidecar manifest:
+Every artifact needs a provenance record, either in the existing indexed incident manifest
+or a sidecar; one new file per artifact is not required:
 
 ```text
 incident/artifact ID, target identity and process start time
@@ -214,6 +220,9 @@ known perturbation and missing evidence
 
 Sanitize commands and manifests: environment, command lines, thread names, heap/core/JFR/logs
 can contain credentials, personal data, request payloads, endpoints, and source information.
+Where retention is authorized, preserve restricted originals and their checksums; redact or
+transform a derivative with its own artifact identity, checksum and transformation record.
+Do not silently replace original evidence with sanitized bytes under the original identity.
 Restrict sharing and preserve chain of custody where legal/security investigation requires it.
 
 ## Failure modes
@@ -254,7 +263,8 @@ exercise them before the incident.
       completion/cancellation are recorded separately, since a timeout may not stop the VM operation.
 - [ ] Disruptive/draining/heap/core actions have approval, capacity proof, and rollback.
 - [ ] Every artifact has provenance, clocks, completion status, checksum, and privacy class.
-- [ ] Service recovery occurs by the declared deadline; uncaptured evidence is documented.
+- [ ] Remediation follows the authorized deadline; actual recovery time/state, missed deadlines
+      and uncaptured evidence are recorded. Requesting restart is not proof service recovered.
 - [ ] Follow-up closes the observability/runbook gap and tests capture in a safe environment.
 
 ## References

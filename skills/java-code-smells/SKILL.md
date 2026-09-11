@@ -46,7 +46,9 @@ also applies to older Java, with recommendations conditional on its supported la
    severity argument, the named java-refactoring technique — routed through
    `references/smell-to-refactoring.md`, which also says what decides between competing
    techniques and when the honest recommendation is no refactoring. Fixing happens in a
-   separate pass under that skill's safety workflow.
+   separate pass under that skill's safety workflow. If the user already authorized fixes,
+   continue into that pass with the established evidence, scope and compatibility constraints;
+   do not turn the handoff into another interview or approval gate.
 
 If history is shallow or unavailable, say which change-pressure claims cannot be established.
 Use source-level evidence for current coupling, but do not invent recurring co-change or defect
@@ -62,9 +64,10 @@ history. Name what additional evidence would distinguish a finding from a monito
 - One structural cause often shows as several smells (a God Object produces Feature
   Envy in its neighbours and Shotgun Surgery in its callers). Report the cause once,
   not each symptom separately.
-- An exhaustive `switch` over a sealed type with no `default` is not the Switch
-  Statements smell — it is one of its fixes. Read `references/modern-java.md` before
-  flagging any switch, record, or Optional usage.
+- Judge unchecked dispatch and the required variant-review policy, not the `switch`
+  keyword or absence of `default`. A cohesive exhaustive switch may be adequate; a
+  catch-all type pattern can also hide a new variant. Read `references/modern-java.md`
+  before flagging any switch, record, or Optional usage.
 - A comment apologising for code ("hack", "careful here") is a search lead, not a finding.
   Preserve comments that encode an invariant, upstream defect, compatibility constraint or
   measured workaround; report the underlying structure only when independently evidenced.

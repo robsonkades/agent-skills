@@ -15,8 +15,9 @@ For any abstraction under review:
    concrete type", it is a file.
 3. **What does it cost per change?** Files touched to add a field; mocks per test; hops in a
    stack trace.
-4. **Who is it for?** An abstraction for a future team is speculative; one for a caller that
-   exists today is real.
+4. **Who is it for?** Distinguish a hypothetical future team from an accepted integration,
+   ownership or compatibility obligation. A committed external contract can matter before
+   its consumer goes live; state the evidence and the cost of deferring the boundary.
 
 Weak answers justify investigation; remove only after establishing cost and the contracts
 that must survive. Do not turn the question count into a deletion threshold.
@@ -105,8 +106,9 @@ transactions or a stable application entry point through configuration/annotatio
 onboarding — with no invariant to protect.
 
 **Rule:** a domain model is justified by interacting rules, not by an entity's importance
-(`domain-logic-organization`). Simple reference data may fit Transaction Script with a gateway
-or Active Record; choose from the actual rules and repository conventions, not a validation count.
+(`domain-logic-organization`). Simple reference data may fit Transaction Script with an
+existing suitable data-access boundary or Active Record; choose from actual rules and
+repository conventions, not a validation count or a mandatory new gateway.
 
 ## Abstraction over a framework abstraction
 

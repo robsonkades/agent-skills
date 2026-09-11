@@ -51,27 +51,29 @@ and remove the interface after checks. Replacing an interface with a same-named 
 compatible; implements clauses, proxies, reflection and published clients can break. Keep justified
 ports/policy seams and use a compatible migration for public APIs.
 
-**Class-per-constant strategies.** Introduce the configuration type and have every strategy read
-from it — behaviour unchanged. Then replace the strategy lookup with a value lookup. Then delete
-the classes. Validate each step's lookup, identity and configuration behavior; merge only if authorized.
+**Class-per-constant strategies.** If a value representation is justified, introduce a table/enum
+or validated configuration behind the existing strategies, then migrate the lookup and remove
+classes when compatible. Check required identity, metadata, defaults and change controls; introducing
+reloadable configuration is a separate behavior/operational choice. Validate each step.
 
-**Singleton.** The five-step migration in `gof-singleton`: add a constructor taking the
-collaborators, introduce a narrow interface, convert callers leaf-first, move construction to the
-composition root, delete `getInstance()` last. Do not add a `setInstance()` for tests — it creates
-a production API for mutating global state.
+**Singleton.** Use the ownership migration in `gof-singleton` when global access is the problem:
+expose collaborators, inject the existing instance first and coordinate ownership/cutover before
+constructing a replacement. A narrow interface is useful only when it supplies a consumer boundary;
+constructor injection alone may suffice. Retain compatible legacy access for its support window;
+do not add a `setInstance()` that creates a new production global-mutation contract.
 
-**Template Method hierarchy.** Inventory subclasses and required overrides first, introduce a
-`Steps` interface with an adapter, move the template into a class with explicit extension policy
-taking `Steps`, convert subclasses one at a time, delete the base
+**Template Method hierarchy.** Inventory subclasses and required overrides first. When composition
+is justified, one migration uses a `Steps` interface/adapter and a class with explicit extension
+policy, then converts subclasses before removing the base. Retain an adequate existing extension contract
 (`gof-template-method`).
 
-**Mediator god object.** Extract the parts that are not coordination first — they usually become
-plain listeners or direct calls. Then split what remains by
-protocol. Do not split by noun (`gof-mediator`).
+**Mediator god object.** Split demonstrated unrelated protocol/state ownership, preserving required
+caller methods and transition authority. Non-coordination responsibilities may become listeners or
+direct calls; nouns and participant counts alone do not determine the split (`gof-mediator`).
 
-**Decorator stack.** Do not remove layers; document the order, add a composition test, and only
-then consider collapsing the fixed part into one class. A stack that is hard to read is not
-necessarily wrong (`gof-decorator`).
+**Decorator stack.** Establish actual ordering and lifecycle from wiring/contracts and existing
+tests. Retain required layers; remove or consolidate only a demonstrated unnecessary cost with
+equivalent composed behavior. Fixed order alone does not justify collapse (`gof-decorator`).
 
 **Factory for a constructor.** Consider inlining after checking naming, visibility, lifecycle,
 validation, caching, exception behavior, method references and external contracts. Review the IDE diff
@@ -79,10 +81,10 @@ and test relevant behavior; the tool does not prove semantic compatibility.
 
 ## Ordering rules for a large removal
 
-- **Leaves before roots.** A caller that already receives its collaborators is the cheapest to
-  convert and creates no new coupling.
-- **Tests before production.** Converting a test to construct the concrete type directly proves the
-  type is usable without the abstraction.
+- **Leaves before roots.** A caller that already receives its collaborators is often cheaper to
+  convert; replacing an interface dependency with a concrete type still needs a boundary/coupling check.
+- **Preserve consumer-level checks.** A test constructing the concrete type proves only that tested
+  path works; keep checks of public contracts and runtime wiring that the migration could break.
 - **Coherent reviewable steps.** Related small removals can stay together; split when ownership,
   behavior or validation becomes hard to assess.
 - **Prepare each step for integration.** Commit or merge only with existing user authorization.
@@ -91,19 +93,22 @@ and test relevant behavior; the tool does not prove semantic compatibility.
 
 ## Measuring whether it helped
 
-State the expected effect before starting, then check it:
+State the expected consumer, correctness or maintenance outcome before starting, then check it.
+Choose supporting measures relevant to that outcome; these are diagnostics, not success quotas:
 
 ```text
-Types removed              a count, not a feeling
+Contract preserved         ordinary, advanced and failure uses remain valid
+Targeted cost removed      observed ownership/change/runtime problem is resolved
+Types removed              a structural count, not proof of benefit
 Call-site readability      can a reader now see what runs, without
                            opening the wiring?
 Test setup                 mocks per test, before and after
 Change locality            does the next feature touch fewer files?
 ```
 
-If none of these improved, the abstraction may have been earning its place and the removal should
-be reverted. That is a legitimate outcome and worth recording, so the next person does not repeat
-the attempt.
+If the intended outcome is unsupported or costs/regressions outweigh it, reconsider or revert the
+removal within the authorized scope. Unchanged class/mock counts alone do not invalidate a contract
+improvement. Record the decision and any unresolved evidence so later work does not repeat it blindly.
 
 ## The four cases to leave alone
 

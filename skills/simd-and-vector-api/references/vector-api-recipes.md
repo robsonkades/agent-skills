@@ -4,6 +4,9 @@
 
 Kernel snippets below target JDK 25. Assemble them in `VectorAPILab` with
 `import jdk.incubator.vector.*;` and a test/main entrypoint; they are not standalone files.
+The commands use the class path. A named application module can instead declare
+`requires jdk.incubator.vector;`; ensure the runtime image contains that resolved dependency.
+Neither route requires `--enable-preview` solely for this incubator module.
 
 ```bash
 javac --add-modules jdk.incubator.vector VectorAPILab.java
@@ -105,6 +108,20 @@ elements unchanged according to the API contract. Lowering varies: it may use na
 registers, masked instructions, blends, scalar code or stubs depending on operation, ISA and
 JDK. Measure the exact tail strategy and input-size distribution.
 
+A mask applies to one operation, not to the remainder of the expression. For `IntVector`
+inputs `vx`/`vy` and an `active` tail mask of the same species, masked loads can leave zero
+divisors in inactive lanes:
+
+```java
+vx.div(vy).intoArray(out, i, active);         // can throw before the masked store
+vx.div(vy, active).intoArray(out, i, active); // inactive lanes are not divided
+```
+
+An active zero divisor still throws; vector grouping alone does not preserve scalar exception
+timing or writes performed before the failing element. Masked lane-wise arithmetic retains the
+receiver's inactive lanes; masked loads zero them, while masked reductions use the operator's identity.
+Check the exact operation contract before reusing those lanes or reducing a tail.
+
 ## Reduction with FMA
 
 ```java
@@ -131,6 +148,9 @@ unfused, so length/species also changes grouping and fusion. Define an error bud
 NaN/infinity/signed-zero policy; a tolerance does not establish reproducibility. Keep a strict
 scalar oracle when exact ordering is required; do not call it a
 drop-in replacement solely because ordinary inputs look equal.
+Even a fixed species does not fix the reduction tree: `reduceLanes(ADD)`/`MUL` permits an
+arbitrary operation order that may vary over time. Bitwise reproducibility needs a separately
+specified accumulation algorithm, not just pinned lane count.
 
 ## Conditional count via mask
 
@@ -229,5 +249,8 @@ choosing reassociation or FMA.
 - [JEP 508: Vector API (Tenth Incubator)](https://openjdk.org/jeps/508)
 - [JDK 25 Vector API package](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.incubator.vector/jdk/incubator/vector/package-summary.html)
 - [JDK 25 VectorSpecies](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.incubator.vector/jdk/incubator/vector/VectorSpecies.html)
+- [JDK 25 VectorShape](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.incubator.vector/jdk/incubator/vector/VectorShape.html)
 - [JDK 25 FloatVector](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.incubator.vector/jdk/incubator/vector/FloatVector.html)
+- [JDK 25 IntVector](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.incubator.vector/jdk/incubator/vector/IntVector.html)
+- [JEP 11: Incubator Modules](https://openjdk.org/jeps/11)
 - [JEP 454: Foreign Function & Memory API](https://openjdk.org/jeps/454)

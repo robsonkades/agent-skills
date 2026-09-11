@@ -1,9 +1,9 @@
 schemaVersion: 1
 
 name: java-api-design
-version: 1.2.1
+version: 1.2.2
 description: >-
-  Naming and API design for Java code that others call: names carrying domain vocabulary,
+  Java API design from ordinary, advanced and invalid consumer calls: names carrying domain vocabulary,
   method and boolean naming conventions, arity and parameter objects, overload hazards,
   discoverability, public versus internal surface (package-private, JPMS exports), and API
   evolution — binary, source and behavioural compatibility, deprecation, semantic

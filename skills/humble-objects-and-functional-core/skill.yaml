@@ -1,16 +1,15 @@
 schemaVersion: 1
 
 name: humble-objects-and-functional-core
-version: 1.2.2
+version: 1.2.3
 description: >-
-  Splitting a component into the part that decides and the part that acts, so the decision is
-  pure, deterministic and cheap to test while the effectful part stays thin enough for a small
-  set of boundary/integration tests—the Humble Object pattern and the functional core / imperative shell shape of the
-  same idea. Use when a rule can only be exercised by standing up the framework because the
-  decision lives inside the component that performs the effect, when logic sits in a controller,
-  scheduler, message listener or UI component, when a test needs a mocking framework to reach
-  the branch it cares about, or when retry, fallback or routing policy is entangled with the
-  call it governs. Does not cover which test level to use (architecture-testing,
+  Isolating decisions from hard-to-test effects with Humble Objects, or a pure functional
+  core and imperative shell when explicit data inputs fit the contract. Use when a rule can
+  only be exercised by standing up the framework, when controller, scheduler, listener or UI
+  logic makes focused tests difficult, or when retry, fallback or routing policy is entangled
+  with the call it governs. Inspect heavy mocking as a possible symptom, not proof that a
+  refactor is needed. Preserve adequate direct tests and boundary contracts. Does not cover
+  which test level to use (architecture-testing,
   java-testing-strategy), choosing and writing the doubles themselves (java-test-doubles), where
   business rules belong across layers (domain-logic-organization), the mechanics of immutable
   types (java-immutability), or module dependency direction (layering-and-boundaries).
@@ -60,15 +59,20 @@ suggests:
   - delivery-semantics
   - distributed-locks-and-leases
   - distributed-systems-testing
+  - domain-logic-organization
   - enterprise-architecture-smells
+  - idempotency
   - java-composition-over-inheritance
   - java-dependency-inversion
   - java-exception-design
   - java-memory-model
+  - java-test-doubles
+  - java-testing-strategy
   - jit-inlining-and-escape-analysis
   - layering-and-boundaries
   - patterns-and-modern-frameworks
   - poison-messages-and-dlq
+  - retries-and-backoff
   - structured-concurrency
   - thread-sizing-and-virtual-threads
 

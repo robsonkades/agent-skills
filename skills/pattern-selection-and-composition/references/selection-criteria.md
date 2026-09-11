@@ -2,17 +2,17 @@
 
 ## The nine inputs as answerable questions
 
-| Input                   | Question with an observable answer                                                | What it decides                         |
-| ----------------------- | --------------------------------------------------------------------------------- | --------------------------------------- |
-| Business complexity     | How many rules are **conditional on other rules**? (Count them, do not estimate.) | Transaction Script vs Domain Model      |
-| Data complexity         | How many concepts span several tables, or share one? Who may change the schema?   | Active Record vs Data Mapper            |
-| Work shape              | Are the decisions per instance, or over sets of rows?                             | Domain Model vs Table Module / SQL      |
-| Concurrency             | Do conflicts occur inside a transaction, or across a user's thinking time?        | Row locking vs offline locking          |
-| Transaction scope       | Does a use case write more than once? Does it cross a process boundary?           | Whether a Service Layer is needed; saga |
-| Distribution            | What is the **named driver** for a process boundary?                              | Module vs service; Remote Facade + DTO  |
-| Performance             | What is the round-trip budget per operation? How asymmetric are reads and writes? | Read model; fetch strategy; caching     |
-| Team and lifespan       | Who maintains this, how many people, for how long?                                | How much indirection is affordable      |
-| Operational constraints | Deploy cadence, ownership boundaries, regulation                                  | Boundaries and their enforcement        |
+| Input                   | Question with an observable answer                                                | What it decides                        |
+| ----------------------- | --------------------------------------------------------------------------------- | -------------------------------------- |
+| Business complexity     | Which representative rules are **conditional on other rules**, and who owns them? | Transaction Script vs Domain Model     |
+| Data complexity         | How many concepts span several tables, or share one? Who may change the schema?   | Active Record vs Data Mapper           |
+| Work shape              | Are the decisions per instance, or over sets of rows?                             | Domain Model vs Table Module / SQL     |
+| Concurrency             | Do conflicts occur inside a transaction, or across a user's thinking time?        | Row locking vs offline locking         |
+| Transaction scope       | Which effects must commit together, and who owns policy and coordination?         | Transaction and application boundaries |
+| Distribution            | What is the **named driver** and communication contract for a process boundary?   | Module vs service; RPC/event contract  |
+| Performance             | What is the round-trip budget per operation? How asymmetric are reads and writes? | Read model; fetch strategy; caching    |
+| Team and lifespan       | Who maintains this, how many people, for how long?                                | How much indirection is affordable     |
+| Operational constraints | Deploy cadence, ownership boundaries, regulation                                  | Boundaries and their enforcement       |
 
 The first is the one most often answered by assertion. "The domain is complex" is not an
 answer; "seven pricing rules, four of them conditional on the outcome of another" is, and it
@@ -37,8 +37,9 @@ Team                  one team, long-lived, small
 → Simple mapper-backed CRUD (JPA entity plus Spring Data repository is not Active Record)
 → Existing Spring Data repository API; no extra pass-through wrapper
 → Service layer only if shared authorization, transaction or caller contracts warrant it
-→ No DTO internally; a response record at the HTTP boundary
-→ @Version plus expected-version propagation and a tested conflict response
+→ Reuse adequate internal types; explicit response contract at the HTTP boundary
+→ If stale edits must be rejected, preserve expected state and a tested conflict response
+  (@Version is one option; inspect the actual mapping and target)
 ```
 
 Check what the house layers protect before adding or removing them: authorization, validation,
@@ -67,8 +68,8 @@ Team                  two teams, long-lived
 → Module boundary around inventory; no service yet
 ```
 
-Note the two that are usually missing from a design like this: the read model, and the
-explicit SQL for the bulk path. Without deliberate fetch/bulk planning, the list may produce
+Projections and explicit SQL are candidates for the query and bulk budgets, not required
+replacements for an adequate existing path. Without deliberate fetch/bulk planning, the list may produce
 N+1 and the job may hydrate excessive aggregates. Prove the query/load shape, and ensure
 the SQL path implements the same required pricing invariants and conflict behavior.
 
@@ -85,16 +86,20 @@ Performance           1 round trip per client interaction
 Team                  API team ≠ the system's team
 
 → Remote Facade: operations named after client interactions
-→ DTOs, versioned, tolerant of unknown fields
-→ Anti-corruption layer over the legacy model
+→ Explicit wire types and evolution/unknown-field policy matched to the public contract
+→ Anti-corruption layer when legacy semantics need translation; do not invent that mismatch
 → Gateway per external system, with error translation
-→ Idempotency keys on writes (clients retry)
-→ ETag / If-Match for concurrent updates
+→ Assess retry safety across all effects; idempotency keys/deduplication only where needed
+→ ETag / If-Match when conditional HTTP updates express the required conflict protocol
 → No domain model in the API layer — it has no rules of its own
 ```
 
 The failure to avoid here is building a domain model in the API tier "for cleanliness". It
 would be a second, weaker copy of rules that live elsewhere.
+An older or separately owned system need not have incompatible semantics. Preserve an
+adequate translation boundary and wire type. Repeat-safe intended effects may need no key
+store; non-repeat-safe effects need an authoritative retry/deduplication or reconciliation
+contract. A method name or a separate cache does not establish that contract (`idempotency`).
 
 ### D. Reporting and analytics over a transactional system
 
@@ -107,7 +112,8 @@ Team                  analysts plus one engineer
 
 → SQL, in gateways, per report
 → Projections/records as the result types
-→ No entities, no repositories, no domain model, no service layer
+→ Avoid unnecessary write-model hydration; retain query repositories and service/policy
+  boundaries when they own authorization, admission, audit or a stable caller contract
 → Isolate reporting capacity when measured contention warrants it; replica if freshness permits
 ```
 
@@ -115,24 +121,26 @@ Projection-oriented SQL can avoid unnecessary hydration. A separate schema alone
 isolate CPU/I/O; a separate pool bounds admission but still shares database resources.
 Compare representative reports, write latency and required freshness before adding a replica.
 Shared security/operational conventions remain useful even when data access differs.
+Verify tenant/row/field access on the reporting path. Projection types and a read-only
+label do not enforce database privileges or prevent writes through raw SQL.
 
 ## Decisions that belong per module, not per system
 
-| Decision                   | Per system                              | Per module                                        |
-| -------------------------- | --------------------------------------- | ------------------------------------------------- |
-| Logic organisation         | —                                       | **Yes** — CRUD and pricing are different problems |
-| Data-source pattern        | —                                       | **Yes**                                           |
-| Service layer existence    | —                                       | **Yes**                                           |
-| Read model                 | —                                       | **Yes** — where reads are slow                    |
-| Locking strategy           | —                                       | **Yes** — per aggregate, by conflict rate         |
-| Error shape                | **Yes** — one for the whole application | —                                                 |
-| Transaction boundary layer | **Yes** — always the use case           | —                                                 |
-| Boundary enforcement rules | **Yes**                                 | —                                                 |
-| Logging and correlation    | **Yes**                                 | —                                                 |
-| API contract conventions   | **Yes**                                 | —                                                 |
+| Decision                   | Per system                                            | Per module                                        |
+| -------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| Logic organisation         | —                                                     | **Yes** — CRUD and pricing are different problems |
+| Data-source pattern        | —                                                     | **Yes**                                           |
+| Service layer existence    | —                                                     | **Yes**                                           |
+| Read model                 | —                                                     | **Yes** — where reads are slow                    |
+| Locking strategy           | —                                                     | **Yes** — per aggregate, by conflict rate         |
+| Error shape                | Govern per public protocol and compatibility contract | Map local failures without breaking that contract |
+| Transaction boundary layer | Govern ownership and propagation conventions          | Demarcate the actual unit required by this path   |
+| Boundary enforcement rules | **Yes**                                               | —                                                 |
+| Logging and correlation    | **Yes**                                               | —                                                 |
+| API contract conventions   | **Yes**                                               | —                                                 |
 
-The left column is where consistency genuinely pays: a caller should never have to ask which
-error shape an endpoint uses. The right column is where uniformity costs — forcing one
+The left column records shared contracts; distinct protocols or existing compatibility
+requirements may need different representations. The right column is where uniformity costs — forcing one
 internal structure onto modules with different forces is a major source of accidental
 complexity (`enterprise-architecture-smells`).
 
@@ -155,3 +163,7 @@ at the beginning. Existing authorized boundaries can constrain earlier choices.
 Choosing distribution by habit constrains other decisions without evidence; a mandated
 ownership or deployment boundary is legitimate input. Revisit the composition when the
 driver or measured costs change (`distribution-boundaries`).
+
+Sources for the conditional boundary choices: [Anti-corruption layer applicability](https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer#when-to-use-this-pattern),
+[HTTP intended-effect idempotence and conditional requests, RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2),
+and [Service Layer responsibilities](https://martinfowler.com/eaaCatalog/serviceLayer.html).

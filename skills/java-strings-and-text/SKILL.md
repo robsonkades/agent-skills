@@ -27,54 +27,59 @@ log line, a path).
 ## Workflow
 
 Inspect compiler release/toolchains, runtime JDK, locale/provider and boundary encoding before
-changing behavior. No single authoring baseline is declared; references use Java SE 25.
+changing behavior. Java 25 is the authoring baseline; preserve the project's actual target.
 Text blocks and `formatted` need Java 15+, records Java 16+, and default charset behavior
 changes in Java 18. Unicode segmentation depends on the runtime version. Use supported
 alternatives without upgrades or preview; missing protocol/column constraints remain unverified.
+Reuse established boundary contracts and adequate implementations. Ask only for missing input,
+consumer or runtime facts that would change the recommendation.
 
-1. **Ask whether it should be a `String` at all.** An id, a status, a currency code, a
-   compound key or a phone number wants a type with validation; a `String` there means every
-   consumer re-validates or none does.
+1. **Check the consumer contract before introducing a type.** An id, status, currency code,
+   compound key or phone number may benefit from a validated type when invariants or mix-ups
+   justify it. Retain adequate validated strings and published wire/API encodings.
 2. **Pin the encoding at every boundary.** Use the charset required by the protocol or storage
    contract—often UTF-8—on byte/string conversions, readers, writers and HTTP bodies.
-3. **Pin the locale wherever text is transformed for a machine.** `toLowerCase(Locale.ROOT)`,
-   `String.format(Locale.ROOT, …)` for protocol text; the user's locale only for what a human
-   reads.
+3. **Follow the required casing and format.** `Locale.ROOT` suits locale-neutral protocols;
+   an explicitly localized import/export or human message may require another locale. Neither
+   substitutes for a protocol's ASCII grammar or canonicalization policy.
 4. **Choose the composition mechanism by shape**: a single expression → `+`; a loop →
    `StringBuilder`; a collection → `String.join`/`Collectors.joining`; multi-line literal →
    a text block; user-facing formatting → `String.format(locale, …)` or `MessageFormat`
    with the user's locale. `formatted` has no locale overload and uses the process default.
 5. **Reuse stable, repeated `Pattern`s**, and check what happens when input is hostile—length
    bound, nesting, backtracking. Dynamic or one-shot expressions do not belong in global state.
-6. **Check every place text is embedded into another language** and replace concatenation with
-   the parameterised mechanism that language provides.
+6. **Check every place text is embedded into another language.** Bind data values where
+   supported; use allowlisted structural choices or context-specific encoding when binding is
+   unavailable. Verify the actual downstream grammar, not just the Java string expression.
 
 ## Rules
 
-- Do not use `String` where a type exists or can be made. Enums for closed sets (java-enums),
-  a record or value object for ids and codes, `java.time` for timestamps, `BigDecimal`/`long`
-  for amounts, `URI`/`Path` for locations. A `String` parameter accepts every wrong value in
-  the universe and documents none of them.
-- Never build a compound key by concatenation (`tenant + "#" + id`). It breaks the moment a
-  component contains the separator, it cannot be parsed back safely, and it makes every
-  consumer a parser. Use a record as the key — it gets `equals`/`hashCode` for free.
+- Consider enums for closed sets (java-enums), validated ids/codes, `java.time` timestamps,
+  numeric amount types and `URI`/`Path` when their contracts fit. A type alone does not validate
+  meaning or authorize a location. Weigh consumer compatibility and useful invariants against
+  wrapper/conversion cost; do not create types merely because text is present.
+- Check compound-key ambiguity: `tenant + "#" + id` collides if unconstrained components can
+  contain `#`. A record can simplify an internal key; an established separator restriction,
+  escaping or length-prefix encoding can be sound. Preserve public encoded keys and verify
+  equality/round-trip behavior before changing representation.
 - `length()` counts UTF-16 **code units**, not characters. Characters outside the Basic
   Multilingual Plane — emoji, many CJK extensions, some scripts — take two units, so
   `substring(0, 100)` can split a surrogate pair and produce invalid text. Use
   `codePointCount`/`offsetByCodePoints` when the unit is a code point, and `BreakIterator` when
   the unit is what a user perceives as a character (an emoji with a skin-tone modifier is
   several code points and one grapheme).
-- Pass the contract's charset. `String.getBytes()`, `new String(byte[])`, `FileReader`,
-  `InputStreamReader` and `PrintWriter` without one use a default that has changed across
-  versions. Since Java 18 it is UTF-8 by default, while `-Dfile.encoding=COMPAT` selects the
+- Pass or verify the contract's charset. `String.getBytes()` and `new String(byte[])` use
+  the default charset; reader/writer overloads may use that default or a specified fixed/inherited
+  encoding. Since Java 18 the default charset is UTF-8, while `-Dfile.encoding=COMPAT` selects the
   native encoding; other overrides have unspecified behaviour. Explicit UTF-8 is portable only
   when UTF-8 is actually the boundary contract—legacy files and protocols may require another
   explicit charset.
-- Pass a `Locale` to every case conversion and format call whose result is consumed by a
-  machine. `"TITLE".toLowerCase()` is `"tıtle"` in a Turkish locale — the dotless ı — so a
+- Select casing and formatting from the consuming contract. `"TITLE".toLowerCase()` is
+  `"tıtle"` in a Turkish locale — the dotless ı — so a
   case-insensitive comparison of a header, a code or an enum name fails on a machine whose
-  locale differs from the developer's. Use `Locale.ROOT` for protocol-defined case mapping.
-  `equalsIgnoreCase` avoids allocation but is locale-independent simple Unicode comparison, not
+  locale differs from the developer's. Use `Locale.ROOT` when the protocol requires that mapping;
+  validate an ASCII-only grammar separately when required.
+  `equalsIgnoreCase` is locale-independent simple Unicode comparison, not
   human-language collation or a universal identifier canonicalizer. The same applies to
   `String.format("%.2f", …)`, which emits a comma decimal separator in many locales;
   `String.formatted` also uses the default formatting locale.
@@ -91,22 +96,23 @@ alternatives without upgrades or preview; missing protocol/column constraints re
   `split` is specified in terms of pattern compilation although implementations may optimize
   simple delimiters. Do not retain data-dependent patterns forever, and measure before building
   a pattern cache—unbounded cardinality merely changes an allocation cost into a leak.
-- A regex applied to untrusted input is an availability risk. Nested quantifiers over
-  alternation (`(a+)+`, `(\w+\s?)*`) can backtrack exponentially, and Java's engine has no
-  timeout: one request pins a CPU core until it finishes. Bound the input length, avoid nested
+- Review the work bound of a regex applied to untrusted input. Ambiguous nested quantifiers
+  (`(a+)+`, `(\w+\s?)*`) can cause excessive backtracking or stack exhaustion; the actual growth
+  depends on the pattern, input and implementation. Java's matcher has no per-match timeout.
+  Bound the input length, avoid harmful nested
   quantifiers, consider possessive quantifiers or atomic groups only after checking accepted
   inputs and captures remain correct, and prefer a real parser for
   structured input. Where a regex must run on user input, run it with a bounded input size and
-  treat a hang as a possible ReDoS, not a slow query.
-- Never build SQL, shell commands, HTML or LDAP filters by concatenating
-  user text. Use prepared statements with parameters, `ProcessBuilder` with an argument list,
+  treat a hang as a possible ReDoS requiring pattern/input evidence.
+- Never interpolate untrusted text as executable syntax. Use prepared statements for SQL data
+  values and allowlist structural choices such as identifiers. Use `ProcessBuilder` with an argument list,
   and a templating engine with contextual escaping. For paths, lexical `normalize`/`startsWith`
   checks do not defeat symlinks or races: resolve against a trusted real base, constrain allowed
   names, and use filesystem-specific secure traversal where the threat model requires it.
   Structured logging preserves field boundaries, but the encoder/sink must still escape control
   characters to prevent log forging (structured-logging).
-- Use text blocks for multi-line literals — SQL, JSON, HTML — instead of escaped concatenation.
-  They preserve readable indentation and remove the escaping mistakes; they do not make
+- Use text blocks when they clarify multi-line literals — SQL, JSON, HTML. Check resulting
+  indentation, newlines and escapes against required bytes; they do not make
   embedded user input safe, so parameters still go through the mechanism above. String
   templates were previewed and then withdrawn from the JDK; do not design around them.
 - Do not use `String.intern()` as an unmeasured deduplication strategy for unbounded external

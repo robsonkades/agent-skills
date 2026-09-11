@@ -21,6 +21,14 @@ the reference strengths you intentionally chose? A static field can name a cache
 singleton. JVM/framework roots and MAT pseudo-roots need version-specific interpretation;
 do not convert their display label directly into ownership.
 
+Record the **parsed population**, not just the capture's live/`-all` filter. MAT normally
+discards unreachable objects while indexing and retains their class/count/size summary in
+the Unreachable Objects Histogram, without their reference graph. If that graph answers
+the question, reparse a copy of the existing dump with **Keep unreachable objects** after
+removing that copy's index files. MAT's resulting UNREACHABLE roots are artificial analysis
+roots, not proof of JVM liveness or a leak. Record this setting and any experimental discard
+settings when comparing snapshots; reparsing cannot recover objects absent from the file.
+
 ## Shallow versus retained, concretely
 
 | Structure                                                      | Shallow heap                   | Retained heap                                                                                 |
@@ -97,8 +105,8 @@ reachability.
 ### A `ThreadLocal` value that is never replaced
 
 A single `ThreadLocal` has at most **one** entry per thread: the `Entry` key is the
-`ThreadLocal` instance itself, so entries cannot accumulate within one thread's
-`ThreadLocalMap`. That mental model sends the investigation the wrong way.
+`ThreadLocal` instance itself. Repeated `set()` on that same key replaces the value;
+the example below instead grows a collection inside one retained value.
 
 ```
 Per thread ("http-nio-8080-exec-1"):
@@ -117,6 +125,13 @@ pool thread that is never discarded. Fix with a scope that restores/removes stat
 request on each owning thread and breaks nested restoration. Virtual-thread locals belong
 to the virtual thread, not its carrier. Prefer explicit
 parameter passing or `ScopedValue` where its Java-version/lifetime contract fits.
+
+A different shape comes from **many distinct short-lived keys** on one long-lived thread.
+HotSpot's map uses weak keys and strong values; after a key is collected, an entry with a
+null referent can still retain its value. Cleanup during map operations is opportunistic,
+so key collection alone does not release it promptly. Inspect stale entries separately from
+the live-key example above. Fix ownership while the key is available, usually with scoped
+removal/restoration; forcing GC or creating extra keys to provoke cleanup is not that contract.
 
 ### Classloader retention across reloads
 
@@ -164,4 +179,6 @@ third-party allocations and some JDK-library memory are outside NMT's coverage.
 - [MAT properties and functions](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/propertyaccessors.html)
 - [Retained sets and minimum versus exact size](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/shallowretainedheap.html)
 - [MAT thread stacks and locals](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/analyzingthreads.html)
+- [MAT unreachable-object population and reparsing](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/inspections/unreachable_objects.html)
+- [ThreadLocalMap weak keys, strong values and cleanup, OpenJDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/java/lang/ThreadLocal.java)
 - [NMT coverage, JDK 25](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)

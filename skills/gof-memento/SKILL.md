@@ -2,8 +2,8 @@
 name: gof-memento
 description: >
   Memento in modern Java: capturing an object's state so it can be restored later, without
-  exposing that state to whoever holds the capture. Covers the encapsulation techniques Java offers, why an
-  immutable object is its own memento, the memory cost of an undo stack and the alternatives
+  exposing that state to whoever holds the capture. Covers the encapsulation techniques Java offers, why
+  immutable state can be retained by reference behind an appropriate boundary, the memory cost of an undo stack and the alternatives
   (inverses, diffs, structural sharing), the torn capture when the source mutates mid-copy, and
   the distinction from a durable snapshot and from event sourcing. Use when undo, drafts, what-if branches or checkpoints are being designed, when
   a getState/setState pair is proposed on a domain object, when an undo stack grows without bound,
@@ -22,8 +22,13 @@ corrupt it. The caretaker keeps the capture and hands it back; only the originat
 what is inside.
 
 That opacity is the pattern, and it is what a `getState()`/`setState()` pair is not: exposing the
-state as a public structure lets any holder inspect it, mutate it, and depend on its shape, which
+state as a public structure lets holders inspect it, depend on its shape and, if mutable, change it, which
 is the coupling the pattern exists to prevent.
+
+Start with the consumer's undo/recovery operation and existing history. Establish which state is
+restorable, who may hold or apply a capture, whether restore overwrites intervening edits, and
+which external facts must remain true. Reuse existing observations and budgets; ask only about
+missing ownership, conflict or recovery requirements that change the design.
 
 Inspect the project's compiler release/toolchain and state ownership before changing the API.
 Examples are partial Java 17 snippets (records and sealed types, no preview); imports, domain
@@ -72,8 +77,9 @@ A long computation must be resumable after a failure
 
 ## When it is not
 
-- **The object is immutable.** It is already its own memento: keep the reference. This removes
-  most proposed uses (`java-immutability`).
+- **A retained immutable value already meets the capture contract.** Keep the reference when
+  its exposure is permitted. Deep immutability removes copying, not an opaque caretaker API or
+  originator ownership requirement; an opaque handle can still hold that value (`java-immutability`).
 - **The operation has a cheap exact inverse.** `Move(+5)` can undo with `Move(-5)` only without
   rounding, clamping, overflow or conflicting intervening edits (`gof-command`).
 - **The capture must survive the process.** Memento alone is insufficient guidance: add durable
@@ -135,7 +141,8 @@ captures from another Editor and assumes immutable Mark values plus thread confi
 
 ```text
 IF the originator is immutable
-THEN there is no memento to design. Keep the old reference.
+THEN retain its old state reference when the access/restore contract permits it;
+     preserve any required opaque handle and originator ownership check.
 
 IF the caretaker reads fields of the capture
 THEN encapsulation is broken and the capture is now a contract. Either
@@ -150,8 +157,9 @@ THEN the capture may hold fields from two different states. Capture
      under the same lock as the mutators, or from an immutable value.
 
 IF an undo stack holds full captures of a large object
-THEN memory is depth × size. Prefer command inverses, diffs, or
-     persistent structures with structural sharing.
+THEN estimate independent copy cost from depth and capture size, then inspect shared/variable
+     retained state. Compare full copies, exact inverses, diffs and persistent structures;
+     retain the simplest representation that meets restore and history budgets.
 
 IF the capture is written to storage or sent to another process
 THEN it is also a wire/storage snapshot: it needs a stable format and explicit
@@ -160,7 +168,8 @@ THEN it is also a wire/storage snapshot: it needs a stable format and explicit
 
 IF restoring must also restore things outside the object — files sent,
 messages published, money moved
-THEN restore is not enough; that is compensation
+THEN restore is not enough. Determine whether authorized compensation or reconciliation
+     is possible; some effects make undo unavailable
      (distributed-transactions-and-sagas).
 
 IF what changed matters as much as what it was
@@ -170,8 +179,8 @@ THEN consider event sourcing before building a snapshot history that
 
 ## Cross-cutting checks
 
-- **Concurrency.** Capturing is a multi-field read and is not atomic: a concurrent mutation
-  produces a capture the object never had. The same applies to `restore`, which must not be
+- **Concurrency.** Unsynchronized multi-field capture can mix states during concurrent mutation.
+  The same applies to `restore`, which must not be
   observable half-applied. Either both run under the lock that guards the state, or the state is
   an immutable state value swapped through a single `volatile`/atomic reference—in which case
   capture/restore of that state reference is atomic, provided no related state lives outside it
@@ -181,10 +190,11 @@ THEN consider event sourcing before building a snapshot history that
   added fields need validated defaults or a migration. Distributed checkpointing across processes
   is a different problem requiring barriers or a consistent-cut algorithm
   (`distributed-aggregation-and-barriers`).
-- **Performance.** A full-copy upper bound is depth × state size, but structural sharing, deduplication
-  and variable diffs change retained size; measure the reachable graph.
-  Options in order of preference — make the object immutable and share structure between versions;
-  store inverses instead of states; store diffs; bound the depth. Also watch retention: an undo
+- **Performance.** Depth × capture size estimates independent full copies, not a universal heap
+  bound. Account for variable payloads, shared objects, redo/branch roots and overhead; measure the
+  retained graph when the estimate matters. Full copies may be simplest for small bounded state;
+  compare inverses, diffs and persistent structures using edit/restore cost and actual retention.
+  Bound history depth and/or bytes to the required retention contract. Also watch retention: an undo
   stack holding large graphs keeps them alive and is a common source of "the heap grows during a
   long editing session" (`heap-dump-analysis`).
 - **Testing.** The property to assert is a round trip: `restore(capture(s))` leaves the object
@@ -197,14 +207,14 @@ Return the capture boundary and ownership, concurrency/restore-conflict policy, 
 and checks executed versus pending. Missing state or deployment evidence leaves completeness
 and compatibility conditional; enumerate fields and external effects before proposing restore.
 
-- [ ] The originator is genuinely mutable; otherwise the capture is a reference
+- [ ] Immutable state is retained without unnecessary copying; required opacity and ownership remain intact
 - [ ] The capture type is opaque to the caretaker
 - [ ] Every mutable component is copied at capture time
 - [ ] Capture and restore are atomic with respect to concurrent mutation
 - [ ] Independent semantic observations cover every restorable field; capture equality alone is insufficient
-- [ ] Undo depth is bounded, and the memory cost was calculated
+- [ ] History bounds cover actual retained state, including variable capture sizes and redo/branch history
 - [ ] A durable capture has an explicit schema identity/evolution strategy and corruption handling
-- [ ] External effects are compensated, not "restored"
+- [ ] External effects have an explicit compensation, reconciliation or irreversible-effect policy
 - [ ] Persisted captures are treated as snapshots/contracts even when they also serve as mementos
 
 ## References

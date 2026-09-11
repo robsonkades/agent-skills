@@ -1,23 +1,25 @@
 # The unknown outcome
 
 A remote write can have a known applied effect, a known non-applied effect or an unknown
-effect. Java return/exception syntax alone does not distinguish these. Even a local exception
+effect. Classify at a named effect boundary. If a debit applied but its notification failed,
+preserve that known partial completion and resolve the notification separately; the whole
+operation was neither wholly rejected nor necessarily wholly unknown. Even a local exception
 can follow partial mutation; remote calls add uncertainty about an independently executing peer.
 
 ```java
-// Conceptual: the shape the fault model forces on every remote write.
+// Optional Java representation of certainty about one effect, not a multi-effect workflow.
 sealed interface Outcome<T> {
     record Applied<T>(T value) implements Outcome<T> {}
     // Provably never applied; retry eligibility still depends on cause and budget.
     record Rejected<T>(Throwable cause) implements Outcome<T> {}
-    // May or may not have applied: retrying duplicates, not retrying may lose.
+    // May or may not have applied: unsafe retry may duplicate; abandoning may lose intent.
     record Unknown<T>(Throwable cause) implements Outcome<T> {}
 }
 ```
 
-The value of the sealed type is not elegance — it is that `switch` over it is exhaustive, so
-a new call site cannot quietly forget the third case. Modelling the exception hierarchy that
-feeds it is `java-exception-design`.
+An exhaustive pattern `switch` can expose an unhandled variant. Existing protocol statuses,
+results or exceptions may already carry this information; preserve it without requiring a
+new type or a Java runtime. Modelling a Java exception hierarchy is `java-exception-design`.
 
 ## Classifying a real call
 
@@ -30,7 +32,7 @@ effect?** Everything below follows from that.
 | JDBC statement      | failure acquiring a connection before dispatch; server rejection whose transaction semantics prove no effect | socket timeout or disconnect during execution; a driver may not know whether a trigger/procedure or transaction effect occurred                                                                                       |
 | JDBC `commit()`     | proven pre-dispatch/protocol rejection with known transaction state                                          | disconnect/exception after possible commit dispatch can mean the commit was durable and only its acknowledgement was lost                                                                                             |
 | Kafka `send()`      | synchronous serialization/size/configuration failure before the record enters the accumulator                | delivery timeout or disconnect after possible transmission; classify from producer metadata and protocol evidence, because `TimeoutException` can also arise while metadata or buffer progress never allowed dispatch |
-| Kafka offset commit | —                                                                                                            | a failed commit may have been applied; a rebalance then redelivers                                                                                                                                                    |
+| Kafka offset commit | proven rejection with known committed offsets                                                                | timeout after possible dispatch may hide a successful commit; replay after rebalance depends on the actual committed offsets                                                                                          |
 
 Two consequences that surprise people:
 
@@ -41,16 +43,16 @@ Two consequences that surprise people:
   boundary. Instrument whether the request entered the transport and whether an
   intermediary forwarded it. Connect and response timeouts should remain separately
   observable because they carry different evidence.
-- **`commit()` is the worst case in the table.** The two-generals structure is exact: the
-  database cannot tell you it committed without a message that can be lost. A JDBC client
-  that catches an exception from `commit()` and reports "transaction failed" is guessing.
+- **A commit acknowledgement can be lost after durability.** A JDBC client that catches
+  an exception from `commit()` and claims "the transaction rolled back" without further
+  evidence is guessing. Reporting that the caller could not confirm success is accurate.
 
 ## What Unknown forces the design to provide
 
 Choose an explicit resolution policy per write path; these mechanisms can be combined:
 
-1. **Idempotent by key.** The write carries a caller-generated key; repeating the same
-   logical intent must not repeat its business effect. Preserve the key
+1. **Safe to repeat.** Natural operation semantics or a stable operation key prevent the
+   repeated logical intent from duplicating its business effect. For keyed deduplication, preserve the key
    and payload semantics, and resolve the original result. The mechanics — key choice, storage, retention,
    concurrent-duplicate handling — are `idempotency`.
 2. **Reconcilable.** The write is not repeat-safe, so the caller records its intent durably
@@ -74,24 +76,33 @@ prove a custom endpoint is free of business side effects. A later read may also 
 different version, so preserve required snapshot/precondition semantics. Repetition has a
 cost the model must account for: another attempt adds load to a peer that may already be slow,
 and it consumes the caller's remaining deadline. Retry budgets and backoff belong to
-`retries-and-backoff`; what belongs here is the classification that says a read may be
-retried at all, and a non-idempotent write may not.
+`retries-and-backoff`; what belongs here is evidence that repetition is safe. A non-idempotent
+write with an unknown effect cannot be retried blindly; one proven never applied may be
+retried if its cause and remaining budget permit. Include earlier transparent attempts in
+that proof, not only the last attempt.
+A rejected later attempt does not resolve an earlier unknown effect.
 
 ## Reviewing for it
 
-Three greps that find the erasure directly:
+Three search leads for possible erasure; inspect the contract before calling them defects:
 
 - `catch (TimeoutException` / `catch (SocketTimeoutException` followed by anything that
-  reports failure to the caller, or by a plain retry of a non-idempotent operation.
+  claims the effect never applied, or retries without evidence that repetition is safe.
 - A retry policy (`@Retryable`, an interceptor, a `RetryTemplate`) applied to a method whose
   name is a verb like `create`, `charge`, `send` or `transfer` with no idempotency key in the
   signature.
 - `commit()` inside a `try` whose `catch` logs and continues, or rolls back a transaction
   that may already be durable.
 
+A key can come from an interceptor or domain identity, and an operation can be naturally
+idempotent. A caller-visible timeout is legitimate if the effect remains classified as unknown.
+Trace these semantics rather than requiring a key parameter or particular result type.
+
 ## Proving it
 
-Do not test this with mocks that throw. Test it with a fault that is genuinely ambiguous:
+Unit tests can check classification and recovery decisions, but a mock throwing an exception
+does not establish what a real peer did. For transport and durability claims, use an isolated
+integration test with controlled fault timing and inspect actual peer state:
 
 - **Testcontainers plus a network fault** between the application and the dependency — pause
   the container, or drop packets on the bridge — _after_ the request is written. Assert the
@@ -122,4 +133,6 @@ itself roll back a peer-side commit.
 - [RFC 9110: HTTP Semantics, §9.2.2 Idempotent Methods](https://httpwg.org/specs/rfc9110.html#idempotent.methods)
 - [Java 17 Connection.commit](<https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html#commit()>): commit contract and exceptions; determine actual outcome from protocol evidence.
 - [JDBC 4.3 specification, transactions](https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index3.html)
-- [Apache Kafka producer configuration: delivery timeout and idempotence](https://kafka.apache.org/documentation/#producerconfigs)
+- [Apache Kafka 4.3 producer configuration: delivery timeout and idempotence](https://kafka.apache.org/43/configuration/producer-configs/)
+- [Apache Kafka 4.0 consumer API: offset commits and rebalance](https://kafka.apache.org/40/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+  — use documentation matching the deployed client; these links do not require an upgrade.

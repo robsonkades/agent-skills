@@ -1,5 +1,9 @@
 # Measuring CAS contention
 
+Use this evidence path when contention or a performance claim needs investigation. Reuse
+matching profiles/counters first and select measurements that distinguish the unresolved
+cause; an API-semantics review does not require new instrumentation or topology sweeps.
+
 ## Hypothesis chain
 
 ```text
@@ -45,7 +49,8 @@ layout/ownership change.
 
 ## Benchmark design
 
-Sweep:
+For a performance comparison, vary the dimensions relevant to the proposed mechanism and
+target deployment:
 
 - 1 through saturation and overload thread counts;
 - same-core/SMT/core/socket/NUMA placement where relevant;
@@ -61,16 +66,23 @@ fixed without the mechanism result.
 
 ## Remediation decision
 
-| Evidence                              | Candidate                       | Trade-off                               |
-| ------------------------------------- | ------------------------------- | --------------------------------------- |
-| exact single value, modest contention | atomic or lock                  | linearizable simplicity                 |
-| exact multi-field invariant           | lock or immutable CAS aggregate | lock waiting versus allocation/retry    |
-| approximate cumulative telemetry      | `LongAdder`/per-owner combine   | non-atomic read/reset, memory           |
-| hot-key skew                          | partition/shard/batch/owner     | ordering and load balance               |
-| short expected ownership delay        | bounded spin then backoff/park  | CPU/power versus wake latency           |
-| stalled owner makes lock unacceptable | proven lock-free/helping        | proof/reclamation/starvation complexity |
+| Evidence                                                              | Candidate                       | Trade-off                               |
+| --------------------------------------------------------------------- | ------------------------------- | --------------------------------------- |
+| exact single value, modest contention                                 | atomic or lock                  | linearizable simplicity                 |
+| exact multi-field invariant                                           | lock or immutable CAS aggregate | lock waiting versus allocation/retry    |
+| cumulative telemetry, non-atomic live reads or exact quiescent totals | `LongAdder`/per-owner combine   | live snapshot/reset races, memory       |
+| hot-key skew                                                          | partition/shard/batch/owner     | ordering and load balance               |
+| short expected ownership delay                                        | bounded spin then backoff/park  | CPU/power versus wake latency           |
+| stalled owner makes lock unacceptable                                 | proven lock-free/helping        | proof/reclamation/starvation complexity |
+
+`LongAdder` is not statistical sampling: after writers stop and their updates are properly
+observed, its sum is accurate subject to `long` overflow. That does not provide an atomic
+check-and-update for concurrent admission. See [striped counters](lock-free-structures.md#striped-counters)
+for reset/observation conditions.
 
 ## Failure tests
+
+Select cases that challenge the changed protocol and claimed lifecycle/progress assumptions:
 
 - actor paused after reading and before CAS;
 - actor paused after publication but before housekeeping/help;

@@ -4,9 +4,11 @@
 
 A supported socket wait on an unpinned virtual thread can release the carrier. HotSpot puts
 the channel in non-blocking mode; if the operation is not immediately ready it registers the
-file descriptor with a **poller** and parks the virtual thread. A small number of dedicated
-threads run `epoll_wait` (or `kqueue`) and unpark the virtual thread when the descriptor is
-ready.
+file descriptor with a **poller** and parks the virtual thread. Poller topology is
+OS/release-specific: OpenJDK 25 uses epoll on Linux, kqueue on macOS and wepoll on Windows.
+Its Linux default uses virtual sub-pollers plus a platform master when continuations are
+supported; not every poller is a dedicated platform thread. Readiness wakes a waiter to
+retry I/O, not to assume a complete response is available.
 
 So the current JDK implementation uses readiness pollers beneath blocking socket APIs on
 virtual threads. That does not make the application programming model an event-loop model,
@@ -63,10 +65,11 @@ Neither proves the absence of blocking in unexercised or uninstrumented native c
 BlockHound.install();
 ```
 
-Run it in the integration test suite, not in production: it is a diagnostic agent with real
-overhead, and its value is in failing a build. Every entry in the allow-list is a documented
-decision, and a growing allow-list requires review rather than automatic suppression.
-Verify that the chosen BlockHound version supports the test JDK and its required JVM flags
+When compatible instrumentation is available or its addition is in scope, use it in tests:
+it is a diagnostic agent with real overhead. Otherwise use source inspection, call-thread
+assertions and loop-lag/wall-clock evidence, recording detection gaps. Every allow-list entry
+is a documented decision; a growing allow-list requires review rather than automatic suppression.
+If using BlockHound, verify its version supports the test JDK and its required JVM flags
 (the project's documentation describes `-XX:+AllowRedefinitionToAddDeleteMethods` for JDK
 13+). Include a negative control: a known blocking call on a marked non-blocking thread
 must fail, then the offloaded path must pass. Do not allowlist the defect being investigated.
@@ -123,7 +126,8 @@ what the model costs in diagnosability.
 ## Review checklist
 
 - [ ] No blocking JDK call, JDBC call or lock acquisition on an event-loop thread
-- [ ] BlockHound running in the integration suite, with an allow-list that is reviewed
+- [ ] Blocking detection has exercised the relevant path; compatible BlockHound tests, if used,
+      include the known-blocking control and a reviewed allow-list
 - [ ] Blocking work offloaded to a scheduler with a stated bound
 - [ ] `defaultBoundedElasticOnVirtualThreads` assessed with its retained caps and queues
 - [ ] Wall-clock, not CPU, profiling in the runbook for latency questions
@@ -131,6 +135,11 @@ what the model costs in diagnosability.
 
 ## Sources
 
+- [OpenJDK 25 Poller modes](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/sun/nio/ch/Poller.java)
+  and the [Linux](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/linux/classes/sun/nio/ch/DefaultPollerProvider.java),
+  [macOS](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/macosx/classes/sun/nio/ch/DefaultPollerProvider.java)
+  and [Windows](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/windows/classes/sun/nio/ch/DefaultPollerProvider.java)
+  providers: implementation-specific readiness mechanisms and platform/virtual poller placement.
 - [Reactor blocking-call FAQ](https://projectreactor.io/docs/core/release/reference/faq.html#faq.wrap-blocking):
   deferred source and `subscribeOn` placement.
 - [Reactor threading and schedulers](https://projectreactor.io/docs/core/release/reference/coreFeatures/schedulers.html):

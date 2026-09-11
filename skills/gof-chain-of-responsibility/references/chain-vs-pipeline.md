@@ -2,7 +2,7 @@
 
 ## The two contracts
 
-|                           | Classical CoR                              | Pipeline / middleware                          |
+|                           | First-match CoR with owner iteration       | Pipeline / middleware                          |
 | ------------------------- | ------------------------------------------ | ---------------------------------------------- |
 | How many handlers run     | Until one handles; then stop               | All, unless one short-circuits deliberately    |
 | Handler's answer          | "mine" / "not mine"                        | "here is the request, possibly transformed"    |
@@ -33,6 +33,10 @@ These are partial signatures with domain types omitted. The composer supplies th
 and terminal handler. Define whether `next` may be called zero or once; repeated invocation is not
 a generic retry mechanism. Async forwarding also needs explicit context, cancellation and cleanup
 ownership; lexical `finally` can run before asynchronous work completes.
+Keep resources alive until downstream use actually ends, on success or failure, and account for
+synchronous failure before a stage is returned. A returned future's timeout/cancellation state
+alone does not establish termination; retain a separate work-completion/cleanup owner when needed
+(`cancellation-and-interruption`). Never retain a framework continuation beyond its supported lifetime.
 
 Choose the linked form only when a stage needs to control the invocation of the rest — timing it,
 catching around it, retrying it, running it elsewhere, or skipping it. Otherwise the iterated form
@@ -40,17 +44,17 @@ keeps the order visible in one place and removes successor wiring entirely.
 
 ## Ordering discipline
 
-Order is the part that decays. Three rules, in increasing strength:
+Order is the part that decays. Choose a representation that makes the rationale reviewable:
 
 ```java
-// weakest: numbers, whose meaning lives nowhere
+// insufficient if the numeric precedence has no documented contract
 @Order(100) class TenantRule { }
 @Order(200) class ProductRule { }
 
-// better: named positions, so the reason is in the code
+// named positions put the reason in the code; ties still need a policy
 enum RulePosition { TENANT_OVERRIDE, CONTRACT, PRODUCT, CATALOGUE_DEFAULT }
 
-// best: one explicit list at the composition root
+// explicit list: useful when this composition root owns the membership
 @Bean
 List<Rule> rules(TenantRule t, ContractRule c, ProductRule p, DefaultRule d) {
     // most specific first; DefaultRule must stay last — it always matches
@@ -58,10 +62,9 @@ List<Rule> rules(TenantRule t, ContractRule c, ProductRule p, DefaultRule d) {
 }
 ```
 
-The explicit list has a property the others lack: adding a rule is a change to a file a reviewer
-reads, and its position is a deliberate act rather than a number chosen to be bigger than the
-last one. When handlers genuinely come from other modules, keep the list but let modules
-contribute to named positions, and fail startup on an unknown position.
+An explicit list centralizes review of membership and precedence. For contributed handlers,
+documented framework ordering may already suffice; do not add a second list solely to replace
+numbers. If using named slots, validate contributed positions at assembly time.
 Also resolve ties deterministically or reject them, validate duplicates/required stages, and freeze
 the assembled membership before sharing it. Named positions alone do not define ordering within a slot.
 
@@ -90,8 +93,8 @@ Silent return                never. This is the pattern's classic bug and
                              no metric and no stack trace.
 ```
 
-Whichever is chosen, count it: a metric on the unhandled path is what turns "a customer says
-their discount vanished" into a graph.
+For operationally significant fallthrough, a bounded metric can make an unexpected change visible;
+an expected no-advice result in a small local API need not introduce telemetry infrastructure.
 
 ## Error propagation and partial state
 
@@ -107,17 +110,20 @@ defensible designs:
 1. **Pure stages over an immutable context.** Each returns a new context; effects are applied once
    at the end per attempt, after every stage has succeeded. The final effect boundary still
    needs atomicity/idempotency/recovery; immutable context alone supplies none of these.
-2. **A transaction spanning the chain.** Works when every effect is in one transactional
-   resource, and makes the chain's duration the transaction's duration
+2. **A transaction spanning the chain.** Covers effects actually enlisted in its atomic unit:
+   often one database, or supported coordinated resources. Unenlisted calls remain outside it;
+   keep transaction duration and isolation appropriate to the work
    (`enterprise-transactions`).
-3. **Explicit compensation.** Each stage declares how to undo itself, and the chain unwinds. Real
-   cost, only worth it when effects are genuinely external.
+3. **Explicit compensation.** When effects cannot share the required transaction, define semantic
+   repair and a recovery owner for known or uncertain outcomes. Compensation can fail or conflict
+   with later changes; it is not automatic reverse-order rollback or necessarily possible for
+   irreversible effects (`distributed-transactions-and-sagas`).
 
 What is not defensible is catching and continuing without deciding: a chain that logs and proceeds
 turns a failed stage into a silently degraded result.
 
 In message-driven pipelines add one more consideration: with at-least-once delivery, a failure at
-stage 3 means stages 1 and 2 run again on redelivery. Either those stages are idempotent, or
+stage 3 can cause stages 1 and 2 to run again under the actual redelivery policy. Either those stages are idempotent, or
 their final commit must be idempotent/transactional and coordinated with acknowledgement.
 Deferring effects does not prevent duplicate execution after commit-before-ack failure
 (`idempotency`, `delivery-semantics`).

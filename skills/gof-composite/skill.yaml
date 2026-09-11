@@ -1,14 +1,14 @@
 schemaVersion: 1
 
 name: gof-composite
-version: 1.2.1
+version: 1.2.2
 description: >-
   Composite in modern Java: treating a leaf and a tree of leaves through one interface, and the
   hazards that come with a recursive structure. Covers the transparent-versus-safe trade-off and
   when a sealed interface with exhaustive pattern matching changes that trade-off, unbounded depth and
-  StackOverflowError, cycles introduced by parent pointers and the infinite recursion they cause
-  in equals, hashCode and toString, mutation during traversal, and why a tree whose children live
-  in other services is not this pattern. Use when a part-whole hierarchy is being modelled, when a
+  StackOverflowError, cycles introduced by parent pointers and the recursion hazards they create
+  in equals, hashCode and toString, mutation during traversal, and why remote children require
+  additional distributed contracts. Use when a part-whole hierarchy is being modelled, when a
   leaf class is forced to implement add() and throw, when a recursive walk overflows the stack on
   production data, when nested structures arrive from untrusted input, or when someone proposes
   Composite for a flat group of items. Does not cover adding operations over a tree (gof-visitor),
@@ -44,6 +44,9 @@ dependencies: []
 
 suggests:
   - allocation-profiling
+  - domain-logic-organization
+  - gof-decorator
+  - gof-iterator
   - gof-patterns-and-distribution
   - gof-visitor
   - java-composition-over-inheritance

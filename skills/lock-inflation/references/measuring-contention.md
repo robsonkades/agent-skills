@@ -2,6 +2,10 @@
 
 ## Capture plan
 
+Use a new capture only when existing evidence cannot answer the runtime question. Select the
+fields and views below for that gap; a static `wait` explanation or source review can use its
+applicable contract without manufacturing a recording.
+
 ```text
 question and suspected invariant:
 affected window/load/business denominator:
@@ -24,8 +28,9 @@ jcmd <pid> JFR.start name=locks settings=/approved/locks.jfc duration=60s \
 jfr summary /durable/locks.jfr
 ```
 
-Do not assume stock profile settings answer short-contention questions. Validate metadata, counts,
-loss, capture interval and positive-control behavior.
+Do not assume stock profile settings answer short-contention questions. For the consumed capture,
+validate metadata, counts, loss and interval; establish relevant sensitivity using a positive
+control or adequate existing validation before treating absent events as evidence.
 
 Inspect `JFR.check` for recording status and the target's `help JFR.dump` if taking an
 early snapshot; report the shorter window. A destination path in the start command does
@@ -50,13 +55,27 @@ assumptions. A dump cannot prove short waits are absent.
 Prefer:
 
 ```text
-wait events/eligible operations
-total and percentile acquisition wait per operation (acknowledging overlap/censoring)
+recorded acquisition count/duration distribution, with threshold and completion coverage
+total recorded wait/eligible operations, with compatible cohort and units
+per-operation wait distribution only with operation-to-acquisition correlation
 maximum/concurrent blocked population and queue duration
 owner hold-path frequency and duration proxy
 useful throughput/error/deadline/cancel rate
 CPU/throttle/GC/safepoint aligned timeline
 ```
+
+An event percentile describes qualifying recorded acquisitions, not requests. One operation may
+acquire several monitors while another has no recorded wait. To estimate per-operation wait,
+define the operation cohort, correlate acquisitions and aggregate within it before taking a
+quantile. Define whether the quantity is summed thread wait or elapsed/critical-path delay;
+parallel waits can overlap. Include genuine zero-wait operations only when observation coverage
+supports them. Dividing an event percentile by operation count does not produce an operation
+percentile, and event count alone does not give the fraction of requests affected.
+
+Thresholds omit short waits, and an acquisition still blocked at the recording end may not yet
+have committed its duration event. Report that unfinished population using thread/queue evidence
+and any justified observed lower bounds; a completed-event summary alone cannot rule out a long
+wait. Do not turn a missing event into zero duration or an invented completed acquisition.
 
 Instrument hold time at application boundary only if overhead/reentrancy/exceptions are handled and
 the critical section is known. High-cardinality monitor/object labels should stay in bounded
@@ -82,13 +101,15 @@ For partitioning:
 
 ## Validation experiment
 
-Use matched load and capture windows. Verify correctness first, then compare wait/hold/queue,
-useful throughput, tail, CPU, allocation/GC, fairness/starvation and the next constrained resource.
+For a proposed runtime change, use matched load and capture windows. Verify the affected correctness
+contract first, then select wait/hold/queue, useful throughput, tail and resource/progress metrics
+that can expose the proposed benefit or shifted failure. Reuse adequate evidence for unchanged paths.
 Report inconclusive if event opportunity/threshold or workload drift prevents discrimination.
 
 ## Authoritative references
 
-- [JDK Flight Recorder runtime guide](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-runtime-guide/index.html)
+- [Java 25 Flight Recorder settings and control API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html) — event discovery, thresholds, stacks and commitment.
+- [OpenJDK 25 GA monitor-event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml) — inspect the actual target schema before consuming fields.
 - [JDK `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [Java monitoring API `ThreadInfo`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadInfo.html)
 - [JEP 444 thread observability](https://openjdk.org/jeps/444)

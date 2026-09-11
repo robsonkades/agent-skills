@@ -18,7 +18,7 @@ description: >
 
 ## Purpose
 
-Decide where a JVM's threads run and where its pages live, and prove the decision worked.
+Decide where a JVM's threads run and where its pages live, and verify the requested placement objective.
 CPU affinity and memory policy are independent axes. Changing one can be useful, but the
 combination determines locality; document both. The exact scope of `-XX:+UseNUMA` is
 collector- and JDK-specific, so do not reduce it to a timeless "fresh allocation only" rule.
@@ -34,6 +34,12 @@ Missing PMU support or permissions is missing evidence, not zero remote traffic.
 
 ## Workflow
 
+Select the steps needed for the requested interpretation, diagnosis or placement change.
+Reuse matching topology, effective-policy and outcome evidence; preserve an adequate placement.
+A narrow command explanation needs no new PMU capture or host experiment. Define success from
+the actual objective, such as locality, capacity or tenant isolation with accepted latency cost.
+Return the supported change or no-change, evidence limits, and checks run versus pending.
+
 1. **Inspect visible and allowed topology.** `numactl --hardware` plus allowed CPU/memory
    sets. A single visible node rules out guest-visible inter-node placement experiments,
    not CPU-affinity problems or hidden host placement. Never infer nodes from socket count.
@@ -43,17 +49,19 @@ Missing PMU support or permissions is missing evidence, not zero remote traffic.
    dismissing the flag. `java -XX:+PrintFlagsFinal -version | grep UseNUMA` in the target
    environment using the same collector/options — defaults can be changed by collector
    ergonomics. Prefer the running process effective flags when available.
-4. **Take a placement and performance baseline.** Systemic `numastat` reports kernel page
+4. **For a placement-effect claim, establish a matching baseline.** Systemic `numastat` reports kernel page
    allocation/fallback counters; `numastat -p <pid>` reports this process's page residence.
    Neither measures the JVM's remote-load ratio. Add CPU placement, supported PMU evidence,
-   throughput/latency and GC percentiles.
+   and outcomes relevant to the objective. Reuse adequate measurements; unavailable PMU data
+   limits access-locality claims rather than invalidating independent placement or outcome evidence.
 5. **Choose a placement strategy** from the heap-versus-node-size decision, in
    `references/placement-decisions.md`. Record both axes; a deliberate one-axis experiment is valid.
 6. **Change one variable at a time.** Do not combine `UseNUMA`, `--interleave` and a heap
    resize in the same deploy.
-7. **Re-measure the mechanism and outcome.** Page residence/CPU placement must move as
-   predicted and the business metric must improve within experimental uncertainty. A global
-   allocator counter moving alone cannot validate a JVM-local NUMA change.
+7. **Validate the claimed mechanism and objective.** Check the predicted placement/access
+   behavior and the declared outcome, uncertainty and accepted cost. An isolation policy need
+   not improve this JVM's peak throughput, and a supported no-change needs no forced movement.
+   A global allocator counter moving alone cannot validate a JVM-local NUMA change.
 
 ## Rules
 
@@ -67,9 +75,10 @@ Missing PMU support or permissions is missing evidence, not zero remote traffic.
 - `UseNUMA` is collector/build-specific. Linux ZGC in JDK 25 consumes this flag and its
   initialization enables it by default when not explicitly configured (subject to later
   platform/topology checks). Parallel/G1 behavior is different; verify effective settings.
-- `numa_miss` is not a `perf` event. The valid PMU events are `node-loads`,
-  `node-load-misses`, `node-stores`, `node-store-misses` — and their availability varies by
-  SoC, so check `perf list | grep node` first. A missing event is not zero misses.
+- `numa_miss` names a kernel allocation counter, not a portable perf remote-access event.
+  Generic aliases such as `node-loads`, `node-load-misses`, `node-stores` and
+  `node-store-misses` require matching PMU/kernel support and semantic checks. An alias in
+  a listing alone does not establish a JVM remote-load ratio. Missing support is not zero misses.
 - `numastat` without `-p` gives system-wide kernel page-allocation counters such as
   `numa_hit`/`numa_miss`/`numa_foreign`; these are not hardware remote-access counts and are
   not process-specific. `numastat -p <pid>` gives page residence by node and no hit/miss
@@ -82,12 +91,15 @@ Missing PMU support or permissions is missing evidence, not zero remote traffic.
   by summing thread counts, because threads time-share and are not all runnable together.
   Use `ActiveProcessorCount` when affinity/container detection does not yield the ergonomics
   you intend, then validate GC and compiler parallelism.
-- An unbound JVM uses Linux first-touch placement and may also be affected by automatic NUMA
-  balancing. That can be good when allocating/accessing threads remain local or poor when
-  they migrate. It is the neutral baseline to measure, not automatically the worst case.
-- `-Xlog:gc+init=debug` reports how many GC workers exist and whether NUMA support is on.
-  It is not a per-thread placement history. Read supported per-thread OS placement evidence
-  and map CPUs to nodes; stat field 39 is only the last executed CPU, not affinity.
+- An unbound JVM can inherit task memory policy or have mapping/collector-specific allocation
+  policy. VMA policy does not survive exec. Under default local allocation, first physical page
+  allocation commonly follows the touching CPU; this is not permanent Java-object ownership.
+  Fallback, GC movement and automatic NUMA balancing can alter locality. Record the effective
+  baseline instead of assuming unbound placement is automatically best or worst.
+- The G1 `-Xlog:gc+init=debug` example reports worker counts and NUMA support; labels and
+  coverage vary by collector/build. It is not a per-thread placement history. Read supported
+  per-thread OS placement evidence and map CPUs to nodes; stat field 39 is only the last
+  executed CPU, not affinity.
 - Budget the whole node-local footprint, not just heap, before strict membind. Exhaustion
   can cause Java/native allocation failure or an OOM kill depending on the path and policy;
   monitor these along with reclaim, headroom and latency.
@@ -97,7 +109,7 @@ Missing PMU support or permissions is missing evidence, not zero remote traffic.
 ## References
 
 - [numactl, numastat and perf](references/numactl-and-numastat.md) — the corrected flag
-  table by axis, the two `numastat` modes side by side, valid PMU event names, and the
+  table by axis, the two `numastat` modes side by side, candidate PMU event names, and the
   recipe for mapping GC threads to nodes. Read before running any NUMA diagnostic, and
   whenever a command returned nothing or an unrecognised event.
 - [Placement decisions](references/placement-decisions.md) — the pin-versus-interleave

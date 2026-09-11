@@ -62,8 +62,11 @@ sub-phase work counts and worker times before choosing a change.
 -Xlog:gc+remset=debug     # Visited cards, Total dirty, Coarsening per pause
 -Xlog:gc+marking=debug    # the concurrent phases with durations (g1-concurrent-marking)
 -Xlog:gc+humongous=debug  # per humongous region, at every young pause
--Xlog:gc+ergo+ihop=debug  # the effective (adaptive) marking threshold, every pause
+-Xlog:gc+ergo+ihop=debug,gc+ihop=debug  # qualifying initiation checks and IHOP predictor updates
 ```
+
+The `gc+ergo+ihop` line is conditional, not emitted for every pause. Its absence does not prove
+marking is disabled; use `g1-concurrent-marking` for threshold denominators and learning state.
 
 There is no "Humongous allocation …" info line on JDK 25. The allocation itself surfaces as
 the cause `G1 Humongous Allocation` on a `Pause Young (Concurrent Start)` and in
@@ -154,8 +157,11 @@ grep -E '\[gc +\].*Pause Full.*ms$' gc.log      # completion summaries only, not
 
 Before investigating:
 
+Apply checks relevant to the question and reuse existing captures; a mechanism explanation need
+not trigger a new recording or a tuning experiment.
+
 - [ ] Young and mixed collections read separately, with distinct greps
-- [ ] Allocation rate and promotion rate measured, not estimated (gc-log-analysis)
+- [ ] Relevant allocation/promotion rates sourced with units and window; log-derived estimates labelled (gc-log-analysis)
 - [ ] The collector confirmed as the cause, rather than downstream latency inflating the
       number of live objects in flight
 
@@ -169,15 +175,16 @@ When measuring and validating:
 
 - [ ] Distribution/max and sample size reported; sparse tails labelled or omitted, not claimed precise
 - [ ] Rates reported with unit and period, not as a bare number
-- [ ] Every extraction command verified to produce non-empty output against a real log
-- [ ] The change tested under the same load as the original measurement
-- [ ] Throughput and CPU checked, to rule out a regression elsewhere
-- [ ] Every quoted flag default confirmed with `-XX:+PrintFlagsFinal` on the target runtime
+- [ ] Extraction selectors checked against actual log format and coverage; empty output reported with its limits
+- [ ] If a change is proposed, tested under comparable load with throughput and CPU checked for regressions
+- [ ] Quoted defaults checked on a matching launch; effective service flags and learned state distinguished
 
 ## Sources and scope
 
 - [Java 25 G1 tuning guide](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html)
 - [Java 25 jcmd command and impact descriptions](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [OpenJDK 25 region-size rounding](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1HeapRegion.cpp)
+- [OpenJDK 25 collector selection](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/gcConfig.cpp)
 
 An isolated Temurin 25.0.3 G1 process confirmed that default `GC.class_histogram` requested a
 `Heap Inspection Initiated GC`, while `-all` did not request that collection. This is a runtime

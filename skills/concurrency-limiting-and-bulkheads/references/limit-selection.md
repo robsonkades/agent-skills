@@ -137,6 +137,11 @@ than one permit.
 Fairness must be tested with adversarial service-time variance. Report wait/hold distributions per
 partition and total useful utilization, not only rejection counts.
 
+A bounded map is not enough: removing tenant A's gate while a lease remains open, then creating a
+fresh gate for A, grants a second allocation. Retire a gate only through a protocol that coordinates
+lookup/acquisition with its holders and waiters; a momentary idle/queue-size check is not sufficient.
+Test removal and reactivation while old work or an admission attempt still holds the old identity.
+
 ## Tests
 
 - action throws before/after provider acquisition;
@@ -146,7 +151,8 @@ partition and total useful utilization, not only rejection counts.
 - slow dependency and caller timeout with residual provider work;
 - replica overlap and another client consuming the same dependency;
 - tenant skew, reserve exhaustion and high partition churn;
-- limit decrease while more work is already in flight.
+- limit decrease while more work is already in flight: no early release, and no new admissions
+  until the chosen draining policy permits them; the fixed wrapper above does not implement resizing.
 
 ## References
 

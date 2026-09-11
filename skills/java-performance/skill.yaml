@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: java-performance
-version: 2.6.1
+version: 2.6.2
 description: >-
   Evidence-first triage and routing for ambiguous Java/JVM performance symptoms: defining the
   affected population and work, separating latency/throughput/resource/error dimensions,
   checking measurement and recent-change validity, preserving live-incident evidence, mapping
-  competing hypotheses to discriminating signals, and handing each confirmed mechanism to its
+  competing hypotheses to discriminating signals, and handing each bounded question to its
   owning skill. Use for “it is slow,” regressions, saturation, memory/RSS growth, startup,
   uneven instances, or post-JDK/deploy changes when the cause is unknown. This is a router, not
   a substitute for performance-methodology or specialist JVM/OS/database/distributed skills.
@@ -161,6 +161,12 @@ dependencies:
     version: ^1.0.0
   - name: scoped-values
     version: ^1.0.0
+  - name: load-balancing-and-routing
+    version: ^1.0.0
+  - name: safepoints
+    version: ^1.0.0
+  - name: deoptimization
+    version: ^2.0.0
 
 suggests:
   - async-profiler-advanced
@@ -180,7 +186,6 @@ suggests:
   - hot-partitions-and-rebalancing
   - jhsdb-and-core-dumps
   - jvm-bytecode
-  - load-balancing-and-routing
   - lock-free-patterns
   - lock-inflation
   - reactive-and-virtual-thread-selection

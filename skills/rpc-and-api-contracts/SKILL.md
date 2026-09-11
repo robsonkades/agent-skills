@@ -4,7 +4,7 @@ description: >
   The contract between two services and how it changes without a coordinated deploy: partial
   failure as a first-class outcome, an error surface a machine caller can act on (stable
   extensible codes, outcome certainty, retry conditions, RFC 9457), compatibility in both directions and
-  expand-then-contract, versioning only where compatibility is impossible, and choosing REST,
+  expand-then-contract, versioning under an explicit compatibility policy, and choosing REST,
   gRPC or messaging on observable conditions. Use when a client branches on an error message
   string, when a field is renamed or a
   proto field number reused, when a rolling deploy breaks consumers, when a synchronous
@@ -39,6 +39,11 @@ proof of either compatibility or incompatibility.
 
 ## Workflow
 
+Use the steps relevant to the requested contract decision. Reuse adequate artifacts, cohort
+evidence and tests; a narrow explanation or supported no-change review does not require a
+new error schema, rollout campaign or version. State the missing evidence only for claims
+that depend on it.
+
 1. **Decide what the call actually is** before choosing a transport: a synchronous answer, or
    an acceptance of work. Long-running synchronous work needs queryable operation identity
    or reconciliation for ambiguous timeout; asynchronous acceptance must define status,
@@ -49,14 +54,15 @@ proof of either compatibility or incompatibility.
    semantics, idempotency key, current state and failure—not one universal boolean.
 3. **Classify every change** as additive, compatible-in-one-direction, or breaking, and name
    which side may deploy first. See `references/contract-evolution.md`.
-4. **Ship a breaking change as expand → migrate → contract** — compatibility phases that may
-   require several deploys. A rename needs a verified transition, not an unqualified edit.
+4. **Plan a verified transition for a breaking change.** Expand → migrate → contract is a
+   common bridge; an adapter, versioned coexistence or a controlled replacement may fit the
+   supported-client policy. A rename needs covered rollout/replay pairs, not automatic dual-writing.
 5. **Prove the coexistence pairs the rollout can create.** Test old-reader/new-writer and
    new-reader/old-writer where deployment order or durable data permits each. Include retries,
    cached/stored payloads, rollback and unknown error/enum values.
-6. **Version only what cannot be made compatible**, and emit requests-per-version with a
-   bounded client category or protected client-level logs; combine telemetry with supported
-   client inventory and the retirement contract.
+6. **Apply the published version policy.** A compatible schema/release identifier need not
+   create a breaking endpoint version. When retirement is in scope, use bounded version/client
+   telemetry or protected logs together with supported inventory and the retirement contract.
 
 ## Rules
 
@@ -68,14 +74,14 @@ proof of either compatibility or incompatibility.
   deduplicated retry. Do not infer peer state from timeout class.
 - Error codes are a documented **extensible** set unless the API version promises otherwise.
   Known meanings remain stable; clients need a conservative unknown-code path. Human-readable
-  text is explicitly **not** branching contract and may be reworded,
-  localised or redacted without a version change — say so in the documentation, or clients
-  will parse it anyway.
+  text is explicitly **not** the machine branching contract. Distinguish occurrence-specific
+  detail from RFC 9457's normally stable title; document localization/redaction and any
+  existing presentation guarantees rather than assuming every textual change is harmless.
 - The response can carry `outcome=REJECTED|UNKNOWN`, `retryCondition`, `Retry-After` or an
   operation-status URI. The client combines those with idempotency and deadline. A naked
   `retryable=true` cannot express "refresh state", "same key only" or ambiguity.
 - RFC 9457 (which obsoletes RFC 7807) defines `application/problem+json` with `type`,
-  `title`, `status`, `detail` and `instance`. Put the machine-readable members — code,
+  `title`, `status`, `detail` and `instance`. Put application-specific machine members — code,
   outcome/retry condition and correlation id — in extension members, never inside `detail`.
   The standard `type` URI is already the primary problem identifier; `code` is optional.
 - In gRPC, mapping every failure to `INTERNAL` loses semantics, but no status is universally
@@ -84,7 +90,9 @@ proof of either compatibility or incompatibility.
   can occur after effect. Publish method-specific retry policy and structured details.
 - Compatibility has a direction, and terminology varies by ecosystem. Define it explicitly:
   backward (new reader reads old data) usually permits consumers first; forward (old reader
-  reads new data) permits producers first. Full compatibility permits arbitrary coexistence;
+  reads new data) permits producers first. Full compatibility covers the evaluated version pairs;
+  adjacent checks alone do not establish historical/transitive compatibility. Arbitrary
+  coexistence requires every relevant supported pair to pass;
   an ordered rollout can rely on one direction only if rollback and all live/stored pairs are
   controlled.
 - The compatibility horizon is the maximum of live old-client lifetime, rollback window,
@@ -97,8 +105,8 @@ proof of either compatibility or incompatibility.
 - Proto3 implicit-presence singular scalars conflate absent/default; `optional`, message fields
   and Editions explicit presence preserve it. Check protoc/runtime/API compatibility before
   introducing presence into generated clients.
-- Jackson 2 enables `FAIL_ON_UNKNOWN_PROPERTIES` by default; Boot 3's auto-configured
-  Jackson 2 mapper disables it. Jackson 3 defaults it to false. Custom mappers, annotations
+- Plain Jackson 2.18.3 enables `FAIL_ON_UNKNOWN_PROPERTIES` by default; Boot 3.5.0's
+  auto-configured Jackson 2 mapper disables it. Jackson 3.0.0 defaults it to false. Custom mappers, annotations
   and readers can differ; verify the actual client. Unknown properties and unknown enum
   values are separate policies.
 - Retirement needs evidence appropriate to the supported population, including dormant
@@ -128,10 +136,11 @@ proof of either compatibility or incompatibility.
 - cache validators/conditional requests, privacy/redaction and audit requirements;
 - rate-limit, deprecation/sunset signals and capability negotiation.
 
-Schema artifacts alone are insufficient: validate invariants, failure semantics and the
-actual rollout pairs. Return the changed contract, supported pairs and deployment order,
-outcome/retry policy, executed validation and remaining unknowns. Do not equate an untested
-pair with a pass.
+For affected contracts, validate the relevant invariants, failure semantics and actual rollout
+pairs; a schema label alone does not establish them. Return the supported decision or change,
+its evidence and unresolved limits. Include deployment order, outcome/retry policy or further
+checks when the decision depends on them. Retain an adequate contract and do not equate an
+untested required pair with a pass.
 
 ## References
 

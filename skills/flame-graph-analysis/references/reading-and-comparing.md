@@ -144,8 +144,9 @@ was executed from these expected values alone.
 
 ### Use repeated trials
 
-One pair is descriptive. For a regression decision, collect randomized/paired independent
-runs and compare stable stack groups or resource outcomes at the run level. Individual
+One pair is descriptive. For a regression decision, use suitable existing randomized/paired
+independent runs, or collect the missing trials within the capture budget, and compare stable
+stack groups or resource outcomes at the run level. Individual
 samples inside one profile are not independent version trials. Preserve each raw profile;
 aggregating first can hide host/run variance.
 

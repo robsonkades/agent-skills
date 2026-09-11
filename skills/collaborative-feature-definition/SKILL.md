@@ -62,13 +62,18 @@ be Deep because it is irreversible; a large description is not automatically com
 request more depth. Do not reduce depth past a material driver without recording the resulting gap and
 acceptance by the authority that owns that risk.
 
+Use the stage template as a content contract, not a demand for empty headings. Light briefs may group
+applicable fields into a compact record; explain material inapplicability and keep ownership, criteria,
+open items, revision and handoff status explicit. Compact presentation never combines the two Product
+Feature stages or removes a convergence gate.
+
 ## The collaboration loop
 
 ### 1. Seed the living draft
 
-Extract only what the user established. Use `feature-discovery` to separate facts, assumptions,
-unknowns, and decisions. Mark missing mandatory sections as `OPEN`; never fill them with plausible
-content.
+Reuse the request, supplied documents and accepted session decisions. Use `feature-discovery` to
+separate facts, assumptions, unknowns, and decisions, preserving each source's scope and authority.
+Mark missing mandatory content as `OPEN`; never fill it with plausible intent or approval.
 
 Assign the shared lifecycle identifiers as items appear: `OBJ-*`, `F-*`, `A-*`, `U-*`, `BR-*`,
 `BAC-*`, `PF-*`, `TF-*`, `SC-*`, `Q-*`, `IMP-*`, `ED-*`, `EXP-*`, `CT-*`, `TC-*`, `RES-*`,
@@ -82,6 +87,10 @@ when the accountable role is unknown or absent.
 
 Show the initial draft briefly, then name the most consequential gaps. The full polished document is
 not repeated after every answer unless the user asks.
+
+Examples illustrate intent; they do not establish every rule. Check whether omitted actors, permission
+boundaries, repeated actions or partial failure could defeat the stated outcome. Raise material gaps
+within the feature's scope without turning every possible concern into a new requirement.
 
 ### 2. Ask one coherent round
 
@@ -141,7 +150,8 @@ when Standard or Deep work would otherwise become hard to audit.
 
 This diagram spans the lifecycle, not a demand to create every item during definition.
 At the product stage, trace OBJ/BR to BAC and scope; add engineering links during analysis
-when applicable. Record a planned verification method for each criterion and distinguish it
+when applicable. An internal Tech Feature may trace OBJ directly to TC without inventing a BAC.
+Record a planned verification method for each criterion and distinguish it
 from executed `EV-*` evidence. Delivery resources and execution results belong to later
 authorized lifecycle work; their absence alone does not block a definition brief.
 
@@ -160,17 +170,17 @@ After integrating each round, assess the current stage against its convergence g
 three recommendations:
 
 - **Continue** — name the unresolved decision and the quality, scope, risk, or acceptance problem that
-  another round will resolve. Offer the next focused round and ask whether the user wants to answer it
-  now or pause.
-- **Close the stage** — state that no blocking gap remains and ask whether to close/hand off or continue
-  with an optional deeper area named by the agent.
-- **Blocked** — name the missing owner, evidence, or decision and ask whether to resolve it now or pause;
-  do not offer advancement as if the blocker were harmless.
+  another round will resolve. Ask the next focused questions within the agreed workshop scope.
+- **Close the stage** — state that no blocking gap remains. Reuse evidenced acceptance of the current
+  revision; request only missing acceptance or a genuinely undecided handoff. Name optional deepening
+  without making it a prerequisite.
+- **Blocked** — name the missing owner, evidence, or decision and the dependent area it blocks. Ask for
+  the missing input and continue independent authorized work; do not offer unsupported advancement.
 
-The user's answer controls the cadence. Answering the offered questions means continue; choosing to
-close triggers the stage gates; asking for more depth starts another round in the requested area. Do
-not ask a content-free “continue?” after every response: include the recommendation, its reason, and
-the concrete subject of the next round or optional deepening.
+The user's instructions control the cadence, including an explicit pause. Answering the offered
+questions means continue; choosing to close triggers the stage gates; asking for more depth starts
+another round in the requested area. Do not ask permission to continue work already authorized. A
+request to prepare a draft is still not acceptance of the result.
 
 One round may be sufficient; five or ten may be appropriate when each produces new consequential
 information. Never continue merely to exhaust the topic, and never stop because a target number of
@@ -181,8 +191,9 @@ rounds was reached.
 During engineering-owned work, use `feature-context-analysis` before asking about established
 technologies, conventions, contracts, or patterns. During product definition, inspect context only
 to clarify existing behavior or known dependencies; do not turn repository evidence into a product
-author's engineering decision. The repository establishes what exists, not what the business intends
-or which standard is authoritative.
+author's engineering decision. Implementation shows what exists; an applicable accepted policy,
+contract or decision can establish what is required. Cite its authority, scope and revision rather than
+promoting common code into a business rule or standard.
 
 ### 6. Write checkable criteria
 

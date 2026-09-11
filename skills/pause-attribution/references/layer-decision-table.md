@@ -1,11 +1,13 @@
 # Pause layer decision table
 
-Use this only after timestamps are on one clock and the safepoint `Total` has been reconstructed.
-The table assigns the next investigation; no single signal proves root cause by itself.
+Use aligned timestamps for cross-source claims and a validated safepoint `Total` when attributing
+a safepoint cycle. Per-thread or host evidence can support a narrower handoff without that
+cycle evidence. The table assigns the next investigation; no single signal proves root cause
+by itself, and a completed diagnosis need not launch every investigation listed here.
 
 | Observed shape                                                                       | Evidence that distinguishes it                                                                                                           | Likely owner                                                           | Next skill                                                                                                                           |
 | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `At safepoint` dominates and the VM operation is a GC operation                      | Unified GC and safepoint events agree on start, duration, collector cause, and affected cycle                                            | Collector or allocation pressure                                       | **gc-log-analysis**, then the collector-specific skill                                                                               |
+| `At safepoint` dominates and the VM operation is a GC operation                      | Identify the collector phase in the same cycle; account for its nested timing rather than demanding equal GC/safepoint durations         | Collector or allocation pressure                                       | **gc-log-analysis**, then the collector-specific skill                                                                               |
 | `At safepoint` dominates and `jdk.ExecuteVMOperation` names a non-GC operation       | Same operation and interval recur; GC events do not cover the time                                                                       | VM subsystem named by the operation                                    | **safepoints** or the relevant class-loading/JIT skill                                                                               |
 | `Reaching safepoint` dominates                                                       | `SafepointTimeout` identifies non-arrived threads; wall-clock samples over the same interval show their stacks                           | Thread failing to poll promptly, native transition, or host scheduling | **safepoints**, **jni-and-ffm**, or **linux-for-jvm**                                                                                |
 | Safepoint log is clean but one application thread stalls                             | JFR/thread samples show deoptimisation, class loading, allocation stall, monitor wait, parking, or blocking I/O on that thread           | Execution, memory, concurrency, or I/O—not global STW                  | **deoptimization**, **jvm-class-loading**, **allocation-profiling**, **concurrency-diagnostics**, or **blocking-and-nonblocking-io** |
@@ -25,8 +27,9 @@ The table assigns the next investigation; no single signal proves root cause by 
 4. For a per-thread stall, use the event carrying the blocked thread and stack. Distinguish monitor
    contention, parking, I/O, allocation, class loading, compilation/deoptimisation, and deadline
    expiry before selecting an owner.
-5. Validate remediation by re-running the same workload and showing that the attributed term moved
-   without violating throughput, CPU, memory, or correctness constraints.
+5. For a proposed remediation, validate the affected term against a matched workload and
+   throughput, CPU, memory and correctness constraints. Reuse adequate relevant evidence;
+   a narrow explanation or no-change verdict does not require a new workload run.
 
 ## Common false attributions
 

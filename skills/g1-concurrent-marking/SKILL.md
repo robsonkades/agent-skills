@@ -18,7 +18,7 @@ description: >
 ## Purpose
 
 Decide why a G1 marking cycle is failing to do its job — starting too late for the real
-old-generation allocation rate, restarting because the object-mark stack exhausted its maximum,
+old-generation allocation rate, restarting after object-mark stack overflow,
 or never finishing before the
 old generation fills — and which of those the evidence in the log actually supports. Marking
 provides liveness for mixed-collection candidates. Late or aborted marking can reduce reclamation
@@ -30,15 +30,24 @@ allocation pressure and evacuation failure require different investigations.
 
 ## Workflow
 
-1. **Confirm which phase names you are reading.** G1's cycle is `Pause Young (Concurrent
-Start)`, `Concurrent Mark From Roots`, `Pause Remark`, `Pause Cleanup`, `Concurrent
-Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting those is not G1.
-2. **Capture at least one complete cycle**, not fragments, with
-   `-Xlog:gc+marking=debug` alongside the base `-Xlog:gc*`.
+The detailed model is HotSpot JDK 25. Reuse the target's vendor/update, effective flags,
+complete logs and accepted outcome budgets; preserve an older project's baseline. These
+are implementation details, not Java language guarantees.
+
+1. **Confirm which phase names you are reading.** G1's cycle includes `Pause Young (Concurrent
+Start)`, `Concurrent Mark From Roots`, `Pause Remark`, `Pause Cleanup` and, on JDK 25,
+   `Concurrent Cleanup for Next Mark`. `Pause Mark Start` / `Pause Mark End` are ZGC's —
+   confirm the collector and hand off rather than applying G1 flags.
+2. **Use a complete cycle for cycle-level conclusions.** A fragment can identify a recorded
+   cause or phase, but not establish the missing chronology. If material evidence is absent,
+   arrange bounded collection through `gc-log-analysis`; `-Xlog:gc*` includes the info-level
+   phases. Read the instrumentation reference for additional overflow or IHOP detail.
 3. **Check whether the trigger is adaptive before touching it.**
-   `java -XX:+PrintFlagsFinal -version | grep G1UseAdaptiveIHOP`. With the default `true`,
-   `InitiatingHeapOccupancyPercent` is only the initial threshold, and marking starting away from
-   45% is the predictor working, not a bug.
+   Use the target's effective flags and `gc+ihop=debug` predictor state. A fresh
+   `java -XX:+PrintFlagsFinal -version` shows that invocation's configuration, not the
+   running service's overrides or learned state. With `G1UseAdaptiveIHOP=true`,
+   `InitiatingHeapOccupancyPercent` supplies the initial threshold; a start away from 45%
+   alone establishes neither a faulty nor a well-calibrated predictor.
 4. **Track each trigger with its effective threshold, old-allocation rate, marking duration and
    post-cycle reclaim.** Rising start occupancy alone can reflect a changed old capacity/live set
    or a healthy adaptive threshold. “Too late” requires insufficient headroom for marking plus
@@ -51,6 +60,10 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
 7. **Re-measure any region-size or IHOP change under the same allocation and promotion
    rate** as the original measurement, and check the effect on mixed collections: region size
    changes the Garbage-First granularity, not just the humongous threshold.
+
+Finish with the supported phase/cause, remaining material uncertainty and the next discriminating
+check or justified no-change decision. Healthy reclaim and sufficient headroom within accepted
+application budgets do not require tuning.
 
 ## Rules
 
@@ -71,9 +84,10 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
 - `Pause Cleanup` (STW) and `Concurrent Cleanup` (concurrent) are two distinct phases sharing
   a word. Reporting `Concurrent Cleanup` as a short STW pause is self-contradictory.
 - The SATB barrier enqueues the **old** value of the field, never the new one. It guarantees
-  "live at the start of the snapshot"; a new reference created after the snapshot is already
-  covered by the rest of the marked graph.
-- SATB can only over-retain, never under-retain. Floating garbage is reclaimed next cycle; a
+  snapshot reachability together with root processing, tracing and allocation liveness; the time
+  a reference was assigned does not determine when its referent was allocated.
+- SATB can conservatively over-retain, but must not under-retain. Floating garbage may survive
+  until a later reclamation opportunity; a
   lost live object would be heap corruption. Never "optimise" the barrier away from that
   asymmetry.
 - The humongous threshold is **strict**: `size > G1HeapRegionSize / 2`. An object of exactly
@@ -111,9 +125,10 @@ Cleanup`. `Pause Mark Start` / `Pause Mark End` are ZGC's — a log quoting thos
 
 The mark stack holds objects discovered but not yet scanned while tracing the graph. SATB buffers
 hold old references from mutator stores and become additional marking roots. Heavy mutation can
-increase marking work, but `Concurrent Mark Restart for Mark Stack Overflow` specifically means
-the mark stack could not expand beyond `MarkStackSizeMax`; it does not prove an SATB queue
-overflow. Correlate graph breadth/live-set shape, mark-stack expansion, concurrent CPU starvation,
+increase marking work, but `Concurrent Mark Restart for Mark Stack Overflow` identifies an
+object-mark stack overflow, not an SATB queue overflow or proof that `MarkStackSizeMax` was
+reached. JDK 25 can restart before expanding the current capacity; allocation failure and the
+maximum also limit growth. Correlate graph breadth/live-set shape, mark-stack expansion, concurrent CPU starvation,
 SATB processing and cycle duration. Changing `G1SATBBufferSize` without evidence targets a
 different structure; increasing `MarkStackSizeMax` trades native memory for headroom and may only
 mask a workload/capacity problem.
@@ -133,6 +148,6 @@ and expire them like other production telemetry.
   diagnostic flags with their defaults, JFR events, and the HotSpot source paths. Read when
   configuring marking instrumentation or reading a marking log for the first time.
 - [Marking pathologies](references/marking-pathologies.md) — symptom-to-hypothesis-to-
-  instrument table, the SATB buffer and overflow mechanism, how evacuation failure invalidates
-  the snapshot, and the humongous threshold and eager-reclaim decision. Read when a cycle
+  instrument table, the SATB buffer and overflow mechanism, evacuation-failure reconciliation,
+  and the humongous threshold and eager-reclaim decision. Read when a cycle
   restarts, does not finish, or is followed by a full GC.

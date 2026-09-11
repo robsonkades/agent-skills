@@ -49,9 +49,11 @@ public interface Template {
 ```
 
 The polymorphic copy interface is useful when runtime type preservation is required; copy
-constructors/factories may express Prototype intent for known types too. Declare in its Javadoc **which fields are shared
-and which are duplicated** — that sentence is the contract, and its absence is the reason most
-`clone()`-style methods are wrong.
+constructors/factories may express Prototype intent for known types too. Declare **which fields are
+shared, duplicated or reset**, whether the result must be fresh, and which subtype and failure
+contracts callers may rely on. An inherited `copy()` that constructs the base class can lose a
+subclass's state even though its return type compiles. A documented base projection or immutable
+same-instance result may be valid; preserve an existing public clone contract where required.
 
 ## Deep or shallow, per field
 
@@ -70,10 +72,13 @@ and which are duplicated** — that sentence is the contract, and its absence is
 A copied subject listener list may notify the original subscribers from another subject; it does
 not automatically register the new object with external publishers. A copied closeable may share
 one underlying resource. Reopen or share only with an explicit lifecycle/ownership protocol.
+If an attempted copy acquires resources and later fails, release only its newly owned resources
+according to that protocol; leave source/shared ownership intact and preserve failure evidence.
+Discarding an unpublished object or copy map does not close external resources.
 
 ## Cycles and identity
 
-A depth-first copy of a graph with cycles does not terminate, and one with shared nodes
+A naive depth-first copy of a graph with cycles does not terminate, and one with shared nodes
 duplicates them — so `a.child == b.child` in the original becomes two distinct objects in the
 copy, and any logic depending on that identity changes behaviour.
 
@@ -97,8 +102,9 @@ cycles; illustrative depth/node limits reject large graphs instead of claiming a
 support. Also bound edges, payload sizes and total work for untrusted graphs; these two counters
 alone do not bound a node with huge fan-out. On failure discard the partial result/map.
 
-If this code is needed, ask first whether the graph should be copied at all. A structure with
-cycles and meaningful identity is usually better rebuilt from a description than duplicated.
+If this code is needed, compare copying with reconstruction from a description or sharing an
+immutable graph. Preserve required aliasing and identity in either design; cycles alone do not
+make reconstruction better or justify replacing an adequate copier.
 
 ## The serialisation round-trip
 
@@ -156,7 +162,7 @@ domain, not a copying utility, decides which parts of an order a duplicate inher
 ## Copying under concurrency
 
 A copy constructor reading five fields performs five separate reads. If the source is mutated
-between the first and the last, the copy holds a state the source never had — for example an
+between the first and the last, the copy can hold a state the source never had — for example an
 order whose `total` predates the line item it also copied.
 
 ```java
@@ -174,6 +180,8 @@ config, replaced wholesale on change, removes the problem altogether — which i
 observation that immutability is the real alternative to this pattern.
 
 Primary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()>),
+[IdentityHashMap](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html),
+[resource cleanup on abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3),
 [Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),
 and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 Check the deployed provider/version and mappings for concrete persistence behavior.

@@ -96,6 +96,10 @@ caller context  -> which operation/data/resource reaches the mechanism?
 
 ## Analysis workflow
 
+Reuse supplied profiles, configuration, trials and accepted outcome targets before asking for
+new evidence. Ask only for gaps that change the interpretation or next action. An adequate
+existing result can justify no change; graph appearance alone does not require an experiment.
+
 1. Validate source, denominator, scope, total weight, loss, truncation, and symbol quality.
 2. Split heterogeneous populations: service/process, application versus runtime threads,
    thread/task role, state, operation/workload class, and version where supported.
@@ -104,7 +108,8 @@ caller context  -> which operation/data/resource reaches the mechanism?
 5. Convert width to an upper-bound opportunity under explicit assumptions.
 6. Correlate with throughput, CPU, allocation/GC, latency, queue/I/O, errors, and load.
 7. Form alternative hypotheses and choose a discriminating measurement or experiment.
-8. Recollect repeated comparable trials and validate the external outcome.
+8. For a change requiring validation, use repeated comparable trials and the external outcome.
+   Reuse suitable trials; collect only missing evidence within the authorized capture budget.
 
 Search is aggregation, not causality. Grouping `ObjectMapper` frames can quantify selected
 weight associated with serialization, but caller/data/output requirements determine whether
@@ -117,8 +122,8 @@ square root of count, but profiler samples are often autocorrelated, weighted, b
 throttled, filtered, and clustered by recording/host. The slogan “100 samples = 10% error” is
 only a rough Poisson/binomial intuition, not a confidence guarantee.
 
-Report absolute selected weight and count alongside percentage. For decisions, repeat
-independent recordings/blocks and analyze per-recording effects. Narrow frames can be real but
+Report absolute selected weight and count alongside percentage. For regression claims, use
+repeated independent recordings/blocks and analyze per-recording effects. Narrow frames can be real but
 underpowered; absent frames can mean no selected samples, not zero execution/cost.
 
 The flame graph itself has no uncertainty interval. Use the raw recording and sampling design

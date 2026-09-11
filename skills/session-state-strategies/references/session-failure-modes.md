@@ -11,25 +11,28 @@ calls.
 **Candidate causes:** lost in-process sessions, incompatible serialized data, changed cookie/key
 configuration, or external-store eviction/expiry. Correlate logout with node and repository events.
 
-**Misdiagnosis:** "the load balancer is not draining properly". Draining helps in-flight
-requests, not sessions that live in the instance's heap.
+**Drain distinction:** draining only in-flight requests does not preserve later requests in
+a heap-resident conversation. A planned full-conversation drain can work if admission/routing
+and a finite remaining lifetime are enforced for the whole drain horizon. An inactivity timeout
+that active users keep extending is not such a bound; neither drain protects an unplanned crash.
 
 **Fix:** address the evidenced cause. Shared session storage can preserve the existing login
 protocol; durable workflow storage may be needed. A token migration is a separate contract change.
 
-**Verify:** in an authorized test environment, replace one instance under load and assert the
-agreed survival/loss budget, including old/new readers and in-flight writes.
+**Verify:** use relevant existing evidence or an authorized replacement test for the claimed
+survival/loss budget, including mixed readers/in-flight writes when those paths are affected.
 
 ## It works on one replica and fails on two
 
 **Symptom:** a wizard loses its data intermittently; the failure rate is roughly
 `(n-1)/n` only under uniform independent routing to n replicas with state on one replica.
 
-**Cause:** server session state without sticky routing or replication.
+**Candidate cause:** instance-local state without the needed routing/recovery contract. Trace
+session identifiers, selected replica and actual repository/key/expiry behavior before concluding.
 
-**The wrong fix that gets applied:** enable sticky sessions. It works, and it converts an
-obvious bug into a subtle one — the conversation now breaks only during deploys and
-scale-in, which is when nobody is watching for it.
+**Decision:** sticky routing may be sufficient when local conversation loss/recovery is accepted,
+or valuable for locality with another recovery mechanism. It is insufficient when the contract
+requires survival of instance loss and no adequate recovery exists.
 
 **Fix:** place the state per the placement table (`state-placement.md`). Sticky routing is
 not a failover guarantee; it can coexist with durable/shared or replicated state for locality.
@@ -39,8 +42,8 @@ not a failover guarantee; it can coexist with durable/shared or replicated state
 **Symptom:** a Redis blip produces 500s on every endpoint, including pages that do not need
 a session.
 
-**Cause:** the session filter runs before everything, has no timeout, and has no degraded
-path.
+**Candidate causes:** eager lookup, an actual security/session requirement on each path, unbounded
+store waits, or incorrectly configured public-route access. Inspect the effective filter chain.
 
 **Fix:** bounded connect/acquire/command waits within the request deadline; a defined degradation
 (anonymous experience, or fail only endpoints that require a session); no session lookup at
@@ -48,15 +51,17 @@ all on endpoints that do not need one — inspect lazy lookup or route/filter co
 (`timeouts-and-deadlines`). Verify framework lookup behavior first. Never bypass required
 authentication or authorization on protected operations when the store is unavailable.
 
-**Verify:** run with the store blocked and confirm which endpoints still work. If the answer
-is none, the dependency is stronger than intended.
+**Verify:** compare route behavior with its intended authority contract using existing evidence
+or an authorized outage test. All protected routes may deliberately fail closed; only an
+unexpected dependency on a session-free/public path establishes that particular problem.
 
 ## The token cannot be revoked
 
 **Symptom:** an account is disabled and the user keeps working for the token's remaining
 lifetime.
 
-**Cause:** offline validation cannot learn an account's new status without updated authority.
+**Candidate cause:** offline validation cannot learn an account's new status without updated
+authority. Inspect the actual lookup/push/cache/expiry and refresh paths before attributing delay.
 
 **Options, with their real costs:** enforced short expiry plus revocable refresh bounds stale
 acceptance by remaining lifetime and clock leeway. Denylist/introspection or pushed revocation state
@@ -71,23 +76,26 @@ anywhere, so it is discovered during a security incident.
 **Symptom:** intermittent 431 or 400 from a proxy, or a header truncated in one environment
 and not another. Frequently appears only for users with many roles.
 
-**Cause:** claims accumulate. Permissions, feature flags, a display name, a tenant list.
+**Candidate cause:** encoded claims or other headers/cookies exceed a specific hop's limit.
+Measure the actual request and rejecting hop; status alone does not identify which header grew.
 
-**Fix:** carry identity and a small role set; look everything else up. Add a test asserting
-a maximum encoded token size for a worst-case user, because this regresses silently as
-claims are added by different teams.
+**Fix:** remove unjustified claims or change representation/lookup where the audience and
+freshness contract permits it. Validate worst-case encoded tokens together with other headers
+against actual hop limits; a fixed role/profile rule is not a substitute for that contract.
 
 ## Two tabs corrupt one conversation
 
 **Symptom:** a multi-step form ends in an inconsistent state; a basket loses an item;
 double-submits create two records.
 
-**Cause:** the session is shared mutable state and two requests mutate it concurrently.
+**Candidate cause:** shared mutable conversation state is concurrently updated without the
+required protocol. Confirm the writers and outcome; duplicate effects may also come from retries.
 Container-managed sessions do not serialise access in any way you should rely on.
 
 **Fix:** treat the conversation as data with a version, and detect the conflict
-(`offline-concurrency-control`). For the double-submit case specifically, an idempotency
-key on the submit is the direct answer (`idempotency`).
+(`offline-concurrency-control`). For repeated submissions, use an operation-scoped idempotency
+protocol binding key, intent/payload, authority and outcome; a key field alone does not prevent
+duplicate effects (`idempotency`).
 Require atomic compare-and-update with affected-row/result checks, not just a version field.
 Test two writers from the same version and a stale request saving after logout/ID rotation;
 the loser must not overwrite newer state or resurrect an invalidated session. Distributed stores
@@ -98,35 +106,39 @@ can lose updates too; container attribute-map safety does not protect mutable at
 **Symptom:** heap grows with active users and never returns; or the session store's memory
 climbs until eviction starts dropping live sessions.
 
-**Cause:** accumulation. A search result cached "just for this request", a list of viewed
-products, an entity graph put there to avoid a reload.
+**Candidate causes:** retained attributes, missing cleanup, longer lifetimes or a larger active
+population. Attribute size, reachability and count distinguish them; heap growth alone does not.
 
 **Detection:** in the heap, sessions are reachable from the container's session manager —
 a heap dump grouped by session shows the size distribution immediately
 (`heap-dump-analysis`). For an external store, sample serialised sizes rather than trusting
 the code.
 
-**Fix:** the inventory step. Ask of each item: what recreates it if it is missing? If
-recreating it is cheap, it does not belong in the session.
+**Fix:** remove items only when recreation preserves the required draft/snapshot/authority
+contract and cost. Bound retained size and population; cheap recomputation alone does not make
+conversation continuity redundant.
 
 ## Abandoned conversations fill the table
 
 **Symptom:** a `basket` or `draft` table with a hundred million rows, most of them years
 old; queries and backups degrade.
 
-**Cause:** database session state with no expiry and no sweeper. Abandonment is the normal
-case — most baskets are never checked out.
+**Candidate causes:** authorized retention, growing population, cleanup lag or retained abandoned
+data. Inspect age/size/access distributions and policy; no automatic expiry alone is not a defect.
 
-**Fix:** an `expires_at` column, an index on it, and a chunked delete job. Retrofitting
-this to an existing large table requires a partitioned or batched deletion, which is a
-migration in its own right (`architecture-refactoring-paths`).
+**Fix:** enforce the agreed retention/growth policy. For expiring drafts, an expiry column/index
+and bounded delete job may fit; retained audit data may require archival or other controls.
+Do not delete data merely because it is old. Retrofitting large-table cleanup requires a scoped
+migration and authorized retention decision (`architecture-refactoring-paths`).
 
 ## Session fixation and leakage
 
 - **Fixation:** rotate the session identifier on authentication/privilege changes and invalidate
   the old authority according to the framework contract. Inspect defaults and test concurrent
   requests rather than assuming rotation occurs or survives a stale replicated save.
-- **Cookie flags:** `HttpOnly`, `Secure` and an appropriate `SameSite` are not optional.
+- **Browser credential cookies:** configure `HttpOnly`, `Secure` over the intended HTTPS
+  transport, and `SameSite` for actual cross-site needs; check deployed framework/proxy behavior.
+  Non-credential UI preferences and non-cookie clients have different contracts.
 - **Identifiers in URLs** leak through referrers, logs and shared links. Never expose bearer
   session secrets there. An ordinary draft resource ID may be in a URL if every access checks
   authorization; it must not silently act as the sole access credential.
@@ -137,6 +149,9 @@ migration in its own right (`architecture-refactoring-paths`).
   A valid signature alone does not prove the caller can access an arbitrary resource ID.
 
 ## Diagnostic sequence
+
+Select the questions needed to distinguish the reported hypotheses; reuse adequate evidence.
+Do not require a full session audit or new latency/failure campaign for a narrow contract question.
 
 1. What is in the session? Inspect code and bounded approved names/types/size telemetry.
 2. Where does each item live, and where should it live per the placement table?

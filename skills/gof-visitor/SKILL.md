@@ -35,6 +35,11 @@ compiler, library API and extension model before adopting them; keep supported V
 forms on older baselines rather than upgrading implicitly. Deliver the dispatch/traversal policy,
 compatibility trade-off, semantic checks and explicit unverified cases.
 
+Start with ordinary calls, supported extensions and unsupported-node outcomes. Reuse actual callers,
+tests and release constraints; ask only about gaps that change operation semantics or compatibility.
+Treat predicted type/operation growth as a hypothesis. Retain an adequate method, Visitor or fold;
+state what evidence would change the choice and stop when the required contract is supported.
+
 ## The expression problem, stated once
 
 ```text
@@ -46,7 +51,7 @@ Adding an OPERATION
 
 Adding an ELEMENT TYPE
   methods on elements   → one new class. Cheap.
-  Visitor / switch      → every visitor/switch must handle it.
+  Visitor / switch      → every operation needs valid specialized or fallback handling.
 
 Choose by which change your domain actually produces. A stable set of
 types with growing operations wants Visitor; a growing set of types
@@ -81,8 +86,9 @@ short-circuit
 
 - **One intrinsic operation over the structure.** A method on elements may be clearer. One
   external operation can still justify Visitor when an established traversal/API requires it.
-- **The element set is growing.** Every new type breaks every visitor; if types arrive weekly, the
-  design is fighting the change it gets.
+- **Growth requires new behavior in most operations.** Compare the actual update cost with
+  polymorphism. Frequent new kinds alone do not invalidate an established Visitor whose extension
+  or fallback contract already meets those operations.
 - **The operation belongs to the element.** `area()` on a shape is not a visitor's business;
   moving intrinsic behaviour out produces an anaemic model (`java-tell-dont-ask`).
 - **The hierarchy is open and you own the switch.** Exhaustiveness needs a catch-all policy.
@@ -106,12 +112,12 @@ interface Visitor<R> {               static <R> R fold(Node n, ...) {
 each element implements accept       }
 by calling the right visit
 
-adding an element: edit Visitor      adding an element: every switch
-and every implementation             fails to compile — the same set of
-                                     sites, found by the compiler
+adding an abstract visit method:     adding an uncovered element:
+recompile implementations to find    recompile exhaustive switches to
+missing implementations              find missing coverage; catch-alls may absorb it
 
-state in the visitor object          an accumulator parameter, or a
-                                     Collector — no shared mutable field
+state in the visitor object          an accumulator parameter or Collector;
+                                     ownership/isolation still needs a contract
 ```
 
 Record deconstruction — case Section(var title, var children) — invokes the record component
@@ -126,10 +132,11 @@ THEN compare exhaustive switch/fold with Visitor. The switch reduces boilerplate
      Visitor may better preserve model encapsulation, API stability, traversal state
      or dependency direction.
 
-IF the Visitor interface has default methods, or the switch has a
-default branch
+IF dispatch inherits a generic/default visit method, or the switch has a
+default or covering type pattern
 THEN missing specialization may stop being a compile error. State whether the fallback
      rejects, handles generically or preserves unknowns; verify semantics with tests.
+     Check separately compiled old consumers as well as rebuilt source.
 
 IF the visitor holds mutable state across visits
 THEN document order, reset and confinement. Prefer an accumulator or fresh visitor;
@@ -145,9 +152,9 @@ THEN review the representation boundary. Record patterns still expose components
      what the operation actually needs.
 
 IF an element type may arrive from a newer producer
-THEN decide explicitly: reject the document, or handle an "unknown"
-     variant. Silently skipping it changes results — a filter that
-     ignores an unknown constraint may widen matches; operator semantics determine the effect.
+THEN decide per operation: reject, preserve/handle an "unknown" variant, or omit
+     only when the consumer contract permits incomplete output. Silent skipping changes results —
+     ignoring an unknown constraint may widen matches; operator semantics determine the effect.
 
 IF the operation mutates the structure while traversing
 THEN follow the traversal/container mutation contract. In-place transforms can be
@@ -166,15 +173,16 @@ THEN traversal is a variation point of its own — separate walking from
   reduction requires a valid identity, associative combination and the appropriate ordering and
   isolation guarantees. Collector specifies those obligations; it does not enforce them for you.
 - **Distribution.** Where the structure crosses a boundary — an AST, a document model, a protocol
-  message — the element set becomes a versioned contract. An older consumer will meet a node type
+  message — the element set becomes a versioned contract. An older consumer may meet a node type
   it does not know, and ignoring it may change semantics: for a filter it may broaden matches, for a
-  pricing tree it drops a charge, for a policy document it may drop a restriction. Reject, or model
-  the unknown explicitly (`rpc-and-api-contracts`).
+  pricing tree it drops a charge, for a policy document it may drop a restriction. Reject or model
+  the unknown explicitly; omission is valid only for operations that permit that incomplete result
+  (`rpc-and-api-contracts`).
 - **Performance.** Classical Visitor has two dispatches, but neither is inherently megamorphic and
   HotSpot may inline stable profiles. Pattern switches use JDK/JVM-specific type-switch machinery;
-  record patterns do not guarantee a meaningful speedup. Traversal usually does not allocate per
-  node unless the operation creates results/context. Benchmark actual tree shape, operation and
-  compilation (`jit-inlining-and-escape-analysis`, `allocation-profiling`).
+  record patterns do not guarantee a meaningful speedup. Streams, iterators, traversal contexts and
+  results can allocate; inspect the actual walk rather than infer allocation from the pattern.
+  Benchmark actual tree shape, operation and compilation (`jit-inlining-and-escape-analysis`, `allocation-profiling`).
 - **Testing.** The property worth having is that every element type is handled by every operation.
   Compiler coverage helps with type cases, not correct output or traversal reachability. Test
   expected results, errors and order for each kind; adding a visitor method must be coordinated
@@ -183,13 +191,13 @@ THEN traversal is a variation point of its own — separate walking from
 ## Review checklist
 
 - [ ] Operation growth or an established traversal/API justifies externalized dispatch
-- [ ] The element set is stable; if it grows weekly, this is the wrong direction
+- [ ] Actual type growth and fallback semantics justify the update/compatibility cost
 - [ ] Closed hierarchies explicitly compare sealed folds with Visitor and record compatibility costs
 - [ ] Classical Visitor has an encapsulation, traversal, dependency, or established-API reason
 - [ ] Fallback methods have explicit rejection/generic/unknown semantics with tests
 - [ ] Mutable visitors have explicit confinement, reset and reentrancy contracts
 - [ ] Deep/untrusted structures have enforced resource limits and stack-safe traversal
-- [ ] An unknown element type from a newer producer is rejected or modelled, never skipped
+- [ ] Unknown handling preserves each operation's required result; any omission is explicitly permitted
 - [ ] Intrinsic behaviour stayed on the elements
 
 ## References

@@ -48,8 +48,13 @@ if (!done.await(30, TimeUnit.SECONDS)) {                  // bounds waiting, not
 }
 ```
 
-In new code most latch usage is better expressed with `StructuredTaskScope` — see
-structured-concurrency.
+Count zero proves the expected signals, not successful work: capture failures separately. This
+snippet also assumes a stable task list and an executor that reports rejection; queued tasks
+removed before running or silently discarded never execute their `finally`. If submission fails
+partway through, the caller still owns previously accepted work and its cleanup.
+For lexically owned child tasks whose results and lifetime must be joined, compare
+`StructuredTaskScope` via structured-concurrency when the target permits its preview API. Keep a
+latch for an appropriate one-shot gate or external completion signal.
 
 ### CyclicBarrier — reusable, with all-or-none breakage
 
@@ -60,6 +65,8 @@ where shared state is updated between phases. `await()` returns the arrival inde
 
 **Breakage is all-or-none:** if any thread leaves the barrier point early through interruption,
 failure or timeout, every other waiting thread leaves abnormally with `BrokenBarrierException`.
+Failure **before** `await()` does not break the barrier automatically. Arrange bounded waits and
+coordinator failure handling; a missing party otherwise strands those that did arrive.
 
 Failure modes:
 
@@ -76,7 +83,8 @@ Failure modes:
 
 Registration can change at any time (`register()`, `bulkRegister(int)`, `arriveAndDeregister()`),
 and "tasks cannot query whether they are registered". Arrival and waiting are separate: `arrive()`
-and `arriveAndDeregister()` **do not block** and return a phase number;
+and `arriveAndDeregister()` do not wait for other parties' arrivals and return a phase number
+(a custom `onAdvance` still runs synchronously when the phase advances);
 `arriveAndAwaitAdvance()` is the `CyclicBarrier.await` analogue. `awaitAdvance` keeps waiting even
 if the thread is interrupted — use `awaitAdvanceInterruptibly` when that matters.
 
@@ -86,11 +94,17 @@ number wraps to zero after `Integer.MAX_VALUE`. The implementation restricts par
 and throws `IllegalStateException` beyond it — reachable with virtual threads, and the documented
 answer is tiering phasers into a tree.
 
-Failure modes: no `arriveAndDeregister()` in a `finally` (the phase never advances — the same shape
-as a missing `countDown`); ignoring the negative return from `arriveAndAwaitAdvance()`, so
-"terminated" is read as "advanced" and the loop exits silently early; and using
-`getRegisteredParties()`/`getArrivedParties()` for control flow, when the javadoc says the values
-"may reflect transient states and so are not in general useful for synchronization control".
+Account for exactly one arrival per registered party per phase. A departing, not-yet-arrived party
+can use `arriveAndDeregister`; applying it mechanically in `finally` after `arrive()` can count a
+second arrival in the same phase and advance before another party finishes. The phaser tracks
+counts, not party identities. Interruption/timeout of `awaitAdvanceInterruptibly` changes no
+registration or arrival state: track the party's phase explicitly, or use a coordinated group
+abort such as `forceTermination()` when that is the intended policy. Termination releases phaser
+waiters; it does not stop their work or clean their resources.
+
+Other failures: treating a negative return as normal advancement, or using monitoring counts to
+decide who may arrive. `getRegisteredParties()`/`getArrivedParties()` can reflect transient states
+and cannot replace the party protocol.
 
 Otherwise a `Phaser` is a strictly more complex `CyclicBarrier`.
 
@@ -132,7 +146,7 @@ for deadlock recovery, and the reason for the two failure shapes below.
    Available capacity can decay over time and does not recover without a compensating release;
    `availablePermits()` trends to 0; threads pile up parked in `Semaphore$NonfairSync`. The classic
    "fine after a restart, degrades over a week" ticket. Fix: `acquire()` immediately before `try`,
-   `release()` as the first statement of `finally`.
+   `release()` in exception-safe cleanup after the protected resource use actually ends.
 
 2. **Over-release — permits multiply.** A double `release()`, or a `release()` on an error path
    that also ran normally, _silently raises the limit_. You observe 12 in-flight calls against a
@@ -154,6 +168,12 @@ try {
 }
 ```
 
+This shape assumes `callDownstream()` ends the protected use before it returns or throws. Returning
+a future, timing out a waiter or accepting a cancellation request may leave work running; retain
+the permit until that work's terminal cleanup if the limit bounds actual resource use. If closure
+fails and the resource remains active, retain or otherwise reserve its capacity and make recovery
+the owner's responsibility; attempting cleanup alone does not prove capacity is free.
+
 `reducePermits(int)` is `protected`; dynamic resizing therefore needs an owned abstraction and a
 protocol for in-flight holders. `drainPermits()` changes immediately available permits but does not
 revoke permits already acquired. Bulkhead framing belongs to
@@ -167,7 +187,8 @@ double-buffering: the filler swaps a full buffer for an empty one.
 
 It pairs exactly **two** threads, `exchange(v)` blocks indefinitely without a partner, and
 `exchange(v, timeout, unit)` throws `TimeoutException`. With virtual threads and a capacity-1
-queue the same pipeline is usually more legible. (Pre-JDK 24 it also spun in ways hostile to
+queue a one-way pipeline may be simpler, but one queue does not implement the two-way ownership
+swap: returning reusable buffers needs its own path or pool. (Pre-JDK 24 it also spun in ways hostile to
 virtual threads — JDK-8338146, fix version 24.)
 
 ## The Condition protocol
@@ -297,6 +318,7 @@ javadoc recommends never using a `Condition` that way.
 ## Authoritative references
 
 - [Java 25 `CountDownLatch`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)
+- [Java 25 `CyclicBarrier`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CyclicBarrier.html)
 - [Java 25 `Phaser`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Phaser.html)
 - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [Java 25 `Condition`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Condition.html)

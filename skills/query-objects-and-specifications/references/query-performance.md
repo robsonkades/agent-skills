@@ -1,6 +1,6 @@
 # Query Performance and Result Shape
 
-## Result shape decides more than the mechanism
+## Result shape and loading behavior
 
 For a list screen of 25 orders, lazy entity traversal can cause N+1 selects; fetch joins
 may reduce round trips but multiply rows. A flat scalar DTO can avoid managed-entity
@@ -37,16 +37,19 @@ their behavior; projection versus entity is a workload and lifecycle decision (`
 ## Counting and existence
 
 ```java
-// Wrong: loads every row to count it.
+// Avoid loading every entity when the count is the only required result.
 long overdue = orders.findByStatus(OVERDUE).size();
 
-// Wrong: loads a row to prove one exists.
+// Avoid loading matches solely to establish existence.
 boolean any = orders.findByCustomerId(id).isEmpty() == false;
 
-// Right.
+// Query those answers directly when the data itself is not needed.
 long overdue = orders.countByStatus(OVERDUE);
 boolean any = orders.existsByCustomerId(id);
 ```
+
+If a complete bounded result is already needed for the use case, its size/emptiness may
+answer count/existence without another query. A partial page does not reveal the full total.
 
 `Page` generally needs a count, but Spring Data can skip it when the total is inferable.
 `Slice` commonly requests `size + 1` to detect continuation without total counting. Verify
@@ -59,7 +62,7 @@ Deep OFFSET often requires producing and skipping many qualifying rows; first-pa
 is not free either. Actual work depends on the plan, filters, indexes and visibility.
 
 ```sql
--- Offset pagination: cost grows with the page number.
+-- Deep offset can require substantial skipped work; inspect the actual plan.
 SELECT ... FROM customer_order ORDER BY placed_at DESC, id DESC OFFSET 500000 ROWS FETCH NEXT 25 ROWS ONLY;
 
 -- PostgreSQL-style row comparison; efficient seek depends on the full plan/filter/index.
@@ -78,20 +81,25 @@ Choose from required navigation, consistency and actual depth.
 
 ## What composition does to plans
 
-A dynamically composed query produces different SQL per filter combination, with three
-consequences worth knowing:
+A composition mechanism may produce different SQL for selected filters or reuse one
+parameterized shape. Inspect emitted SQL, parameter types and driver/server preparation:
 
-- **Plan cache pressure.** Many distinct statement shapes means many plans. Bound the
-  combinations where possible.
-- **Parameter sniffing.** One plan cached for a selective parameter can be reused for an
-  unselective one, and vice versa; a query that is fast for one customer and slow for
-  another is a clue, not a diagnosis; cardinality, data skew or different work may explain it.
-- **Index coverage varies by combination.** An index on `(status, placed_at)` serves the
-  status+date filter and not the customer+total filter. Enumerate the combinations users
-  actually use and index for those, rather than adding an index per column.
+- **Plan reuse and cache pressure.** Distinct prepared statement shapes can consume cache
+  space or planning work, depending on the stack; different values do not necessarily create
+  new statements/plans. Preserve useful selective shapes rather than merging everything blindly.
+- **Parameter-sensitive cost.** Reuse of a plan suited to some values can hurt others, but
+  generic/custom plan selection and replanning are database/configuration dependent. A query
+  fast for one customer and slow for another is a clue, not a diagnosis; inspect selectivity,
+  actual work and representative plans.
+- **Index usefulness varies by query.** An index on `(status, placed_at)` does not directly
+  provide a selective lookup on unrelated customer/total columns. It may still participate
+  through ordering or a broader scan; index-only/covering access additionally requires the
+  needed data and engine visibility conditions. Inspect the full plan and workload rather
+  than infer either usefulness or impossibility from the filter names alone.
 
-A dominant combination deserves its own named statement, tuned and indexed, with the general
-composed query serving the rest.
+A frequent costly combination may justify a dedicated statement or index when evidence
+shows a benefit. The composer may already emit the desired SQL shape; naming it separately
+does not itself change the plan or reduce execution work.
 
 ## Fetching and the aggregate
 
@@ -121,9 +129,9 @@ release, not just the happy-path row count.
 
 ## The query budget test
 
-Use integration cases with controlled fixtures, cleared context/cache policy and a scoped
+For the affected query contract, use integration cases with controlled fixtures, cleared context/cache policy and a scoped
 statement counter; background queries must not pollute it. These are recipes, not executed
-tests:
+tests. A narrow review can reuse adequate existing evidence:
 
 - Seed one order with two matching child rows and another with separately matching children.
   Assert the requested same-child versus any-child semantics, unique root results and total
@@ -143,3 +151,6 @@ do not expose an incorrect predicate or guarantee an efficient query plan.
 Sources: [Spring Data projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html),
 [Spring Data query methods](https://docs.spring.io/spring-data/commons/reference/repositories/query-methods-details.html)
 and [PostgreSQL 17 LIMIT/OFFSET](https://www.postgresql.org/docs/17/queries-limit.html).
+For plan/scan claims, see [PostgreSQL 17 prepared statements](https://www.postgresql.org/docs/17/sql-prepare.html),
+[multicolumn indexes](https://www.postgresql.org/docs/17/indexes-multicolumn.html) and
+[index-only scans](https://www.postgresql.org/docs/17/indexes-index-only-scans.html); other engines differ.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-refactoring
-version: 1.4.1
+version: 1.4.2
 description: >-
   Refactoring mechanics for Java: characterisation tests, small reversible steps, what
   behaviour preservation actually covers, risk classification, and the catalogue —
@@ -45,11 +45,42 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: concurrency-testing
+    version: ^1.0.0
+  - name: delivery-semantics
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
 
 suggests:
   - java-legacy-code-testing
   - java-optional
+  - java-api-design
+  - java-code-smells
+  - java-clean-code
+  - refactoring-automation
+  - schema-evolution-and-compatibility
+  - java-serialization-hardening
+  - structured-logging
+  - metrics-and-cardinality
+  - message-ordering-and-partitioning
+  - enterprise-transactions
+  - remote-facade-and-dto
+  - distribution-boundaries
+  - humble-objects-and-functional-core
+  - java-immutability
+  - java-composition-over-inheritance
+  - inheritance-mapping-strategies
+  - java-solid
+  - framework-coupling-and-independence
+  - java-performance
+  - orm-structural-mapping
+  - task-queues-and-competing-consumers
 
 capabilities:
   - reads-source

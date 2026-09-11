@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: startup-cds-crac-leyden
-version: 2.1.1
+version: 2.1.2
 description: >-
   Cutting JVM startup and warm-up while staying on the JVM: CDS and AppCDS, the Leyden AOT
   cache (JEP 483/514/515), CRaC checkpoint and restore and its constraints, what each mechanism
@@ -47,6 +47,9 @@ dependencies:
     version: ^1.0.0
   - name: jvm-class-loading
     version: ^1.0.0
+
+suggests:
+  - graalvm-native-image
 
 capabilities:
   - reads-source

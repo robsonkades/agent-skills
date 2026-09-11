@@ -25,7 +25,7 @@ Look before creating anything:
 | Found                                                      | Do this                                                                |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------- |
 | An existing ADR directory (`docs/adr`, `doc/arch`, `adr/`) | Put decision records there, in the numbering already in use            |
-| An existing per-feature or per-RFC directory convention    | Follow it; keep the five artefact roles, whatever the file names are   |
+| An existing per-feature or per-RFC directory convention    | Follow it; preserve artefact roles, whatever the file names are        |
 | A documentation site with a fixed structure                | Place the dossier where that structure puts working documents          |
 | A repository that tracks work only in an issue tracker     | Reuse the authorized record; clarify location only if still unresolved |
 | Nothing                                                    | Use the default above                                                  |
@@ -51,7 +51,9 @@ directories. External writes still follow the user's authorization and available
   must also be current or explicitly stale; read affected records before resuming implementation.
 - **execution-log.md** — append-only. Entries are never edited or deleted, because the value is
   the chronology; a correction is a new entry.
-- **decisions/** — one file per decision, superseded rather than rewritten.
+- **decisions/** — ADRs for choices that warrant a separate record; routine decisions stay in
+  the existing decision log. Follow the local lifecycle through architecture-decision-making,
+  preserving prior rationale when a choice changes.
 
 ## When there is no dossier
 

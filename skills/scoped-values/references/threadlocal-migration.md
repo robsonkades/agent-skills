@@ -55,12 +55,16 @@ is not a security sandbox.
 ```java
 ScopedValue.where(TENANT, tenant)
            .where(PRINCIPAL, principal)
-           .where(DEADLINE, Instant.now().plusMillis(800))
+           .where(DEADLINE, requestDeadline)
            .run(() -> handler.handle(request));
 ```
 
 One carrier, one scope, one nesting level. A chain of nested `run` calls does the same thing
 with different intermediate lifetimes; use nesting when those lifetimes matter.
+
+`DEADLINE` holds the project's deadline type; `requestDeadline` is the already-established
+request budget measured with a local monotonic clock. Rebinding context must not restart it.
+Each call still derives its remaining timeout; see `timeouts-and-deadlines` for that contract.
 
 ## Rebinding for callees
 
@@ -159,3 +163,4 @@ context around the test method — but keep at least one test that runs unbound.
 ## Primary reference
 
 - [Java 25 ScopedValue API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html) — dynamic scope, capabilities, exceptional restoration and capture at scope creation.
+- [JEP 506: final Scoped Values](https://openjdk.org/jeps/506) — finalization in Java 25 removed support for a null `orElse` argument.

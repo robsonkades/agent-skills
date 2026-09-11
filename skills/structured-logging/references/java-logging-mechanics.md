@@ -19,12 +19,17 @@ logger.atInfo()
 
 Fixture-test the configured provider/encoder; the SLF4J API does not dictate backend JSON
 shape.
-For example, a local fixture with SLF4J 2.0.9 and Logback JsonEncoder 1.4.11 emitted
+For example, the historical local fixture with SLF4J 2.0.9 and Logback JsonEncoder 1.4.11 emitted
 `event.version` as the string `"2"` inside `kvpList`, despite the integer argument above.
 That output does not satisfy a schema requiring a numeric top-level field; configure/map
 and validate the actual representation rather than assuming `addKeyValue` guarantees it.
 
 ## Throwable example
+
+Use this variant only when the stack/cause is needed and this stream's policy permits the
+actual exception content, including nested causes and suppressed exceptions. Otherwise emit
+the approved bounded classification, incident reference or summary that meets the consumer
+contract; omit `setCause(ex)` and do not copy its prohibited message into another field.
 
 ```java
 try {
@@ -63,8 +68,11 @@ executor.execute(() -> {
 });
 ```
 
-Prefer framework/instrumentation wrappers already in use. Capture immutable copies at
-submission, restore previous context, and test rejection/cancellation/nested submission.
+Prefer adequate framework/instrumentation wrappers already in use. SLF4J 2.0.9 specifies a
+copied String-to-String map, and Logback 1.4.11 copies when getting or setting that map. The
+returned copy is still mutable: keep the captured map private and unchanged after submission
+(or freeze an approved subset). Restore previous context and select relevant
+rejection/cancellation/nested-submission controls for a changed bridge.
 MDC is not a security boundary; validate values before logging.
 The full-map wrapper is appropriate only for already-approved context. Across a trust or
 tenant boundary, propagate an allowlisted subset and keep trusted envelope fields protected.
@@ -88,10 +96,11 @@ smaller record or an observable rejection, not arbitrary byte truncation.
 
 ## Contract test
 
-Capture a real encoded event and assert:
+For a new or changed API, encoder, context bridge or data policy, use actual encoded fixtures
+for the affected contract, reusing adequate existing controls. Select the relevant assertions:
 
 - parseable one-event framing;
-- required name/version/service/timestamp;
+- name/version/service/timestamp where required by the event's schema;
 - correct types/units;
 - reserved-key collisions rejected or handled by the documented trusted-field policy;
 - occurrence-time values survive delayed encoding without caller mutation;
@@ -99,8 +108,10 @@ Capture a real encoded event and assert:
 - Throwable structure under policy;
 - CR/LF and large input safely encoded/truncated;
 - secret fixtures absent from every field/message/stack;
-- overflow/drop behavior observable.
+- overflow/drop behavior observable when delivery is being changed or claimed.
 
 The [SLF4J manual](https://www.slf4j.org/manual.html#fluent) defines the fluent API; the
 [Logback encoder documentation](https://logback.qos.ch/manual/encoders.html) describes one
 backend's output. Neither replaces a fixture against the deployed encoder configuration.
+For the map-copy statements, see [SLF4J 2.0.9 MDC](https://github.com/qos-ch/slf4j/blob/v_2.0.9/slf4j-api/src/main/java/org/slf4j/MDC.java)
+and [Logback 1.4.11 MDC adapter](https://github.com/qos-ch/logback/blob/v_1.4.11/logback-classic/src/main/java/ch/qos/logback/classic/util/LogbackMDCAdapter.java).

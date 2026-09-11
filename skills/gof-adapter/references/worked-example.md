@@ -126,8 +126,9 @@ for (int attempt = 0; attempt < 3; attempt++) { ... }
 ```
 
 The approval threshold is a domain rule and stays true if the provider is replaced, so it belongs
-above. The retry policy is a decorator or a client-level configuration; embedding it here means
-it cannot be tested, observed or changed without touching the mapping
+above. The retry policy can live in a decorator or client-level configuration. Embedding it here
+couples policy changes to the mapping and can conceal retries already performed by the client;
+it does not make testing or observability impossible. Name and verify the actual retry owner
 (`gof-decorator`, `circuit-breakers`).
 
 ## Testing: two different tests, two different purposes

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: code-review
-version: 1.0.1
+version: 1.0.2
 description: >-
   Reviewing a change as an engineering activity: setting review depth from the change's risk
   rather than its size, looking in the order that finds the expensive defects first, refusing

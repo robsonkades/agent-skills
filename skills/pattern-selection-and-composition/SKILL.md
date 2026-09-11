@@ -51,7 +51,8 @@ it has no justification yet.
 
 1. **Inspect evidence for the relevant inputs** for the module — not just the system.
    Reuse accepted constraints and existing code. Record consequential unknowns and investigate
-   the smallest missing basis; do not require nine new answers for a small decision.
+   the smallest missing basis; do not require nine new answers for a small decision. Retain
+   an adequate composition when no unmet requirement or observed cost justifies changing it.
 2. **Start with logic organisation, then iterate with fixed schema, transaction, concurrency and
    delivery constraints.** It constrains many downstream choices but is not a one-way dependency
    (`domain-logic-organization`).
@@ -93,12 +94,13 @@ Work is set-shaped (bulk recalculation, indexation, reporting)
           Not a domain model looping over objects.
 
 Reads are slow because they go through the write model
-        → add a read model (projections/query objects). This is the most
-          common missing pattern in otherwise good designs.
+        → inspect query/fetch shape, then consider a read projection or query object
+          when it addresses the measured cost without losing access-control or freshness guarantees.
 
 Concurrent edits across a user's thinking time
-        → Optimistic Offline Lock, coarse-grained at the aggregate.
-          Pessimistic only when the lost work is expensive.
+        → compare optimistic validation with pessimistic checkout using conflict frequency,
+          lost-work and waiting/recovery cost. Coordination scope follows the invariant;
+          preserve an adequate existing protocol (offline-concurrency-control).
 
 A remote boundary exists
         → define coarse-enough operations and an explicit wire contract.
@@ -123,11 +125,14 @@ Multi-request conversation state
 - **Repository provides collection-like access to domain objects.** When adopting DDD
   aggregates, organize domain repositories around aggregate roots and protect their mutation
   boundaries; absence of aggregates alone does not make a Repository a DAO (`repository-pattern`).
-- **Remote Facade implies DTOs.** A coarse operation returning domain objects re-couples the
-  caller to the model, and the facade's whole purpose was one round trip with a stable
-  payload.
-- **Optimistic Offline Lock implies an identity field, a version and a conflict experience.**
-  The first two are mechanical; the third is where implementations fail.
+- **Remote Facade needs an explicit wire contract and suitable operation granularity.**
+  A dedicated DTO, schema-generated type or an already stable boundary type can fill that
+  role. Inspect exposed state and coupling before adding copies; one client interaction
+  need not mean one internal network hop (`remote-facade-and-dto`).
+- **Optimistic Offline Lock needs authoritative atomic validation of the expected state
+  and a meaningful conflict outcome.** A version column is common; an original-value
+  predicate or another adequate revision contract can also work. Every relevant writer
+  must participate, including bulk and external writes.
 - **Service Layer defines an application operation boundary.** Transaction ownership,
   authorization, orchestration and multiple callers can justify it; read-only or remote
   operations need not start a database transaction
@@ -135,8 +140,8 @@ Multi-request conversation state
 - **Set-based operations need explicit invariant and concurrency handling.** Table Module
   can own business rules over tabular data; it does not inherently bypass every invariant.
 - Reads and writes may use different patterns when query and invariant forces diverge.
-  This is the most under-applied composition in enterprise architecture and the one that
-  resolves most performance–purity arguments (`architecture-and-performance`).
+  Preserve access policy, freshness and consistency on each path; compare their actual
+  costs (`architecture-and-performance`).
 
 ## Conflicts to check for
 
@@ -149,23 +154,24 @@ DDD aggregate + independent write repositories for its child tables
           infrastructure alone does not prove the aggregate boundary is broken.
 
 Active Record + a Repository abstraction + DTOs everywhere
-        → paying a Data Mapper's price for Active Record's coupling.
-          Choose one position.
+        → inspect whether each wrapper protects an independently required contract.
+          Remove unjustified duplication; boundary DTOs or an adapter are not inherently inconsistent.
 
 Transaction Script + a rich domain model half-built
-        → two homes for every rule; the rule will be in the wrong one.
+        → check for two competing owners of the same rule or bypassed invariants.
+          Scripts and models can coexist when each rule has one logical owner.
 
 Remote Facade + fine-grained service methods behind it
         → compatible for local calls: aggregating them is the facade's purpose.
           If calls remain remote, inspect the remaining network hops and latency.
 
-Aggregate + bulk updates that skip the version
-        → optimistic locking is silently defeated
+Version-based aggregate + bulk writes bypassing its conflict protocol
+        → expected-state checks and version invalidation must cover these writers too
           (offline-concurrency-control).
 
-Lazy Load + entities crossing a boundary
-        → LazyInitializationException, or Open Session In View and its
-          costs.
+Uninitialized lazy state crossing a boundary
+        → inspect the actual ORM/session and serialization contract: detached access
+          may fail, or an open context may hide queries and expose unintended state.
 
 Coarse-Grained Lock + a large aggregate
         → measure contention and invariant scope before resizing; splitting an
@@ -179,7 +185,7 @@ Distribution + a shared database
 
 ## References
 
-Return the selected/rejected composition, the relevant evidence and constraints, its main
+Return the selected, retained or rejected composition, the relevant evidence and constraints, its main
 trade-off, and a concrete validation or reconsideration condition. Do not infer a performance
 improvement from pattern names; inspect versions and measure the target implementation.
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-defensive-programming
-version: 1.2.1
+version: 1.2.2
 description: >-
   Where to defend in Java and where defence becomes noise: trust boundaries as the
   organising idea, preconditions with Objects.requireNonNull and explicit range and state
@@ -39,6 +39,15 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-design-by-contract
+  - java-null-safety
+  - java-immutability
+  - java-exception-design
+  - java-application-security-basics
+  - java-strings-and-text
+  - java-serialization-hardening
 
 capabilities:
   - reads-source

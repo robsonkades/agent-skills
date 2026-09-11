@@ -19,12 +19,12 @@ description: >
 
 ## Purpose
 
-Decide where business logic goes, on evidence about the logic itself. This is the highest
-consequence decision in an enterprise application: it determines what a change costs for
+Decide where business logic goes, on evidence about the logic itself. This consequential
+decision in an enterprise application affects what a change costs for
 the rest of the system's life, and it is routinely made by habit — a domain model because
 the team read about aggregates, or a service class because the previous project had one.
 
-The two failures are symmetrical and equally common. A rich domain model over five CRUD
+Two failures recur. A rich domain model over five CRUD
 screens buys mapping code, aggregate loads and a learning curve to protect invariants that
 do not exist. A procedural service layer over genuinely interacting rules produces the same
 rule written four times, each slightly different, discovered when they disagree in
@@ -55,10 +55,14 @@ in the table class that owns the set.
 
 1. **Inventory the rules, not the entities.** List the actual business rules, then mark
    which ones depend on other rules or on state the operation must first establish. Rule
-   _interaction_, not rule count, is the deciding evidence.
+   _interaction_, not rule count, is the deciding evidence. Reuse existing use-case tests,
+   decisions and change history; inspect callers and observed change or load costs before
+   asking for missing evidence. Retain an adequate organization when no material problem
+   or new requirement justifies changing it.
 2. **Check for shared state across operations.** If six operations must each maintain the
-   same invariant, that invariant wants an owner (Domain Model). If each operation stands
-   alone, procedures are cheaper and clearer.
+   same invariant, identify one logical owner: a shared policy may suffice, while a Domain
+   Model can own interacting state transitions. Check all writers, not just public methods.
+   If each operation stands alone, procedures are often cheaper and clearer.
 3. **Check the shape of the work.** Per-instance decisions favour a Domain Model.
    Set-shaped work — recalculate every line in a batch, apply a rate change to a million
    rows — favours Table Module or plain SQL. Object hydration can add major allocation and
@@ -72,7 +76,10 @@ in the table class that owns the set.
    forcing either sameness or difference.
 6. **Write down the criterion that would flip the decision** — for example, independent
    pricing operations repeatedly diverge on one stateful invariant. Rule count alone is
-   not that criterion. Record the selected owner, rejected alternative and validation case.
+   not that criterion. Record the selected or retained owner, a material alternative,
+   preserved caller/transaction behavior and a validation case. Distinguish checks performed
+   from proposed checks; use an ADR for consequential decisions under project conventions,
+   not every routine grouping choice. A recommendation is not an implemented migration.
 
 ## Decision rules
 
@@ -92,8 +99,9 @@ data
 
 Logic is genuinely per-table and set-shaped; the platform gives strong
 record-set tooling; reporting and bulk updates dominate
-        → Table Module, or SQL owned by a gateway. Do not load a million
-          objects to change a rate.
+        → Table Module, or set-based SQL through a suitable existing
+          repository/gateway. Preserve invariant and concurrency semantics;
+          do not hydrate objects solely to express a set operation.
 
 Complex logic on data owned and shaped by someone else (mainframe, vendor
 schema, partner feed)
@@ -115,13 +123,13 @@ Cannot tell yet, module is new and small
 - Rule interaction, invariant ownership, volatility and set/per-entity work are evidence—not a
   universal count threshold. A dependency map or examples of duplicated decisions are stronger
   than saying “the domain is complex,” but “a dozen rules” does not mechanically select a model.
-- **The anaemic domain model is a real cost, not a purity complaint** — but only where a
-  domain model was the right choice. Entities of getters and setters plus a service holding
-  the rules is a Transaction Script with an expensive mapping layer attached: you pay the
-  domain model's price and receive its benefits nowhere. Either move the rules into the
-  objects or stop paying for the objects.
+- **The anaemic domain model is a cost question, not a purity complaint** — but only where
+  a domain model was the right choice. Trace whether callers can bypass or duplicate a
+  stateful invariant. Data-only ORM entities can serve deliberate scripts and shared policies;
+  their mapping may still pay for itself. Move rules or remove structure only when the
+  resulting ownership and change cost improve, preserving required persistence behavior.
 - A Transaction Script is not a lesser architecture. For non-interacting rules it is
-  clearer, faster, easier to test and easier to delete. Choose it deliberately and say so,
+  often simpler to change and test. Choose it deliberately and say so,
   so the next reader knows it was a decision.
 - Transaction Scripts often fail through duplicated or inconsistent rules. Even two occurrences
   can be material when correctness or change frequency is high; use divergence and change cost,
@@ -134,9 +142,9 @@ Cannot tell yet, module is new and small
   the platforms it was written for — but its idea survives as a gateway or a service that
   owns set-based SQL for one table, and that is frequently the right home for bulk work
   next to a domain model doing per-instance work.
-- Reads and writes may use different organisations when their forces differ. Protect invariants
-  through the model on the write path; serve reads with projections or SQL
-  (`query-objects-and-specifications`).
+- Reads and writes may use different organisations when their forces differ. Preserve write
+  invariants; use projections or SQL when they avoid unnecessary model loads, and retain bounded
+  entity reads when appropriate (`query-objects-and-specifications`).
 - Do not decide from the persistence pattern. Active Record does not compel Transaction
   Script and JPA does not compel a domain model; the organisation of logic and the
   data-access pattern are separate choices that constrain but do not determine each other.

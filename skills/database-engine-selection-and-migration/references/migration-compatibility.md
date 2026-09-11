@@ -11,9 +11,10 @@
   keys, pools/poolers by role.
 - Operations: backup/restore, replication, CDC, jobs, observability, maintenance, DDL and recovery.
 
-## Mandatory edge cases
+## Applicable edge cases
 
-Test rather than translate:
+Select cases from the inventoried source behavior and intended destination features. Test rather
+than translate the applicable cases; an unused feature is not a reason to expand the migration:
 
 - zero/one/multiple `NULL`s under uniqueness;
 - accents, case, Unicode normalization, emoji, and trailing spaces under target collation;

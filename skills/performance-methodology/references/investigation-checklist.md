@@ -1,13 +1,16 @@
 # Investigation checklist
 
+Use the checks that affect the stated decision. Observation, mitigation, comparative measurement
+and a completed causal diagnosis support different claims; unfinished checks remain explicit.
+
 ## Before starting — written down, not held in mind
 
-- [ ] SLO stated with metric, percentile, numeric threshold, window and load context
-      (req/s, duration, hardware)
+- [ ] Goal or SLO stated with metric, population, threshold/comparison, window and load context;
+      percentile or threshold fraction when relevant, without inventing a latency SLO for other goals
 - [ ] The question being answered, in one sentence, and which method answers it
       (`methods-and-failure-modes.md`)
-- [ ] Baseline recorded: p50/p90/p99/p99.9, throughput, CPU, heap, GC — over a full period
-      of the metric's pattern where available; retain incident evidence and state missing history
+- [ ] Baseline records the target metric, correctness/error guardrails and implicated resources —
+      over the relevant period where available; retain incident evidence and state missing history
 - [ ] Workload recorded with the baseline: request mix, data volume, hot keys, concurrency,
       process uptime
 - [ ] What changed recently, with timestamps: deploys, config, traffic, data, dependencies,
@@ -15,14 +18,14 @@
 - [ ] A comparator identified and its claim stated: randomised control, blocked concurrent
       control, restarted control, healthy neighbour, or historical baseline. Neighbours and
       previous periods are not called controls until allocation and confounders justify it
-- [ ] The stopping criterion stated: the SLO met with what margin, or the gap declared
-      unreachable locally
+- [ ] The stopping criterion stated: goal met with what margin, options insufficient under stated
+      assumptions, or further evidence costs more than its decision value
 - [ ] Measurement environment identified — production, staging with real data, or an
       isolated benchmark — and, for staging, the four differences stated (data volume,
       access pattern, concurrency, uptime)
 - [ ] Tooling selected for the question is available; report missing coverage rather than
       requiring every profiler before useful observation
-- [ ] JDK version and **effective** flags recorded
+- [ ] For JVM-specific work, JDK version and **effective** flags recorded
       (HotSpot target: `jcmd <pid> VM.version`, `VM.command_line`, `VM.flags -all`;
       attach access and supported commands checked)
 
@@ -52,7 +55,7 @@
 - [ ] A fixed-work upper bound is computed where its assumptions hold. For tail latency, the
       slow-request cohort and critical path are defined; component quantiles are not added and
       a CPU sample fraction is not treated as a fraction of endpoint p99
-- [ ] The expected effect written down before the run, in the SLO's unit
+- [ ] The expected effect written down before the run, in the target metric's unit
 
 ## While measuring
 
@@ -75,19 +78,21 @@
 ## When validating
 
 - [ ] Result compared with the recorded baseline, not with memory
-- [ ] All metrics re-checked, not just the target one (throughput, CPU, GC pauses)
+- [ ] Relevant correctness and operational guardrails re-checked as well as the target metric
 - [ ] Observed treatment effect distinguished from the mechanism explanation; state which
       mechanism predictions were checked and what remains uncertain
 - [ ] Deploy side effects enumerated and tested as alternative causes; unresolved ones named
 - [ ] A defensible counterfactual was tested: safe AB/BA toggle, randomised allocation,
       restarted control, bisection or another design appropriate to the change
-- [ ] The improvement holds across a full period of the metric's pattern
+- [ ] The improvement covers the declared evaluation window and relevant state/pattern;
+      shorter coverage is reported as a limit, not extrapolated as a durable fix
 - [ ] Written up: hypothesis, evidence, change, before/after
 
 ## When stopping
 
-- [ ] The SLO is met with margin, under its stated load, by the baseline's method — or the
+- [ ] The goal/SLO is met with margin, under its stated load, by the baseline's method — or the
       bounded options and credible combinations are insufficient, or further measurement
       has lower decision value than its cost. Single-component p99 fractions are not global bounds
-- [ ] Every finding that was not the cause is recorded with its measured share
+- [ ] Tested alternatives and their evidence limits are recorded; missing samples do not establish
+      an excluded cause or a zero share, and untested hypotheses remain untested
 - [ ] If stopped for cost, the measurement that would reopen the investigation is named

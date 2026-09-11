@@ -57,15 +57,18 @@ remediation.
 
 ## Diagnostics unavailable during an incident
 
-| Symptom                                        | Cause                                                                                 | Recovery and prevention                                                                            |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| runtime rejects JFR/heap-dump/NMT feature      | artifact was built without required monitoring support                                | use OS-level evidence now; rebuild with narrowly required features and rehearse                    |
-| `jcmd` cannot attach                           | unsupported platform/release or `jcmd` not enabled                                    | use configured JFR/signals/OS tools; current docs exclude Native Image `jcmd` on Windows           |
-| stack trace/crash address cannot be symbolized | stripped symbols not retained or build identity lost                                  | preserve binary and core; retrieve exact symbols by build ID; make symbol retention a release gate |
-| expected HotSpot event absent                  | event depends on HotSpot runtime or bytecode instrumentation not implemented natively | enumerate events on the real binary; select supported event, custom event, profiler, or HotSpot    |
+| Symptom                                        | Candidate cause                                                                           | Recovery and prevention                                                                            |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| runtime rejects JFR/heap-dump/NMT feature      | monitoring support omitted, unsupported release/platform, or invalid invocation           | inspect exact artifact/build and runtime help; use available evidence, then fix the confirmed gap  |
+| `jcmd` cannot attach                           | unsupported platform/release or `jcmd` not enabled                                        | use configured JFR/signals/OS tools; current docs exclude Native Image `jcmd` on Windows           |
+| stack trace/crash address cannot be symbolized | stripped symbols not retained or build identity lost                                      | preserve binary and core; retrieve exact symbols by build ID; make symbol retention a release gate |
+| expected HotSpot event absent                  | unsupported event, disabled/thresholded recording, unexercised path or incomplete capture | inspect event support, recording settings/window and exercised path before adding instrumentation  |
 
 GraalVM 25.1 added Windows JFR recording and heap dumps, so older blanket statements that JFR is
 unavailable on Windows are version-specific. Always test the selected release.
+These are candidate explanations, not diagnoses from the symptom alone. Reuse adequate existing
+signals; if a required event is unsupported, choose a supported event, custom event, profiler or
+HotSpot only when it answers the unresolved operational question.
 
 ## Escalation bundle
 
@@ -78,5 +81,6 @@ Preserve before rebuilding:
 - JFR/heap/thread/native-memory/core evidence that the artifact supports;
 - equivalent HotSpot result and last known-good native artifact.
 
-Changing several flags and rebuilding destroys causal evidence. Make one hypothesis-driven change,
-reproduce the original failure, and validate the surrounding paths before promotion.
+Changing several independent controls at once makes attribution harder. Preserve the failing
+artifact and make a focused, hypothesis-driven change; reproduce the original failure and validate
+the surrounding paths before promotion.

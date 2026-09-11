@@ -20,8 +20,9 @@
 <p th:if="${order.total > 1000 and customer.country != 'BR' and order.status != 'DRAFT'}">…</p>
 ```
 
-The second version hides pricing and eligibility policy in rendering. Templates can be
-tested and reviewed, but duplicated policy can diverge from the authoritative use case.
+The second version assumes these expressions calculate authoritative pricing and eligibility;
+that duplicates policy in rendering. A threshold used only to emphasize an already decided display
+value can instead be presentation. Identify its meaning and owner before moving a condition.
 
 **The discipline:** business decisions are resolved before rendering; presentation choices remain.
 
@@ -40,7 +41,7 @@ business policy or traversing managed lazy data. Record components are shallowly
 copy mutable collections when ownership requires a stable snapshot. `canBeCancelled` is a
 UI hint; recheck authorization and current business state when cancellation is requested.
 
-## Rendering must not query
+## Deliberate data access during rendering
 
 ```html
 <!-- Lazy lines may trigger SQL; nested access can add queries depending on fetch state. -->
@@ -56,6 +57,15 @@ and connection occupancy instead of inferring either from the annotation or temp
 When rendering performs unintended data access, materialize the required view data before
 rendering, using a projection or an explicit mapper within its resource scope
 (`query-objects-and-specifications`).
+
+Thymeleaf 3.1 also supports application-supplied `ILazyContextVariable` values, commonly through
+`LazyContextVariable`, resolved when the template needs them. A bounded optional panel can use this
+deliberately: the application owns authorization, loading, consistency and cleanup; rendering only
+consumes the value. Verify whole-request work and resource limits, including failure or skipped
+rendering. A lazy value is not a query-budget or transaction guarantee. Scope its instance to the
+intended request/render; a cached value must not be reused across users or tenants accidentally.
+Successful-value caching does not imply one load attempt per render after failures; inspect the
+actual expression engine's retry behavior and enforce the application's work/failure bounds.
 
 ## Escaping is a security boundary
 
@@ -79,7 +89,9 @@ Verify the engine, template mode and output context. Thymeleaf `th:text` escapes
 
 ## Transform View
 
-Code produces the output. In practice: a presentation type plus a serialiser.
+The classical Transform View walks model data to produce HTML. A presentation type plus a
+serializer is a useful analogous separation for JSON; inspect actual output construction instead
+of identifying the pattern solely from a DTO return type.
 
 ```java
 public record OrderDetailView(
@@ -94,9 +106,9 @@ public record OrderDetailView(
 }
 ```
 
-The structure is in code: refactorable, compile-checked, and testable without rendering. It
-is less immediately visible than a template — you cannot see the output's shape at a glance
-— which is why an explicit snapshot test of the serialised form is worth having:
+The declared type is refactorable and compile-checked, but serializer annotations, modules and
+configuration also determine the wire shape. For a changed or uncertain output contract, test the
+serialized form; reuse adequate existing contract tests. For example:
 
 ```java
 @Test
@@ -116,7 +128,7 @@ are a focused integration-test fragment, not a complete snapshot test.
 
 ## One model, several formats
 
-The reason to prefer Transform View when output must vary:
+One option when output semantics can share construction logic:
 
 ```java
 // Shared construction logic, invoked per request; not a cached cross-user instance.
@@ -139,14 +151,14 @@ must refer to the same version/snapshot. Reusing a Java type does not give snaps
 
 ## Choosing between them
 
-| Condition                                        | Pattern                                        |
-| ------------------------------------------------ | ---------------------------------------------- |
-| HTML for a browser                               | Template View                                  |
-| JSON/XML for a program                           | Transform View                                 |
-| Several formats from the same data               | Transform View over one model                  |
-| Output structure changes frequently by designers | Template View — a designer can edit a template |
-| Output must be diffable and reviewable           | Either; test the rendered contract             |
-| Output is assembled conditionally from parts     | Either; keep domain policy outside rendering   |
+| Condition                                        | Pattern                                                        |
+| ------------------------------------------------ | -------------------------------------------------------------- |
+| HTML for a browser                               | Template View or an adequate explicit transform                |
+| JSON/XML for a program                           | Deliberate mapping/serialization; transform analogy            |
+| Several formats from the same data               | Shared model when semantics match; separate shapes when needed |
+| Output structure changes frequently by designers | Template View may suit the team's editing tools                |
+| Output must be diffable and reviewable           | Either; test the rendered contract                             |
+| Output is assembled conditionally from parts     | Either; keep domain policy outside rendering                   |
 
 ## Presentation model construction
 
@@ -171,6 +183,9 @@ Verify that `row.lines()` is materialized, all required fields are detached, and
 projection meets the query/row/byte budget. Neither a projection return type nor this
 annotation proves one query or a consistent snapshot (`repository-pattern`).
 
-Sources: [Thymeleaf 3.1 text, layouts and inlining](https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html),
+Sources: [Fowler Transform View](https://martinfowler.com/eaaCatalog/transformView.html),
+[Thymeleaf 3.1 text, layouts, lazy values and inlining](https://www.thymeleaf.org/doc/tutorials/3.1/usingthymeleaf.html),
+[Thymeleaf 3.1.2 lazy-value implementation](https://github.com/thymeleaf/thymeleaf/blob/thymeleaf-3.1.2.RELEASE/lib/thymeleaf/src/main/java/org/thymeleaf/context/LazyContextVariable.java),
+[Spring 6.1.14 expression property access](https://github.com/spring-projects/spring-framework/blob/v6.1.14/spring-expression/src/main/java/org/springframework/expression/spel/ast/PropertyOrFieldReference.java),
 [OWASP context encoding and HTML sanitization](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html),
-[Spring Open EntityManager in View](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewFilter.html).
+[Spring 6.1.14 Open EntityManager in View](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewFilter.html).

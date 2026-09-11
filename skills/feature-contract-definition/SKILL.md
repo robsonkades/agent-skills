@@ -33,7 +33,9 @@ shape.
 3. **Select only the applicable surfaces.** API/RPC, event/message, persisted/shared data, external
    integration, security, or operational/SLO. Read the matching sections of
    [Contract surfaces](references/contract-surfaces.md).
-4. **Define success and failure semantics.** Inputs, outputs, invariants, errors, timeouts, retries,
+4. **Start with consumer interactions.** Walk ordinary use, plus recovery/version-skew and
+   invalid or unauthorized use where those risks exist. State what the provider guarantees and
+   what the consumer must do, then define inputs, outputs, invariants, errors, timeouts, retries,
    duplication, ordering, partial success, authorization, and observability where applicable.
 5. **Define evolution.** Current version, proposed version, compatible and incompatible changes,
    coexistence window, migration/deprecation, rollout order, rollback limit, and consumer evidence.

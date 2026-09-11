@@ -2,10 +2,10 @@
 name: circuit-breakers
 description: >
   The breaker as a state machine that stops calling a failing dependency: closed, open and
-  half-open; choosing rate windows versus consecutive failures; why half-open admits a bounded
-  number of probes; the failure predicate—classifying correlated dependency failures rather than
-  blindly counting status classes—and the distinction between protecting caller resources
-  by failing fast and providing a semantically valid fallback. Use when a breaker trips on
+  half-open; choosing rate windows versus consecutive failures; recovery probe limits and
+  in-flight work across state transitions; the failure predicate—classifying correlated
+  dependency failures rather than blindly counting status classes—and the distinction between
+  protecting caller resources by failing fast and providing a semantically valid fallback. Use when a breaker trips on
   consecutive failures, when it never
   trips or trips on one client's bad requests, when half-open sends full traffic at a
   recovering dependency, when a breaker sits on a call with no timeout under it, or when a
@@ -34,8 +34,8 @@ resource protection. Decide both the fast-failure contract and any fallback firs
 ```text
 CLOSED    → OPEN       failure rate or slow-call rate ≥ threshold, over ≥ minimum calls
 OPEN      → HALF_OPEN  after the wait duration; calls before it are rejected untried
-HALF_OPEN → CLOSED     the configured probe sample meets success/slow-call thresholds
-HALF_OPEN → OPEN       the completed probe sample breaches a threshold (per implementation policy)
+HALF_OPEN → CLOSED     the recorded recovery sample meets success/slow-call thresholds
+HALF_OPEN → OPEN       the recorded sample breaches a threshold (per implementation policy)
 ```
 
 ## Workflow
@@ -43,9 +43,10 @@ HALF_OPEN → OPEN       the completed probe sample breaches a threshold (per im
 The Java illustration requires Java 21+ without preview; configuration guidance is checked
 against Resilience4j 2.3.0 and its CircuitBreaker guide. Inspect compiler release/toolchain,
 runtime image, resolved breaker/client dependencies and Spring/programmatic integration before
-using property names or decorators. Do not upgrade the project to adopt this example. Without
-per-instance traffic, mapped outcomes and decorator order, keep tuning conditional and request
-the smallest missing trace/configuration or control test.
+using property names or decorators. Do not upgrade the project to adopt this example. Reuse
+existing traffic, outcome mappings, decorator configuration and test evidence before asking.
+Keep tuning conditional when these are missing, ask only for decision-changing evidence, and
+continue independent classification or boundary checks.
 
 1. **Check failures predict later calls within the proposed scope.** An invalid payload is
    request-specific; an independently failing tenant backend or endpoint may justify a bounded
@@ -60,9 +61,9 @@ the smallest missing trace/configuration or control test.
 5. **Size the window from the endpoint's traffic**: sliding window type and size, the minimum
    number of calls before the rate is evaluated, the failure-rate threshold, and — separately
    — a slow-call rate threshold, so a dependency that is slow but returning 200s still trips.
-6. **Bound the half-open probes and set the wait duration.** Trial calls, not full traffic.
-   Include a half-open residence bound and fleet-wide simultaneous probe load; a probe limit
-   per instance is not a fleet limit.
+6. **Bound recovery load and set the wait duration.** Include half-open residence, ignored-call
+   replacements, unfinished earlier calls and fleet-wide probe load. Per-instance permits do
+   not establish an overall work limit; check the lifecycle in `references/breaker-configuration.md`.
 7. **Instrument state and transitions**, then prove both directions in a test: force the trip
    under injected failure, assert the probe count, assert recovery. See
    `references/fallbacks-and-testing.md`.
@@ -100,9 +101,9 @@ Prefer instead when:
   breaker stays closed whatever the rate, or one failure out of two evaluates to 50%. An
   endpoint serving 2 requests a minute needs a longer/count-based window, a smaller justified
   sample, a categorical/consecutive signal, or no statistical breaker.
-- **Half-open admits a bounded number of probes, not full traffic.** Reopening to the whole
-  request stream is a thundering herd aimed at the instance that just came back; the probe
-  count is a load decision — enough to be a sample, few enough to survive.
+- **Half-open should restrict new recovery traffic.** Choose enough recorded outcomes to inform
+  recovery without overwhelming it. A permit/sample setting is not a total-attempt or in-flight
+  cap: ignored calls and completions from earlier states affect some implementations.
 - A breaker with no slow-call criterion misses the failure mode that matters most: a
   dependency answering 200 OK in 30 s exhausts the caller like an outage while the
   failure-rate breaker reads 0%. Set a slow-call duration and rate, or a tight enough timeout.
@@ -119,10 +120,10 @@ Prefer instead when:
   tenants can be independently bad—but per-tenant keys need cardinality bounds and expiry or the
   breaker registry becomes attacker-controlled memory.
 - Retry composition is a decision, not a default. With `Retry(Breaker(call))` the breaker
-  records **every attempt**, so a rate threshold is reached after fewer logical calls than it
-  appears; with `Breaker(Retry(call))` it records one outcome per logical call, but each
-  protected call lasts `attempts × timeout + Σ backoff`, distorting slow-call detection and
-  letting retries reach a dependency the breaker would have protected. Pick one deliberately.
+  records **admitted attempts**; local open-state rejections are not backend failure samples.
+  With `Breaker(Retry(call))` it records one outcome per logical call, whose duration includes
+  attempts and backoff. The sample and slow-call meaning therefore depend on composition;
+  reconcile the entire operation with the caller's deadline.
 - A fallback that silently returns wrong data is worse than an error. An empty list the caller
   persists, a zero balance, a default entitlement that grants access — each turns an
   availability incident into a data one. Mark degraded responses as degraded.
@@ -134,9 +135,11 @@ Prefer instead when:
   it computed. Alert on time spent open, not on transitions. A breaker that has never opened
   is an untested hypothesis.
 
-Deliver the breaker scope, measured traffic/sample assumptions, outcome classification and
-decorator order, proposed settings, and trip/probe/recovery assertions. Separate observed state
-and downstream calls from hypotheses about dependency health; report checks not executed.
+Deliver the recommendation, including keeping current settings or relying on an adequate timeout
+or bulkhead alone. When a breaker is warranted, give its scope, measured traffic/sample assumptions,
+outcome classification, decorator order, settings and trip/probe/recovery assertions. State what
+evidence would change the decision. Separate observed state and downstream calls from hypotheses
+about dependency health; reuse valid checks and report those not executed.
 
 ## Primary sources
 

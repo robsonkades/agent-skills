@@ -19,7 +19,7 @@ rule, not tax guidance. Specify the intermediate rounding policy before testing 
 order: exact percentage multiplications commute, so final totals alone may not distinguish
 discount-then-VAT from VAT-then-discount.
 
-**Not written:** a `@SpringBootTest` that places an order and checks the total. It would run
+**Not written:** a `@SpringBootTest` that places an order and checks the total. It may
 incur context setup (measure the actual cost), and a rounding failure would be reported from
 six layers away.
 
@@ -35,9 +35,11 @@ wiring case or explicitly accept the gap.
 sort stability under pagination, and whether the migration creates the intended index.
 
 **Narrowest real scope:** integration, against the real engine. A mocked repository proves
-only that you can stub a method; H2 proves a dialect nobody deploys.
+only the caller's behavior under the stubbed assumptions. Use the deployed engine, including
+H2 when that is the actual target; H2 compatibility mode does not establish another engine's
+SQL, locking or planning behavior.
 
-**Chosen:** one Testcontainers test with the real engine and the real migrations, seeding
+**Chosen:** one real-engine integration test (Testcontainers when appropriate) with the real migrations, seeding
 rows either side of the 7-day boundary and asserting the returned ids in order. A second
 assertion that page 2 does not repeat a row from page 1 — the classic unstable-sort defect
 when the sort key is not unique. Seed equal sort keys and require an explicit unique
@@ -96,10 +98,13 @@ annotations, not the schema.
 
 > "Customer 88123 saw a negative balance after a refund."
 
-**Order matters.** Reproduce before diagnosing, and write the reproduction as a test.
+**Seek a reproduction before claiming a cause**, and preserve it as a test when feasible.
+If the failing revision or environment is unavailable, report that limit separately from a
+current passing regression test; a controlled defect check may help but is not a historical run.
 
-1. Reproduce at the level where it actually happens. Start end-to-end only if narrower
-   attempts fail. If only end-to-end reproduces it, wiring or shared state are hypotheses;
+1. Reproduce at the level where available evidence makes the risk real. A known process or
+   wiring boundary can justify starting end-to-end; unsuccessful narrower attempts are not a
+   prerequisite. If only end-to-end reproduces it, wiring or shared state remain hypotheses;
    retain the reproduction until narrower evidence identifies the cause.
 2. Shrink the reproduction until removing anything makes it pass. Usually it collapses to a
    smaller test; do not remove essential transactions, concurrency or environmental triggers.
@@ -107,8 +112,9 @@ annotations, not the schema.
    reason than the report describes is not a reproduction.
 4. Fix. The same test now passes, and it is the regression test — no second one is needed.
 
-**Not written:** a test asserting the balance is non-negative everywhere. That is an invariant
-belonging in the type (java-design-by-contract), not a test to be repeated at each call site.
+**Not written:** the same non-negative assertion at every call site. Confirm whether that is
+the actual balance/refund invariant; if so, test it at its owning boundary
+(java-design-by-contract). Do not infer an overdraft policy from the symptom alone.
 
 ## The recurring shape
 

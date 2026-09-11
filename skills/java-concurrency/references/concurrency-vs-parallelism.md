@@ -37,9 +37,13 @@ do not quote M/M/1 intuition as a universal curve.
 
 ## Experiment
 
-Sweep offered load and concurrency independently where possible. Record useful completion/error/
-drop/retry rate, omission-corrected latency, active/in-flight/queued and wait/service time, CPU/
-throttle/pressure, memory/connections, downstream SLO, and residual work after cancellation.
+If existing evidence cannot establish the operating region, use a bounded experiment within the
+authorized environment and workload envelope. Sweep offered load and concurrency independently
+where possible while preserving the representative arrival model, including a closed population
+when that is the requirement. Record useful completion/error/drop/retry rate, latency clocks and
+omitted/delayed arrivals, active/in-flight/queued and wait/service time, CPU/throttle/pressure,
+memory/connections, downstream SLO, and residual work after cancellation. Synthetic omission
+correction is a conditional sensitivity model, not a mandatory transformation of valid data.
 
 Find the operating region meeting SLO and failure/headroom constraints. Maximum throughput is not
 automatically the safe concurrency limit.

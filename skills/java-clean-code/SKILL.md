@@ -27,23 +27,29 @@ comment only when a future maintainer could reasonably "simplify" a still-measur
 
 ## Workflow
 
-Before changing structure, inspect the compiler release/toolchain, framework lifecycle,
-affected callers and existing tests. No single authoring baseline is declared; references
-use Java SE 25 documentation. `Clock` needs Java 8+, `List.copyOf` Java 10+, records
+Before changing structure, identify the reader's task or recurring change that is difficult;
+inspect project conventions, the compiler release/toolchain, framework lifecycle,
+affected callers and existing tests. Use Java 25 as the authoring default when the project
+has no declared target. `Clock` needs Java 8+, `List.copyOf` Java 10+, records
 Java 16+, and `RandomGenerator` Java 17+. Use the project's supported alternatives;
 this skill does not authorize upgrades, preview features or new dependencies.
 When caller contracts or tests are missing, identify the gap and characterize observable
 results, effects and failure order before claiming a behaviour-preserving change.
+Reuse supplied context; ask only when an unresolved contract changes the safe edit. In a
+review, distinguish a demonstrated defect from a maintenance cost, a convention or a
+hypothesis. No findings is valid when the code already supports its readers and callers.
 
-1. State what the unit does in one sentence. Every "and", "then" or "unless" in that
-   sentence is either a split point or evidence that the unit is coherent and only its
-   name is wrong (naming is java-api-design's).
+1. State what the unit does in one sentence. "And", "then" or "unless" can reveal
+   separate responsibilities, but also describe one coherent algorithm or lifecycle.
+   Identify the actual comprehension or change cost before splitting; naming is
+   java-api-design's.
 2. Check each method for abstraction level: does it mix policy ("apply the fee rule")
-   with mechanics (rounding, string assembly, iteration bookkeeping)? Extract the
-   mechanics under a domain name; keep the policy visible.
+   with mechanics (rounding, string assembly, iteration bookkeeping)? Extract a stable
+   concept when the name makes policy easier to follow; keep trivial mechanics inline.
 3. Check for hidden structure: ambient reads (`now()`, locale, static config) inside
    logic, fields used as scratch space between calls, methods valid only in a fixed
-   order. Make dependencies parameters and make order impossible to get wrong.
+   order. Expose inputs or state when this resolves a real testing, reasoning or misuse
+   problem; preserve deliberate lifecycle and ownership boundaries.
 4. Only then weigh size — count the concepts a reader must hold at once, not lines.
    A 30-line method at one abstraction level beats ten 3-line hops.
 5. Re-run the tests. A change that alters behaviour is not a readability change; the
@@ -64,9 +70,10 @@ results, effects and failure order before claiming a behaviour-preserving change
 - Prefer one abstraction level per method when named extractions reduce concepts held
   at once. Guards, resource scopes and trivial mechanics need not become helpers;
   consult the structure reference when extraction would only add navigation.
-- Every extraction has a price — a name to trust and a hop to follow. Do not keep a
-  fragment that has one caller, needs fields or three-plus parameters to share state
-  with that caller, and cannot be understood without reading it. Inline it back.
+- Every extraction has a price — a name to trust and a hop to follow. A fragment with
+  one caller, wide shared state and no independent meaning is a candidate for inlining,
+  not an arity rule. Retain useful policy, extension, failure or resource boundaries;
+  inspect framework and external callers before concluding that a helper has no consumers.
 - Section comments are a diagnostic, not a verdict. Stable domain steps often deserve named
   extractions; a dense algorithm, state machine or intentionally co-located hot loop may be
   clearer with phase/invariant comments. A comment that merely paraphrases syntax is noise;
@@ -81,9 +88,10 @@ results, effects and failure order before claiming a behaviour-preserving change
   pass what `b` needs as the return of `a`, or encode the order in a type. Preserve
   framework/protocol lifecycles and published APIs; documented state checks may be
   appropriate there. A new phase type is not automatically safer or clearer.
-- No ambient reads in domain logic: `LocalDate.now()`, `Locale.getDefault()`, static
-  configuration lookups belong at the boundary, passed in as `Clock`, `Locale`,
-  values. Hidden inputs make behaviour untestable and irreproducible.
+- Expose ambient inputs when outcomes, reproducibility or isolation require control:
+  pass a `Clock`, `Locale` or config value at a suitable boundary. Preserve intentional
+  repeated reads and time zones. An irrelevant generated identifier or an already adequate
+  test seam does not justify plumbing every environmental dependency through every layer.
 
 ## Production checks
 
@@ -106,6 +114,8 @@ results, effects and failure order before claiming a behaviour-preserving change
 Deliver the concrete readability problem, why a split/merge (or no change) follows from
 the code, and the checks executed for behaviour preservation. Report untested assumptions;
 passing tests alone neither proves equivalence nor measures reader comprehension.
+Stop when the identified reader task is supported and affected contracts have been checked;
+record separate defects or unresolved questions without expanding into a general cleanup.
 
 - [Worked examples](references/worked-examples.md) — an under-factored settlement
   method split by abstraction level, and an over-fragmented batch processor merged

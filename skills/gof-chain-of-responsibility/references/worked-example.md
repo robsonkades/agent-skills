@@ -35,16 +35,17 @@ public Decision decide(Payment payment) {
 }
 ```
 
-Sixty lines by the time every product's exception is in it, four levels of nesting, and every new
-rule is an edit in the middle of a method three teams touch. The order of specificity — the actual
-design — is expressed only by the order of the `if`s.
+As independently contributed rules grow, they require edits to this shared method. The order of
+specificity is already visible in its `if`s; a chain is justified by the composition need, not by
+the presence of branching alone.
 
 ## After — first-match chain
 
 ```java
 public interface AuthorisationRule {
     String name(); // stable bounded rule kind, not tenant/payment identifiers
-    /** Empty when this rule has no opinion about this payment. */
+    /** Non-null: empty abstains; any present decision, including decline, ends selection.
+     *  Exceptions fail the attempt; they are not abstention. */
     Optional<Decision> apply(Payment payment);
 }
 ```
@@ -107,13 +108,12 @@ the list, six months from now, and quietly makes it dead code.
 
 ## Then the default rule stopped matching everything
 
-A change made `CatalogueDefaultRule` return empty for products not in the catalogue — reasonable
-in isolation, and it turned the chain's terminal guarantee into a runtime exception for a small
-set of payments. Two things made this a five-minute diagnosis rather than an incident:
+Suppose a change makes `CatalogueDefaultRule` return empty for products not in the catalogue — reasonable
+in isolation, but it turns the chain's terminal guarantee into a runtime exception for a small
+set of payments. Two signals would help identify this hypothetical failure:
 
-- The `authorisation.unhandled` counter had a rate above zero.
-- `NoAuthorisationRule` carried the product code, so the affected set was obvious from the
-  exception.
+- The `authorisation.unhandled` counter rises above its expected rate.
+- `NoAuthorisationRule` carries the product code to identify affected inputs in appropriate diagnostics.
 
 Resolve the domain policy before repairing the default. Unknown products may require rejection
 or referral; restoring blanket approval merely to restore totality is not a valid fix. For the
@@ -179,6 +179,7 @@ bypass cases, plus replay/partial-commit tests when effects exist.
 The alternative considered was a sealed `RuleKind` with an exhaustive `switch`. It was rejected
 because the rule set is genuinely open — the configuration module contributes tenant rules at
 runtime. Changing data alone does not prove open behavior: a fixed algorithm can read configurable
-tables. Had the behavior been the four fixed kinds above and nothing more, the
-`switch` would have been the better answer: shorter, exhaustive at compile time, and with the
-order visible without a wiring file (`java-composition-over-inheritance`).
+tables. For four fixed kinds, an ordered `if` sequence or loop may already be adequate.
+An exhaustive `switch` helps only when its discriminator expresses the decision without losing
+overlapping-rule priority; a sealed type alone does not supply that priority
+(`java-composition-over-inheritance`).

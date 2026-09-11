@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-generics
-version: 1.2.1
+version: 1.2.2
 description: >-
   Generics as a compile-time contract over an erased runtime: raw types and what they
   disable, eliminating unchecked warnings rather than suppressing them, why arrays and
@@ -12,8 +12,8 @@ description: >-
   collection parameter forces callers to convert before calling; when ClassCastException
   surfaces far from any visible cast; when a deserialised list of strings turns out to
   contain something else; or when designing a container that must hold values of several
-  types safely. Does not cover null contracts (java-null-safety), collection choice and
-  stream pipelines (java-streams), or the wider API-shape decisions (java-api-design).
+  types safely. Does not cover null contracts (java-null-safety), stream pipelines
+  (java-streams), collection implementation choice, or wider API-shape decisions (java-api-design).
 
 license: Apache-2.0
 
@@ -46,6 +46,11 @@ dependencies: []
 suggests:
   - java-api-design
   - java-serialization-hardening
+  - java-null-safety
+  - java-streams
+  - java-object-construction
+  - scoped-values
+  - java-immutability
 
 capabilities:
   - reads-source

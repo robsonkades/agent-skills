@@ -11,7 +11,7 @@
 | busy spin              | lower wake-up delay                        | dedicated CPU/power and interference    | distribution gain per reserved core    |
 | kernel bypass          | bypasses selected kernel packet processing | operational and native complexity       | kernel/network share of latency budget |
 
-Use `allocation-profiling`, collector-specific skills, `jit-compilation`,
+Use `allocation-profiling`, collector-specific skills, `jit-compilation`, `deoptimization`, `safepoints`,
 `numa-and-cpu-affinity`, `linux-for-jvm`, `tcp-tuning` and `io-uring-and-zero-copy` for mechanism
 details. Keep every claim scoped to JDK, kernel, CPU topology and deployed library version.
 

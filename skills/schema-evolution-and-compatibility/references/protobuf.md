@@ -1,7 +1,7 @@
 # Protobuf
 
 Coordinates. Runtime `com.google.protobuf:protobuf-java:4.32.0` — **every _verified_ transcript below
-was run on 4.32.0** and on no other version. No claim is made about the newest runtime or an
+was historically run on 4.32.0** and on no other version. No claim is made about the newest runtime or an
 unmeasured release. Code generation example `io.github.ascopes:protobuf-maven-plugin:3.1.0`
 (the ubiquitous `org.xolstice.maven.plugins:protobuf-maven-plugin:0.6.1` was last released in 2018
 and needs a `protoc` artefact or binary). Everything below uses `DynamicMessage` over
@@ -139,8 +139,9 @@ payload "bob@example.com" inner = 62 6f 62 40 ...  -> InvalidProtocolBufferExcep
 four-byte `"\nabc"` is not: `0a` selects field 1 / wire type 2 and the **next** byte is read as the
 length, so `0x61` = 97 overruns the two remaining bytes and it throws. The length byte has to be
 physically present, which is why the payload that survives is five bytes, not four. Which outcome you
-get therefore depends on the _content_ of the old value, and is decided per record — which is why
-a test suite built on synthetic data passes.
+get therefore depends on the _content_ of the old value, and is decided per record. A narrow happy-path
+fixture can miss it; deliberately generated hostile payloads can expose both the parse failure and the
+well-formed wrong value. Include semantic assertions, not just successful parsing or unknown counts.
 
 ## Unknown fields: dropped in 3.0, restored in 3.5.0
 
@@ -195,19 +196,25 @@ Also from the spec: the first defined enum value "must be 0", conventionally
 
 ## `oneof` and proto2 `required`
 
-Only two `oneof` transitions are safe: a single explicit-presence field into a **new** `oneof`, and a
-one-field `oneof` back into an explicit-presence field. Everything else is a minefield — "Moving
-fields into an existing `oneof` is not safe"; "You may lose some of your information (some fields
-will be cleared) after the message is serialized and parsed". The mechanism is that setting one
-member clears the others, so two independently settable fields become mutually exclusive and a
-message that legitimately had both loses one on the next round trip. Splitting and merging oneofs
-have the same problem.
+The guide's binary-safe cases include a single explicit-presence field into a **new** `oneof`, and
+a one-field `oneof` back into an explicit-presence field. It also describes a conditional case:
+multiple fields may move into a new `oneof` when only one is ever set. Establish that invariant for
+all reachable writer data, retained records, intermediaries and rollback paths, and test generated
+API, ProtoJSON, presence and read-modify-write semantics separately. A recent sample is not proof.
+Setting one member clears the others: a message that legitimately contains both independently
+settable fields loses one after the move. Moving fields into an existing `oneof`, or splitting and
+merging oneofs, can similarly lose information; do not infer safety from unchanged field numbers.
 
-Proto2 `required` is a one-way door in both directions: you cannot add it (old writers omit the
-field) and you cannot remove it (old readers reject messages lacking it). "**Required Is
-Forever** — Required fields should be treated as permanent, immutable elements of the message
-definition." The guide also notes that an unrecognised enum value is treated as _missing_, which then
-fails the required check. The only exit is a new field number declared `optional`, dual-write,
-migrate, and eventually a new message type; enforce the requirement in the application layer instead.
+Do not introduce new proto2 `required` fields: old writers omit them and stale required readers
+reject messages lacking them. The guide's **Required Is Forever** warning reflects how difficult
+retirement is. It nevertheless documents an error-prone removal path: first make the field optional
+and deprecated, while writers keep supplying it; deploy every supported reader and intermediary to
+that schema, including rollback builds, before permitting omission or removal. Account for delayed
+messages and generated API/application semantics. If that retirement cannot be established, retain
+the old contract or use a separate field/message and an explicit migration. A new message type is
+not inevitable when the retirement conditions are proved. Enforce new business requirements in the
+application layer. An unknown enum value in a proto2 required enum can count as missing and fail
+the required check.
 
 Source: [Protobuf proto3 evolution and reservations](https://protobuf.dev/programming-guides/proto3/).
+See also [proto2 field retirement and oneof conditions](https://protobuf.dev/programming-guides/proto2/).

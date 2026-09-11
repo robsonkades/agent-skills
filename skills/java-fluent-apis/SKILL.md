@@ -19,35 +19,40 @@ A builder or fluent chain is an API commitment, not a style choice. This skill e
 prevent two opposite failures: builder ceremony wrapped around a type a record handles in
 three lines, and a bare constructor with six positional parameters — three of them the same
 type — that callers keep transposing. It also covers the costs that only appear later:
-staged builders that freeze the API, and chain return types that cannot change without
-breaking binary compatibility.
+staged builders that constrain evolution, and chain return-type changes that can break
+published callers.
 
 ## Workflow
 
 Inspect compiler release/toolchains, runtime, framework/generated construction paths and
-published callers before choosing a form. No single authoring baseline is declared; records
-require Java 16+, local `var` Java 10+, and `Optional` Java 8+. Adapt to the project's target;
-do not upgrade, enable preview or add builder-generation dependencies. If caller/lifecycle
-evidence is missing, identify the uncertainty and keep migration claims conditional.
+published callers before choosing a form. Use Java 25 without preview as the authoring default
+when no project target is specified; records require Java 16+, local `var` Java 10+, and `Optional`
+Java 8+. Adapt to the project's target; do not upgrade, enable preview or add builder-generation
+dependencies. Resolve missing caller/lifecycle evidence from the project first; ask only when an
+unresolved answer would change the contract or chosen form. State reversible assumptions and keep
+unsupported migration claims conditional.
 
-1. **Inspect call-site risk before designing.** Count parameters/options as signals, then examine
+1. **Sketch callers before declarations.** Use ordinary calls, a relevant advanced use such as
+   conditional configuration, and likely misuse. Count parameters/options as signals, then examine
    same-type transposition, defaults, invalid combinations, construction frequency, API audience
    and evolution. Apply the decision table in
    `references/builder-decision.md` — the default is the simplest form that survives the
-   counts, not a builder.
-2. **Exhaust the cheaper forms first.** A record with a compact constructor, a second
+   caller risks, not a builder.
+2. **Compare relevant cheaper forms first.** A record with a compact constructor, a second
    constructor, or a named static factory each beat a builder when they fit. A record with
    three cohesive components often needs no builder; positional ambiguity or named optionality
-   can still justify one regardless of count.
-3. **If a builder: mutable builder, immutable product.** Validate each setter's local input when
+   can still justify one regardless of count. Compose independently varying capabilities; consider a
+   DSL when a recurring domain grammar warrants it, not simply to make configuration read like prose.
+3. **For value construction, prefer a mutable builder and immutable product.** Validate each setter's local input when
    useful; `build()` rechecks required and cross-field invariants, snapshots mutable inputs and
    returns a valid product. Specify whether builders are reusable; default to confined,
    non-thread-safe construction.
-4. **If required-at-compile-time matters, price the staged variant.** Staging buys unmissable
-   required parameters and pays in one interface per stage plus a frozen evolution path. Take
-   it only for widely consumed APIs where a missing parameter is expensive.
-5. **Verify the result**: call sites format one call per line, `build()` rejects every
-   invalid combination, and the chain's return types are ones you can live with — see the
+4. **If required-at-compile-time matters, price the staged variant.** Staging restricts the call
+   sequence at the cost of public stage types and harder evolution. Use it when presence/order errors
+   justify that cost and a required-argument factory or runtime check is insufficient; audience size
+   affects the trade-off but is not a prerequisite.
+5. **Verify the consumer contract**: compile supported calls and meaningful compile-negative misuse,
+   exercise each declared invariant and lifecycle, and check return-type evolution — see the
    compatibility rules below.
 
 ## Rules
@@ -65,6 +70,8 @@ evidence is missing, identify the uncertainty and keep migration claims conditio
 - Setters may reject context-free invalid values immediately. `build()` is the authoritative
   completeness/cross-field check; enforcing a cross-field rule in the first setter makes validity
   order-dependent and is usually wrong.
+  If other construction paths exist, put intrinsic product invariants at their shared constructor
+  or factory boundary and delegate from `build()`; builder checks must not be the only protection.
 - Wither-style immutable APIs may create a new instance per changed value; no-op calls may
   return the receiver and unchanged immutable substructure may be shared. That is a cost mechanism,
   not a verdict: escape analysis may eliminate the copies, and only a profile of the real
@@ -72,22 +79,25 @@ evidence is missing, identify the uncertainty and keep migration claims conditio
 - Prefer one chain call per source line once diagnosis matters. Line-number tables can then point
   nearer the failing invocation and breakpoints are easier to place; a fluent chain remains one
   caller stack frame, and compiler/debugger mappings are not guaranteed per call.
-- No conditionals inside a chain. If a caller needs `if` between calls, break the chain
-  into statements against a local builder variable — that is what the mutable builder is
-  for.
+- Do not force conditional configuration into chain syntax. A local builder and ordinary `if` often
+  read better; a domain conditional/composition operator is reasonable when its semantics are clear.
+- For chains that perform operations, state when effects occur, whether evaluation is deferred,
+  whether reuse is allowed, and who closes acquired results or cleans up after failure. Passing a
+  borrowed resource into a fluent call does not by itself transfer ownership.
 - Fluency that forces the reader to scan the whole chain before knowing what happens is a
   net readability loss. Prefer clear constructors/factories for a small required parameter set;
   justify an exception using concrete call-site needs rather than a numeric threshold.
-- A fluent chain that keeps returning the same conceptual object exposes no structure and
-  is not a Law of Demeter violation; navigation through distinct objects' structure is —
-  see java-law-of-demeter.
+- Chaining the same conceptual object is different from navigating other objects' structure.
+  Navigation needs a separate boundary assessment through java-law-of-demeter; dots alone do not
+  establish a violation, especially for an intentional data representation.
 
 ## Production failure modes
 
 - **Builder reuse leaks state:** a pooled/shared builder carries an option into the next product.
-  Create per use or implement/test an explicit reset; never publish one mutable builder as a bean.
+  Prefer per-use confinement or implement/test an explicit reuse/reset policy. Container management
+  alone proves neither safety nor sharing; inspect the bean's scope and escape paths.
 - **Aliasing survives `build()`:** copying references to mutable lists/maps lets later builder or
-  caller mutation violate the product. Snapshot defensively at construction.
+  caller mutation violate the product. Snapshot containers and address mutable elements as well.
 - **Repeated `build()` is ambiguous:** state whether it may create equivalent independent values,
   is single-use, or transfers ownership. Tests should pin the chosen lifecycle.
 - **Generated/reflection APIs:** Jackson, JPA, protobuf, native-image reflection and bean tools may
@@ -99,7 +109,8 @@ evidence is missing, identify the uncertainty and keep migration claims conditio
 ## References
 
 Deliver the caller risk, selected form and lifecycle (reuse, thread confinement, snapshot or
-ownership transfer), plus compatibility impact and checks executed. Exercise invalid values,
+ownership transfer), plus compatibility impact and checks executed. State which caller or evolution
+evidence would change the choice. Exercise invalid values,
 option ordering, repeated build and alias mutation where applicable. Distinguish compilation
 from runtime/framework validation and unmeasured performance expectations.
 

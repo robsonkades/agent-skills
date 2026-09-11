@@ -98,13 +98,20 @@ or unfinished operations absent from the histogram rather than declaring a healt
 
 ## Schema migration
 
-When changing tags, units or bucket representation:
+First assess the affected consumer/population contract. A compatible new metric or label
+value within an existing contract can need only focused compatibility and budget checks;
+do not force dual publication or a fresh load campaign for unchanged populations.
+
+When units, label semantics or bucket representation cannot safely mix during rollout:
 
 1. introduce a versioned/new metric when populations cannot safely mix;
-2. dual-publish briefly and compare queries/cost;
+2. use bounded dual publication when needed to compare queries/cost and transition consumers;
 3. update recording rules, alerts, dashboards and autoscalers;
 4. roll out without aggregating incompatible schemas;
 5. remove old publication after consumer/retention review.
+
+Plan staged consumer updates and verify schema selection at each stage; do not assume
+dashboards, alerts, autoscalers and external consumers can all change atomically.
 
 ## References
 

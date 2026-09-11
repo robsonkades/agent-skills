@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: low-latency-jvm
-version: 1.0.1
+version: 1.0.2
 description: >-
   Designing and validating JVM systems whose primary objective is bounded jitter rather than low
   average latency: latency-distribution budgets, allocation strategy, GC choice, warm-up and
@@ -31,6 +31,8 @@ suggests:
   - numa-and-cpu-affinity
   - allocation-profiling
   - jit-compilation
+  - deoptimization
+  - safepoints
   - linux-for-jvm
   - tcp-tuning
   - io-uring-and-zero-copy

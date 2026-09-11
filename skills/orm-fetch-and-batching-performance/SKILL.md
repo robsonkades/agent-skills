@@ -2,9 +2,9 @@
 name: orm-fetch-and-batching-performance
 description: >
   Making JPA and Hibernate stop issuing the statements you did not ask for, and making the ones
-  they do issue cheap: statement count as the primary number, N+1 from an association and from a
-  collection, join fetch versus entity graph versus batch fetching, the cartesian product two
-  join-fetched collections produce, DTO projections instead of entity graphs, and why write
+  they do issue cheap: statement amplification, N+1 from an association and from a
+  collection, join fetch versus entity graph versus batch fetching, the cartesian product of
+  independent join-fetched collections, scalar DTO projection trade-offs, and why write
   batching silently does nothing under identity id generation. Use when the query count scales
   with rows rendered, when a page issues hundreds of selects, when LAZY was changed to EAGER to
   make an exception go away, when open-session-in-view is switched on, when a bulk write is one
@@ -18,8 +18,8 @@ description: >
 
 ## Purpose
 
-Make the number of statements the ORM issues a quantity you chose, rather than one that emerges
-from the mapping.
+Choose the ORM's fetching and batching work against the operation's correctness and cost
+requirements: statements, transferred rows, managed state and actual JDBC batch execution.
 
 The failure this prevents is the global fix for a local symptom: switching an association to
 `EAGER`, or turning on open-session-in-view, because one screen threw
@@ -34,12 +34,18 @@ Reproduce with the deployed stack; JPA fetch contracts do not prescribe a SQL st
 
 ## Workflow
 
-1. **Count the statements before forming any theory.** Turn on statement counting for one
-   request and read the number. "It feels slow" and "this request issues 431 selects" lead to
-   different investigations, and only the second is falsifiable.
+Use the steps that resolve the actual question. Reuse adequate SQL, timing and lifecycle
+evidence; a narrow explanation or supported no-change review needs no new instrumentation,
+full fetch comparison or write benchmark. Keep independently supported findings when another
+measurement is missing, and qualify only the claims that need it.
+
+1. **Identify the disputed work and its boundary.** For suspected N+1, obtain scoped statement
+   counts and SQL for the relevant traversal; do not reset shared factory statistics. For an
+   already identified slow statement, flush or JDBC batch issue, start with that evidence.
+   Missing counts prevent quantifying amplification, not explaining a known provider contract.
 2. **Classify what the count is proportional to.** Repeated selects growing with accessed
    associations suggest N+1; a constant query count can still transfer excessive rows or be
-   slow. Writes remain one logical DML operation per row even when JDBC batching works.
+   slow. Entity-by-entity writes remain logical per-row DML even when JDBC batching works.
    Measure batch executions separately; inspect listeners, cascades, implicit flushes and
    identifier allocation rather than diagnosing from a count alone.
 3. **Find the traversal that triggers it.** For N+1 the statement log shows one query followed by
@@ -50,10 +56,14 @@ Reproduce with the deployed stack; JPA fetch contracts do not prescribe a SQL st
    interchangeable; query counts depend on the provider, mappings and population.
 5. **Check what the fix cost.** A join fetch that solved N+1 can return a cartesian product; a
    projection that solved it can bypass a cache you were relying on.
-6. **Re-measure the same operation through rendering/serialization**, with matched row counts,
-   cache state and transaction scope. Report selects, prepared statements/batches where relevant,
-   returned rows, duration and result correctness before/after. Accept a change only against
+6. **Validate a proposed change at the affected boundary**, including rendering/serialization
+   when it can trigger fetching. Compare relevant counts, rows, duration and result correctness
+   with matched population, cache state and transaction scope. Accept a change only against
    the actual objective; fewer statements with worse row volume or latency is not a success.
+
+Return the supported mechanism, smallest justified correction or no-change conclusion, and
+the evidence and remaining gap relevant to that conclusion. Do not claim a speedup from a
+query-count reduction or configuration change alone.
 
 ## Rules
 
@@ -62,19 +72,25 @@ Reproduce with the deployed stack; JPA fetch contracts do not prescribe a SQL st
   A JPA `fetchgraph` treats unspecified attributes as lazy even if mapped eager, whereas
   `loadgraph` preserves their mapping defaults; providers may fetch additional state. Verify
   the actual provider behavior instead of promising either one SQL query or mandatory laziness.
-- **`LazyInitializationException` reports a boundary, not a defect in `LAZY`.** Something read
-  uninitialized state after its entity became detached or its context closed. The fix is fetching it in the query that
-  needs it, or mapping to a DTO before the boundary — not widening the context's lifetime.
+- **Diagnose the initialization context before changing `LAZY`.** For `LazyInitializationException`,
+  inspect the uninitialized proxy/collection's session association and whether that context
+  closed or disconnected. Fetch required state in its owning query, reload in the proper unit
+  of work, or map loaded data before the boundary. An intentional extended context or OSIV
+  can be valid with bounded lifetime, query/connection cost and explicit consistency and
+  mutation ownership; retain an adequate contract. Extending lifetime alone does not fix N+1.
 - **Open-session-in-view permits additional queries during rendering.** Reads may occur outside
   the service transaction and see a different database state; connection acquisition/release
   depends on configuration. Include this phase in counting. Enabling it does not fix N+1.
-- **Join fetching multiple to-many associations can multiply rows.** Ten line items and five
+- **Join fetching independent to-many branches can multiply rows.** Ten line items and five
   shipments may produce fifty rows carrying the same order. Hibernate rejects some multiple-bag
-  shapes, while other collection combinations may execute and still explode the result. Prefer one
-  collection fetch per query unless measured cardinalities prove the product is bounded.
+  shapes, while other collection combinations may execute and still explode the result. Multiple
+  to-one fetches or a single nested chain do not create that independent sibling product, though
+  nested child volume still matters. Split independent collections when their product exceeds
+  the budget; retain a supported, adequately bounded fetch shape.
 - **Pagination over a collection fetch requires version- and query-specific verification.** Common
   Hibernate query shapes warn and page in memory because SQL row limits do not equal root-entity
-  limits. Fail on that warning in tests; use a root-id page followed by a bounded fetch, or a
+  limits. When SQL pagination is required, fail on that fallback in tests; use a root-id page
+  followed by a fetch of those roots with a separate child-row budget, or a
   provider feature whose generated SQL and ordering you have verified.
 - **Batch fetching can approach `1 + ceil(N / batch)` for one eligible association role.** It is a candidate when the
   association is needed for most rows and a join fetch would multiply, and it is still round
@@ -92,10 +108,10 @@ Reproduce with the deployed stack; JPA fetch contracts do not prescribe a SQL st
   batching for entities using IDENTITY; this does not disable unrelated updates/deletes.
   Pre-insert identifiers (for example sequences or assigned UUIDs) permit insert batching;
   sequence pooling reduces identifier round trips separately and needs a compatible schema.
-- **The `count` query for a page is frequently the expensive half.** Optimise or avoid it
-  separately; do not assume the page query is the problem because it is the one you were reading.
-- **A statement whose plan is bad is a different problem.** Once the count is right and one
-  statement is still slow, that is `sql-query-performance`.
+- **A page's `count` query can be expensive independently.** Measure it separately; optimise it
+  or omit it only if the response contract permits doing without the total.
+- **An individually slow statement has its own diagnosis.** Hand its SQL, bindings, rows and
+  timing to `sql-query-performance`; count amplification and statement cost can coexist.
 
 ## References
 

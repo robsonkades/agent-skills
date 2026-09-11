@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-internals
-version: 1.3.1
+version: 1.3.2
 description: >-
   How G1 actually works: uniform regions and the ergonomic sizing formula, remembered sets
   and the card table with its write barrier, SATB and the pre-write barrier, the phases of
@@ -45,6 +45,11 @@ files:
 dependencies:
   - name: gc-fundamentals
     version: ^1.0.0
+
+suggests:
+  - g1-concurrent-marking
+  - g1-tuning-for-slo
+  - gc-log-analysis
 
 capabilities:
   - reads-source

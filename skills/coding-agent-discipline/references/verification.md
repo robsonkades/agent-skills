@@ -2,22 +2,24 @@
 
 ## Claim to evidence
 
-| Claim you want to make     | Minimum evidence                                                                                                              |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| "It compiles"              | The relevant compile task succeeded for the final inputs, or a valid cache result covers them                                 |
-| "Tests pass"               | The named relevant suite executed for the final state; failures, executed counts and skipped coverage were inspected          |
-| "This test covers the bug" | You saw it **fail** before the fix and pass after                                                                             |
-| "The bug is fixed"         | The reproduction that failed now succeeds, by the reported symptom                                                            |
-| "This is faster"           | A measurement with a distribution, not one run (jmh-microbenchmarks)                                                          |
-| "Nothing else uses this"   | A search you ran, whose scope you state — including non-code references                                                       |
-| "The API behaves this way" | Version-matched contract/source or a focused run for the claimed behavior; signature alone establishes availability/types     |
-| "This is the cause"        | Evidence discriminates it from plausible alternatives, ideally a controlled reproduction/intervention; otherwise a hypothesis |
-| "The change is complete"   | Every required part and required verification is finished; remaining required work means a partial or blocked result          |
+| Claim you want to make     | Minimum evidence                                                                                                                       |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| "It compiles"              | The relevant compile task succeeded for the final inputs, or a valid cache result covers them                                          |
+| "Tests pass"               | The named relevant suite executed for the final state; failures, executed counts and skipped coverage were inspected                   |
+| "This test covers the bug" | You saw it **fail** before the fix and pass after                                                                                      |
+| "The bug is fixed"         | The reproduction that failed now succeeds, by the reported symptom                                                                     |
+| "This is faster"           | Baseline and candidate measurements of the named metric under comparable workload, versions and environment, with variability reported |
+| "Nothing else uses this"   | A search you ran, whose scope you state — including non-code references                                                                |
+| "The API behaves this way" | Version-matched contract/source or a focused run for the claimed behavior; signature alone establishes availability/types              |
+| "This is the cause"        | Evidence discriminates it from plausible alternatives, ideally a controlled reproduction/intervention; otherwise a hypothesis          |
+| "The change is complete"   | Every required part and required verification is finished; remaining required work means a partial or blocked result                   |
 
 State the scope and source of evidence: command, inspected artifact or versioned reference.
 A documented contract is not an observed application outcome. Bind test/build evidence to
 the relevant revision, module, configuration and environment; checks before later edits do
 not establish the final state. Re-run affected checks when subsequent changes invalidate them.
+Limit performance claims to the measured operation and conditions; a microbenchmark does
+not establish application-level improvement (jmh-microbenchmarks, performance-methodology).
 
 ## Traps that produce a false green
 
@@ -35,13 +37,21 @@ not establish the final state. Re-run affected checks when subsequent changes in
   it fail; absence of an explicit assertion alone is not proof of insensitivity (a test can
   deliberately check that an operation completes without throwing).
 - **The wrong module.** The suite ran, in a different package from the one you changed.
-- **Compilation without execution.** Type-checking proves shape, not behaviour, and it proves
-  nothing at all about configuration, wiring or SQL.
+- **Compilation without execution.** A compile check can establish types and other static
+  contracts; it does not establish runtime configuration, wiring or SQL behavior.
 
 Watching a relevant test fail for the reported defect and then pass after the fix is strong
 evidence, not immunity: unrelated environment changes, retries or flakiness can also produce
 red then green. Check failure cause, exercised path and unchanged test conditions. Do not
 claim regression sensitivity when the pre-fix failure was not observed.
+
+For asynchronous ordering claims, observe contract milestones rather than assuming progress
+after a sleep or a fixed number of promise/scheduler turns, unless that timing is itself the
+contract. In a streaming test, let the writer signal entry and return a test-controlled
+promise; make any subsequent input pull fail while that write is unresolved. After release,
+await the next observed milestone with a bounded failure path and cleanup of owned work.
+If a contract-preserving scheduling change breaks the test, repair its synchronization
+without losing checks for premature progress, stalled completion or propagated failures.
 
 ## Reporting a partial verification
 
@@ -88,14 +98,17 @@ authorized contract change. Ask when evidence does not settle the expected behav
 
 Use these consistently and the user can calibrate on you:
 
-| Phrase                         | Means                         |
-| ------------------------------ | ----------------------------- |
-| "Verified: …"                  | I ran it and observed this    |
-| "The build passes"             | I ran the build; it succeeded |
-| "I expect …"                   | Reasoning, not observation    |
-| "I have not verified …"        | Explicitly untested           |
-| "I could not verify … because" | Blocked, with the reason      |
-| "I am assuming …"              | A gap I filled; contradict me |
+| Phrase                         | Means                                                                                     |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| "Verified: …"                  | The named execution, artifact or version-matched contract establishes this specific claim |
+| "The build passes"             | I ran the build; it succeeded                                                             |
+| "I expect …"                   | Reasoning, not observation                                                                |
+| "I have not verified …"        | Available evidence has not established the claim                                          |
+| "I could not verify … because" | Blocked, with the reason                                                                  |
+| "I am assuming …"              | A gap I filled; contradict me                                                             |
+
+Name the evidence when "verified" could mean either contract inspection or execution:
+"The pinned API contract rejects null; this application's null-input path was not run."
 
 Avoid "should work", "should be fine" and "looks correct" entirely. They read as verification
 and mean inference, which is precisely the ambiguity that destroys trust.

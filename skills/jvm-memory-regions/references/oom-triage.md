@@ -29,10 +29,12 @@ jcmd <pid> VM.classloader_stats       # loader count and classes per loader
 jcmd <pid> GC.heap_info               # heap summary by generation
 ```
 
-Via JFR:
+Via JFR: the stock JDK 25 `profile` settings disable `jdk.ClassLoad`; explicitly enable it
+for a bounded loading capture. An empty event list is evidence only within the enabled
+events and collection window.
 
 ```bash
-jcmd <pid> JFR.start name=mem_capture duration=60s settings=profile filename=/secure/diagnostics/mem.jfr
+jcmd <pid> JFR.start name=mem_capture duration=60s settings=profile "jdk.ClassLoad#enabled=true" filename=/secure/diagnostics/mem.jfr
 # Wait for this recording to finish, or take a supported dump of its verified ID.
 # Copy the completed artifact from the target JVM's filesystem to the analysis host.
 
@@ -43,7 +45,7 @@ jfr print --events jdk.ClassLoad      /secure/diagnostics/mem.jfr   # class load
 
 `jdk.CodeCacheFull` deserves special attention, but its presence proves an exhaustion
 event—not that every later method remained interpreted or that it was the sole degradation
-cause. Inspect event count/timestamps, segmented occupancy, compiler stop/restart/flushing
+cause. Inspect event count/timestamps, segmented occupancy, compiler stop/restart/reclamation
 logs and throughput (`code-cache-segments`).
 
 ## Class space, specifically
@@ -90,9 +92,11 @@ operation with its own safety constraints (`heap-dump-analysis`).
 - [ ] For Metaspace suspicion: track classloader count over time, not just usage
 
 Judge comparable trends, not an instant: equivalent post-reclamation occupancy, load,
-class count, native categories and cgroup charges. A rising heap floor means more remains
-reachable under those conditions; it may be legitimate working set, cache or a defect. A
-collector flag cannot remove an unwanted strong owner.
+class count, native categories and cgroup charges. A rising heap floor shows higher observed
+occupancy, not by itself greater reachable or retained size: a young collection can leave
+unreachable old objects untouched. Check which regions were reclaimed and use dominators/root
+paths when retention matters (`heap-dump-analysis`). Confirmed retention may be legitimate
+working set, cache or a defect; a collector flag cannot remove an unwanted strong owner.
 
 ## Primary sources
 
@@ -100,3 +104,5 @@ collector flag cannot remove an unwanted strong owner.
   — once-only report gate and handler ordering.
 - [JDK 25 Bits.reserveMemory](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/nio/Bits.java)
   — Java-thrown direct-buffer OOME and reservation accounting.
+- [JDK 25 G1 collection cycle and collection set](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-g1-garbage-collector1.html)
+  — incremental reclamation and the limits of post-young-GC occupancy as retention evidence.

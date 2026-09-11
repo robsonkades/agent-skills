@@ -15,7 +15,7 @@ stream, multiplexed versus dedicated connections, and JDK versions can differ.
 
 - monitor entry versus `Lock.lockInterruptibly`/timed `tryLock`;
 - `Object.wait`, `Condition.await`, `Thread.sleep`, `join`;
-- `Future.get` versus `join`, queue/semaphore/latch methods;
+- `Future.get` versus `CompletableFuture.join`, queue/semaphore/latch methods;
 - socket streams, NIO selectors/channels and async channels;
 - JDBC acquisition/query and driver `Statement.cancel`/socket timeout;
 - HTTP future/body/transport cancellation and connection reuse;
@@ -46,6 +46,14 @@ Test synchronous completion during registration and late success after public ca
 release an otherwise unclaimed returned resource even when its result cannot be delivered.
 Invoke an underlying handle's cancel according to its idempotency/retry contract rather than
 equating one successful public transition with one guaranteed downstream acknowledgement.
+
+For example, Java 25's default `HttpClient.sendAsync` returns cancelable futures (including
+derived futures) whose `cancel(true)` attempts exchange cancellation. The request may already
+have reached the server, and resource release can be asynchronous. Completion racing cancellation
+can expose a wrapped cancellation exception even when `isCancelled()` is false. Inspect the owned
+cancellation state and exception chain; a nested I/O cause does not by itself make the operation
+an ordinary retryable failure. Neither local exceptional completion nor a closed transport proves
+that server-side work or committed effects have stopped.
 
 ## Close as cancellation
 
@@ -78,3 +86,6 @@ only exceptional completion of the caller future.
 - [InterruptibleChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/InterruptibleChannel.html)
 - [JDBC `Statement.cancel`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Statement.html#cancel()>)
 - [Java HTTP client](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)
+- [OpenJDK 25.0.3 cancelable future](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.net.http/share/classes/jdk/internal/net/http/common/MinimalFuture.java)
+  and [exchange cancellation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.net.http/share/classes/jdk/internal/net/http/MultiExchange.java)
+  — implementation evidence for the completion/cancellation race; recheck other builds/providers.

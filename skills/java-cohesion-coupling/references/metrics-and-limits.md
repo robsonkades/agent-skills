@@ -22,9 +22,10 @@ structural preference; the target may nevertheless be mature and rarely change. 
 contract exposure and actual history before predicting downstream churn. That edge is a candidate
 for the moves in `dependency-graphs.md`.
 
-Expected values, not targets: a leaf application/wiring package sits near I = 1
-and should; a domain-model package sits near I = 0 and should. Neither number is
-a problem — the numbers describe roles.
+Application/wiring packages often have more outgoing edges; widely reused contracts often have
+more incoming ones. These are contextual observations, not required values for a role.
+A domain package may legitimately depend on several other contracts; its name does not require
+I = 0. Neither endpoint nor an intermediate value establishes a problem.
 
 ## What the metrics cannot see
 
@@ -36,6 +37,9 @@ Cite a metric only alongside what it is blind to:
 - **Runtime coupling.** Reflection, `ServiceLoader`, DI wiring and event topics
   can introduce edges absent from bytecode analysis; static references to their APIs may
   appear without revealing the dynamically selected implementation or topic contract.
+- **Source detail absent from bytecode.** Source-only annotations can disappear; inlined field
+  uses are erased even if the declaring class still appears in the graph. Neither view alone
+  describes all source compatibility or old-client value dependencies.
 - **Edge weight.** Ce counts a package once whether one class touches one method
   or fifty classes touch its internals. Always drop to `-verbose:class -filter:none` before
   judging an edge.
@@ -64,12 +68,12 @@ threshold ("instability must stay under 0.8") should be rejected in review.
 - **Mid-migration.** Transitional edges distort trend comparisons, but measuring during the
   crossing is how you detect forbidden backflow and know whether the old graph is shrinking.
   Label transition edges and compare against explicit migration milestones.
-- **To settle taste disputes.** Two package layouts with equal change behaviour
-  are equal; do not deploy metrics as authority where evidence of change pain
-  does not exist.
+- **To settle taste disputes.** If layouts meet the same change, ownership and boundary requirements,
+  metrics alone do not justify preferring one. An explicit preventive policy may still justify a
+  correction without historical change pain.
 
-Restructuring churn is itself a cost centre: every package move is a breaking
-change for something (imports at minimum; often config, persistence mappings and
-serialisation). Batch moves behind release boundaries, and prefer stopping new
-bad edges — an architecture test or a module boundary — over relocating old ones
-that no longer hurt.
+Restructuring churn is itself a cost centre: package moves can affect imports, supported public
+names, configuration, persistence mappings and serialization. Internal source changes are not
+automatically public compatibility breaks; inspect the affected consumers. Plan consequential
+moves against the actual release contract, and compare preventing new bad edges through an
+architecture test or module boundary with relocating existing ones that no longer hurt.

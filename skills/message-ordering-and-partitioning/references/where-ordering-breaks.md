@@ -20,7 +20,7 @@ Two requirements in that table that are usually assumed rather than checked:
 
 ## The breakage catalogue
 
-**1 — The missing key.** Silent, and the most common.
+**1 — The missing key.** Can silently violate the assumed domain-key routing.
 
 ```java
 producer.send(new ProducerRecord<>("orders", event));            // no key: partitioner places it
@@ -34,10 +34,12 @@ Inspect producer configuration and actual serialized routing, not just construct
 **2 — Parallel dispatch inside the consumer.**
 
 ```java
-for (var rec : records) executor.submit(() -> handle(rec));   // per-partition order destroyed
+for (var rec : records) executor.submit(() -> handle(rec));   // concurrent workers may reorder effects
 ```
 
-One ordering-preserving shape is a serial lane per key (usually many keys share a lane).
+Inspect the executor contract: a FIFO serial lane can preserve its admitted order when each
+effect completes before the next task starts. Submission alone proves neither preservation
+nor breakage. One ordering-preserving shape is a serial lane per key (usually many keys share a lane).
 This partial snippet assumes non-null keys, nonempty workers, stable routing, FIFO submission
 and one worker per lane. `handle` must finish its effect before returning; merely enqueueing
 another asynchronous operation does not preserve completion order:
@@ -67,11 +69,11 @@ fetches. `pause` does not cancel those records or in-flight handlers. Keep polli
 the membership budget; serialize seek/retry on the owning consumer thread, resume deliberately
 and reconcile pause/ownership after rebalance (`kafka-consumers-in-java`).
 
-| Option                                              | Ordering                    | Cost                                                  |
-| --------------------------------------------------- | --------------------------- | ----------------------------------------------------- |
-| Blocking in-place retry                             | Preserved for the partition | Head-of-line blocking on the whole partition          |
-| Pause the partition, seek back to the offset, retry | Preserved for the partition | Same blocking, but the consumer stays alive and polls |
-| Republish to a retry topic                          | **Abandoned** for that key  | Only acceptable when handlers are order-insensitive   |
+| Option                                              | Ordering                                          | Cost                                                      |
+| --------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------- |
+| Blocking in-place retry                             | Preserved for the partition                       | Head-of-line blocking on the whole partition              |
+| Pause the partition, seek back to the offset, retry | Preserved for the partition                       | Same blocking, but the consumer stays alive and polls     |
+| Republish to a retry topic                          | Arrival order lost; sink order needs resequencing | Order-insensitive handlers or bounded sequence/gap repair |
 
 **4 — The DLQ skip.**
 
@@ -85,8 +87,11 @@ or pause the partition instead (`poison-messages-and-dlq`).
 
 **5 — Rebalance overlap.** A handler can outlive ownership; the new owner resumes from the
 committed offset while old work still completes. Revocation callbacks are best-effort during
-crash/eviction and Kafka does not fence the external sink. Use cancellation plus repeat-safe
-effects, or propagate an ownership epoch the sink can enforce. Mechanics are
+crash/eviction and Kafka does not fence the external sink. Stop admission and request
+cancellation, but do not assume cancellation stopped an effect already dispatched. Enforce
+an ownership epoch/sequence at the sink or otherwise establish that late old-owner effects
+cannot violate the required order. Keep repeat-safe replay as a separate requirement: dedup
+by operation ID does not reject a distinct stale operation. Mechanics are
 `kafka-consumers-in-java`.
 
 **6 — Producer in-flight retries.** Without producer idempotence, with several request batches
@@ -109,14 +114,14 @@ an unrecorded domain order from broker arrival alone.
 
 **8 — Ordering assumed across channels/topics.** Independent logs usually expose no shared
 order. A Kafka transaction can commit records across partitions, but `read_committed` consumers
-do not receive them as one atomic cross-partition snapshot or processing unit. Carry causal/version information or
+are not guaranteed to receive them as one atomic cross-partition snapshot or processing unit. Carry causal/version information or
 use an explicit sequencer when the invariant spans streams.
 
 ## The partition count is a one-way door
 
 With Kafka's common default key mapping, increasing the count remaps part of the key space. New records for key K can land on a different partition
-while K's earlier records remain in the old one, and no ordering relation exists between two
-partitions — the two histories are simply unordered, and a consumer can apply the new before the
+while K's earlier records remain in the old one. Kafka supplies no shared order across those
+partitions; without an application cutover protocol, a consumer can apply the new before the
 old. Kafka does not support reducing a topic's partition count at all; the only path down is a
 new topic.
 
@@ -133,11 +138,15 @@ Consequences to plan for at creation:
   under a deduplicated operation ID, drain every old partition through its barrier, then allow
   effects from the new mapping. Merely consuming old and new topics concurrently can apply new-
   epoch records before old ones. Keep rollback/replay until reconciliation proves the cutover.
-- If none of that is acceptable, the fix is upstream: remove the ordering requirement
-  (`designing-without-ordering.md`) and the partition count stops being a door at all.
+- If no safe migration fits the constraints, retain the current mapping or redesign upstream.
+  Relax ordering only when the domain permits it (`designing-without-ordering.md`); capacity
+  pressure does not remove a required transition or effect history.
 
 ## Primary references
 
-- [Apache Kafka design: ordering guarantees](https://kafka.apache.org/documentation/#intro_guarantees)
+- [Kafka 4.1 introduction: partition ordering](https://kafka.apache.org/41/getting-started/introduction/)
 - [Kafka 4.1 producer configuration: idempotence and in-flight requests](https://kafka.apache.org/41/configuration/producer-configs/)
-- [KafkaConsumer API: offsets and assignment](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+- [Kafka 4.1 consumer API: offsets, assignment and transactional reads](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+- [Kafka 4.1 operations: partition-count changes](https://kafka.apache.org/41/operations/basic-kafka-operations/)
+- [Kafka 4.1.0 built-in key mapping](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java) — implementation example; inspect the target client's partitioner.
+- [Java 17 Executors: single-worker execution](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Executors.html) — serial execution is possible; the factory's unbounded queue is not an overload policy.

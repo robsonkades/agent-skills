@@ -1,8 +1,8 @@
 # Experiments in a Real Environment
 
-Deterministic fault tests prove the failures you thought of. An experiment in a real
-environment finds the ones you did not — but only if it is run as an experiment, with a
-hypothesis and a limit, rather than as an act of vandalism with a dashboard open.
+Deterministic fault tests exercise known claims in their fixture. A real-environment experiment
+can expose additional couplings or validate operational recovery, within the tested conditions.
+Choose it for an unresolved question, with a hypothesis and a limit.
 
 ## What makes it an experiment rather than an outage
 
@@ -33,11 +33,12 @@ An experiment against an unprepared system produces an outage and no information
 - [ ] **The failure being injected is observable** — if a dependency slows down, a graph
       shows it. Injecting an invisible fault yields an unattributable symptom
       (`metrics-and-cardinality`, `distributed-tracing-design`).
-- [ ] **Alerting works.** If the experiment triggers no alert while degrading the steady
-      state, that is the finding, and it should be fixed before continuing.
-- [ ] **The deterministic tests pass.** Do not discover in production what a stub server would
-      have found in CI. Chaos is for the unknown unknowns, and it is an expensive way to learn
-      that a timeout is unset.
+- [ ] **Detection and abort coverage match the plan.** Verify alerts that should fire when
+      their thresholds are crossed, or the declared manual/automated observation and stop path.
+      Expected degradation below an alert threshold does not by itself prove an alert defect.
+- [ ] **Relevant cheaper checks have addressed known prerequisites.** Do not use production
+      to discover an unset timeout that a stub could expose. A real-environment recovery drill
+      should target the remaining operational evidence, with known gaps recorded.
 - [ ] **Someone can stop it**, and the stop has been rehearsed.
 - [ ] **The team knows it is happening**, and the on-call is in the room. An unannounced
       experiment that pages someone burns the goodwill the practice depends on.
@@ -67,6 +68,10 @@ Use isolated environments to falsify known claims and rehearse the procedure. Pr
 expose couplings absent there, but no fixed percentage is universally safe: shared pools and
 dependencies can spread a small targeted fault. Preserve the authorized environment and scope;
 this guidance does not itself authorize a production experiment.
+Reuse authority already granted for the named target, actions and bounds; clarify only missing
+or expanded scope. Record maximum duration, cleanup owner and an independent watchdog/stop path.
+On success, failure or abort, verify injection removal, outstanding work and serving recovery;
+removing a rule does not undo accepted effects or guarantee capacity has recovered.
 
 ## A worked experiment
 
@@ -99,16 +104,16 @@ the fault does not drain existing queues or undo writes: verify recovery and rec
 
 Outcomes worth anticipating, because each is a different finding:
 
-- **Hypothesis holds.** The claim is now evidence rather than configuration. Record it and
-  re-run after changes to the checkout path.
-- **Completion rate falls, checkout still returns.** The fallback works but is not free —
-  usually a queue filling somewhere. Find it, bound it, and add a deterministic test.
-- **Unrelated endpoints degrade.** A shared thread or connection pool. This is the highest
-  value finding this method produces, and it is essentially undiscoverable any other way
+- **Hypothesis holds.** Record support for the tested cohort, window and conditions; repeat
+  relevant checks after changes to the path rather than claiming universal resilience.
+- **Completion rate falls, checkout still returns.** Inspect response semantics, offered load,
+  queueing and downstream outcomes; a returned response does not prove a valid fallback worked.
+- **Unrelated endpoints degrade.** Investigate shared resources and correlated causes; verify
+  the suspected thread/connection pool before choosing its control
   (`concurrency-limiting-and-bulkheads`).
-- **Instances are removed from the load balancer.** The readiness probe shares the exhausted
-  pool, so healthy pods are marked unready and the survivors receive more traffic. The
-  self-inflicted outage (`kubernetes-service-lifecycle`).
+- **Instances are removed from the load balancer.** Check the effective probe, routing decision
+  and resource exposure. Shared-pool starvation is one hypothesis, not a conclusion from removal
+  alone (`kubernetes-service-lifecycle`).
 
 ## Game days
 
@@ -121,8 +126,8 @@ and operationally useless, a runbook whose first step is a command that no longe
 
 Two rules keep them useful:
 
-- **Do not tell the responders which fault was injected.** Detection and diagnosis are the
-  point; announcing the answer tests only the fix.
+- Withhold the injected fault when independent detection/diagnosis is the agreed objective;
+  disclose it for a walkthrough whose purpose is practicing a known recovery procedure.
 - **Do tell them a game day is happening.** Covert exercises produce real stress responses and
   destroy trust in the practice.
 
@@ -130,11 +135,13 @@ Two rules keep them useful:
 
 The experiment is not the deliverable. The deliverable is:
 
-1. **A fix**, prioritised like any other defect.
-2. **A deterministic regression test at the cheapest level that reproduces it** — usually a
-   stub-server test that takes milliseconds (`references/fault-injection.md`). Without this,
-   the same finding recurs after the next refactor.
-3. **A re-run of the experiment** to confirm the hypothesis now holds.
+1. **The observed result and its limits**: violated invariant, unresolved hypothesis, or an
+   accepted outcome. Do not manufacture a defect from expected behavior.
+2. **A correction and focused regression for a confirmed defect**, where feasible at the
+   cheapest credible level (`references/fault-injection.md`); otherwise retain the trace and
+   an owned follow-up. Existing adequate controls can justify no change.
+3. **Proportionate revalidation** after a correction. Reuse the authorized environment and
+   bounds; a production rerun is not automatically required or authorized.
 
 A chaos programme that generates findings and no regression tests will rediscover the same
 problems annually. **The tests are the compounding asset; the experiments are how you find out
@@ -144,12 +151,12 @@ which tests to write.**
 
 - **The system has no observability for the injected fault.** Fix that first; it is more
   valuable than any experiment.
-- **Known unmitigated single points of failure exist.** Breaking a thing you already know is
-  fragile teaches nothing. Fix the known problems, then look for unknown ones.
+- **The proposed break adds no useful evidence about a known weakness.** Prefer correction or
+  an isolated check. A bounded recovery drill can still be useful if recovery is the actual
+  unresolved claim and the impact is authorized.
 - **There is no capacity to act on findings.** Generating a list nobody will address converts
   the practice into theatre and burns the organisational credit needed to run it later.
 - **The question is throughput, not failure.** That is a load test (`load-testing`,
   `capacity-planning`).
-- **The question is a specific, known failure mode.** Write the deterministic test. Chaos
-  engineering is for discovery, and it is an expensive substitute for a test you could have
-  written.
+- **A narrow deterministic test can settle the question.** Use it; choose a real-environment
+  drill only for the remaining implementation or operational evidence it can supply.

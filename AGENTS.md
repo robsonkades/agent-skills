@@ -207,6 +207,18 @@ Treat these as breaking-change boundaries:
 
 ## Codex working rules
 
+### Parallel skill reviews
+
+When the user requests reviews of multiple skills, delegate one skill per agent using
+the `skill-reviewer` custom agent in `.codex/agents/skill-reviewer.toml` and follow
+[the parallel review workflow](docs/parallel-skill-reviews.md). Each reviewer must read
+and execute [the complete review prompt](docs/skill-review-prompt.md).
+The coordinator alone regenerates the index and runs the final `npm run verify` after
+all reviewers have stopped writing; this is the parallel-run exception to those steps
+in the individual prompt. Configuration requests alone do not start catalog reviews.
+
+### General rules
+
 - Inspect the relevant implementation, tests, and package-level documentation before editing.
 - Keep changes scoped to the user's request. Preserve unrelated user changes and avoid broad
   formatting or cleanup.

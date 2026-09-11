@@ -45,23 +45,25 @@ Two supporting views:
 
 ## Signatures
 
-| Signature                                                                  | Class                      | Repair direction                                                    |
-| -------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------- |
-| One shard: high read rate, high CPU, normal storage, writes normal         | **Read-hot key**           | Cache, request coalescing, or a read replica of that shard          |
-| One shard: high write rate, write latency and queue depth up, reads normal | **Write-hot key**          | Salting, or splitting the key's own workload; a cache does nothing  |
-| One shard: storage far above the others, traffic near the mean             | **Storage-hot**            | Dedicated shard, or a composite key that splits the large tenant    |
-| Same logical key dominates before and after remapping                      | **Intrinsic hot key**      | Split/cache/coalesce/isolate that key; remapping cannot divide it   |
-| Excess load follows different sets of ordinary keys after remapping        | **Placement imbalance**    | Inspect token/range weights, hash quality and virtual-node count    |
-| All shards: elevated together, ratio near 1                                | **Overloaded fleet**       | Capacity or shedding, not skew                                      |
-| One shard: latency up, rate _down_                                         | **Saturated and shedding** | The shard has stopped accepting; measure queue depth and rejections |
+| Signature                                                                  | Candidate class                    | Investigation / repair direction                                                                      |
+| -------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| One shard: high read rate, high CPU, normal storage, writes normal         | **Read-hot key**                   | Cache, request coalescing, or a read replica of that shard                                            |
+| One shard: high write rate, write latency and queue depth up, reads normal | **Write-hot key**                  | Salting, or splitting the key's own workload; a cache does nothing                                    |
+| One shard: storage far above the others, traffic near the mean             | **Storage-hot**                    | Dedicated shard, or a composite key that splits the large tenant                                      |
+| Same logical key dominates before and after remapping                      | **Intrinsic hot key**              | Split/cache/coalesce/isolate that key; remapping cannot divide it                                     |
+| Excess load follows different sets of ordinary keys after remapping        | **Placement imbalance**            | Inspect token/range weights, hash quality and virtual-node count                                      |
+| All shards: elevated together, ratio near 1                                | **Fleet-wide pressure**            | Check saturation, common dependencies and request mix before capacity or shedding                     |
+| One shard: latency up, rate _down_                                         | **Saturation or reduced progress** | Separate offered, admitted and completed work; inspect queues, rejections and local/dependency faults |
 
-The last row is the trap: a shard past its limit shows _lower_ request rate because it is
-failing or timing out, so a rate-only dashboard points at the wrong shard entirely. Always
-read rate together with error rate and latency.
+These signatures are hypotheses, not proof of a particular key or cause. A shard past its
+limit can show _lower_ admitted or completed rate; a dependency or local fault can also
+reduce progress. Offered attempts may still rise. Read rates with their population, errors,
+latency and queue evidence before selecting a repair.
 
 ## Naming the key, cheaply
 
-A shard metric proves skew exists. The repair needs the key.
+A comparable shard metric establishes skew in that measured quantity, not its cause.
+A key-level repair needs key evidence; a shard-local fault need not have one offending key.
 
 - **Use the store's own facility first.** Many stores expose per-key or per-partition
   statistics, a slow-log carrying the key, or a top-keys command. Check before building
@@ -103,9 +105,9 @@ if (ThreadLocalRandom.current().nextInt(SAMPLE_RATE) == 0) {
 - **Check whether the shard was hot before the last membership change.** Track logical keys separately from physical owners. Persistent heat on one physical node
   can reflect hardware or a local fault; intrinsic heat should follow the same logical key.
   Configuration-dependent heat suggests testing placement imbalance (`consistent-hashing`).
-- **Record the numbers you used.** The max/mean ratio at the time of the incident is the
-  baseline against which the repair is judged, and it is unrecoverable afterwards if nobody
-  wrote it down.
+- **Record the evidence and window you used.** Keep the distribution with demand, outcomes,
+  capacity and SLO evidence; max/mean alone is not a recovery baseline. Note missing history
+  rather than reconstructing unrecorded measurements.
 
 ## Troubleshooting path
 

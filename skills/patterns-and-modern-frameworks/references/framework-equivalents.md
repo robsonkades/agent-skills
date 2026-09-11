@@ -100,8 +100,10 @@ public interface Orders {
 }
 ```
 
-**Wrapper to avoid:** a hand-written interface whose methods are identical to Spring Data's.
-Narrowing is a justification; renaming is not (`repository-pattern`).
+**Wrapper to avoid:** an identical pass-through interface with no additional contract.
+Check for an actual compatibility, lifetime, failure or application-owned replacement seam
+before calling it redundant. Narrowing is one justification; merely renaming adds no such
+contract (`repository-pattern`).
 
 ### Service Layer → `@Transactional`
 
@@ -153,21 +155,28 @@ cache manager implements the intended behavior.
 
 ## Not provided at all
 
-| Pattern                      | Why a framework cannot supply it                                            |
-| ---------------------------- | --------------------------------------------------------------------------- |
-| Domain Model organisation    | It is your business; no framework knows your invariants                     |
-| Aggregate boundaries         | Same; and this decision drives locking, transactions and performance        |
-| Remote Facade granularity    | Depends on your callers' interactions                                       |
-| Pessimistic Offline Lock     | Spans requests; no transaction can carry it (`offline-concurrency-control`) |
-| Coarse-Grained Lock scope    | Follows the invariant, which is yours                                       |
-| Application Controller flow  | Your process                                                                |
-| Session state placement      | A trade-off between your requirements                                       |
-| Distribution boundaries      | Technical, organizational and operational trade-offs                        |
-| Saga and compensation design | Business semantics of "undo"                                                |
+| Pattern                      | Why a framework cannot supply it                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Domain Model organisation    | It is your business; no framework knows your invariants                                                   |
+| Aggregate boundaries         | Same; and this decision drives locking, transactions and performance                                      |
+| Remote Facade granularity    | Depends on your callers' interactions                                                                     |
+| Pessimistic Offline Lock     | Conversation ownership and abandonment recovery are application decisions (`offline-concurrency-control`) |
+| Coarse-Grained Lock scope    | Follows the invariant, which is yours                                                                     |
+| Application Controller flow  | Your process                                                                                              |
+| Session state placement      | A trade-off between your requirements                                                                     |
+| Distribution boundaries      | Technical, organizational and operational trade-offs                                                      |
+| Saga and compensation design | Business semantics of "undo"                                                                              |
 
-This table is the answer to "do we still need to know the patterns?". Everything in it is a
-decision, and every one of them is more expensive to get wrong than anything the framework
-provides.
+An application can hold a database transaction beyond one request; request-scoped framework
+demarcation does not automatically carry it there. A held transaction can retain connections,
+locks and snapshot resources and needs explicit concurrency, timeout and recovery bounds.
+For human thinking time, prefer short database transactions with an appropriate offline
+protocol. Durable checkout may use explicit release and audited recovery; a lease needs
+safe expiry/renewal and stale-owner rejection. An extended persistence context is not proof
+that one database transaction stays active.
+
+The table separates application decisions from available mechanisms; prioritize the gaps
+that matter to the requested contract rather than ranking their costs by pattern name.
 
 ## Patterns absorbed, not refuted
 
@@ -192,3 +201,7 @@ Sources: [Spring transaction interception](https://docs.spring.io/spring-framewo
 [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html),
 and [Spring caching annotations](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html).
 Check the matching documentation version for the deployed stack.
+For transaction lifetime, see [JDBC Connection's explicit commit/rollback contract, Java 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/Connection.html#setAutoCommit(boolean)>)
+and [Hibernate 6.6 conversation patterns](https://docs.hibernate.org/orm/6.6/userguide/html_single/#long-conversations).
+These distinguish possible lifetimes from appropriate resource ownership; they do not
+authorize holding a project's transaction across user interaction.

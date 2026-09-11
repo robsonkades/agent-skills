@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: gof-mediator
-version: 1.2.1
+version: 1.2.2
 description: >-
   Mediator in modern Java, treated as high-risk: replacing many-to-many collaboration with a hub
   that owns the interaction protocol, and the god object that hub becomes when nothing bounds it.
-  Covers the direction test that separates it from a facade, why an event bus is the decoupled
-  alternative and what it gives up, the reentrancy loop when a colleague notifies the hub that
-  notifies it back, the hub as a serialisation point, and orchestration versus choreography with
+  Covers the direction test that separates it from a facade, event-based alternatives and their
+  delivery coupling, the reentrancy loop when a colleague notifies the hub that
+  notifies it back, when the hub serializes work, and orchestration versus choreography with
   the availability coupling an orchestrator introduces. Use when collaborators reference each
   other in a web, when a coordinator class keeps growing, when a command bus is called a mediator,
   when a saga orchestrator is designed, or when a notification loops between two components. Does
@@ -49,6 +49,7 @@ suggests:
   - gof-facade
   - gof-observer
   - gof-state
+  - idempotency
   - java-memory-model
   - java-test-doubles
   - littles-law-and-queueing

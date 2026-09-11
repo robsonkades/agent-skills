@@ -34,13 +34,13 @@ shim instead of assuming every header function is directly callable.
 
 ## JDK transfer APIs versus io_uring
 
-| Property                      | `transferTo` / mapping                                                                   | io_uring transport                                                                         |
-| ----------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Stable JDK API                | Yes                                                                                      | No JDK-native transport through JDK 25                                                     |
-| Eliminates payload copies     | May avoid specific copies; mapping alone does not guarantee an end-to-end copy-free path | Ordinary reads/writes copy; selected zero-copy/splice operations may avoid specific copies |
-| Amortizes syscall transitions | Not a general property                                                                   | Possible through batching/shared rings; workload- and implementation-dependent             |
-| Portability                   | JDK API is portable; optimization is platform-dependent                                  | Linux-specific with kernel and native-library constraints                                  |
-| Failure surface               | Partial/zero transfer, fallback implementation, mapping faults/lifetime                  | Queue saturation, native ABI/artifact, unsupported opcodes, fallback and native memory     |
+| Property                      | `transferTo` / mapping                                                                   | io_uring transport                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Stable JDK API                | Yes                                                                                      | No built-in stock OpenJDK transport through JDK 25                                       |
+| Eliminates payload copies     | May avoid specific copies; mapping alone does not guarantee an end-to-end copy-free path | Depends on the operation and buffering; zero-copy/direct-I/O paths need separate support |
+| Amortizes syscall transitions | Not a general property                                                                   | Possible through batching/shared rings; workload- and implementation-dependent           |
+| Portability                   | JDK API is portable; optimization is platform-dependent                                  | Linux-specific with kernel and native-library constraints                                |
+| Failure surface               | Partial/zero transfer, fallback implementation, mapping faults/lifetime                  | Queue saturation, native ABI/artifact, unsupported opcodes, fallback and native memory   |
 
 The `FileChannel` contract permits an implementation-specific optimized path; it does not
 promise `sendfile(2)` or `splice(2)`. Correct code handles partial progress and validates the
@@ -51,6 +51,12 @@ buffered fallback appropriate to the channel. Preserve pending bytes and propaga
 Reject a raw file-transfer substitution when user-space TLS, compression or transformation is
 required; prove any supported offload path separately. Keep the source range stable for the
 transfer and any kernel-held references, rather than truncating/reusing it immediately.
+
+For a path that uses direct file I/O, verify filesystem support, alignment, buffered fallback
+and coherency requirements separately. A Java direct `ByteBuffer` does not itself enable
+`O_DIRECT`; neither registration nor an opcode establishes the entire copy path. `O_DIRECT`
+alone also provides no `O_SYNC` durability guarantee. Preserve the application's persistence
+and concurrent-access contract rather than adopting direct I/O merely for a zero-copy label.
 
 ## Netty API era map
 
@@ -118,3 +124,5 @@ completion ownership and delayed buffer reuse.
 - [FileChannel transfer contract, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html)
 - [FFM final API, JEP 454](https://openjdk.org/jeps/454)
 - [liburing send-zero-copy completion contract](https://man7.org/linux/man-pages/man3/io_uring_prep_send_zc.3.html)
+- [Linux direct-file-I/O contract and restrictions](https://man7.org/linux/man-pages/man2/open.2.html) — `O_DIRECT` and NOTES, when that file mode is actually involved.
+- [JDK 25 custom selector-provider contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/spi/SelectorProvider.html) and [stock OpenJDK 25 Linux selector provider](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/linux/classes/sun/nio/ch/DefaultSelectorProvider.java) — distinguish the standard API from the deployed native backend.

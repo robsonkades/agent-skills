@@ -147,22 +147,26 @@ framework-mediated edges are inferred automatically; the rest need reachability 
   missing-class/member/unsupported-feature behavior in the native binary. Test the native artifact
   over negative and optional paths, not only the training happy path.
 
-The corollary for design: on a runtime where startup and footprint matter, prefer the
-build-time mechanisms — generated code, `ServiceLoader`, constructor injection over field
-injection — because they are the ones the analyser can follow. See graalvm-native-image.
+For startup/footprint requirements, compare generation or explicit registration when build-time
+inputs and deployment semantics permit them. `ServiceLoader` performs service discovery; it is
+not itself a build-time generator. Its descriptors and framework-generated metadata can help a
+native-image toolchain, but support and discovered paths still need verification. Constructor
+injection can make dependencies explicit without proving native reachability. See graalvm-native-image.
 
 ## Review checks
 
 - [ ] Dynamic access is confined to an owned boundary with a typed contract and failure policy.
-- [ ] Every dynamically resolved name is checked against an allow-list, and narrowed with
-      `asSubclass` or an interface.
+- [ ] Resolution follows an owned schema/provider policy. External tokens select approved
+      operations; configurable classes are type-checked and authorized independently. Code-owned
+      member names need signature/access validation, not an inapplicable `asSubclass` check.
 - [ ] External tokens map to allow-listed operations; no direct class/member-name concatenation.
 - [ ] Lookups are cached at the correct application/plugin/schema lifecycle, not per call.
 - [ ] Repeated handles are stable where possible and do not pin reloadable class loaders.
 - [ ] `InvocationTargetException` unwrapped; reflective exceptions translated at the boundary.
-- [ ] Any `--add-opens`/`--add-exports` in the launch configuration is documented with the
-      reason and the plan to remove it.
-- [ ] Native-image reachability metadata is owned and the native artifact is tested.
+- [ ] Any `--add-opens`/`--add-exports` is scoped and justified by the supported access contract;
+      unsupported internals or temporary exceptions have an owner and migration/review condition.
+- [ ] Where native deployment is supported, reachability metadata is owned and the native
+      artifact is tested; otherwise this is not a required deployment mode.
 - [ ] Privileged lookups/handles are not exposed beyond their intended trust boundary.
 
 ## Troubleshooting map

@@ -1,8 +1,8 @@
 # Pool incident triage
 
-Follow the order. Each step either closes the question or hands you the next one, and
-skipping to "raise the pool" ends the investigation with the bottleneck relocated rather
-than removed.
+Use this sequence when the cause is unknown; reuse evidence that already resolves a step.
+Each step should distinguish a cause or identify the next check. Raising the pool without
+database headroom and aggregate budget evidence can relocate the bottleneck.
 
 ## 1. Is it the pool at all?
 
@@ -46,6 +46,9 @@ snapshot for the entire transaction. Check `backend_xmin` and blockers before as
 
 In default Spring proxy mode, `this.method()` bypasses that method's transaction advice. An outer
 transaction may still exist; inspect propagation and caller context, and distinguish AspectJ mode.
+If outer transactions hold all pool connections while `REQUIRES_NEW` calls wait for additional
+ones, the database may have spare capacity while no borrower can progress. Confirm the nested
+acquisition dependency; changing propagation also changes commit/rollback semantics.
 
 ## 4. Is it N+1?
 
@@ -104,9 +107,11 @@ retry exhaustion. Do not retry only the last statement in an aborted transaction
 
 ## What not to do first
 
-Raising `maximumPoolSize` is the last step, not the first. Before it: check
-`hikaricp.connections.usage`. If `W` is inflated by external I/O, N+1 or a slow query, the
-pool is not the problem, and enlarging it moves the queue into the database.
+Before raising `maximumPoolSize`, check hold time and competing causes: external waits, N+1,
+slow queries and nested acquisition can contribute. Their presence does not prove the local
+pool is adequate. A bounded increase can be justified by measured database headroom, aggregate
+session budgets and request SLOs, including as a temporary mitigation; compare useful throughput,
+waits and database health with explicit rollback bounds. Keep an adequate pool unchanged.
 
 Primary references: [PostgreSQL 17 statistics](https://www.postgresql.org/docs/17/pgstatstatements.html),
 [transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html), and

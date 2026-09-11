@@ -18,10 +18,10 @@ that will deploy.
 
 Warnings and state terminology are HotSpot implementation details, not a JVM-spec promise.
 
-For a concrete distinction, Temurin 25.0.3+9 on Windows accepted
+For a concrete historical distinction, a prior review recorded that Temurin 25.0.3+9 on Windows accepted
 `java -XX:+ZGenerational -version` with exit 0 and printed that the option was ignored
-because support was removed in 24.0 (executed during this review). The warning's
-"removed" does not mean this binary rejected the spelling. Inspect effective behavior
+because support was removed in 24.0. This is prior execution evidence, not a new target test.
+The warning's "removed" does not mean this binary rejected the spelling. Inspect effective behavior
 and repeat on the upgrade target; this observation predicts neither future acceptance
 nor another vendor's lifecycle.
 
@@ -70,8 +70,9 @@ Build evidence rather than copying a lifecycle table:
 | ------ | ------------------------------- | ------------------------------ | ------------------ | ---------- |
 |        |                                 |                                |                    |            |
 
-Test startup, readiness, workload, shutdown, OOM/recovery, and observability. A flag being accepted
-on both builds does not mean its default, mechanism, or effect is identical.
+Select startup, readiness, workload, shutdown, OOM/recovery and observability checks according to
+the affected flag semantics and upgrade risk; reuse adequate tests already performed on the builds.
+A flag being accepted on both builds does not mean its default, mechanism, or effect is identical.
 
 ## Source verification
 
@@ -117,6 +118,6 @@ The list is a routing hint, not a statement that any named family has the same s
 
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 `jcmd` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
-- [OpenJDK HotSpot arguments source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)
+- [OpenJDK JDK 25 GA arguments source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/arguments.cpp) — example release tag; select the deployed vendor/build source when different.
 - [OpenJDK JEP index](https://openjdk.org/jeps/0)
 - [Java SE support roadmap](https://www.oracle.com/java/technologies/java-se-support-roadmap.html)

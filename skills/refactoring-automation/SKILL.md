@@ -1,18 +1,14 @@
 ---
 name: refactoring-automation
 description: >
-  Applying a code change by machine rather than by hand: choosing between an IDE
-  refactoring, an OpenRewrite recipe, structural search-and-replace, a compiler-driven
-  change and hand-editing; what each tool can and cannot see; checking rename coverage
-  beyond resolved symbols; making a change spanning hundreds of files reviewable, reproducible and
-  revertible; and proving a mechanical change was mechanical. Use when one edit must land
-  across many files, when a framework or library migration must be applied repo-wide (javax
-  to jakarta, JUnit 4 to 5, a Spring major version), when a rename must reach names that
-  live in strings and configuration, when someone is about to run sed or a regex over Java
-  source, when a tool-generated diff is too large to review line by line, when an automated
-  refactoring changed behaviour, or when a cleanup keeps regressing because nothing stops it
-  coming back. Which refactoring to apply is java-refactoring, what to detect is
-  java-code-smells, and the CI gates the result must pass are quality-gates.
+  Applying repeatable Java changes with IDE refactoring, OpenRewrite, structural search,
+  compiler tooling or hand edits; checking tool coverage and making large diffs reviewable,
+  reproducible and reversible. Use when one edit spans many files, a framework or library
+  migration must run repo-wide, a rename reaches strings and configuration, regex is proposed
+  for Java source, a generated diff is too large to review line by line, automated refactoring
+  changed behaviour, or a cleanup needs recurrence prevention. Which refactoring to apply
+  belongs to java-refactoring, what to detect to java-code-smells, and which CI gates to require
+  to quality-gates.
 ---
 
 # Refactoring Automation
@@ -57,10 +53,10 @@ preconditions, representative match categories, exceptions and compatibility evi
 
 ```text
 IF the change is type-dependent — resolving an overload, a subtype, an import, a shadowed name
-THEN the tool must have a type-resolved model: IDE refactoring or OpenRewrite. Never regex.
+THEN use a tool with the required resolved semantic model, such as an IDE, OpenRewrite or Refaster. Never use regex as symbol resolution.
 
 IF the change is confined to one project open in one IDE and a human is driving
-THEN use the IDE refactoring; it is the highest-value-per-risk option and it updates callers.
+THEN consider the existing IDE refactoring after checking its index, scope and preview; do not assume unavailable integrations or external caller coverage.
 
 IF the change must be repeated — across repositories, or on a schedule, or by CI
 THEN prefer a versioned, testable transformation such as OpenRewrite; inspect available replay/export support before excluding an IDE or another tool.
@@ -68,8 +64,8 @@ THEN prefer a versioned, testable transformation such as OpenRewrite; inspect av
 IF a published migration recipe exists for it (javax→jakarta, JUnit 4→5, a Spring Boot upgrade)
 THEN inspect its version, prerequisites and complete recipe list, then preview only within the authorized migration scope.
 
-IF the change is a pure text pattern in non-Java files — YAML keys, properties, a licence header
-THEN a scripted text edit is legitimate. Say so explicitly, and keep it out of the Java sources.
+IF the edit is genuinely textual and bounded — a known licence header or literal documentation typo
+THEN a manual or scripted literal edit can suffice, including in Java comments. Inspect exact matches; this does not authorize a textual symbol rename.
 
 IF someone proposes a regex over Java source for anything type-dependent
 THEN refuse it: a regex cannot see scope, shadowing, imports, overloads or comments-versus-code.
@@ -77,7 +73,7 @@ THEN refuse it: a regex cannot see scope, shadowing, imports, overloads or comme
 IF the tool reports fewer matches than the codebase visibly contains
 THEN investigate match semantics, exclusions, source sets, parse failures and classpath. Do not infer completeness until the discrepancy is explained.
 
-IF the diff cannot be reproduced by re-running the tool on the base commit
+IF the diff cannot be reproduced by re-running the tool on the recorded input state, including relevant local changes
 THEN investigate differing inputs/tool versions and review unexplained edits directly; reproducibility is not a substitute for semantic validation.
 ```
 

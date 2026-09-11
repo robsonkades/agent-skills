@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-architecture-smells
-version: 1.2.1
+version: 1.2.2
 description: >-
   Detecting structural problems in an enterprise application from evidence, and telling
   genuine harm apart from unfamiliar-but-fine: anaemic domain models, god services,
@@ -59,6 +59,7 @@ suggests:
   - enterprise-base-patterns
   - enterprise-transactions
   - inheritance-mapping-strategies
+  - legacy-enterprise-modernization
   - remote-facade-and-dto
   - session-state-strategies
 

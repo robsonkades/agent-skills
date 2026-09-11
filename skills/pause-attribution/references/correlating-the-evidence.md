@@ -6,7 +6,7 @@
 Safepoint Total         = Reaching safepoint (sync) + At safepoint (VM work) + Leaving safepoint
                           \___________________/       \__________________/       \_______________/
                            thread-side problem          collector or VM-op        disarm + wake-up,
-                           (TTSP)                       problem                   small, real
+                           (TTSP)                       problem                   separate term
 ```
 
 This is the tested JDK 25 log layout, not a cross-version parser schema. `At` spans the
@@ -21,10 +21,10 @@ bucket to sum again. Match request intervals before reasoning about a remainder.
 | `At safepoint`       | Synchronized interval: VM work and cleanup                  | Partly; not necessarily equal to a GC event               |
 | `Leaving safepoint`  | Disarming the polls and waking the threads                  | Partly — the term a two-field sum drops                   |
 | `Total`              | Sync + operation + leaving                                  | JVM safepoint interval; correlate to application evidence |
-| `Threads`            | `N runnable, M total` — how many had to be stopped          | No, but it scales the sync term                           |
+| `Threads`            | Counts recorded by the synchronization pass                 | No; counts alone do not establish sync cost               |
 
 Worked example of why the manual sum is not the metric — a real `G1CollectFull` line from
-25.0.3 (executed):
+the package's historical 25.0.3 validation (not a new target observation):
 
 ```
 Reaching safepoint:   10700 ns
@@ -34,10 +34,12 @@ Leaving safepoint:     4500 ns
 Total:              2823200 ns     <- Reaching + At + Leaving, exact on 1,169 lines
 ```
 
-A few microseconds per event is noise at a few safepoints per second. At thousands per
-second — frequent GC, heavy deoptimisation — the accumulated omission stops being noise, and
-a JDK ≤ 24 log, which prints no `Leaving` field, hides it entirely. Measure the term in
-your own log before deciding whether it matters to your SLO; it has no universal magnitude.
+The importance of an omitted term depends on its duration distribution, frequency and the
+affected request/SLO contract, not a universal safepoints-per-second threshold. The checked
+JDK 24 layout has no separate `Leaving` field, but its `At` is end minus sync and already
+includes leaving; `Total` remains end minus begin. JDK 25 splits that old `At` interval into
+`At` and `Leaving`. Do not add estimated leaving time to an older `Total` or apply the JDK 25
+three-term schema to every historical log.
 
 ## Enabling the safepoint log
 
@@ -45,7 +47,7 @@ your own log before deciding whether it matters to your SLO; it has no universal
 java -Xlog:safepoint=info:file=safepoint.log:time,uptime,level,tags -jar app.jar
 ```
 
-Real output on 25.0.3 (executed; one line, wrapped):
+Historical 25.0.3 output (one line, wrapped):
 
 ```
 [2026-09-02T02:43:47.726-0300][0.029s][info][safepoint] Safepoint "G1CollectForAllocation", \
@@ -80,8 +82,10 @@ Report, per safepoint reason, count and distributions of both TTSP and `Total`, 
 above an SLO-derived investigation threshold grouped by reason. A universal 10 ms threshold
 can be irrelevant to either a low-latency or batch workload.
 
-Before trusting any aggregate: run the analyser over twenty lines of the real log and check the
-event count against a manual `grep -c Safepoint`.
+Before trusting an aggregate, compare a representative raw sample with the parser's accepted
+completion records and rejected candidates. Count actual `Safepoint "...", ... Total: ...`
+records, not every line containing the word `Safepoint` (timeout/debug messages can differ).
+Do not interpret an unreadable file, failed producer or unmatched schema as zero events.
 
 ## The JFR safepoint events
 
@@ -116,8 +120,8 @@ expires and the final file is written. Confirm completion/readability or take a 
 is not the final duration window. Verify event settings and recording loss alongside metadata.
 
 `jdk.SafepointLatency` has no `safepointId` (verified against
-`src/hotspot/share/jfr/metadata/metadata.xml`, tag `jdk-25-ga`) and its only field is
-`threadState`. It cannot be correlated into a safepoint cycle, and using it as a shortcut to
+`src/hotspot/share/jfr/metadata/metadata.xml`, tag `jdk-25-ga`); its only event-specific payload
+field is `threadState`, in addition to standard timing/thread/stack metadata. It cannot be correlated into a safepoint cycle, and using it as a shortcut to
 `Total` produces a number that answers a different question.
 
 ## Reconstructing `Total` from JFR
@@ -169,9 +173,11 @@ duration event can explain them. A currently stuck operation may not yet have em
 If an older schema lacks correlation fields, report unavailable labels; temporal attribution
 is a separate hypothesis, not a silent fallback. Do not merge safepoint IDs across JVM restarts.
 
-## The cross-check, and why it is the acceptance criterion
+## Cross-checking a cycle when both sources are available
 
-Run the JFR reconstruction against a recording taken over the same interval as the text log.
+When a cycle comparison is needed, run the JFR reconstruction against a recording taken over
+the same interval as the text log. Existing adequate captures suffice; absence of JFR leaves
+this cross-check unavailable, not every log-based conclusion invalid.
 Match individual cycles by interval/operation before comparing the largest durations; do not
 pair independently sorted tails as if they identified the same events. The two expose the same JVM cycle through
 different encodings — unified logging text and JFR. Agreement is a strong parser/window
@@ -206,16 +212,17 @@ Compare actual overlaps and avoid double-counting nested GC/safepoint/JFR interv
 
 ## Cadence and the apparent gap
 
-With `-XX:GuaranteedSafepointInterval=0` (default since JDK 23), the safepoint log contains
-only safepoints with a real cause. Correlating against infrastructure metrics sampled at a
-fixed interval, the missing background beat can read as an instrumentation gap when it is the
-correct behavior, but only after excluding configuration/loss and an in-progress cycle whose
-completion line has not yet been emitted.
+`-XX:GuaranteedSafepointInterval=0` is the default since JDK 23, but neither the flag's name
+nor its help text establishes a periodic safepoint producer. In the checked 25.0.3 implementation,
+it controls the VM-operation monitor's timed wait. Without an operation to execute or a separate
+diagnostic forcing mechanism, waking that monitor does not itself request a safepoint.
+Do not expect `1000` alone to produce a one-second beat. A gap can be correct behavior, but
+exclude configuration/loss and an in-progress cycle whose completion line is still pending.
 
-| Context                                                                          | Value                 | Why                                                           |
-| -------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
-| Production, normal running                                                       | `0` (JDK 23+ default) | Removes the overhead of periodic safepoints with no purpose   |
-| Short diagnostic experiment, only if a forced cadence answers a defined question | `1000`, temporarily   | Introduces safepoints; compare against an unmodified baseline |
+| Context                                                             | Value                 | Why                                                                           |
+| ------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------- |
+| Checked default invocation                                          | `0` (JDK 23+ default) | No timed monitor wake from this interval; other causes can request safepoints |
+| Matched invocation to investigate an intentional nondefault setting | `1000`                | Compare actual operations/costs; this value alone does not force safepoints   |
 
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:GuaranteedSafepointInterval=1000 \
@@ -223,8 +230,14 @@ java -XX:+UnlockDiagnosticVMOptions -XX:GuaranteedSafepointInterval=1000 \
      -jar app.jar
 ```
 
-Do not leave the diagnostic change in production without measuring its effect and documenting
-why induced safepoints are required.
+The command illustrates a nondefault invocation, not a guaranteed safepoint-generating fixture.
+Retain an intentional nondefault setting only with a documented continuing purpose and
+adequate target-build cost evidence. A supported existing configuration does not require
+removal merely because it differs from the default.
 
 Source for JFR duration boundaries and synchronization aggregation:
 [OpenJDK 25 safepoint implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepoint.cpp).
+Compare the [JDK 24 layout](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/safepoint.cpp)
+before interpreting an older `At` or absent `Leaving` field.
+For cadence, inspect the [25.0.3 VM-operation wait loop](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmThread.cpp)
+and its actual operation producers rather than relying on a flag description.

@@ -35,6 +35,11 @@ heap-default note in the reference. Inspect the runtime image's vendor/update, l
 deployment resources and kernel/cgroup version; a build toolchain alone does not identify
 production ergonomics. Do not upgrade the runtime to match these examples.
 
+Start with the requested decision and existing deployment, runtime and measurement artifacts.
+Reuse evidence that matches the target and workload; collect only gaps that could change the
+answer. A flag explanation needs no new load test, and a budget that already meets its
+headroom and latency goals may need no change.
+
 1. **Establish what the target JVM detected, from inside its container.** A fresh
    `java -XshowSettings:system` is a probe, not proof of the live JVM's settings: match binary,
    options and cgroup, and prefer in-process `availableProcessors()` plus live flags.
@@ -84,8 +89,8 @@ production ergonomics. Do not upgrade the runtime to match these examples.
   before reading `cpu.stat`, rather than assuming either a `/cpu/` controller or mount root.
   Both versions use `nr_periods` and `nr_throttled`; time is `throttled_time` (ns) in v1,
   `throttled_usec` in v2.
-- Kubernetes CPU requests are scheduler shares and are not a cgroup CPU-capacity value the
-  JVM should interpret as a hard capacity. Older HotSpot updates nevertheless used shares;
+- Kubernetes CPU requests influence pod placement and CPU scheduling weight under contention;
+  they are not a hard CPU quota. Older HotSpot updates nevertheless used shares for sizing;
   verify the deployed update's behavior. Updated HotSpot derives an effective count from applicable
   quota, cpuset/affinity and host constraints (or an explicit `ActiveProcessorCount`). A pod
   with request `500m` and limit `4` can therefore size parallel facilities near four even
@@ -109,12 +114,17 @@ production ergonomics. Do not upgrade the runtime to match these examples.
 - Confirm the JDK version against the cluster's cgroup version before trusting detection.
   Cgroups v2 support landed in JDK 15 and was backported, including to 11.0.16. Major version
   alone cannot establish support or exclude later detection bugs; verify vendor/update and logs.
-- Collecting NMT only at boot proves nothing about a kill under load. Take the summary at
-  peak.
+- Boot-only NMT does not establish memory usage at a later kill. Use a capture near the
+  relevant peak when available; if the JVM has exited or NMT was disabled, report that gap
+  and plan only the missing capture or representative reproduction. A replacement JVM's
+  readings do not reconstruct its predecessor's peak.
 
-Deliver the target/runtime/cgroup identity, measured memory or CPU evidence, competing
-explanations, proposed change and same-load validation metric. Missing access or counters
-leave the diagnosis conditional; an empty command output is not a healthy reading.
+For a diagnosis or sizing decision, deliver the target/runtime/cgroup identity, available
+memory or CPU evidence, competing explanations where unresolved, and the proposed change
+or reason to retain the current sizing. A change needs a same-load validation metric;
+report whether it was actually checked. For a flag explanation, a scoped interpretation
+and its evidence suffice. Missing access or counters leave the diagnosis conditional;
+an empty command output is not a healthy reading.
 
 ## References
 

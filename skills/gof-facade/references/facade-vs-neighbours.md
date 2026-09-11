@@ -66,11 +66,12 @@ Detection, in order of how early it fires:
 
 - **Dependency growth with unrelated change reasons.** Counts are a prompt to inspect cohesion.
 - **Methods that share no collaborators.** `exportForAccounting` and `resendConfirmation` touch
-  disjoint sets; they are two classes wearing one name.
+  disjoint sets; investigate independent change and ownership before splitting a coherent public API.
 - **Test setup grows superlinearly.** A new test must stub collaborators it does not use.
 - **Merge conflicts concentrate in one file.** Every feature touches it because everything is in
   it.
-- **A method takes a boolean or an enum that selects behaviour.** Two intentions in one method.
+- **A flag hides distinct intentions or effects.** Preview versus publish deserves explicit names;
+  a rendering format or another clear option of one operation is not itself a cohesion defect.
 
 ## Splitting one
 
@@ -91,18 +92,20 @@ final class CancelOrder  { CancelOrder(OrderRepository, StockReservation, Domain
 final class RefundOrder  { RefundOrder(OrderRepository, PaymentGateway, DomainEvents) { } }
 ```
 
-Objections and answers:
+For a justified split, weigh the costs:
 
-- _"Now there are twenty classes."_ There were twenty methods; each is now independently
-  readable, testable and ownable, and none forces the others to load.
-- _"Callers must know which class to use."_ They already had to know which method. The class name
-  carries the same information with better discoverability.
+- _"Now there are twenty classes."_ Independent ownership/testing may repay the extra navigation
+  and wiring; if there is no such gain, a small cohesive facade can remain adequate.
+- _"Callers must know which class to use."_ Preserve a stable public facade that delegates where
+  it still helps consumers. A public split needs compatibility/migration evidence; an internal
+  split need not change callers.
 - _"Shared setup is duplicated."_ Extract it as a collaborator, not as a base class. Shared
   behaviour through inheritance re-creates the coupling you just removed
   (`java-composition-over-inheritance`).
 
-Keep a single class only where the operations genuinely share state or a sequence — a wizard-like
-flow, a saga's steps — and then the shared thing, not the noun, is the reason.
+Shared state or a sequence — a wizard-like flow or a saga's steps — can justify one implementation.
+A coherent consumer capability and stable ownership can justify one facade even when its delegated
+operations do not share collaborators. Keep that decision tied to actual consumers and change costs.
 
 ## The transaction boundary
 

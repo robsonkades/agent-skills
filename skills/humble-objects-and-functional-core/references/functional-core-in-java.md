@@ -120,8 +120,10 @@ throw (`java-exception-design`).
 
 ## Inputs and intermediate values: records, and where they stop paying
 
-Records are the right default for the core's inputs and outputs: transparent, equal by value,
-free `toString` for test failure messages.
+Records fit transparent data carriers with component-based equality; existing immutable
+classes or simple values may already fit. Do not change a public input/output contract
+just to use a record. Generated `toString` includes component values, so avoid exposing
+sensitive data in test output or logs.
 
 Two costs are worth stating plainly:
 
@@ -138,8 +140,8 @@ Two costs are worth stating plainly:
   }
   ```
 
-- **Rebuilding a record per step allocates.** In a loop over a large collection this is
-  usually irrelevant, because young-generation allocation is cheap. Escape analysis can
+- **Rebuilding a record per step may allocate.** Materialized allocation and its cost depend
+  on the workload and optimized code. Escape analysis can
   eliminate a record entirely when its uses remain within the optimized compilation graph.
   A source-level return does not prove escape after inlining; a local collection does not
   by itself prove materialization either. Retained/published results constrain elimination.
@@ -183,10 +185,12 @@ published and stable for the entire evaluation. Reading a caller-owned list whil
 thread mutates it violates that premise even if the core performs no writes. Purity does not
 make the shell's read/decide/write sequence atomic (`java-memory-model`).
 
-The corresponding trap: a "pure" core holding a memoisation cache in a `HashMap` field. It is
-now shared mutable state, it is not thread-safe, and the impurity is invisible at the call
-site. If memoisation is needed, it belongs in the shell, or in a concurrent structure chosen
-deliberately (`caching-strategies`, `java-memory-model`).
+The corresponding trap is a memoisation `HashMap` shared by concurrent evaluations without
+synchronization. Confinement can be adequate; if the cache is shared, define coordination,
+key/value stability and retention explicitly. Memoisation may preserve decision results while
+introducing hidden mutable state and costs. Put that policy in the shell or choose an explicit
+core contract rather than inferring thread safety from pure-looking signatures
+(`caching-strategies`, `java-memory-model`).
 
 ## Costs, stated honestly
 
@@ -194,9 +198,9 @@ deliberately (`caching-strategies`, `java-memory-model`).
 | ----------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | More types                    | Every outcome becomes a named record                 | Only model outcomes the shell branches on; do not wrap a single boolean                 |
 | A second hop to read          | The reader follows shell → core → outcome → shell    | Keep the pair in one package, named for the same concept                                |
-| Allocation                    | Records rebuilt in a measured hot loop               | Profile before reacting; EA removes it only if it never escapes                         |
+| Allocation                    | Records rebuilt in a measured hot loop               | Profile materialized allocation; elimination depends on the optimized graph             |
 | Data must be fetched up front | Deciding what to fetch requires knowing the decision | Two rounds — decide what is needed, fetch, decide — rather than passing a repository in |
-| Over-application              | Components that have no decision get a core anyway   | The workflow's step 6: revert if no test got better                                     |
+| Over-application              | Components gain a core without a concrete benefit    | Keep adequate seams; compare testability and change cost while retaining boundary tests |
 
 ## When not to use a functional core
 
@@ -217,3 +221,5 @@ deliberately (`caching-strategies`, `java-memory-model`).
 
 - [Java 21 pattern switches](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html) — exhaustiveness and null handling.
 - [Java 21 List contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html) — unmodifiable collections and mutable elements.
+- [Java 21 Clock contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Clock.html) — injected clocks, fixed test time and zones.
+- [Java 21 Record contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html) — shallow immutability and generated component-based methods.

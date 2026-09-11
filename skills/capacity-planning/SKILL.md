@@ -60,6 +60,12 @@ replica count. The full record is for a provisioning decision.
 
 ## Workflow
 
+Start from the requested decision and existing capacity records, configuration, telemetry
+and test artifacts. Reuse applicable evidence and accepted demand/failure policies; ask only
+about unresolved inputs that could change feasibility or selection. Continue independent
+calculations with explicit assumptions. Keeping the current configuration is a valid result
+when its evidence covers the required demand paths; define what would trigger a new decision.
+
 ### 1. Define scenarios before collecting numbers
 
 At minimum consider:
@@ -96,7 +102,8 @@ See [inputs, forecast and cost](references/inputs-forecast-and-cost.md).
 
 For each candidate resource shape and replica count:
 
-1. sweep open-loop offered load through and beyond the expected operating range;
+1. vary load using the production population model: open arrivals for externally imposed
+   demand, or a closed population when that is the actual constraint;
 2. test representative steady, step and ramp profiles;
 3. identify the highest load whose complete measurement window satisfies the SLO, error,
    resource and stability guardrails;
@@ -104,10 +111,10 @@ For each candidate resource shape and replica count:
 5. express the boundary as an interval when tested load steps or measurement error leave it
    bracketed.
 
-The maximum observed passing point is not an exact capacity. It is a lower bound for the
-tested scenario; the first failing point is an upper bound only if the experiment,
-configuration and failure classification are sound. Refine the bracket where the decision
-is sensitive.
+The maximum observed passing point is not an exact capacity. A passing/failing pair brackets
+capacity only when reproducible, locally monotone feasibility and a sound failure
+classification support that inference for the same scenario/configuration. Otherwise report
+the observed points. Refine the bracket where the decision is sensitive.
 
 Closed workloads can reveal saturation and are appropriate for fixed-population systems,
 but coordinated feedback means they do not establish behavior under an externally fixed
@@ -141,8 +148,9 @@ or defensibly interpolated envelope. A candidate is feasible only if:
 - overload protection prevents unstable positive feedback.
 
 Choose among feasible candidates using cost, operability, carbon, supply risk and
-reversibility. Validate the chosen configuration and adjacent alternatives; integer
-replicas, bin-packing and quotas make the search discrete.
+reversibility. Use comparable evidence for the chosen configuration; test adjacent
+alternatives when they could change the choice. Integer replicas, bin-packing and quotas
+make the search discrete.
 
 Do not reduce system capacity to the numerical minimum of component QPS limits unless the
 components are serial, limits use the same workload unit, and interactions are negligible.
@@ -275,7 +283,9 @@ new useful capacity.
 
 Before approval:
 
-- reproduce the chosen boundary and at least one adjacent passing/failing configuration;
+- confirm that existing evidence covers the chosen configuration and required scenarios;
+  repeat or extend tests for changed conditions, missing coverage or material uncertainty;
+- refine adjacent passing/failing points when the boundary could change the decision;
 - test gradual ramp, impulse/burst, sustained overload and recovery;
 - test rollout/restart and the declared failure-domain loss;
 - verify offered, admitted and successful demand independently;

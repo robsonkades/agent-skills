@@ -13,8 +13,10 @@ framework mechanism whose owner publishes that representation as the contract.
 **Common coupling — shared mutable state.** In Java: a mutable `static` field or
 singleton read and written from several packages, a shared `Properties` or config
 object mutated at runtime, a static registry that classes populate on class-load.
-Detection: `static` non-final fields with cross-package writers; grep for
-`getInstance()` callers that mutate. The blast radius is invisible in the
+Detection: cross-package writers to mutable `static` fields **or objects held by final fields**;
+`final` prevents rebinding a reference, not mutation of its referent. Inspect mutating calls
+through shared collections, configuration objects and `getInstance()` results, then establish
+the intended state owner and consistency contract. The blast radius is invisible in the
 dependency graph — the graph shows edges to the holder, not who overwrites whom.
 
 **Control coupling — telling the callee how to behave.** In Java: `boolean` or
@@ -61,10 +63,10 @@ because "it also runs at startup" (cache warming that encodes pricing rules).
 The members share nothing but a vague kind, every package depends on it, and it
 only grows. Detection: afferent coupling from everywhere, exports of unrelated
 vocabulary. Sometimes fine: a small, stateless, dependency-free leaf
-(`StringPadding`, `Hex`) is cheap to depend on precisely because it can never
-change for domain reasons. The rot begins when a "utility" acquires a domain
-noun — `OrderUtils` is a missing method on `Order` or a missing domain service,
-filed in a junk drawer.
+(`StringPadding`, `Hex`) may be cheap to depend on when its contract is stable.
+A domain noun such as `OrderUtils` is an investigation cue, not proof of misplaced methods:
+coherent stateless domain calculations can be valid. Move behavior only when its actual
+invariants, ownership or consumer/change costs justify a different home.
 
 ## False positives across the board
 
@@ -76,5 +78,11 @@ filed in a junk drawer.
 - **Generated code** (protobuf, JPA metamodels) distorts source-maintenance metrics, so analyse
   it separately rather than declaring it free. Regeneration may be mechanical while schema,
   binary and downstream compatibility costs remain large.
-- **A test package coupled to everything it tests** is definitionally fine;
-  coupling analysis applies to production edges.
+- **A test package referencing the code it exercises** is expected and stays outside production
+  Ca/Ce counts. Tests coupled to private structure can still create maintenance costs;
+  java-test-design owns that separate review, not a production-package move to improve the metric.
+
+## Primary source
+
+- [JLS 25 final variables](https://docs.oracle.com/javase/specs/jls/se25/html/jls-4.html#jls-4.12.4)
+  distinguishes a fixed reference from mutable object state.

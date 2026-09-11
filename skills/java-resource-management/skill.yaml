@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-resource-management
-version: 1.2.1
+version: 1.2.2
 description: >-
   Deterministic release of what a Java program holds open: try-with-resources and the
   exception semantics that make it non-optional, designing an AutoCloseable (ownership,
@@ -43,6 +43,22 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - concurrency-limiting-and-bulkheads
+  - connection-pool-sizing
+  - delivery-semantics
+  - executors-and-task-lifecycle
+  - idempotency
+  - java-memory-model
+  - java-reference-types-and-leaks
+  - kubernetes-service-lifecycle
+  - littles-law-and-queueing
+  - off-heap-memory
+  - session-state-strategies
+  - structured-concurrency
+  - thread-sizing-and-virtual-threads
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

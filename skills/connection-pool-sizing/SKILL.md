@@ -47,7 +47,7 @@ capacity evidence requires a measurement plan and conditional recommendation, no
    `usage` p50 versus p99 (does a minority hold connections far too long?),
    `pg_stat_activity` for long `idle in transaction` sessions (what code is holding a transaction
    open while no statement runs?), then `pg_stat_statements` ordered by `total_exec_time` **and** by `calls`
-   — the second reveals N+1.
+   — high call counts identify candidates for per-request N+1 investigation.
 
 ## Rules
 
@@ -59,9 +59,11 @@ capacity evidence requires a measurement plan and conditional recommendation, no
   itself slows as concurrency rises. Use Erlang-C only as an explicit approximation and validate
   candidate sizes with production distributions or a representative load test.
 - Never equate the pool to the container's thread count. Threads waiting for a connection can be
-  intentional backpressure, but their wait must still fit the request deadline. Across instances,
-  pool maxima must fit the database's configured connection budget; do not assume a vendor default
-  or managed-service limit.
+  intentional backpressure, but their wait must still fit the request deadline. For direct database
+  connections, aggregate all pools across peak coexisting instances within the available session
+  budget. This configured ceiling is separate from measured safe database execution concurrency.
+  With a connection proxy, budget client connections and backend sessions separately; do not assume
+  a one-to-one mapping or a vendor default (see the sizing reference).
 - Avoid `connection-timeout=0`, which HikariCP treats as effectively unbounded. Its default is
   **30,000 ms** and its accepted minimum is 250 ms. Choose a finite value inside the caller's
   remaining deadline and validate the resulting rejection behaviour. Failing fast
@@ -84,6 +86,9 @@ capacity evidence requires a measurement plan and conditional recommendation, no
   interception. Method visibility support depends on proxy type and Spring version; a separate
   proxied collaborator or `TransactionTemplate` makes the boundary explicit. AspectJ weaving has
   different semantics, so inspect the configured advice mode before diagnosing from source alone.
+  Also inspect nested acquisition: `REQUIRES_NEW` can hold the outer transaction's connection while
+  borrowing another for the inner transaction. Pool starvation can therefore occur with database
+  headroom; review propagation semantics and peak simultaneous borrows before changing capacity.
 - `idle in transaction` says that a transaction is open while the backend is not executing a
   statement. Correlate application traces and transaction age before attributing the gap to HTTP,
   messaging, user think time, or business logic. A 300 ms HTTP call inside

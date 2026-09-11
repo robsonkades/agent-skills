@@ -28,6 +28,13 @@ accounts for the window in which a half-applied state is readable by everyone el
 
 ## Workflow
 
+Start from the supplied business invariant, acceptable pending/repair outcomes, existing boundaries
+and recovery evidence. Ask only about missing facts that change the choice, such as whether a
+reservation may expire or a refund window closes; keep the recommendation conditional while
+investigating those facts. A working local transaction or supported XA arrangement may already
+satisfy the contract. Stop mechanism selection when the required outcomes and recovery owner are
+supported; do not introduce a saga merely to anticipate possible future distribution.
+
 1. **Enumerate the writes and their owners.** For each: which store or service, is it
    reversible, and what an observer sees between it and the next write.
 2. **Test whether one transactional owner is architecturally valid.** Writes in one database
@@ -51,8 +58,10 @@ accounts for the window in which a half-applied state is readable by everyone el
 Inspect the deployed JDK, Spring/JTA manager, client versions, enlistment, rollback policy and
 participant status/idempotency semantics. Reference Java types require JDK 17+; orchestration and
 test blocks are partial sketches with application-specific contracts. Do not upgrade the target
-to fit them. Deliver the selected atomic boundary, persisted transition/recovery plan, terminal
-invariants, tested evidence and unresolved outcomes or assumptions.
+to fit them. Deliver the selected or retained atomic boundary, its recovery obligations, terminal
+invariants, evidence and unresolved outcomes or assumptions. For a saga, include its persisted
+transition/recovery plan. Distinguish a recommendation or untested sketch from implemented,
+failure-tested recovery, and state which unresolved fact would change the choice.
 
 ## Decision block
 
@@ -80,8 +89,9 @@ Prefer the transactional outbox when the only non-database write is "publish a m
 
 ## Rules
 
-- **A saga is not an ACID transaction.** Each step commits locally and is immediately
-  visible, so two sagas can interleave on one entity, a reader can observe a state no
+- **A saga is not an ACID transaction.** Each step commits locally and can become visible
+  before the saga finishes, according to the reader's isolation and application contract.
+  Two sagas can interleave on one entity, a reader can observe a state no
   completed operation produces, and a compensation can land after someone acted on the
   intermediate value. The countermeasures are design obligations, not optimisations: a
   **semantic lock** (an explicit `PENDING`/`RESERVED` status other operations are written to
@@ -97,16 +107,21 @@ Prefer the transactional outbox when the only non-database write is "publish a m
   request a remote step durably; it does not make that step atomic with the local row.
 - **2PC's defining failure cost is the in-doubt blocking window;** protocol latency, resource
   support and operational coupling matter too. Having voted yes, a participant is _in
-  doubt_: it holds its locks and may not decide unilaterally without risking atomicity, so a
-  coordinator crash in that window blocks it until the coordinator's recovery log returns.
-  Across services that means one team's incident freezes another team's rows.
+  doubt_: it retains the prepared state and resource-specific locks/reservations needed until
+  a recoverable decision reaches it. A read-only branch need not remain prepared. Losing the
+  decision authority can block other work; forcing a unilateral heuristic outcome risks
+  atomicity and requires reconciliation, not an assumption that the transaction rolled back.
 - XA is not disqualified everywhere. One application, one transaction manager, a database
   and a broker both exposing XA resource managers, a durable transaction log and operational
-  access to in-doubt branches is correct, and a smaller machine than a saga. Say where that
-  log lives: XA logging to ephemeral container storage is not recoverable.
+  access to in-doubt branches can be simpler than a saga when the actual enlistment, isolation
+  and recovery contracts meet the business invariant. Say where that log lives: a lost sole
+  recovery log prevents automatic decision recovery.
 - **A compensation is not an undo.** You cannot un-send an email (you send a correction),
   un-charge a card (you refund, a new fact with its own trail), or restore a seat someone
-  else has taken. Write the compensation as the business action it actually is.
+  else has taken. Write the compensation as the business action it actually is. Preserve later
+  independent changes: release this saga's identified reservation rather than restoring an old
+  balance. Check current eligibility and time limits atomically at the participant; an expired
+  refund window or consumed reservation needs the agreed alternative/repair outcome.
 - Compensations must be **idempotent and retryable** (`idempotency`), because they run
   precisely where outcomes are unknown. A step timeout is an _unknown_ outcome, not a
   failure (`failure-models`): query the participant for that step's status by saga id before

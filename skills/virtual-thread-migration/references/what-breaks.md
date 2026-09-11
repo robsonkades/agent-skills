@@ -5,11 +5,12 @@ the required behavior rather than relying on the absence of an exception.
 
 ## Thread names, log correlation and metrics
 
-An unnamed virtual thread has an **empty** `getName()` and prints as
-`VirtualThread[#38]/runnable`.
+An unnamed virtual thread has an **empty** `getName()`; a diagnostic representation may look
+like `VirtualThread[#38]/runnable`. Do not treat that example as a stable parser format.
 
-Breaks: log patterns containing `%thread`, MDC populated from the thread name, metrics tagged
-by thread name, log filters that select a pool's threads, and any dashboard grouped by thread.
+Inspect log patterns containing `%thread`, MDC populated from thread names, thread-name labels,
+pool-name filters and dashboards grouped by thread. Whether they fail or need replacement
+depends on their actual contract and emitted data. Adequate request correlation need not be renamed.
 
 ```java
 // Partial Java 21+ snippet: import java.util.concurrent.*; lifecycle owner must close exec.
@@ -51,22 +52,28 @@ The fix depends on which property was wanted:
 | Immutable lexical context  | Java 25 final `ScopedValue` when binding/lifetime semantics fit           |
 | Scarce resource per worker | an explicit pool with a size                                              |
 
-Measure allocation before and after: replacing a per-thread buffer with a per-request one is
-correct and can still be a GC regression worth knowing about.
+Before replacing a per-thread buffer with a per-request one, preserve confinement, lifetime,
+resource cleanup and ownership across concurrent children. Request scope alone does not make
+mutable sharing safe. When allocation cost matters, compare actual initialized populations and
+retained lifetimes; a correct replacement can still cause a GC regression.
 
 ## Ordering guarantees that came from a single thread
 
 ```java
-// This is not "a pool of one". This is a serialisation point with a misleading name.
+// Partial snippet: task bodies run sequentially, but the queue is unbounded.
+// The component owns shutdown; appendToLedger and entry are application-specific.
 ExecutorService ordered = Executors.newSingleThreadExecutor();
 ordered.submit(() -> appendToLedger(entry));
 ```
 
-Replace it with per-task virtual threads and entries interleave. Nothing fails; the ledger is
-wrong.
+Per-task virtual threads remove that executor's sequential-task guarantee. If the ledger relies
+on it and no other enforcement preserves the required effect order, concurrent effects can be
+wrong without an immediate exception. Valid resource-side ordering or order-independent effects
+can make the old serialization unnecessary; verify the actual contract before removing it.
 
 Find them, and for each decide: keep the single-threaded executor (usually correct and
-costs one platform thread), or use an explicitly ordered per-key queue/consumer. A lock enforces
+costs one platform thread), or use a demonstrated ordered queue/consumer/resource contract;
+record a justified removal when order was never required. A lock enforces
 mutual exclusion, not submission order; sequence numbers need a defined gap/retry/reordering
 policy before effects occur. Sorting results after unordered side effects cannot repair them.
 What is not acceptable is discovering the property
@@ -81,19 +88,19 @@ The same audit applies to scheduled/actor-like designs, but note that one period
 a multi-thread scheduled executor. Distinguish that API guarantee from serialization between
 different jobs.
 
-## Pool metrics that go to zero
+## Pool metrics whose meaning changes
 
 Dashboards and alerts built on `tomcat.threads.busy`, `executor.active`, `executor.queued`,
-`executor.pool.size` keep reporting — a flat zero, or nothing at all. An alert on a metric
-that no longer exists does not fire, and nobody notices until the incident it was meant to
-catch.
+`executor.pool.size` may disappear, become zero, retain a valid producer, or change meaning.
+Inspect the actual executor, instrumentation and alert rules; missing-series behavior depends
+on those rules. Verify both the metric and the condition it is supposed to detect.
 
-Replace them, in the same change, with:
+Preserve adequate signals and replace uncovered requirements in the affected change, using:
 
-- in-flight requests (a gauge you now maintain yourself, because the pool no longer is one)
+- in-flight requests from a verified existing instrument or an explicitly owned gauge
 - available permits and wait time on each declared limit
 - scheduler pool/mounted/queued estimates (Java 24+), so pressure is visible
-- the connection pool's own metrics, which are now doing more of the work
+- the connection pool's own metrics for actual resource utilization and waiting
 
 ## Framework adapters
 
@@ -114,8 +121,9 @@ for scheduler/batch-only applications. Keep these checks distinct from choosing 
 - Tests using a `CountDownLatch` sized to the pool's thread count.
 - Tests whose timing assumptions came from queueing behind a small pool.
 
-These fail _sometimes_, which is worse than failing. Fix them by asserting on outcomes rather
-than on scheduling — see `concurrency-testing`.
+Classify incidental scheduling assumptions separately from required ordering, exclusion and
+lifecycle behavior. Keep tests for those actual contracts; replace brittle pool/name assumptions
+with observable boundary assertions and controlled coordination — see `concurrency-testing`.
 
 ## Native and third-party libraries
 
@@ -125,9 +133,10 @@ not by itself a blocking defect. Measure duration/rate, scheduler pressure and S
 before isolating a path on bounded platform execution; the handoff adds queueing and needs
 deadline, rejection, context and lifecycle ownership.
 
-A library with its own internal thread pool is unaffected by your migration and keeps its own
-limit — which is often a good thing, and always worth knowing about, because that limit is
-now one of the few left.
+A library may retain its own worker count while caller concurrency, queued demand, context
+propagation or resource lifetimes change. Inspect its actual version/configuration and call
+path; an unchanged pool factory is not evidence that the library is unaffected. Preserve
+adequate internal limits and include their waiting and lifecycle boundaries in the inventory.
 
 ## Debuggers, profilers and agents
 
@@ -135,8 +144,9 @@ now one of the few left.
   lock ownership, but are incomplete for the application's virtual-thread population.
 - Some profilers and APM agents sample platform threads only, or attribute virtual-thread
   work to carriers. Verify your specific agent version rather than assuming.
-- `ThreadMXBean.findDeadlockedThreads()` does not see virtual threads at all, so automated
-  deadlock detection silently stops covering the majority of the application's threads.
+- `ThreadMXBean.findDeadlockedThreads()` detects platform-thread cycles, not virtual-thread
+  cycles. Identify which required deadlock coverage is missing rather than treating an empty
+  result as proof that the application has no deadlock.
 
 ## The order to check these in after an unexplained regression
 
@@ -152,6 +162,8 @@ them from scheduler, allocation or provider effects; this ordering is not a freq
 ## Authoritative references
 
 - [Java 25 virtual-thread guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 `Thread` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
+- [Java 25 executor factory contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
 - [Java 25 `ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)
 - [Java 25 thread-local variables](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)
 - [JEP 444](https://openjdk.org/jeps/444)

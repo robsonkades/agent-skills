@@ -2,7 +2,12 @@
 
 ## Stage 0 — Baseline
 
-**Exit criteria:** a recorded baseline nobody has to argue about later.
+Use the stages and criteria relevant to the requested change. Reuse adequate supplied evidence;
+a source explanation or adequate no-change review need not execute this whole playbook.
+
+**Exit criteria for a comparative performance claim:** a recorded, comparable baseline and the
+predeclared objective/cost envelope. Its absence does not justify delaying an already authorized
+validated recovery or inventing measurements.
 
 | Measure                                                | Why it is on the list                                       |
 | ------------------------------------------------------ | ----------------------------------------------------------- |
@@ -20,7 +25,8 @@ population and think time and report achieved throughput.
 
 ## Stage 1 — Inventory the implicit limits
 
-One row per executor, per HTTP client, per anything with a size:
+One row per affected executor/client/resource bound, including shared resources whose demand
+changes. Record existing adequate enforcement as well as required replacements:
 
 ```text
 | Pool / setting                  | Size | What it was really limiting        | Replacement          |
@@ -55,7 +61,7 @@ rg -n 'getName\(\)|currentThread\(\)\.getName|thread_name|%thread'
 # Native and file I/O on request paths
 rg -n 'System\.loadLibrary|native |FileInputStream|Files\.(read|write)|FileChannel'
 
-# Pool metrics and dashboards that will read zero afterwards
+# Pool metrics and dashboards whose producer or meaning may change
 rg -n 'getActiveCount|getPoolSize|getQueue\(\)|tomcat.threads'
 ```
 
@@ -74,21 +80,25 @@ claiming compatibility. Short filtered or unfinished events may be absent.
 **Exit criteria:** every hit classified as _keep_, _replace with X_, or _irrelevant_, with
 runtime checks for consequential hypotheses. Grep hits are candidates, not a complete inventory.
 
-## Stage 3 — Declare the limits, on platform threads
+## Stage 3 — Preserve the required limits
 
-Deploy justified semaphores, bulkheads and bounded admission from the inventory **before** enabling
-virtual threads, while the pools are still there. This isolates limit-policy risk from execution-model
-risk. Expect possible queue/wait changes if two gates temporarily coexist; equivalence is a hypothesis
-to validate, not proof from unchanged throughput.
+Required resource/admission policies must be effective before the old enforcement disappears.
+Deploying justified gates first on platform threads can isolate limit-policy risk from execution-model
+risk. It is not compulsory when an evidenced paired rollout preserves the contracts and separate
+coexistence changes queue/wait/deadline semantics. Retain adequate existing controls; document a
+justified removal where no required property remains. Equivalence needs relevant evidence, not
+unchanged throughput alone.
 
-**Exit criteria:** limits deployed; predeclared correctness/SLO and overload criteria met;
-each limit exporting available permits, wait time and rejections.
+**Exit criteria:** required bounds, waiting/rejection and ownership are enforced; predeclared
+correctness/SLO and overload criteria met; their actual utilization/wait/rejection signals are
+observable. A semaphore is not the only adequate control.
 
 ## Stage 4 — Flip one workload
 
-Pick the first candidate by these properties, in order: I/O-bound, high concurrency, a
-downstream with a known bound, low blast radius, and easy to load-test. A read-heavy internal
-endpoint is the classic first move; a payment path is not.
+Choose a candidate from the actual objective, waiting profile, downstream bounds, blast radius,
+effect/lifecycle contracts, observability and rollback. A bounded well-observed payment cohort
+may be safer than an opaque internal read path; the domain label does not decide. Start with
+the smallest useful exposure whose required contracts and recovery can be demonstrated.
 
 ```properties
 # Illustrative application-owned property; requires implemented routing/lifecycle support
@@ -98,24 +108,28 @@ app.virtual-threads.reports=true
 This is not a standard Boot property and does nothing by itself. A config flag is not
 automatically reloadable. Rehearse whether switching needs a restart and how old tasks drain;
 do not run two independent owners concurrently for work whose order must be preserved.
+An existing scoped deployment/rollback mechanism can be sufficient without adding this property.
 
 Canary long enough to cover the workload's relevant peak, batch/cron and dependency variability;
 duration follows evidence, not a universal business-day rule. Compare against a concurrent control
 or seasonally matched baseline:
 
-| Signal                                 | Expected                                 | Roll back if                                        |
-| -------------------------------------- | ---------------------------------------- | --------------------------------------------------- |
-| p99 at target rate                     | equal or better                          | worse by more than the noise band                   |
-| Downstream error rate                  | inside error budget/no causal regression | statistically/operationally significant causal rise |
-| Connection-pool wait time              | inside capacity/SLO envelope             | sustained queue-age/SLO breach                      |
-| Retained heap and GC phases            | stable at repeated load/recovery         | retained state or GC violates budget                |
-| Scheduler MXBean queued/pool estimates | explained and SLO-safe                   | sustained causal pressure/exhaustion                |
-| `jdk.VirtualThreadPinned`              | measured/impact understood               | native/foreign pins causally constrain throughput   |
+| Signal                                 | Expected                                   | Roll back if                                        |
+| -------------------------------------- | ------------------------------------------ | --------------------------------------------------- |
+| p99 at target rate                     | inside predeclared objective/cost envelope | meaningful breach of the accepted envelope          |
+| Downstream error rate                  | inside error budget/no causal regression   | statistically/operationally significant causal rise |
+| Connection-pool wait time              | inside capacity/SLO envelope               | sustained queue-age/SLO breach                      |
+| Retained heap and GC phases            | stable at repeated load/recovery           | retained state or GC violates budget                |
+| Scheduler MXBean queued/pool estimates | explained and SLO-safe                     | sustained causal pressure/exhaustion                |
+| `jdk.VirtualThreadPinned`              | measured/impact understood                 | native/foreign pins causally constrain throughput   |
 
 Write the rollback criteria **before** the canary. Written afterwards they become negotiable
 in the exact moment they should not be.
+An operability/lifecycle benefit can justify an explicitly accepted latency/resource cost;
+a pin event or statistically visible p99 change alone does not determine acceptance. Keep
+correctness and shared-resource budgets as hard constraints of the chosen contract.
 
-## Stage 5 — Re-size the connection pool
+## Stage 5 — Revalidate the connection pool
 
 The instinct is to raise it because concurrency rose. Resist it and do the arithmetic:
 
@@ -127,8 +141,9 @@ Our provisional share must include all clients, rollout overlap and headroom.
 ```
 
 `3.2` is an average occupancy consistency check, not a safe pool size; `40 ÷ 6` assumes even traffic
-and full authority over the database budget. Sweep candidate sizes under representative variance and
-choose the smallest that meets SLO/throughput without exceeding the database envelope.
+and full authority over the database budget. If sizing must change, compare candidate sizes under
+representative variance and choose a justified size meeting SLO/throughput within that envelope.
+Keep an adequate existing size when current evidence supports it.
 
 Keep lambda and W on the same stable borrow population; query rate is equivalent only if there
 is exactly one query per borrow. Measure connection waiters and database queue/lock/CPU demand:
@@ -137,16 +152,24 @@ capacity may worsen queueing; if hold time rises, diagnose it before changing po
 
 ## Stage 6 — Verify observability, then widen
 
-```bash
+```text
 # Traditional dumps remain useful for platform locks but omit virtual threads.
-jcmd <pid> Thread.dump_to_file -format=json /tmp/dump.json
-
-# Name the factories, or the dump is thousands of VirtualThread[#38]/runnable
+jcmd <pid> Thread.dump_to_file -format=json <owned-protected-unique-path>
 ```
+
+This is a command template, not a literal shell command. Within existing capture authority,
+identify one process, inspect its command help and choose a protected destination on the target
+filesystem. Preserve other operators' evidence. Record command status/diagnostics and verify the
+actual file and relevant content; an existing-file or permission failure is missing capture,
+not an empty healthy population. Do not assume overwrite behavior across JDKs or add overwrite
+to defeat a failed capture. Run only captures relevant to the question.
+
+Names can aid diagnosis; retain adequate request/context correlation and bounded role metrics
+without requiring a thread-name change. Verify actual dump visibility and metric producers.
 
 **Exit criteria before widening:** both platform/all-thread evidence is understood, pinning and
 scheduler/resource signals are observable with bounded overhead, per-limit metrics are on a
-dashboard, and runbooks are updated. Then repeat from Stage 4
+dashboard or equivalent operational view, and affected runbooks are current. Then repeat from Stage 4
 for the next workload.
 
 ## What "done" means

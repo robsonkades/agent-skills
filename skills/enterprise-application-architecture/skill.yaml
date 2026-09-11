@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-application-architecture
-version: 1.2.3
+version: 1.2.4
 description: >-
   The entry point for reasoning about an enterprise application's architecture: what makes
   these systems distinctive (data that outlives the code, concurrent users, integration,
@@ -104,6 +104,7 @@ suggests:
   - consistency-models
   - delivery-semantics
   - failure-models
+  - idempotency
   - java-performance
   - jvm-gc-tuning
   - latency-statistics

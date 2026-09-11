@@ -85,12 +85,23 @@ accounted limits can lead to write failure or eviction. `medium: Memory` uses tm
 count toward the writing container's memory usage, creating memory pressure/OOM risk.
 A `sizeLimit` alone is not a loss or availability policy. Specify medium, relevant resource
 limits, rotation/retention and behavior when writes fail; validate on the target runtime.
+`emptyDir` survives a container crash but is deleted when its Pod is removed from the node;
+a queued record there is not a durable handoff across Pod replacement.
 See [Kubernetes emptyDir semantics](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir).
 
-For an outage budget, estimate backlog from excess input over drain rate multiplied by outage
-duration, then measure encoded size and overhead. State whether overflow drops, blocks, samples
-or spills, and who accepts that tradeoff. A finite local buffer cannot promise lossless delivery
-through an unlimited outage. Observe application latency as well as loss/backlog during injection.
+For an outage budget, include existing backlog and usable capacity. With constant rates measured
+at the same buffer boundary, backlog grows by excess input over drain rate times duration;
+account for encoding and overhead in the same units. Catch-up after recovery requires drain
+capacity above continuing input; test that recovery, not only the outage.
+
+State whether overflow drops, blocks, samples or spills, and who accepts that tradeoff. Finite
+storage cannot preserve unlimited continuing input through an unbounded sink outage. Backpressure
+may instead stop the producer or admission, at an availability cost; verify that it propagates
+through the actual logging path and does not just move an unbounded queue upstream. It does not
+make volatile storage durable. Observe application latency, loss, backlog and catch-up during
+injection. For a pipe, a full blocking writer waits for its reader; a nonblocking writer can
+fail instead. See [Linux pipe behavior](https://man7.org/linux/man-pages/man7/pipe.7.html);
+do not infer the application's failure policy from the IPC mechanism alone.
 
 ## Validate the output contract
 

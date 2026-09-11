@@ -30,7 +30,9 @@ break, a test that cannot be written, a cost that is being paid for nothing.
 ## Workflow
 
 1. **Observe, do not diagnose.** Record what is actually there: file counts per change,
-   layer counts, imports, method bodies that only forward.
+   layer counts, imports, method bodies that only forward. Reuse the requested scope,
+   accepted decisions, caller contracts and existing evidence before asking for missing
+   context; investigate only uncertainties that could change a finding or correction.
 2. **Find the evidence in the history**, not only in the code. `git log` on a suspected god
    class suggests whether unrelated features edit it; inspect the diffs and use cases to
    distinguish cohesive work from competing responsibilities.
@@ -42,6 +44,9 @@ break, a test that cannot be written, a cost that is being paid for nothing.
 5. **Check the acceptable case.** Every smell in the catalogue has a situation in which it
    is the right design. Check that situation before writing the finding.
 6. **Order by impact and give the concrete first edit**, not a target architecture.
+   Stop when representative paths support the finding or an acceptable counterexample;
+   an estate-wide inventory is not required for a local finding. Report checks performed
+   separately from proposed validation, and retain a sound design when no finding survives.
 
 Inspect the project's JDK, persistence namespace/version, Spring proxy/transaction configuration
 and public contracts before recommending Java-specific edits. This skill has no executable
@@ -113,8 +118,9 @@ The codebase is unfamiliar but consistent, and change is cheap
 - An abstraction can remove duplication and accidental complexity as well as move costs.
   Compare caller simplicity with configuration, maintenance and onboarding costs; do not
   assume complexity is a conserved quantity.
-- Anaemia is only a smell where a rich model was the right choice. Over transaction scripts
-  with a gateway, "entities with no behaviour" is the design, correctly applied
+- Anaemia is only a smell where a rich model was the right choice. Deliberate transaction
+  scripts and shared policies may use data-only ORM entities or a gateway; neither shape
+  alone establishes bypassable or duplicated rules
   (`domain-logic-organization`).
 - **A wrapper must justify its boundary.** Translation, narrowing, policy, independent
   ownership or compatibility may justify forwarding. Inspect annotations and interceptors
@@ -134,6 +140,8 @@ The codebase is unfamiliar but consistent, and change is cheap
 ## Finding format
 
 Observation → harm → evidence/confidence → first edit → validation → what to avoid.
+
+Illustrative finding; replace these names and counts with inspected evidence:
 
 > **Observation:** `OrderService` (3 240 lines, 11 collaborators) contains the pricing rules,
 > which also appear in `QuoteService` and the nightly re-rate job.

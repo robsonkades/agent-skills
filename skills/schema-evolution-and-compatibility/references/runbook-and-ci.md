@@ -29,7 +29,7 @@ When incompatible historical values remain reachable, choose a supported migrati
 1. **Keep read compatibility.** Retain defaults, aliases or a legacy decoder as needed. This does
    not require every current schema to retain every field: Avro readers can ignore removed writer
    fields and Protobuf readers can preserve unknown fields. Check the required semantics.
-2. **Upcast at the read boundary.** Keep every historical schema and lift v1 → v2 → v3 before the
+2. **Upcast at the read boundary.** Preserve schemas for reachable history and lift v1 → v2 → v3 before the
    domain sees it. That chain belongs to `event-sourcing`; what belongs here is that its
    links may implement semantic transformations that defaults and Protobuf reservations cannot.
 3. **Rewrite the topic.** Produce v2 to a new topic, migrate consumers, delete the old. Costs a full
@@ -40,18 +40,22 @@ When incompatible historical values remain reachable, choose a supported migrati
 
 ## The precondition for any gate
 
-The `.avsc`/`.proto`/`.json` files in the repository are the source of truth; the registry is a
-deployment target, exactly as a database is a deployment target for migrations. If a producer's
-`auto.register.schemas` can change the registry, the source of truth is a running JVM somewhere and
-CI can still validate candidates, but no longer controls every change. The repo copy can drift, so
-restrict registration ownership and add a job that detects unexplained differences
-(`schema-registry:download` plus a diff).
+Establish the authoritative schema and its review-to-runtime chain: checked-in schema files,
+reviewed generator inputs plus reproducible outputs, or immutable published artifacts can each
+provide it. Preserve exact versions, hashes and references, and verify which artifact the producer
+actually registers/selects. `auto.register.schemas=true` alone does not make the JVM the authority;
+uncontrolled registrations outside that chain bypass the gate. Restrict registration ownership and
+detect unexplained drift against the approved artifacts (`schema-registry:download` plus a diff is
+one option). Do not replace an already adequate governed pipeline solely to move files into git.
 
 ## Confluent Maven plugin — `io.confluent:kafka-schema-registry-maven-plugin:8.3.1`
 
 Goals: `validate`, `test-local-compatibility`, `set-compatibility`, `test-compatibility`, `register`,
-`download`, `derive-schema`. Confluent's own GitHub Actions example binds the first four to the
-`validate` phase on a pull request and `register` on push to the main branch.
+`download`, `derive-schema`. Confluent's published GitHub Actions example binds the first four to the
+`validate` phase on a pull request and `register` on push to the main branch. That example includes
+the mutating `set-compatibility` goal; copying it is not a read-only PR check. Bind remote mutations
+only to the intended authorized registry/policy environment. An isolated disposable registry can
+exercise them; an offline compatibility review does not require a real registry mutation.
 
 ```xml
 <plugin>
@@ -71,7 +75,7 @@ Goals: `validate`, `test-local-compatibility`, `set-compatibility`, `test-compat
 </plugin>
 ```
 
-The offline goal, which most pipelines should start with — "This goal tests compatibility of a local
+The offline goal is one useful starting point — "This goal tests compatibility of a local
 schema with other existing local schemas during development and testing phases":
 
 ```xml
@@ -152,20 +156,26 @@ mutualRead/validateAll v2 vs [v1]      -> VALID
 ```
 
 (v1 = `{id}`, v2 = `{id, n:string=""}`, v3 = `{id, n:string}` with the default removed. This is
-exactly the shape Apicurio documents for the same divergence.) Keep the history in the repo as
-`src/test/resources/schemas/<subject>/v1.avsc`, `v2.avsc`, …
+exactly the shape Apicurio documents for the same divergence.) Preserve the required comparison
+history as immutable files or artifacts, for example `src/test/resources/schemas/<subject>/v1.avsc`,
+`v2.avsc`, …; do not silently rewrite a historical schema to make a gate pass.
 
 ## Golden bytes
 
-Check a hex fixture of a serialised v1 record into the repository and assert that every future reader
-decodes it into the expected **values**. Never regenerate it. One byte array and one assertion per
-schema version, and it is the only technique that survives someone tidying up the historical schema
-files.
+An immutable serialized fixture with its writer schema/references and expected **values** can detect
+accidental changes to historical encoding or interpretation. Do not regenerate it with the candidate
+writer and call that historical evidence. Test supported future readers against the required history.
+One record per version is not sufficient for all boundaries: include relevant absent/default/null,
+enum, range, presence and hostile-byte cases. Immutable published writer artifacts, reproducible
+generators and independently constructed payloads can provide complementary or adequate equivalent
+controls. Structural compatibility rules can detect schema edits that runtime samples miss; semantic
+decoding checks catch meaning that a structural verdict omits. Preserve an adequate existing suite.
 
 ## Testcontainers: the registry's own verdict
 
-The library check and the registry's check are not the same thing, and only this shape exercises the
-second — including registry-side surprises such as the open-content-model rejection.
+The library check and the registry's check are distinct claims. When the latter is needed, an
+isolated registry matching the target can exercise it, including registry-side configuration and
+provider behavior. Testcontainers is one option; a controlled equivalent environment also works.
 
 ```java
 // Pseudocode: requires pinned Testcontainers/images, network/aliases and omitted configuration.

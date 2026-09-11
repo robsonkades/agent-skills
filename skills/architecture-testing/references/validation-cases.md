@@ -15,11 +15,17 @@ This checks example compilation and two failure modes, not behavioral skill impr
 Compiling with release 17 on JDK 25 checks the source/API target; it does not establish that
 the dependencies and test runner execute on a Java 17 runtime.
 
+## Reproduction protocol
+
 Run each request verbatim in fresh baseline and treatment sessions with the same model/version,
 settings, tools and repository fixture. Supply the skill/references only to treatment; keep
-neighboring descriptions identical. Hide expected behavior from the agent. Save outputs and
-tool traces; judge each requirement with an excerpt, not exact wording. For selection, provide
-descriptions first. Repeat runs before claiming consistency or improvement.
+neighboring descriptions identical. In the isolated evaluation copy, remove this reference's
+`## Reproduction protocol` heading and everything after it from agent-accessible resources;
+retain the preceding example-verification record. Keep the full cases and other evaluation
+artifacts private to the evaluator in both arms, supplying only the selected request/context
+to the agent. Save outputs and tool traces; judge each requirement with an excerpt, not exact
+wording. For selection, provide descriptions first. Repeat runs before claiming consistency
+or improvement.
 
 ## 1. A structural rule that cannot prove its name
 

@@ -1,5 +1,12 @@
 # Test prompts — `architecture-coupling-and-quanta`
 
+> Historical evidence, reviewed 2026-09-10: these excerpts concern an earlier package.
+> Self-reported counterfactual contributions are not an executed baseline. Several old
+> pass narratives overstate team-size exclusions, process/transaction equivalence,
+> deployment evidence, analyzer limits or equal SLO requirements. Re-adjudicate cases
+> against current source-qualified contracts before reusing them. Current results are in
+> [the catalog review](../../skill-validation/catalog-review-2026-09-09.md).
+
 Phase 4 of the architecture suite build. Six prompts, each executed by an **isolated agent** holding
 only this skill's five files — `SKILL.md`, `skill.yaml` and the three references — and nothing else
 about the project. Two adversarial by design, one on the handoff boundaries, one a full six-step run

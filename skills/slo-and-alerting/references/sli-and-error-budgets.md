@@ -33,8 +33,10 @@ A quantile can still be an SLI, but its estimator, aggregation and window must b
 
 ## Event classification
 
-Define at logical-operation level where retries/hedges exist. Attempt success can overstate
-user success and inflate denominators. Preserve dimensions for overload, client invalidity,
+Use logical operations when the promise concerns the user's outcome across retries/hedges.
+An explicitly defined attempt-level SLI can serve a backend/caller contract or diagnosis;
+keep it separate from logical success. Retries change attempt weighting and denominators,
+so attempt success is not a substitute for user success. Preserve dimensions for overload, client invalidity,
 server fault, dependency fault, timeout/cancel and degraded result without creating
 unbounded cardinality.
 
@@ -75,11 +77,18 @@ traffic mix and definition differences. Compare the complete specifications, not
 
 ## Migration
 
-SLI changes rewrite history unless versioned. For a schema/query/population change:
+First determine whether a change affects the measured promise, population, history or any
+consumer. Documentation corrections or demonstrably equivalent query/instrumentation changes
+can retain the accepted contract with focused checks. For a material semantic change:
 
 1. document reason and expected delta;
-2. dual-run old/new definitions;
+2. compare old/new definitions through dual-running or equivalent representative evidence;
 3. reconcile disagreement by cohort;
 4. agree effective date and budget treatment;
-5. update dashboards, alerts, runbooks and SLA mapping atomically;
+5. coordinate affected dashboards, alerts, runbooks and SLA mapping; a staged transition is
+   valid when consumers remain compatible and the effective definition is unambiguous;
 6. retain old series/report for audit.
+
+Version changed meanings and make their effective dates explicit; do not silently apply a
+new denominator to an old promise or rewrite its budget history. Preserve the evidence needed
+for the agreed audit/retention policy.

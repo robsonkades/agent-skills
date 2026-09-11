@@ -31,14 +31,15 @@ far from the code that caused it.
 Use Java 21 for stable-API examples and explicitly marked Java 25 preview semantics only for
 StructuredTaskScope. Inspect compiler/runtime, preview policy, driver/pool contracts and the
 actual owner before changing lifetimes; do not upgrade a project or enable preview for a cleanup
-fix. Missing cancellation/close guarantees must remain explicit unknowns.
+fix. Reuse adequate lifecycle code and evidence; ask only for missing contracts that change the
+decision. Missing cancellation/close guarantees must remain explicit unknowns.
 
 1. **Name the lifetime authority.** Prefer one owner that acquires/releases. Borrowed,
    reference-counted or shared resources need an explicit protocol instead. A method receiving an
    open resource normally borrows it; consuming/closing must be named and documented.
 2. **Make the scope lexical.** Acquire in a `try`-with-resources header. If the resource
-   must outlive the method, the method is not the owner — return it, and let the owner's
-   scope hold it.
+   must outlive the method, transfer ownership explicitly or borrow from a longer-lived owner.
+   Returning a resource or view alone does not transfer ownership.
 3. **Declare each resource separately.** `try (var raw = open(); var buf = wrap(raw))`, not
    a nested constructor chain: if the outer constructor throws, the inner resource is
    already open and nothing references it. This shape may close the raw resource twice when
@@ -50,9 +51,13 @@ fix. Missing cancellation/close guarantees must remain explicit unknowns.
    Do not report success or infer that retrying is safe merely because close threw.
 5. **Check every escape route.** A resource captured by a lambda submitted to an executor,
    stored in a field, returned inside a `Stream`, or held across a `CompletableFuture`
-   boundary has left the lexical scope. Either the scope must wait, or ownership must move.
-6. **Verify on the failure path.** A test that throws from inside the body and asserts the
-   resource was closed once. That path is the one that leaks in production.
+   boundary may be used beyond the current lexical scope. Determine the actual last use:
+   the releasing scope must wait, ownership must transfer, or an existing longer-lived owner
+   must keep the borrowed resource valid through that use.
+6. **Verify the relevant failure paths.** Check partial acquisition, body/close failure ordering,
+   borrowed-resource survival and actual-use termination on cancellation as applicable. Assert
+   release according to the resource's contract; a wrapper and its delegate may both receive
+   permitted close calls. A passing happy path does not cover these failures.
 
 ## Rules
 
@@ -79,18 +84,20 @@ fix. Missing cancellation/close guarantees must remain explicit unknowns.
   other remote call — see timeouts-and-deadlines.
 - Most streams need no closing; the ones backed by an I/O resource do—`Files.lines`,
   `Files.walk`, `Files.find`, `Files.list`, and `Files.newDirectoryStream`. A method that returns such a
-  stream has handed the caller a resource, and its Javadoc must say so.
+  newly opened stream transfers its resource to the caller, and its Javadoc must say so.
 - `ExecutorService` has been `AutoCloseable` since Java 19, and its `close()` initiates an
-  orderly shutdown and then _blocks until all submitted tasks finish_. In
+  orderly shutdown and then _blocks until executor termination_. In
   `try`-with-resources that is a join point, not a cheap release: a long-running task makes
   the enclosing method hang there. If the calling thread is interrupted while waiting,
-  `close` stops executing tasks as if by `shutdownNow`, keeps waiting for those already
-  running, and re-asserts the interrupt before returning. Use it when the block genuinely owns the work; use
-  explicit `shutdown`/`awaitTermination` with a bound when it does not.
-- A pooled resource is _returned_, not destroyed — but the caller's code is identical:
-  `close()` on a pooled `Connection` gives it back. Holding one beyond the operation is the
-  same defect as leaking it, because the pool is the real bound; connection-pool-sizing owns
-  the arithmetic.
+  `close` attempts to stop tasks as if by `shutdownNow`, keeps waiting for those already
+  running, and re-asserts the interrupt before returning. Never-started submitted Futures can
+  remain incomplete. Only the executor's lifecycle owner may close or shut it down; when that
+  owner needs a bounded wait, use an explicit shutdown/escalation protocol and retain result
+  ownership. executors-and-task-lifecycle covers shutdown and queued-result settlement.
+- Closing a pooled `Connection` normally ends the borrow; the pool may reuse or evict the
+  physical connection. Hold it only for the work and transaction it serves, including an
+  explicitly owned longer-lived operation when required. connection-pool-sizing owns the
+  capacity arithmetic; a long borrow alone is not proof of a leak.
 - Before closing a JDBC `Connection`, explicitly commit or roll back an active transaction; JDBC
   does not define portable close behaviour with one active. Reset failures can cause a pool to
   evict rather than reuse the physical resource.
@@ -101,13 +108,16 @@ fix. Missing cancellation/close guarantees must remain explicit unknowns.
   the test. Acquire inside the actual task where possible. A `whenComplete(close)` callback is
   insufficient if cancellation completes the exposed future before underlying use stops; release
   only after actual use terminates and propagate/suppress close failure deliberately.
-- Do not use finalizers, and do not reach for `Cleaner` as the primary release mechanism —
-  it is a safety net that logs a leak, if it runs at all. java-reference-types-and-leaks
-  covers when a safety net is justified and how to write one that can actually fire.
-- Virtual threads remove the thread as the implicit limit on concurrent resources. One
-  connection per task was bounded by a 200-thread pool; on
-  `newVirtualThreadPerTaskExecutor` it is bounded by nothing until the pool refuses. The
-  bound must become explicit — a semaphore or the pool's own limit; see
+- Do not use finalizers or rely on automatic `Cleaner` execution for a release deadline.
+  An owned `close()` may invoke `Cleanable.clean()` for explicit release, with optional
+  automatic cleanup/reporting. At-most-once action invocation neither makes concurrent losing
+  callers wait for cleanup nor protects use against close. java-reference-types-and-leaks
+  covers action capture, fallback timing and these explicit-clean limits.
+- A virtual-thread-per-task executor removes its platform-worker cap. With one connection
+  per worker task, a fixed 200-worker pool bounded those active acquisitions; the virtual-thread
+  executor supplies no equivalent admission bound. An existing resource pool or admission policy
+  may already suffice; the pool can block, time out or reject according to its contract.
+  Verify the actual bound — a semaphore, admission policy or the pool's own limit; see
   concurrency-limiting-and-bulkheads.
 - A permit/pool limit bounds active use, not tasks waiting for it. Bound admission/waiters and
   acquisition time as well; a timed-out caller must not release a permit while its work still

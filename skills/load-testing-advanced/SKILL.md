@@ -26,17 +26,22 @@ Choose a load profile that identifies the decision variable without confusing:
 Every published number is conditional on workload, version, resources, topology, state,
 duration and SLO semantics.
 
+Use the requested decision and authorized load range to select the profile. Reuse adequate
+supplied evidence; a focused review can conclude that the current report is sufficient.
+A baseline or a passing authorized ceiling does not require inducing overload to become
+useful evidence.
+
 ## Profile selection
 
-| Profile             | Question                                         | Required output                                  | Does not prove               |
-| ------------------- | ------------------------------------------------ | ------------------------------------------------ | ---------------------------- |
-| baseline            | what is normal at a controlled operating point?  | distribution and run variance                    | maximum capacity             |
-| envelope/breakpoint | where does a specific guardrail cross?           | highest passing and lowest failing tested load   | universal capacity           |
-| stress/overload     | how does useful work fail and recover?           | rejection/collapse/recovery behavior             | safe operating point alone   |
-| spike/impulse       | can finite headroom and controls absorb a burst? | queues, deadlines, shedding and recovery         | sustained capacity           |
-| ramp                | how do transitions and controllers track growth? | lag, hysteresis, warm-capacity response          | one steady boundary          |
-| soak                | what changes with elapsed time/cycles?           | retained-resource slope/change points            | leak merely from rising heap |
-| failure scenario    | what survives topology/dependency loss?          | useful capacity and recovery under named failure | normal peak                  |
+| Profile             | Question                                         | Required output                                                   | Does not prove               |
+| ------------------- | ------------------------------------------------ | ----------------------------------------------------------------- | ---------------------------- |
+| baseline            | what is normal at a controlled operating point?  | distribution and run variance                                     | maximum capacity             |
+| envelope/breakpoint | where does a specific guardrail cross?           | pass/fail bracket, or passing point with upper boundary unlocated | universal capacity           |
+| stress/overload     | how does useful work fail and recover?           | rejection/collapse/recovery behavior                              | safe operating point alone   |
+| spike/impulse       | can finite headroom and controls absorb a burst? | queues, deadlines, shedding and recovery                          | sustained capacity           |
+| ramp                | how do transitions and controllers track growth? | lag, hysteresis, warm-capacity response                           | one steady boundary          |
+| soak                | what changes with elapsed time/cycles?           | retained-resource slope/change points                             | leak merely from rising heap |
+| failure scenario    | what survives topology/dependency loss?          | useful capacity and recovery under named failure                  | normal peak                  |
 
 Combine profiles only when phases remain separately tagged and prior overload cannot
 contaminate the next phase. Randomize or use fresh environments when order effects matter.
@@ -45,18 +50,19 @@ contaminate the next phase. Randomize or use fresh environments when order effec
 
 1. Define a pass predicate over the full evaluation window: latency, errors/correctness,
    useful throughput, resource guardrails and stability.
-2. Establish a clearly passing load and a reproducibly failing load with an arrival model
-   matching production.
-3. Search between them using discrete steps or adaptive bracketing. Keep workload/state
+2. Establish a clearly passing load with an arrival model matching production. When locating
+   the upper boundary is the authorized question, seek a reproducibly failing point within
+   the load/impact limits. If the authorized ceiling passes, report that conditional tested
+   lower bound and the unlocated upper boundary; do not exceed the ceiling to complete a bracket.
+3. With both endpoints, search between them using discrete steps or adaptive bracketing. Keep workload/state
    constant and use independent repetitions near the decision boundary. Use a bracket only
    where pass/fail is consistent with monotonicity; otherwise publish the tested points and
    investigate state changes or multiple operating regimes.
 4. When that ordering holds, report highest tested reproducible pass to lowest tested fail.
    The “last passing step” is not an exact breakpoint.
-5. Classify why the upper point failed and verify the generator still produced its intended
-   process.
-6. Repeat recovery after load removal; overload that leaves queues, breakers, caches or
-   instances unhealthy is a separate finding.
+5. If a point failed, classify why and verify the generator still produced its intended process.
+6. For an overload/recovery claim or when overload affected subsequent phases, verify recovery
+   after load removal; queues, breakers, caches or instances left unhealthy are a separate finding.
 
 Analytical predictions choose search bounds and detect unit/topology mistakes. Divergence
 does not prove the script is wrong: it can reveal model-assumption failure, variable demand,
@@ -127,9 +133,12 @@ retention across cycles, failure to plateau, ownership paths, time-to-limit and 
 
 ## Automation and output contracts
 
-- Pin tool/version/extensions and validate output against a real fixture.
+- Pin tool/version/extensions and output/summary mode; validate output against a real fixture.
 - Treat raw event output and aggregated summaries as different schemas.
-- Fail loudly on missing fields, empty populations, histogram overflow or changed units.
+- Fail loudly on missing required fields, unknown coverage, histogram overflow or changed units.
+  A confirmed-empty optional outcome cohort (for example, zero rejections) is valid evidence of
+  zero occurrences; its quantiles are unavailable, not zero latency. Require a positive relevant
+  population before accepting a request-latency or business-check predicate.
 - Define every consumed statistic explicitly when tool configuration controls aggregation.
 - Preserve raw timestamps and outcome tags; summary-only exports can prevent reanalysis.
 - Size/preallocate generator concurrency through a pilot and monitor dropped scheduled
@@ -175,12 +184,15 @@ Correctness and generator fidelity determine validity; the SLO determines accept
 
 ## Publication checklist
 
+Apply the items that support the requested claim. Return the result, its evidence and limits,
+plus any material gap or smallest next check; do not invent a finding or an unrequested profile.
+
 - [ ] claim, workload unit, SLO population/window and profile are explicit
 - [ ] offered, started, admitted, attempted and useful work are reconciled
 - [ ] environment, dependency state and generator headroom are valid
-- [ ] passing/failing boundary is bracketed with run-level uncertainty
-- [ ] failure cause and recovery are characterized
-- [ ] output parser and units are fixture-tested
+- [ ] a claimed boundary is bracketed where justified, or tested points/lower bounds and run-level uncertainty are reported
+- [ ] failure cause and recovery are characterized when those behaviors are part of the claim
+- [ ] consumed parser output and units are fixture-tested
 - [ ] timeout/censoring/graceful-stop treatment is disclosed
 - [ ] raw artifacts, configuration and analysis are reproducible
 - [ ] safety, privacy and external-impact controls were followed
@@ -191,7 +203,9 @@ Correctness and generator fidelity determine validity; the SLO determines accept
 - coordinated-omission: lost scheduled arrivals and correction limits.
 - latency-statistics: histogram, quantile and comparison inference.
 - capacity-planning: scenario/configuration selection and cost.
-- heap-dump-analysis or allocation-profiling: memory attribution after a soak signal.
+- heap-dump-analysis: retained heap and ownership after a soak signal.
+- allocation-profiling: allocated-byte rate/stacks when allocation pressure is the question;
+  allocation alone does not identify retained ownership.
 
 ## Authoritative references
 

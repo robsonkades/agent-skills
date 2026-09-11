@@ -1,5 +1,11 @@
 # Research brief — `architecture-coupling-and-quanta`
 
+> Historical research, reviewed 2026-09-10: retain this dated record without adopting
+> its universal absence claims, maximum-denominator Code Maat formula, 0.8 deployment
+> threshold or session-to-boundary inference as current rules. The current package
+> qualifies these claims with primary sources and explicit measurement limits; see
+> [the catalog review](../../skill-validation/catalog-review-2026-09-09.md).
+
 **Researcher's role:** evidence supplier. Nothing here is a recommendation. Where I write "the authors
 say X", that is a report of what a named person published, not a claim that X is true.
 

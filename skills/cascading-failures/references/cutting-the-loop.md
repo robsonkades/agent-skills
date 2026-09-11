@@ -17,7 +17,7 @@ Two controls are worth stating as arithmetic a reviewer can check:
 ```text
 Sequential local time + Σ attempt durations + Σ backoff + cleanup reserve
     ≤ remaining end-to-end budget
-Σ (active replica limit × per-permit downstream fan-out) + other callers
+Σ (replica admission ceiling × bounded per-permit fan-out) + additional live demand
     ≤ dependency's safe concurrent-work budget
 ```
 
@@ -25,9 +25,15 @@ Sum sequential durations, not nested enclosing timeouts: a 200 ms child call ins
 parent budget consumes part of that 300 ms, not 500 ms. Parallel branches consume their longest
 required duration but all their resource demand. Include pool acquisition and retry backoff.
 For concurrency, use maximum active replicas including rollout surge and failure traffic; compare
-in-flight operations with in-flight capacity, never directly with requests/second. Route per-shard
-skew and other tenants explicitly. Static checks find inconsistent budgets; cancellation, real
-capacity and isolation still require runtime evidence (`distributed-systems-testing`).
+in-flight operations with in-flight capacity, never directly with requests/second. The ceiling
+term bounds downstream work only while permits cover its actual resource lifetime. Include live
+work no longer represented by those ceilings: lowering a limit gates new starts, but previously
+admitted work can still be draining, including on removed replicas or after caller timeout.
+Account for retries, half-open probes, cache warming, replay and other callers outside the same
+controls; do not count them twice when already covered. Route per-shard skew and other tenants
+explicitly. If surviving work cannot be bounded, the configured sum does not establish safe
+exposure. Static checks find inconsistent budgets; cancellation, real capacity and isolation
+still require runtime evidence (`distributed-systems-testing`).
 
 ## Bounding the queue is not optional
 
@@ -73,7 +79,8 @@ turns a shared outage into a degraded feature.
 Critical — the request cannot produce a correct answer without it:
 - the system of record for the data being returned or written
 - the authoriser for a request that must not be served unauthorised
-Behaviour on failure: fail closed, fast, with a typed error. Do not fall back.
+Behaviour when the required capability is unavailable: fail closed, fast, with a typed
+error. Never bypass its correctness or security contract to produce a successful response.
 
 Degradable — this operation has a correct, explicitly lower-quality answer without it:
 - enrichment, recommendation, personalisation, A/B assignment, analytics
@@ -87,6 +94,11 @@ Declared degradable but implemented as required — treat as critical until fixe
   no breaker. This is the classification error that causes the outage: nobody believed
   the dependency mattered, and the code made it required.
 ```
+
+Classify the required capability separately from one provider. An accepted alternative that
+preserves the full contract is not feature degradation; account for its load and any uncertain
+primary effect before invoking it. A stale authorization decision is not automatically such an
+alternative just because it is cached.
 
 The test that this classification is real: for each non-critical dependency, there is a test
 that makes it fail and asserts the endpoint still returns a successful, degraded response —
@@ -105,7 +117,8 @@ that trade must be made deliberately and recorded, not inherited from a `catch` 
 - [ ] The retry policy has a budget, not just an attempt count.
 - [ ] Every queue and executor is bounded, with a rejection mapped to a real response.
 - [ ] There is one concurrency limit per dependency, not one shared across all of them.
-- [ ] Aggregate in-flight demand including fan-out, rollout surge and other callers fits measured capacity.
+- [ ] Aggregate live demand includes fan-out, rollout surge, surviving work and recovery callers
+      outside the same controls, and fits measured capacity.
 - [ ] Every dependency is labelled critical or non-critical, and each non-critical one has a
       degraded behaviour with a test and a counter.
 - [ ] Readiness includes downstream health only when no admitted traffic can be served correctly

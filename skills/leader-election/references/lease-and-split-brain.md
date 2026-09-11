@@ -52,7 +52,10 @@ record GrantBudget(long fence, long admissionDeadlineNanos) {
 
 Use subtraction for `nanoTime` comparisons: its origin can be negative and addition can wrap.
 All compared intervals must be shorter than half the counter range; discard budgets on
-restart. The margin covers drift/uncertainty plus the bounded work/quiescence duration.
+restart. The margin covers documented drift/uncertainty plus the bounded work/quiescence
+duration. Those are assumptions to justify, not bounds established by the largest observed
+pause. A paused process cannot execute its deadline check; local admission arithmetic cannot
+revoke delayed effects at a remote sink.
 
 Integrate it on one owner thread: start with no grant (no work), process renewal outcomes
 through a queue, and snapshot the accepted budget/fence together before admission. Reject
@@ -72,8 +75,11 @@ Properties to preserve when adapting it:
 
 ## Choosing the lease duration
 
-Inputs, all measured: the worst stop-the-world pause (`pause-attribution`), blip durations already
-seen in production, the store's own election window, and the tolerance for having no leader.
+Use observed pause/network distributions (`pause-attribution`), store election/recovery timing
+and the leaderless SLO to estimate churn and failover. Observed maxima describe the sampled
+workload; they do not prove a bound on future pauses or delayed requests. Separately establish
+the provider's grant semantics and any clock-rate and work/quiescence bounds used to justify
+the conservative local budget. Preserve sink-side safety when those liveness estimates fail.
 
 ```text
 lease and renewal schedule leave enough margin for observed pause/network/store tails,
@@ -82,8 +88,10 @@ remaining lease + election + recovery + warm-up fits the leaderless SLO in the t
 renewal cadence gives multiple opportunities without correlated retries overwhelming the store
 ```
 
-If those bounds cross, the design is wrong before the numbers are: the pauses must come down, the
-work must tolerate a longer gap, or it must not need a singleton at all.
+If the estimated operating range cannot meet the failover SLO at acceptable churn, identify
+which evidence or assumption drives the conflict. Reducing pauses, changing recovery or the
+coordination mechanism, tolerating a longer gap, or removing the singleton are possible
+responses; a larger observed sample alone cannot prove safety.
 
 ## The failover budget
 
@@ -113,6 +121,11 @@ behaviours worth getting right, in order of impact:
 
 ## Proving it
 
+For a new or changed election protocol, or an unresolved stale-effect risk, select the
+applicable scenarios below and reuse adequate prior evidence. A focused review can state what
+the supplied evidence establishes and which material checks remain; it need not run a live
+cluster campaign. These fault injections belong in an isolated test environment.
+
 - **Partition the leader from the coordination store** while leaving its path to the database
   open — a packet-dropping proxy is enough. Assert local admission stops by its conservative
   deadline. After activating the successor's fence at the sink, assert rejection of old-term
@@ -122,8 +135,9 @@ behaviours worth getting right, in order of impact:
   supported POSIX hosts). Never signal a real user/agent process.
   This is the case renewal cannot save and the one most designs have never run.
 - Compare local role/term metrics, but assert the safety invariant at the mutable resource:
-  stale-term writes are rejected even after the old process resumes. Also assert bounded time
-  to useful work and backlog recovery; a leader flag alone is not availability.
+  stale-term writes are rejected after successor activation even when the old process resumes,
+  or concurrent/repeated effects preserve the stated invariant. For a failover SLO decision,
+  also measure time to useful work and backlog recovery; a leader flag alone is not availability.
 
 ## Clock model
 

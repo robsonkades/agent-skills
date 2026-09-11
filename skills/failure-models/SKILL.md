@@ -19,7 +19,7 @@ description: >
 
 ## Purpose
 
-Fix the fault model in writing before designing anything else. Every downstream decision —
+Make the relevant fault model explicit before relying on it in a design. Every downstream decision —
 whether a retry is safe, whether a read may be stale, how many replicas are enough — is an
 answer to "which faults do we tolerate?", and a design that never asked the question has
 answered it by accident.
@@ -31,24 +31,29 @@ as three. Naming the class turns each of those into a visible, arguable claim.
 
 ## Workflow
 
-1. **Write a fault-model card for each boundary.** Name the fault classes, failure domains,
+1. **Inspect the contract and write or update the relevant boundary's fault-model card.**
+   Start with the requested operation, its success/degraded-success criteria, existing model,
+   client/driver behavior and deployment evidence. Reuse established facts; ask only for gaps
+   that change safety, recovery or the recommendation. Name the fault classes, failure domains,
    synchrony assumption, recovery source, detection mechanism, and maximum tolerated
    combination. Crash-stop, crash-recovery, omission, timing and Byzantine are not labels
    for the whole system: a trusted database replica may be crash-recovery while an
    Internet-facing client is arbitrary or hostile. A process that restarts from durable
    state is crash-recovery; any in-flight operation whose completion was not durably
    recorded must be retried, reconciled, or abandoned by an explicit rule.
-2. **Give every remote call three outcomes**, not two: success, definite failure, unknown.
-   Definite failure means the request provably never applied; anything else — read timeout,
-   reset after the bytes went out, a broker ack that never arrived — is unknown. Then decide
-   per call what happens on unknown: retry (safe only if idempotent), reconcile later, or
-   escalate to a human. "Retry and hope" is a decision too; make it explicit. See
+2. **Distinguish known applied, known not applied and unknown effects.** Name the effect
+   boundary: a multi-effect operation can be partly complete, so preserve each effect's
+   status instead of calling the whole operation rejected or rolled back. A read timeout,
+   reset after dispatch or missing broker ack normally leaves the effect unknown. Decide
+   what happens on unknown: repeat safely, reconcile, or escalate. Proven non-application
+   can permit retry even for a non-idempotent operation, subject to cause and budget; a
+   rejected later attempt does not clear an earlier unknown effect. See
    `references/the-unknown-outcome.md`.
-3. **Add gray failure to the model.** Assume a node that is up, passing its health check, and
-   answering at ten times its normal latency. If the design has no answer for that node, it
-   has no answer in production either.
+3. **Check a relevant gray failure.** For example, a node passes its health check while its
+   responses miss the caller's deadline. Assess detection, resource occupancy and remaining
+   capacity under the actual load; distinguish a tolerable slowdown from a violated contract.
 4. **Draw the failure domains.** For a process, a host, a rack, an AZ, a dependency and a
-   deploy, write what each one takes down. Replicas sharing a domain fail together for that
+   deploy, write what a specified fault can affect. Replicas sharing a domain fail together for that
    cause; they may still tolerate independent process faults.
 5. **Do conditional availability arithmetic** on the request path before promising a
    number. Required dependencies in series multiply availability only when their events are
@@ -58,16 +63,20 @@ as three. Naming the class turns each of those into a visible, arguable claim.
    `references/failure-domains-and-arithmetic.md`.
 6. **Walk the eight fallacies as a checklist** — reliable network, zero latency, infinite
    bandwidth, secure network, unchanging topology, one administrator, zero transport cost,
-   homogeneous network. Each is checkable in code, not just prose: a client with no read
-   timeout has asserted the first, an unbounded in-memory queue the third, a hostname
-   resolved once at startup the fifth.
+   homogeneous network. Use code patterns as investigation leads: check whether an overall
+   deadline bounds a client without a separate read timeout, admission bounds queue growth,
+   and discovery/connection refresh handles topology changes. Report the effective behavior
+   and violated contract, not a defect inferred from one missing API call.
 
 Inspect the actual client/driver, retry, durability and deployment configuration before assigning
 outcomes. The conceptual Java type uses sealed classes/records (Java 17); exhaustive pattern
-switch without preview requires Java 21. Preserve the target. Deliver the boundary's card,
-evidence versus assumptions, unresolved outcome policy and one fault-injection case with an
-observable invariant. Missing protocol or topology evidence means a conditional claim, not a
-replica count or availability promise.
+switch without preview requires Java 21. These examples do not set a platform requirement;
+preserve the project's target. Deliver the relevant card, evidence versus assumptions, outcome
+and recovery policies, and a recommendation compared with retaining the current design and
+any materially relevant alternative. Name what evidence would change it. Include a focused
+fault-injection case with an observable invariant; distinguish proposed checks from executed
+results. Missing protocol or topology evidence means a conditional claim, not a replica count
+or availability promise.
 
 ## Fault classes
 
@@ -115,17 +124,18 @@ For every important operation, make these fields reviewable:
 
 Do not merge **fault**, **error** and **failure**. A fault is the hypothesised cause; an error
 is incorrect internal state; a failure is externally visible deviation from the service
-contract. The distinction prevents a host reboot from being counted as one customer-visible
-failure per request and prevents a latency SLO failure from being dismissed because every
-response was eventually correct.
+contract. One host reboot can cause ten failed requests: count the incident once and the ten
+request failures in a request-based SLI. A masked reboot may cause no service failure. State
+the counting unit, and do not dismiss a latency SLO failure because responses were eventually
+correct.
 
 ## Rules
 
 - **Partial failure creates outcome uncertainty.** A local exception does not imply rollback
   either; remote calls additionally decouple caller observation from peer execution. A remote
   call can leave you not knowing — and that third outcome is where many
-  distributed bugs arise. Code that maps a timeout onto "it failed" has erased it: a timeout
-  states the _caller's_ patience, never the callee's state, and the callee may complete the
+  distributed bugs arise. Code that maps a timeout onto "the effect never applied" has erased it:
+  a timeout alone does not establish the callee's state, and the callee may complete the
   work after the caller gave up.
 - Crash-recovery makes the recovery path a correctness surface. For each recovery step,
   state whether it is idempotent and under which key. The mechanics are `idempotency`; the
@@ -156,19 +166,23 @@ response was eventually correct.
 
 ```text
 If the operation crosses a process boundary:
-  classify timeout/cancellation/disconnect as Unknown unless protocol evidence proves
-  the request could not have applied.
+  classify timeout/cancellation/disconnect as Unknown unless protocol or authoritative
+  state establishes the relevant effect's outcome.
 
 If progress requires suspecting a peer:
-  preserve safety with quorum, epochs or fencing;
-  tune the detector only for liveness and recovery speed.
+  separate suspicion from authority to act; preserve the protocol's safety assumptions.
+  Tune detection for recovery speed and false suspicion, and state any timing/clock bounds
+  required for safety, especially with leases.
 
 If replicas share any host, zone, control plane, deploy, credential or dependency:
   model that cause once as a common failure domain;
   do not multiply replica availability as if independent.
 
-If a recovered participant can still write:
-  require a new epoch/term/fencing token or an authoritative ownership check before re-entry.
+If stale or recovered writers could violate the invariant:
+  identify how the protected resource rejects their effects, for example through a validated
+  fencing protocol or atomic conditional write. Verify the actual claim/effect contract;
+  a client-side check followed by a pause and an unchecked write is not enforcement.
+  Detailed lease/fencing protocol design belongs to distributed-locks-and-leases.
 
 If the design claims availability during partition:
   state which operations remain safe, which side may progress, and what reconciliation
@@ -177,7 +191,8 @@ If the design claims availability during partition:
 
 ## Failure injection and recovery proof
 
-Test the model, not merely exception handlers:
+Select fault cases relevant to the card. Before injection, establish an isolated or explicitly
+authorized target, observable invariants, blast radius, abort conditions and recovery steps:
 
 - inject loss separately before send, after apply/before acknowledgement, and during
   response transfer; assert downstream state and duplicate count;
@@ -216,3 +231,6 @@ asserts the client exception does not validate the distributed outcome.
   — series and parallel composition worked through, correlated failure, and the questions
   that expose a hidden shared dependency. Read when promising an availability number, sizing
   replicas, or reviewing a topology.
+- [Chubby locks and sequencers](https://static.usenix.org/events/osdi06/tech/full_papers/burrows/burrows_html/)
+  and [Redis lock assumptions](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/)
+  — consult when checking stale-owner enforcement and a lease protocol's timing assumptions.

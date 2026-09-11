@@ -20,9 +20,10 @@ description: >
 ## Purpose
 
 A retry is a policy with a cost, and the cost is paid by the dependency that is already
-failing. It turns one failure into N requests. It reduces failures caused by _independent_
-transient faults and it makes _correlated_ faults worse — so it changes the shape of the
-failure distribution rather than making the call reliable.
+failing. It turns one logical operation into multiple attempts. A bounded retry can recover
+from an independent transient fault or a temporary shared outage when the next attempt has
+useful recovery odds. During sustained overload, extra attempts can instead prolong failure.
+It changes the failure distribution and cost; it does not guarantee successful completion.
 
 The decision is made per failure, not per call site: transient, permanent, or **ambiguous**.
 The ambiguous class causes the incidents. A timeout is a failure of the wait, not of the
@@ -31,21 +32,27 @@ reconciliation evidence before reissuing it; idempotency owns that guarantee.
 
 ## Workflow
 
+Match the work to the requested explanation, implementation or policy review. Reuse adequate
+configuration and evidence, and retain a sound policy. A narrow arithmetic/contract answer
+needs its assumptions and limits, not a new fleet budget, fault campaign or configuration change.
+
 1. **Classify before you retry.** Definite pre-dispatch/rejected, retryable transient,
    terminal for the current intent, and ambiguous outcome need different handling. A typed
    error/status is evidence interpreted with operation semantics—not a universal lookup table.
-2. **Resolve the ambiguous class first.** If the operation is not idempotent downstream, use
-   status lookup/reconciliation or surface a durable pending/unknown outcome; blind retry and
-   blind failure are both guesses.
+2. **Resolve the ambiguous class first.** Require safe replay semantics for the same intent,
+   or use authoritative status lookup/reconciliation and preserve a durable pending/unknown
+   outcome until resolved. A key is one mechanism; conditional protocols can also qualify.
+   Blind retry and blind failure are both guesses.
 3. **Give one layer ownership of the end-to-end retry budget.** Transport connection retries,
    proxy attempts and application retries may coexist only when their nested attempt/deadline
    budget is explicit and safe; disable hidden defaults elsewhere.
 4. **Choose capped full, equal or decorrelated jitter deliberately.** Full jitter is a robust
    default for large correlated fleets; then check total time and attempt timeout against the
    caller's remaining deadline before the policy ships.
-5. **Add a retry budget.** Cap retries as a fraction of successful traffic; attempt counts
-   bound one call site; budgets bound their declared scope, with coordinated grants needed
-   for a fleet-wide guarantee.
+5. **Bound aggregate retry work where the policy requires it.** A success-refilled budget is
+   one option; preserve an adequate existing admission policy. Attempt counts bound one call
+   site; aggregate budgets bound their declared scope, with coordinated grants needed for a
+   fleet-wide guarantee.
 6. **Respect server guidance within the deadline.** Do not retry before a valid `Retry-After`;
    use at least the greater of local backoff and server delay, unless it cannot fit. Validate/
    reject untrusted or unrepresentable dates. If a valid delay exceeds the allowed wait, stop
@@ -55,10 +62,11 @@ reconciliation evidence before reissuing it; idempotency owns that guarantee.
 
 ## Rules
 
-- Retryability is a property the contract carries, not one the client infers.
-  `if (e.getMessage().contains("timeout"))` is the shape to delete; rpc-and-api-contracts
-  owns putting the flag in the contract and java-exception-design owns modelling it on the
-  type.
+- Classify from reliable transport phase/outcome evidence and the operation contract.
+  Proven non-dispatch or non-application can permit another attempt even without a server
+  retryability flag; an exception name or message alone proves neither. Replace
+  `if (e.getMessage().contains("timeout"))` with that evidence. rpc-and-api-contracts owns
+  the protocol semantics and java-exception-design owns modelling the evidence on the type.
 - RFC 9110 defines GET/HEAD/PUT/DELETE/OPTIONS/TRACE method semantics as idempotent, but a
   concrete server may violate them and an idempotent state effect can still return a different
   response. POST/PATCH can be made retry-safe by an operation key/conditional semantics.
@@ -68,8 +76,9 @@ reconciliation evidence before reissuing it; idempotency owns that guarantee.
   contract must say whether the request could have applied and whether retrying unchanged helps.
 - Full jitter is `sleep = random(0, min(cap, base × 2^attempt))` — a uniform draw over the
   whole window, not the window plus a small wobble.
-- Unjittered backoff synchronises clients. They all failed at the same instant, so they all
-  wake at the same instant; the wave lands precisely while the dependency is recovering.
+- Unjittered backoff preserves aligned failure cohorts and can concentrate recovery traffic.
+  Staggered starts and variable attempt durations need not wake together; inspect the actual
+  arrival pattern. Jitter spreads retries but does not create dependency capacity.
 - Attempt counts do not bound amplification across hidden layers. L layers allowing N total
   attempts each can produce up to `N^L` bottom calls: three layers × three attempts = 27.
 - A retry budget bounds retries over its scope/window according to refill plus initial burst.
@@ -80,9 +89,11 @@ reconciliation evidence before reissuing it; idempotency owns that guarantee.
 - Before sleeping, check `backoff + expected attempt cost ≤ remaining deadline` and fail now
   if it does not fit. Sleeping in order to fail later spends the caller's budget on nothing.
   The budget is timeouts-and-deadlines'.
-- Never sleep a backoff while holding a transaction or a pooled connection. The dependency's
-  slowdown then becomes your pool exhaustion, and the transaction stays open across it.
-  Retry outside the transactional boundary.
+- Release failed transaction/connection scopes before external dependency backoff; retained
+  resources can spread the slowdown through pool exhaustion. A protocol-specific bounded local
+  acquisition/statement retry may retain a surrounding scope only if its state remains valid
+  and the held-resource cost is explicitly budgeted. It is not permission to reuse a failed
+  transaction or hold resources through an unbounded dependency retry.
 - Start each retried transaction from fresh transactional state; rollback/release the failed
   attempt before backoff and reread/recompute when the concurrency contract requires it.
 - A caller timeout/cancel does not establish that previous work stopped. Propagate cancellation,
@@ -91,16 +102,17 @@ reconciliation evidence before reissuing it; idempotency owns that guarantee.
   withdrawn. Before delivery, bounded buffering may permit retry; after delivery, only an
   explicit resumable/restart protocol can preserve the caller-visible contract.
 - Compose retry and breaker deliberately, and state which nesting you chose.
-  `Retry(Breaker(call))` records **every attempt** in the breaker, so it trips after fewer
-  logical calls than the threshold suggests — and once open the remaining attempts fail fast,
-  and breaker-open rejection must itself be non-retryable. `Breaker(Retry(call))` records one
-  outcome per logical call, so the threshold means what it says, but the retries keep reaching
-  a dependency the breaker would already have stopped calling. Tripping policy and the full
-  trade-off are circuit-breakers.
+  `Retry(Breaker(call))` presents each attempt to breaker admission and classification;
+  `Breaker(Retry(call))` presents the aggregate result/duration while hiding inner attempts
+  from that breaker. Recorded success/failure/ignored outcomes, slow calls, minimum samples
+  and windows determine tripping, not nesting alone. Do not automatically retry breaker-open
+  rejection. A later policy-controlled attempt still needs deadline/budget and breaker
+  permission, including half-open probe limits. Tripping policy and the full trade-off are
+  circuit-breakers.
 - State what a retry achieves and what it does not: it lowers the failure rate for
-  independent transient faults, at the cost of extra load, extra latency inside the caller's
-  own SLA, and duplicates whenever the ambiguous class is retried without idempotency. It
-  makes nothing reliable.
+  recoverable faults when another safe attempt succeeds, at the cost of extra load and latency
+  inside the caller's own SLA. Ambiguous replay without safe semantics risks duplicate effects;
+  neither duplication nor recovery is guaranteed by the failure class alone.
 
 ## Anti-patterns and edge cases
 
@@ -117,8 +129,9 @@ reconciliation evidence before reissuing it; idempotency owns that guarantee.
 Record logical operation ID, attempt ordinal, parent layer, endpoint, per-attempt timeout,
 backoff/server delay, classification evidence and final outcome. Keep metric labels bounded;
 high-cardinality IDs belong in traces/logs.
-Report policy versions, total attempts across layers, deadline/reserve, retry-safety evidence,
-observed amplification and remaining validation. Missing outcome evidence stays unknown; do
+For a material policy decision, report relevant versions, total attempts across layers,
+deadline/reserve, retry-safety evidence, observed amplification and remaining validation.
+A narrow review can report the supported conclusion and any unresolved evidence. Missing outcome evidence stays unknown; do
 not upgrade dependencies or change established retry/API contracts merely to fit an example.
 
 ## References

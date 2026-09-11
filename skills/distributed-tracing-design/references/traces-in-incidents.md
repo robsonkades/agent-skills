@@ -49,9 +49,16 @@ SpanKind merely to make a backend service map look connected.
 Known probabilistic inclusion can support weighted estimates; tail-sampling policies usually
 require policy-aware analysis rather than raw counts.
 
+Distinguish valid context, recording, sampling, export and retention. A non-recording span
+can still carry valid context. `RECORD_ONLY` records data without setting the sampled flag;
+processors can observe it while standard export paths normally omit it. Neither
+`isRecording` nor a sampled flag is an export acknowledgment or backend retention guarantee.
+Inspect the pinned SDK and pipeline before treating an empty exporter as propagation loss.
+
 ## Contract tests
 
-Use an in-memory exporter or test collector to assert:
+For local model assertions, use an isolated SDK and an in-memory exporter with known
+recording/export settings. Select assertions relevant to the changed operation:
 
 - expected number and class of spans;
 - stable name and kind;
@@ -59,12 +66,18 @@ Use an in-memory exporter or test collector to assert:
 - links for batch/messaging causes;
 - logical timestamps for async completion;
 - status/outcome for success/error/cancel/retry;
-- propagation across a real broker/executor boundary;
 - no duplicate auto/manual spans;
 - truncation and sensitive-data policy.
 
-Also execute the backend queries/runbook links against a staging dataset. Correct spans can
-still be unusable if indexes, retention or service-map assumptions differ.
+These assertions prove only what the exercised fixture records. Test actual broker/executor
+propagation using the pinned integration and its carrier/context boundary; a handcrafted
+parent ID is not evidence that deployed instrumentation propagates it. Separately test the
+effective sampling/processor/export path, including intentional omissions and relevant loss
+conditions, without changing production policy merely to make a model assertion pass.
+
+For affected backend queries/runbook links, execute them against a representative staging
+dataset or retain an explicit validation gap. Correct spans can still be unusable if indexes,
+retention or service-map assumptions differ.
 
 ## Incident handoff
 

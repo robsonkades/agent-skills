@@ -30,9 +30,11 @@ Mean inter-arrival CV is insufficient to establish a Poisson or renewal process.
 - per-source streams before and after routing/superposition.
 
 Poisson has exponential independent gaps and variance equal to mean counts, but seeing one of
-those properties in a finite trace does not prove the others. Detrend seasonality before estimating
-`C_a`; otherwise rate variation appears as intrinsic burstiness. Scrape-interval counts may be too
-coarse to recover the process.
+those properties in a finite trace does not prove the others. Preserve the original time-varying
+arrival stream. Detrending can help estimate within-regime variability, but a residual `C_a`
+does not replace the queue-driving intensity or justify a stationary fit. Represent seasonality
+through justified quasi-stationary regimes or a transient/trace model; do not erase bursts from
+the prediction. Scrape-interval counts may be too coarse to recover the process.
 
 ## Service time, demand and `μ`
 
@@ -42,7 +44,8 @@ part of worker occupancy if the whole task is the service center. If instead the
 CPU, connection pool and remote dependency, measure visits/demand/residence at each node and model
 the blocking interaction.
 
-Capture enqueue/start/end timestamps directly. Do not derive `μ=1/W_endpoint`; endpoint residence
+Use reliable lifecycle timestamps when available and quantify their boundary/overhead limits;
+otherwise state which durations are actually observable. Do not derive `μ=1/W_endpoint`; endpoint residence
 contains queues and other stages. Low-load measurement can reduce queue contamination, but CPU
 frequency, cache/JIT state and batching may differ from production. Measure service at multiple
 loads; if its distribution/demand changes with queue length or concurrency, `μ` is state-dependent
@@ -64,8 +67,10 @@ cs = service.std(ddof=0) / mean_s
 ```
 
 The second moment directly feeds P–K. A CV of one does not establish exponential service; inspect
-survival/hazard, modality and serial/class dependence. Mixtures should be modeled by routing class
-when classification is available, while preserving their shared-resource interaction.
+survival/hazard, modality and serial/class dependence. An aggregate IID service mixture can be
+a valid general-service distribution for an aggregate decision. Split classes when routing,
+priority, dependence, shared-resource demand or class-specific outcomes affect that decision;
+available labels alone do not require separate models. Preserve the shared-resource interaction.
 
 Timeouts and cancellations can right-censor service or abandon queue wait. Record whether work
 actually stopped; a caller timeout may leave server work running. Success-only samples change the
@@ -109,10 +114,14 @@ executor.execute(() -> {
 });
 ```
 
-Production instrumentation must avoid capture/allocation/cardinality overhead, propagate
-cancellation safely and include rejected submissions separately. Framework hooks or wrapped tasks
-may be preferable; verify nested/resubmitted tasks and caller-runs execution. For a pure queue
-model, instrument successful queue insertion/removal directly and preserve the same task ID.
+The recorder must be thread-safe and must not prevent task execution or alter its failure contract;
+this partial snippet assumes a nonthrowing recorder. Instrumentation has capture, allocation and
+timing costs: set and measure an acceptable overhead/cardinality budget. Preserve task identity,
+Future cancellation/removal and rejection-handler semantics when wrapping work. Count rejected
+and never-started submissions separately, and verify nested/resubmitted tasks and caller-runs
+execution. For exact queue residence, use reliable successful insertion/removal hooks with the
+same task ID when available. Otherwise keep the submission-delay label and state the missing
+queue boundary; do not invent timestamps or claim zero overhead.
 
 JFR wait events answer different questions. Coverage depends on runtime and execution path;
 ordinary unmounted virtual-thread waits are not fully represented by these events in JDK 25:
@@ -124,13 +133,17 @@ ordinary unmounted virtual-thread waits are not fully represented by these event
 | `jdk.ThreadPark`       | recorded JVM park episodes, commonly platform/carrier waits  | every virtual-thread park or time an unowned `Runnable` sits in a queue  |
 
 Inspect the running JDK's JFC settings: enabled state, stack traces, cutoff/threshold and period are
-version/configuration-specific. Lower thresholds on a short representative recording while
-monitoring overhead; zero recorded events is not zero wait, including duration events still
+version/configuration-specific. If existing coverage is insufficient because relevant durations
+fall below the threshold, consider a short lower-threshold recording with an overhead budget.
+An adequate recording needs no threshold change. Zero recorded events is not zero wait, including duration events still
 unfinished when the recording ends. For virtual threads use applicable
 virtual-thread events plus application queue/permit timestamps; do not infer everything from
 platform-thread states.
 
 ## Fit and falsify
+
+Use these checks for the predictive claim being established, reusing adequate existing evidence.
+A source/API explanation or an already supported parameter calculation need not acquire new runs.
 
 1. Attach uncertainty and outcome/censoring policy to every parameter.
 2. Fit/calibrate on selected stable operating points, not the same point used to claim validation.
@@ -150,4 +163,5 @@ platform-thread states.
 - [Oracle JDK 25 JFR troubleshooting](https://docs.oracle.com/en/java/javase/25/troubleshoot/troubleshoot-performance-issues-using-jfr.html)
 - [OpenJDK 25 monitor-entry event path](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/objectMonitor.cpp) — successful virtual-thread unmount returns before the ordinary monitor-enter event commit.
 - Harchol-Balter, [_Performance Modeling and Design of Computer Systems_](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html)
+- Bertsekas and Gallager, [_Data Networks_, section 3.5](https://web.mit.edu/dimitrib/www/Queueing_Data_Nets.pdf) — general IID service and the P–K mean-wait contract.
 - Cox and Lewis, _The Statistical Analysis of Series of Events_ (1966).

@@ -28,6 +28,13 @@ Those capabilities are the justification test. A synchronous command may still d
 invoker from receivers or parameterize UI/workflow actions, but `GetCustomerByIdCommand` plus a
 handler that merely calls one repository often adds ceremony without a consumer of reification.
 
+Start with ordinary caller code, a composed/deferred use and a misuse or failure path. Reuse
+the project's current callbacks, dispatch and history before adding a bus. Establish who owns
+the result, execution thread/lifetime, captured state and each effect; ask only when a missing
+ordering, undo or retry requirement changes the choice. Compare the direct call/callback with
+a named command or existing framework dispatcher. Finish with that choice, its contracts and
+an observable success/failure check; an adequate existing callback is a valid result.
+
 ## Command is not Event
 
 ```text
@@ -38,16 +45,16 @@ Imperative, present tense            Past tense, immutable history
 Addressed to one logical handler     Broadcast to zero or more subscribers
 May be rejected or fail validation   The fact remains true; a consumer may reject/park malformed delivery
 Sender usually owns an outcome       Publisher does not coordinate one authoritative handler result
-Coupling: sender knows the operation Coupling: publisher knows nothing of
-                                     the subscribers
+Coupling: sender knows the operation Coupling: fact contract need not name
+                                     each subscriber
 Retry semantics: re-issue the        Retry semantics: redeliver the same
-  instruction (needs idempotency)      fact (subscribers need idempotency)
+  intent under its repeat policy       fact under subscriber repeat policies
 ```
 
-Conflating them produces two specific defects: an "event" that a subscriber is allowed to reject,
-which makes the publisher responsible for a decision it cannot see; and a "command" published to
-several handlers, which means nobody owns the outcome. Name them by tense, and the mistake becomes
-visible in review (`event-driven-architecture`).
+Conflating them can hide a requested decision inside a claimed fact, or send one instruction to
+independent effect owners without defining the combined outcome. Delivery validation and an
+explicit coordinator/fan-out contract are separate concerns. Tense is a review clue; establish
+meaning and outcome ownership (`event-driven-architecture`).
 
 ## When it is the answer
 
@@ -108,15 +115,18 @@ Persisted / transmitted              a record with an explicit schema
                                      shape is now a contract
 ```
 
-A sealed command hierarchy plus exhaustive `switch` gives compile-time proof that every command
-has a handler, which the classical `Map<String, Handler>` cannot (`java-composition-over-inheritance`).
+A sealed hierarchy with explicit exhaustive cases checks coverage of source-known types.
+It does not prove each arm invokes the right handler or that separately deployed types remain
+compatible. A registry instead needs registration/type checks and behavior tests
+(`java-composition-over-inheritance`).
 
 ## Decision rules
 
 ```text
 IF nothing needs invocation identity, action binding, invoker/receiver separation,
 uniform handling, queues, logs, retries or undo
-THEN delete the class and call the method.
+THEN prefer the direct method; remove an existing public class only with its compatibility
+     and consumers accounted for.
 
 IF a command is named in the past tense
 THEN inspect its meaning: is it an instruction or an already-established fact?
@@ -127,8 +137,8 @@ THEN identify one logical outcome owner; competing instances and coordinated sub
      are distinct from independent handlers performing the same effect.
 
 IF a command is persisted or sent over a boundary
-THEN its shape is a versioned contract: a stable name, tolerant
-     deserialisation, an explicit schema version, and a plan for a
+THEN its shape is a versioned contract: a stable name, compatible
+     deserialisation, an explicit schema/version identity, and a plan for a
      command written by an older producer (rpc-and-api-contracts).
 
 IF a command may be delivered more than once
@@ -138,39 +148,42 @@ THEN the handler needs idempotent effects, deduplication, or an explicitly toler
      (idempotency, delivery-semantics).
 
 IF a command captures a mutable object and executes later
-THEN it executes against state from execution time, not from creation
-     time. Capture values, or an identifier to re-load.
+THEN it holds a live reference, not a creation-time snapshot; unsynchronised changes
+     need not be observed reliably. Choose snapshot values, an identifier to re-load,
+     or an explicit confined live-receiver lifetime.
 
-IF undo must reverse an external effect
-THEN it is compensation, not an inverse: refunds, cancellations and
-     apologies, with their own failure modes
+IF undo must address an effect outside the reversible state/transaction boundary
+THEN model compensation where the business permits it: refunds, cancellations and
+     other operations with their own failure modes; some effects cannot be compensated
      (distributed-transactions-and-sagas).
 
-IF a command handler is selected by a class name from the payload
-THEN that is a deserialisation vulnerability. Dispatch from a closed
-     registry of accepted names.
+IF untrusted payload data can select an arbitrary class to load or instantiate
+THEN restrict selection to accepted types through a closed registry or equivalent
+     allowlist; it does not replace payload validation or caller authorization.
 ```
 
 ## Cross-cutting checks
 
-- **Concurrency.** A command executed on a pool runs on a thread that is not the creator's:
-  captured mutable state races, `ThreadLocal` context does not follow it, and a command holding a
-  managed JPA entity holds an object whose session is gone. Capture immutable values and
-  identifiers; propagate context explicitly (`scoped-values`,
-  `executors-and-task-lifecycle`).
+- **Concurrency.** Dispatch may run inline or on another thread. Establish confinement,
+  safe publication and resource lifetime; do not rely on implicit `ThreadLocal` propagation
+  or a managed entity's session surviving deferred work. Capture values/identifiers when
+  those lifetimes differ; an intentionally confined callback may retain its live receiver
+  (`scoped-values`, `executors-and-task-lifecycle`).
 - **Distribution.** A command sent to a broker inherits its configured delivery, ordering,
   retention and acknowledgement semantics; do not assume every broker is at-least-once. Most
   broker flows decouple the immediate outcome, though reply channels are possible. A command that
-  fails permanently needs a dead-letter path, or it blocks a partition forever
+  fails permanently needs an owned terminal/recovery policy, such as an audited rejection,
+  quarantine or a DLQ. Whether it blocks a partition depends on the actual consumer policy
   (`poison-messages-and-dlq`, `message-ordering-and-partitioning`).
 - **Performance.** Representation may allocate (records usually do; cached non-capturing lambdas
-  may not per invocation), plus serialization/copying when crossing a boundary. Because commands
-  are values, they can be batched, deduplicated and reordered — which is often why the design was
-  chosen (`orm-behavioral-patterns`).
-- **Testing.** Commands as values make tests unusually clean: assert that a service _produced_ the
-  expected command rather than that an effect occurred, and test handlers independently against
-  constructed commands. For undo, the property worth asserting is `undo(do(s)) == s` over generated
-  states, which finds the cases hand-written tests miss.
+  may not per invocation), plus serialization/copying when crossing a boundary. Values enable
+  inspection; batching, deduplication or reordering still require compatible outcome, atomicity
+  and ordering contracts. Idempotence does not imply commutativity (`orm-behavioral-patterns`).
+- **Testing.** At an intent-producing boundary, assert the expected command; separately verify
+  handler effects/results and any required transaction or transport integration. Production of
+  the value is not completion of the effect. For exact undo, test `undo(do(s)) == s` over valid
+  state/command pairs plus history failure and branch behavior; use compensation's business
+  postconditions when exact restoration is not promised.
 
 ## Review checklist
 
@@ -179,10 +192,10 @@ THEN that is a deserialisation vulnerability. Dispatch from a closed
 - [ ] Each command has one outcome owner; horizontally competing handler instances are distinguished
       from multiple independent semantic handlers
 - [ ] Persisted or transmitted commands carry a stable name and a schema version
-- [ ] Handlers are idempotent when the transport may redeliver
-- [ ] Commands capture values or identifiers, never live mutable objects
-- [ ] Handler dispatch uses a closed registry, never a class name from the payload
-- [ ] Undo of an external effect is modelled as compensation, not as an inverse
+- [ ] Repeated execution obeys the declared effect/response policy: natural repeat safety, deduplication or tolerated repeats
+- [ ] Captured values, identifiers or live receivers have explicit state and lifetime ownership
+- [ ] Untrusted type selection is allowlisted; payload validation and caller authorization remain enforced
+- [ ] Undo stays within its reversible boundary; compensation has its own accepted postconditions
 - [ ] A permanently failing command has a defined terminal path
 
 ## References

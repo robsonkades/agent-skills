@@ -30,6 +30,11 @@ be older. Neither adopting a construct nor reading a Java 25 source authorizes a
 new dependency or preview flag. Mark missing measurements as unknown and keep performance
 recommendations conditional rather than inventing a thread count.
 
+Reuse established requirements, ownership and matching incident/test evidence. Fill only the
+classification gaps that can change the current decision; do not repeat another specialist's
+intake. An adequate existing model can be retained. During an incident, preserve the recovery
+deadline and already authorized mitigation scope while routing unresolved causes.
+
 ```text
 unit of work and semantic result:
 arrival shape: request/value/stream/scheduled/background
@@ -93,7 +98,8 @@ JDK/API status and framework constraints:
 
 ## Evidence before “more threads”
 
-Measure aligned:
+Reuse aligned evidence first. When a missing measurement could change the decision, select the
+relevant views below; a routing question does not require every capture or a new load test:
 
 ```text
 arrival/completion/error/drop rate and in-flight work
@@ -140,15 +146,21 @@ compatibility, and framework/tooling support. Do not encode a moving API from me
 
 ## Deliverable
 
-Return the dominant decision and owning specialist skill, the selected model with its task owner
-and resource bound, one relevant rejected alternative, and the evidence/test that would confirm
-the choice. For an incident, separate observed waits from the suspected cause. Unknown workload
-or cancellation behavior is an explicit gap, not a capacity estimate. Keep this proportional;
-do not expand a routing answer into implementation of every listed construct.
+Return the dominant decision and owning specialist skill. When evidence supports selection,
+name the selected or retained model, its task owner/resource bound and a material alternative
+if one needs comparison. Otherwise give the unresolved contract or hypothesis and the smallest
+discriminating check, without inventing a model or capacity estimate. For an incident, separate
+observed waits from suspected causes. Carry known facts, constraints, recovery authority and
+remaining obligations into the handoff; continue authorized work with that owner rather than
+restarting intake. Report proposed checks separately from executed results, and do not expand
+a routing answer into implementation of every listed construct.
 
 ## Review checklist
 
-- [ ] Every task has an owner, terminal state, deadline/cancel path, and cleanup.
+Apply relevant checks to the affected model and lifecycle; existing bounds and evidence may
+already satisfy them. These are contracts to assess, not a demand to add every mechanism or test.
+
+- [ ] Every task has an owner, terminal state, applicable deadline/cancel path, and cleanup.
 - [ ] Every executor/scope/subscription has bounded admission and shutdown behavior.
 - [ ] Scarce-resource bounds sit at the resource and are tested under saturation.
 - [ ] Context cannot leak tenant/security state across reused threads/tasks.
@@ -178,6 +190,6 @@ do not expand a routing answer into implementation of every listed construct.
 - [Java 25 ScopedValue](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html)
 - [Java 25 StructuredTaskScope](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html)
 - [Java concurrency API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
-- [JLS 17: Threads and locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
+- [JLS 25, chapter 17: Threads and locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
 - [JEP index](https://openjdk.org/jeps/0)

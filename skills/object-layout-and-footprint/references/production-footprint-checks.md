@@ -6,7 +6,7 @@ page is about the quantities the JVM itself reports, the two costs that sit outs
 per-object arithmetic — the compressed class space and G1's humongous regions — and a
 symptom-to-cause table for the disagreements.
 
-**Environment for every executed figure.** Temurin **25.0.3+9** (Windows x64), `-Xmx2g`
+**Historical environment for every executed figure.** Temurin **25.0.3+9** (Windows x64), `-Xmx2g`
 unless stated, G1 unless stated. Nothing here was run on any other release.
 
 ## 1. Sizes the running JVM reports, without JOL
@@ -34,22 +34,30 @@ the histogram is the JVM's own answer; go to §6 for the reasons the prediction 
 
 Two other in-JVM sources give the same numbers over time rather than at one instant:
 
-- JFR `jdk.ObjectCount` — per class, `count` and `totalSize`, taken at a GC. Its
-  `default.jfc` setting is `enabled=false` with `period=everyChunk` `[executed]`; it must be
-  switched on. Confirm its collection trigger and overhead on the target recording; do not
-  treat `everyChunk` as a wall-clock sampling period.
+- JFR `jdk.ObjectCount` — `count` and `totalSize` for emitted classes. On the checked
+  25.0.3+9 source, a request schedules a VM heap-inspection operation that requests collection;
+  this is not merely passive observation of an independently occurring GC.
+  `default.jfc` has `enabled=false` and `period=everyChunk`; the distinct
+  `jdk.ObjectCountAfterGC` event is also disabled there. Inspect event/collector support,
+  class-coverage thresholds, actual collection and overhead before enabling either event.
+  `everyChunk` is not a wall-clock sampling period. These trigger details are source-derived.
 - Heap after a verified collection: `GC.run` requests `System.gc()`; flags can suppress it
   or select a concurrent cycle. Confirm the actual cycle and completion from GC evidence
   before comparing `GC.heap_info` under a matched workload. This is aggregate heap usage,
   not a per-class figure or an exact retained live-set measurement.
 
-**A heap dump is not one of those sources.** The HPROF `INSTANCE DUMP` record carries the
-field values, not the object's size; the analyser reconstructs shallow size from its own model
-of the header, and nothing in the file says which header mode wrote it. Whether the analyser
-in use knows about compact headers was not tested here (no MAT on this machine) — check it
-once by comparing one class's shallow size in the tool against a `GC.class_histogram` from
-the same JVM, and do not quote a dump-derived shallow size from a compact-header JVM until
-that comparison has been made.
+**Dump-derived shallow sizes require writer/parser context.** In the checked HotSpot 25.0.3+9
+HPROF writer, instance payload length and the class record's `instance size` come from the sum
+of serialized field sizes; they do not include the real header/alignment. These records do
+not supply a canonical compact-header/oop-width/alignment setting. The analyser must infer
+or obtain layout inputs and may use version-specific extensions or supplied settings.
+No MAT/parser support was executed here. Reuse a trustworthy same-target comparison, or
+cross-check a relevant class/array against VM-reported sizes when the disputed size matters;
+do not promote an unverified parser model to an exact target layout.
+
+Source: [HotSpot 25.0.3+9 HPROF writer](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/services/heapDumper.cpp),
+[requestable JFR ObjectCount](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp)
+and [heap-inspection collection](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/gcVMOperations.cpp).
 
 ## 2. Compressed oops: the boundary, and reading it off a live JVM
 
@@ -66,7 +74,8 @@ margin, all `[executed]`:
 On this build, `-Xmx32g` is therefore **off**, not the last value on: the margin below the 32 GB encoding
 range is a page plus the heap alignment, so the exact cut-off is a few tens of megabytes
 under 32 GB and depends on the collector's region size and large-page setting. Treat
-"32 GB" as the boundary and "32 GB minus a little" as the last safe `-Xmx`. The accepted
+these as historical alignment-8 observations, not a universal safe `-Xmx`. Actual collector,
+alignment, compressed-reference support and flags determine the effective width. The accepted
 range for `ObjectAlignmentInBytes` is `[8 … 256]`; 4 and 512 are refused at start-up
 `[executed]`. Raising it buys range and costs padding per object —
 `array-and-object-arithmetic.md` §6 has the per-object price; the heap-sizing decision is
@@ -129,13 +138,15 @@ shape; larger configured reservations and other builds/topologies change the eff
 boundary. The `Klass ID Range` line is the run-specific evidence. Two
 consequences:
 
-- The trade is a population question on both sides. A service with 20 million small objects
-  and 30,000 classes gains tens of megabytes on the heap and loses 15 MB of class space; a
+- The trade is a population question on both sides. If 20 million live objects save 8 bytes
+  each and 30,000 classes incur the measured ~490-byte debit, the modeled trade is 160 MB
+  of heap against about 15 MB of class space. Other mixes can save zero heap bytes. A
   service that spins lambdas, proxies and generated classes into the hundreds of thousands
   should read `jcmd <pid> VM.metaspace` (the `Class:` line and `Klass ID Range`) in the
   current mode before switching, because `OutOfMemoryError: Compressed class space` is not
-  a heap symptom and `-Xmx` does nothing for it.
-- The 8-byte win per `Object` is never free on a class-heavy heap. Quote both numbers.
+  a heap symptom and raising `-Xmx` does not raise the compressed-class-space limit.
+- Include measured or modeled class-space cost in a deployment trade; the strong-hidden-class
+  result is not a universal debit for every class-heavy heap.
 
 The class-space allocator, its limits and its own flags are metaspace-internals'; what
 belongs here is that the cost exists and how large it is. Measure it with the loader
@@ -220,15 +231,15 @@ it.
 
 ## 6. Prediction disagrees with observation
 
-| Symptom                                                                                       | Likely cause                                                                                   | How to confirm                                                                                                           | What to do                                                                                               |
-| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| Every reference-holding class is 4–8 bytes bigger than predicted; arrays of references are 2× | Compressed oops are off — heap at or above 32 GB, or `-XX:-UseCompressedOops`                  | `-Xlog:gc+init` shows `Compressed Oops: Disabled`; `UseCompressedOops = false {default}`                                 | Recompute with `ref` = 8 (§2); consider `ObjectAlignmentInBytes=16` only after §6 of the arithmetic page |
-| Class-dependent size increase; array bases are 20/24                                          | `-XX:-UseCompressedClassPointers` — 16-byte header                                             | JOL `Compressed class pointers: disabled`; the deprecation warning on stderr                                             | Recognise, do not design for it; the flag is deprecated on 25                                            |
-| Predicted compact-header sizes, observed classic ones                                         | Flag passed and overridden, or passed on a build where it needs unlocking                      | `jcmd <pid> VM.flags -all`: `false {command line, ergonomic}`; JDK 24 needs `-XX:+UnlockExperimentalVMOptions` (JEP 450) | `compact-object-headers.md` §4                                                                           |
-| Small objects 8 bytes bigger than the table, `byte[1]` is 32                                  | `ObjectAlignmentInBytes=16`                                                                    | JOL `Object alignment: 16 bytes`; `PrintFlagsFinal`                                                                      | `array-and-object-arithmetic.md` §6 — decide whether the oop range was worth it                          |
-| Reserved/used heap exceeds shallow totals, dominated by large arrays                          | Humongous arrays: each charged whole G1 regions                                                | `GC.heap_info` region size; aligned shallow size > region ÷ 2                                                            | §4 — resize chunks or `G1HeapRegionSize`                                                                 |
-| Deep footprint far below N × shallow                                                          | Shared instances: `Integer` cache, interned or deduplicated strings, a flyweight               | Check identities/sharing; `GraphLayout.toFootprint()` counts each object once                                            | `jol-operating-procedure.md` §2.4; sharing by design is gof-flyweight                                    |
-| Dump analyser and `GC.class_histogram` disagree on shallow size                               | Analyser reconstructs the header with its own model; the dump does not record the mode         | Compare one class in both                                                                                                | Trust the histogram; §1                                                                                  |
-| `OutOfMemoryError: Compressed class space` after enabling compact headers                     | Per-`Klass` cost doubled to 1 KB; class count near the 1 M ceiling at the 1 GB default         | `jcmd <pid> VM.metaspace` — `Klass ID Range`, `Class:` used                                                              | §3; raise `CompressedClassSpaceSize` or reduce generated classes — metaspace-internals                   |
-| Heap saving from compact headers far below "8 bytes × objects"                                | The dominant classes have `p % 8 ∈ {1,2,3,4}` at the actual reference width                    | Histogram top-10 by count, apply the mod-8 rule to each                                                                  | `compact-object-headers.md` §1–3; evaluate required headroom and equivalent shape alternatives           |
-| Objects appear to grow after hashing or locking                                               | Shallow size was unchanged on tested JDK 25 (§5); native monitor state or lazy fields may grow | `Instrumentation.getObjectSize`, NMT/JFR and field state before/after                                                    | Separate shallow heap bytes from side structures and lazy object graphs                                  |
+| Symptom                                                                                  | Likely cause                                                                                              | How to confirm                                                                                                           | What to do                                                                                              |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Reference-holding sizes or reference-array element widths exceed a narrow-oop prediction | Effective compressed oops are off; heap ergonomics, collector or explicit flags may explain it            | Read actual `UseCompressedOops`, VM/JOL element widths and alignment; origin alone is insufficient                       | Recompute actual layouts (§2); evaluate any alignment change against padding and deployment constraints |
+| Class-dependent size increase; array bases are 20/24                                     | Wide class pointers — 16-byte classic header in the measured build                                        | JOL/class-pointer flags and stderr on the target; distinguish class pointers from oops                                   | Recompute from actual header and base offsets; flag lifecycle is version-specific                       |
+| Predicted compact-header sizes, observed classic ones                                    | Flag passed and overridden, or passed on a build where it needs unlocking                                 | `jcmd <pid> VM.flags -all`: `false {command line, ergonomic}`; JDK 24 needs `-XX:+UnlockExperimentalVMOptions` (JEP 450) | `compact-object-headers.md` §4                                                                          |
+| Small objects 8 bytes bigger than the table, `byte[1]` is 32                             | `ObjectAlignmentInBytes=16`                                                                               | JOL `Object alignment: 16 bytes`; `PrintFlagsFinal`                                                                      | `array-and-object-arithmetic.md` §6 — decide whether the oop range was worth it                         |
+| Reserved/used heap exceeds shallow totals, dominated by large arrays                     | Humongous arrays: each charged whole G1 regions                                                           | `GC.heap_info` region size; aligned shallow size > region ÷ 2                                                            | §4 — resize chunks or `G1HeapRegionSize`                                                                |
+| Deep footprint far below N × shallow                                                     | Shared instances: `Integer` cache, interned or deduplicated strings, a flyweight                          | Check identities/sharing; `GraphLayout.toFootprint()` counts each object once                                            | `jol-operating-procedure.md` §2.4; sharing by design is gof-flyweight                                   |
+| Dump analyser and `GC.class_histogram` disagree on shallow size                          | Writer/parser layout assumptions, capture populations or target settings differ                           | Compare the same class/array and target mode; inspect parser support and settings                                        | Prefer validated VM sizes for that target; §1                                                           |
+| `OutOfMemoryError: Compressed class space` after enabling compact headers                | Encoding alignment, class shape, loader overhead or retained class growth may exceed class-space capacity | Inspect actual `VM.metaspace` shift/ID range, reservation, used/committed and loader/class counts                        | §3; diagnose capacity versus retention before changing limits or generation — metaspace-internals       |
+| Heap saving from compact headers far below "8 bytes × objects"                           | The dominant classes have `p % 8 ∈ {1,2,3,4}` at the actual reference width                               | Histogram top-10 by count, apply the mod-8 rule to each                                                                  | `compact-object-headers.md` §1–3; evaluate required headroom and equivalent shape alternatives          |
+| Objects appear to grow after hashing or locking                                          | Shallow size was unchanged on tested JDK 25 (§5); native monitor state or lazy fields may grow            | `Instrumentation.getObjectSize`, NMT/JFR and field state before/after                                                    | Separate shallow heap bytes from side structures and lazy object graphs                                 |

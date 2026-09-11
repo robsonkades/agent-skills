@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-prototype
-version: 1.2.1
+version: 1.2.2
 description: >-
   Prototype in modern Java: producing a new object from an existing instance's state, when the
   configuration is expensive or the concrete type is unknown to the caller. Covers why
@@ -46,6 +46,9 @@ dependencies:
 
 suggests:
   - allocation-profiling
+  - gof-builder
+  - gof-factory-method
+  - gof-flyweight
   - java-immutability
   - java-memory-model
   - offline-concurrency-control

@@ -2,20 +2,20 @@
 
 ## The decision table
 
-| Situation                                                        | Choose                            | Because                                                           |
-| ---------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------- |
-| A framework constructs your class and calls into it              | Template Method (inheritance)     | Only if inherited hooks are the required extension contract       |
-| A test base class specifying a contract                          | Template Method                   | Inheriting a specification is exactly the intent                  |
-| A stable algorithm, cohesive hooks and explicit extension policy | Either; inheritance is defensible | Coupling is confined and the whole set is visible                 |
-| One step varies                                                  | Pass the step in                  | Compare composition unless lifecycle/SPI constraints favor a hook |
-| Variants are open to code you will not see                       | Preserve the supported SPI        | Either design needs a published compatibility policy              |
-| Hooks grow across unrelated responsibilities                     | Composition                       | Subclasses must understand the whole sequence to fill one part    |
-| Steps come from different modules                                | A pipeline or chain               | The template's fixed sequence is not the constraint you have      |
-| Steps must be reused across unrelated algorithms                 | Composition                       | A step trapped in a hierarchy cannot be shared                    |
+| Situation                                                        | Choose                            | Because                                                                 |
+| ---------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------- |
+| A framework constructs your class and calls into it              | Template Method (inheritance)     | Only if inherited hooks are the required extension contract             |
+| A test base class specifying a contract                          | Template Method                   | Inheriting a specification is exactly the intent                        |
+| A stable algorithm, cohesive hooks and explicit extension policy | Either; inheritance is defensible | Coupling is confined and the whole set is visible                       |
+| One step varies                                                  | Pass the step in                  | Compare composition unless lifecycle/SPI constraints favor a hook       |
+| Variants are open to code you will not see                       | Preserve the supported SPI        | Either design needs a published compatibility policy                    |
+| Hooks grow across unrelated responsibilities                     | Composition                       | Subclasses must understand the whole sequence to fill one part          |
+| Modules control step forwarding or ordering                      | A pipeline or chain               | Supplying implementations of fixed named steps alone is insufficient    |
+| Steps must be reused across unrelated algorithms                 | Compare composition               | Extract useful step behavior while preserving supported inherited roles |
 
 ## Rules for the inheritance form
 
-**The template method is `final`.**
+**Use `final` when it enforces the intended extension contract.**
 
 ```java
 public abstract class SettlementRun {
@@ -43,13 +43,16 @@ everything that is not a genuine variation point.
 protected abstract Batch load(RunContext ctx);      // required — subclass must supply
 protected void beforeSettle(Batch b) { }            // optional — safe no-op default
 protected boolean shouldRetry(Failure f) {          // policy — a default worth overriding
-    return f.isTransient();
+    return false;                                 // retry needs explicit operation/budget policy
 }
 ```
 
 Documenting which is which prevents the two common errors: overriding a required hook with a
 throw ("this variant does not load"), and forgetting an optional one because nothing said it was
 optional.
+The policy hook may permit retries only under the actual effect, prior-attempt outcome and
+remaining-budget contract. A transient label alone is not proof that repeating a
+whole run is safe; reuse the existing resilience owner.
 
 **No constructor calls a hook.**
 
@@ -60,11 +63,12 @@ public abstract class SettlementRun {
 }
 ```
 
-`load()` executes before the subclass's field initialisers, so it sees `null`s and zeroes. The
-failure is silent. Move the call into the template method or take the value as a constructor
-parameter.
+In this Java 17 construction shape, `load()` runs before the subclass's field initialisers and
+can observe default values; it can also throw or leak the incomplete object. Move the call to a
+defined post-construction lifecycle or pass an already initialized value. An injected callback
+that still accesses the incomplete subclass does not remove the hazard.
 
-**No `super.hook()` requirement.**
+**Keep invariant work out of new hook callers; preserve existing `super` contracts.**
 
 ```java
 protected void beforeSettle(Batch b) {
@@ -73,7 +77,7 @@ protected void beforeSettle(Batch b) {
 }
 ```
 
-If the base needs work done around a hook, it should call two hooks itself:
+For a new or compatibly migrated API, the base can perform its own work around the hook:
 
 ```java
 private void settlePhase(Batch b) {
@@ -82,23 +86,30 @@ private void settlePhase(Batch b) {
 }
 ```
 
-**No mutable state between hooks.** A field written by `load` and read by `record` couples
-subclasses to representation and makes a shared instance unsafe. Pass a context object through the
-hooks; shared step instances and collaborators must still support concurrent use.
+Do not remove a published `super` requirement before supported subclasses and lifecycle tests
+are accounted for; the replacement must preserve observable order and failure behavior.
+
+**Define ownership of mutable state between hooks.** A field written by `load` and read by
+`record` couples subclasses to representation. Confinement or a correct whole-run protocol may
+be adequate; concurrent or reentrant runs need isolation. A per-run context is one option;
+shared step instances and collaborators must still support their actual use.
 
 ## Migrating to composition
 
-A five-step conversion that keeps each commit reviewable.
+A conversion to consider when its consumer and maintenance benefits justify migration. Keep
+the existing design when adequate; existing collaborator types may already provide the seam.
 
 1. **Inventory override/self-use contracts and characterize behavior.** Final/private changes
    can break supported subclasses. Narrow visibility only after callers migrate or a compatible
    extension adapter exists.
-2. **Introduce a `Steps` interface** with one method per hook, and an adapter that delegates to
-   the existing abstract methods. Nothing changes behaviourally.
-3. **Move the template method into a new `final` class** that takes `Steps` in its constructor.
-   The abstract base becomes a thin subclass of nothing, delegating.
-4. **Convert subclasses into `Steps` implementations**, one at a time. Each conversion makes that
-   variant independently testable, which is the incentive that keeps the migration moving.
+2. **Reuse or introduce a cohesive step contract** and an adapter that delegates to existing
+   hooks. Characterize arguments, order, visibility, identity, exceptions and resource ownership;
+   delegation alone does not establish equivalent behavior.
+3. **Move internal orchestration into a composed class** where useful. A supported abstract base
+   can retain its type, methods and hooks while delegating; do not discard superclass behavior
+   or expose protected hooks publicly merely to implement a new interface.
+4. **Convert eligible variants**, one at a time, checking both ordinary and failure paths.
+   Retain the inherited entry point for consumers whose extension contract requires it.
 5. **Delete the abstract base** when local and supported external subclasses are migrated;
    local compilation alone cannot establish binary/plugin compatibility.
 
@@ -126,8 +137,8 @@ public SettlementRun(Function<RunContext, Batch> load,
                      BiConsumer<Settled, RunContext> record) { }
 ```
 
-Readable at three or four steps; past that the parameter list stops carrying its own meaning and a
-named interface or a record of functions is better.
+Choose by call-site clarity and cohesion: independent functions can be enough; related operations
+may deserve a named contract. Parameter count alone does not decide.
 
 ## What composition loses
 

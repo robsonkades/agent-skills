@@ -20,8 +20,8 @@ description: >
 Decide where mapping information lives and what generates it, and keep it honest about the
 schema it describes. Metadata mapping is what makes an ORM possible: the mapping is data,
 read by a generic engine, instead of a per-class translation someone wrote. That is a large
-win and it has three recurring costs — the metadata sits on the domain class, it is checked
-late, and it drifts.
+win with recurring costs: metadata can couple domain types to persistence APIs, defer checks
+until runtime, and drift from its schema.
 
 ## The choices
 
@@ -46,11 +46,19 @@ Generated code                a build step produces the mapping or the
                               metamodel), or an interface (MapStruct).
 ```
 
+These mechanisms can coexist: generated row types can feed explicit mappers, and XML can
+override annotations. Identify the authority for each fact and the contract between stages.
+
 ## Workflow
 
 Inspect the JDK/compiler, JPA namespace/version, ORM/provider, annotation processors,
 database dialect and schema deployment pipeline first. Examples are partial; this skill
 does not authorize upgrading the stack to match its documentation sources.
+
+Start with the requested mapping decision or changed contract. Reuse existing configuration
+and validation evidence; an adequate mapping or narrow API explanation can close with no
+change. Apply the steps and checks relevant to that scope, reporting any specific unresolved
+compatibility obligation without inventing a migration, generator or full CI matrix.
 
 1. **Pick the schema deployment authority.** Versioned migrations should control shared
    production schemas. Model-generated DDL can be reviewed into migrations; avoid independent
@@ -64,8 +72,10 @@ does not authorize upgrading the stack to match its documentation sources.
 4. **Prefer typed generated references where supported.** Regeneration exposes removed/renamed
    members at compile time when used. Remaining strings/constants need validation; moving a
    string into a constant does not make its value schema-checked.
-5. **Check for duplicated mapping.** The same fact stated in annotations, in a migration,
-   in a DTO mapper and in a view is four places to update and three places to be wrong.
+5. **Check which repeated facts must agree.** Domain, wire, persistence and schema contracts
+   may intentionally differ. Identify redundant assertions of the same fact and validate
+   required agreements or conversions; do not merge models or delete independent constraints
+   merely because a field appears in several places.
 6. **Resist metadata-driven behaviour** unless a stated driver requires it; see the decision
    rules.
 
@@ -84,7 +94,8 @@ A separate framework-free domain model exists
 
 The same classes must map differently per deployment or per tenant
         → external metadata or programmatic configuration. This is the
-          case orm.xml was designed for and it is rare.
+          mapping-variability case; tenant selection/isolation still needs
+          a supported provider and persistence-unit contract.
 
 Column and attribute names appear as strings in queries or projections
         → use typed generated references where possible; validate remaining
@@ -112,8 +123,9 @@ need no deploy
   competing with migrations on shared data. Disposable test databases may deliberately
   generate schemas; model-generated scripts reviewed into migrations are another valid path.
 - Use `validate` where startup failure is an acceptable control and permissions expose enough
-  metadata. For rolling deployment, validate both old and new application versions against the
-  expanded schema before rollout; do not discover incompatibility by replacing all healthy pods.
+  metadata. For a mapping/schema change in a rolling deployment, validate affected old/new
+  application contracts against the expanded schema, reusing applicable evidence; do not
+  discover incompatibility by replacing all healthy pods.
 - **Startup validation is not complete validation.** It checks tables, columns and types; it
   does not check nullability the way you would want, nor constraints, nor indexes, nor
   defaults comprehensively across providers/dialects. A schema diff covers only the objects

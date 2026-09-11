@@ -5,7 +5,8 @@ fitness functions. No measured improvement is claimed.
 
 Run each request/context in a fresh session, without the expectations below. For comparison,
 keep model/version, settings, tools and surrounding instructions the same; omit this skill in
-the baseline and provide SKILL.md plus access to its references in the treatment. Record outputs,
+the baseline and provide SKILL.md plus its three technical references in the treatment. Keep
+this evaluation file and its expectations unavailable to task-runner agents. Record outputs,
 tool use and pass/fail against each required characteristic with evidence. For selection cases,
 provide the same neighboring descriptions, adding this description only in the treatment.
 Judge decisions and preserved requirements, not exact wording. Paired runs remain pending.

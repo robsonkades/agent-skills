@@ -3,7 +3,10 @@
 These are reproducible evaluations of the skill's decisions, separate from tests of the
 profiler, converter, or repository packaging. Run each request in a fresh context with the
 stated fixture. For a comparison, keep model/version, tools, context, and generation settings
-constant; provide this skill and its references only to the skill-enabled arm. Record tool
+constant; provide this skill and its technical references only to the skill-enabled arm.
+This file is evaluator-only: supply the selected request/context as input and keep this file
+and judging criteria outside response agents' accessible files and tools, including the
+routed reference path. Instructions not to read available criteria are not access isolation. Record tool
 calls, response, observed decisions, and failures; compare decisions, not wording. Do not
 attach to a real service or change host policy to execute these cases.
 
@@ -126,9 +129,9 @@ perturbation rather than inferring it from emitted event count.
 **Failure:** Reuses incompatible filter syntax, invents -e trace, or guarantees low overhead
 from the count of calls passing the duration threshold.
 
-## Verification record and limits
+## Earlier verification record and limits (1.3.1)
 
-During this revision, the official v4.5 Linux x64 release's `asprof --help` was executed
+During that revision, the official v4.5 Linux x64 release's `asprof --help` was executed
 through WSL, and its packaged converter's `--help` was executed through `java -jar` on
 Windows using JDK 25. The differential fixture in `output-and-conversion.md` was converted
 to collapsed and HTML output; collapsed baseline/candidate weights and reversed input order

@@ -2,12 +2,13 @@
 
 ## Windows, and what each one costs
 
-A window is what converts an unbounded stream into a finite computation. The type chosen
-decides the state cost as much as it decides the semantics.
+Windows define grouping and completion/retention rules over a stream. The type and actual
+aggregation/join implementation determine state cost; a window alone does not guarantee finite
+physical state or eventual completion.
 
 | Type         | Definition                                | State per key                                                      | Bounded by                                     |
 | ------------ | ----------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
-| **Tumbling** | Fixed, non-overlapping intervals          | One aggregate per open interval                                    | The interval, plus grace                       |
+| **Tumbling** | Fixed, non-overlapping intervals          | Aggregate or raw records per open interval                         | The interval, plus grace                       |
 | **Sliding**  | Fixed size, advancing by a smaller step   | Naive copies overlap; panes/incremental aggregates may share state | Window, step, algorithm and allowed lateness   |
 | **Session**  | Activity separated by a gap of inactivity | Accumulator or raw events for each active session                  | Gap, lateness, merge behavior and key activity |
 
@@ -27,20 +28,21 @@ TTL may cap retention but can discard valid late matches, so it is a correctness
 The classic pipeline death is a join or table whose state grows in **unmatched events or live
 keys over retention**, not merely records per second:
 
-```
+```text
+# Illustrative failure shape, not executable API or a measured time-to-failure
 streamJoin(orders, shipments) on orderId, no eviction
   → every orderId ever seen is retained, waiting for a shipment that may never come
   → state grows monotonically with the business, at roughly orders/day × days
-  → throughput is fine, latency is fine, and the process dies in week three
+  → throughput can look adequate while retained state exhausts heap or disk
 ```
 
 Why it survives testing: a load test runs 10× traffic for one hour over a small key set. State
 is a function of _distinct keys over the retention period_, and one hour of synthetic traffic
-with a thousand keys tells you nothing about ninety days with forty million.
+with a thousand keys does not establish the capacity needed for ninety days with forty million.
 
 Table/latest-value joins can retain only the current value per live key and remove it on a
-tombstone; a fixed-size aggregate can be bounded per key. They are still unbounded in key count
-unless lifecycle eviction exists.
+tombstone; a fixed-size aggregate can be bounded per key. Key count still needs a domain,
+lifecycle or capacity bound; a known finite live-key domain need not use window eviction.
 
 **Detect it before the OOM or disk exhaustion.** Useful leading signals are:
 
@@ -54,10 +56,11 @@ unless lifecycle eviction exists.
   changelog and disk-compaction growth for an on-disk one. Track checkpoint duration, upload
   bytes, restore time and compaction/write amplification; local bytes alone understate cost.
 
-**Bound it.** In order of preference: a window whose size comes from how late the other side can
-legitimately arrive; an explicit retention on the store with a stated eviction policy; a
-key-space bound where the domain provides one (a closed order can be evicted; an open one
-cannot without a declared timeout/late policy). Immediate discard can bound state but may lose
+**Bound it from the semantic contract.** Use a matching window when time limits valid matches,
+an explicit retention/eviction policy when loss is allowed, or a key-space/lifecycle bound where
+the domain provides one. An authoritative latest-value table may need to retain every live key;
+arbitrary TTL/window eviction would change its answer. A closed order may be evictable, while an
+open one needs a declared timeout/late policy. Immediate discard can bound state but may lose
 future matches or corrections; emitted output is not proof that retained state was cleaned up.
 
 ## Watermarks and late data
@@ -80,19 +83,20 @@ Then decide, separately, what happens to an event that arrives after its window 
 | Policy                | What it does                                      | Choose when                                                              |
 | --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Drop**              | Discard with accounted reason/count               | An explicit loss budget permits it; alert when that budget is threatened |
-| **Side output**       | Route to a separate stream for reconciliation     | The default for anything a business reconciles — it keeps the record     |
+| **Side output**       | Route to a separate stream for reconciliation     | Retained records and a separate reconciliation path meet the contract    |
 | **Emit a correction** | Update/retract a prior result                     | Sink supports stable keys, versions and upsert/retraction semantics      |
 | **Extend the grace**  | Keep the window open longer for this class of key | Lateness is systematic for a known source, not random                    |
 
-Framework defaults vary. Treat an implicit policy as a defect: even side output needs durable
-delivery, retention, access control and a reconciliation owner. Replay does not inherently make
+Framework defaults vary. Inspect and accept or change the effective policy explicitly; a verified
+default can satisfy the contract without custom configuration. Side output needs durable
+delivery, retention, access control and a reconciliation owner when those are promised. Replay does not inherently make
 all records late when event-time watermarks are reconstructed from replayed partitions; it can
 do so when live and replay traffic share progress, timestamps are compressed, or old records are
 injected behind an already advanced watermark. Test the actual mode.
 
 ## Replay and reprocessing
 
-Replay is the capability windowed state most often destroys:
+Replay requires a defined input/state/output boundary:
 
 - Use **event time** when the answer represents when the business event occurred. Processing-time
   windows deliberately answer when this execution observed the event and generally cannot
@@ -105,17 +109,21 @@ Replay is the capability windowed state most often destroys:
 - **The output must tolerate the rewrite.** Upsert keys alone do not guarantee convergence:
   stale replay may overwrite newer values, removed results need deletion, and append sinks may
   duplicate effects. Specify output generation, ordering/version guards, reconciliation and cutover.
-- **Downstream consumers see the history again**, so they must be repeat-safe (`idempotency`) —
-  including the ones nobody remembers subscribing.
+- **Identify which downstream consumers can see replay.** Consumers of rewritten/live output
+  need the corresponding repeat-safe or reconciliation protocol (`idempotency`). Isolated
+  versioned output with controlled cutover can keep intermediate history away from existing
+  consumers; verify routing, deletes, cutover consistency and any side effects on that path.
 
 ## Testing a windowed stage deterministically
 
-Wall-clock time in a windowing test produces a test that is either slow, flaky, or both. The
-technique is to make event time an input.
+For deterministic window logic checks, make event time an input and control timer progress.
+A bounded integration smoke test may exercise real timers, but it does not replace deterministic
+boundary assertions. Select the relevant cases for the actual change/guarantee and reuse adequate
+evidence; a narrow explanation need not execute this entire recovery matrix.
 
 - **Drive event time from the records.** Every test record carries an explicit timestamp; the
   test advances the watermark by feeding a record (or an explicit watermark, where the framework
-  exposes one) rather than by sleeping. `Thread.sleep` in a windowing test is the failure.
+  exposes one) rather than using `Thread.sleep` as proof of a logical boundary.
 - **Control processing time too.** Inject `Clock` for application code and use the engine's
   test timer service/harness for framework timers; an application Clock does not replace those.
   Feeding one record may not emit a periodic watermark until that generator is advanced.
@@ -132,7 +140,7 @@ technique is to make event time an input.
   timer beyond cleanup, and assert semantic state eviction. Allow documented asynchronous backend
   compaction/physical-byte reclamation. Also stall one input while another advances and verify the
   state/admission budget; a healthy-watermark run misses this failure.
-- **Test recovery and evolution.** Crash between input, checkpoint and sink commit; restore from
+- **Test recovery and evolution when affected or claimed.** Cover the relevant crash boundaries between input, checkpoint and sink commit; restore from
   checkpoint/savepoint; rescale/repartition; upgrade state serializers; add an idle partition;
   regress a watermark; and inject a record behind it. Assert no silent loss, duplicate effect or
   orphaned state beyond the declared guarantee.
@@ -140,7 +148,9 @@ technique is to make event time an input.
 ## State sizing and operational budget
 
 Estimate logical bytes from distinct live keys/events, serialized key/value size, window/pane
-multiplicity and versions retained. Then measure physical amplification: indexes, allocator/
+multiplicity and versions retained. A representative per-live-key mean, correctly weighted across
+classes/partitions, can estimate the aggregate; an unweighted average of class means or a short
+repeated-key sample may misrepresent it. Check hot-key/partition limits separately. Then measure physical amplification: indexes, allocator/
 object overhead, RocksDB/LSM compaction, changelog replication, checkpoints, local cache and
 temporary migration overlap. Capacity must cover steady state plus recovery/rescale headroom,
 and restore time must fit the recovery objective—not merely fit disk.
@@ -151,8 +161,8 @@ audit replay/correction operations.
 
 ## Primary references
 
-- [Apache Flink event-time and watermarks](https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/time/)
-- [Apache Flink state and fault tolerance](https://nightlies.apache.org/flink/flink-docs-stable/docs/concepts/stateful-stream-processing/)
-- [Kafka Streams state stores](https://kafka.apache.org/documentation/streams/developer-guide/processor-api.html#state-stores)
-- [Flink windows](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/operators/windows/) — assignment, firing, allowed lateness and cleanup.
-- [Flink watermark generation](https://nightlies.apache.org/flink/flink-docs-stable/docs/dev/datastream/event-time/generating_watermarks/) — idleness and alignment for skewed progress.
+- [Flink 1.20 event-time and watermarks](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/concepts/time/)
+- [Flink 1.20 state and fault tolerance](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/concepts/stateful-stream-processing/)
+- [Kafka 4.1 Streams state stores](https://kafka.apache.org/41/streams/developer-guide/processor-api/#state-stores) and [table semantics](https://kafka.apache.org/41/streams/developer-guide/dsl-api/#ktable)
+- [Flink 1.20 windows](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/operators/windows/) — assignment, firing, allowed lateness and cleanup.
+- [Flink 1.20 watermark generation](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/event-time/generating_watermarks/) — idleness and alignment for skewed progress. Verify deployed engine/connector support rather than assuming these source versions match it.

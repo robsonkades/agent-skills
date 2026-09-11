@@ -50,32 +50,42 @@ owner and the stage/resource where they become prerequisites. Reuse existing aut
 | --- | ---------------------------------------------------------------- | -------- |
 | 15  | The context report exists and every finding cites evidence       | no       |
 | 16  | Established project patterns are identified and will be followed | no       |
-| 17  | The impact map lists paths, not descriptions                     | yes      |
+| 17  | The impact map gives concrete repository or external locators    | yes      |
 | 18  | Every boundary crossing is named, with who depends on it         | yes      |
 | 19  | Reusable components were looked for and the result recorded      | no       |
+
+External resource identities/specifications are valid locators; NEW locations are proposals,
+not files claimed to exist. Unknown locations remain OPEN for affected work.
 
 ## The change itself
 
 | #   | Item                                                                                          | Blocking |
 | --- | --------------------------------------------------------------------------------------------- | -------- |
-| 20  | Every boundary crossing has an accepted CT-* and owner, including failure/evolution semantics | yes      |
+| 20  | Affected boundary contracts and owners are identified; required semantic changes are accepted | yes      |
 | 21  | Schema changes are defined, with the compatibility window                                     | yes      |
 | 22  | Error and failure behaviour is defined for the named cases                                    | yes      |
 | 23  | Security obligations are established — authn, authz, data handling                            | yes      |
 | 24  | Configuration is defined, with defaults and per-environment values                            | no       |
 | 25  | Observability is defined: what an operator sees when it misbehaves                            | no       |
 
+For item 20, reuse the authoritative accepted contract revision when its semantics are unchanged.
+New, changed or missing semantics need the applicable contract-definition/CT-* handoff, including
+failure and evolution behavior; do not duplicate a settled specification to satisfy the gate.
+
 ## Execution readiness
 
-| #   | Item                                                                 | Blocking |
-| --- | -------------------------------------------------------------------- | -------- |
-| 26  | RES-* exist, each with upstream trace, dependencies and planned EV-* | yes      |
-| 27  | The execution order is derived, with forced arrows marked            | yes      |
-| 28  | The test strategy is set per resource, not as a paragraph            | yes      |
-| 29  | Migration, deployment and rollback are written as sequences          | yes      |
-| 30  | RISK-* are derived; every HIGH one has mitigation or a valid GAP-*   | yes      |
-| 31  | BAC-* and TC-* are observable and trace to planned EV-*              | yes      |
-| 32  | Dependencies on other people or systems are named                    | no       |
+| #   | Item                                                                                  | Blocking |
+| --- | ------------------------------------------------------------------------------------- | -------- |
+| 26  | RES-* exist, each with upstream trace, dependencies and planned EV-*                  | yes      |
+| 27  | The execution order is derived, with forced arrows marked                             | yes      |
+| 28  | The test strategy is set per resource, not as a paragraph                             | yes      |
+| 29  | Migration, deployment and rollback are written as sequences                           | yes      |
+| 30  | Risks are derived; remaining HIGH-impact risks have planned controls or a valid GAP-* | yes      |
+| 31  | BAC-* and TC-* are observable and trace to planned EV-*                               | yes      |
+| 32  | Dependencies on other people or systems are named                                     | no       |
+
+For item 30, an avoided risk needs evidence that removes its failure path for the reviewed scope.
+A proposed removal remains open until supported; planned controls are not verified protection.
 
 ## Scaling the checklist
 

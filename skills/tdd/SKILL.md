@@ -17,9 +17,10 @@ description: >
 
 ## Purpose
 
-Red-green-refactor is a feedback loop, not a virtue. It buys three specific things: a test
-proven capable of failing, a design shaped by its first caller, and a small enough step that a
-regression is attributable to the last minute of work rather than the last afternoon.
+Red-green-refactor is a feedback loop, not a virtue. It can provide evidence that a test
+detects the intended missing behavior, expose design choices through a caller, and keep the
+changed scope small enough to investigate. An observed failure does not prove every assertion
+effective or rule out setup, environment and nondeterminism as causes of later failures.
 
 Where those three are cheap to get another way, TDD costs more than it returns. Deciding which
 situation you are in is the skill; performing the loop is mechanics.
@@ -31,15 +32,16 @@ Inspect the project's Java release, test runner, resolved dependencies and focus
 Do not upgrade them to match the worked example. Report missing tools or an unreproduced fault
 as a limitation; do not invent a red run. The following loop applies when test-first is selected.
 
-1. **Write one failing test for the next behaviour**, small enough to implement in a few
-   minutes. Name it after the behaviour (java-test-design).
+1. **Write one failing test for the next behaviour**, keeping the change small enough that
+   an unexpected result is understandable. Name it after the behaviour (java-test-design).
 2. **Run it and read the failure.** This is the step that is skipped and the one that carries
    the value: a passing test whose sensitivity was never checked gives weaker evidence.
    A failure from unrelated setup or a typo is not the intended red. A missing API or bean
    can be the intended failure when creating that API or wiring is the behavior under test.
-3. **Make it pass with the simplest change that could work.** Simplest means smallest, not
-   dishonest; hardcoding a return value is a legitimate step only if the next test is already
-   queued to break it.
+3. **Make it pass with the simplest change that satisfies the intended behaviour.** A literal
+   return can complete a genuinely constant contract. For a broader input-dependent contract,
+   a temporary constant may be a step; drive the remaining real requirements with discriminating
+   cases rather than inventing a second test merely to forbid constants.
 4. **Refactor while green** — both the code and the test. Skipping this converts TDD into
    "writing tests first and accumulating mess". Refactor when there is a concrete improvement;
    the step can legitimately end with no edit.
@@ -66,21 +68,23 @@ as a limitation; do not invent a red run. The following loop applies when test-f
 - Do not write a test whose assertion restates the implementation. `verify(repo).save(any())`
   alone often misses wrong data or timing. Interaction assertions are useful when the call,
   payload, ordering or absence of a side effect is itself the observable contract.
-- TDD does not produce a test strategy. Driving every behaviour from a unit test still leaves
-  the schema, the wiring and the contract untested — those need their own tests chosen
-  deliberately.
+- TDD does not produce a test strategy. Unit tests do not establish real schema, wiring or
+  external contracts when those boundaries carry the risk; choose their coverage deliberately.
+  A pure component with no such boundary need not acquire an unrelated integration suite.
 - Do not TDD toward a coverage number. Coverage is an output of having tested the behaviours
   that matter; used as a target it produces tests written for lines rather than for risk.
 
-Return the chosen approach and reason, observed red/green results with command and test
-counts, and remaining checks or evidence gaps. Do not call a single successful run TDD.
+For an approach review, return the chosen method, reason and relevant limits; retain an adequate
+existing approach. For executed work, report actual commands, discovery/pass/fail/skip counts,
+observed red/green or characterization evidence, and remaining checks. Do not invent execution
+for advice or call a single successful run evidence of a red-green history.
 
 ## References
 
 - **The loop, executed** — `references/loop-mechanics.md`. A complete red-green-refactor
-  session on an instalment splitter, with the real failure output at each step — including the
-  second red, where a test written to state an invariant exposed an `ArithmeticException` the
-  first implementation shipped with. Read when the mechanics or step size are in question.
+  session on an instalment splitter, with recorded failure output — including the second red,
+  where the zero-count rejection test exposed an `ArithmeticException` while six invariant
+  examples already passed. Read when the mechanics or step size are in question.
 - **Where TDD pays, and where it does not** — `references/when-tdd-pays.md`. The conditions
   that make the loop cheap or expensive, situations where test-after or
   characterisation may be a better choice, and how to answer "is TDD mandatory here?" with a

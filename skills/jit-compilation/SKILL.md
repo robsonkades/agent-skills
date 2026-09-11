@@ -27,6 +27,9 @@ flags when its problem is a single C2 thread.
 
 ## Workflow
 
+Reuse the supplied runtime and incident evidence. Choose the steps that resolve the actual
+question; an adequate existing mode or readiness criterion need not change.
+
 1. **Classify the symptom against the JIT's failure shapes.**
    - Bad only in the first minutes after deploy → decompose JIT/class loading, application and
      dependency caches, connection establishment, rollout traffic, CPU throttling, and GC; do not
@@ -44,15 +47,17 @@ flags when its problem is a single C2 thread.
 2. **Model the curve rather than guessing a delay.** Invocation and back-edge rates influence
    policy thresholds, while queueing, CPU quota, code-cache availability, method mix, class
    loading, application caches, and dependency initialization influence observed readiness.
-3. **Check the code cache** before anything else on a no-recovery symptom: `jcmd <pid>
+3. **Check the code cache early when it remains a candidate** on a no-recovery symptom: `jcmd <pid>
 Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
    `jdk.CodeCacheStatistics`, `CodeCache is full` in the log.
 4. **Read the compiler's CPU budget off the container, not the flag.** In the examined default
    C1/C2 configuration, 1-3 active processors gives a cap of one C1 and one C2 thread,
    and a CPU limit is shared between compiling
    and serving. See `references/tiered-compilation-model.md`.
-5. **Verify defaults before adding a flag** (`-XX:+PrintFlagsFinal`). Several widely
-   copied flags have been default for years.
+5. **Verify the target's effective settings before adding a flag.** Reuse launch/runtime
+   evidence or supported `jcmd <pid> VM.flags -all` and `VM.command_line` output. A fresh
+   `java -XX:+PrintFlagsFinal -version` describes that new process, including its environment
+   and ergonomics, not the deployed JVM. Several copied flags may already be enabled.
 6. **Gate traffic on service behavior, not a sleep.** Use correct responses plus latency/error
    acceptance under representative self-training or ramped traffic. Compiler-statistics deltas,
    queue depth, and code-cache state explain convergence but are not sufficient readiness
@@ -73,8 +78,11 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   selects non-tiered high-tier compilation. `-Xint` disables JIT. On the examined JDK 25 build,
   disabling tiered compilation or stopping at level 1 also changed code-cache ergonomics from
   240 MB segmented to 48 MB unsegmented; verify effective flags on every runtime.
-- Under tiered compilation `-XX:CompileThreshold` is accepted and ignored. The ladder moves
-  with `-XX:CompileThresholdScaling`, globally or per method through `CompileCommand`.
+- In default full C1/C2 tiering, `-XX:CompileThreshold` is accepted but does not control
+  compilation eligibility. C1-only modes such as `TieredStopAtLevel=1` and non-tiered modes
+  can honor legacy thresholds on JDK 25. Inspect the mode and effective per-tier thresholds;
+  `TieredCompilation=true` alone is insufficient. `CompileThresholdScaling` can scale policy
+  globally or per method through `CompileCommand`.
 - `CICompilerCount` is a cap, not a head-count: threads are added while a queue is long and
   memory allows, and retired when idle (`UseDynamicNumberOfCompilerThreads`, default).
   Raising it on a one-CPU pod adds no CPU. The default full C1/C2 mode requires at least 2;
@@ -87,12 +95,12 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   compilation before ordinary execution for reached, compilable methods and uses blocking policy;
   on the examined tiered JDK 25 build those methods went through tier 3 and tier 4
   (`Tier4InvocationThreshold=0`, `BackgroundCompilation=false`) before it runs, from a
-  profile that saw almost nothing. Start-up gets much slower, and the compiler loses the
-  information that justifies its existence.
+  sparse profile. Blocking compilation can dominate startup, but the cost and resulting code
+  quality require workload evidence; this mode does not prove every application gets slower.
 - Scaling out can dilute per-instance profiles while improving queueing headroom and availability.
   Model both effects. Use slow start/readiness, rollout limits, minimum warm capacity, and an HPA
   signal/stabilization policy that distinguishes startup CPU from sustained demand.
-- The AOT cache (JEP 515) caches **profiles, not compiled code**. It shortens the profiling
+- The AOT cache (JEP 515) caches **profiles, not compiled application code**. It can shorten the profiling
   phase; compilations still run under the same CPU quota, but their amount, timing and cost can
   change. `jdk.CompilerStatistics.totalTimeSpent` aggregates compilation elapsed durations,
   not CPU seconds; pair it with compiler-thread/process CPU and throttling evidence.
@@ -104,7 +112,8 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   `graalvm-jit` for the supported distribution/version rather than assuming a stock-JDK flag installs it.
 
 Record the deployed JDK/build, compiler mode, effective flags and workload before changing policy.
-Return the observed curve and competing explanations, proposed adjustment and checks actually run;
+The examples describe HotSpot 25; preserve a project's explicit runtime and compatibility baseline.
+Return the relevant observations and competing explanations, any proposed adjustment and checks actually run;
 do not equate configured thresholds, elapsed compile time or a counter plateau with readiness.
 
 ## References

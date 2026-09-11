@@ -91,7 +91,8 @@ or a LIBRARY (you call it; it does not call you)?
 
   LIBRARY  → use an adapter for an external protocol/failure boundary or
              application-owned contract; do not wrap stable value APIs by default.
-             A retry policy still needs idempotency and a bounded deadline
+             Retries need a shared budget and evidence of safe repetition,
+             such as non-application or repeat-safe operation semantics
              (timeouts-and-deadlines, retries-and-backoff).
 
   FRAMEWORK ↓
@@ -125,9 +126,9 @@ Stated plainly, because the literature on this topic under-weights it:
   APIs can be appropriate infrastructure ports but still depend on Spring. `javax.sql.DataSource`
   is a Java SE interface. Wrap only when a narrower application contract adds a concrete benefit
   (`patterns-and-modern-frameworks`).
-- **The application is short-lived or small.** A service with a two-year horizon should
-  optimise for delivery speed. Isolation is insurance, and insurance on a short policy is
-  usually a bad buy.
+- **The application is short-lived or small.** A shorter horizon can reduce the benefit of
+  speculative portability, but does not remove security, consumer or contractual requirements.
+  Compare the cheapest adequate boundary with the recurring cost of isolation.
 - **The domain is thin.** A separate persistence/domain model may buy little unless schema
   ownership or independently changing contracts require separation; API DTOs are a separate choice
   (`domain-logic-organization`).
@@ -139,9 +140,10 @@ Stated plainly, because the literature on this topic under-weights it:
 - **The domain is complex and long-lived** — rules with real invariants, expected to outlast
   two framework generations. Here the mapping cost is repaid by being able to reason about,
   and test, the rules on their own (`humble-objects-and-functional-core`).
-- **The dependency is an integration, not a framework.** Payment providers, messaging vendors
-  and cloud SDKs are replaced regularly, have small surfaces, and need a seam for failure
-  injection anyway (`distributed-systems-testing`).
+- **The integration has a concrete contract or failure boundary.** A payment, messaging or cloud
+  adapter can contain external semantics and permit focused failure tests. Inspect the actual
+  surface and replacement scenario; a vendor SDK is not inherently small or cheap to replace
+  (`distributed-systems-testing`).
 - **Regulatory or contractual portability is an actual requirement** rather than an
   aspiration — someone has written it down and will audit it.
 - **A concrete boundary benefit exists.** Multiple implementations can justify a port, but

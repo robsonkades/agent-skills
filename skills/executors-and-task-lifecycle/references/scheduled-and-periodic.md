@@ -24,6 +24,8 @@ overrun -> skip/coalesce/queue/catch up, with maximum lag
 
 Observe the `ScheduledFuture` and task transitions. Catch only what policy can safely handle; a
 catch-`Throwable` loop can keep corrupt work running forever.
+The periodic Future captures a thrown body failure and its series stops; this does not automatically
+shut down the executor or process. Wire required disable/health/process escalation to its owner.
 
 ## Drift and time
 
@@ -56,9 +58,13 @@ without blocking on a healthy periodic Future that is not done.
 
 ## Multi-replica jobs
 
-Every replica normally schedules its own local task. If only one cluster execution is required, use
-a durable scheduler/lease/partition assignment with fencing and idempotency. A local non-overlap
-guarantee is not distributed exclusion.
+Every replica normally schedules its own local task. State whether the contract requires exclusive
+execution or permits duplicate computation with controlled effects. A scheduler, lease or partition
+assignment does not by itself stop a stale task. Preserve an adequate resource-enforced invariant;
+add coordination or repeat-effect protection only where the actual contract needs it. Fencing must
+be enforced by the protected resource, and idempotency does not by itself reject every stale effect.
+Route grant/enforcement design to `distributed-locks-and-leases` and repeated-effect semantics to
+`idempotency`. A local non-overlap guarantee is not distributed exclusion.
 
 ## Observability
 

@@ -6,19 +6,19 @@ on my machine, red in CI".
 
 ## The controllable inputs
 
-| Hidden input                | Symptom                                                          | Substitution                                                                  |
-| --------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| System clock                | Fails at a month boundary, at midnight, or in another zone       | Inject `Clock`; `Clock.fixed(...)` in tests                                   |
-| Default time zone           | Off-by-one day in CI                                             | Never `LocalDate.now()` without a zone; assert with explicit `ZoneOffset`     |
-| Default locale              | `toUpperCase`, formatting and parsing differ (Turkish `i`)       | Pass an explicit `Locale` to every locale-sensitive call                      |
-| Default charset             | Bytes differ from the file on disk                               | Pass an explicit `Charset`; `StandardCharsets.UTF_8`                          |
-| `HashMap` / `HashSet` order | Assertion on "the first element" fails after an unrelated change | Assert order-independently, or use an ordered collection deliberately         |
-| `Random`                    | Fails one run in fifty                                           | Fixed seed: `new Random(42L)`; never `ThreadLocalRandom`, it cannot be seeded |
-| `UUID.randomUUID()`         | Ids differ per run, so assertions cannot name one                | Inject a supplier, or assert on shape rather than value                       |
-| Filesystem paths and order  | Passes locally, fails in the container                           | `@TempDir`; never rely on `Files.list` ordering                               |
-| Fixed ports                 | Fails when two builds run on one agent                           | Bind port 0 and read back the assigned port                                   |
-| Test execution order        | Passes alone, fails in the suite                                 | Remove shared state; do not impose an order to fix it                         |
-| Wall-clock waiting          | Fails on a loaded CI agent                                       | Await a condition, never a duration (concurrency-testing)                     |
+| Hidden input                | Symptom                                                          | Substitution                                                                            |
+| --------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| System clock                | Fails at a month boundary, at midnight, or in another zone       | Inject `Clock`; `Clock.fixed(...)` in tests                                             |
+| Default time zone           | Off-by-one day in CI                                             | Specify the domain zone, or isolate and restore the tested default                      |
+| Default locale              | `toUpperCase`, formatting and parsing differ (Turkish `i`)       | Specify the locale, or isolate and restore the tested default                           |
+| Default charset             | Bytes differ from the file on disk                               | Pass an explicit `Charset`; `StandardCharsets.UTF_8`                                    |
+| `HashMap` / `HashSet` order | Assertion on "the first element" fails after an unrelated change | Assert order-independently, or use an ordered collection deliberately                   |
+| `Random`                    | Fails one run in fifty                                           | Seed/replay the generator or failing input; `ThreadLocalRandom` is not seedable         |
+| `UUID.randomUUID()`         | Ids differ per run, so assertions cannot name one                | Inject a supplier, or assert on shape rather than value                                 |
+| Filesystem paths and order  | Passes locally, fails in the container                           | `@TempDir`; never rely on `Files.list` ordering                                         |
+| Fixed ports                 | Fails when two builds run on one agent                           | Bind port 0 and read back the assigned port                                             |
+| Test execution order        | Passes alone, fails in the suite                                 | Remove accidental coupling; make required workflow order and ownership explicit         |
+| Wall-clock waiting          | Fails on a loaded CI agent                                       | Await bounded completion; distinguish intentional temporal faults (concurrency-testing) |
 
 Since JDK 18, UTF-8 is the default unless configured otherwise (for example `-Dfile.encoding=COMPAT`), which removes the
 most common charset surprise — but the _console_ encoding still follows the platform, so a
@@ -66,13 +66,13 @@ Run the failing test alone; if it passes, work down this list.
    next test.
 
 Prefer removing accidental sharing; when an external resource must be shared, isolate namespaces,
-reset reliably or serialize its users with the runner's resource protocol. Imposing an order with `@TestMethodOrder` makes the
-symptom disappear and preserves the defect: the tests still depend on each other, and the
-next person to add a test in the middle gets the failure back.
+reset reliably or serialize its participating users with the runner's resource protocol.
+`@TestMethodOrder` can mask a defect when tests are meant to be independent. An explicitly ordered
+workflow is different: preserve whole-scenario selection, failure reporting and resource cleanup;
+do not present dependent steps as independent tests.
 
-Jupiter's default order is deterministic but intentionally non-obvious, precisely so that
-order-dependence surfaces early rather than in whichever build first runs the tests
-differently. Do not defeat it.
+Jupiter's default method order is deterministic but intentionally non-obvious; it is not random
+coverage of all orders. A pass in that order alone does not establish test independence.
 
 ## Flakiness is a defect report
 

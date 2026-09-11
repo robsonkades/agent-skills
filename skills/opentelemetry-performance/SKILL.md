@@ -32,11 +32,20 @@ Decide whether metrics, logs, profiles or traces are the right population eviden
 Traces explain individual paths; sampled traces alone do not generally estimate fleet
 rates or quantiles without sampling-aware analysis.
 
+Scope the review to the requested decision and affected path. An API/context explanation
+may be settled by source and a focused fixture; an adequate existing contract can need no
+change. Use the wider inventory and experiment only when needed to support the claim.
+
 ### 2. Inventory actual instrumentation
 
-Pin agent, SDK, semantic-convention and library versions. Inspect the current Java agent's
-supported-library matrix and a smoke trace. Map ingress, egress, messaging, database and
-async boundaries; locate duplicates, missing links and excessive internal spans.
+Pin the target JDK, agent, SDK, semantic-convention, Collector and library versions that
+participate in the affected path. When an agent is present, inspect its supported-library
+matrix and relevant existing traces or a smoke fixture. Map the boundaries needed for the
+question; locate duplicates, missing links and excessive internal spans.
+
+The API/processor reference clauses use OpenTelemetry Java 1.62.0 and Collector contrib
+0.160.0. These are review baselines, not permission to upgrade a project's JDK or telemetry
+dependencies; verify the actual target before copying version-sensitive guidance.
 
 Do not assume every I/O library is instrumented or that manual instrumentation is required.
 Agent debug output can help in a controlled environment but may be verbose and is not a
@@ -44,8 +53,8 @@ production default.
 
 ### 3. Establish resource identity and schema
 
-Set stable service identity and deployment/resource attributes through one authoritative
-configuration path. Use versioned semantic conventions where available and a governed
+Set stable service identity and deployment/resource attributes through a documented
+configuration ownership and precedence policy. Use versioned semantic conventions where available and a governed
 domain schema otherwise. Avoid IDs or arbitrary strings on metrics; span attributes also
 carry storage, indexing and privacy cost.
 
@@ -56,13 +65,17 @@ Java ContextStorage is thread-local, while automatic instrumentation and Context
 can propagate across many executors/frameworks. Therefore “nothing propagates” and
 “everything propagates” are both wrong.
 
-For every raw executor, CompletableFuture, virtual-thread, callback and reactive/messaging
-boundary:
+For each changed or unverified raw executor, CompletableFuture, virtual-thread, callback or
+reactive/messaging boundary relevant to the question, reuse adequate existing evidence or:
 
 1. test whether the pinned instrumentation already wraps it;
 2. assert parent/trace IDs in an integration fixture;
 3. if missing, capture Context at submission and wrap/restore at execution;
-4. avoid double wrapping and scope leaks.
+4. verify restoration and avoid unnecessary wrapping and scope leaks.
+
+Wrapping Context alone does not create a span. Redundant scope wrapping can add work, while
+duplicate spans require span-creating instrumentation; inspect the actual boundary before
+removing a correct wrapper.
 
 Virtual threads do not inherit arbitrary thread locals by contract; agent/library support
 and JDK combinations must be tested.
@@ -88,18 +101,23 @@ probabilistic coverage when population estimation matters.
 
 ### 6. Engineer the telemetry failure path
 
-Define batch queue, exporter timeouts/retries, memory limiter, load balancing, disk/agent
-buffering if used, and drop behavior. Under backend/network failure, telemetry must not
+For components in use or being changed, define batch queue, exporter timeouts/retries,
+memory limiter, load balancing, disk/agent buffering if used, and drop behavior. Under backend/network failure, telemetry must not
 unboundedly consume application or Collector resources. Monitor the telemetry pipeline with
 independent signals: accepted/exported/dropped items, queue utilization, export failures,
 collector CPU/memory and decision latency.
 Queue counts are not necessarily byte bounds. Include in-flight spans, payload sizes,
 retry retention and exporter buffers, and verify each component's units and failure behavior.
+Distinguish processor completion from exporter/backend delivery: flush is not a persistence
+acknowledgment. Assign shutdown to the SDK/agent/framework owner, with bounded drain/flush
+and an explicit loss policy; a request or library must not close a shared provider it does
+not own. See the failure-budget details in `references/sampling-and-config.md`.
 
 ### 7. Measure overhead experimentally
 
-Compare the production-relevant configuration against a baseline using randomized/blocked
-repeated runs. Separate:
+For a comparative overhead claim, choose the treatments that distinguish the suspected
+cost and compare the relevant configuration against an appropriate baseline using
+randomized/blocked repeated runs. Separate the relevant contributions:
 
 - agent bytecode/instrumentation cost;
 - span creation/enrichment and context propagation;
@@ -109,7 +127,8 @@ repeated runs. Separate:
 
 Hold observability and workload configuration fixed except the treatment. Measure useful
 throughput, latency distribution, CPU, allocation/GC, memory, network and telemetry loss
-under normal and failure scenarios. Report confidence and environment, not one percentage.
+under the normal/failure scenarios required by the claim. Existing comparable evidence may
+suffice; report confidence, environment and untested conditions, not one percentage.
 
 ## Sampling decision table
 
@@ -188,8 +207,8 @@ coverage; do not claim premain is the only possible mechanism.
 - tail-latency-analysis for causal interpretation.
 - continuous-profiling/JFR for runtime attribution.
 
-For a review, return the affected boundary, observed evidence, proposed change and focused
-validation results or gaps. Missing deployment/version evidence makes configuration claims
+For a review, return the affected boundary, observed evidence, justified change or adequate
+no-change conclusion, and focused validation results or gaps. Missing deployment/version evidence makes configuration claims
 conditional; inspect it before prescribing options or upgrades.
 
 ## Authoritative references

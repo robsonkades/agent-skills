@@ -1,17 +1,13 @@
 ---
 name: feature-execution
 description: >
-  Implementing a planned feature one resource at a time: taking a single resource to done,
-  choosing the validation that resource actually warrants, running it and reading the output,
-  and handling the two things that always happen — the plan turning out to be wrong, and a
-  resource turning out to be blocked. Use when a plan exists and implementation is starting,
-  when several resources are half-finished at once, when implementation has diverged from the
-  plan without anyone recording it, when a resource is blocked and the work has quietly stopped,
-  or when a change is about to be reported as done on the strength of it compiling. Does not
-  choose which automated gates a change must pass (quality-gates), does not decide the test
-  level or write the tests (java-testing-strategy, tdd), does not own the status artefacts
-  (feature-progress-tracking), and does not own what may be claimed about the result
-  (coding-agent-discipline).
+  Implementing an authorized plan through coherent, verifiable resources: selecting ready work,
+  implementing within accepted scope, running relevant checks and reading their results, and
+  reconciling deviations and blockers. Use when implementation is starting, too many resources are
+  partly finished, code diverges from the plan, a blocked resource has stalled unrelated work, or
+  compilation is being treated as completion. Does not select repository gate policy (quality-gates),
+  own test-design methods (tdd; java-testing-strategy for Java), maintain the status format
+  (feature-progress-tracking), or define reporting discipline (coding-agent-discipline).
 ---
 
 # Feature Execution
@@ -59,16 +55,22 @@ Light/Inline work need not create an artifact solely to document sub-minute step
 
 ## Workflow
 
-1. **Take the next unblocked resource** in the execution order. Unforced ordering means a
-   blocked resource does not stop unrelated work — check the forced arrows before stalling.
+1. **Resume the current authorized plan.** Inspect its scope/acceptance revision, resource IDs,
+   recorded progress and evidence. Reuse existing implementation authorization and delegation;
+   an accepted definition or request to review a plan alone does not request implementation.
+   Take the next ready resource, checking its implementation prerequisites and ownership.
+   Unforced ordering means a blocked resource does not stop unrelated authorized work.
 2. **Read the code you are about to change**, including its callers and its tests, before
-   editing. Inspect the working tree and relevant JDK/toolchain/dependency/runtime settings;
-   preserve other contributors' changes. The plan named files; it did not read them for you.
+   editing. Inspect repository instructions, the working tree and the actual language, build,
+   dependency and runtime settings; preserve other contributors' changes and compatibility.
+   The plan named files; it did not read them for you, and does not authorize a toolchain upgrade.
 3. **Implement to the project's conventions** as the context report established them, reusing
    what exists rather than adding a parallel mechanism.
 4. **Validate at the level the resource warrants** (`references/validation-by-resource.md`).
    Reuse meaningful existing checks; do not add tests merely to mirror a reversible edit.
    If planned validation is missing or inadequate, define the needed evidence before completion.
+   Use the project's test strategy and tools; route to `java-testing-strategy` for Java-specific
+   choices. Test methods and gate policies guide implementation without changing its target stack.
 5. **Read the output.** A suite can exit successfully while running zero relevant tests.
 6. **Record the outcome** with what actually ran, then move on.
 7. **When implementation contradicts the plan or a decision**, classify the affected work
@@ -80,9 +82,11 @@ Light/Inline work need not create an artifact solely to document sub-minute step
 IF a resource is larger than it looked and splits naturally
 THEN split it with dependency and acceptance traceability; group tightly coupled edits when
      artificial separation would leave neither resource independently verifiable.
+     Preserve existing IDs/history, record the split mapping, and reassess affected evidence.
 
 IF implementing RES-n reveals that RES-m is unnecessary
-THEN mark RES-m CANCELLED with the reason. Do not silently skip it.
+THEN show where its accepted obligation remains covered, or cite the authorized revision
+     removing that obligation, before marking CANCELLED. Do not drop promised work by relabeling it.
 
 IF implementation needs a decision that was never taken
 THEN check existing user authorization and delegated authority; take routine in-scope choices.
@@ -98,7 +102,9 @@ THEN either the impact map missed it — amend it — or it is scope creep. Deci
      out loud.
 
 IF a deviation changes BAC-*, CT-*, TC-*, or an accepted baseline
-THEN stop affected work, create a revision-impact entry, and return to the accountable phase.
+THEN distinguish a bug from evidence requiring a changed premise. Fix the bug against the
+     accepted contract; for a necessary baseline revision, pause affected decision-dependent
+     actions, record the impact and return to its accountable phase using existing authority.
 
 IF a resource cannot be validated as planned
 THEN record the missing evidence and use an alternative only if it covers the required
@@ -122,21 +128,27 @@ THEN preserve its true IN_PROGRESS or BLOCKED state, with exactly what remains a
   DONE converts a real signal into a false one, and the next person inherits both.
 - **Report what ran.** Capture command, relevant counts/results, revision/environment and
   limitations. Summarize output; do not paste secrets or imply skipped tests executed.
+- **Honor the requested delivery boundary.** Local implementation and passing checks do not
+  themselves authorize publication, deployment or a production migration.
 
 ## Output
 
-Per resource, one entry:
+Per resource, one entry. This hypothetical Java example illustrates the evidence record;
+use the actual project's paths, runner, revisions and observed results:
 
 ```text
 RES-04 Dispatch status endpoint            DONE
+      Traces to   BAC-03, TC-04, CT-02 at their accepted revisions
       Files       api/DispatchStatusController.java (new)
                   api/DispatchStatusResponse.java (new)
                   api/ApiRoutes.java:31 (modified)
       Evidence    EV-14 ./mvnw test -Dtest=DispatchStatusControllerTest
                   4 tests, 4 passed — covers found, not-found, and unauthorised
+      Checked     <code revision and relevant local diff; actual JDK/test environment>
       Notes       Reused the existing ProblemDetail error shape (11 controllers,
                   no counter-example), so no new error type was introduced.
 ```
 
 At the end of a run: what was completed, what is blocked and on what, what changed in the plan,
-and what was not verified.
+and what was not verified. Recheck affected resources when later edits invalidate their evidence;
+resource completion does not by itself establish feature completion or release readiness.

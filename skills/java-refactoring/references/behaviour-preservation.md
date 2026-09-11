@@ -12,25 +12,25 @@ where a refactoring must stop.
 "Same return value" is one row. Name the rows the step can touch in the commit message;
 rows you do not name, you are claiming it cannot touch.
 
-| Dimension                    | Changes silently when                                                                                                                                                                                                                        |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Return value                 | rounding, ordering, or a null/empty distinction is reshaped                                                                                                                                                                                  |
-| Numeric promotion            | an extracted sub-expression's declared return type differs from the type it had in place — `int` arithmetic in a `long` context stops overflowing, or starts                                                                                 |
-| Exception **type**           | a wrapper is added or removed; a hand-rolled check replaces a library call                                                                                                                                                                   |
-| Which failure wins           | validation is reordered, or a loop is split so a later element now fails first                                                                                                                                                               |
-| Side-effect **order**        | Slide Statements, Split Loop, Split Phase, moving work out of a lock or a transaction                                                                                                                                                        |
-| Replay / duplicate behaviour | side effects are reordered behind an at-least-once boundary — redelivery now re-does a different prefix (idempotency, delivery-semantics)                                                                                                    |
-| Number of collaborator calls | a query is hoisted out of a loop (fewer), or a temp becomes a query (more)                                                                                                                                                                   |
-| Transaction boundary         | code moves across a proxy or a `@Transactional` edge; flush timing shifts                                                                                                                                                                    |
-| SQL emitted                  | fetch strategy changes — snapshot timing (which rows are visible), result cardinality, and pagination (a collection `JOIN FETCH` paginates in memory); lock footprint too, but only under an explicit lock mode or a locking isolation level |
-| Events emitted               | count, order or payload shape after extracting or merging a publisher call                                                                                                                                                                   |
-| HTTP status / headers        | an exception type now maps to a different handler                                                                                                                                                                                            |
-| Logs and metrics             | a message an alert greps for is reworded; a counter moves to a new place                                                                                                                                                                     |
-| Timing                       | work moves in or out of the synchronous path                                                                                                                                                                                                 |
-| Resource lifecycle           | a stream, connection or session closes at a different point                                                                                                                                                                                  |
-| Identity vs equality         | a class that relied on identity equality becomes a record                                                                                                                                                                                    |
-| Iteration order              | `HashMap` replaces `LinkedHashMap`; a stream is parallelised                                                                                                                                                                                 |
-| Memory visibility            | a field read is cached in a local; a statement leaves a `synchronized` block                                                                                                                                                                 |
+| Dimension                    | Changes silently when                                                                                                                                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Return value                 | rounding, ordering, or a null/empty distinction is reshaped                                                                                                                                                                                              |
+| Numeric promotion            | an extracted sub-expression's declared return type differs from the type it had in place — `int` arithmetic in a `long` context stops overflowing, or starts                                                                                             |
+| Exception **type**           | a wrapper is added or removed; a hand-rolled check replaces a library call                                                                                                                                                                               |
+| Which failure wins           | validation is reordered, or a loop is split so a later element now fails first                                                                                                                                                                           |
+| Side-effect **order**        | Slide Statements, Split Loop, Split Phase, moving work out of a lock or a transaction                                                                                                                                                                    |
+| Replay / duplicate behaviour | side effects are reordered behind an at-least-once boundary — redelivery now re-does a different prefix (idempotency, delivery-semantics)                                                                                                                |
+| Number of collaborator calls | a query is hoisted out of a loop (fewer), or a temp becomes a query (more)                                                                                                                                                                               |
+| Transaction boundary         | code moves across a proxy or a `@Transactional` edge; flush timing shifts                                                                                                                                                                                |
+| SQL emitted                  | fetch strategy changes — snapshot timing, result cardinality and pagination (collection fetch joins can force in-memory pagination or configured rejection); lock footprint depends on actual SQL, engine and isolation, including ordinary reads/writes |
+| Events emitted               | count, order or payload shape after extracting or merging a publisher call                                                                                                                                                                               |
+| HTTP status / headers        | an exception type now maps to a different handler                                                                                                                                                                                                        |
+| Logs and metrics             | a message an alert greps for is reworded; a counter moves to a new place                                                                                                                                                                                 |
+| Timing                       | work moves in or out of the synchronous path                                                                                                                                                                                                             |
+| Resource lifecycle           | a stream, connection or session closes at a different point                                                                                                                                                                                              |
+| Identity vs equality         | a class that relied on identity equality becomes a record                                                                                                                                                                                                |
+| Iteration order              | `HashMap` replaces `LinkedHashMap`; a stream is parallelised                                                                                                                                                                                             |
+| Memory visibility            | a field read is cached in a local; a statement leaves a `synchronized` block                                                                                                                                                                             |
 
 A log line an operational alert is keyed on is a contract. So is a metric on a dashboard
 someone pages from, and a partition or routing key derived from a field's name or value —
@@ -57,7 +57,9 @@ dimension, not the file scope.
 
 **Closing the caller set** takes two halves, because neither is complete alone. (a) Static
 callers: reduce the symbol's visibility, or rename it to something nothing could reference,
-and compile — the compiler enumerates these exhaustively and grep does not. (b)
+and compile to expose affected sites; inspect resolved calls too, because another overload or
+inherited member can be selected without an error. Include generated sources and builds outside
+this invocation; a green build is not an exhaustive caller inventory. (b)
 Framework-reached names: search the old name as a **string literal** across resources, YAML,
 XML, SpEL, JPQL, `@Query`, `@Value`, `@Column`, `@JsonProperty` and `Class.forName`
 arguments. A generic Java compiler cannot enumerate reflective callers; string/config-aware
@@ -73,7 +75,7 @@ refactoring-automation's `tool-capabilities.md` — one home, do not re-derive i
 | Persistence mapping               | An integration test against the real engine with schema validation on, asserting the emitted SQL and the rows returned — not an in-memory database                                                                                    |
 | Distributed call                  | The consumer's contract test run against the new provider (rpc-and-api-contracts)                                                                                                                                                     |
 | Transaction boundary              | An integration test that observes the boundary itself: rollback propagates, the second write joins the first transaction, lazy access still resolves                                                                                  |
-| Lock scope or memory visibility   | **Not a test.** A reviewed argument under the JMM, and `jcstress` where the claim is about a specific pair of accesses (java-memory-model). A green concurrency test is one accepted interleaving, not evidence (concurrency-testing) |
+| Lock scope or memory visibility   | A reviewed argument under the JMM, plus targeted controls or `jcstress` where relevant (java-memory-model, concurrency-testing). Tests provide evidence for exercised outcomes; passing runs do not prove all permitted interleavings |
 
 ## Where the compiler and the tests both lie
 
@@ -82,14 +84,16 @@ in it, and a `private` modifier is no protection — JPA field access and Jackso
 it. Close the caller set as above; the stop-line for each category is `compatibility.md`
 item 4.
 
-**Transaction and session boundaries.** Extracting a block into a method is cheap _unless
-the new method is annotated_: `@Transactional` on a self-invoked method is silently ignored
-by the proxy, so a `REQUIRES_NEW` added during an extraction does nothing. Extracting into a
-_different bean_ usually changes nothing either — the default propagation `REQUIRED` joins
-the caller's transaction. The changes are `REQUIRES_NEW` (an independent commit that
-survives the outer rollback and can block on rows the outer transaction holds) and no
-transaction at all (per-statement autocommit). Lazy access then throws
-`LazyInitializationException` — or does not in a Spring Boot web application where the default
+**Transaction and session boundaries.** In Spring's proxy mode, `@Transactional` on a
+self-invoked method is not intercepted; a `REQUIRES_NEW` added there does not start a new
+transaction. AspectJ weaving has different interception semantics. Moving to another bean
+requires checking the actual proxy, transaction manager, propagation and exception rules:
+`REQUIRED` joins an existing compatible transaction or starts one when none exists.
+`REQUIRES_NEW` creates an independent transaction whose commit can survive outer rollback
+and whose work can block on rows the outer transaction holds. Without an enclosing transaction,
+actual driver/provider settings decide autocommit and allowed writes. Access to uninitialized
+detached state can throw `LazyInitializationException` with Hibernate — or remain available
+in a Spring Boot web application where the default
 Open EntityManager in View interceptor has not been disabled. Inspect the deployed setting;
 jobs, listeners and tests do not inherit a web-request context. A query extracted between two
 writes can also trigger autoflush, moving a
@@ -107,17 +111,19 @@ design (enterprise-transactions), not refactoring.
 - Sliding a statement across a lock boundary is a lock-scope change, not a slide — in both
   directions. Outward drops protection; inward can put a blocking or alien call under a
   lock, which is a new deadlock edge.
-- **Move Method and Extract Class change the monitor.** `synchronized` means `this`, so a
-  moved method locks a different object and callers that were mutually excluded no longer
-  are; splitting fields guarded by one lock into two objects deletes every invariant that
-  spanned them and creates a lock-ordering pair. The compiler sees nothing.
+- **Move Method and Extract Class can change the monitor.** An instance `synchronized`
+  method locks its receiver; a static one locks its declaring class. Moving it can split
+  protection that callers previously shared. Preserve the actual shared lock and atomicity
+  boundary where required; a shared explicit lock can keep one invariant across helper objects.
+  Introducing multiple locks needs its own lock-order argument. The compiler proves none of this.
 - Replacing two reads of a field with one local **removes a re-read**, and the field's
   declaration decides legality. On a **`volatile`** field, a `VarHandle` acquire read or an
-  `AtomicXxx.get()`, it is not a refactoring: each read is a synchronisation
-  action, and caching one across a loop is exactly how `while (!stopped)` becomes an
-  infinite loop. On a **plain** field with no intervening synchronisation action the JIT may
-  coalesce them, but a racy program has no useful cross-thread contract. Caching changes the
-  observations an execution can make and must not be sold as behavior preservation. The inverse,
+  `AtomicXxx.get()`, removing a read needs an ordering/publication argument under the actual
+  access mode and writer protocol. Caching one across a stop loop can prevent observation of
+  later updates. On a **plain** field with no intervening synchronisation action the JIT may
+  coalesce reads; a data race does not erase all JMM guarantees, but supplies no missing
+  synchronization. Check the required observations instead of inferring preservation from a
+  local rewrite. The inverse,
   Replace Temp with Query, _adds_ a re-read and can yield two different values where the code
   assumed one.
 - Lazy-init and double-checked-locking shapes tolerate almost no rearrangement: the field
@@ -150,14 +156,15 @@ they are different kinds of evidence about different dimensions, and the proof t
 says which ones are owed. Reaching rung 5 does not discharge rung 3. State the rungs
 reached as a set.
 
-1. It compiles. Establishes that every caller in this build was updated, and nothing
-   whatsoever about behaviour.
+1. It compiles. Establishes type and symbol checks for the source compiled in this build, not
+   that every call still resolves to the same member or that external binaries keep working.
 2. Existing suite green. Covers only what the suite already observed.
 3. Characterisation tests written **before** the step, on the changed path, pinning the
-   selected dimensions (`safety-workflow.md`) — **and shown to be sensitive**: mutate the
-   code about to be restructured (flip a comparison, delete a branch) and confirm a specific
-   row goes red. A characterisation suite never observed failing is rung 2 wearing rung 3's
-   name.
+   selected dimensions (`safety-workflow.md`). Reuse adequate existing assertions and evidence.
+   Where sensitivity is uncertain, use a targeted wrong-behavior control (flip a relevant
+   comparison or delete a required effect) and identify the assertion that fails. A surviving
+   equivalent or deliberately scrubbed/unobserved change does not itself prove a coverage gap;
+   verify that the mutation violates the contract the test is meant to protect.
 4. Differential test: keep the old implementation for one commit, generate inputs, assert
    `old(x)` equals `new(x)` over a seeded generator or jqwik. Available whenever both forms
    coexist and the computation is pure, and it finds what a hand-written row set does not

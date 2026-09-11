@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: legacy-enterprise-modernization
-version: 1.2.1
+version: 1.2.2
 description: >-
   Modernising an enterprise application that is in production and cannot stop: understanding
   a system nobody fully knows, pinning behaviour before changing it, strangling
@@ -49,6 +49,7 @@ dependencies:
 
 suggests:
   - distribution-boundaries
+  - enterprise-architecture-smells
   - enterprise-base-patterns
   - enterprise-transactions
   - java-legacy-code-testing

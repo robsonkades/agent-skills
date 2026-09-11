@@ -10,7 +10,7 @@ description: >
   throughput plateaus far below a high bandwidth-delay link, when somaxconn was raised and
   nothing changed, when TIME_WAIT sockets accumulate, or when someone proposes switching to
   BBR or DCTCP. Does not cover host memory, CPU and signals (linux-for-jvm), the
-  data-movement path itself (io-uring-and-zero-copy), or application-level connection reuse
+  data-movement path itself (io-uring-and-zero-copy), or JDBC pool sizing and lifetimes
   (connection-pool-sizing).
 ---
 
@@ -33,13 +33,17 @@ numbers that describe the remedy rather than the default.
 Record the deployed Linux/vendor kernel, network namespace, iproute2, JDK and framework
 versions first. Java examples use standard APIs available on Java 17+, but socket support
 and defaults remain platform-specific. Diagnosis alone does not authorize host changes.
+Select the steps and evidence needed for the actual question, reusing adequate captures and
+measurements. A source/API explanation or sound existing setup need not trigger a host audit,
+setting change or new load campaign. Missing evidence limits the claims that depend on it;
+return a supported no-change conclusion or the next discriminating check where appropriate.
 
 1. **Generate competing hypotheses before touching anything.** Small-write latency can involve
    Nagle/delayed ACK; local connect failures can involve ports, source addresses or routing;
    dropped SYNs can involve several path queues; one busy core can involve accept, RSS/RPS,
    event-loop affinity or application work. Each needs its own evidence.
-2. **Measure the current state.** Connection counts by state, TIME_WAIT depth, a packet capture
-   if Nagle is suspected, per-connection `cwnd` and retransmissions. Recipes are in
+2. **Measure the relevant current state.** Select connection/tuple counts, TIME_WAIT depth,
+   write/ACK timing, per-connection `cwnd` or retransmissions for the hypothesis. Recipes are in
    `references/diagnosis-recipes.md`.
 3. **Correlate before concluding.** TIME_WAIT depth against the connection rate over the same
    interval; the ~40 ms gap in the capture against small writes on sockets without
@@ -49,7 +53,7 @@ and defaults remain platform-specific. Diagnosis alone does not authorize host c
    and security/operational boundaries; choose only after proving which bound was hit.
 5. **Confirm the setting actually took.** Read the option back from the socket, or observe the
    `setsockopt` call. A configured value is not an applied value.
-6. **Validate before persistence.** Within existing authorization, test one scoped change
+6. **Validate a proposed change before persistence.** Within existing authorization, test one scoped change
    with an old value, rollback and comparable load. Persist only the validated setting through
    the deployment's configuration owner; re-measure throughput, latency, errors and memory.
    Return evidence, remaining hypotheses and the next discriminating check if data is missing.
@@ -67,7 +71,8 @@ and defaults remain platform-specific. Diagnosis alone does not authorize host c
   28,232-connection ceiling.
 - `BindException` / `EADDRNOTAVAIL` before a SYN is consistent with local ephemeral-port or
   source-address exhaustion, but routing, an unavailable explicit bind address and namespace
-  configuration can produce related errors. Prove it with tuple/state counts and packet capture.
+  configuration can produce related errors. Use relevant tuple/state, bind/route and packet
+  evidence to distinguish them; the exception name alone does not establish the cause.
 - The completed-connection accept queue is capped by the requested `listen()` backlog and
   kernel policy such as `somaxconn` (with implementation rounding/accounting). Pass it
   explicitly when needed: `new ServerSocket(port, 1024)` or `bind(addr, 1024)`.
@@ -85,8 +90,8 @@ and defaults remain platform-specific. Diagnosis alone does not authorize host c
   write sizes/cadence and protocol framing; bulk paths usually batch in user space or use
   zero-copy, so leaving Nagle on is not an automatic win.
 - Nagle/delayed-ACK interaction can create a repeatable delay (often tens of milliseconds on
-  specific stacks). Only packet timing plus socket-option evidence distinguishes it from RTT,
-  scheduling, application batching or proxy timers.
+  specific stacks). Correlate packet/ACK timing and effective options with application writes
+  and flushes; a gap alone does not distinguish it from RTT, scheduling, batching or proxy timers.
 - Treat BBR as a versioned congestion-control implementation, not a universal speedup.
   BBRv1/v2/later revisions, pacing support, RTT fairness, policers and workload mix differ.
   Reproduce against the deployed kernel and path with throughput, RTT distribution, loss and
@@ -94,14 +99,17 @@ and defaults remain platform-specific. Diagnosis alone does not authorize host c
 - DCTCP needs compatible ECN negotiation and appropriately configured path marking/AQM.
   Host settings alone do not establish its intended feedback loop; fallback and behavior
   depend on the implementation and peer. Validate both endpoints and the fabric.
-- `SO_REUSEADDR` and `SO_REUSEPORT` solve different problems: relisten over a lingering socket
-  versus scaling `accept()` across sockets. Neither addresses client-side port exhaustion.
+- `SO_REUSEADDR` and `SO_REUSEPORT` have different bind/ownership contracts. Relistening and
+  distributing accepts are common uses, not their entire scope. Neither creates additional
+  identical TCP four-tuples; explicit client bind/reuse behavior needs its own platform and
+  destination-tuple analysis, not a blanket port-exhaustion remedy.
 - Every externally dependent blocking operation needs a deadline budget. For a client socket,
   that includes connect and read timeouts, but `SO_TIMEOUT` bounds an individual blocking read,
   not writes, DNS or the whole request. Align an overall budget and cancellation mechanism
   with retries, proxies and load balancers; see `timeouts-and-deadlines` for that contract.
-- Report a latency distribution with enough samples for the claimed percentile and retain
-  timeout/error counts. p99.9 from a few hundred requests is noise; a mean alone hides tails.
+- Report metrics suited to the claim and retain timeout/error counts. Tail claims need a
+  distribution with enough samples for the percentile; p99.9 from a few hundred requests is
+  not a reliable tail estimate. A mean can answer a mean-only question but does not establish tails.
 
 ## References
 

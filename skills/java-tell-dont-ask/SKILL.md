@@ -29,14 +29,17 @@ them.
 
 0. **Inspect compatibility and lifecycle.** Read compiler release/toolchains, framework/binder
    requirements, entity ownership, transaction/version mapping and public failure contracts.
+   Reuse available policy, caller and test evidence; ask only when unresolved ownership or
+   eligibility would materially change the fix. Keep independent work moving while that is resolved.
    The domain example uses Java 17; its service pattern switch/record patterns require Java 21+
    without preview. Adapt to the project baseline without upgrading or adding frameworks.
 1. **Find ask–decide–mutate sequences**: getters on an object, a branch on the result,
    then a setter or mutation on the same object. Each is a candidate, not a verdict.
-2. **Name the invariant.** If the branch protects a rule the object must never violate,
-   the decision and the mutation move into the object as one command, and the setter that
-   enabled the bypass is removed. If there is no invariant — the code just shovels data —
-   leave it; a transaction script over data is fine.
+2. **Name the invariant and its existing enforcement.** Move a misplaced object-owned guard
+   and mutation together into a command; keep an adequate service/transaction owner when that
+   is where the rule belongs. Close unsafe mutation paths under the actual public/binder
+   compatibility contract, rather than deleting every setter. If there is no misplaced or
+   missing rule — the code just shovels data — leave it; a transaction script over data is fine.
 3. **Identify the authority and change owner.** A rule spanning aggregates may belong to
    a domain policy, process manager or application service; no participating entity becomes
    the owner merely because it holds one input. Use `references/placement-decision.md`.
@@ -53,8 +56,8 @@ them.
 - Put a decision with the type that owns its invariant or policy and can enforce it from
   authoritative state. Callers express intent; data proximity alone does not establish ownership.
 - Public queries expose information that callers can couple policy to. Keep queries needed for
-  boundaries, observability and legitimate decisions; remove raw mutation paths and duplicated
-  external derivations instead of treating every getter as a defect.
+  boundaries, observability and legitimate decisions; close unsafe mutation bypasses and correct
+  duplicated external derivations instead of treating every getter as a defect.
 - Under strict CQS, commands return `void`. If the codebase adopts the pragmatic variant, a
   command may return its own result or updated representation; document that convention and do
   not mix unrelated answers or externally visible read effects into it.
@@ -75,7 +78,10 @@ them.
 Name the invariant/policy authority, inputs and freshness, allowed mutation path, caller result
 mapping and synchronization/commit boundary. Distinguish a mechanical move from changed failure
 or validation behavior. Report checks executed and unresolved ownership evidence; do not infer
-a common rule merely because two callers read the same fields.
+a common rule merely because two callers read the same fields. A review may conclude that the
+existing owner and queries are adequate: state the evidence and what would justify revisiting it.
+When a material policy remains unknown, give the conditional recommendation and the specific
+missing decision rather than silently choosing it or prolonging unrelated investigation.
 
 ## References
 

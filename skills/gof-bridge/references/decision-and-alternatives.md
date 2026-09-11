@@ -13,8 +13,9 @@ Compressed   ...          ...            ...
 
 Three questions decide it:
 
-1. **Do both axes have ≥2 members today?** If not, there is one axis and the answer is a field
-   or a Strategy.
+1. **Which members and independent change pressures are evidenced?** Multiple members make
+   the split visible; a concrete public-provider boundary may matter with one implementation.
+   Without a second responsibility or boundary need, a field or Strategy is enough.
 2. **Are they independent — is every cell meaningful?** If cells are illegal, see below.
 3. **Will both keep growing?** If one axis is closed and small, a sealed set with an exhaustive
    `switch` may beat a second hierarchy.
@@ -66,35 +67,37 @@ interface StreamingChannel extends Channel { OutputStream open(); }
 record StreamingReport(StreamingChannel channel) { }     // SmsChannel cannot be passed
 ```
 
-The second is better when the capability is stable and few; the first when the rule is policy
-that may change. Either way, the constraint lives where the pair is formed, not inside the
-abstraction.
+The second is useful when capabilities are stable and few; the first when policy may change.
+Static pair constraints belong where the pair is formed; per-input or changing constraints
+still need validation at the operation that can enforce them.
 
-If most cells are holes, there is no bridge: the axes are not independent, and the design wants
-an explicit closed set of the combinations that exist.
+If constraints dominate the matrix, compare an explicit set of named legal combinations.
+Sparsity alone does not invalidate a useful separation; price its capability and validation cost.
 
 ## Designing the implementor interface
 
-The interface must be usable by its **worst** implementation, not its most convenient one. Three
-rules, each learned by breaking them:
+Design from required consumer operations and the costs/failures of the backends that must support
+them. Preserve useful capabilities rather than reducing every provider to the weakest one:
 
 **Granularity.** An interface with `boolean exists(Key)`, `byte[] read(Key)`, `void write(Key,
-byte[])` is fine over a local file system and catastrophic over object storage when the
-abstraction loops over ten thousand keys. If any backend may be remote, the interface needs a
-bulk operation from the start; adding one later means every caller must be revisited
+byte[])` can produce expensive repeated calls when the abstraction loops over ten thousand
+remote keys. Inspect actual call patterns and available measurements; an adequate single lookup
+does not need a batch API merely because it is remote. When batching is justified, define size,
+partial-result and deadline semantics rather than assuming a loop is equivalent
 (`rpc-and-api-contracts`).
 
 **Failure.** A method that returns `void` and "cannot fail" locally will fail remotely. Decide up
 front whether failure is an exception (with a documented transient/permanent split) or a result
 type, and keep it uniform across backends (`java-exception-design`).
 
-**Time.** A local backend returns in microseconds; a remote one may not return. Either the
-interface carries a deadline parameter, or every implementation is required to bound itself and
-say so. Silence on this point is how one slow backend exhausts a caller's thread pool
+**Time.** Both local and remote work can block. Name the deadline/cancellation owner and what is
+bounded: admission, new attempts, caller wait or actual local work. A deadline parameter or injected
+policy can carry the contract; a timeout alone does not establish cleanup or undo a remote effect
 (`timeouts-and-deadlines`).
 
-A useful discipline: write the remote backend's signature first, then check the local one is
-still natural. The reverse order produces an interface that must be broken later.
+Exercise ordinary and advanced consumer calls against the materially different backends before
+committing the interface. Starting with a costly remote path can reveal missing constraints, but
+does not replace the consumer contract or force every capability onto every implementation.
 
 ## The leak that ends a bridge
 
@@ -111,7 +114,9 @@ bridge was paying indirection to avoid. The fix is one of:
 - Add the concept to the interface, if every backend can meaningfully answer it
   (`Backend.durability(Durability)`, only if the promised durability can actually be met).
 - Move the decision to construction: the caller who knows it is S3 configures it when wiring.
-- Accept that this abstraction has one backend after all, and delete the interface.
+- Expose a separate capability contract to consumers that need it, with explicit unsupported cases.
+- Reconsider the boundary if it has no independent role; do not delete it merely because one
+  backend has an extra operation.
 
 Choosing the first without checking that other backends can implement it honestly is how an
 implementor interface acquires methods that half its implementations throw from — the beginning
@@ -120,6 +125,10 @@ of the same erosion.
 ## The contract test
 
 Backends drift unless one test enforces the interface's promises against all of them:
+
+This sketch assumes shared, thread-safe backends that bound their own execution. A confined/session
+contract instead needs affinity and ownership tests; a caller-owned deadline needs propagation and
+attempt/lifetime checks. Test the declared promises, not a stronger contract borrowed from this example.
 
 ```java
 abstract class ChannelContractTest {
@@ -135,7 +144,6 @@ class EmailChannelTest extends ChannelContractTest { ... }
 class SmsChannelTest   extends ChannelContractTest { ... }
 ```
 
-This is one of the few places where an inheritance-based test base class is clearly right: the
-subclasses supply a value and inherit a specification, and adding a promise to the contract makes
-every non-conforming backend fail at once. Without it, the abstraction's guarantees hold only for
-the backend that was in front of the developer.
+An inherited test specification or a parameterized contract fixture can share these checks. Use the
+project's conventions and exercise relevant pair interactions as well; reused assertions do not
+establish all cross-product behavior or prove a real provider from a fake.

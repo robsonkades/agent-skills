@@ -25,9 +25,10 @@ Three distinct capture kinds, with different lifetimes:
 | A local holding any object, immutable or mutable | reference value     | the referenced graph may remain reachable while the callback is retained |
 | `this` or instance access through it             | enclosing reference | enclosing state may stay reachable                                       |
 
-The third is the one that leaks. A lambda submitted to a scheduler, stored in a listener list,
-or queued in an executor holds those references for as long as the holder lives. The fix is
-mechanical: copy what you need into locals first.
+Any captured object graph can outlive its intended use; enclosing-instance capture is one route,
+not automatically a leak. Trace how long the holder retains the callback and whether the graph
+is still needed. Extracting a smaller value can help when it preserves the execution contract;
+bounded explicit request data can be a valid capture.
 
 Extraction can move computation from task execution to submission: preserve intended snapshot
 timing, side effects and failures, and ensure the extracted value does not retain the original graph.
@@ -39,9 +40,10 @@ Runnable task(String reportId) {
 }                                                // an instance method — make it static too
 ```
 
-`this`-capture is invisible in the source; the signal is any unqualified reference to an
-instance field or an instance method. If neither appears, the lambda is non-capturing of
-`this`.
+Inspect explicit/unqualified instance access and indirect paths: a captured inner object or
+bound receiver may retain its enclosing instance even if the lambda body never names `this`.
+Source and compiler output can identify capture paths; actual retention/collection conclusions
+need the holder's lifetime and target-runtime evidence, not a syntax-only rule.
 
 ## Lambda `this` versus anonymous-class `this`
 
@@ -118,11 +120,12 @@ Comparator<Order> byValueThenId =
 
 ## Checked exceptions
 
-The standard interfaces declare no checked exceptions, so a lambda body cannot throw one. The
-three legitimate answers, in order of preference:
+The `java.util.function` interfaces declare no checked exceptions, so their lambda bodies cannot
+let an unhandled checked exception escape. Other targets, such as `Callable`, can declare one.
+Choose among these approaches using the existing failure contract and caller handling needs:
 
-**1. Translate at the throw site.** Usually correct: the checked exception is an implementation
-detail of the operation, and the caller of the pipeline needs a domain exception anyway.
+**1. Translate at an owning boundary** when the checked failure is an implementation detail and
+callers need the domain exception. Preserve causes and cancellation semantics.
 
 ```java
 static Config parse(Path p) {
@@ -142,16 +145,16 @@ interface ThrowingFunction<T, R, E extends Exception> { R apply(T t) throws E; }
 static <T, R, E extends Exception> Function<T, R> unchecked(ThrowingFunction<T, R, E> f) { ... }
 ```
 
-Useful, and worth exactly one implementation per codebase — not one per package.
+Reuse a compatible adapter where available; different domain or cancellation contracts can
+require different translation policies. A throwing interface can also be consumed directly.
 
 **3. Keep the operation out of the pipeline.** A `for` loop with a normal `try`/`catch` is
 often the honest shape, especially when different elements need different handling, or when
 one failure must abort the rest.
 
 What not to do: the "sneaky throw" trick, which uses an unchecked generic cast to throw a
-checked exception the compiler cannot see. The exception then propagates through call sites
-whose signatures deny it can happen, so no caller catches it and the failure surfaces
-somewhere with no relevant context.
+checked exception outside the declared contract. A narrow checked catch can become a compile
+error, while a broader catch can still intercept it; neither restores the missing public contract.
 
 Two related points:
 

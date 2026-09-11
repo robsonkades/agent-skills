@@ -30,8 +30,8 @@ Note that the JDK's own markers are split exactly this way: `Serializable` and `
 interfaces (they mark types and change what the platform does with instances), while
 `@FunctionalInterface`, `@Deprecated` and `@Override` are annotations (they mark declarations
 for the compiler). And a marker interface with no methods still has the downside every
-interface has — it is permanent API surface. A marker that only a framework consumes is better
-as an annotation.
+interface has — it is API surface consumers may rely on. A framework-only marker may be simpler
+as an annotation when that framework supports it; preserve contractual subtyping and existing users.
 
 ## Designing a custom annotation
 
@@ -58,16 +58,18 @@ Checklist for any annotation you define:
 - [ ] Javadoc says **who reads it** and what happens when it is present. Without that line, the
       next reader cannot tell whether it is load-bearing.
 - [ ] `@Retention` explicit, and matching the reader.
-- [ ] `@Target` explicit, covering every declaration the reader inspects — including
-      `RECORD_COMPONENT` if records are in scope.
+- [ ] `@Target` explicit for the selected access strategy; use `RECORD_COMPONENT` when the
+      reader inspects record components, not merely because records exist.
 - [ ] `@Documented` if it is part of the API contract (it then appears in Javadoc).
-- [ ] Members have defaults wherever possible, so the annotation can gain attributes without
-      breaking existing uses. Adding a member **without** a default breaks every existing use at
-      compile time.
+- [ ] New members have defaults only when an omitted value has a valid meaning. Adding a member
+      **without** a default breaks recompilation of old uses that omit it; reading that member
+      from an old binary can throw `IncompleteAnnotationException`. Changing a default affects
+      already compiled uses that omitted the element, so source compatibility is not behavioral
+      compatibility. Check old compiled consumers as well as fresh source.
 - [ ] Member return types are limited to the annotation-element types permitted by the JLS;
       supplied values obey the corresponding constant/class-literal/enum/annotation rules.
-- [ ] There is a test that the enforcement fires, and a test that it does **not** fire where it
-      should not.
+- [ ] Checks cover the consumer's promised effect and its exclusions; enforcement needs accepted
+      and rejected inputs, while documentation/generation needs the correct output.
 
 ## The enforcement gap
 
@@ -128,9 +130,11 @@ unavoidable.
   someone debugs a latency spike caused by a retry they could not see. Prefer explicit code for
   behaviour with operational consequences, or make the annotation's effect visible in traces
   and metrics.
-- **Configuration that varies per environment.** Annotation members are compile-time constants.
-  A timeout, a pool size or a feature flag in an annotation is a redeploy away from every
-  change.
+- **Configuration that varies per environment.** A baked-in literal policy needs a source/build
+  change, but a consumer can resolve a constant key or expression externally. For example,
+  Spring's `@Scheduled(cron = "${jobs.cron}")` supports a property placeholder. Check when the
+  configured consumer resolves it; external configuration does not imply live rescheduling.
+  Retain a supported configuration path rather than replacing it merely because it uses metadata.
 - **An invariant better expressed in a type or data structure.** A value type can validate
   non-empty text at construction, but its reference can still be null; nullness analysis is a
   separate contract. Compare actual enforcement: a configured annotation checker can provide
@@ -138,3 +142,12 @@ unavoidable.
 - **Cross-cutting rules you can enforce structurally.** An architecture test asserting "no
   class in the domain package imports a framework type" is stronger than an annotation saying
   the same thing, because it cannot be forgotten on a new class — see architecture-testing.
+
+## Primary sources
+
+- [JLS 17 annotation defaults](https://docs.oracle.com/javase/specs/jls/se17/html/jls-9.html#jls-9.6.2)
+  specifies how changed defaults affect previously compiled uses.
+- [JDK 25 annotation reflection](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/AnnotatedElement.html)
+  documents repeatability and failures when reading evolved annotation members.
+- [Spring 7.0.9 Scheduled API](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/scheduling/annotation/Scheduled.html)
+  documents supported placeholders/expressions; verify the project's framework version and lifecycle.

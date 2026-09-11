@@ -19,7 +19,8 @@ which production objective that configuration serves. Static options are intent;
 runtime events, and cgroup state are execution evidence.
 
 The deliverable is a prioritized set of bounded findings with provenance, mechanism, consequence,
-confidence, and a confirming/falsifying observation. It is not a reusable “best flags” block.
+uncertainty, and a confirming/falsifying observation, or a supported conclusion that the reviewed
+configuration is adequate within the supplied evidence. It is not a reusable “best flags” block.
 
 ## Ownership boundary
 
@@ -33,6 +34,12 @@ confidence, and a confirming/falsifying observation. It is not a reusable “bes
 - `jdk-upgrade-impact` owns the broader upgrade program.
 
 ## Review contract
+
+Establish the requested decision and reuse relevant supplied artifacts. For a broad configuration
+audit, the packet below describes the evidence to reconcile. For a narrow or pre-deployment review,
+collect the subset that can change the finding and report unavailable runtime checks as limitations.
+The command references use HotSpot JDK 25; inspect the project's actual toolchain, image, vendor
+build and fleet before applying them. This reference version does not authorize a target upgrade.
 
 ```text
 decision/request and owner:
@@ -50,7 +57,8 @@ Missing evidence lowers confidence or changes the next action; it does not justi
 
 ## Evidence precedence and provenance
 
-Use all layers because each answers a different question:
+Use the layers relevant to the claim; each answers a different question. A static review can
+establish declared configuration or launch risk without claiming observed runtime performance:
 
 | Layer                                    | Shows                                      | Can miss/mislead                                               |
 | ---------------------------------------- | ------------------------------------------ | -------------------------------------------------------------- |
@@ -86,17 +94,20 @@ timestamp, PID start time, container identity, and JDK build. `VM.flags` does no
 4. **Classify support and origin.** Live/product, diagnostic/experimental, deprecated, obsolete/
    ignored, expired/unrecognized, vendor-specific, or unknown. Runtime/source verification beats a
    copied lifecycle table.
-5. **Reconcile effective runtime state.** Collector, heap min/initial/max, CPU count, GC/compiler
-   threads, compressed references/headers, code cache, native tracking, logging, and manageability.
-6. **Reconcile resources.** Effective cgroup paths/limits/current/events, cpuset, quota/period,
-   Kubernetes request/limit/QoS, node topology, and OOM/throttle history.
-7. **Price every non-default or explicit-default choice.** CPU, memory/headroom, startup/readiness,
+5. **Reconcile the runtime state affected by the decision.** Collector, heap min/initial/max,
+   CPU count, GC/compiler threads, compressed references/headers, code cache, native tracking,
+   logging, and manageability.
+6. **Reconcile relevant resources.** Effective cgroup paths/limits/current/events, cpuset,
+   quota/period, Kubernetes request/limit/QoS, node topology, and OOM/throttle history.
+7. **Price choices that could affect the objective or compatibility contract.** Group interacting
+   flags where useful. Consider CPU, memory/headroom, startup/readiness,
    peak throughput, latency/tail, observability, failure semantics, portability, and operational
    complexity where relevant.
 8. **Connect the change to an objective and falsifier.** Select the cheapest adequate measurement;
    use several when hypotheses cannot be separated by one artifact.
-9. **Emit findings and an experiment/rollback.** Do not edit production configuration merely to
-   make the option list shorter.
+9. **Emit supported findings or a bounded adequacy conclusion.** Include an experiment/rollback
+   when proposing an operational change. Adequate existing evidence need not be recollected;
+   do not edit production configuration merely to make the option list shorter.
 
 ## Flag lifecycle and origin
 
@@ -137,10 +148,13 @@ change the result. Inspect effective heap configuration on the exact target.
 
 ## Change gate
 
-Before recommending a performance-affecting change, require:
+For a proposed performance-affecting change, establish the relevant items below in proportion to
+its consequence. A launch-compatibility correction needs its exact-build preflight; it does not
+thereby require a full capacity experiment. A performance improvement remains conditional until
+the workload evidence supports it:
 
 ```text
-observed problem and workload window
+observed problem/workload window or demonstrated configuration risk
 mechanism supported by current evidence
 objective and guardrails
 candidate versus status quo/default
@@ -170,6 +184,9 @@ Severity, likelihood, exposure, detectability, and reversibility should be state
 single priority would hide uncertainty.
 
 ## Finding template
+
+Use the fields that clarify a material finding; a small review need not repeat the full template.
+When no material issue is supported, state what was checked and the limits of that conclusion.
 
 ```text
 Finding / priority:
@@ -242,12 +259,13 @@ startup slower after pre-touch/fixed heap
 
 ## Definition of done
 
-- [ ] Exact target builds/platforms and all option sources are pinned.
-- [ ] Received command, duplicates, masking, support lifecycle, and effective origins are reconciled.
-- [ ] Collector/heap/CPU/compiler/header/code-cache state and cgroup envelope are captured.
-- [ ] Memory, CPU, startup, SLO, failure, deployment, and observability trade-offs are evaluated.
+- [ ] The requested scope, target builds/platforms and relevant option sources are identified.
+- [ ] Received command, masking, lifecycle and effective origins are reconciled where available;
+      missing runtime evidence limits the conclusion explicitly.
+- [ ] Runtime/resource interactions and trade-offs that could affect this decision are evaluated.
 - [ ] Every material finding separates fact from inference and has confidence plus falsifier.
-- [ ] Recommendations include measurement, practical threshold, guardrails, rollback, and owner.
+- [ ] Proposed operational changes include proportionate validation, guardrails, rollback and owner;
+      an adequate configuration can close without a new experiment or change.
 - [ ] Claims are scoped; runtime discovery replaces stale default/lifecycle assumptions.
 
 ## References
@@ -262,5 +280,5 @@ startup slower after pre-touch/fixed heap
   the supplied evidence cannot separate competing explanations.
 - [JDK 25 `java` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 `jcmd` command documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
-- [HotSpot VM options source](https://github.com/openjdk/jdk/tree/master/src/hotspot/share/runtime)
+- [HotSpot JDK 25 GA arguments source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/arguments.cpp) — a versioned example; use the target vendor/release source for another build.
 - [Java Virtual Machine specifications](https://docs.oracle.com/javase/specs/)

@@ -7,6 +7,9 @@ Java 17 partial teaching example: domain, deadline, policy and wrapper types are
 Spring/JUnit snippets require the project's actual dependencies. `Deadline` uses a monotonic clock.
 `sleepBefore` must cap waiting to the remaining budget and propagate interruption as cancellation,
 not as `PricingUnavailable`. The transport must enforce remaining time for each attempt.
+This sample assumes an eligible cached price in one supplier/currency/access scope; a broader
+deployment needs a key and validation policy covering its actual scope. Layers are requirements
+of this example, not a checklist to add to every client.
 
 ## The interface, and one layer
 
@@ -46,6 +49,9 @@ Two properties this layer must have and hand-written retries usually lack. It re
 transient exception** — a `PriceRejected` (unknown SKU) is permanent and is not caught. And it
 checks the **deadline** before each attempt. Total-call enforcement additionally depends on
 budget-aware backoff/transport and cancellation; this loop alone cannot bound an arbitrary delegate.
+The illustrative exception hierarchy must keep permanent rejection, open-breaker rejection,
+deadline expiry and cancellation outside `PricingUnavailable`; a transport must not translate
+an ambiguous side effect into safe retry merely by using that name.
 
 ## The wiring, with its order justified
 
@@ -78,7 +84,7 @@ tidiest.
 Caller deadline                       800 ms
 Per-attempt timeout                   300 ms
 Backoff                          100 + 200 ms
-Worst case without a deadline check   1200 ms  → exceeds the caller's budget
+Full-attempt arithmetic               1200 ms  → exceeds the caller's budget
 
 With deadline-aware sleep and transport as well as the pre-attempt check:
   attempt 1 at   0 ms  (fails at 300)
@@ -87,9 +93,10 @@ With deadline-aware sleep and transport as well as the pre-attempt check:
   failure is observed near the 800ms budget, subject to scheduling/cleanup delay
 ```
 
-Without the deadline check the third attempt runs after the caller has already timed out —
-holding a connection, adding load to a struggling supplier, for a result nobody will read. This
-is the single most valuable line in the retry layer.
+This is a conditional timeline, not a measured upper bound; queueing, scheduling, cleanup and
+the actual transport can change it. If only the caller stops waiting and no equivalent deadline
+or cancellation enforcement stops retries, the third attempt starts after expiry. Check both
+observed completion and remaining work; the pre-attempt test alone cannot prove either bound.
 
 ## Testing each layer
 
@@ -123,6 +130,8 @@ void does_not_retry_a_permanent_rejection() {
 
 Each layer is tested against a lambda delegate. No mocking framework, no HTTP, and the test says
 exactly what the layer promises.
+Also exercise expiry during backoff, interruption and a throwing metrics recorder. Best-effort
+metrics must not turn a completed price lookup into a retryable failure or mask the original failure.
 
 ## Testing the order
 

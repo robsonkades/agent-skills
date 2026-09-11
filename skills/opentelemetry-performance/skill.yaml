@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: opentelemetry-performance
-version: 1.2.1
+version: 1.2.2
 description: >-
   Designing OpenTelemetry tracing that remains causally useful within an explicit
   overhead and data-risk budget: auditing automatic/manual coverage, preserving context
@@ -42,6 +42,12 @@ files:
 dependencies:
   - name: latency-statistics
     version: ^1.0.0
+
+suggests:
+  - distributed-tracing-design
+  - continuous-profiling
+  - metrics-and-cardinality
+  - tail-latency-analysis
 
 capabilities:
   - reads-source

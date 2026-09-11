@@ -1,14 +1,15 @@
 schemaVersion: 1
 
 name: varhandles-and-memory-ordering
-version: 1.2.1
+version: 1.2.2
 description: >-
   Designing and proving low-level Java variable access with VarHandle plain, opaque,
   acquire/release and volatile modes; compare-and-set/exchange, weak CAS, read-modify-write,
   fences, coordinates, signature-polymorphic typing, supported modes, and mixed-access hazards.
-  Connects each mode to an algorithmic synchronization edge, allowed outcomes, jcstress model,
-  generated-code evidence and target-specific performance measurement. Use only when ordinary
-  volatile, atomics, locks or concurrent utilities do not express the required protocol.
+  Connects modes to synchronization edges and allowed outcomes, with model, generated-code and
+  performance evidence when relevant. Use when selecting or reviewing low-level access modes,
+  adapting existing handles or dynamic coordinates, resolving invocation mismatches, or assessing
+  a proposed ordering optimization.
 
 license: Apache-2.0
 

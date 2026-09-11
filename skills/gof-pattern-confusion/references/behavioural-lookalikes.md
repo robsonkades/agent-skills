@@ -29,13 +29,14 @@ illegal transitions such as `Shipped → Paid`. Naming alone enforces nothing (`
 function when the application owns its extension set. One hook is still a valid Template Method;
 framework/public extension contracts can justify retaining it.
 
-**Cost:** subclasses coupled to the base's self-use, a class per variant, and no ability to combine
-a step from one variant with a step from another. Converting it to a final class taking the step as
-a parameter removes all three (`gof-template-method`).
+**Cost to inspect:** subclass coupling to the base's self-use and the actual difficulty of combining
+steps. Injected behavior can reduce that coupling, but a final-class rewrite can break public or
+protected extension contracts; it does not automatically preserve validation, cleanup or behavior.
+Keep a working extension design unless a change has a concrete benefit (`gof-template-method`).
 
-The converse also happens: five separate strategies each repeating the same setup and teardown
-around their one differing line. That repetition is the template, and it should be in the caller
-once.
+The converse also happens: strategies repeat the same setup and teardown around a differing step.
+If those lifecycle contracts really match, compare a shared caller-owned sequence; superficially
+similar setup is not enough to merge independently owned behavior.
 
 ## Strategy vs Command
 
@@ -56,7 +57,7 @@ nobody designed, and a "command" passed as a parameter to configure behaviour ga
 
 ## Command vs Event
 
-**Question: tense, and who owes an answer.**
+**Question: a requested decision or an established fact?**
 
 | Command                       | Event                                         |
 | ----------------------------- | --------------------------------------------- |
@@ -90,9 +91,9 @@ void priceChanged(Sku sku, Price p) {
 mediator. A listener with domain conditions does not turn the transport/bus into a mediator;
 identify where the coordination rules actually live.
 
-**Cost:** the hub grows into a god object while everyone believes it is a thin dispatcher, because
-the word "bus" suggests it. Naming it a mediator sets the expectation that it must be bounded and
-split (`gof-mediator`).
+**Risk:** coordination can accumulate unnoticed when the name suggests only dispatch. Review
+protocol ownership and independent reasons to change; retain a cohesive mediator that meets its
+contract. The label alone does not require splitting (`gof-mediator`).
 
 ## Facade vs Mediator
 
@@ -101,8 +102,9 @@ progress/results to a facade without making it a mediator. A mediator can also e
 
 **The ambiguous case:** a `Coordinator` described as a facade because it "simplifies access".
 
-**Cost:** a facade is expected to stay thin, so nobody watches its size. A mediator must be
-watched, because it accumulates protocol rules by design.
+**Risk:** either label can hide growing responsibilities. A facade may own a cohesive workflow;
+a mediator may remain small. Inspect the actual interaction rules, cohesion and consumer contract
+rather than inferring complexity or a required split from the name.
 
 ## Chain of Responsibility vs Decorator
 
@@ -129,9 +131,10 @@ child; Decorator augments a wrapped component. Intent matters more than current 
 **The possible overlap:** a one-child composite that also augments behavior. Inspect aggregate
 semantics and the delegated contract before imposing a single label.
 
-**Cost:** small in code, real in expectations. Readers of a composite expect aggregation semantics
-(`size()` sums its children); readers of a decorator expect delegation and stacking. A class that
-does both surprises both.
+**Cost:** real in expectations. Composite requires defined part/whole operations, but does not
+dictate whether a particular `size()` counts direct children, leaves or another domain measure.
+Decorator suggests augmentation of a component contract. Document justified overlap without
+changing established consumer semantics to fit either label.
 
 ## Visitor vs Iterator
 
@@ -162,13 +165,13 @@ count or changes are coupling independent axes. A sparse current matrix can stil
 
 ## Factory Method vs Abstract Factory vs Builder vs static factory
 
-| What you have                                        | It is                               |
-| ---------------------------------------------------- | ----------------------------------- |
-| A subclass hook, called from inherited code          | Factory Method (GoF)                |
-| `static X of(...)` on the product type               | A static factory — not this pattern |
-| Several products that must come from the same family | Abstract Factory                    |
-| Staged construction with intermediate choices        | Builder                             |
-| A `Supplier` field                                   | A function, and that is fine        |
+| What you have                                        | It is                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------- |
+| A subclass hook, called from inherited code          | Factory Method (GoF)                                    |
+| `static X of(...)` on the product type               | A static factory — not this pattern                     |
+| Several products that must come from the same family | Abstract Factory                                        |
+| Staged construction with intermediate choices        | Builder                                                 |
+| A `Supplier` field                                   | A function; inspect its role before assigning a pattern |
 
 **The misclassification:** calling `Money.of(...)` a Factory Method.
 
@@ -185,18 +188,23 @@ usually has many instances — one per distinct value.
 
 **The misclassification:** a "cache singleton" that is both, and neither well.
 
-**Cost:** the two have opposite review checklists. Singleton needs the "one per what?" question and
-a testability answer; Flyweight needs a heap measurement, a bound and an immutability guarantee.
+**Cost:** the two need different checks. Singleton needs the "one per what?" question and a
+testability answer; Flyweight needs safe shared intrinsic state (often immutable), a retention
+policy and evidence for any claimed memory benefit.
 Conflating them means neither list is applied (`gof-singleton`, `gof-flyweight`).
 
 ## Memento vs snapshot vs event sourcing
 
-| Property           | Memento              | Snapshot                     | Event sourcing                |
-| ------------------ | -------------------- | ---------------------------- | ----------------------------- |
-| Lives              | Transient or durable | In storage                   | In an append-only log         |
-| Readable by others | No — opaque          | Yes — a contract             | Yes — events are the contract |
-| Versioned          | If persisted         | **Required for durable use** | Required, forever             |
-| Answers "why"      | No                   | No                           | Only recorded reasons         |
+| Property           | Memento                               | Snapshot                         | Event sourcing                           |
+| ------------------ | ------------------------------------- | -------------------------------- | ---------------------------------------- |
+| Lives              | Transient or durable                  | In memory or storage             | Authoritative event history              |
+| Readable by others | Opaque to caretaker                   | Depends on the consumer contract | Events have a reader/replay contract     |
+| Compatibility      | For durable/cross-version restoration | For durable/cross-version use    | For retained events and supported replay |
+| Answers "why"      | Not implied by capture                | Not implied by capture           | Only recorded reasons                    |
+
+A capture can be both a snapshot and a memento. Neither its location nor its label supplies
+unrecorded causes; stored reasons are evidence only for what was recorded. Preserve the actual
+event retention/recovery contract, including history still required for reconstruction.
 
 **The mistake:** treating a persisted memento as exempt from snapshot compatibility duties.
 

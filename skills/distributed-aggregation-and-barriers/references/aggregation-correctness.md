@@ -65,8 +65,10 @@ Three fixes. Name the one in use, in the code:
    scale. These are normally required for contractual monetary amounts; binary floating
    point remains legitimate for explicitly approximate analytics.
 2. **Compensated summation** (Kahan, or Neumaier for wide-magnitude inputs). Carry a running
-   correction term alongside the sum. This bounds the error; it does **not** make addition
-   associative, so two partitionings may still differ — the difference is merely smaller.
+   correction term alongside the sum. This can reduce rounding error under the algorithm's
+   assumptions; it does **not** make addition associative or guarantee a smaller discrepancy
+   for every input. Specify non-finite/intermediate-overflow handling and validate the chosen
+   accumulator and merge against an appropriate exact oracle and error contract.
 3. **Deterministic evaluation.** Fix input, partition boundaries, order within each partition
    and merge tree/algorithm. Sorting local partitions and merging by ID alone does not preserve
    results when partition boundaries change. Specify whether reproducibility must survive a
@@ -93,11 +95,15 @@ record SumCount(BigDecimal sum, BigInteger count) {
 }
 ```
 
-- **Percentiles**: each worker emits an `HdrHistogram`/t-digest; the coordinator merges the
-  structures and reads the quantile once. Emitting per-worker p99s destroys the information
-  needed to compute the fleet's — the rule itself is `latency-statistics`.
-- **Rate**: carry numerator and denominator; never average per-worker rates weighted by
-  nothing.
+- **Pooled percentiles**: each worker emits a compatible `HdrHistogram`/t-digest; the coordinator
+  merges the structures and reads the quantile once. Per-worker p99s cannot reconstruct it.
+  A mean of independent run-level p99s answers a different question — `latency-statistics`
+  owns that distinction and the population/measurement boundary.
+- **Rate**: define the exposure before merging denominators. For disjoint worker counts of
+  100 and 200 during the same aligned 10-second window, fleet throughput is `300 / 10 = 30`
+  events/s. Summing the overlapping durations gives `300 / 20 = 15` events per worker-second,
+  a different statistic. Sum denominators only when those exposures are additive for the
+  requested ratio; partial coverage does not silently become a full-window measurement.
 - **"Latest value per key"**: use an explicit version/order key and deterministic tie-breaker
   for different records with equal versions. `max` on that total order can merge in any order;
   arrival-based last is only meaningful when the engine preserves the required encounter order.
@@ -113,8 +119,13 @@ record SumCount(BigDecimal sum, BigInteger count) {
 | t-digest                   | approximate quantiles             | compression-dependent                                             | implementation/data/order-dependent, often tail-oriented              | merge compatible digests                   |
 | HdrHistogram               | quantiles over a configured range | fixed by range/precision                                          | quantization; out-of-range behavior is implementation/config-specific | add compatible histograms                  |
 
-Compatibility is part of every merge contract: precision, bounds, hash functions/seeds,
-normalization and implementation version must match. A non-mergeable result may force raw
+Compatibility is part of every merge contract: preserve units, input cohort/window and outcome
+filters, and check precision, bounds, hashes/seeds, normalization and implementation versions.
+Use only the algorithm's supported combinations or conversions and retain their error limits;
+not every field must be identical. For example, HdrHistogram 2.2.2 can remap counts between
+different precision layouts when values fit, but cannot recover the source's lost precision.
+Successful library addition does not establish compatible measurement populations.
+A non-mergeable result may force raw
 data retention, repartitioning or a centralized final step. Bounded sketches trade storage for
 their stated estimator/quantization errors. Count-min's one-sided property assumes non-negative
 updates, compatible hashes and counters without overflow; a candidate heap needs its own
@@ -148,5 +159,7 @@ empty input, singleton, extreme magnitudes, overflow, NaN/infinity policy, regro
 allowed reorderings, duplicate attempts and incompatible summary metadata.
 
 Sources: [BigDecimal arithmetic and equality](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html),
+[DoubleStream summation accuracy and non-finite behavior](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/DoubleStream.html#sum()>),
+[HdrHistogram 2.2.2 merge implementation](https://github.com/HdrHistogram/HdrHistogram/blob/HdrHistogram-2.2.2/src/main/java/org/HdrHistogram/AbstractHistogram.java),
 [Count-Min Sketch authors' reference](https://sites.google.com/site/countminsketch/),
 and [t-digest implementation and accuracy discussion](https://github.com/tdunning/t-digest).

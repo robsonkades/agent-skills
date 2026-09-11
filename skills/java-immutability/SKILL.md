@@ -27,17 +27,20 @@ fights the tools without a measurement to justify it.
    each input. Examples use Java 17-compatible features: records and type-pattern `instanceof`
    need Java 16+ without preview, `copyOf` needs Java 10+, and `Stream.toList()` needs Java 16+.
    Keep the project baseline; use ordinary classes/private-copy wrappers on older targets.
+   Reuse caller tests and lifecycle evidence; ask only when unresolved alias ownership or a
+   public contract changes the decision. Keep an adequate immutable or confined mutable design.
 1. **Classify every field or record component.** Primitive and known deeply immutable values are
    safe. Collections, arrays, legacy dates, buffers and custom types require proof of both
    container and element immutability; “no setters” is not proof.
-2. **Close the inbound route.** Copy in the constructor: `List.copyOf`, `Map.copyOf`,
-   `Set.copyOf`, `clone()` for arrays. These are shallow copies; mutable elements/keys/values need
-   their own immutable representation or deep-copy policy.
+2. **Close the inbound route.** Where aliases require isolation, copy in the constructor:
+   `List.copyOf`, `Map.copyOf`, `Set.copyOf`, `clone()` for arrays. These are shallow copies;
+   mutable elements/keys/values need an immutable representation, copying or proven ownership.
 3. **Close the outbound route.** Accessors can return deeply immutable values directly.
    Owned mutable representations still need isolation on output: arrays, dates and buffers
    need defensive access even after an inbound copy. An unmodifiable container does not
    protect mutable elements.
-4. **Check publication.** Fields final, `this` not escaping the constructor. Final-field
+4. **Check publication.** Prefer final stable state; justify derived caches separately and
+   prevent premature `this` escape. Final-field
    initialization safety protects observed constructed state, but a happens-before publication
    mechanism is still preferable for reference visibility, lifecycle and later mutable state.
 5. **Verify with a hostile test.** Mutate the constructor container and a nested mutable element
@@ -49,16 +52,18 @@ fights the tools without a measurement to justify it.
 - A record guarantees final component references, not immutable referents. A mutable input
   must be isolated by copying or a proven ownership transfer; already immutable values can be
   reused. Check the reachable state, not merely whether the component type is `List` or `Map`.
-- Never ship a record with an array component and generated `equals`/`hashCode` — arrays
-  compare by identity, so two records with equal contents are not equal. Copy in and out
-  and override both, or use a `List` instead.
+- Array components use identity equality by default. For content-value semantics, isolate
+  mutable bytes and define matching content equality/hash behavior, or choose an immutable
+  representation. Preserve intentional identity contracts; do not silently replace them.
+  Copying arrays while retaining generated equality can also break the record reconstruction
+  invariant — see the records reference.
 - Prefer `List.copyOf` when its null contract fits. An unmodifiable wrapper around a privately
   owned copy is also a valid snapshot; a wrapper around aliased mutable backing is a live view
   requiring a documented concurrency/lifecycle protocol. `copyOf` remains shallow; never call
   re-copying “free” without measuring a material path.
-- Evolve immutable state with hand-written `withX` methods that return a new instance.
-  Java has no wither syntax and records have no generated `with` — do not claim or wait
-  for one.
+- Expose only needed immutable transitions through constructors, copy factories or withers.
+  An unchanged result may reuse an instance if identity permits. Java/records do not generate
+  withers; project code generation is a separate, optional tool choice.
 - Do not assert or deny an allocation cost without a measurement. Escape analysis may
   eliminate an allocation; it never guarantees it.
 - State what immutability includes: object fields only, reachable graph, external resources, and
@@ -74,7 +79,9 @@ fights the tools without a measurement to justify it.
 Name the immutability boundary and remaining aliases, construction/access strategy and any
 API behavior changed. Report mutation tests and the happens-before argument for the actual
 handoff; a passing thread test alone does not prove JMM correctness. Keep allocation benefits
-and framework round-trip safety conditional until measured or exercised.
+and framework round-trip safety conditional until measured or exercised. A review may conclude
+no change when the required state and ownership contract already hold; otherwise distinguish a
+demonstrated leak from a missing publication/binder guarantee and name the remaining check.
 
 ## References
 

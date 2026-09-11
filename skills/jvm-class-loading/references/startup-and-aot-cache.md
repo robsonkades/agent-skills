@@ -24,8 +24,14 @@ readiness may dominate instead.
 - **JEP 483** (JDK 24) — AOT cache storing loaded and linked classes.
 - **JEP 514** (JDK 25) — creation reduced to a single command via `-XX:AOTCacheOutput`.
 - **JEP 515** (JDK 25) — training profiles are stored so optimizing compilation can consume
-  prior execution information. It improves warm-up but does not guarantee the production path,
-  receiver distribution or branch frequencies match training.
+  prior execution information. This can shorten warm-up; it does not guarantee that a particular
+  method consumes a cached profile or compiles during a given run, or that the production path,
+  receiver distribution or branch frequencies match training. Runtime profiling and JIT
+  optimization continue.
+
+These release numbers identify feature introductions, not support in every vendor, VM build,
+collector or launch configuration. Inspect the deployed image and its accepted options before
+using them; preserve a Java 17 target with the CDS capabilities that build actually supports.
 
 ## Verify it is being used
 
@@ -43,8 +49,12 @@ java -Xlog:class+load=info -XX:AOTCache=app.aot -jar app.jar
 ```
 
 In CI, assert `AOTMode=on` accepts the assembled image. In production `auto`, extract a stable
-log/metric showing whether the application cache loaded, then compare cold-start distributions
-with and without it. Do not use a grep count as the sole SLO: class selection changes legitimately.
+log/metric showing whether the application cache loaded. Cache acceptance or a class-source log
+does not prove per-method profile consumption, native compilation, or reduced initialization
+work. If those are the claim, use the target build's method/profile and compilation diagnostics;
+then compare correct responses and cold-start/warm-up distributions with and without the cache.
+Do not use a grep count as the sole SLO: class selection changes legitimately. Retain adequate
+readiness checks or an existing cache setup when measurements do not justify changing them.
 
 The training run must be representative, bounded and free of irreversible production side
 effects. Cover startup and important early endpoints with stable data; retrain when code, flags,

@@ -24,6 +24,12 @@ hypothesis to falsify, not the default explanation for poor scaling.
 
 ## Workflow
 
+Start from the requested outcome and reuse existing captures, layout listings and deployment
+configuration when they match the workload and build. Preserve the project's Java baseline;
+use Java 25 when no target is specified. For a conceptual or flag question, answer the relevant
+contract directly. Keep an adequate layout or placement when there is no demonstrated problem.
+For a scaling investigation, select the following checks to resolve the remaining hypotheses:
+
 1. **Measure the scaling curve**: throughput, p99, CPU, allocation and synchronization from
    one thread through the production concurrency range. Efficiency is descriptive; there is
    no universal 0.5 entry threshold.
@@ -37,14 +43,17 @@ hypothesis to falsify, not the default explanation for poor scaling.
 5. **Measure coherence on supported hardware.** Prefer `perf c2c`, HITM/cache-to-cache or
    vendor PMU events when available; LLC misses alone do not prove false sharing. Normalize
    against the application's own baseline and retain event support/scaling warnings.
-6. **Validate twice.** Use JMH to isolate the proposed mechanism, then an application/load
-   test at the same topology and concurrency to prove the production effect.
+6. **Validate the claim.** Use JMH when isolating a mechanism would resolve uncertainty;
+   an application benefit needs a representative application/load comparison at matched
+   topology and concurrency. Preserve semantics and report the observed metric and conditions.
 
 Record target JDK/vendor, collector, header/alignment flags, JOL version, CPU/cache topology,
 allowed CPUs/memory nodes and workload ownership before changing layout or placement. Examples
 are partial sketches, not a runnable benchmark or a declared cross-JDK layout contract. Return
-the evidence, competing explanation, proposed controlled change and validation result. If PMUs,
-layout tools or target hardware are unavailable, state the gap and keep the diagnosis provisional.
+the evidence and decision to retain or change, with the competing explanation and next
+discriminating check where unresolved. Distinguish a proposed change from an implemented one,
+and observed validation from checks still needed. If PMUs, layout tools or target hardware are
+unavailable, state the gap and keep the diagnosis provisional.
 
 ## Rules
 
@@ -62,9 +71,11 @@ layout tools or target hardware are unavailable, state the gap and keep the diag
   hierarchy. HotSpot field packing, headers, inheritance gaps, compressed pointers and
   alignment are implementation details; even familiar 12-byte-header examples are not a
   layout contract.
-- Compact Object Headers gives an 8-byte header: product in JDK 25 behind
-  `-XX:+UseCompactObjectHeaders` (JEP 519), **off by default through JDK 26 and on by
-  default from JDK 27** (JEP 534). It can change offsets — and by packing more fields per
+- Compact Object Headers gives an 8-byte header in HotSpot: product in JDK 25 behind
+  `-XX:+UseCompactObjectHeaders` (JEP 519), **off by default through JDK 26**. JEP 534
+  enables it by default in upstream JDK 27, which is in the **release-candidate phase as of
+  2026-09-10**. Vendors can backport support or change
+  defaults; inspect the actual build. It can change offsets — and by packing more fields per
   line it can **worsen** false sharing while improving footprint.
 - Do not resurrect obsolete layout flags such as `CompactFields` or `UseEmptySlotsInSupers`.
   Inspect options supported by the target build; header modes and packing still evolve.
@@ -74,8 +85,11 @@ layout tools or target hardware are unavailable, state the gap and keep the diag
   remain adjacent, so moving a field to a new object is not a physical-isolation guarantee.
 - HotSpot's default contended padding width is commonly 128 bytes, intended to isolate beyond
   one typical line and reduce adjacent-line effects; verify the flag/build rather than
-  treating the rationale or width as a specification. In application code it needs `--add-exports` **and**
-  `-XX:-RestrictContended`; without the second it is silently ignored.
+  treating the rationale or width as a specification. Compiling direct uses of its internal
+  annotation needs the appropriate `--add-exports`. HotSpot recognition for application classes
+  needs `EnableContended` enabled and `-XX:-RestrictContended`; a runtime export is not needed
+  solely for VM annotation recognition. Actual runtime access to the internal type is a separate
+  module-access question. See `references/false-sharing.md` before proposing this option.
 - Prefer `LongAdder` for highly contended statistics only when a non-atomic `sum()` snapshot
   is acceptable. `AtomicLong` provides linearizable updates/reads and can win at low
   contention; padding protects independent fields. These solve different contracts and must
@@ -99,6 +113,8 @@ layout tools or target hardware are unavailable, state the gap and keep the diag
   detection procedure, JOL usage and the correction options. Read when scaling efficiency is
   poor or when adding fields to a shared class.
 - [NUMA](references/numa.md) — verifying topology, reading `numastat`, and choosing between
-  distributing and pinning. Read only after confirming more than one NUMA node exists.
+  distributing and pinning. Read when checking `UseNUMA` or a placement proposal, including
+  why a requested flag is disabled on a single available node.
 - [OpenJDK JOL](https://github.com/openjdk/jol) — supported VM layouts and measurement caveats.
 - [JEP 519](https://openjdk.org/jeps/519) and [JEP 534](https://openjdk.org/jeps/534) — compact-header release/default boundaries.
+- [JDK 27 status](https://openjdk.org/projects/jdk/27/) — check release status; a delivered JEP is not evidence of a GA runtime.

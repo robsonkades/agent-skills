@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-strategy
-version: 1.2.1
+version: 1.2.2
 description: >-
   Strategy in modern Java, separated into three things that are usually conflated: the design
   concept (an algorithm varies), the classical class hierarchy, and the lambda or functional
@@ -11,7 +11,7 @@ description: >-
   obligations, and the contract test implementations can share. Use when an algorithm must vary
   at runtime, when a switch over a type code keeps growing, when a class hierarchy exists whose
   members are one-line methods, or when strategy classes differ only in a rate or a threshold.
-  Does not cover behaviour that changes with the object's own state (gof-state), two independently
+  Does not cover lifecycle-governed legal operations and transitions (gof-state), two independently
   varying hierarchies (gof-bridge), an algorithm skeleton with varying steps
   (gof-template-method), or choosing which object to create (gof-factory-method).
 
@@ -52,11 +52,13 @@ suggests:
   - gof-bridge
   - caching-strategies
   - flame-graph-analysis
+  - gof-chain-of-responsibility
   - gof-pattern-thinking
   - java-composition-over-inheritance
   - java-memory-model
   - jit-inlining-and-escape-analysis
   - load-balancing-and-routing
+  - message-ordering-and-partitioning
   - retries-and-backoff
   - sharding-and-partitioning
 

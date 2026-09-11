@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: session-state-strategies
-version: 1.1.1
+version: 1.1.2
 description: >-
   Placing the state that spans several requests of one conversation: client session state,
   server session state and database session state, plus signed tokens and external stores.
@@ -50,6 +50,7 @@ suggests:
   - architecture-refactoring-paths
   - enterprise-transactions
   - heap-dump-analysis
+  - idempotency
   - offline-concurrency-control
   - timeouts-and-deadlines
 

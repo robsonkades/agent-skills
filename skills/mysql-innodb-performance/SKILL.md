@@ -23,6 +23,10 @@ tested SQL/JDBC program. Missing instrumentation must remain an evidence gap, no
 
 ## Investigation contract
 
+Select the evidence needed for the actual question; reuse adequate supplied artifacts. A narrow
+plan, API, or configuration explanation need not collect every category or make a change. Runtime
+diagnoses still need relevant workload evidence; unavailable measurements remain unknown.
+
 ```text
 exact server/distribution/version, topology, durability and replication mode:
 effective variables and persisted configuration, including upgrade history:
@@ -36,8 +40,9 @@ Connector/J version and effective prepared/batch/fetch/TLS/time-zone properties:
 
 ## Workflow
 
-1. Capture effective variables from the running server and resolved Connector/J version. Especially
-   after an upgrade, configuration files do not prove which defaults or deprecated settings apply.
+1. Establish the relevant server/driver versions and effective settings from available evidence.
+   Capture running-server variables when a runtime claim depends on them. Especially after an
+   upgrade, configuration files alone do not prove which defaults or deprecated settings apply.
 2. Classify the dominant path:
    - access: rows examined, estimates, temporary materialization, sort, secondary-to-PK lookup;
    - concurrency: locking versus consistent read, record/gap/next-key range, deadlock, metadata lock;
@@ -45,12 +50,15 @@ Connector/J version and effective prepared/batch/fetch/TLS/time-zone properties:
    - history: long read view, undo retention, purge lag;
    - capacity: buffer pool, per-connection memory, `Threads_running`, CPU/I/O, replication apply;
    - client: statement rewrite/cache, server prepare, fetch materialization, timeout/TLS behavior.
-3. Use `performance_schema`, `sys`, `SHOW ENGINE INNODB STATUS`, actual plans, and server counters in
-   the same interval. A configuration value without its workload signal is not a diagnosis.
-4. Predict the specific counter or plan work an intervention will move. Change one scoped variable,
-   query/index, transaction boundary, or driver behavior at a time.
-5. Validate p99 and useful throughput together with rows examined, waits/deadlocks, redo/checkpoint,
-   history length, memory, lag, and durability/error guardrails.
+3. For a runtime diagnosis, select relevant `performance_schema`, `sys`, `SHOW ENGINE INNODB STATUS`,
+   plan and counter evidence from a comparable interval. A configuration value without its workload
+   signal is not a diagnosis; a version-matched contract can support an API explanation.
+4. If an intervention is justified, predict the counter or plan work it should move. Change one
+   scoped variable, query/index, transaction boundary, or driver behavior at a time. A supported
+   keep-current conclusion is valid.
+5. Validate the affected claim. For a performance change, compare p99 and useful throughput with
+   the relevant engine/client signals and durability/error guardrails. For an unchanged narrow
+   review, adequate existing evidence can close the task; report unexecuted checks explicitly.
 
 ## Rules
 
@@ -80,9 +88,11 @@ Connector/J version and effective prepared/batch/fetch/TLS/time-zone properties:
 
 ## Output
 
-State engine/driver versions, evidence window, direct observations, mechanism and alternatives,
-confidence, intervention and predicted counter, validation, durability/replication implications,
-guardrails, and rollback.
+State the supported conclusion, relevant versions/evidence and material limits. For a runtime
+diagnosis, separate observations from the proposed mechanism and name the next discriminating
+check if needed. For a change, include its predicted effect, checks actually run, affected
+durability/replication contract, guardrails and reversal or forward-repair plan. Keep an adequate
+no-change review or API explanation concise.
 
 ## References
 

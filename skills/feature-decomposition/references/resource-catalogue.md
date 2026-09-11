@@ -3,6 +3,8 @@
 A resource is the smallest unit that is implemented, validated and tracked as one thing. It is
 the unit the whole lifecycle downstream operates on: the plan orders resources, execution
 honors dependency and ownership constraints, and progress reports their status.
+Read this for an authorized delivery breakdown or its revision; definition-only child-feature
+analysis does not require a resource catalogue.
 
 ## Required fields
 
@@ -26,11 +28,15 @@ Do not invent impact/decision IDs or populate an unrelated status ledger just to
 For shared work, identify ownership and files that require coordination. Two fields do the real work:
 
 - **Validation** — written before implementation starts, not chosen afterwards to fit what was
-  built. A validation invented after the fact tests what the code does, not what was wanted.
+  built. Derive it from the applicable acceptance and contract, including when reconstructing an
+  existing resource; a later-written check can still be valid when it tests that obligation.
 - **Depends on** — necessary inputs and their readiness criteria. Shared-file conflicts and
   release/validation prerequisites also constrain safe execution; label them explicitly.
 
 ## Resource kinds
+
+These are examples of work and evidence, not a required resource per layer. Choose checks that
+establish the affected contract; a resource may span several kinds and need integration evidence.
 
 | Kind                     | Typical validation                                                                               |
 | ------------------------ | ------------------------------------------------------------------------------------------------ |
@@ -77,7 +83,18 @@ Record the dependency graph and currently ready resources; give a preferred sequ
 Check every referenced ID exists, reject cycles, and distinguish missing evidence from a real
 dependency. A blocked node need not stall unrelated work; shared-file ownership still matters.
 
+## Revising an existing breakdown
+
+Preserve IDs, criterion links and recorded status/evidence; the `TODO` example applies to new,
+unstarted work. Renaming or regrouping a resource does not make it new. For a split or merge,
+record the old-to-new mapping and reason without reusing an ID for a different obligation or
+deleting history. Update affected dependencies, acceptance and plan/progress links in their existing
+records. Mark evidence stale only where changed scope or contracts invalidate it; do not reset
+unaffected completed work or copy a parent's `DONE` status onto unverified new children.
+
 ## Child features, when they are used
+
+The following is a delivery-stage illustration; it does not require resources during definition.
 
 ```text
 PF-02  A caller can ask whether a dispatch finished

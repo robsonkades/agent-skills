@@ -1,6 +1,8 @@
 # Smell Catalogue
 
 Each entry: symptoms · cause · consequences · detection · direction · when it is acceptable.
+Causes and consequences are hypotheses to check against actual paths and change history;
+apply a refactoring direction only to confirmed harm, preserving the required contracts.
 
 ## Anaemic domain model
 
@@ -10,8 +12,9 @@ Each entry: symptoms · cause · consequences · detection · direction · when 
 **Possible cause** A domain model was intended, but rules were placed beside repositories
 and transaction orchestration. JPA entities alone do not establish that architectural choice.
 
-**Consequences** Every rule can be bypassed by any new code path; rules duplicate and
-diverge; the mapping layer's cost is paid without its benefit.
+**Possible consequences** A stateful rule can be bypassed or copied inconsistently, or
+mapping costs exceed their benefit. Trace the actual rule owner and all writers; data-only
+entities and service conditionals alone do not establish either problem.
 
 **Detection**
 
@@ -24,8 +27,9 @@ rg -n -g '*.java' '@Entity|public\s+void\s+set' src/main/java
 mode, serializers and reflective callers before removing a setter; compilation does not
 find those consumers (`architecture-refactoring-paths`).
 
-**Acceptable when** the design is Transaction Script plus a gateway. Then entities _are_ row
-objects and behaviourless is correct — but call them row objects, not a domain model
+**Acceptable when** deliberate scripts/shared policies have coherent rule ownership and
+data-only entities provide useful persistence mapping. A gateway is not required to make
+that choice valid; preserve the relevant ORM and concurrent-writer contracts
 (`domain-logic-organization`).
 
 ## God service
@@ -50,7 +54,8 @@ Many authors and subjects select candidates. Read the actual changes to establis
 responsibilities and resulting conflicts; commit titles and size alone do not confirm them.
 
 **Direction** Consider splitting one use case while preserving transactions, authorization,
-proxy entry points and behavior tests; extraction is not automatically safe. Move rules into the domain
+proxy entry points and behavior tests; extraction is not automatically safe. Shared policy
+extraction or a state-owning domain type should follow the chosen organization
 (`service-layer-design`).
 
 **Acceptable when** the class is genuinely one cohesive responsibility that happens to be
@@ -153,11 +158,14 @@ and failure containment rather than inferring that all benefits are absent.
 **Detection** Check representative releases and mixed-version contract tests. Distinguish
 technical incompatibility from organizational release policy or a one-time migration.
 
-**Direction** Version the contracts and make them tolerant, or merge the services back.
-Merging back is unpopular and frequently correct (`distribution-boundaries`).
+**Direction** Address the demonstrated coupling: compatible evolution or a staged rollout
+may preserve the boundary. Tolerate only changes the actual wire/business contract permits.
+Compare consolidation when the retained benefits no longer justify the cost, including
+data, consumer and rollback work (`distribution-boundaries`).
 
-**Acceptable when** it is a deliberate, temporary stage of an in-progress extraction with a
-stated end date.
+**Acceptable when** deliberate release coordination still meets the accepted goals and its
+cost is justified by actual scaling, isolation or other benefits. A temporary extraction is
+another case; check its migration milestones rather than assuming release policy is a defect.
 
 ## Persistence leakage
 
@@ -185,11 +193,14 @@ This partial ArchUnit policy needs the project's ArchUnit/JUnit setup and matchi
 web dependencies on entity classes, which is broader than detecting wire exposure; adopt it
 only for that intended boundary. It does not prove what reflection/serialization emits.
 
-**Direction** Projections for reads, DTOs at boundaries, assembled inside the transaction
+**Direction** Protect the actual wire/read/write contract and loading lifetime. Use
+projections or DTOs when they isolate those responsibilities; materialize required lazy
+state within its intended persistence lifecycle rather than during uncontrolled serialization
 (`remote-facade-and-dto`).
 
-**Acceptable when** an internal admin tool deliberately trades coupling for speed, recorded
-as a decision with a boundary around it.
+**Acceptable when** the coupling is deliberate and bounded, with verified serialization,
+input-binding, loading and compatibility policies. An internal admin tool is one example,
+not the only possible exception; a published independence contract remains binding.
 
 ## Transaction boundary in the wrong place
 
@@ -242,14 +253,19 @@ invariants.
 **Consequences** The model no longer describes the business; a schema change is a domain
 change.
 
-**Detection** For each association, find the code that traverses it in each direction; for
-each subtype, name the behaviour that differs (`inheritance-mapping-strategies`).
+**Detection** For each association, inspect application traversal and ORM ownership,
+`mappedBy`, cascade/orphan behavior, queries and indirect consumers. No explicit call site
+does not mean a mapping is unused. For each subtype, identify the domain distinction and
+mapping contract (`inheritance-mapping-strategies`).
 
-**Direction** Remove unused directions; re-derive the hierarchy from behaviour; consider a
-separate domain model where the divergence is real (`data-source-patterns`).
+**Direction** Remove a direction only after preserving relationship writes, lifecycle and
+caller contracts with relevant provider-backed checks. Revisit a hierarchy when its domain
+meaning conflicts with its use; a separate model is conditional on real divergence
+(`data-source-patterns`).
 
-**Acceptable when** the design is deliberately Active Record — the entity _is_ the row, and
-that is recorded as the choice.
+**Acceptable when** the chosen persistence mapping supports the intended domain or script
+organization without breaking invariants. Required no-arg constructors, accessors or
+associations are not defects solely because the ORM needs them.
 
 ## Chatty remote interface
 
@@ -271,6 +287,7 @@ bound is enforced.
 
 ## Sources for framework-sensitive findings
 
+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity construction/access, relationship ownership and cascade/orphan semantics; inspect the project's actual provider and persistence version.
 - [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html) — verify against the project's release.
 - [Spring AOP proxy semantics](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — inspect effective proxy configuration before extraction.
 - [Git log](https://git-scm.com/docs/git-log) — history filters select commits, not business features.

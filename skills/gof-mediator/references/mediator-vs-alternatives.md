@@ -12,15 +12,15 @@
 Two discriminations matter in review.
 
 **Mediator versus Observer.** A mediator _decides_: it knows that when A finishes, B should start
-unless C is pending. An observer publisher does not decide anything; it states a fact and is
-indifferent to who reacts. If your hub's methods contain conditional logic about other
+unless C is pending. An observer publisher can enforce its own invariants and choose when to
+notify; subscribers own their reactions. If your hub's methods contain conditional logic about other
 participants, it may be a mediator; forwarding alone may be an event bus with useful dispatch,
 subscription or delivery policy. Classify the responsibility instead of inferring value from the name.
 
 **Mediator versus command dispatcher.** Libraries in other ecosystems popularised calling a
-request-to-handler dispatcher a "mediator". It shares no properties with this pattern: there are no
-participants, no protocol, no callbacks, and nothing to coordinate. Calling it one obscures the
-real question — whether the dispatch adds anything over calling the handler (`gof-command`).
+request-to-handler dispatcher a "mediator". Dispatch may own useful validation, routing and result
+policy without owning a peer collaboration protocol. Distinguish those roles; an established
+library/API name alone is not a reason to rename or replace a useful dispatcher (`gof-command`).
 
 ## God-object criteria
 
@@ -36,7 +36,8 @@ A mediator deserves closer inspection when these signals reveal unrelated change
 
 ### Splitting
 
-Split by **protocol**, never by noun.
+Split by **protocol** and its state/lifecycle ownership, not by a noun alone. Preserve supported
+caller methods through delegation when changing them would break consumers.
 
 ```java
 // before: one hub for "orders"
@@ -103,12 +104,12 @@ an endless feedback loop by themselves (`gof-state`).
 Shared, synchronised hub
   + participants call from any thread
   − lock ordering across participants is now the hub's problem
-  − contention proportional to interaction rate
+  − contention depends on overlapping calls and critical-section duration
 
 Single-threaded hub (queue + one consumer)
   + confined protocol state needs no locks if all callbacks enqueue, never invoke inline
   + easy to reason about and to test deterministically
-  − a throughput ceiling of one, and callers must accept asynchrony
+  − one active handler at a time, not a fixed throughput; callers must accept queued completion
   − a slow participant blocks the whole protocol unless calls are offloaded
 
 Immutable state + CAS
@@ -118,21 +119,23 @@ Immutable state + CAS
 ```
 
 Choose confinement when its latency/capacity contract fits. Offloaded effects still need ordered
-completion, cancellation and failure handling. CAS publication does not atomically deliver an effect;
+completion, cancellation and failure handling; returning from a handler does not release resources
+still used by that work. Close only owned resources after actual use ends, and define how late
+completions are handled after cancellation/shutdown. CAS publication does not atomically deliver an effect;
 use claimed effect identities and a delivery/recovery policy (`littles-law-and-queueing`).
 
 ## Orchestration versus choreography
 
 The distributed forms of Mediator and Observer respectively.
 
-|                           | Orchestration (a mediator)               | Choreography (events)                                                                   |
-| ------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------- |
-| Where the flow is visible | Central protocol definition              | Distributed protocol; documentation and projections may provide an overview             |
-| Adding a step             | Usually change the orchestrator          | Independent reactions may need only a subscriber; protocol changes may affect producers |
-| Availability              | Dependent progress may wait for recovery | Broker/storage and participants can be shared failure dependencies                      |
-| Cancellation              | Central state can help enforce policy    | Requires explicit distributed ownership and protocol                                    |
-| Debugging a stuck flow    | Query the orchestrator's state           | Correlate traces across services                                                        |
-| Coupling                  | Orchestrator knows every participant     | Everyone couples to event schemas                                                       |
+|                           | Orchestration (a mediator)                  | Choreography (events)                                                                   |
+| ------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Where the flow is visible | Central protocol definition                 | Distributed protocol; documentation and projections may provide an overview             |
+| Adding a step             | Usually change the orchestrator             | Independent reactions may need only a subscriber; protocol changes may affect producers |
+| Availability              | Dependent progress may wait for recovery    | Broker/storage and participants can be shared failure dependencies                      |
+| Cancellation              | Central state can help enforce policy       | Requires explicit distributed ownership and protocol                                    |
+| Debugging a stuck flow    | Query the orchestrator's state              | Query a durable workflow view where supplied; otherwise correlate participant evidence  |
+| Coupling                  | Orchestrator knows required roles/contracts | Participants depend on the event contracts they use                                     |
 
 Neither is correct in general. The decision rules that hold up:
 

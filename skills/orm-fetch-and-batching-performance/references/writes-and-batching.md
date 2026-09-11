@@ -63,15 +63,17 @@ em.flush();                // include the final partial window; flush is not com
 em.clear();
 ```
 
-`flush()` sends the batch; `clear()` detaches what was sent so the context stops growing.
+`flush()` synchronizes pending work, executing eligible JDBC batches; `clear()` detaches the
+managed state so the context stops growing.
 Omitting `clear()` can retain the growing managed graph. Clearing does not release objects
 still held by `rows` or application buffers, commit the transaction, or release its locks.
 Bound the input too; for chunk commits, define restart/idempotency and partial-success semantics.
 After a persistence failure, roll back and discard the failed context instead of continuing
 the loop. The transaction owner commits/rolls back and closes its resources outside this snippet.
 
-For genuinely large jobs, consider not using the ORM for the write at all. A bulk `INSERT … SELECT`
-or a `COPY`-style load is one statement and no object graph.
+For jobs whose entity lifecycle is unnecessary, compare set-based `INSERT … SELECT` or a
+database-native load with ORM batching. These can avoid a per-row managed graph; verify the
+required constraints, callbacks, transaction and restart contract before changing the path.
 
 ## Bulk operations bypass the context
 
@@ -95,7 +97,11 @@ The rules that follow:
 - Prefer a fresh context for bulk DML. If pending managed changes must be preserved, explicitly
   flush them before the bulk operation, then clear/refresh affected state afterward. Do not
   clear away unsent changes; AUTO flush depends on query spaces and flush mode.
-- Do not mix a bulk update with entity modifications of the same rows in one transaction.
+- Managed modifications of affected rows can follow bulk work when ordering and reconciliation
+  are deliberate: preserve required pending writes first, refresh/reload affected state, then
+  make later changes against that state. Otherwise a later flush can overwrite bulk results
+  from stale managed values. A fresh context is often simpler; mixing is not categorically
+  forbidden, and concurrency/version requirements still apply.
 - Bulk operations do not cascade and do not fire entity lifecycle callbacks. Anything your
   `@PreUpdate` did, they do not do.
 - Bulk JPQL does not automatically perform per-entity optimistic version checks. Add the
@@ -108,8 +114,9 @@ Read-only paths may benefit from scalar projections when managed identity/behavi
 needed. Entities are not automatically waste: required data, cache hits, domain behavior and
 read-only/enhanced tracking change the trade-off.
 
-Prefer a projection (`n-plus-one-remedies.md`). Where an entity really is needed for a read that
-will not be modified, a read-only marker lets Hibernate skip taking the dirty-checking snapshot:
+Compare a projection using [N+1 and its remedies](n-plus-one-remedies.md) when selected detached
+values fit the contract. For entities loaded for a read that will not modify them, a read-only
+marker lets Hibernate skip taking the dirty-checking snapshot:
 
 ```java
 em.createQuery("select o from Order o where …", Order.class)
@@ -136,5 +143,5 @@ For a slow individual statement, hand off SQL, bindings, rows and database timin
 
 Sources: [Hibernate 6.6 batching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#batch),
 [identifier optimizers](https://docs.hibernate.org/orm/6.6/userguide/html_single/#identifiers-optimizers),
-[bulk cache cleanup](https://github.com/hibernate/hibernate-orm/blob/6.6/hibernate-core/src/main/java/org/hibernate/action/internal/BulkOperationCleanupAction.java)
-and [Jakarta Persistence bulk update/delete contracts](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
+[6.6.33 bulk cache cleanup](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/action/internal/BulkOperationCleanupAction.java)
+and [Jakarta Persistence 3.1 bulk update/delete and context contracts](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).

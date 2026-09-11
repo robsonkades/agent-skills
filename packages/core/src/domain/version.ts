@@ -46,6 +46,10 @@ export function compareVersions(a: SemanticVersion, b: SemanticVersion): number 
   return semver.compare(a, b);
 }
 
+export function isPrerelease(version: SemanticVersion): boolean {
+  return semver.prerelease(version) !== null;
+}
+
 export function sortVersionsDescending(
   versions: readonly SemanticVersion[],
 ): readonly SemanticVersion[] {

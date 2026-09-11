@@ -19,14 +19,14 @@ description: >
 
 Make a remote interface coarse enough to be usable over a network, and make the data that
 crosses it a deliberate contract rather than an accidental serialisation. These two patterns
-travel together: a coarse operation needs a payload that carries everything the caller needs
-in one exchange.
+travel together: a coarse operation needs a payload that carries the values required by its
+contract, within explicit size and work bounds.
 
 Two failures bracket the topic. The **chatty facade**: a remote API that mirrors the domain
 model, so rendering one screen costs five round trips and the interface's latency is
-dominated by the network. The **ceremonial DTO**: a field-for-field copy of an entity, with a
-mapper, a test and a maintenance burden, that provides no decoupling because it changes
-whenever the entity does.
+dominated by the network. The **ceremonial DTO**: a copy with mapping and maintenance costs
+but no distinct exposure, ownership, encoding or evolution responsibility. Identical fields
+alone do not establish that a boundary is redundant.
 
 ## The patterns
 
@@ -56,8 +56,13 @@ without remote serialization or speculative distribution.
 
 ## Workflow
 
+Use the steps relevant to the requested decision. Reuse adequate contracts, tests and traces;
+a narrow explanation or supported no-change review does not require a payload rewrite or a
+new performance/compatibility campaign.
+
 1. **Start from the caller's use case**, not from the domain model. What does the caller do
-   in one interaction? That is one facade operation.
+   in one interaction, and which calls depend on earlier results? Choose operation boundaries
+   from that work, its consistency requirements and its latency/failure budget.
 2. **Count and budget round trips** for each interaction. More than one is not automatically wrong:
    cacheability, parallelism, reuse, payload size and consistency determine whether coarsening wins.
 3. **Shape the payload from what the caller needs** — not the entity's fields, and not
@@ -67,7 +72,8 @@ without remote serialization or speculative distribution.
    (`rpc-and-api-contracts`).
 5. **Materialize required persistent state within its valid context**, with a transaction
    and isolation level when consistency requires them. Pure mapping of materialized values
-   may occur afterwards; nothing lazy or managed should escape
+   may occur afterwards. An exposed source object must not enable uncontrolled lazy traversal,
+   managed mutation or accidental field exposure through the actual encoding path
    (`orm-behavioral-patterns`).
 6. **Justify each DTO.** If it is an exact copy of a domain type and there is no independent
    evolution, no security filtering and no serialisation concern, it may not be earning its
@@ -86,8 +92,10 @@ The boundary is a public or partner API
           The domain must be free to change without breaking clients.
 
 The type is a JPA entity
-        → DTO, always. Serialising an entity couples the contract to the
-          schema and drags lazy proxies into the serialiser.
+        → prefer a dedicated DTO or scalar projection to isolate persistence concerns.
+          An existing explicit serializer projection may also satisfy the wire contract;
+          verify allowed fields, nested exposure, loaded state/query behavior and independent
+          evolution. Default traversal of the entity graph is not an exposure policy.
 
 The domain type is already an immutable value with no persistence
 concerns and no hidden fields (a record: Money, DateRange, an event)
@@ -100,8 +108,9 @@ Internal, in-process, same deployable, same team
           "boundary" can be changed in one commit if it moves.
 
 The caller needs 3 fields of a 40-field aggregate
-        → a projection, not a DTO built from the loaded aggregate. Do
-          not load what you will not send
+        → consider a bounded scalar projection when it avoids unnecessary hydration.
+          Map already materialized state when required domain work, pending changes,
+          caching or consistency make it the correct source; do not add a redundant query
           (query-objects-and-specifications).
 
 Several services need "the same" DTO
@@ -121,16 +130,19 @@ One client needs a screen-shaped payload and others do not
   Fine-grained operations can be legitimate for streaming, independently cacheable resources or
   genuinely independent workflows. Ported call for
   call, a local design becomes a chatty remote one, and no serialiser or protocol makes up
-  for the round trips (`architecture-and-performance`).
+  for a remaining sequential dependency chain. Cache hits, parallelism and streaming can
+  change the critical path; measure the complete interaction (`architecture-and-performance`).
 - **A Remote Facade holds no business logic.** It translates, assembles and delegates. Rules
-  in the facade cannot be reached by any other caller — a job, a consumer, another API — and
-  they will be duplicated there (`service-layer-design`).
+  shared by jobs, consumers and APIs need one application/domain owner, rather than separate
+  implementations inside transport handlers (`service-layer-design`).
 - The facade is also the natural place for boundary-only concerns: coarse authorisation for
   the operation, request validation, translation of domain failures into the protocol's
   error shape, and idempotency-key handling (`idempotency`).
-- **Never serialise a JPA entity to a client.** Three couplings arrive at once — schema to
-  contract, lazy proxies to the serialiser, and internal fields to the public payload — and
-  each fails differently.
+- **Make the serialized representation explicit.** With persistence-backed sources, test
+  schema/contract independence, lazy access and sensitive/nested field exposure separately.
+  A dedicated response type makes these controls visible; a tested serializer allowlist or
+  custom projection can also provide them. Retain an adequate design rather than adding a
+  copy solely because the source has `@Entity`.
 - **DTOs are not free and not mandatory.** The mapping is code to write, test and keep in
   step. Their justification is independent evolution, deliberate exposure, and a stable wire
   shape; where none of those applies, the mapping is ceremony
@@ -159,14 +171,17 @@ One client needs a screen-shaped payload and others do not
   state before leaving its valid persistence context; mapping detached, already materialized
   values is safe. A coarse endpoint spanning services does not create a distributed
   transaction or a consistent snapshot.
-- The mapper is not a place for business rules. A mapper that computes a total or decides a
-  status has hidden a rule where no test looks for it.
+- Keep business policy in its application/domain owner. Deterministic wire formatting,
+  unit conversion or representation-only calculations may belong in a mapper, with tests
+  for precision, nulls and semantics. Discount eligibility, payable totals and authoritative
+  state transitions must not be independently reimplemented there.
 
 ## Deliverable
 
-Provide the operation/payload change, preserved authorization and wire semantics, measured
-round-trip/payload trade-off or missing evidence, and focused checks for old clients, invalid
-input, sensitive fields and partial/repeated execution. Keep small reviews short.
+Provide the decision, relevant evidence and any justified operation/payload change or no-change
+verdict. For affected contracts, report preserved authorization/wire semantics and focused
+compatibility, exposure or execution checks. Performance claims need the actual round-trip,
+critical-path and payload evidence or an explicit gap. Keep small reviews short.
 
 ## References
 
@@ -176,7 +191,7 @@ input, sensitive fields and partial/repeated execution. Keep small reviews short
   place where domain failures become protocol errors. Read when designing a remote API or
   diagnosing a chatty one.
 - [DTO versus domain object](references/dto-vs-domain-object.md) — the decision table with
-  the cases where a DTO is mandatory, optional and wasteful; mapping strategies and their
-  failure modes; projections instead of DTOs over loaded aggregates; the shared-DTO-library
+  the cases where a separate DTO or another explicit representation earns its cost; mapping
+  strategies and their failure modes; choosing projections or materialized state; the shared-DTO-library
   trap; and how to shrink an over-mapped codebase safely. Read when a DTO layer is being
   added, questioned, or has become a burden.

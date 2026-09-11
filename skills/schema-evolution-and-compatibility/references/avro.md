@@ -52,9 +52,12 @@ from the reader's schema." The Java implementation does honour them (verified be
 | Reader union is a **subset**                          | `INCOMPATIBLE MISSING_UNION_BRANCH: reader union lacking LONG`   | —                                                                      |
 | Writer non-union `string`, reader `[null,string]`     | `COMPATIBLE`                                                     | —                                                                      |
 
-**A rename is an add plus a remove.** The checker reports it as "reader field has no default value"
-— the same incompatibility as adding a required field. `aliases` on the _reader_ is the only thing
-that turns it back into a rename, and it must be the reader's schema that carries them.
+**Without a resolution bridge, a rename is an add plus a remove.** The recorded checker reports
+"reader field has no default value" when the reader expects the new name with no default or alias.
+Reader aliases preserve the field mapping in implementations that honor them; a default can permit
+decoding while losing the original value. An explicit legacy decoder plus semantic adapter is another
+route. Test the actual reader projection, implementation and required values rather than treating
+successful decoding as proof that a rename preserved meaning.
 
 ## Enums and unions
 
@@ -117,8 +120,9 @@ reader D1: {a: int, b: int = 1}  -> reads {"a": 5, "b": 1}
 reader D2: {a: int, b: int = 2}  -> reads {"a": 5, "b": 2}   <-- same bytes
 ```
 
-Both Avro's checker and the registry call the D1 → D2 change `COMPATIBLE`, and in the narrow sense it
-is. Only a round-trip test that asserts on the _value_ (see `runbook-and-ci.md`) catches it.
+The recorded structural checks accept D1 → D2, but do not establish semantic compatibility. Assert
+the expected default in actual decoding (see `runbook-and-ci.md`); a schema-diff rule or reviewed
+semantic contract can also detect or reject a changed default. No-exception-only tests miss the issue.
 
 ## Parsing canonical form, fingerprints and framing
 

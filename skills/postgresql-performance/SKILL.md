@@ -31,7 +31,12 @@ pool mode and session features; pgjdbc prepare, batch, fetch, timeout and autoco
 ## Workflow
 
 Start with available evidence; unavailable counters/plans remain explicit gaps, not a reason
-to guess or require every contract field. `EXPLAIN ANALYZE` executes the statement, including
+to guess or require every contract field. Use the steps needed for the requested claim and
+reuse adequate captures/settings. A narrow plan/source explanation or supported no-change
+conclusion does not require a new intervention or workload campaign. No single Java release
+is declared here; inspect the project's compiler/runtime and resolved driver before changing
+Java code or configuration. PostgreSQL 17/18 guidance does not authorize a stack upgrade.
+`EXPLAIN ANALYZE` executes the statement, including
 writes and invoked functions. Inspect side effects and use an isolated representative copy or
 an explicitly authorized bounded production measurement; transaction rollback does not undo
 sequence advancement or all external effects. Plain EXPLAIN is the first alternative when
@@ -49,27 +54,33 @@ or blocking rewrites.
    - client: pgjdbc generic/custom transition, rewrite batching, cursor prerequisites, timeouts.
 3. Capture evidence at relation/query/session granularity before changing globals. A cluster average can
    hide one table whose scale-factor threshold or one transaction whose xmin controls the outcome.
-4. Predict the counter that should move, apply the narrowest reversible change, and validate with the
-   same plan/workload plus bloat/WAL/memory/lag guardrails.
+4. For a justified intervention, predict the signal that should move, apply the narrowest authorized
+   change, and validate with the relevant plan/workload and affected bloat/WAL/memory/lag guardrails.
+   Preserve an adequate design; state which target effects remain unmeasured.
 
 ## Rules
 
-- PostgreSQL updates create a new heap tuple and leave the old version for VACUUM. Long-lived xmin
-  holders can prevent removal even when VACUUM reports success.
-- Autovacuum is correctness-critical because of transaction-ID wraparound. Never disable it as a
-  tuning fix; tune relation thresholds/cost/capacity from churn, table size, and completion evidence.
+- PostgreSQL updates create a new heap tuple. Old versions can be removed by pruning, including
+  HOT cleanup during ordinary access, as well as VACUUM when visibility permits. Long-lived xmin
+  holders can prevent removal even when VACUUM reports success; pruning does not replace vacuum/freeze.
+- Regular vacuum/freeze maintenance is correctness-critical. Do not disable autovacuum merely to hide
+  load; tune relation thresholds/cost/capacity from churn and completion evidence. An intentional
+  manual or temporary policy needs an owner, adequate maintenance/age checks and failure recovery;
+  anti-wraparound autovacuum can still run when ordinary autovacuum is disabled.
 - HOT avoids new ordinary index entries when updated columns are not referenced by non-summarizing
   indexes and the new version fits on the same page. Summarizing indexes such as BRIN are an
   exception and may still need summary maintenance. Choose `fillfactor` from row size/update cadence
   and validate the HOT ratio delta.
 - Index-only scan is a runtime condition, not only an index definition. High `Heap Fetches` points to
   visibility-map/maintenance state.
-- `work_mem` is per sort/hash operation, per worker/session, and hash can use a multiplier. Count plan
-  nodes and concurrency before raising it globally.
+- `work_mem` budgets depend on concurrently live operations, private participant state and shared
+  Parallel Hash state; hash can use a multiplier. Do not multiply an already combined shared allowance
+  by workers again or treat the calculation as process RSS. Inspect the plan and concurrency first.
 - Read `EXPLAIN (ANALYZE, BUFFERS)` from the deepest estimate divergence and include loops, reads,
   batches, disk sort, heap fetches, and rows removed. A sequential scan alone is not a defect.
 - Prepared planning has two layers: pgjdbc's named-statement threshold and PostgreSQL's custom-versus-
-  generic decision. Warm-up on the same connection can change the plan without a deploy.
+  generic decision. Warm-up can change the plan without a deploy; through a pooler, reuse of one JDBC
+  connection does not establish the same backend or server plan history.
 - PgBouncer transaction pooling does not preserve arbitrary session state. Named-protocol prepared
   statement support does not make `SET`, LISTEN, temp tables, session advisory locks, or every SQL
   PREPARE use safe.
@@ -81,8 +92,13 @@ or blocking rewrites.
 
 ## Output
 
-Report versions and evidence window, observations, mechanism and alternatives, confidence reason,
-relation/query/session scope, intervention and predicted signal, validation, guardrails, and rollback.
+Return the supported observation/mechanism, relevant versions/scope and evidence limits, with the
+smallest justified correction or no-change result. For a proposed change, add its expected signal,
+applicable validation/guardrails and recovery plan; do not invent measured benefit.
+
+Route engine-neutral statement work to `sql-query-performance` and pool hold-time/fleet budgeting
+to `connection-pool-sizing`; index design and bulk-ingestion choices can use `database-index-design`
+and `database-bulk-loading` when those are the actual decisions.
 
 ## References
 

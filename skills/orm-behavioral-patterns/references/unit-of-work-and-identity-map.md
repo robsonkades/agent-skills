@@ -8,7 +8,7 @@ transient ──────────────► managed ─────�
                              │  ▲
              detach / close  │  │ merge()  (copy into managed target; SELECT may occur)
                              ▼  │
-                          detached ── modifications here are silently discarded
+                          detached ── modifications are not automatically synchronized
 managed ── remove() ──► removed ──► deleted at flush
 ```
 
@@ -16,7 +16,7 @@ managed ── remove() ──► removed ──► deleted at flush
 Flush sends changes without committing them. Examples assume a transaction-scoped context
 that ends at the shown transaction boundary.
 
-The single most common data-loss bug in enterprise Java:
+A common tracking mismatch:
 
 ```java
 // Transaction 1
@@ -38,9 +38,11 @@ public void ship(Order detached) {
 }
 ```
 
-Rule that avoids both: **do not carry entities across transaction boundaries.** Pass
-identifiers and re-read, or pass a command object. Merge is for genuinely detached
-long-lived objects, and its return value is the only usable reference afterwards.
+For independently owned operations, pass identifiers/commands and load in the receiving unit
+of work. Deliberate detached editing or an extended/application-managed context spanning
+transactions can also be valid; define ownership, loaded state and conflict handling.
+`merge` copies into a managed target rather than reattaching the argument. Use that returned
+target for subsequent tracked writes; the detached object remains usable as detached data.
 
 ## Dirty checking and flush
 
@@ -48,7 +50,7 @@ Snapshot dirty checking compares eligible managed state at flush. Enhancement, i
 read-only entities and collection tracking change the work; inspect configuration rather
 than assuming every entity is always compared. Three consequences:
 
-**1. Modification is persistence.** No `save()` is needed, and none prevents the write:
+**1. Writable managed changes can write without `save()`.** Omitting that call does not prevent synchronization:
 
 ```java
 @Transactional
@@ -74,15 +76,16 @@ em.flush(); em.clear(); // final partial chunk; requires the enclosing transacti
 This chunk owns its persistence context; `clear()` detaches unrelated managed entities too.
 Do not use this loop in a shared unit of work without accounting for those references.
 
-Also set `hibernate.jdbc.batch_size`, and note that `IDENTITY` identifier generation
-disables Hibernate JDBC batching for those entity inserts. Sequences with suitable allocation are one
+If JDBC write batching is part of the objective, inspect its eligibility and configure
+`hibernate.jdbc.batch_size` as appropriate. Hibernate 6.6 `IDENTITY` identifier generation
+disables batching for those entity inserts. Sequences with suitable allocation are one
 alternative; assigned IDs can also batch. Flush/clear bounds the context, not transaction
 locks, log volume or the already-materialized `rows` list. StatelessSession changes lifecycle
 and cascade semantics; verify its target-version contract before substituting it.
 
-**3. Flush happens more often than you think.** Commit; an explicit `flush()`; and before a
-query whose result could be affected by pending changes. That last one turns a
-write-then-query loop into a flush per iteration.
+**3. A query can cause synchronization.** In a joined transaction under Hibernate AUTO,
+an overlapping query can flush pending changes; the illustrated write/query loop can
+therefore flush every iteration. Inspect effective mode and query spaces.
 
 ```java
 for (var line : lines) {
@@ -98,8 +101,8 @@ synchronization also depend on provider/API mode. Restructure the loop or flush 
 
 ## Statement ordering
 
-The unit of work orders statements by entity type and operation, not by the order your code
-ran. This breaks a specific, plausible pattern:
+Hibernate 6.6's action queue groups operations rather than preserving source-call order;
+JPA does not prescribe that ordering. This can break a specific, plausible pattern:
 
 ```java
 tagRepository.delete(existingTag);       // same (post_id, name) key
@@ -130,10 +133,11 @@ practical consequences:
 - **A "refresh from the database" needs `em.refresh(entity)`.** Re-querying returns the
   managed instance rather than refreshing its state. Refresh discards local changes and
   remains subject to database isolation; it need not see a newer committed row in the same snapshot.
-- **`equals`/`hashCode` must be stable across the transition from transient to managed.** A
-  generated identifier is null before persist; an `equals` based on it puts the entity in a
-  `HashSet` under one hash and then changes it. Use a business key where one exists, or
-  compare on an assigned UUID generated in the constructor.
+- **Keep hash/equality behavior compatible with its actual collection and identity contract.**
+  A hash derived naively from a generated identifier can change after persist, breaking
+  `HashSet` lookup. An immutable business key or an appropriately assigned identifier is
+  one option when row/value identity is required; reference equality may already be correct
+  when separately loaded instances are intentionally distinct.
 
 ## Bulk operations against both patterns
 
@@ -144,8 +148,8 @@ int expireAll(@Param("date") LocalDate date);
 ```
 
 What this does **not** do: update managed instances; run `@PreUpdate` callbacks; increment
-`@Version`; respect optimistic locking. What it does do: change rows in one statement, which
-is exactly right for the job.
+`@Version`; respect optimistic locking. It performs set-shaped work; one JPQL statement can require
+multiple SQL statements for some mappings. Use it when that operation fits the contract.
 
 Using it safely:
 
@@ -167,16 +171,17 @@ extensions may implement other rules; inspect them.
 
 ## Reading a persistence problem from the statement log
 
-Enable statement logging with a request identifier and read the shape:
+When SQL evidence is needed, correlate statements with the operation and transaction;
+reuse existing evidence or collect a bounded trace. Shapes suggest investigations, not unique causes:
 
-| Shape in the log                                         | Cause                                                                                                                  |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| One SELECT, then N similar SELECTs                       | N+1 lazy load (`lazy-load.md`)                                                                                         |
-| SELECT before every INSERT                               | Inspect merge/newness detection, ID generation and application existence checks                                        |
-| UPDATE of columns the code never touched                 | An update may include unchanged columns by default; compare bound values, dirty state and dynamic-update configuration |
-| Repeated identical SELECT within one transaction         | Queries can execute repeatedly in one context; inspect query versus identity lookup before blaming context boundaries  |
-| Flush in the middle of a loop                            | Query-triggered flush                                                                                                  |
-| Statements during rendering or after response completion | Investigate lazy rendering, asynchronous work and transaction ownership; timing alone does not prove OSIV              |
+| Shape in the log                                         | Candidate mechanism / check                                                                                                |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| One SELECT, then N similar SELECTs                       | N+1 from lazy traversal, eager secondary selects or explicit per-row queries; inspect access and mappings (`lazy-load.md`) |
+| SELECT before every INSERT                               | Inspect merge/newness detection, ID generation and application existence checks                                            |
+| UPDATE of columns the code never touched                 | An update may include unchanged columns by default; compare bound values, dirty state and dynamic-update configuration     |
+| Repeated identical SELECT within one transaction         | Queries can execute repeatedly in one context; inspect query versus identity lookup before blaming context boundaries      |
+| Flush in the middle of a loop                            | Query-triggered or explicit flush, lifecycle/framework behavior; correlate the trigger and effective mode                  |
+| Statements during rendering or after response completion | Investigate lazy rendering, asynchronous work and transaction ownership; timing alone does not prove OSIV                  |
 
 Hibernate's `Statistics` supplies aggregate counters, not SQL text, parameter values or
 causal ownership. Use it with isolated query-budget tests and statement inspection
@@ -184,6 +189,8 @@ causal ownership. Use it with isolated query-budget tests and statement inspecti
 
 Primary contracts: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
 (context lifecycle, merge, query flush mode and bulk updates) and
-[Hibernate 6.6 guide](https://docs.hibernate.org/orm/6.6/userguide/html_single/)
-(flush ordering, dirty checking and batching). Apply provider-specific details only to the
+[Hibernate 6.6.56 flush guide](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/flushing/Flushing.adoc)
+(flush ordering), [persistence-context guide](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/pc/PersistenceContext.adoc)
+and [batching guide](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/batch/Batching.adoc).
+Apply provider-specific details only to the
 matching runtime; these sources do not authorize a baseline upgrade.

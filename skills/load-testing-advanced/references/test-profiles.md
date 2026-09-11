@@ -2,7 +2,7 @@
 
 ## Profile contract
 
-For every phase record:
+Choose only phases needed for the requested decision. For each selected phase record:
 
 - question and pass/fail/abort predicates;
 - arrival process or closed population;
@@ -30,14 +30,19 @@ algorithms and load balancing can make pass/fail non-monotone.
 Procedure:
 
 1. establish a reproducible passing load;
-2. find a safely/reproducibly failing load;
-3. refine the bracket using steps selected for the needed resolution;
+2. when the upper boundary must be located, seek a safely/reproducibly failing load within
+   authorized limits; if the ceiling passes, retain it as a tested passing point/lower bound
+   with the upper boundary unlocated;
+3. if both endpoints exist, refine the bracket using steps selected for the needed resolution;
 4. hold each point long enough to cover stabilization and the SLO window;
 5. repeat boundary points as independent runs, randomized/blocked where possible;
-6. report \([\lambda_{pass},\lambda_{fail})\), run variability and why failure occurred.
+6. report \([\lambda_{pass},\lambda_{fail})\) only when a reproducible monotone bracket is
+   supported; otherwise report the tested points and any conditional lower bound, with run
+   variability and the reason for any observed failure.
 
 If only discrete points were tested and monotonicity is uncertain, report the points rather
-than an interval. A model-predicted boundary is labelled predicted until tested.
+than an interval. A passing point does not establish that all lower loads pass under every
+state or that higher loads fail. A model-predicted boundary is labelled predicted until tested.
 
 ## Duration selection
 
@@ -118,14 +123,16 @@ Pin the implementation and fixture-test boundary values.
 
 ## Publication
 
-Publish:
+Publish what supports the selected profile and claim; an adequate existing report can remain
+unchanged. In particular, a baseline or authorized passing ceiling does not need a failed
+upper point or a new overload/recovery campaign. Include:
 
 - conditional scope and immutable configuration;
 - profile, achieved workload and validity;
-- bracketed boundary rather than false precision;
+- bracketed boundary when supported, or tested points/conditional lower bounds without false precision;
 - run-level uncertainty and estimator;
 - outcome/latency/resource evidence;
-- overload and recovery behavior;
+- overload and recovery behavior when observed or required for the decision;
 - censored/missing work treatment;
 - raw artifacts and parser version;
-- remaining unknowns and the next falsifying experiment.
+- material remaining unknowns and the next discriminating check, if needed.

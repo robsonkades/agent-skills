@@ -35,8 +35,9 @@ class PromotionalCardFee extends CardFee {
 ## Analysis
 
 - **Self-use.** `total` calls overridable `base`, `surcharge` and `round`. When the base
-  team later changed `total` to round each component before adding, every subclass's
-  behaviour shifted with no change to any subclass file.
+  implementation changes to round each component before adding, some inputs produce a
+  different result without any subclass edit. The international `0.12` case below exposes
+  this; it does not imply every subclass or amount changes.
 - **Two axes multiplied.** Payment method (card, boleto, pix) and pricing adjustment
   (standard, international, promotional) are independent, but the hierarchy encodes their
   product: an international promotional card needs
@@ -106,9 +107,11 @@ complete monetary contract.
 
 ## Trade-offs — what got worse
 
-- **New variants are loud on recompilation.** Adding `ApplePay` means editing `permits` and every
-  source switch over `PaymentMethod`. Already compiled consumers are not repaired by that
-  property and can fail with `MatchException`; coordinated deployment/versioning still matters.
+- **Uncovered variants are loud on recompilation.** Adding a direct `ApplePay` variant requires
+  updating this `permits` list and this switch. Other switches with an applicable broader
+  pattern or explicit `default` may still compile; review whether their fallback is acceptable.
+  Already compiled consumers are not repaired by recompilation elsewhere and can fail with
+  `MatchException` if no case applies; coordinated deployment/versioning still matters.
 - **Closed to outsiders.** A partner module can no longer add a payment method. If the
   variant set is genuinely open, this refactoring is wrong — keep an interface.
 - **Behaviour moved away from data.** Fee logic for all methods now lives in one switch

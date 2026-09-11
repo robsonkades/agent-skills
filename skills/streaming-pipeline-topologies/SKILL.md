@@ -17,30 +17,35 @@ description: >
 
 ## Purpose
 
-Give a pipeline a vocabulary of stage shapes, and decide for each whether it may run at
-concurrency above 1 — the single question where correctness is silently traded for throughput.
+Give a pipeline a vocabulary of stage shapes, and decide where ordering, state, concurrency
+and recovery constrain its implementation.
 The shapes are small: **copier** (fan-out to independent consumers), **filter** (drop by
-predicate), **splitter** (one input, many outputs), **sharder** (re-partition by a new key),
+predicate), **splitter** (one input, many outputs), **sharder** (redistribute by key or partition mapping),
 **merger/join** (combine streams; a union can interleave without keyed join state).
 
 Semantic parallelism is safe when operations commute/order does not matter, or keyed state and
 effects have one current owner with recovery/fencing. Stateless code can still emit ordered or
 non-idempotent effects; stateful frameworks can safely parallelize by key. Repartitioning is a
-shuffle boundary: old-key order no longer defines order among records sharing a new key, state
-must migrate/rebuild and skew changes. It does **not** inherently end exactly-once—some engines
+shuffle boundary: inspect whether the logical key or only its partition mapping changes, what
+ordering the source/application protocol establishes, and how ownership/state and skew change.
+Independent input partitions do not supply a cross-partition order on their own. It does **not** inherently end exactly-once—some engines
 include repartition topics/state in one transaction or checkpoint. The two failures prevented are the stage
 parallelised because it "looked stateless", and the join that retains every key it has ever
-seen — which passes every load test and dies in week three of memory, not of throughput.
+seen without a semantic or capacity bound. A short repeated-key load test can miss growth over
+the actual retention and key population.
 
 ## Workflow
 
+Use the steps relevant to the question and reuse adequate evidence. A narrow stage explanation
+or sound existing topology need not trigger a full graph, split, replay or fault campaign.
 Inspect deployed engine/API, connector and Java versions, topology configuration and state
 backend before using version-sensitive guarantees; no upgrade is implied. Missing watermark,
-checkpoint or sink evidence is unknown. Deliver a stage map with ordering/authority boundaries,
-state/backlog budgets and the tested recovery contract. Replay, resets and failure injection
+checkpoint or sink evidence limits dependent claims, without erasing independently supported
+conclusions. Deliver the relevant decision/evidence; include affected stage boundaries, state/backlog
+budgets and recovery checks when the requested design/change needs them. Replay, resets and failure injection
 must use isolated targets or existing explicit authorization for their effects.
 
-1. **Name each stage by shape** before drawing arrows. If an operator combines shapes, model
+1. **Name the relevant stages by shape.** If an operator combines shapes, model
    each semantic step even when the implementation fuses them; this exposes separate ordering,
    state and failure boundaries without forcing an unnecessary network hop.
 2. **For each stage, answer four questions:** what ordering does it preserve, is it safe above
@@ -80,9 +85,11 @@ Do not treat parallelism as a knob when:
 Push the stage upstream instead when:
 - it is a filter with high selectivity and the source can evaluate the predicate
 
-Split into separate pipelines instead when:
-- two branches need different parallelism, ordering or retention. One topology forced to
-  satisfy both is sized for the stricter and pays for it twice
+Consider separate pipelines when:
+- required resource, failure, security, retention or deployment independence cannot be met
+  adequately within the current engine/job; differing branch settings alone do not establish this
+- compare per-operator parallelism/state policy and supported isolation with the extra broker,
+  serialization, coordination and recovery costs of a split
 ```
 
 ## Rules
@@ -94,13 +101,14 @@ Split into separate pipelines instead when:
 - Filter cost and removable upstream work depend on payloads, batching and predicate cost.
   Push a pure predicate earlier only if null/type/time semantics and required audit/security
   observations remain equivalent; a 99% record drop does not imply 99% byte or CPU savings.
-- A **splitter** raises one question and it is transactional: are the N outputs atomic? If not,
+- For a **splitter**, establish output multiplicity, ordering, backpressure and partial failure,
+  including whether the N outputs must be atomic. If not,
   a crash after output 1 leaves consumers of output 2 with a gap they must tolerate. What a
   transaction covers, and what it does not, is `delivery-semantics`.
-- A **sharder/shuffle** changes the key and forces three reviews:
-  per-key ordering (records sharing a new key may arrive from inputs with no relative order),
+- A **sharder/shuffle** changes partition placement and may change the key. Review:
+  per-key ordering (including any authoritative sequence/version protocol across inputs),
   the guarantee/checkpoint scope (which may or may not include the shuffle), and skew profile (a new
-  key is a new distribution — `hot-partitions-and-rebalancing`).
+  key or mapping can change the distribution — `hot-partitions-and-rebalancing`).
 - A stream-stream join without eviction can retain unmatched records indefinitely. Table/latest-
   value joins may retain current state per live key and tombstones may remove it; fixed-size
   aggregates need less per-key bytes than raw-event joins. Bound by semantic retention and
@@ -129,9 +137,10 @@ Split into separate pipelines instead when:
 - Replay is not merely "start at offset 0": a full recomputation needs isolated/reset state,
   while checkpoint recovery restores state and source positions consistently. Choose versioned
   output/cutover or a sink protocol that tolerates replay (`idempotency`) before running it.
-- Never size a state store from the average key: size it from distinct keys × per-key state ×
-  window multiplicity, and export the real number as a metric. A store whose size is visible
-  only in a heap dump has already taken the outage.
+- Estimate aggregate state from live key/event population, representative weighted per-key bytes
+  and window/version multiplicity. Then check hot keys/partitions, physical amplification and
+  recovery headroom; an average alone does not establish those limits. Expose actual state size
+  and growth before relying on a capacity estimate.
 
 ## Exactly-once scope
 
@@ -154,7 +163,7 @@ serializer compatibility are part of the contract.
 
 - [The stage catalogue](references/stage-catalogue.md) — every shape with its ordering effect,
   parallel-safety condition, state requirement and characteristic failure, plus the composition
-  rules and the shapes that are two stages pretending to be one. Read when designing a topology
+  rules and semantic steps within fused operators. Read when designing a topology
   or reviewing whether a stage may be parallelised.
 - [Stateful stages](references/stateful-stages.md) — window types with their state cost,
   watermarks and late-data policy options, the unbounded-state failure with the metrics that

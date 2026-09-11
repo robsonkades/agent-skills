@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-dry-kiss-yagni
-version: 1.2.1
+version: 1.2.2
 description: >-
   The economics of duplication and abstraction in Java: knowledge duplication versus
   incidental (textual) duplication, what a shared abstraction costs, the wrong-abstraction
@@ -39,6 +39,11 @@ files:
   - references/
 
 dependencies: []
+
+suggests:
+  - java-code-smells
+  - java-refactoring
+  - java-performance
 
 capabilities:
   - reads-source

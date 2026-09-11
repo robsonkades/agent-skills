@@ -25,9 +25,10 @@ public final class Team implements OrgNode {
 }
 ```
 
-Two problems. The interface promises what a `Team` cannot deliver, so the failure is a runtime
-exception in whatever generic code trusted the type. And when `Contractor` was later added as a
-third node kind, every existing traversal compiled and silently ignored it.
+Here generic clients were promised that every node supports `add`; optional refusal was not part
+of the contract. `Team` breaks that promise at runtime. When `Contractor` was later added as a
+third node kind, a manually type-enumerating traversal could compile yet ignore it; a traversal
+using the shared operation need not have that defect.
 
 ## After — sealed nodes
 
@@ -54,7 +55,7 @@ public record Division(String name, List<Rule> rules, List<OrgNode> children) im
 }
 ```
 
-The shared operation is on the interface; `children` exists only where it means something.
+The shared operation is on the interface; only branches expose their child storage in this design.
 Structural code switches exhaustively:
 
 ```java
@@ -66,7 +67,9 @@ static Stream<OrgNode> childrenOf(OrgNode node) {
 }
 ```
 
-Adding `Contractor` now breaks this method at compile time, which is the point.
+Adding `Contractor` and recompiling this method exposes its missing case. A fallback can hide the
+gap, and an old binary can instead fail at runtime; plan compatibility across independently
+released consumers rather than relying on sealing alone.
 
 ## The resolver — iterative, depth-bounded, deny-wins
 
@@ -100,7 +103,8 @@ Three deliberate choices:
 - **Iterative, over a path.** The question is about one unit, so the walk is a single descent —
   no recursive call-stack growth. Lookup cost is O(depth) only with bounded/constant-time child
   lookup; linear child-list searches also pay fan-out at each level. Where
-  a full-tree operation is genuinely needed, use an explicit `ArrayDeque`, not recursion.
+  a full-tree operation is needed, bounded recursion or an explicit `ArrayDeque` must fit its
+  depth and work limits.
 - **Default deny.** The composite's uniform interface makes "no rule found" easy to overlook; an
   authorisation walk that returns `GRANT` for an unmatched path is the classic failure.
 - **Explicit deny stays sticky.** Rule evaluation can stop, but this example still validates the
@@ -136,15 +140,16 @@ invalidate on revocation. Include expiry for time-dependent decisions, or do not
 ## What was rejected
 
 - **Parent pointers on nodes.** They were proposed so a node could resolve its own inheritance.
-  Records with a parent component make `equals`, `hashCode` and `toString` recurse forever, and
-  the first `log.debug("{}", node)` would have taken the process down. Passing the accumulated
+  Component operations following both directions can overflow during structural comparison,
+  hashing or logging. That risks the affected operation, not inevitable process termination.
+  Passing the accumulated
   decision down the walk gives the same answer with no cycle.
 - **Lazy children from the database.** `children()` hitting a repository would have turned each
   authorisation check into a chain of queries. The whole tree is small — thousands of nodes —
   and is loaded once per version in a single query.
 - **A generic `visit(Visitor)` on the interface.** There is one operation over this tree, and it
-  is the one the interface already exposes. Visitor becomes worth its cost at three or four
-  distinct operations (`gof-visitor`).
+  is the one the interface already exposes. Consider Visitor when independently changing
+  operations and variant coverage justify its cost, not at a fixed operation count (`gof-visitor`).
 
 ## Property tests
 

@@ -11,7 +11,7 @@ description: >
   when BigDecimal values are compared with equals, when boxed types are compared with ==,
   when a nullable Integer is unboxed, when arithmetic on ids, timestamps or sizes could
   overflow, or when large longs are serialised to a browser. Does not cover date and time
-  types, string formatting and parsing (java-strings-and-text), or measuring allocation
+  types, general text encoding and locale APIs (java-strings-and-text), or measuring allocation
   (allocation-profiling).
 ---
 
@@ -40,7 +40,7 @@ behaviour differ from the primitive it looks like.
 2. **Fix precision, scale and rounding policy with the domain type**, not ad hoc at call sites.
    Any operation that can be inexact needs a specified `RoundingMode` and either result scale or
    `MathContext`; exact-only operations may deliberately throw.
-3. **Bound the range.** Check whether any product, sum or difference can exceed the type —
+3. **Bound the range.** Check whether any product, sum, difference or conversion can exceed the type —
    ids, byte counts, milliseconds, accumulators — and use exact arithmetic where it can.
 4. **Choose primitive or boxed deliberately.** Primitive unless absence is meaningful or a
    generic/collection requires the box.
@@ -69,9 +69,9 @@ behaviour differ from the primitive it looks like.
   significant-digit precision is the policy. Never invent a default: contractual and regulatory
   rules decide where and how rounding occurs.
 - `BigDecimal.equals` compares value **and scale**, so `1.0` does not equal `1.00`. Compare
-  numerically with `compareTo(other) == 0`, and never put `BigDecimal` in a `HashSet` or use it
-  as a map key expecting numeric identity. `TreeSet` uses `compareTo` and will silently treat
-  them as one element — see java-object-contracts.
+  numerically with `compareTo(other) == 0`; raw hash keys remain scale-sensitive unless the
+  domain canonicalizes them consistently. A naturally ordered `TreeSet` treats these values as
+  one element; an explicit comparator defines its own equivalence — see java-object-contracts.
 - Normalize to a fixed scale only when defined by the domain/ledger contract—not
   blindly to `Currency.getDefaultFractionDigits()`, which is an ISO default and returns `-1` for
   pseudocurrencies. Use `setScale(domainScale, roundingMode)`, not
@@ -111,8 +111,9 @@ behaviour differ from the primitive it looks like.
   `Double.compare` supplies the total order used by Java comparators, including signed zero;
   choose deliberately whether that representation order matches domain equality. Reject NaN
   and infinity at ingress when the domain forbids them.
-- Do not use `double` for time arithmetic and do not do date arithmetic in millis. `Instant`,
-  `Duration` and `Period` exist; `System.nanoTime()` is monotonic and meaningful only as a
+- Preserve exact temporal arithmetic with appropriate units and `Instant`, `Duration` or `Period`
+  rather than treating calendar changes as fixed milliseconds. Approximate elapsed-time statistics
+  may use floating point under the stated error model. `System.nanoTime()` is meaningful only as a
   difference, `System.currentTimeMillis()` is wall-clock and can jump backwards.
 - For random numbers, use `ThreadLocalRandom` for independent non-secure concurrent draws,
   `RandomGenerator` (Java 17+) when algorithm/splitting/jump semantics matter, and
@@ -124,8 +125,9 @@ behaviour differ from the primitive it looks like.
   string contract for large ids/exact decimals when binary-number consumers must preserve them,
   or an explicitly verified lossless parser contract. Treat a number-to-string API change as
   a compatibility migration. In the database, use `DECIMAL/NUMERIC` with an explicit
-  precision for money—not `FLOAT`/`REAL`—and make Java's scale/rounding policy compatible with
-  the column and driver behaviour.
+  precision for decimal money, or a suitably ranged integral column for the declared minor-unit
+  contract—not `FLOAT`/`REAL` for exact conservation. Keep Java's scale/rounding policy compatible
+  with the column and driver behaviour.
 
 ## Deliverable
 
@@ -135,14 +137,14 @@ separate arithmetic tests from serializer/database round trips and measured allo
 
 ## Diagnostic map
 
-| Symptom                                             | Distinguish with                                                         | Likely direction                                                                |
-| --------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| totals differ by cents across paths/services        | capture unrounded operands, scale and rounding stage at every boundary   | centralize the contractual rounding/allocation policy; replay the same inputs   |
-| `ArithmeticException` in decimal arithmetic         | separate divide-by-zero, non-terminating quotient and `UNNECESSARY` loss | fix invalid input or select the specified scale/precision and rounding policy   |
-| map/set cannot find a visually equal decimal        | log `toPlainString()`, `scale()`, class and collection kind              | normalize in a value type or use equality/order consistent with the requirement |
-| negative bucket/index only for some hashes          | reproduce `MIN_VALUE`, negative operands and positive divisor            | use `floorMod`; remove `abs(x) % n`                                             |
-| id changes only in JavaScript/browser clients       | compare original digits and test values around 2^53                      | use a string contract end-to-end                                                |
-| high allocation rate in an arithmetic/bulk pipeline | profile allocation sites and escaped boxes/`BigDecimal` operations       | specialize representation only after correctness and benchmark validation       |
+| Symptom                                             | Distinguish with                                                                                        | Likely direction                                                               |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| totals differ by cents across paths/services        | capture unrounded operands, scale and rounding stage at every boundary                                  | centralize the contractual rounding/allocation policy; replay the same inputs  |
+| `ArithmeticException` in decimal arithmetic         | separate divide-by-zero, non-terminating quotient and `UNNECESSARY` loss                                | fix invalid input or select the specified scale/precision and rounding policy  |
+| map/set cannot find a visually equal decimal        | inspect bounded value text, precision/scale and collection/comparator kind; bound plain expansion first | preserve the required numeric or scale-sensitive identity                      |
+| negative bucket/index only for some hashes          | reproduce `MIN_VALUE`, negative operands and positive divisor                                           | use `floorMod`; remove `abs(x) % n`                                            |
+| id changes only in JavaScript/browser clients       | compare original digits and test values around 2^53                                                     | preserve exact ids with a string contract or verified lossless parser/encoding |
+| high allocation rate in an arithmetic/bulk pipeline | profile allocation sites and escaped boxes/`BigDecimal` operations                                      | specialize representation only after correctness and benchmark validation      |
 
 ## References
 

@@ -3,8 +3,10 @@
 Latency ranges below are illustrative, not measurements or guaranteed ratios. Measure cold
 startup, warm tests and whole-suite time separately. Levels overlap: a JPA slice using the
 real engine is also an integration test; characterisation describes a purpose, not a scope.
+These are capabilities of a test scope, not guarantees from its label. Claims depend on the
+actual collaborators, configuration, inputs and assertions exercised.
 
-| Level                                          | Typical latency | Proves                                               | Blind to                                           |
+| Level                                          | Typical latency | Can exercise                                         | Blind to unless included                           |
 | ---------------------------------------------- | --------------- | ---------------------------------------------------- | -------------------------------------------------- |
 | Unit (no framework)                            | < 10 ms         | Logic, branches, boundary values, error paths        | Runtime wiring, SQL and external behavior          |
 | Sociable unit (real collaborators, fake edges) | 10–100 ms       | Logic plus the interaction between owned classes     | Anything crossing a process boundary               |
@@ -33,27 +35,29 @@ the application wires the same serializer configuration.
 
 ## Spring slice
 
-`@WebMvcTest` loads controllers, argument resolvers, converters and the exception handling
-chain — not services or repositories. It proves request mapping, deserialisation, validation
-responses and status codes. It cannot prove anything below the controller.
+`@WebMvcTest` focuses default scanning and auto-configuration on MVC components, including
+controllers, resolvers, converters and exception handling. Services and repositories are not
+normally discovered, but imports and custom configuration can add real collaborators. Check
+what is actually loaded and asserted before claiming request, validation or deeper coverage.
 
 `@DataJpaTest` loads JPA and repositories and normally rolls back each test. Database
 replacement depends on the Boot version and configuration: Boot 3.4 defaults to `NON_TEST`,
 preserving recognized auto-configured test databases. Inspect the actual connection:
 
-- Replacing the DataSource means you tested H2, not your engine. H2's PostgreSQL or SQL
-  Server compatibility mode reproduces neither the dialect nor the locking behaviour nor the
-  index planner. Use `@AutoConfigureTestDatabase(replace = Replace.NONE)` with Testcontainers
-  when the risk is in the SQL or the schema.
+- Inspect the replacement engine, selected from configuration/classpath; it is not always H2.
+  If production uses H2, matched H2 tests exercise that engine. H2 compatibility modes cover
+  selected behavior of other engines, not full dialect, locking or planner equivalence.
+  For those risks, preserve or configure the actual target engine, for example with
+  `@AutoConfigureTestDatabase(replace = Replace.NONE)` and Testcontainers when needed.
 - Rollback does not prevent flush-time failures: explicitly flush to expose deferred ORM SQL
   and applicable constraints. Commit-time constraints and `AFTER_COMMIT` listeners require
   an actual commit, followed by observation outside that transaction and deliberate cleanup.
   A test-managed transaction can also hide missing application transaction boundaries.
 
 `@SpringBootTest` loads the application context selected by its configuration, not necessarily
-a live server or external systems. It checks that wiring; it costs a context per distinct
-configuration, so vary configuration as little as possible — each distinct set of properties
-or mocked beans is a new context that Spring caches separately.
+a live server or external systems. Context reuse depends on Spring's cache key, process,
+eviction and dirty-context invalidation; properties and mocked beans can distinguish keys.
+Reuse compatible configurations when useful, while preserving the differences the risk needs.
 
 ## Integration against the real engine
 
@@ -64,8 +68,8 @@ exercise migrations, SQL, constraints and transaction behavior; merely starting 
 establishes none of them. Locking or isolation claims need controlled multiple transactions.
 
 Keep it to the tests whose risk is genuinely in the database. It is not a substitute for unit
-tests of the logic that sits above it — a failing assertion here tells you far less about
-where the fault is.
+tests of the logic that sits above it; broad integration assertions can obscure where a fault
+is. Reuse adequate existing coverage and keep new assertions focused on the named risk.
 
 ## Contract
 
@@ -74,10 +78,11 @@ shape, status, headers and modeled states. Consumer-driven tooling needs both co
 and provider verification of the relevant versions; a passing stub alone proves no current
 provider agreement. It does not establish general business correctness.
 
-Reach for it when the two sides are released on different schedules by different teams. When
-one team owns both sides and releases them together, an integration test is cheaper and
-proves more. A contract test proves agreement on shape; it says nothing about whether either
-side computes the right answer.
+Reach for it when supported consumer/provider versions or independent release schedules make
+agreement a distinct risk, even within one team. If both sides always ship together, a focused
+integration test may cover the required agreement and behavior more simply. Compare existing
+coverage, version combinations and measured maintenance/feedback cost; team ownership alone
+does not make integration cheaper or universally stronger.
 
 ## End-to-end
 
@@ -112,5 +117,12 @@ independently specified fields and values. Recorded stubs only reflect their cap
   and [replacement modes](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
 - [Spring test transactions](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html):
   rollback, explicit flush and commit. Consult the version matching the project.
+- [Boot 3.4 MVC slice API](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/web/servlet/WebMvcTest.html)
+  and [Spring context caching](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html):
+  inspect the actual scan/import scope and cache configuration.
+- [H2 features and compatibility modes](https://www.h2database.com/html/features.html):
+  match the deployed engine rather than assuming a compatibility mode is equivalent.
+- [Java SE 25 serialization input specification](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html#the-readobject-method):
+  a private `readObject` is a defined callback, illustrating why visibility is not reachability.
 - [Pact consumer guidance](https://docs.pact.io/consumer): contract versus functional checks
   and matching only interactions the consumer relies on.

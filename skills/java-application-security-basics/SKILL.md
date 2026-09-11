@@ -4,8 +4,8 @@ description: >
   Application-security judgement for Java 21+: password storage with current memory-hard KDF
   parameters, constant-time verification, secure randomness, authorisation inside the protected
   operation, adversarial validation, reversible-cryptography boundaries, and secret-safe types.
-  Use when a password, hash, salt, token, API key or pepper appears in a diff; when
-  MessageDigest, SecureRandom, Random, UUID, Cipher, Mac or PasswordEncoder is called; when a
+  Use when credentials, password hashes, salts, bearer tokens or peppers change; when
+  MessageDigest, SecureRandom, Random, UUID, Cipher, Mac or PasswordEncoder serves a security purpose; when a
   controller annotation is the only authorisation check; when identity comes from the request
   instead of the principal; or when a generic CryptoUtils wrapper is proposed. Code-level only:
   layered validation is java-defensive-programming, redaction is structured-logging, ReDoS is
@@ -23,7 +23,7 @@ security framework. It prevents two failures: "I used the framework default" mis
 ## Scope
 
 **Covers:** password storage and verification, secure randomness, authorisation as a
-precondition of the domain operation, the adversarial half of input validation, secrets in
+precondition of the protected operation, the adversarial half of input validation, secrets in
 source and in types, and safe review boundaries for reversible cryptography.
 
 **Does not cover:** transport security, nor framework configuration — filter chains, JWT and
@@ -42,7 +42,7 @@ resolved version. If evidence is missing, state the gap and keep the proposed ch
 
 1. **Name the asset and the reachable attacker.** "A leaked database backup" and "another
    tenant's authenticated user" lead to different code; "make it more secure" leads to none.
-2. **Read the KDF parameters, not the class name.** Spring Security's own defaults sit below
+2. **Read the KDF parameters, not the class name.** Some Spring Security defaults sit below
    current OWASP guidance, so "I used `PasswordEncoderFactories`" is not a compliance claim:
 
    |                    | Spring Security 7.1 default                                | OWASP (fetched 2026-08-27)  |
@@ -52,13 +52,15 @@ resolved version. If evidence is missing, state the gap and keep the proposed ch
    | bcrypt             | strength 10                                                | 10 is the stated _minimum_  |
 
    `DelegatingPasswordEncoder.idForEncode` is still `"bcrypt"` in 7.1.1, not Argon2id — so
-   "Spring defaults to the OWASP-recommended algorithm" is wrong on both algorithm and
-   parameters. `new Argon2PasswordEncoder(16, 32, 1, 19456, 2)` closes the Argon2 gap.
+   it does not select OWASP's first choice for new storage. bcrypt strength 10 meets its
+   minimum; adequacy still depends on measured cost and the binding standard.
+   `new Argon2PasswordEncoder(16, 32, 1, 19456, 2)` closes the Argon2 parameter gap.
 
-3. **Make authorisation a precondition of the domain operation** — it takes the acting
-   principal and refuses, rather than trusting that the caller which checked is the only
-   caller. The parameter is a compile-time obligation, not proof of identity: construct it only
-   from a trusted authentication context, and do not let request JSON supply roles or tenant.
+3. **Make authorisation a precondition of the protected operation.** Use the domain operation
+   for an instance rule, or retain an application-service guard when every relevant entry path
+   necessarily passes it and its checked state stays consistent with the write. An `Actor`
+   parameter is an obligation, not proof of identity: construct stable claims only from a trusted
+   authentication context, and do not let request JSON supply roles or tenant.
    Keep the controller annotation as cheap early rejection; it stops being the only check.
    Authorise the _instance_: "has role CUSTOMER" without "and this order is theirs".
 4. **Allowlist attacker-controlled input as structure, but it is not the control** — regex over
@@ -73,7 +75,9 @@ resolved version. If evidence is missing, state the gap and keep the proposed ch
 
 ```text
 IF greenfield password storage
-THEN Argon2id at OWASP parameters, not the encoder's defaults.
+THEN prefer Argon2id at current OWASP parameters; use scrypt if unavailable, or an approved
+     PBKDF2 implementation where binding FIPS requirements demand it. An algorithm name alone
+     does not establish FIPS validation. Check deployment capacity before choosing parameters.
 
 IF existing bcrypt at a measured adequate cost
 THEN keep verification support and migrate on successful authentication; schedule forced
@@ -103,19 +107,19 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
 ## Rules
 
 - Password length policy conflicts between the two standards teams cite, so say which one binds
-  instead of picking silently: NIST SP 800-63B-4 (26 Aug 2025) makes 15 characters a **SHALL**
+  instead of picking silently: NIST SP 800-63B-4 (July 2025) makes 15 characters a **SHALL**
   where the password is the _single_ factor (8 within MFA); ASVS 5.0 §6.2.1 sets the floor at
   8, 15 recommended. The deciding question is not which is stricter but _which regime does this
   system answer to, and is the password ever the only factor?_ Both forbid composition rules
   and periodic rotation regardless — and never write that "NIST relaxed the password rules": it
   dropped composition and expiry and **raised** the single-factor floor. Requirement text and
   the three questions that settle it: `references/password-policy.md`.
-- bcrypt's 72-**byte** ceiling now fails loudly, not silently: since the CVE-2025-22228 fix
-  (6.3.8 / 6.4.4, March 2025) `encode` throws `IllegalArgumentException` above it, so a form
-  advertising 128-character passphrases 500s at sign-up, and any re-encode — password change,
-  or a rehash under `upgradeEncoding` — throws for users whose stored hash predates the fix.
-  `matches` still skips the guard, so legacy hashes keep the ASVS 6.2.8 truncation. Cap at 72
-  bytes at the boundary, or use Argon2id.
+- Spring bcrypt's 72-**byte** ceiling differs between writing and verification: the
+  CVE-2025-22228 fix (6.3.8 / 6.4.4, March 2025) makes `encode` throw above it. In the named
+  7.1.1 implementation, `matches` still skips the guard, including for a newly written hash
+  of a 72-byte password plus an over-length candidate suffix. An uncaught re-encode can fail
+  registration, change-password or rehash-on-login. Enforce the byte limit consistently or
+  migrate to a suitable KDF without truncation; plan recovery for existing over-length users.
 - Make account-existence paths observationally similar: the same external response, one KDF
   on both paths, and shared throttling. This mitigates rather than proves indistinguishability:
   caches, database work, network jitter and downstream side effects remain measurable.
@@ -139,15 +143,15 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
   verification. Store algorithm, key version, nonce and ciphertext/tag so rotation is possible;
   never store a plaintext data-encryption key beside the ciphertext it protects. An encrypted
   (wrapped) data key may accompany the ciphertext when its wrapping key is separately protected.
-- A record component or Lombok `@Data` field holding a secret is in `toString()` by
-  construction, and `log.info("processing {}", request)` is then a leak nobody wrote.
+- A secret in an automatically generated record or Lombok `@Data` `toString()` can leak
+  through `log.info("processing {}", request)`; check custom exclusions and renderers too.
 - Two moves make code worse. **Encrypting what only needs hashing** ("so we can support
   password recovery") trades away the property that mattered — a dump yields no passwords —
   for a feature that is itself a defect, and adds a key needing rotation and custody. **The
-  custom crypto wrapper**, `CryptoUtils.hash(String)` "for flexibility", has a signature too
-  narrow for Argon2's parameters and drops the algorithm identifier the `{id}` format carries
-  per hash, destroying the migration path it was built for — that, not implementing AES, is
-  rolling your own crypto.
+  custom crypto wrapper that loses the credential contract**: discarding algorithm/parameter
+  metadata or replacing a vetted verifier destroys migration and reviewability. Inspect the
+  implementation; `hash(String)` alone proves neither defect. A small policy adapter can be
+  adequate when it preserves versioned encodings, verification and upgrade behavior.
 
 ## Failure modes and production evidence
 
@@ -169,6 +173,8 @@ whether an attacker can turn the KDF into a CPU or memory-exhaustion endpoint.
 For each actionable finding, return its source location, reachable attacker and consequence,
 proposed adjustment, and the test that would verify it. Separate observed behavior from static
 inference; grep matches alone do not prove exploitability. Report tests actually run and gaps.
+If the existing controls satisfy the scoped contract, say so with the evidence; do not require
+a migration or a new abstraction to make the review productive.
 
 ## References
 

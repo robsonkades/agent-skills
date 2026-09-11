@@ -79,7 +79,8 @@ Read actual values back. Configure a listener before bind, for example
 as implementation-specific; correlate the Linux listener's observed queue.
 For SO_REUSEPORT, use supportedOptions on each unbound ServerSocketChannel and set it before
 bind; Linux group membership requires compatible bind/ownership settings. An unsupported
-option needs an explicit single-listener fallback, not a silent claim of parallel accepts.
+option needs an explicit decision: use a single-listener fallback only if it meets the required
+contract; otherwise fail clearly or select a supported design. Do not silently claim parallel accepts.
 
 With SO_KEEPALIVE enabled, 7200 seconds is normally the idle delay before the first probe,
 not the detection time; interval/probe count and TCP_USER_TIMEOUT affect failure detection.
@@ -90,29 +91,35 @@ whole request or guarantees that a timed-out remote operation stopped.
 
 ## Choosing `TCP_NODELAY`
 
-| Traffic                                           | Setting                                     | Why                                                                |
-| ------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------ |
-| Small request/response with tiny dependent writes | test `true`                                 | Avoid Nagle/ACK stalls if the framework has not already set it     |
-| Bulk transfer of a large file                     | usually irrelevant after batching/zero-copy | Measure segment sizes and CPU, do not rely on Nagle as the batcher |
-| Streaming with writes already at MSS              | irrelevant                                  | Nagle only holds a small write while an ACK is outstanding         |
-| Multiplexed protocols (HTTP/2, gRPC streaming)    | `true`                                      | Per-stream latency dominates; frameworks already default to it     |
-| WebSocket control frames                          | `true`                                      | Ping/pong should not wait 40 ms                                    |
+| Traffic                                           | Setting                                          | Why                                                                            |
+| ------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Small request/response with tiny dependent writes | test `true`                                      | Avoid Nagle/ACK stalls if the framework has not already set it                 |
+| Bulk transfer of a large file                     | usually irrelevant after batching/zero-copy      | Measure segment sizes and CPU, do not rely on Nagle as the batcher             |
+| Streaming with MSS-sized application writes       | inspect actual packetization                     | Write sizes do not prove no queued short segment after framing/coalescing      |
+| Multiplexed protocols (HTTP/2, gRPC streaming)    | inspect effective setting; test if relevant      | Shared connection framing, flush policy and latency/batching objectives matter |
+| WebSocket control frames                          | test `true` for a demonstrated small-write stall | Control-frame budgets and framework flush behavior determine the need          |
+
+An application write is not a TCP segment boundary: framing, TLS, coalescing, MSS changes and
+offloads can change the observed shape. Nagle's small-segment decision depends on queued data
+and acknowledgements, not the protocol name. Preserve intentional batching that meets the
+contract, and do not assume every framework/backend sets the same default. NODELAY does not
+remove application buffering, flow/congestion limits or the path RTT.
 
 ## Congestion control
 
 These are candidate environments for comparison, not promised wins. Kernel build/module
 availability, algorithm revision, pacing and the actual workload determine the result.
 
-| Algorithm             | Congestion signal                                 | Candidate comparison                | Prerequisite                                  |
-| --------------------- | ------------------------------------------------- | ----------------------------------- | --------------------------------------------- |
-| CUBIC (often default) | Loss/ECN, cubic `cwnd` growth                     | General-purpose baseline to compare | Kernel support                                |
-| BBR                   | Measured bandwidth and minimum RTT                | Networks with non-congestive loss   | `tcp_bbr` kernel module                       |
-| DCTCP                 | Fraction of ECN-marked bytes; also reacts to loss | Controlled datacentre fabric        | Compatible ECN negotiation and fabric marking |
-| Reno                  | Packet loss                                       | Simple, low-BDP networks            | None                                          |
+| Algorithm             | Congestion signal                                 | Candidate comparison                | Prerequisite                                                             |
+| --------------------- | ------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
+| CUBIC (often default) | Loss/ECN, cubic `cwnd` growth                     | General-purpose baseline to compare | Kernel support                                                           |
+| BBR                   | Measured bandwidth and minimum RTT                | Networks with non-congestive loss   | Built-in support or an available `tcp_bbr` module; check revision/pacing |
+| DCTCP                 | Fraction of ECN-marked bytes; also reacts to loss | Controlled datacentre fabric        | Compatible ECN negotiation and fabric marking                            |
+| Reno                  | Packet loss                                       | Simple, low-BDP networks            | None                                                                     |
 
 ```bash
 sysctl net.ipv4.tcp_congestion_control            # default for new connections
-sysctl net.ipv4.tcp_available_congestion_control  # what is loaded
+sysctl net.ipv4.tcp_available_congestion_control  # currently registered built-ins/loaded modules
 ss -ti                                         # affected connection's algorithm
 ```
 
@@ -120,6 +127,11 @@ DCTCP's host settings configure the sender's reaction to ECN marking. Without co
 negotiation and path marking, the intended feedback loop does not exist; do not assume a
 specific fallback congestion control without checking the kernel. Confirm marks in packet
 evidence before proposing it as a datacentre-wide change.
+
+The available list is not an inventory of every unloaded module the kernel could support.
+Mainline Linux 6.12 declares BBR as a tristate option, so it may be built in or modular.
+Inspect the actual build and algorithm revision; reading this example does not authorize a
+module load or host-wide default change.
 
 Primary contracts inspected: [Linux IP sysctls](https://docs.kernel.org/networking/ip-sysctl.html),
 [Linux TCP socket behavior](https://man7.org/linux/man-pages/man7/tcp.7.html),
@@ -129,4 +141,9 @@ For listener ownership and heartbeat policy, see
 [Linux socket options](https://man7.org/linux/man-pages/man7/socket.7.html),
 [Java ServerSocket](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/ServerSocket.html)
 and [gRPC keepalive](https://grpc.io/docs/guides/keepalive/).
-Linux documentation tracks a moving kernel; recheck defaults and support on the deployed build.
+The Java baseline contracts are also documented by [Java 17 Socket](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/Socket.html)
+and [ServerSocketChannel](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/channels/ServerSocketChannel.html).
+For the implementation distinctions above, see [Linux 6.12 BBR build options](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/Kconfig)
+and [TCP send/Nagle decisions](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_output.c).
+Unversioned Linux documentation tracks a moving kernel; these versioned examples do not replace
+checking defaults and support on the deployed build or authorize an upgrade.

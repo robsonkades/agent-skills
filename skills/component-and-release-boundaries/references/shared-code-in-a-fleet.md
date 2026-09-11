@@ -28,9 +28,10 @@ The severity depends on whether consumers may lag:
 
 - **May lag freely** (library is versioned, old versions keep working, no shared state): the
   coupling is real but cheap. This is the acceptable case.
-- **Must upgrade in step** (the library encodes a wire format, a schema, or a protocol both
-  sides must agree on): every consumer is on the producer's release schedule. This is a
-  distributed monolith regardless of how many processes are involved.
+- **Must upgrade in step** (a required change has no supported mixed-version state or staged
+  transition): the affected consumers need coordinated evolution. Name the incompatible
+  contract and the versions affected; encoding a wire format or schema alone does not prove
+  lockstep. Record a binding release policy separately from technical necessity.
 
 ## The four kinds of shared code
 
@@ -166,10 +167,12 @@ ownership and compatibility support explicitly.
 
 ## Migrating off a `commons` jar
 
-The goal is not to delete it — that requires a fleet-wide release, which is the thing you are
-trying to escape. The goal is to make it stop growing and let it shrink as consumers move.
+The goal is to reduce unwanted consumer obligations while retaining supported artifacts.
+Removing classes from a new major release need not move all consumers at once if their old
+versions remain supported. Do not mistake deleting published artifacts for completing migration.
 
-1. **Freeze it.** No new classes. This alone stops the problem worsening and costs nothing.
+1. **Stop unrelated growth.** Agree an owner and scope for new work; retain required fixes
+   and compatibility bridges during migration. A freeze has delivery/support costs too.
 2. **Inventory by consumer and supported version.** Combine source/bytecode analysis with
    reflection, service-loader metadata, configuration, serialization and external consumer
    evidence. Missing search hits do not prove an unused public class.
@@ -184,8 +187,10 @@ trying to escape. The goal is to make it stop growing and let it shrink as consu
    migrate within the support window. Retire maintenance only after supported consumers
    migrate; do not delete or overwrite released artifacts needed for reproducible builds.
 
-At no point does this require every service to release at once, which is the constraint that
-makes the migration feasible at all.
+This sequence can avoid simultaneous releases when supported versions and intermediate contracts
+can coexist. Check each checkpoint and recovery path; where coexistence is impossible, retain the
+constraint and assess a bounded coordinated cutover rather than promising independent rollout
+(`architecture-refactoring-paths`).
 
 ## Verifying independence
 

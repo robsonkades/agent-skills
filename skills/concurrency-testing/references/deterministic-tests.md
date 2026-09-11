@@ -1,7 +1,7 @@
 # Deterministic tests
 
 Partial test snippets: supply the enclosing test class, application fixtures and imports from
-`java.util.concurrent`, `java.util.concurrent.atomic`, `java.time` and JUnit Jupiter. Awaitility
+`java.util`, `java.util.concurrent`, `java.util.concurrent.atomic`, `java.time` and JUnit Jupiter. Awaitility
 examples require the project's existing Awaitility dependency. Ordinary virtual-thread examples
 require Java 21+; the structured-scope section specifically requires Java 25 preview.
 Every blocking fixture needs independent release/abort in teardown, including assertion failures.
@@ -65,8 +65,10 @@ await().atMost(Duration.ofSeconds(2))
 ```
 
 The bound is part of the assertion: `atMost(2s)` says "this must happen within two seconds",
-which is a real requirement. `Thread.sleep(2000)` says "I hope two seconds is enough", which
-is not.
+which must come from the contract or an explicitly calibrated test budget. It does not prove a
+two-second production bound. `Thread.sleep(2000)` alone cannot establish that the effect happened.
+Keep coordination outside accesses whose missing ordering is under test: a latch between a
+payload write and read can add the very happens-before edge the product lacks.
 
 ## Cancellation
 
@@ -105,11 +107,12 @@ but never substitutes for observed termination and release.
 @Test
 @Timeout(10)
 void taskStopsPromptlyWhenInterrupted() throws Exception {
-    CountDownLatch started = new CountDownLatch(1);
+    CountDownLatch entered = worker.holdAtInterruptibleOperation();
     AtomicBoolean finished = new AtomicBoolean();
+    AtomicReference<Throwable> workerFailure = new AtomicReference<>();
 
-    Thread t = Thread.ofVirtual().start(() -> {
-        started.countDown();
+    Thread t = Thread.ofVirtual().uncaughtExceptionHandler((thread, error) ->
+            workerFailure.set(error)).start(() -> {
         try {
             worker.runUntilInterrupted();
         } finally {
@@ -118,10 +121,12 @@ void taskStopsPromptlyWhenInterrupted() throws Exception {
     });
 
     try {
-        assertTrue(started.await(2, SECONDS));
+        assertTrue(entered.await(2, SECONDS));
         t.interrupt();
         assertTrue(t.join(Duration.ofSeconds(2)));
+        assertNull(workerFailure.get(), "unexpected worker failure");
         assertTrue(finished.get());
+        worker.assertInterruptionObserved();
     } finally {
         worker.abortForTeardown(); // independent fixture release, bounded and nonthrowing
         t.interrupt();
@@ -130,8 +135,14 @@ void taskStopsPromptlyWhenInterrupted() throws Exception {
 }
 ```
 
-And the complementary test that catches a swallowed exception — that the interrupt status
-survives:
+The fixture signals entry to the targeted operation, not merely thread startup. A checkpoint
+before a blocking call also permits interrupt-before-block; testing an already blocked provider
+needs provider-specific evidence. Joining a thread proves termination, not successful handling:
+uncaught assertions and exceptions must reach the test. This worker's terminal contract handles
+interruption and returns normally; assert a different expected outcome when its API propagates it.
+
+For a boundary whose contract translates interruption to an unchecked exception while preserving
+the caller's status, test that specific policy:
 
 ```java
 @Test
@@ -146,43 +157,77 @@ void interruptStatusIsRestoredRatherThanSwallowed() {
 }
 ```
 
+Run this on an isolated test thread with a known initial status; clearing belongs to that fixture's
+cleanup. A terminal owner may deliberately consume interruption, so restoration is not universal.
+
 ## Timeout and its cancellation
+
+This example requires a client whose contract stops a dispatched operation on timeout; its
+configured deadline fits within the five-second Future wait. The held dependency is below the real
+timeout mechanism. When an injectable clock/timer exists, advance it after dispatch to avoid a
+race between slow test setup and expiry. For accepted durable jobs or a provider that cannot stop,
+assert the documented residual-work ownership/budget and recovery instead of inventing cancellation.
 
 ```java
 @Test
 @Timeout(10)
-void timeoutReleasesTheCallerAndStopsTheWork() {
-    dependency.respondAfter(Duration.ofSeconds(30));       // a controllable fake or WireMock
-
-    assertThrows(TimeoutException.class, () -> client.fetch(id));
-
-    // The half everybody forgets: did the work actually stop?
-    await().atMost(Duration.ofSeconds(2))
-           .until(() -> dependency.inFlightRequests() == 0);
+void timeoutReleasesTheCallerAndStopsTheWork() throws Exception {
+    CountDownLatch entered = dependency.holdNextRequest(); // records actual dispatch
+    Future<?> call = executor.submit(() -> client.fetch(id));
+    try {
+        assertTrue(entered.await(2, SECONDS));             // positive execution control
+        ExecutionException failure = assertThrows(ExecutionException.class,
+                () -> call.get(5, SECONDS));              // harness timeout must fail too
+        assertInstanceOf(TimeoutException.class, failure.getCause());
+        dependency.assertOperationTerminatesWithin(Duration.ofSeconds(2));
+        assertEquals(0, dependency.inFlightRequests());
+    } finally {
+        dependency.releaseOrAbortHeldRequest();           // independent of client timeout
+        call.cancel(true);
+    }
 }
 ```
 
-Without the second assertion this test passes on a system that leaks an in-flight request per
-timeout — which is exactly the system that falls over during the next dependency slowdown.
+For this client's stop contract, the observed operation-termination and resource assertions
+detect residual work after timeout. The caller outcome alone cannot verify cleanup.
 
 ## The limit at its boundary
 
 ```java
 @Test
 void rejectsWithTheDesignedResponseWhenSaturated() throws Exception {
-    // Fill every permit and hold them
-    for (int i = 0; i < LIMIT; i++) executor.submit(this::blockUntilReleased);
-    awaitAllStarted();
-
-    DependencyOverloadedException e =
-            assertThrows(DependencyOverloadedException.class, () -> client.price(sku));
-
-    assertEquals("pricing", e.dependency());
-    assertEquals(1, meterRegistry.counter("limit.rejected", "dep", "pricing").count());
+    int before = limiter.availablePermits();
+    assertEquals(LIMIT, before);                          // isolated, initially idle limiter
+    var rejected = meterRegistry.counter("limit.rejected", "dep", "pricing");
+    double rejectedBefore = rejected.count();
+    CountDownLatch acquired = dependency.holdCallsAfterPermitAcquisition(LIMIT);
+    List<Future<?>> holders = new ArrayList<>();
+    assertAll("rejection and holder completion",
+        () -> {
+            try {
+                for (int i = 0; i < LIMIT; i++) holders.add(executor.submit(() -> client.price(sku)));
+                assertTrue(acquired.await(2, SECONDS));   // real permits, not just task starts
+                assertEquals(0, limiter.availablePermits());
+                DependencyOverloadedException e =
+                        assertThrows(DependencyOverloadedException.class, () -> client.price(sku));
+                assertEquals("pricing", e.dependency());
+                assertEquals(rejectedBefore + 1, rejected.count());
+            } finally {
+                dependency.releaseAllHeldCalls();         // bounded, nonthrowing fixture release
+            }
+        },
+        () -> {                                         // also runs when rejection assertions fail
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            assertAll("holder outcomes", holders.stream().map(task -> () ->
+                    task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)));
+        });
+    assertEquals(before, limiter.availablePermits());
 }
 ```
 
-Assert the _designed_ rejection, and assert it was counted. A limit whose rejection path has
+The enclosing fixture still owns bounded executor teardown, including when a worker does not
+terminate after release. Preserve the original assertion alongside any cleanup failure in its
+test report. Assert the _designed_ rejection, and assert it was counted. A limit whose rejection path has
 never run in a test is a 500 with extra steps.
 
 ## A structured scope
@@ -269,3 +314,9 @@ removed monitor-induced pinning, while native/foreign behavior remains version-s
 - Retrying a failed concurrency test automatically in CI
 - Shared static mutable state between tests, which makes parallel test execution a race in
   the suite itself
+
+## Sources
+
+- [Java 25 Thread termination and uncaught exceptions](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
+- [Java 25 Future result, failure and cancellation contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
+- [Java 25 CountDownLatch memory effects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)

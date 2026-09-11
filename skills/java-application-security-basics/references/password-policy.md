@@ -4,7 +4,10 @@ Read when setting or reviewing registration, change-password or password-strengt
 Storage parameters are `password-storage.md`; this file is about what the user is allowed to
 choose. Both sources fetched **2026-08-27**.
 
-## NIST SP 800-63B, Version 4, dated 26 August 2025
+## NIST SP 800-63B, Version 4, published July 2025
+
+The [NIST CSRC publication record](https://csrc.nist.gov/pubs/sp/800/63/b/4/final) dates the
+final to **31 July 2025** (rechecked 2026-09-10).
 
 Section 3.1.1.2 "Password Verifiers". Revision 4 renamed "memorized secrets" to
 **"passwords"** — the old term is gone from the current text, so do not write it as though it
@@ -107,8 +110,8 @@ It did not relax length. **800-63B-4 raised the single-factor minimum to 15 (SHA
 correct statement is: drop the composition rules and the expiry, _raise_ the floor to 15 for
 single-factor, and add a breach-corpus check (ASVS 6.2.12 / the NIST blocklist SHALL). A
 policy of "minimum 12, one uppercase, one digit, one symbol, expires every 90 days" is
-simultaneously too permissive on length and prohibited on composition and rotation — and its
-measured effect is `Password1!` followed by `Password2!`.
+simultaneously too permissive on length and prohibited on composition and rotation. Such rules
+can encourage predictable changes such as `Password1!` followed by `Password2!`.
 
 For the breach check, Spring Security has shipped
 `org.springframework.security.web.authentication.password.HaveIBeenPwnedRestApiPasswordChecker`
@@ -121,4 +124,4 @@ constructor signature; module, package and `@since` are confirmed from the 7.1.1
 - [NIST SP 800-63B-4, password verifiers](https://pages.nist.gov/800-63-4/sp800-63b.html#passwordver)
 - [NIST SP 800-63B-4 change log](https://pages.nist.gov/800-63-4/sp800-63b/changelog/)
 - [OWASP ASVS v5.0.0 repository and stable artifacts](https://github.com/OWASP/ASVS/tree/v5.0.0_release)
-- [Spring Security compromised-password checking](https://docs.spring.io/spring-security/reference/servlet/authentication/passwords/compromised.html)
+- [Spring Security compromised-password checking](https://docs.spring.io/spring-security/reference/features/authentication/password-storage.html)

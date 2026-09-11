@@ -20,6 +20,7 @@ This Bash template requires those exact versions in the named variables and an i
 : "${REWRITE_RECIPE_VERSION:?set a verified exact recipe version}"
 mvn "org.openrewrite.maven:rewrite-maven-plugin:${REWRITE_PLUGIN_VERSION}:dryRun" \
   "-Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-migrate-java:${REWRITE_RECIPE_VERSION}" \
+  -Drewrite.failOnInvalidActiveRecipes=true \
   -Drewrite.activeRecipes=org.openrewrite.java.migrate.jakarta.JavaxMigrationToJakarta
 ```
 
@@ -27,6 +28,9 @@ mvn "org.openrewrite.maven:rewrite-maven-plugin:${REWRITE_PLUGIN_VERSION}:dryRun
 that can generate artifacts or run configured plugins. Inspect those effects first. `dryRunNoFork`
 avoids that lifecycle fork when prerequisite state is already prepared. Record logs, matched
 modules and the fresh patch before applying `run`; missing artifacts/runner failure are not success.
+The explicit validation flag makes invalid active recipe configuration fail instead of relying on
+the plugin's default. Confirm option support in the pinned version; treat validation failures as
+configuration defects to resolve, not a reason to disable the check.
 
 ## The type-attribution trap
 

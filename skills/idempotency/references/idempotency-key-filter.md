@@ -117,7 +117,9 @@ After losing the conditional claim:
   mechanism;
 - for `RETRYABLE`, atomically claim a new attempt epoch before dispatch; preserve the same
   operation ID and the evidence that makes retry safe;
-- do not hold a database lock or platform thread while waiting on remote work.
+- do not hold a database lock while waiting on remote work. Bound admitted waiters and their
+  total wait deadline using the project's execution model; a suitably bounded platform-thread
+  wait does not by itself require a virtual-thread or asynchronous redesign.
 
 An HTTP `409` can be an API choice, but it is not inherently the one correct status and may
 mislead clients into treating an in-progress retry as terminal conflict. Whatever contract is
@@ -183,7 +185,7 @@ proxy or test dependency that applies the operation and then drops the acknowled
 ## Primary references
 
 - [RFC 9110 §9.2.2: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
-- [IETF HTTPAPI Idempotency-Key header draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/)
+- [IETF HTTPAPI Idempotency-Key header draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/) — revision 07 is an expired Internet-Draft, not a published HTTP standard; use the actual API's contract.
 - [Stripe API: idempotent requests](https://docs.stripe.com/api/idempotent_requests)
 - [PostgreSQL unique constraints](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
 - [PostgreSQL 17 conflict handling](https://www.postgresql.org/docs/17/sql-insert.html)

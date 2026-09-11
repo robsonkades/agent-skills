@@ -5,6 +5,13 @@ Judge decisions and transitions, not exact wording. These are written cases, not
 record run conditions and evidence separately, and compare the same inputs with/without the skill
 when evaluating its effect.
 
+During evaluation, only the evaluator may access this file. Give task-runner agents the case's Given
+context as input; keep this entire file, including expected and failure criteria, unavailable in every
+arm. A skill-enabled arm may read SKILL.md and its three ordinary references; a no-skill arm must not
+discover or load this skill. Use fresh sessions with the same model/version, settings, tools,
+permissions and repository context, and record the inputs, loaded resources, outputs and judgments
+separately.
+
 ## 1. Small, well-defined Product Feature
 
 **Given:** one local reversible outcome, known behavior, one authorized owner/session, no boundary,
@@ -81,3 +88,15 @@ invalidates the decision.
 **Expected:** correct the implementation and rerun affected validation.
 
 **Failure:** superseding the decision merely to make the current implementation appear compliant.
+
+## 9. Record a proposal while feasibility is unresolved
+
+**Given:** an agreed feature has a material solution option awaiting an experiment; the required
+environment is unavailable, no GAP-* has been accepted, and independent analysis can proceed.
+
+**Expected:** record the option as proposed with the unresolved evidence and affected decision;
+keep the experiment NOT RUN, the dependent selection blocked, and the next evidence step explicit.
+Continue independent authorized work without treating the proposal as an accepted decision.
+
+**Failure:** postponing the proposal record until the experiment finishes, inventing a feasibility
+result, accepting the gap without authority, or stopping all independent work.

@@ -2,26 +2,29 @@
 
 ## What makes the loop cheap or expensive
 
-TDD's cost is dominated by two things: how long one cycle takes, and how well you can express
-the next behaviour as an assertion before writing it.
+Price the loop from feedback latency, the cost of a trustworthy assertion and fixture, and
+test maintenance. Short execution time helps but does not make the whole loop nearly free.
 
-| Condition                                     | Effect on the loop                                     |
-| --------------------------------------------- | ------------------------------------------------------ |
-| Cycle under ~10 seconds                       | Cheap; the loop is nearly free                         |
-| Cycle in minutes (container, full context)    | Expensive; batch behaviours, or drive at a lower level |
-| The expected output is known before coding    | Cheap; the assertion writes itself                     |
-| The expected output is what you are exploring | Expensive; you would be guessing at assertions         |
-| Behaviour reachable without I/O               | Cheap                                                  |
-| Behaviour only exists once wired together     | Expensive; the test is an integration test             |
+| Condition                                     | Effect on the loop                                                                                       |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Short focused cycle                           | Frequent feedback is easier; still price fixtures and maintenance                                        |
+| Cycle in minutes (container, full context)    | Consider focused integration runs, larger steps or test-after; lower the level only if the risk survives |
+| The expected output is known before coding    | Helps specify the assertion; arranging state or a reliable oracle may still be costly                    |
+| The expected output is what you are exploring | Explore or test an explicit hypothesis before treating it as a requirement                               |
+| Behaviour reachable without I/O               | Often easier to isolate; input generation or computation may still be expensive                          |
+| Behaviour only exists once wired together     | Keep the real integration boundary; choose test order from its contract and cost                         |
 
-Notice that none of these is about the developer's discipline. When someone reports TDD "not
-working" here, the productive question is which row they are in — usually a slow cycle, and
-the fix is to make the behaviour reachable without the container, not to abandon the loop.
+When the loop is costly, identify whether feedback delay, oracle uncertainty, fixture setup or
+maintenance dominates. Extract behavior only when a useful boundary preserves the risk and
+improves the design. A container-dependent contract can legitimately need a slower integration
+loop; retaining that boundary or choosing test-after can be sound. No universal seconds cutoff
+decides whether TDD is worthwhile.
 
-## Where it pays clearly
+## Where it often pays
 
-- **Algorithmic and rule-heavy logic** — pricing, tax, eligibility, parsing, scheduling. The
-  expected outputs are known, boundaries are numerous, and the cycle is milliseconds.
+- **Algorithmic and rule-heavy logic** — pricing, tax, eligibility, parsing, scheduling.
+  Known rules and boundary cases can support a fast local loop; check oracle and execution
+  cost rather than assuming every such problem has a millisecond cycle.
 - **Bug fixes, when the failure can be reproduced safely at a useful level.** The failing test is
   strong evidence that the fix addresses the reported fault rather than a nearby one. During an
   incident, mitigation may precede the regression test; nondeterministic, destructive, or
@@ -69,9 +72,10 @@ useful red regression test, but its passing does not prove all interleavings saf
 
 ## The three laws, and what to do with them
 
-Uncle Bob's formulation — write no production code except to pass a failing test, write no more
-of a test than sufficient to fail, write no more production code than sufficient to pass — is a
-training constraint. It is deliberately extreme so that a learner feels the loop.
+Uncle Bob's [three laws](https://blog.cleancoder.com/uncle-bob/2014/12/17/TheCyclesOfTDD.html)
+constrain test and production increments to the next failing condition and its minimal
+implementation. That is a fine-grained discipline; it can serve as a training exercise without
+making it the required method for every production change.
 
 Applied mechanically to production work it can produce dozens of trivial
 tests written to satisfy the letter, a design pinned by tests that assert the implementation,
@@ -92,13 +96,18 @@ determine test completeness or guarantee tested wiring.
 
 ## The agent-specific failure
 
-An agent that writes the test and the implementation in the same edit, runs the suite once, and
-sees green has performed none of the loop. It has no evidence the test can fail, and a test
-asserting a tautology looks identical to a working test in that output.
+Writing the test and implementation together and observing one green run does not establish
+that this behavior was developed test-first. Inspect discovery and assertion sensitivity;
+green with zero tests is not validation, and green alone cannot distinguish a tautology from
+an assertion that would catch the intended fault.
 
-The minimum honest version: write the test, run it, quote the red output, implement, run again,
-quote the green. Two runs. Anything less is test-after wearing TDD's name — which is a
-legitimate choice, but must be reported as what it is (coding-agent-discipline).
+To claim an observed red-green cycle, retain the intended failing result before the relevant
+implementation and the passing result after it, plus any post-refactor checks actually run.
+Count executions and tests as they occurred rather than enforcing a universal two-new-run quota:
+characterization may start green, invariant checks may already hold, and an isolated old-code or
+controlled-defect run can establish scoped sensitivity without changing the development history.
+For those approaches, report the evidence and its limits under the actual method
+(coding-agent-discipline); do not force a production failure or fabricate an earlier red.
 
 See [Fowler's TDD account](https://martinfowler.com/bliki/TestDrivenDevelopment.html) for the
 small test/code/refactoring cycle; these applicability choices depend on the actual contract

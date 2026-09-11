@@ -1,8 +1,8 @@
 # Pattern inventory
 
 One row per Gang-of-Four pattern. Use it to locate the owning skill, and to check that the
-pattern under discussion actually addresses the problem at hand — most misuse is a pattern
-solving a neighbouring problem convincingly.
+pattern under discussion actually addresses the problem at hand; a pattern can solve a neighbouring
+problem convincingly while leaving the actual requirement unmet.
 
 ## Reading the columns
 
@@ -39,13 +39,13 @@ solving a neighbouring problem convincingly.
 
 | Pattern                     | Primary problem                                                                         | Risk   | Boundary class | Skill                         |
 | --------------------------- | --------------------------------------------------------------------------------------- | ------ | -------------- | ----------------------------- |
-| **Chain of Responsibility** | Letting an unknown number of handlers each decide whether to handle or pass on          | Medium | Interaction    | `gof-chain-of-responsibility` |
+| **Chain of Responsibility** | Letting ordered candidate handlers decide whether to handle or pass on                  | Medium | Interaction    | `gof-chain-of-responsibility` |
 | **Command**                 | Turning an invocation into an object so it can be queued, logged, retried or undone     | Medium | Interaction    | `gof-command`                 |
 | **Interpreter**             | Evaluating sentences of a small language by representing its grammar as a type per rule | Medium | Local          | `gof-interpreter`             |
 | **Iterator**                | Traversing an aggregate without exposing its representation                             | Lower  | Process-local  | `gof-iterator`                |
 | **Mediator**                | Replacing many-to-many collaboration with a hub that owns the interaction protocol      | High   | Interaction    | `gof-mediator`                |
 | **Memento**                 | Capturing and restoring an object's state without breaking its encapsulation            | Medium | Process-local  | `gof-memento`                 |
-| **Observer**                | Notifying an unknown set of dependents that a subject changed                           | High   | Interaction    | `gof-observer`                |
+| **Observer**                | Notifying interested dependents that a subject changed                                  | High   | Interaction    | `gof-observer`                |
 | **State**                   | Letting an object's behaviour change with its state, with transitions made explicit     | Medium | Algorithm      | `gof-state`                   |
 | **Strategy**                | Selecting among interchangeable algorithms for one operation at runtime                 | Lower  | Algorithm      | `gof-strategy`                |
 | **Template Method**         | Fixing an algorithm's skeleton while letting named steps vary                           | Medium | Algorithm      | `gof-template-method`         |
@@ -65,8 +65,7 @@ stackable pipeline (Decorator, Chain of Responsibility), or a second representat
 (Memento, Command, State, Visitor, Builder). Check recursive bounds, side effects and compatibility;
 these are not exempt from incident risk.
 
-**High risk** — patterns whose semantics break silently in the environment they are usually used
-in:
+**High risk** — pay particular attention to hidden ownership, lifecycle and failure contracts:
 
 - **Singleton** — uniqueness is often per defining class loader or container, not necessarily one
   instance per JVM or system. Class initialization safely publishes a holder, but does not make
@@ -74,12 +73,13 @@ in:
 - **Observer** — thread, ordering, error and deregistration guarantees belong to the concrete API.
   A long-lived subject may retain abandoned listeners. Distributed pub/sub adds delivery and
   failure obligations that cannot be inferred from local callbacks.
-- **Mediator** — the hub accumulates every rule that touches two collaborators and becomes a god
-  object with a respectable name.
+- **Mediator** — a hub that accumulates unrelated interaction protocols or participant-owned rules
+  can become a god object. Keep a cohesive protocol and explicit participant responsibilities.
 - **Proxy** — a remote proxy makes a network call look like a method call, hiding latency,
   partial failure and retry semantics behind assignment-like syntax.
-- **Flyweight** — a shared mutable cache under contention, sold as a memory optimisation, that
-  is rarely measured against the allocator it is meant to beat.
+- **Flyweight** — unsafe shared state, retained pool entries or lookup contention can outweigh
+  saved state and construction. Verify intrinsic-state safety and compare total retained memory
+  and workload cost with ordinary objects; sharing alone proves no benefit.
 - **Prototype** — Object.clone performs shallow field copying; Cloneable supplies no public clone
   method. Define graph aliasing, identity and resource ownership, whether using clone, a copy
   constructor or a factory.

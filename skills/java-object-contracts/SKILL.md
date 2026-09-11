@@ -26,10 +26,13 @@ because a record generated `toString` for every component.
 ## Workflow
 
 Inspect compiler release/toolchains, target JVM, collection usage, published consumers and
-ORM/provider configuration first. No single authoring baseline is declared; references use
-Java SE 25, while records and pattern `instanceof` need Java 16+, `List.copyOf` Java 10+.
+ORM/provider configuration first. References use Java SE 25; partial examples require records
+and pattern `instanceof` from Java 16+, or `List.copyOf` from Java 10+ as applicable.
 Adapt to the project without upgrades or preview. Missing lifecycle/provider evidence makes
 equality recommendations conditional; state what must be tested before changing the contract.
+Reuse available caller tests and lifecycle evidence; ask only about unresolved identity, ordering
+or disclosure requirements that change the decision. Keep an adequate implementation, and separate
+a demonstrated contract defect from a representation preference.
 
 1. **Decide the intended identity.** Service objects often need reference equality. Value
    types need component equality; entities may need row/business identity across contexts.
@@ -47,7 +50,8 @@ equality recommendations conditional; state what must be tested before changing 
 5. **If the type will be sorted or put in a sorted collection**, implement `Comparable` for
    the natural order or supply a `Comparator` that satisfies the total-order contract. Add a
    unique deterministic tiebreaker when distinct elements must coexist in a sorted set, or when
-   pagination/canonicalization must reproduce one strict sequence.
+   pagination must distinguish rows. Canonical output only needs to distinguish ties whose
+   encoded representations differ; identical encoded values can remain interchangeable.
 6. **Write `toString` for the person reading the incident**, then check what it discloses.
 7. **Verify by contract, not by example.** Reflexivity, symmetry, transitivity and the hash
    obligation are properties: assert them over generated pairs, not over one hand-picked
@@ -55,34 +59,38 @@ equality recommendations conditional; state what must be tested before changing 
 
 ## Rules
 
-- Override `hashCode` whenever you override `equals`. The obligation is one-directional and
-  absolute: equal objects must produce equal hashes; unequal objects may collide. Violating
-  it makes the object undiscoverable in every hash-based collection, including ones the code
+- Check `hashCode` whenever you override `equals`; retain an inherited implementation if it
+  satisfies the obligation: equal objects must produce equal hashes, while unequal objects
+  may collide. A violation can break equal-key lookup in hash-based collections, including ones the code
   does not know it is in — `HashSet`, `HashMap`, `ConcurrentHashMap`, `distinct()` in a
   stream, set-based dirty tracking in an ORM.
-- Never include a mutable field in `equals`/`hashCode` if instances are used as keys.
+- Do not mutate equality/hash-relevant state while an instance is stored as a key.
   Changing equality/hash-relevant state after insertion can make lookup search a different
   bucket or change equality without reindexing the stored entry. Behavior is unspecified;
-  iteration may still find it, so do not rely on either lookup failure or success.
+  iteration may still find it, so do not rely on either lookup failure or success. A controlled
+  remove-before-mutation and reinsert can suffice; immutable identity avoids that lifecycle burden.
 - Prefer a record when the type _is_ its components. The generated `equals` and `hashCode`
   cover every component; the two edge cases to know are array components (compared by
-  identity — use `List` instead) and floating-point components (compared as by
+  identity, which is valid only for that intended contract) and floating-point components (compared as by
   `Double.compare`, so `NaN` equals `NaN` and `0.0` does not equal `-0.0`).
 - Choose floating-point equality deliberately. `Double.compare`/`Float.compare` provide the
   wrapper/record equivalence needed by conventional collections (all NaNs equivalent, signed
   zeros distinct); primitive `==` has different semantics. Reject/canonicalize special values or
-  use a tolerance in an algorithm—not in `equals`—when the domain requires another relation. And
-  compare arrays with `Arrays.equals`/`Arrays.deepEquals`, never `==`. `Objects.equals`
-  handles null on both sides for everything else.
-- Do not depend on any hash value crossing a process, a restart or a JVM version. `Object`'s
+  use a tolerance in an algorithm—not in `equals`—when the domain requires another relation.
+  For array content equality, use matching `Arrays.equals`/`hashCode` or deep variants and
+  appropriate ownership; copying alone does not change generated equality. Preserve deliberate
+  identity semantics and public binary APIs instead of mandating `List<Byte>`. The reference covers
+  record reconstruction and diagnostic contracts. `Objects.equals` is null-safe but not deep equality.
+- Do not assume an arbitrary hash value is portable across a process, restart or JVM version. `Object`'s
   — and therefore every enum's — `hashCode` is identity-based without a cross-run guarantee; `String`'s
-  is specified and stable but is not a distribution function. Persisting, sharding,
-  partitioning or deduplicating on `hashCode` is a defect; use an explicit digest or key. See
+  is specified and stable, but that alone does not establish suitable distribution. Persisting,
+  routing or deduplicating needs an explicit encoding, algorithm and collision policy, not an
+  incidental object hash. Preserve a suitable specified existing protocol; see
   consistent-hashing and idempotency.
 - Entity equality is a lifecycle/provider decision. Reference equality may be sufficient inside
   one persistence context. For detached/cross-context values, prefer an immutable real business
   key or an application-assigned identifier available at construction. A generated id requires
-  special handling: two transient instances with null ids are never equal, equality becomes
+  special handling: two distinct transient instances with null ids are not equal, equality becomes
   id-based only after assignment, and hash membership must remain stable. Proxy-safe type checks
   are provider-specific—plain `instanceof`, `getClass()` and provider “effective class” helpers
   make different inheritance/loading trade-offs. Test transient, managed, detached and
@@ -94,23 +102,24 @@ equality recommendations conditional; state what must be tested before changing 
   `BigDecimal("1.0")` versus `BigDecimal("1.00")` is the canonical case — a `TreeSet` and a
   `HashSet` of the same elements have different sizes, and the sorted one is usually the
   surprise.
-- Never implement `compareTo` by subtraction (`a.value - b.value`). It overflows for large
-  and negative operands and returns the wrong sign. Use `Integer.compare`, `Long.compare`,
-  `Double.compare`, or build the comparator with `Comparator.comparingInt(...)`.
+- Prefer `Integer.compare`, `Long.compare`, `Double.compare` or a `Comparator.comparing*`
+  factory over subtraction. Subtraction needs a range proof against overflow; narrowing a
+  floating-point difference can also turn distinct values into a false tie.
 - A comparator that violates its contract may corrupt ordered-collection semantics or be detected
   by a sorting implementation. OpenJDK object sorts commonly use TimSort and can throw
   `IllegalArgumentException: Comparison method violates its general contract!` for some input
   shapes; detection is not guaranteed. Treat the exception as evidence against the comparator,
   and test its algebraic properties over adversarial/generated triples.
-- Any order used for paging, for cross-service comparison, or for a reproducible export must
-  be total: append a unique tiebreaker (the id) after every business sort key. Ties broken
-  arbitrarily mean two pages can both contain, or both skip, the same row.
+- Paging distinct rows needs a deterministic unique tiebreaker for otherwise tied keys; it
+  does not solve concurrent changes or cursor/snapshot semantics. For a reproducible export,
+  distinguish different encoded values; byte-identical ties do not need invented identities.
 - Write `toString` for diagnosis, and treat what it exposes as a disclosure decision. A record
   generates a `toString` containing every component — including tokens, passwords, PII and
   card numbers — and that string reaches logs, exception messages and traces. Override it on
   any type carrying a secret; structured-logging covers what belongs in a log at all.
-- Nothing may parse `toString`. If a textual form is part of the API, give it a named method
-  and a documented grammar (`toIso8601`, `format`), and let `toString` stay free to change.
+- Do not newly parse an unspecified diagnostic `toString`. Prefer a named method and documented
+  grammar for a textual API (`toIso8601`, `format`); preserve or deliberately migrate an existing
+  specified `toString` contract and its callers.
 - Avoid introducing `Cloneable` into new domain APIs. It is a marker interface around a protected,
   shallow-copy mechanism; final reference fields cannot be replaced by ordinary clone code and
   inheritance makes deep-copy semantics hard to state. Immutable objects can safely be shared or

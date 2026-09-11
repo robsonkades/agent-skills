@@ -24,14 +24,15 @@ The fix is structural: make the skill separate what was observed from what was c
 | **Observation**    | A direct reading of that evidence          | States the visible result within the artifact's coverage            |
 | **Inference**      | A conclusion drawn using domain knowledge  | Someone could disagree while accepting the evidence                 |
 | **Hypothesis**     | A candidate explanation not yet tested     | States what would confirm or refute it                              |
-| **Recommendation** | An action, with its expected effect        | Names what to measure afterwards                                    |
+| **Recommendation** | An action, with its expected effect        | Names suitable verification or the evidence already sufficient      |
 
 Never present an inference in the register of an observation. When evidence is
 unavailable, the skill must say so explicitly rather than reasoning past the gap.
 
 ## Output shape
 
-Impose this only where it earns its place — a finding that changes what someone does:
+Impose this only where it earns its place — a finding that changes what someone does.
+The numbers and change identifier below are illustrative, not recorded measurements:
 
 ```text
 Evidence:        allocation captures plus GC logs under comparable load/windows
@@ -81,7 +82,8 @@ IF the evidence is unavailable or the tool failed
 THEN say so explicitly; do not substitute plausible reasoning silently.
 
 IF a recommendation is made
-THEN name the measurement that will show whether it worked.
+THEN identify verification appropriate to the claim, reusing sufficient existing evidence;
+do not require a new runtime measurement for a source- or statically resolved contract.
 ```
 
 ## Tool strategy

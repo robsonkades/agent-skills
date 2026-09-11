@@ -23,6 +23,10 @@ rewrite. Confirm by server/protocol evidence rather than configuration intent.
 staging when rejects need broad classification. For client-side data use STDIN/`CopyManager`; do not
 grant server file access merely to avoid streaming.
 
+`COPY FROM` does not invoke rules and is unsupported when row-level security applies to the caller.
+Use a supported policy-enforcing path such as `INSERT`; do not bypass required tenant/access
+checks merely to select the bulk API. Test with the actual loading role, not only the table owner.
+
 Unlogged/new-table and WAL optimizations have strict backup/replication/recovery implications.
 Measure WAL generation and replica lag rather than assuming a `COPY` variant is minimally logged.
 

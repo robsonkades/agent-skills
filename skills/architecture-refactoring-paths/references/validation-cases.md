@@ -4,10 +4,12 @@ Status: documented, not executed. These evaluate migration decisions made with t
 they are not application integration tests or evidence of measured improvement.
 
 Run each request in fresh sessions with the same model/version, settings, tools and repository
-context. Baseline omits this skill; treatment receives SKILL.md and access to its references.
-Keep expectations hidden from the agent. Record outputs and tool actions, then mark required
-characteristics pass/fail with evidence rather than comparing wording. For selection, hold
-neighboring descriptions constant. No isolated paired model runner was used for this revision.
+context. Baseline omits this skill; treatment receives SKILL.md and the two path references.
+Keep this entire file and other evaluation artifacts private to the evaluator in both arms;
+supply only the selected request/context to the task agent. Record outputs and tool actions,
+then mark required characteristics pass/fail with evidence rather than comparing wording.
+For selection, hold neighboring descriptions constant. No isolated paired model runner was
+used for this revision.
 
 ## 1. Representative mapper migration
 

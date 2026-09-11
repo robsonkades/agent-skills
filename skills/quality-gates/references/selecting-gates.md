@@ -29,7 +29,7 @@ resolve correctly instead of remaining pending or falsely reporting tested succe
 
 ### A new REST endpoint reading existing data
 
-**Tier:** integrating. **Gates:** compile with `-Werror`, unit tests on the logic, a slice test
+**Tier:** integrating. **Candidate gates:** compile under the existing warning policy, unit tests on the logic, a slice test
 on request mapping and validation, one integration test proving the query works against the
 real engine, architecture tests, and contract verification if a consumer has one.
 
@@ -48,7 +48,9 @@ record why targeted query/load evidence is sufficient under that policy.
   deploy both run at once, and this is the check that is almost always skipped;
 - a written rollback, and a statement of whether it loses data.
 
-No gate proves the last one. It is a review item, and it is the item that matters most.
+Rehearse the applicable rollback or forward-recovery path and compare resulting data with the
+declared preservation requirements. This establishes behavior for the exercised states, not all
+production data, concurrent writers or recovery times; review those remaining limits explicitly.
 
 ### A minor version dependency bump
 
@@ -94,8 +96,8 @@ for the hotfix" becoming the normal path.
 - Gates that cannot be affected by the change (a path-filtered pipeline is a design, not a
   shortcut).
 - Long gates on a draft, moved to the point of merge.
-- A noisy gate whose findings are triaged asynchronously — provided someone actually triages
-  them, on a named schedule.
+- A gate explicitly classified as advisory by policy, with findings triaged by a named owner
+  on a named schedule. Noise alone does not authorize moving a required check after merge.
 
 ## Recording a skip
 

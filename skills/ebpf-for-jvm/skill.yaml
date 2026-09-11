@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: ebpf-for-jvm
-version: 2.1.1
+version: 2.1.2
 description: >-
   Using eBPF/bpftrace to measure kernel-visible behavior around a JVM without inventing
   attribution: selecting stable tracepoints versus kprobes/uprobes/USDT, scoping by
@@ -45,6 +45,8 @@ dependencies:
 
 suggests:
   - async-profiler-advanced
+  - jfr-and-async-profiler
+  - continuous-profiling
   - tcp-tuning
   - cpu-cache-and-numa
   - io-uring-and-zero-copy

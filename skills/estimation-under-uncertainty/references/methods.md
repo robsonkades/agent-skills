@@ -96,8 +96,8 @@ That is more useful than smearing the same contingency into every line.
 
 ## Decomposition
 
-Decompose until each piece is comparable to something you have actually done. The comparison —
-not the arithmetic — is where accuracy comes from.
+Use decomposition to expose work and obtain useful comparisons. Retain an adequate whole-change
+reference class; arithmetic and finer task boundaries do not resolve genuinely unfamiliar work.
 
 Two effects, both valuable:
 
@@ -114,20 +114,28 @@ Do not split work solely to manufacture independent inputs or narrower intervals
 Use comparable historical work to challenge inside-view estimates: how long did similar
 changes take under similar delivery conditions?
 
-It works because it captures everything your introspection omits — review latency, the
+It can capture costs introspection omits — review latency, the
 interruptions, the environment being down for a day, the rework after the first demo. Those
 costs may change with staffing, queues, scope and delivery process; inspect comparability.
 
 Practical version, needing no process change:
 
 1. Collect comparable changes and report sample size, selection criteria and time window.
-2. Take their actual elapsed time, from start to merged-and-deployed.
+2. Use start/end definitions matching the forecast event; for deployed completion, history
+   ending at merge omits deployment time. State the forecast origin and horizon.
 3. Use the observed spread as evidence, not automatically an 80% or 90% prediction interval.
    Three observations give little information about tails. Record named differences and
    unfinished work excluded from the sample; completed-only selection can bias forecasts.
 4. Preserve the forecast made at each decision point. Check later deadline hit rates or
-   interval coverage across comparable outcomes, as well as interval width; distinguish
-   scope changes from estimation errors. Avoid tuning and evaluating on the same examples.
+   interval coverage and width at comparable horizons and scope. Revisions are useful evidence,
+   but nine forecasts for one delivery are not nine independent delivery outcomes. Group by
+   delivery and forecast origin; distinguish scope changes and avoid fitting and evaluating on
+   the same outcomes or using information unavailable at the original forecast date.
+
+For work already underway, forecast remaining time from its current state and elapsed age.
+Use comparable remaining-work evidence or an explicitly conditional model; subtracting elapsed
+time from a fresh-work mean or percentile ignores that this item is still unfinished. Sparse
+history may support only scenarios or no numerical forecast; do not force a fitted model.
 
 When someone says "but this one is simpler", ask what specifically is simpler and by how much.
 The answer is often "we understand it better now", which is what the previous team also said.
@@ -161,16 +169,17 @@ percentiles as calibrated facts.
 
 ## Common distortions
 
-| Distortion                                   | Correction                                                |
-| -------------------------------------------- | --------------------------------------------------------- |
-| Estimating only the coding                   | Include review, rework, migration, deploy; use history    |
-| Anchoring on the number the asker said first | Estimate before hearing their date; then compare          |
-| Estimating for the best possible day         | Pessimistic case must include realistic interruption      |
-| One person estimating alone                  | Two independent estimates; discuss only where they differ |
-| Silent padding                               | Explicit buffer at plan level, visibly owned              |
-| Treating a stale estimate as still valid     | Re-estimate on new evidence and say it changed            |
+| Distortion                                   | Correction                                                 |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| Estimating only the coding                   | Include review, rework, migration, deploy; use history     |
+| Anchoring on the number the asker said first | Derive forecast from evidence; compare the supplied target |
+| Estimating for the best possible day         | Pessimistic case must include realistic interruption       |
+| One person estimating alone                  | Seek an independent view when it can change the decision   |
+| Silent padding                               | Explicit buffer at plan level, visibly owned               |
+| Treating a stale estimate as still valid     | Re-estimate on new evidence and say it changed             |
 
 ## Sources
 
 - [GAO Schedule Assessment Guide, Best Practices 3 and 8](https://www.gao.gov/assets/gao-16-89g.pdf): resource-aware schedules, dependencies, correlation and schedule risk analysis. Its project examples are not software-team calibration data.
 - [NIST prediction uncertainty](https://www.itl.nist.gov/div898/handbook/pmd/section5/pmd512.htm): prediction for a future observation differs from uncertainty in an estimated mean. The worked PERT arithmetic above remains a stated heuristic.
+- [Forecasting: Principles and Practice, time series cross-validation](https://otexts.com/fpp3/tscv.html): forecast-origin and horizon-aware evaluation without future-data leakage; applying this discipline does not make software deliveries a time series model.

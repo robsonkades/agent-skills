@@ -34,6 +34,13 @@ compiler settings, copy APIs, persistence mappings/provider and ownership before
 Do not upgrade Java or persistence libraries merely to fit an example. Deliver the copy purpose,
 per-field ownership/identity policy, concurrency precondition and relevant validation or gaps.
 
+Start with ordinary callers, supported subtype extensions and failure paths. Reuse source, tests,
+ownership and mapping evidence before asking whether the operation creates a fresh object/entity,
+shares a value or captures state. Ask only unresolved questions that change that contract; continue
+independent field-policy review and keep uncertain recommendations conditional. Retain an adequate
+copy or sharing implementation. A concise decision with validation and revisit conditions is enough;
+a review does not require a replacement API or completed implementation.
+
 ## When it is the answer
 
 ```text
@@ -41,9 +48,10 @@ An object's configuration is assembled at runtime and duplicating it
 is cheaper or more reliable than re-deriving it
         → Prototype, via a copy factory.
 
-The set of things to instantiate is registered by name at runtime and
-the registry does not know their classes
+Configured instances are registered by name at runtime and each new
+object must inherit their selected state, without knowing their classes
         → a registry of prototypes, each able to copy itself.
+          A registry of creators may suffice when no existing state must be copied.
 
 A mutable working object must be duplicated so two paths can diverge
 (a scenario, a draft, a what-if calculation)
@@ -56,8 +64,9 @@ A mutable working object must be duplicated so two paths can diverge
 - **The object is an immutable value and reference identity is irrelevant.** Share the instance.
   A distinct identity, lifecycle, ownership token, or native resource can still require a new
   object even when exposed state is immutable (`java-immutability`).
-- **The state can be re-derived from parameters.** Then a factory or builder is clearer, and the
-  new object does not inherit whatever the source accumulated.
+- **Only specified parameters should be inherited.** Compare a factory or builder with the existing
+  copy; reconstruction must preserve required state, extension contracts and operational constraints.
+  Being able to reconstruct the state alone does not make a correct copy unnecessary.
 - **Only polymorphic discovery is unnecessary.** A known concrete type can use a copy constructor
   or named factory; that may still implement Prototype intent without a copy interface.
 - **Only a few fields differ from the original.** Hand-written or generated `withX` methods can
@@ -104,6 +113,11 @@ IF the copy shares any mutable substructure with the original
 THEN classify the operation as shallow/selective/deep. Shared fields retain aliases;
      decide whether that sharing is intended and compatible with ownership.
 
+IF callers require a fresh object or preservation of runtime subtype
+THEN state and test that contract across supported subclasses. A constructor or static
+     factory does not automatically preserve an unknown subtype. Sharing or a deliberate
+     base-type projection is valid only when the requested contract permits it.
+
 IF the graph contains cycles or object identity is meaningful
 THEN a naive deep copy either loops forever or duplicates shared nodes.
      Use a per-operation identity map keyed by the original node. Bound depth/nodes/work;
@@ -131,8 +145,8 @@ THEN tests or construction structure must expose an omitted copy policy. A const
 
 ## Cross-cutting checks
 
-- **Concurrency.** Copying a mutable object is a multi-field read and is not atomic. Another
-  thread mutating the source mid-copy yields a "copy" that never existed — fields from before
+- **Concurrency.** Copying mutable state is not inherently an atomic multi-field read. Another
+  thread mutating the source mid-copy can yield a "copy" that never existed — fields from before
   and after the change. Either copy while holding whatever lock guards the source, or have the
   source expose an immutable snapshot and copy that. A `copy()` documented as thread-safe with
   no explanation of immutability, locking or snapshot publication is not evidence of safety (`java-memory-model`).
@@ -148,7 +162,8 @@ THEN tests or construction structure must expose an omitted copy policy. A const
   about cost, measure it (`allocation-profiling`).
 - **Testing.** A shared mutable prototype used as a test fixture is a cross-test dependency: one
   test mutating the copy's shared substructure changes another test's data. Prototype fixtures
-  must be deep-copied, or be immutable, or be rebuilt per test.
+  must isolate state whose mutation could affect another test. Selective copying can preserve
+  deliberate immutable or safe collaborator sharing; full deep copying is not always required.
 
 ## Review checklist
 

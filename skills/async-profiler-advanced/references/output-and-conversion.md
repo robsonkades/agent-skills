@@ -83,6 +83,9 @@ only the session this controller successfully started while it still owns that s
 `-d` is a client-side start/wait/stop sequence, not a guarantee that the target stops when the
 client is killed. Use the pinned release's documented agent-side timeout (v4.5 supports
 `--timeout`) or an independently supervised stop path, and test controller loss in staging.
+In v4.5, the [launcher](https://github.com/async-profiler/async-profiler/blob/v4.5/src/main/main.cpp)
+makes an implicit collection command start asynchronously with `--timeout`, even with `-d`;
+launcher exit confirms the start attempt, not completed output. Check target status and the file.
 Keep recording duration separate from loop rotation: `--loop 1h` below repeats indefinitely.
 
 ## Event combinations
@@ -160,7 +163,9 @@ at peak event rate, not only average traffic.
 For v4.5 method latency, use `--trace 'com.example.Service.handle:10ms'`, replacing the
 method with an actual instrumentable target; do not invent `-e trace`. This filters recorded
 calls by duration, but every instrumented invocation still incurs work. Runtime
-retransformation may deoptimize code; compare warmed controls and compilation behavior.
+retransformation may deoptimize code; include compilation behavior in the comparison.
+Use warmed controls for steady-state claims; for a startup or cold-path question preserve that
+lifecycle phase in the control and instrumented runs rather than warming away the affected work.
 
 For native leak candidates, retain frees and convert explicitly:
 

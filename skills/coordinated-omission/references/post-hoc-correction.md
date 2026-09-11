@@ -50,6 +50,11 @@ Histogram aggregate = new Histogram(highestTrackableNanos, significantDigits);
 aggregate.addWhileCorrectingForCoordinatedOmission(raw, expectedIntervalNanos);
 ```
 
+In HdrHistogram 2.2.2, a corrected add can mutate earlier buckets before a later value fails
+the destination's range check. Build corrections in a disposable, compatible destination
+and publish only after success. On failure, discard/rebuild from raw input; blindly retrying
+into the partially changed aggregate can count earlier additions again.
+
 Keep an immutable/raw artefact. Persist:
 
 - HdrHistogram version, value unit, range and significant digits;

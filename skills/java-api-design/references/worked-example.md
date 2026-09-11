@@ -20,6 +20,26 @@ public class GatewayImpl {
 
 ## Analysis
 
+Start with the consumer contract, before replacing declarations. In this **unpublished draft**,
+the established need is synchronous settlement with a receipt; async and notification flags
+were speculative. If they already serve supported callers, retain or migrate those behaviors
+explicitly instead of deleting them during API cleanup.
+
+The ordinary caller should be able to express the operation using the proposed types:
+
+```java
+Money amount = new Money(new BigDecimal("10.00"), Currency.getInstance("EUR"));
+SettlementRequest request = new SettlementRequest("merchant-42", amount, Duration.ofDays(2));
+SettlementReceipt receipt = gateway.settle(request);
+String settlementId = receipt.settlementId();
+```
+
+Here `gateway` is a borrowed collaborator; the call site does not create or close its transport.
+The three required request values have distinct roles/types and no optional construction steps,
+so a constructor is enough. A named factory would earn its place for different creation meanings;
+a builder for meaningful optional choices. Neither a staged builder nor a settlement DSL solves
+a demonstrated problem here. Revisit that decision if actual consumer cases introduce those needs.
+
 - Names come from the implementation (`doProcess`, `getData`), so a caller cannot predict
   behaviour or find the API by searching for domain words ("settle").
 - `String amt` plus `String curr` is a data clump with no validation home; `int window`
@@ -42,6 +62,9 @@ public record Money(BigDecimal amount, Currency currency) {
 
 public record SettlementRequest(String merchantId, Money amount, Duration settlementWindow) {
     public SettlementRequest {
+        Objects.requireNonNull(merchantId);
+        Objects.requireNonNull(amount);
+        Objects.requireNonNull(settlementWindow);
         if (settlementWindow.isNegative()) {
             throw new IllegalArgumentException("settlementWindow must not be negative");
         }
@@ -62,6 +85,11 @@ the booleans are gone — asynchronous settlement, if ever needed, will be a dif
 named method rather than a flag. `settle` returns a `SettlementReceipt`, so completion on
 the result leads the caller to the next facts (`settlementId()`, `settledAmount()`)
 without documentation.
+
+Misuse checks: `new SettlementRequest("merchant-42", amount, 2)` must fail compilation because
+the window has no unit. A null required value must fail construction with `NullPointerException`;
+a negative `Duration` must fail with `IllegalArgumentException`. Those local checks happen before
+submission. They do not establish remote failure handling, settlement correctness or retry safety.
 
 ## Evolving to v1.1
 
@@ -119,6 +147,21 @@ key and result atomically enough for the documented retry semantics. The caller 
 for the same logical operation. Idempotency owns the storage/failure protocol; this skill owns the
 compatible capability shape.
 
+An advanced caller opts into that capability explicitly:
+
+```java
+static SettlementReceipt submitWithKey(IdempotentSettlementGateway gateway,
+        SettlementRequest request, IdempotencyKey persistedOperationKey) {
+    return gateway.settleIdempotently(
+            new IdempotentSettlementRequest(request, persistedOperationKey));
+}
+```
+
+The caller obtains `persistedOperationKey` from the logical operation's durable state and reuses
+it for a permitted retry with the same request. A new random key on each attempt compiles but
+defeats deduplication. The capability contract must specify retention, same-key/different-payload
+handling and uncertain outcomes; this call site alone is not an implementation of that protocol.
+
 ## Trade-offs
 
 - Three public records instead of loose parameters: more types to document and to hold
@@ -133,6 +176,8 @@ compatible capability shape.
 
 Acceptance checks to run on a concrete implementation; these are not recorded test results:
 
+- Compile the ordinary and advanced call sites; reject the unitless-window caller. Execute
+  constructor checks for null required values, negative windows and valid zero/positive windows.
 - japicmp (or Revapi) comparing v1.1 against v1.0 reports only additions—no removed or changed
   signatures.
 - The v1.0 test suite runs unmodified against v1.1 and passes.

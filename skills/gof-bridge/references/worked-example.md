@@ -47,6 +47,10 @@ public interface Channel {
      */
     List<DeliveryOutcome> deliverAll(List<RenderedMessage> messages, Deadline deadline);
 
+    /** Immutable snapshot of advertised capabilities, not a reservation.
+     *  deliver/deliverAll must enforce current per-message constraints before the effect;
+     *  if an effect may already have occurred, preserve the unknown/partial outcome.
+     */
     Set<MessageFeature> supported();
 }
 ```
@@ -69,8 +73,9 @@ public final class Notifier {
 }
 ```
 
-Three notification kinds plus three channels: six types instead of nine, and the count now grows
-by addition. Digest windowing exists once.
+Three notification kinds plus three channels: six variation types instead of nine combined
+variants, plus the shared interfaces and wiring. Variation grows by addition; digest windowing
+exists once. Total type count alone is not the benefit.
 
 ## What the remote channel forced into the interface
 
@@ -94,8 +99,9 @@ Two lessons that generalise:
 ```java
 public DeliveryReceipt send(Notification notification, Deadline deadline) {
     var message = notification.render();
-    if (!channel.supported().containsAll(message.requiredFeatures())) {
-        throw new ChannelCannotCarry(message.requiredFeatures(), channel.supported());
+    var supported = channel.supported();
+    if (!supported.containsAll(message.requiredFeatures())) {
+        throw new ChannelCannotCarry(message.requiredFeatures(), supported);
     }
     return channel.deliver(message, deadline);
 }
@@ -104,6 +110,9 @@ public DeliveryReceipt send(Notification notification, Deadline deadline) {
 This is the runtime option, and it is the weaker of the two: an illegal pair can be constructed
 and only fails when a message is sent. It was chosen here because channel preference is user
 configuration that changes at runtime, so the pairing cannot be fixed at wiring time.
+The snapshot is an early rejection/diagnostic aid; it can become stale before delivery. The
+backend must enforce the actual request's constraints, and rejection is definitive only when
+no effect could have occurred. The caller does not acquire authority from this precheck.
 
 Where the pairing _is_ static, prefer making it uncompilable:
 
@@ -112,6 +121,9 @@ interface AttachmentChannel extends Channel { }          // email, push — not 
 
 record ReceiptNotifier(AttachmentChannel channel) { }    // SmsChannel does not fit
 ```
+
+The type excludes channels without attachment support; it does not prove that a particular
+payload fits current size/configuration limits or reserve capacity for a later call.
 
 ## The contract test
 
@@ -143,10 +155,11 @@ for these sketches. See [JUnit timeout limitations](https://docs.junit.org/5.11.
 ```text
 Before                     After
 ─────────────────────────  ────────────────────────────────────
-9 classes, growing ×       6 types, growing +
+9 combined variants        6 variation types, plus shared scaffolding
 digest logic ×3            digest logic ×1
 channel choice via type    channel injected; configurable per user
-"SMS cannot do receipts"   a capability set, checked in one place
+"SMS cannot do receipts"   advertised capability prefilter plus
+                            authoritative delivery validation
   handled nowhere
 adding a channel: 3 files  adding a channel: 1 file + it inherits
                              the contract test

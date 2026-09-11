@@ -23,7 +23,9 @@ still wrong.
 Inspect the project's Java release/toolchain, JMH version, annotation processor and benchmark
 packaging before supplying commands. The source contracts referenced here were checked against
 JMH 1.37, not a required upgrade. Verify generated harness/benchmark discovery with the resolved
-version; missing benchmarks or an IDE run are not evidence of a measured operation.
+version. A successful build or IDE launch alone does not establish that the intended benchmark
+ran. Prefer the standalone harness; an IDE-launched JMH Runner can run benchmarks, but inspect
+its generated code, discovered benchmarks, actual forks/arguments and competing host activity.
 
 ## Ownership boundary
 
@@ -38,7 +40,14 @@ version; missing benchmarks or an IDE run are not evidence of a measured operati
 
 ## Benchmark contract
 
-Write this before code:
+Start with the requested decision and reuse applicable source, generated harness code, raw results
+and controls already supplied. A version-matched annotation question can finish with an explanation;
+a benchmark design records planned checks separately from executed results. Ask for missing context
+only when it could change the design or conclusion. Adequate evidence may support keeping the
+existing experiment; missing evidence may justify an inconclusive answer and one focused next check.
+
+For an experiment, record the relevant parts of this contract before changing code. Production
+exposure and external validation apply when estimating system impact, rather than a local mechanism:
 
 ```text
 decision and smallest meaningful effect:
@@ -208,8 +217,9 @@ operation timing. In particular, moving allocation into invocation setup need no
 from B/op. Check the secondary metric's actual counter window and normalization separately.
 
 Use allocation as a high-signal regression dimension when it represents the outcome, but do not
-call it universally deterministic or JMH's most reliable number. Validate with compiler evidence
-and production allocation/GC behavior.
+call it universally deterministic or JMH's most reliable number. Use compiler evidence when the
+optimization context could change the conclusion; validate production allocation/GC effects before
+claiming those effects.
 
 ## From score to engineering decision
 
@@ -222,7 +232,9 @@ capacity/latency impact = function of hot fraction, concurrency, queueing, GC, a
 
 Amdahl's law can bound CPU speedup when its assumptions hold; it is not mandatory and does not
 model allocation, queueing, tail latency, resource contention, or changed parallelism by itself.
-Validate the change at the next realistic layer and explain divergence.
+For a system-impact claim, validate at the relevant next layer, reusing adequate existing evidence,
+and explain divergence. A local mechanism result can remain local; when external validation is
+unavailable, report that limit and any proposed check without claiming the system benefit is verified.
 
 ## Anti-patterns
 
@@ -238,14 +250,18 @@ Validate the change at the next realistic layer and explain divergence.
 
 ## Validation checklist
 
-- [ ] The contract and practical effect threshold are written.
+Apply these checks to the experiment and claims in scope. Select controls that can distinguish the
+material failure modes; a narrow source explanation does not require a measurement matrix. Mark
+planned, executed, missing and inapplicable checks distinctly rather than manufacturing a result.
+
+- [ ] The question and relevant contract are explicit; decision comparisons define a practical effect threshold.
 - [ ] Inputs, state sharing, reset, and result observation match the intended semantics.
-- [ ] Positive/negative controls and analytical scaling behave as expected.
+- [ ] Selected positive/negative controls and applicable analytical scaling support the interpretation, or unresolved discrepancies limit it.
 - [ ] Warm-up/measurement trajectories and compiler/GC activity support the lifecycle claim.
 - [ ] Multiple forks expose between-JVM behavior; raw fork identity is retained.
 - [ ] Comparison order, pairing/blocking, environment, versions, and flags are recorded.
 - [ ] Score, unit, operation denominator, secondary metrics, uncertainty, and exclusions are clear.
-- [ ] The claim is bounded to the benchmark context and validated at the next realistic layer.
+- [ ] The claim is bounded to the available evidence; system-impact claims have relevant external validation or remain unverified.
 
 ## References
 
