@@ -256,9 +256,23 @@ as "compilations" reports a JVM that never compiles anything. Read the rate from
 
 ```bash
 jfr print --events jdk.CompilerStatistics rec.jfr | grep -E 'startTime|compileCount'
-jfr view compiler-statistics rec.jfr        # totals for the recording
+jfr view compiler-statistics rec.jfr        # last cumulative snapshot, not interval totals
 jfr view longest-compilations rec.jfr       # only what crossed the jdk.Compilation threshold
 ```
+
+On this JDK 25 baseline, the `compiler-statistics` view uses `LAST(...)` over the cumulative
+VM counters. A recording started after warm-up can therefore show compilations that happened
+before recording began. For interval activity, subtract two `compileCount` samples from the
+same JVM and divide by their timestamp difference. For example, 42000 at 12:00:10 and 42030 at
+12:00:15 means 30 compilations over those 5 seconds (6/s), not 42030 during the recording.
+This is illustrative arithmetic, not a service measurement.
+
+Report the sample-covered interval; without samples at the recording boundaries, its edge
+activity is unknown. Fewer than two timed samples cannot establish a rate or zero activity.
+The same delta approach applies to cumulative `totalTimeSpent`, whose result is summed elapsed
+compilation duration, not CPU time. `peakTimeSpent` is a lifetime maximum; subtracting maxima
+does not recover the longest compilation in the interval. Use recorded `jdk.Compilation`
+durations for that question, with their threshold/coverage limitation.
 
 `jcmd <pid> Compiler.queue` prints `Current compiles`, `C1 compile queue` and `C2 compile
 queue` with `Empty` or one line per task; `jstat -compiler <pid>` prints `Compiled Failed
@@ -323,5 +337,7 @@ Decisions that follow:
 - [HotSpot 25.0.3 compilation policy](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilationPolicy.cpp)
 - [HotSpot 25.0.3 mode and threshold initialization](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)
 - [HotSpot 25 compile broker: waiting and elapsed timers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)
+- [JDK 25.0.3 JFR compiler-statistics view definition](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/query/view.ini)
+- [HotSpot 25.0.3 periodic compiler counters](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp)
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [JDK 25 `jcmd` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

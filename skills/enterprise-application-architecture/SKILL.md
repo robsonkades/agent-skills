@@ -32,8 +32,8 @@ nobody controls. Every pattern in this family exists to handle some part of that
 Business complexity      rules that are arbitrary, interacting, and revised
 Data complexity          a schema that outlives the code, and often
                          predates it and is owned by someone else
-Concurrency              users editing the same data over minutes, not
-                         milliseconds
+Concurrency              shared state and overlapping operations, within
+                         and across database transactions
 Consistency              which invariants must hold immediately, and which
                          may hold eventually
 Performance              round trips, transaction duration, read/write
@@ -61,7 +61,8 @@ iteration—for example, concurrency or a fixed schema may reshape aggregate and
 4. What are the aggregates? (if a
    domain model)                        → domain-logic-organization,
                                           repository-pattern
-5. How are concurrent edits handled?    → offline-concurrency-control
+5. How are edits spanning transactions
+   protected from stale state?         → offline-concurrency-control
 6. How are reads served?                → query-objects-and-specifications
 7. What crosses each boundary?          → remote-facade-and-dto,
                                           layering-and-boundaries
@@ -130,9 +131,12 @@ Something is expensive to change
           (enterprise-architecture-smells).
 
 Something is wrong under concurrency
-        → decide whether the conflict is inside a transaction
-          (enterprise-transactions) or across a user's thinking time
-          (offline-concurrency-control). They have different answers.
+        → locate the shared state, original read and authoritative write.
+          For database work, distinguish interference when each operation's
+          read/write fits within its transaction (enterprise-transactions)
+          from stale state carried into a later transaction
+          (offline-concurrency-control). Automated callers can carry stale
+          state too; elapsed time and the presence of a UI do not decide.
 
 A rewrite is being proposed
         → architecture-refactoring-paths for a pattern change;
@@ -145,6 +149,10 @@ A pattern name is being used as a justification
         → identify the force or binding constraint it answers
           (architecture-decision-making).
 ```
+
+For shared-memory races or task-lifecycle questions inside one JVM, hand off to
+`java-concurrency`. Database transaction isolation does not establish a JVM shared-state
+protocol; preserve any separate persistence question when both are involved.
 
 ## Rules
 

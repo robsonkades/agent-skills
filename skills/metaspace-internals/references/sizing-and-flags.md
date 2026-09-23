@@ -12,12 +12,18 @@ package remain historical; their missing vendor/architecture details cannot be r
 | --------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------- |
 | `-XX:MetaspaceSize`               | 22020096 bytes (≈ 21.0 MB)        | Threshold that triggers the first metaspace-driven collection — **not** a size cap       |
 | `-XX:MaxMetaspaceSize`            | 18446744073709551615 (`SIZE_MAX`) | Overall commitment limit on this build; effectively unbounded by default                 |
-| `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum % free after a metaspace collection, below which metaspace expands               |
-| `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum % free above which metaspace may shrink                                          |
+| `-XX:MinMetaspaceFreeRatio`       | 40                                | Minimum desired free % in GC high-water-mark policy; can raise the threshold             |
+| `-XX:MaxMetaspaceFreeRatio`       | 70                                | Maximum desired free % in GC high-water-mark policy; can lower the threshold             |
 | `-XX:MinMetaspaceExpansion`       | 327680 bytes (320 KB)             | Lower increment used in GC high-water-mark adjustment, not every arena/OS allocation     |
 | `-XX:MaxMetaspaceExpansion`       | 5439488 bytes (≈ 5.19 MB)         | GC high-water-mark expansion-policy parameter, not a hard cap on each allocation         |
 | `-XX:CompressedClassSpaceSize`    | 1073741824 bytes (1024 MB)        | Requested reservation/limit for compressed class metadata; verify the effective value    |
 | `-XX:+UseCompressedClassPointers` | `true`                            | Separate mechanism; effective mode can depend on build, architecture and heap ergonomics |
+
+The JDK 25 ratio policy adjusts `capacity_until_GC`, using committed metadata as its
+occupied baseline. A lower high-water mark changes when another metaspace-driven GC is
+requested; it does not itself uncommit pages or reduce RSS. For a footprint objective,
+compare threshold changes separately with used/committed memory, reusable blocks/chunks
+and actual reclamation. Do not interpret a threshold-shrink message as bytes returned to the OS.
 
 **`-XX:MetaspaceExpansionSize` is unrecognized on the checked build.** `java -XX:MetaspaceExpansionSize=5m -version`
 answers `Unrecognized VM option 'MetaspaceExpansionSize=5m'. Did you mean

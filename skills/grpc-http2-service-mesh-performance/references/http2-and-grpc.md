@@ -11,7 +11,8 @@
 
 A channel may create one or more connections, and a connection carries many streams. Confirm the
 deployed library's behavior rather than encoding a universal mapping.
-An active streaming RPC attempt occupies a stream until it finishes; retries/hedges add attempts.
+Once dispatched over HTTP/2, a streaming RPC attempt occupies a stream until it finishes;
+retries/hedges add attempts, but an attempt can fail locally before a stream is allocated.
 A terminating HTTP proxy has its own upstream pools: extra client channels need not create extra
 backend connections or fix backend skew. Observe actual connections and selected endpoints.
 
@@ -43,7 +44,7 @@ and test slow readers; both peers writing while neither reads can stall or deadl
 
 ## Runtime review
 
-- Reuse stubs/channels. Stubs are not closeable connections; the ManagedChannel owner initiates
+- Reuse base stubs/channels. Stubs are not closeable connections; the ManagedChannel owner initiates
   shutdown, awaits bounded termination, and escalates cancellation when needed. Close owned custom
   executors/event-loop groups according to the transport contract; shared ones need shared ownership.
 - Distinguish Netty transport event loops from gRPC callback/application executors. directExecutor
@@ -51,7 +52,13 @@ and test slow readers; both peers writing while neither reads can stall or deadl
   A channel pool may still share those same executors/event loops, so measure the actual bottleneck.
 - Attribute direct-buffer growth outside the Java heap and verify allocator/leak evidence.
 - Set deadlines from the caller's remaining budget; gRPC has no deadline by default. Include
-  connectivity/wait-for-ready and stream-slot queues in the budget. Java can propagate deadlines
+  connectivity/wait-for-ready and stream-slot queues in the budget. In grpc-java 1.84.0,
+  `withDeadlineAfter` creates an absolute deadline when called, not anew for every later RPC.
+  Derive and use the returned immutable stub for each RPC from the remaining budget; a cached
+  deadline-bearing stub eventually expires. Share an absolute deadline only when those calls
+  intentionally belong to the same operation budget. Inspect call options before treating immediate
+  expiry as channel saturation; recreating the channel does not fix deadline construction.
+  Java can propagate deadlines
   through gRPC Context, but async context loss or other APIs need explicit propagation. Cancellation
   requires server/application cooperation and does not roll back an already committed effect.
   Observe caller return, transport closure and application/resource release separately: cancelled
@@ -67,5 +74,8 @@ Primary references: [RFC 9113](https://www.rfc-editor.org/rfc/rfc9113),
 For Java-specific executor/ownership behavior inspect
 [ManagedChannelBuilder](https://grpc.github.io/grpc-java/javadoc/io/grpc/ManagedChannelBuilder.html)
 (served as grpc-java 1.84.0 when reviewed), and the deployed transport API.
+For immutable stub configuration and deadline construction see
+[AbstractStub](https://grpc.github.io/grpc-java/javadoc/io/grpc/stub/AbstractStub.html) and
+[grpc-java 1.84.0 CallOptions](https://github.com/grpc/grpc-java/blob/v1.84.0/api/src/main/java/io/grpc/CallOptions.java).
 See [gRPC streaming flow control](https://grpc.io/docs/guides/flow-control/) for read/write readiness;
 manual streaming API advice does not mean unary HTTP/2 DATA is exempt from protocol flow control.

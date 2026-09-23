@@ -1,5 +1,8 @@
 # Artefact formats
 
+These examples are illustrative formats, not observed execution results. Fill placeholders from
+actual evidence and leave missing historical details unknown.
+
 ## progress.md
 
 The current snapshot at material transitions and handoffs. It is the entry point for resuming,
@@ -13,6 +16,7 @@ Input revisions: Product r3; Engineering r2
 Plan: plan.md Depth: Deep Persistence: Dossier
 Plan revision: r4
 Ownership: agent-A owns RES-05/06/07/08; agent-B owns RES-09. Check current ownership before editing.
+Tracking writer: coordinator maintains this snapshot/log from resource-owner updates.
 Code/evidence baseline: <commit plus relevant working-tree revision>; example values below are illustrative.
 
 ## Resources
@@ -35,10 +39,13 @@ Code/evidence baseline: <commit plus relevant working-tree revision>; example va
 Q-08 — Is a repeated dispatch of the same order a duplicate to suppress, or a
 legitimate second dispatch with its own id?
 Blocks RES-07, and RES-08 through it. Asked 2026-09-05. Does not block RES-09.
+Resolution owner: product owner named in the accepted definition; agent-A tracks Q-08.
+Unblocks when: an applicable answer from that owner or an evidenced delegate establishes the
+uniqueness rule, with its source/revision recorded and affected criteria/contracts reconciled.
 
 ## Next
 
-RES-09. RES-05 resumes at the poison-message path.
+RES-09 (agent-B). RES-05 (agent-A) resumes at the poison-message path.
 
 ## Evidence
 
@@ -65,9 +72,14 @@ content follows the repository's redaction process, with a sanitized audit note.
 
 ## 2026-09-04
 
+Recorded: <actual recording timestamp>; actor: agent-A.
+Baseline: Product r3 / Engineering r2; plan r3; code: <commit plus relevant working-tree revision>.
+Event dates: 2026-09-04; exact start/completion times were not captured.
+
 RES-01 started.
 RES-01 done. Applied V42 to a copy of the current schema (40,112 rows); all rows read
-back as LEGACY. Files: V42__order_dispatch_state.sql.
+back as LEGACY. Files: V42__order_dispatch_state.sql. EV-01 records the command,
+assertions, checked revision and environment.
 RES-11 cancelled. ED-11 identifies its scope as duplicate producer transport retries already
 covered by the configured client; application retries, duplicate effects and deadlines retain
 their existing owners and required tests. Broker retries alone do not cover those contracts.
@@ -75,11 +87,15 @@ Plan amended accordingly.
 
 ## 2026-09-05
 
+Recorded: <actual recording timestamp>; actor: agent-A.
+Baseline: Product r3 / Engineering r2; plan r3 -> r4; code: <commit plus relevant working-tree revision>.
+Event dates: 2026-09-05; exact event times were not captured.
+
 RES-05 started.
 RES-05 paused, IN_PROGRESS. Consumer, deserialisation and happy path implemented;
 DispatchConsumerTest written but not run. Poison path outstanding.
 RES-07 blocked. The uniqueness scope of the idempotency key depends on whether a
-repeated dispatch is a duplicate. Asked as Q-08. Blocks RES-08. Proceeding with RES-09.
+repeated dispatch is a duplicate. Asked as Q-08. Blocks RES-08. Agent-B continues with RES-09.
 Plan amended: RES-06 added — implementing RES-05 revealed an acknowledgement-path question
 that no resource covered. Check the existing container/base
 consumer before adding manual acknowledgement; duplicated acknowledgement can break delivery.
@@ -111,7 +127,11 @@ when changes or gaps invalidate it, not merely because a new session began.
 
 If state disagrees, determine whether tracking is stale, code regressed or the accepted plan
 changed. Preserve other contributors' work and reopen only affected resources/evidence.
-Resolve a blocker from recorded answers before asking the same question again.
+Check recorded answers before asking the same question again. Resolve a blocker only when the
+answer or restored condition is evidenced, applicable to the current revision, and within the
+responder's established authority where a decision is required. Record the resolution source
+and reassess dependent work; a proposal or expired decision alone does not unblock it, and
+unblocking does not imply DONE.
 
 ## Feature status line
 

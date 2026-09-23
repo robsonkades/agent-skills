@@ -27,8 +27,10 @@ from outside.
 
 ## Workflow
 
-1. **Start from agreed scope and accepted decisions**, not an assumed design. Record the input revision and
-   trace accepted items to `SC-*`; recommended work is conditional until included. If used
+1. **Start from agreed scope and accepted decisions**, not an assumed design. Record the feature
+   revision, any accepted contract revisions, each inspected repository revision and relevant
+   working-tree changes.
+   Trace accepted items to `SC-*`; recommended work is conditional until included. If used
    alone, derive a small scope list from the request. Discovered impacts of accepted work
    remain relevant even if their files were absent from that list; surface new requirements
    as scope questions rather than silently adding them.
@@ -59,9 +61,9 @@ THEN link the applicable accepted contract revision and record the compatibility
      Changed or missing semantics need a decision/CT-* handoff through feature-contract-definition;
      do not duplicate a settled contract or choose its new semantics while mapping impacts.
 
-IF an element is READ and its behaviour is being relied on more heavily
-THEN it belongs in the map. Load, contention and failure modes travel to callers
-     that never changed.
+IF an element is READ and the dependency is new, heavier or used under changed conditions
+THEN it belongs in the map. Changed values, ordering, transaction scope or failure handling
+     can affect unchanged code even when call counts and load do not increase.
 
 IF the impact crosses a module boundary
 THEN say which direction the dependency runs, and whether the direction is new.
@@ -100,7 +102,7 @@ THEN say so with the search boundary; lower review depth only if risk evidence s
 
 ```text
 Feature impact map
-Input revision / scope baseline / inspected repositories and environments
+Feature/contract baseline / repository revisions + relevant working-tree changes / environments
 
 api/
   IMP-01 OrderController.java:41     MODIFIED  EXTERNAL   new endpoint <- SC-01
@@ -129,6 +131,8 @@ Unknowns             <what could not be established, next check/owner, and what 
 
 Before handoff, check that every accepted scope item maps to impacts or an evidenced no-impact
 conclusion, locators match the inspected revision, and affected consumers and verification points are
-traceable. Material unknowns name their next check/owner and dependent work; they do not prevent
+traceable. If scope, contracts, code or wiring change, recheck affected entries and their propagation
+before reusing the map; a path that still exists does not make old evidence current.
+Material unknowns name their next check/owner and dependent work; they do not prevent
 reporting the supported map or imply implementation readiness. A local feature may need only a few
 entries. Close with the affected parties and credible consequences if the feature is wrong.

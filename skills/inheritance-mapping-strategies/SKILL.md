@@ -43,10 +43,10 @@ Class table           one table per class in the hierarchy, joined by the
 (JOINED)              shared primary key. Subtype entity loads generally join
                       through mapped levels; projections may not.
 
-Concrete table        one table per concrete subtype, each with every
-(TABLE_PER_CLASS)     column. No shared table, so polymorphic queries are
-                      typically UNIONs or separate queries. An ordinary
-                      FK cannot target the hierarchy without a base table.
+Concrete table        one table per concrete entity class, including a concrete
+(TABLE_PER_CLASS)     root, each with its own and inherited columns. No table contains
+                      all hierarchy rows; polymorphic queries typically use UNIONs
+                      or separate queries. A root table alone is not a hierarchy FK target.
 ```
 
 ## Workflow
@@ -140,7 +140,9 @@ without a deploy
   database/version and DDL; additive does not mean online. Changing
   strategy later usually requires a substantial data migration. It is expensive, not literally
   one-way; use expand/contract, reconciliation and rollback/forward-fix analysis
-  (`architecture-decision-making`).
+  (`architecture-decision-making`). When SQL changes mapped state or reclassifies rows,
+  include existing persistence contexts, optimistic versions and configured caches in the
+  cutover plan; see the schema-evolution reference.
 - Choose indexes from predicates and selectivity. Partial/filtered indexes can help sparse
   subtype data where supported and where the query implies their predicate; inspect the
   generated, possibly parameterized SQL and plan.

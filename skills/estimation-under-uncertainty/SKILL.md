@@ -41,9 +41,11 @@ permits, or identify what must be learned before a number is useful.
    provisional and do not fabricate a coverage percentage
    (`references/methods.md`).
 4. **Combine them with their dependencies.** For a sum, expected values add; variances add
-   when covariances are zero, as under independence. Shared people, platforms, approvals and integration risks create
-   correlation; model them explicitly. Simulation does not infer missing dependencies or
-   capacity constraints. A sum of effort is not automatically elapsed project duration.
+   when covariances are zero, as under independence. Shared uncertain productivity, outages or
+   integration risks can correlate durations. Shared people also constrain parallel work even
+   when task durations are independent. Model precedence, capacity and calendars separately
+   from statistical dependence; simulation does not infer them. A sum of effort is not
+   automatically elapsed project duration.
 5. **Calibrate against comparable history.** Record sample count, start/end definitions,
    changed team conditions and omissions. Three examples can anchor discussion, not establish
    reliable tail percentiles. Compare forecasts with later outcomes without replacing old estimates.
@@ -64,9 +66,11 @@ detail to the decision; do not invent a date, owner or probability merely to fil
 - Avoid a bare single number when uncertainty affects the decision. If supported, give the
   range and explain the planning value selected from it for the decision's risk tolerance.
   Keep assumptions and residual risks visible; an unsupported broad range is still a guess.
-- State whether the range is a scenario span or a calibrated prediction interval, and whether
-  a quoted percentile is a deadline or interval endpoint. A confidence interval for a mean
-  does not describe the uncertainty of one future delivery.
+- Distinguish a scenario span, a conditional model interval and an interval with coverage
+  checked against comparable outcomes. State calibration evidence or its absence; a nominal
+  model probability is not observed reliability. Say whether a quoted percentile is a deadline
+  or interval endpoint. A confidence interval for a mean does not describe the uncertainty of
+  one future delivery.
 - Estimate, target and commitment are three different things and must be named separately. An
   estimate is what you predict, a target is what someone wants, a commitment is what you have
   promised. Deriving an estimate from a target is how a project becomes late on day one.

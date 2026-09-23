@@ -137,6 +137,11 @@ Multi-request conversation state
   authorization, orchestration and multiple callers can justify it; read-only or remote
   operations need not start a database transaction
   (`service-layer-design`).
+- **Outbox follows a durable-publication requirement, not a Domain Model requirement.**
+  When business state and publication intent must commit together, compare an outbox with
+  the existing delivery contract. Transaction Scripts can need it too; a local synchronous
+  event alone does not. Include consumer repeat safety in the composition, since an outbox
+  does not make downstream effects exactly once.
 - **Set-based operations need explicit invariant and concurrency handling.** Table Module
   can own business rules over tabular data; it does not inherently bypass every invariant.
 - Reads and writes may use different patterns when query and invariant forces diverge.

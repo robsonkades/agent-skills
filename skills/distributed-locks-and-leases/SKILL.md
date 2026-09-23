@@ -55,10 +55,13 @@ transaction-scoped lock in that same resource, or a repeat-safe invariant.
 5. **Use the implementation's ownership and cleanup protocol.** For key/value leases, the lock
    value is a unique owner token; release
    compares it and deletes only on a match, atomically. A bare `DEL` releases whoever holds it
-   now — a lock-stealing bug that appears only after the first expiry.
+   now — a stale-release bug after expiry or another ownership loss/regrant, including failover.
    Renewal must also atomically compare the owner token before extending expiry. For session or
    transaction locks, own that scope and use its supported release/end operation. An acquisition
    timeout is unknown, not a grant. A renewal timeout must not extend established validity.
+   Even a successful reply can arrive too late: derive remaining validity from the protocol,
+   never restart a full TTL at response arrival. For acquisition and renewal budgets, read
+   `references/lock-decision.md`.
    Stop admitting work before authority is lost; cancellation does not prove in-flight effects
    stopped, so resource enforcement remains necessary.
 6. **Size the lease as a liveness trade-off, not a proof.** Use measured duration and pause

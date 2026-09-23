@@ -86,25 +86,32 @@ Three decisions worth naming:
 
 ```java
 @Bean
-List<AuthorisationRule> authorisationRules(TenantOverrideRule tenant,
-                                           ContractLimitRule contract,
-                                           ProductThresholdRule product,
-                                           CatalogueDefaultRule catalogue) {
+AuthorisationRules authorisationRules(TenantOverrideRule tenant,
+                                      ContractLimitRule contract,
+                                      ProductThresholdRule product,
+                                      CatalogueDefaultRule catalogue) {
     // Most specific first. CatalogueDefaultRule matches every payment and
     // MUST stay last; anything after it is unreachable.
-    return List.of(tenant, contract, product, catalogue);
+    return new AuthorisationRules(List.of(tenant, contract, product, catalogue));
 }
 ```
 
 ```java
 @Test
-void the_catch_all_rule_is_last() {
-    assertThat(rules.get(rules.size() - 1)).isInstanceOf(CatalogueDefaultRule.class);
+void the_configured_chain_uses_the_specific_rule_before_the_default() {
+    var payment = payment().withTenant(OVERRIDDEN).overContractLimit().build();
+    var configured = applicationContext.getBean(AuthorisationRules.class);
+    assertThat(configured.decide(payment)).isEqualTo(Decision.approve());
 }
 ```
 
-That test looks trivial and it is the one that fires when someone appends a new rule to the end of
-the list, six months from now, and quietly makes it dead code.
+This partial Spring/JUnit test uses the real composition configuration and fixtures where the
+authorized tenant override approves while the contract and default would refer. It therefore
+checks the owner callers actually receive, not merely the contents of an unused list bean.
+Construct that owner only through the shown factory; do not also component-scan a duplicate.
+Add overlapping cases for the other required precedence relationships and assert that handlers
+after the first decision are not invoked. An assertion that a separate list ends with the
+default would miss a consumer wired with a different collection.
 
 ## Then the default rule stopped matching everything
 
@@ -124,7 +131,20 @@ accepted total-default policy, assert the outcome as well as presence for releva
 void the_default_rule_has_an_opinion_about_every_payment(@ForAll("payments") Payment p) {
     assertThat(new CatalogueDefaultRule(limits).apply(p)).isPresent();
 }
+
+@Test
+void the_default_rule_preserves_the_accepted_limit_policy() {
+    var rule = new CatalogueDefaultRule(limitsWithDefault("100.00"));
+    assertThat(rule.apply(cataloguePayment("99.99"))).contains(Decision.approve());
+    assertThat(rule.apply(cataloguePayment("100.00"))).contains(Decision.approve());
+    assertThat(rule.apply(cataloguePayment("100.01"))).contains(Decision.refer("default limit"));
+}
 ```
+
+These partial fixture helpers supply known catalogue products, exact decimal amounts in the
+same currency, and the original strictly-greater-than limit policy. The presence property
+checks totality; the outcome cases catch an always-approve rule that would pass that property.
+Use separately agreed cases for unknown products rather than importing this approval policy.
 
 ## When a rule acquired a side effect
 

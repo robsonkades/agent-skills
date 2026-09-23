@@ -45,8 +45,11 @@ on the change.
    is it to undo? This one answer sets the test level, the gate set and the review depth for
    everything that follows.
 4. **Decide the test approach** before implementing: which level, and whether the change is
-   driven by tests or verified after (java-testing-strategy, tdd). For a bug, the reproduction
-   comes first.
+   driven by tests or verified after (java-testing-strategy, tdd). For a bug, capture the
+   observed failure and attempt a safe reproduction before the fix. If reproduction remains
+   unavailable, record the evidence and limits of the proposed fix (debugging). During an
+   incident, authorized mitigation may precede reproduction: preserve evidence within the
+   response budget and distinguish service recovery from a verified cause.
 5. **Implement in reviewable, reversible steps**, keeping the tree green where practical. Separate
    preparatory refactoring from behaviour when each is independently valid and testable. When a
    safe refactoring exists only to enable the behaviour, preserve the distinction in the diff or
@@ -69,9 +72,11 @@ on the change.
 
 - Understand the affected path before editing it, including under urgency. Revisit earlier
   decisions when implementation or verification exposes a false assumption.
-- Ceremony scales with risk, and risk is not proportional to diff size. A 900-line rename
-  verified by the compiler is a lighter change than a one-character timeout default
-  (`references/workflow-by-risk.md`).
+- Ceremony scales with risk, and risk is not proportional to diff size. A large rename
+  confined to compiler-resolved internal references can be lower risk than a small timeout
+  change. Reflection, persisted/serialized names and external consumers can invalidate that
+  classification; compilation alone does not verify those contracts (java-refactoring).
+  See `references/workflow-by-risk.md` for risk-dependent sequencing.
 - Do not start editing to understand. Read first; if the code is genuinely unreadable, that is a
   finding to report, not a reason to start rewriting it.
 - Prefer one coherent change per commit. Separate refactoring from behaviour when the refactoring
@@ -94,8 +99,8 @@ on the change.
 
 - **Workflow by risk** — `references/workflow-by-risk.md`. What each step actually collapses to
   at three risk levels, walked through on a configuration fix, a new endpoint and a schema
-  migration — including which steps disappear entirely and which never do. Read when deciding
-  how much process a change warrants.
+  migration, plus incident mitigation before reproduction. Read when deciding how much
+  process a change warrants or when incident response changes the sequence.
 - **Routing** — `references/routing.md`. Situation-to-skill map across this repository: the
   craftsmanship skills, the Java language and design skills, testing, concurrency, performance,
   architecture and operations. Read when you know the problem but not which skill owns it, or

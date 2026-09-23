@@ -2,6 +2,10 @@
 
 ## Transparent, safe, sealed — the same tree three ways
 
+Alternative partial Java 21 sketches: the repeated declarations are separate designs, and imports
+are omitted. The sealed size example counts nonnegative bytes once per path and rejects a total
+outside `long`; its recursive method is for validated, bounded-depth input.
+
 ```java
 // Transparent: one type, leaves throw
 interface Node {
@@ -18,11 +22,18 @@ sealed interface Node permits Leaf, Branch {
     long size();
 }
 record Leaf(String name, long bytes) implements Node {
+    Leaf {
+        if (bytes < 0) throw new IllegalArgumentException("negative byte size");
+    }
     public long size() { return bytes; }
 }
 record Branch(String name, List<Node> children) implements Node {
     Branch { children = List.copyOf(children); }
-    public long size() { return children.stream().mapToLong(Node::size).sum(); }
+    public long size() {
+        long total = 0;
+        for (Node child : children) total = Math.addExact(total, child.size());
+        return total;
+    }
 }
 ```
 
@@ -57,13 +68,19 @@ static long size(Node root) {
     stack.push(root);
     while (!stack.isEmpty()) {
         switch (stack.pop()) {
-            case Leaf leaf -> total += leaf.bytes();
+            case Leaf leaf -> total = Math.addExact(total, leaf.bytes());
             case Branch branch -> branch.children().forEach(stack::push);
         }
     }
     return total;
 }
 ```
+
+Both size implementations reject overflow with `ArithmeticException` through
+[`Math.addExact`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Math.html#addExact(long,long)>).
+Depth and node-count limits alone do not establish a safe numeric range: two nonnegative leaves
+can already overflow `long`. Preserve the application's chosen failure contract or use a wider
+representation when larger exact totals are required.
 
 And bound the depth where the tree is built from input you do not control:
 
@@ -100,28 +117,43 @@ Rules:
 - **Record methods include every component by default.** The failure requires a cycle actually
   followed by the component operations; a parent field alone is not proof. Self-equality may
   short-circuit even when structural hashing or rendering overflows. Omit cyclic components from
-  structural methods or choose explicit identity/ID semantics where appropriate.
-- **Prefer not to store the parent.** Pass it down during traversal, or keep an external
-  identity-keyed `IdentityHashMap<Node, Node>` or stable-ID map for operations that need it;
-  a structural HashMap key can recursively hash the same tree. Most parent pointers exist for one
-  method that could have taken a path instead.
+  structural methods only when that preserves the required equality contract; see the record
+  invariant below.
+- **Prefer passing the current path when it supplies the needed parent.** An external
+  identity-keyed `IdentityHashMap<Node, Node>` can index a single-parent tree without recursively
+  hashing its keys. It cannot retain multiple parents of a shared node: a later `put` replaces
+  the earlier mapping. For shared structures, retain the required parent/edge occurrences or
+  pass the path for this traversal. Stable-ID keys are another option when their uniqueness and
+  lifetime are defined. See the [identity-map contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/IdentityHashMap.html).
 - **If the parent must be stored**, exclude the back-reference from structural operations or
-  use identity (`==`)/stable-ID semantics, according to the consumer contract. Document that choice.
+  use stable-ID semantics only as allowed by the consumer contract. Identity-based traversal
+  bookkeeping does not require replacing node equality with `==`.
 - **Reject forbidden cycles at construction**, using active-path identity rather than equality
   or a global set that also rejects legal sharing. Mutable/external graphs may change later;
   operation-specific visited/path guards and work limits must then prevent hangs at traversal too.
 
 ## `equals` and `hashCode` on a recursive structure
 
-Even without cycles, structural equality on a tree is O(n) and recursive, and `hashCode` is worse
-because it is called on every map insertion. A large tree used as a `HashMap` key computes its
-hash over the whole structure each time unless it is cached.
+Generated structural methods may visit descendants recursively even when the business traversal
+is iterative. An acyclic tree can still overflow the stack during equality, hashing or rendering.
+Equality may short-circuit; an uncached structural hash may traverse the entire tree on each
+lookup/insertion. For shared DAGs, repeated descendant expansion can cost far more than the number
+of distinct nodes. Assess the actual method and structure rather than ranking hashing as always worse.
 
-The practical guidance: give tree nodes an identity (an id) and key maps by that; reserve
-structural equality for tests and for small trees. If structural equality is genuinely needed on
-a large immutable tree, cache the hash in a field computed once at construction — which is only
-safe if the tree is deeply immutable, including its `List`. A record cannot declare an extra
-instance cache field: use an ordinary immutable class or an external identity-based cache.
+Preserve required value equality: replacing it with IDs can change map lookup, set membership and
+deduplication behavior. Use identity-keyed maps for traversal metadata, or stable-ID keys for
+entity-oriented operations whose contract calls for them. When large value trees need structural
+comparison, use bounded/iterative algorithms and test equal-but-distinct instances, required
+sharing semantics and deep inputs. A cached hash is not proof of equality; collisions still need
+comparison. The [Object contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html)
+govern equality and hashing together.
+
+Cache a structural hash only while equality-relevant state remains immutable. Bound external cache
+retention and avoid structural keys that recursively compute the hash being cached. Records cannot
+declare an extra instance cache field; an ordinary immutable class or external identity-keyed cache
+can hold it. A record must also preserve its copy invariant: reconstructing it from its component
+accessors produces an equal value. Overriding a record's `equals` with reference-only `==` violates
+that invariant; see [Record](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html).
 
 ## Mutation and traversal
 

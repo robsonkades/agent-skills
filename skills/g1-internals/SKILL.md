@@ -44,7 +44,7 @@ question. An explanation or a justified unchanged configuration can complete the
 
 1. **Read young and mixed collections separately.** They are different events with
    different budgets; grep them apart before computing any statistic.
-2. **Break the pause into phases** with `-Xlog:gc+phases` and identify which one dominates.
+2. **Break the pause into phases** with `-Xlog:gc+phases=debug` and identify which one dominates.
    Everything after this step depends on that answer.
 3. **If `Evacuate Collection Set` dominates**, distinguish `Object Copy` from root scanning.
    For copying, correlate live bytes, promotion and CSet size with worker imbalance, CPU availability
@@ -52,7 +52,7 @@ question. An explanation or a justified unchanged configuration can complete the
 4. **If `Merge Heap Roots` / `Merge RS` dominates**, inspect card-set merging and pending dirty
    cards; correlate `Scan Heap Roots` separately for heap-reference scanning. Check reference fan-in,
    RSet representation and refinement activity before selecting an action.
-5. **Check humongous allocation** with `-Xlog:gc+humongous` whenever the old generation
+5. **Check humongous allocation** with `-Xlog:gc+humongous=debug` whenever the old generation
    grows without matching application state. Short-lived buffers above half a region can mimic
    retention until eager reclaim or a completed marking cycle; prove allocation, eligibility and
    reclamation rather than declaring either leak or non-leak from occupancy alone.

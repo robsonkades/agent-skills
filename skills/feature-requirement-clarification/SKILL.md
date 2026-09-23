@@ -37,7 +37,8 @@ bounded gap; it need not prove that no answer exists anywhere.
    policy/contract evidence before asking again. Run a focused repository check only when it could
    settle the remaining gap; a scope question needed to locate relevant code can come first.
 3. **Price each surviving question** by impact, and mark BLOCKING or NON-BLOCKING
-   (`references/impact-and-blocking.md`). Most questions are neither high-impact nor blocking.
+   (`references/impact-and-blocking.md`). Assess consequences and the work about to start;
+   high impact alone does not establish a blocker.
 4. **Group dynamically into rounds** (`references/question-rounds.md`). Ask one question when its
    answer controls what is worth asking next; ask two or three only when they share one decision area.
    There is no target number of rounds.
@@ -46,6 +47,9 @@ bounded gap; it need not prove that no answer exists anywhere.
 6. **Proceed with independent authorized work.** Keep later consequential questions unresolved until
    their answers are needed. Adopt a stated, bounded assumption only for a reversible choice within
    existing authority; non-blocking for current work does not mean the missing answer was decided.
+7. **Update question state when an answer arrives or changes.** Record its source and applicable
+   scope; close only what it resolves. When an accepted answer changes, reassess affected questions
+   and dependent work using `references/question-rounds.md`; preserve unaffected answers.
 
 ## The repository-first rule
 

@@ -126,13 +126,41 @@ public class Outcomes {
 JMH resets public counter fields before each iteration and reads them afterward. Numeric
 getter methods are also metrics but their backing state needs explicit lifecycle management;
 keep other helper fields/methods non-public to avoid accidental metrics/name collisions.
-`EVENTS` counters are event counts, not automatically rates or fractions. `OPERATIONS` uses
-time normalization and can produce a secondary operation rate/time; inspect units and mode
-before computing ratios. Throughput and AverageTime support these counters; verify other
-modes in the pinned harness. Aggregate matching populations before testing
-`success + failure = attempts`; do not mix warm-up with measurement or group roles with
-different denominators. A shared atomic counter outside AuxCounters may create contention
-being measured. Calibrate counter overhead against an uninstrumented run.
+Throughput and AverageTime support these counters; verify other modes in the pinned harness.
+This is an experimental JMH API, so check the pinned implementation when upgrading it.
+
+Before deriving a fraction or rate, distinguish three boundaries in JMH 1.37:
+
+- **Collection window.** The generated Throughput/AverageTime harness resets auxiliary fields
+  before iteration synchronization and reads them after iteration teardown. Benchmark calls in
+  the synchronization warmup/warmdown loops can therefore increment counters without increasing
+  `measuredOps`. These loops are distinct from configured warm-up iterations: `-wi 0` does not
+  establish matching windows. Do not clear counters in iteration teardown before JMH reads them.
+- **Operation unit.** The primary count scales measured invocations by
+  `opsPerInvocation / batchSize`. `OPERATIONS` passes the raw auxiliary count to the secondary
+  rate/time result without that scaling. Matching `ops/s` labels do not establish matching
+  meanings. Inspect effective options and generated code, including any getter's own scaling.
+- **Aggregation.** `EVENTS` produces a `#` result with sum aggregation across collected
+  observations, not a duration-, iteration-, or fork-independent rate. Retain per-iteration/fork
+  counts and exposure when comparing runs. `OPERATIONS` produces a time-normalized result;
+  Throughput and AverageTime have different dimensions, so a ratio of their scores is not
+  automatically an event fraction.
+
+For example, suppose each invocation processes eight items with `@OperationsPerInvocation(8)`,
+batch size one, and increments an `OPERATIONS` success counter once when all eight succeed.
+Even with matching windows, secondary throughput divided by primary throughput is about `1/8`
+at 100% invocation success: the numerator counts successful invocations and the denominator
+counts items. Fix the unit definition before interpreting this as a failure rate; the window
+check is still required.
+
+For a realized success fraction, aggregate matching `EVENTS` success and attempt counts, then
+divide, explicitly labeling the counter population. Check `success + failure = attempts` at
+the same update points; do not pool warm-up iterations with measurement or different group roles
+unless that population is intentional. That identity can hold even when the counters include
+synchronization calls: it does not prove a measurement-only fraction. If that narrower claim
+matters, validate the collection boundary in the generated harness and any instrumentation
+used to align it. A shared atomic counter outside AuxCounters may create contention being
+measured. Calibrate counter overhead against an uninstrumented run.
 
 ## Parameter matrix budget
 
@@ -224,4 +252,7 @@ mandatory full experiment.
 - [JMH asymmetric sample](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_15_Asymmetric.java)
 - [JMH `AuxCounters` API](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/AuxCounters.html)
 - [JMH 1.37 AuxCounters source](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/AuxCounters.java) — scope, lifecycle and normalization contracts.
+- [JMH 1.37 benchmark generator](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/generators/core/BenchmarkGenerator.java) — synchronization loops, reset/read order and primary operation scaling.
+- [JMH 1.37 state handler](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/generators/core/StateObjectHandler.java) — raw auxiliary counts, result modes and `EVENTS` sum policy.
+- [JMH 1.37 scalar results](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/results/ScalarResult.java) — aggregation of event-count observations.
 - [JMH annotations API](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/package-summary.html)

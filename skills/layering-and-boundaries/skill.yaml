@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: layering-and-boundaries
-version: 1.2.2
+version: 1.2.3
 description: >-
   Deciding where an enterprise application's boundaries go and which direction dependencies
   cross them: the classical presentation / domain / data-source split, the styles that

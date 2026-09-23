@@ -42,8 +42,9 @@ unclear, resolve that boundary before creating a delivery breakdown.
 
 ## Delivery resource workflow
 
-1. **Test whether to decompose at all.** If the feature is one resource, say so and produce a
-   one-line list. That is a complete answer.
+1. **Test whether to decompose at all.** If the feature is one resource, a concise `RES-*` entry
+   is sufficient: retain its identity, scope, applicable acceptance and validation, plus relevant
+   prerequisites and shared ownership. A short answer still satisfies those obligations.
 2. **Produce the resource list first**, from the impact map. Account for each entry as scoped work,
    validation coverage or an evidenced unchanged dependency. A `READ` entry need not become an edit:
    link the resource that verifies its relied-on behavior or cite applicable existing evidence.
@@ -57,10 +58,10 @@ unclear, resolve that boundary before creating a delivery breakdown.
 5. **Keep enabling work as resources by default.** A migration, component, infrastructure change, or
    test harness is `RES-*` unless it independently reduces risk/cost or enables a usable capability
    with its own acceptance. Do not manufacture a Tech Feature from a phase or layer.
-6. **Order the resources** by their dependencies, and say where the order is forced versus
-   merely convenient.
-   Check missing IDs and cycles. A cycle calls for clarifying a shared contract, splitting a
-   producer from its consumer, or merging inseparable work; do not invent a linear order over it.
+6. **Order the resources** by implementation prerequisites, with validation/release gates identified
+   separately, and say where the order is forced versus merely convenient. Check missing IDs and
+   cycles in the required order. A cycle calls for clarifying a shared contract, separating the
+   relevant readiness milestones, or merging inseparable work; do not invent a linear order over it.
 7. **Say why the shape is what it is** — including "not decomposed, because it is one resource".
 
 ## When to decompose
@@ -96,15 +97,18 @@ IF two resources always change together and are always validated together
 THEN consider merging unless ownership, staged compatibility or a real handoff requires separation.
 
 IF a resource cannot be validated without another resource existing
-THEN say so in its validation, and let the order follow from it.
+THEN name the validation gate and its prerequisites. Do not infer implementation order from
+     validation order when an agreed contract or fixture permits independent implementation.
 
 IF a resource lacks a path to in-scope impact and acceptance
 THEN identify the missing mapping or scope decision. One impact entry can justify several
      resources, and one resource can satisfy several entries; counts are not a scope test.
 
-IF a resource is "write the tests"
-THEN it is misplaced: tests belong to the resource whose behaviour they establish.
-     A separate test resource is legitimate only for shared harness or fixture work.
+IF a resource is "write the tests" for another resource's behaviour
+THEN keep those tests with that resource by default. Separate shared harness work, accepted
+     test-coverage outcomes or cross-resource validation only when the scope or handoff warrants it.
+     Name the criterion, prerequisites and shared-work owner; do not invent production changes
+     for a feature whose accepted outcome is testing existing behaviour.
 
 IF preparing a delivery breakdown for a Light feature
 THEN return one concise resource with its validation when it remains one local outcome.

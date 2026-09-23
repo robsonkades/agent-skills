@@ -15,8 +15,9 @@ description: >
 The unit is the operation from arrival to its promised completion, including work deferred
 to other services when that completion requires it. Attribute cost to concrete choices:
 how much data is fetched, how often a boundary is crossed, which calls must wait for others,
-and how long scarce resources remain occupied. A faster mapper cannot remove database waits;
-fewer queries cannot remove measured serialization CPU.
+and how long scarce resources remain occupied. Separate direct work savings from indirect
+queue effects: faster mapping may reduce pool waits when it shortens connection holds, even
+with unchanged SQL. Neither that effect nor an end-to-end gain follows from local timing alone.
 
 ## Workflow
 
@@ -70,6 +71,6 @@ adjustment and a confirming/refuting check. For a design, add the workload assum
 cost/budget comparison and correctness constraints. Separate measured results from estimates
 and tests still to run; leave unsupported conclusions open.
 
-When reviewing this skill's behavior, use
-[validation-cases.md](references/validation-cases.md), which defines reproducible prompts and
-failure conditions rather than tests of application code.
+For worked decision boundaries or when reviewing this skill's behavior, use
+[validation-cases.md](references/validation-cases.md). These teaching cases include expected
+behavior; they are known examples, distinct from tests of application code.

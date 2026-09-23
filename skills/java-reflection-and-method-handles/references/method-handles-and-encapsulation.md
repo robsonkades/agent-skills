@@ -60,9 +60,13 @@ Details that matter:
   `VarHandle` is the supported replacement for `sun.misc.Unsafe` field access.
 
 `LambdaMetafactory` can link a compatible direct implementation handle to a functional-interface
-call site. It has strict erased/instantiated method-type, capture and bridge rules. Use it only
-when profiling justifies a reusable adapter and test serialization/marker/bridge requirements;
-generated code may be clearer for schemas known at build time.
+call site. Its caller lookup must have full privilege access (`PRIVATE` and `MODULE` in the
+Java 17 baseline); being able to invoke the target is not sufficient. Check
+`hasFullPrivilegeAccess()` as well as the erased/instantiated method types, capture and bridge
+rules. Keep the implementation handle direct: `bindTo` creates an indirect handle, so capture a
+receiver through the factory's parameter type and invoke the linked factory with that receiver
+instead. Use the metafactory only when profiling justifies a reusable adapter and test any
+serialization/marker/bridge requirements; generated code may be clearer for build-time schemas.
 
 ## Adapt once; choose target mutability explicitly
 
@@ -99,6 +103,12 @@ A `MethodHandles.Lookup` carries the access rights of the class that created it.
 `privateLookupIn` respects module encapsulation; it does not bypass it. If a required cross-module
 opening is absent, it throws `IllegalAccessException` — the point at which
 the application must decide whether to open the package deliberately.
+
+A successful cross-module `privateLookupIn` retains `PRIVATE` but drops `MODULE`. That lookup
+can resolve and invoke an authorized private member while still being unsuitable as the caller
+of `LambdaMetafactory`; adding more `opens` does not restore full privilege access. Use an ordinary
+typed adapter around the authorized handle, or a narrow factory supplied by the target's owner,
+when appropriate. Do not export a full-power lookup merely to make linkage succeed.
 
 Access is checked when a method handle is created, not on every later invocation. Never return a
 private lookup/handle to code that should not exercise that authority. Conversely, accepting a
@@ -174,6 +184,7 @@ injection can make dependencies explicit without proving native reachability. Se
 | Symptom                                       | Distinguish                                                                                      | Likely remediation                                                                              |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | `WrongMethodTypeException`                    | Print `handle.type()` and the call site's static argument/return types; include defining loaders | Fix exact descriptor/casts or adapt once with `asType`                                          |
+| `LambdaConversionException`                   | Check caller full privilege, direct implementation handle, factory capture and SAM types         | Fix linkage inputs or use a typed adapter/owner factory; do not widen access blindly            |
 | `IllegalAccessException` from lookup          | Record lookup class/modes, source/target modules, readability and `opens`/`exports`              | Use caller-provided/narrow lookup or targeted module directive; do not blanket-open first       |
 | `InaccessibleObjectException` from reflection | `setAccessible` module denial; `trySetAccessible` normally returns false for that denial         | Supported API or targeted `opens`; treat JDK-internal access as migration debt                  |
 | `ServiceConfigurationError`                   | Inspect provider descriptor/module, provider factory/constructor and original cause              | Reject only the bad optional provider if contract permits; fail startup for mandatory ambiguity |
@@ -181,6 +192,7 @@ injection can make dependencies explicit without proving native reachability. Se
 
 ## Primary references
 
+- [Java 17 LambdaMetafactory linkage requirements](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html)
 - [Java 17 MethodHandles lookup rules](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html)
 - [Java 17 AccessibleObject](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/AccessibleObject.html)
   distinguishes `setAccessible` throwing on module denial from `trySetAccessible` returning

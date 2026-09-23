@@ -93,7 +93,7 @@ without measurements as a hypothesis.
 ## References
 
 - [Semantics and misuse](references/semantics.md) — the per-method contracts (verified
-  against the JDK 25 Javadoc) and the misuse table. Read when choosing between
+  against the Java 21 API) and the misuse table. Read when choosing between
   unwrapping methods or judging a flagged usage.
 - [Worked example: a lookup path](references/lookup-refactoring.md) — read when
   refactoring null-returning lookups to Optional, or when deciding which parts of a call

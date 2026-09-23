@@ -12,7 +12,7 @@ Parent selection:
 Links and link attributes:
 Required/optional attributes:
 Status/error/outcome rules:
-Events:
+Events and exception signal/migration:
 Sampling/cost/privacy constraints:
 Owner and incident query:
 ```
@@ -77,11 +77,14 @@ Document replay/duplicate semantics.
 Select cases relevant to the changed span classes and their failure contracts:
 
 - stable names for unknown routes and arbitrary IDs;
-- success, expected rejection, server failure, cancel and timeout status;
+- success, expected rejection, server failure, intentional caller cancel and timeout status;
 - retry attempt versus logical outcome;
 - batch with zero/one/many messages;
 - redelivery;
-- ambient context plus message creation context;
+- custom creation context preserved through send, with the corresponding kind and links;
+- ambient context plus message creation context, including explicit parentage opt-in;
+- library prefetch versus actual delivery to the caller;
 - async completion after method return;
 - link/attribute truncation;
-- automatic plus manual instrumentation duplication.
+- automatic plus manual instrumentation duplication;
+- exception event/log migration with legacy queries and unsupported opt-ins.

@@ -49,6 +49,13 @@ silently replaces Boot's configured repository choice.
 - Keep the session small. Measure repository access and save/flush behavior; not every request
   necessarily reads and writes it. Large attributes can amplify storage, serialization and
   concurrent-update costs.
+- Shared storage does not serialize a conversation's read-modify-write operations. Two requests
+  can read the same basket and overwrite each other's changes; a Java monitor on one instance
+  cannot coordinate independent objects on another. Inspect attribute mutation tracking,
+  save/flush timing and the actual conflict protocol. Use `session-state-strategies`'s
+  `references/state-placement.md` for those persistence details and `references/session-failure-modes.md`
+  for stale writers, invalidation and atomic conflict checks. Faster or broader saving is not a
+  concurrency protocol.
 
 ## Token — the shape and the two problems
 
@@ -121,6 +128,10 @@ evidence. A narrow interpretation or accepted loss policy does not require all t
 - **Mixed-version test.** Start v1 and v2 together against one store, create a session on v1
   and read it on v2, and the reverse. This exposes compatibility failures that a single-version
   check cannot establish; include rollback when the supported deployment contract requires it.
+- **Overlapping-update test.** Have A and B load the same session before either writes, then
+  save conflicting changes in a controlled order and reload independently. Verify the required
+  merge/rejection outcome, including a stale save after logout when relevant; successful store
+  commands alone do not establish correctness.
 - **Revocation test.** Revoke access, then assert the maximum time until the next request is
   refused. That number is a stated property of the design; measure it rather than assuming it
   is zero.
@@ -132,6 +143,8 @@ evidence. A narrow interpretation or accepted loss policy does not require all t
 ## Primary references
 
 - [Spring Session 3.4 Redis configuration](https://docs.spring.io/spring-session/reference/3.4/configuration/redis.html) — serializer/repository example; select documentation for the actual deployed dependency line.
+- [Spring Session 3.4.7 SaveMode](https://github.com/spring-projects/spring-session/blob/3.4.7/spring-session-core/src/main/java/org/springframework/session/SaveMode.java) — write tracking and concurrent overwrite exposure are separate from placement.
+- [Servlet 6.0 session semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0) — section 7.7.1 permits concurrent requests and leaves attribute-object thread safety to the application.
 - [RFC 7519: JSON Web Token](https://www.rfc-editor.org/rfc/rfc7519)
 - [RFC 8725: JWT Best Current Practices](https://www.rfc-editor.org/rfc/rfc8725)
 - [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)

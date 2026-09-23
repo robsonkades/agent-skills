@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: message-ordering-and-partitioning
-version: 1.3.3
+version: 1.3.4
 description: >-
   Ordering guarantees and their exact scope/stage: common logs order per partition while a
   global total order requires a serialized sequencer; per-key ordering depends on key-to-partition

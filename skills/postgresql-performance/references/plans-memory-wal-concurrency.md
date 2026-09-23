@@ -1,5 +1,19 @@
 # PostgreSQL plans, memory, WAL, and concurrency
 
+## Sampling statistics
+
+On PostgreSQL 17/18, default `stats_fetch_consistency` caches accessed cumulative statistics until
+the observer transaction ends. Repeated polling inside one `BEGIN` can therefore appear flat;
+current-query snapshots can also persist within a transaction. Use short separate monitoring
+transactions or `pg_stat_clear_snapshot()` to refresh the observer's cached information. This
+neither resets counters nor forces other backends to publish pending statistics; allow for reporting
+lag. Do not use `pg_stat_reset()` merely to refresh a read.
+
+Compute rates and HOT-ratio deltas for the same instance/objects and reset interval. Inspect available
+`stats_reset` markers, known object-specific resets and restart/failover history; discard intervals
+that cannot be compared. Disabled timing collection or restricted `pg_stat_activity` fields are
+evidence gaps, not proof of zero I/O time or an absent session.
+
 ## Reading the executed plan
 
 Use the production statement shape and representative parameters. Read:
@@ -76,6 +90,8 @@ high plan cost with short OLTP execution can cross the threshold and regress lat
 Sources: [Using EXPLAIN](https://www.postgresql.org/docs/18/using-explain.html),
 [EXPLAIN execution semantics](https://www.postgresql.org/docs/18/sql-explain.html), and
 [serialization failure handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html).
+Sampling semantics: [PostgreSQL 17 statistics](https://www.postgresql.org/docs/17/monitoring-stats.html)
+and [PostgreSQL 18 statistics](https://www.postgresql.org/docs/18/monitoring-stats.html).
 Memory scope: [parallel plans](https://www.postgresql.org/docs/17/parallel-plans.html),
 [resource settings](https://www.postgresql.org/docs/18/runtime-config-resource.html) and
 [PostgreSQL 18.0 hash sizing](https://github.com/postgres/postgres/blob/REL_18_0/src/backend/executor/nodeHash.c).

@@ -84,6 +84,11 @@ An entity's persistence context ended or it was detached, then modified
         → changes are not automatically synchronized. Re-read or merge deliberately;
           merge returns the managed target and may issue a SELECT.
 
+A write failed at flush/commit, or the transaction is rollback-only
+        → end the failed unit through its lifecycle owner. clear() does not repair
+          a failed Hibernate session or restore commitability. A permitted retry
+          needs a fresh unit of work; rollback does not undo Java object mutations.
+
 A collection is traversed once per row of a result set
         → inspect for N+1. Consider a join fetch, an entity graph, batch fetching, or
           a projection. Eager mapping alone does not establish a bounded query plan;
@@ -172,7 +177,7 @@ not proof of commit; verify a disputed persistence result from a fresh context a
 JPA/Hibernate/Spring snippets; adapt to resolved versions, without upgrading to use this skill.
 
 - [Unit of Work and Identity Map](references/unit-of-work-and-identity-map.md) — entity
-  states and the transitions that lose data, flush timing and ordering, dirty checking cost
+  states, failed-flush recovery and rollback, flush timing and ordering, dirty checking cost
   and context growth, merge versus re-read, batch chunking, and how bulk operations
   interact with both patterns. Read when a write did not happen, happened unexpectedly, or
   a batch is slow.

@@ -138,12 +138,16 @@ radius but does not establish that the selected objects are correct.
 - **Mechanism** — wall clocks differ and synchronization daemons may slew or, under configured
   conditions, step corrections. Cross-host timestamp subtraction includes offset and network
   asymmetry; local interval timing with `System.currentTimeMillis()` can include wall-clock
-  adjustment. Monotonic clocks measure local elapsed time but are not comparable across hosts.
+  adjustment. `System.nanoTime()` measures elapsed time within one JVM; its arbitrary origin
+  is not guaranteed to match another JVM's, even on the same host. Do not compare or propagate
+  raw `nanoTime()` values across JVMs.
 - **Where it hides** — last-writer-wins keyed only on wall time; latency as
-  `receivedAt − sentAt`; lease correctness assuming an unstated maximum clock error; a
-  relative timeout reset at every hop so total work exceeds the original budget.
+  `receivedAt − sentAt`; lease correctness assuming an unstated maximum clock error.
+- **Discriminator** — identify the time source and process/host for each timestamp, then
+  inspect clock-offset/adjustment evidence and its uncertainty. A timeout overrun alone does
+  not establish clock skew; resetting the full budget at each hop belongs to timeout stacking.
 - **Owner** — `timeouts-and-deadlines` (propagate one budget/deadline with explicit clock and
-  transit assumptions; use a monotonic source for local elapsed time);
+  transit assumptions; use same-JVM monotonic differences for local elapsed time);
   `distributed-locks-and-leases` (clock assumptions behind lease expiry).
 
 ## Control-plane/data-plane coupling
@@ -164,5 +168,7 @@ radius but does not establish that the selected objects are correct.
 
 ## Source
 
+- [Java 25 `System.nanoTime()`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html#nanoTime()>) —
+  arbitrary origin and elapsed-time comparison within the same JVM.
 - [PostgreSQL 18 statement snapshots and transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html)
 - [RFC 7662 — token-introspection caching and stale authorization trade-offs, section 4](https://www.rfc-editor.org/rfc/rfc7662.txt)

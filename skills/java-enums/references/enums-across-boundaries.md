@@ -61,6 +61,16 @@ portable conversion. Validate null, unknown and duplicate-code handling against 
   - Inbound response/event from a peer: an unknown value is usually version skew. Choose
     preserve/map/quarantine/reject based on safety; fail-closed rejection can be correct for
     authorization or financial semantics even though it affects availability.
+- **Check token types and coercion, not only unknown names.** Jackson 2.19's default enum
+  decoder accepts JSON integers as ordinal indexes and can accept quoted indexes such as
+  `"1"`; a String-valued `@JsonValue` alone does not disable those paths. For a textual
+  contract that excludes ordinal input, enable `FAIL_ON_NUMBERS_FOR_ENUMS` (disabled by
+  default) or the appropriate rejection policy, then test the mapper actually used by the
+  endpoint. Coercion overrides, creators and custom deserializers can change the result.
+  Test valid codes, integers, undeclared quoted indexes and unknown codes separately.
+  Preserve intentional numeric codes: an integer-valued `@JsonValue` uses code lookup rather
+  than ordinal lookup, and a declared textual code `"1"` is not an ordinal fallback. Neither
+  case should be rejected merely because it contains digits; enforce its declared token shape.
 - Jackson configuration deserves an explicit decision rather than acceptance. For example,
   Jackson 2.19 provides disabled-by-default features
   `READ_UNKNOWN_ENUM_VALUES_AS_NULL` and `READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE` (with
@@ -131,6 +141,8 @@ closure from the supported compatibility horizon, not a fixed rate of business c
       `@EnumeratedValue`, converter, or scalar code) and unknown-value policy.
 - [ ] Declaration positions/hashes are not used as independently stable domain identity.
 - [ ] Stored/wire identity is explicit and stable, including names if that is the accepted contract.
+- [ ] Decoder token types and coercions match the contract; ordinal inputs are not accepted
+      accidentally, and explicit numeric codes retain their intended meaning.
 - [ ] Unknown-value behavior follows each endpoint's accepted semantics and authority.
 - [ ] New-value emission and removal are safe for required reader/writer and retained-data pairs.
 - [ ] Switches expose uncovered constants or have an intentional tested fallback; boundary
@@ -143,3 +155,5 @@ and [EnumeratedValue](https://jakarta.ee/specifications/persistence/3.2/apidocs/
 For format and switch details: [Avro 1.12 schema resolution](https://avro.apache.org/docs/1.12.0/specification/#schema-resolution),
 [JEP 441's enum-switch change](https://openjdk.org/jeps/441), and
 [Jackson 2.19 feature contracts](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.19.0/src/main/java/com/fasterxml/jackson/databind/DeserializationFeature.java).
+For ordinal coercion versus explicit codes, see the version-matched
+[Jackson 2.19 EnumDeserializer](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.19.0/src/main/java/com/fasterxml/jackson/databind/deser/std/EnumDeserializer.java).

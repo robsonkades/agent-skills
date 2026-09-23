@@ -81,10 +81,10 @@ collaborators and coarse methods    entry point; separate implementation
 one facade per subsystem            one or more use-case-oriented classes
                                     when responsibilities change independently
 
-facade exposes the subsystem too    package-private subsystem types +
-                                    an exported package (JPMS or
-                                    package structure) when access
-                                    should be closed, not merely eased
+facade exposes the subsystem too    package-private subsystem types,
+                                    or a named module exporting only
+                                    the facade package, when direct
+                                    access should be restricted
 ```
 
 A Spring `@Service` can also act as a facade when it simplifies a subsystem, but Service Layer is
@@ -101,7 +101,8 @@ THEN it is a facade — keep the subsystem accessible and say so.
 IF no caller may reach past it
 THEN it is a boundary. Enforce it (package-private types, module
      exports, an architecture test), or the rule is a wish
-     (architecture-testing).
+     (architecture-testing). Check the actual caller scope and deployment:
+     package names alone do not hide public types, and JPMS requires named-module use.
 
 IF collaborators change for unrelated reasons or tests require unrelated setup
 THEN consider splitting by use case, capability, or subdomain. A stable public facade

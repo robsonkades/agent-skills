@@ -81,11 +81,13 @@ Source of truth: OpenJDK `src/hotspot/share/opto/` — `compile.cpp` (pipeline),
 (`ConnectionGraph`), `loopTransform.cpp` (loop transformations). `opto` is HotSpot's internal
 name for the optimizing compiler.
 
-## The ideal graph and its three edge types
+## Reading control, values and memory in the ideal graph
 
-The sea-of-nodes unifies the control graph and the data graph. Each operation is a node, and
-every edge carries one of three meanings — **data**, **control**, **memory**. There is no
-implicit fourth category for "order within a basic block".
+The sea-of-nodes represents operations and their **value**, **control** and **memory**
+dependencies together. These are useful semantic categories, not an exhaustive taxonomy of
+`Node` inputs. C2 distinguishes ordered required inputs from additional precedence inputs
+used to constrain scheduling. Source statement order alone is not an implicit dependency;
+explicit dependencies still limit legal placement.
 
 An unpinned node with only data dependencies (a `CmpI`, say) can be scheduled within the
 region permitted by its inputs and uses. This freedom does not remove dominance analysis
@@ -95,6 +97,28 @@ operations must preserve exception behavior. Do not infer that source-level loop
 is legal merely because the IR is a sea of nodes.
 
 Implementation reference: [OpenJDK 25.0.3+9 global code motion](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/gcm.cpp).
+
+Read the relevant inputs before proposing a transformation:
+
+- **Control alternatives:** a `Region` joins control paths; a `Phi` refers to that region
+  and associates each value or memory input with the corresponding control-input slot.
+  Trace which predecessor supplies a value rather than treating a phi as an arbitrary merge.
+- **Memory dependencies:** a `MergeMem` combines base memory with alias-specific slices;
+  it does not select control alternatives like a memory phi. Follow a load/store's address
+  and memory input through the relevant slice. Sharing an alias category does not prove
+  identical addresses, and different Java variable names do not prove distinct objects.
+  A potentially aliasing store or call can constrain motion. `MergeMem` itself is neither
+  a runtime memory copy nor a Java happens-before guarantee.
+- **Changes between phases:** keep compilation identity and graph phase attached to each
+  snapshot. Numeric node IDs can change during renumbering; use available graph provenance
+  instead of assuming the same number identifies the same operation. An `Allocate` absent
+  after macro expansion may have become allocation fast/slow paths. Confirm elimination
+  with the corresponding compiler evidence and generated code, not node absence alone.
+
+Pinned implementation references: [required and precedence inputs; node identity](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/node.hpp),
+[Region/Phi correspondence](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/cfgnode.hpp),
+[MergeMem semantics](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/memnode.cpp),
+and [allocation elimination versus expansion](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/macro.cpp).
 
 ## Inlining limits
 

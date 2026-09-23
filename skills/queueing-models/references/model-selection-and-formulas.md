@@ -31,7 +31,7 @@ blocking and class/routing rules explicitly; hiding them behind `G` does not mak
 | Poisson arrivals, general IID service, one FCFS server          | M/G/1                           | exact mean via P–K                               | service correlated/state-dependent, multiple servers, tail required from moments alone |
 | Poisson plus deterministic service, one server                  | M/D/1                           | exact mean as M/G/1 special case                 | “low CV” is only approximate determinism                                               |
 | renewal arrivals and general service, one server, heavy traffic | GI/G/1 Kingman                  | approximate mean                                 | nonrenewal/batched/state-dependent arrivals or low-load accuracy needed                |
-| general arrivals/service, multiple shared servers               | Allen–Cunneen family            | heuristic mean                                   | no validation data; heterogeneous/routed servers or tail/loss decision                 |
+| general arrivals/service, multiple shared servers               | Allen–Cunneen family            | heuristic mean                                   | unvalidated operational prediction; heterogeneous/routed servers or tail/loss decision |
 | exponential open loss system, no waiting slots                  | M/M/c/c                         | Erlang-B blocking and carried load               | callers wait, retry feedback, non-Poisson bursts                                       |
 | exponential open finite system                                  | M/M/c/K                         | stationary occupancy, blocking and admitted mean | abandonment or state-dependent admission/service not represented                       |
 | finite users with think time                                    | closed queueing network/MVA     | throughput/residence by population               | arrivals are exogenous or sessions arrive independently                                |
@@ -152,8 +152,11 @@ Kingman exact for arbitrary arrival processes with `C_a=1`; autocorrelation and 
 structure remain invisible.
 
 A commonly used Allen–Cunneen-style G/G/c approximation scales the M/M/c mean wait by
-`(C_a²+C_s²)/2`. Published variants and correction factors differ. Pin the formula/source used,
-validate it on held-out load points, and never use it as a closed-form tail distribution.
+`(C_a²+C_s²)/2`. Published variants and correction factors differ. Pin the formula/source used.
+For a supplied-parameter exploratory calculation, report an explicitly unvalidated mean estimate
+and its assumptions. Before relying on it for an operational prediction, validate it on relevant
+held-out load points, reusing adequate existing evidence. Never use this mean correction as a
+closed-form tail distribution.
 
 Kingman is asymptotically motivated near heavy traffic; at lower load it may err in either
 direction. It is not a guaranteed upper bound.

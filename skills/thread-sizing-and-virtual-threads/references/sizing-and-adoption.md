@@ -41,6 +41,18 @@ before treating it as `W`. Serialized lock or provider waits also need their own
 Validate a range because correlated waits, long tails, resource caps and burst traffic
 violate those assumptions.
 
+Check independence before using this model. If every worker submits a child to the same pool and
+blocks on its Future, children may remain queued behind their parents indefinitely. Raising the
+pool size can merely move the failure threshold, and increasing `maximumPoolSize` with an accepting
+unbounded queue does not supply the missing workers. Trace which task must run to release each wait.
+Consider composition that does not occupy a worker while awaiting children, or an independently
+provisioned execution stage with an acyclic dependency graph; preserve ordering, admission and
+cancellation contracts. A virtual thread per task removes this fixed-worker shortage, but not a
+cycle where parents hold all permits or connections needed by their children. Repair the resource
+ownership/dependency first, rather than releasing a permit while its resource is still in use.
+Test by occupying every worker or permit with parents before allowing them to submit children;
+verify child progress and cleanup under timeout, not just a low-concurrency happy path.
+
 For each size, record queue age, timeout/cancellation, native thread memory, context switching,
 dependency concurrency and useful throughput. Stop before downstream saturation even if local CPU is
 idle.
@@ -109,6 +121,14 @@ termination. Observe completion/failure of submitted Futures; orderly close does
 task exceptions. A bounded CPU queue rejects via `AbortPolicy`; handle rejection and shut down that
 executor explicitly, including during partial application startup failure.
 
+Also identify what keeps the process alive. Virtual threads are always daemon threads, unlike the
+non-daemon workers created by the default platform-executor thread factory. A batch `main` that
+submits work and returns can therefore exit with virtual tasks unfinished. Await required results
+and perform lifecycle shutdown while an application owner is still alive; declaring `AutoCloseable`
+does not arrange a call to `close()`. Preserve an existing server lifecycle that already does this.
+Test the actual entrypoint in a child JVM, checking required completion before normal exit; an
+in-process test runner can accidentally supply the non-daemon lifetime missing in production.
+
 ## Thread-local review worksheet
 
 For each `ThreadLocal`/`InheritableThreadLocal`, record value size, initialization cost, mutability,
@@ -137,3 +157,5 @@ executor lifecycles drain safely during mixed-version deployment.
 - [Java 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [Java 25 thread-local guidance](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)
+- [Java 21 Thread daemon and JVM-lifetime contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html)
+- [Java 21 ThreadPoolExecutor queues and internal dependencies](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)

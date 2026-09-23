@@ -51,8 +51,23 @@ an explicit business date if the caller owns that policy.
 
 `expireAllFor` is a partial SQL illustration: define whether future rates may be shortened
 past their start date, and preserve interval constraints. Bulk SQL bypasses entity callbacks
-and automatic entity version checks; coordinate managed-state refresh/clear and version
-updates where required by the write contract. Test against the target dialect.
+and automatic entity version checks; preserve version predicates/updates required by the
+write contract and test against the target dialect.
+
+When mixing a gateway with managed JPA entities in one use case:
+
+- Verify that both join the intended transaction. In Spring, `JpaTransactionManager` can
+  expose its connection to JDBC using the corresponding `DataSource`, transaction-aware
+  lookup and a compatible `JpaDialect`. `JdbcClient` delegates to Spring JDBC; `@Repository`
+  alone neither starts a transaction nor enlists an arbitrary connection. Force a failure
+  after both writes and verify that both roll back (`enterprise-transactions`).
+- Do not assume plain JDBC triggers JPA auto-flush. If SQL must observe pending entity changes,
+  deliberately flush them first within the shared transaction. Flush does not commit it.
+- After SQL changes managed rows, reconcile before relying on those objects again. `clear`
+  detaches all managed entities and loses unflushed changes; `refresh` overwrites the selected
+  entity's state. Preserve intended changes before SQL/invalidation, or isolate the bulk work
+  in a suitable fresh persistence context. Do not blindly flush stale objects after SQL.
+  Provider caches may also need invalidation; runtime policy belongs to `orm-behavioral-patterns`.
 
 ### What must not
 
@@ -185,3 +200,5 @@ the same tables.
 - [Fowler: Row Data Gateway](https://martinfowler.com/eaaCatalog/rowDataGateway.html)
 - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html)
 - [Spring Framework 6.1 JdbcClient](https://docs.spring.io/spring-framework/docs/6.1.x/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html)
+- [Spring 6.1.21 JpaTransactionManager connection-sharing contract](https://github.com/spring-projects/spring-framework/blob/v6.1.21/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java)
+- [Jakarta Persistence 3.1 EntityManager flush, clear and refresh](https://jakarta.ee/specifications/persistence/3.1/apidocs/jakarta.persistence/jakarta/persistence/entitymanager)

@@ -47,10 +47,16 @@ low ratios; tiny values can lose even at much higher ratios.
 | Enum constants                          | One per constant           | The closed-set case, and the best one                                   |
 | `List.of()` / `Collections.emptyList()` | Empty values may be reused | No identity assumption; List.of instances are value-based               |
 
-`String.intern()` deserves specific caution: modern HotSpot keeps interned strings in the Java
-heap, while the table and its tuning/rehash behavior are JVM-version details. Interning millions
-of request-derived distinct values can increase retention and lookup/GC work. An application map
-is not automatically better, but it can express scope, bounds and eviction explicitly.
+`String.intern()` is not equivalent to retaining every value in a strong application map.
+The OpenJDK 17 HotSpot local StringTable holds ordinary dynamically interned strings through weak
+handles; that table alone does not keep otherwise unreachable strings alive indefinitely.
+This is an implementation fact, not a Java guarantee of prompt collection or a bounded table
+footprint. Inspect other retaining paths before diagnosing a leak. Millions of distinct values
+can still add table memory, lookup and GC work. An application map is not automatically better,
+but can express scope, bounds and eviction explicitly.
+
+Source: [OpenJDK 17 HotSpot StringTable](https://github.com/openjdk/jdk/blob/jdk-17-ga/src/hotspot/share/classfile/stringTable.cpp)
+— `WeakHandle` entries and weak storage in the local table, distinct from the shared archive table.
 
 ## Alternatives to compare
 
@@ -125,6 +131,14 @@ message ids can grow without limit. Confirm the retaining path, distinctness and
 old-generation growth alone does not prove a leak. Bound admission/bytes, validate a closed domain,
 or scope it to the operation with a peak budget. A bounded cache can still leave evicted values
 live through callers, and fresh instances may coexist with them.
+
+**Weak keys with strong canonical values.** Replacing `HashMap<T,T>` with `WeakHashMap<T,T>`
+while storing the same object as key and value does not remove the retaining path: the map holds
+its values strongly, and each value is its own key. Indirect value-to-key references have the same
+problem. The [Java 17 WeakHashMap contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/WeakHashMap.html)
+documents this trap. Keep explicit bounds/lifetime unless a different reachability design is
+justified; weak references are not a deterministic eviction policy. Route weak-interner lifecycle
+and concurrency details to `java-reference-types-and-leaks` rather than swapping map types blindly.
 
 **Contention on the pool.** `ConcurrentHashMap.computeIfAbsent` atomically installs a mapping and
 may coordinate callers contending for the same key/bin; the exact mechanism is JDK-specific. An

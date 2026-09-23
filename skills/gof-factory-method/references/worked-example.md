@@ -92,13 +92,15 @@ class Parsers {
 ```
 
 ```java
+if (format == null) throw new IllegalArgumentException("source format is required");
 Supplier<Parser> selected = parsers.get(format);
 if (selected == null) throw new UnsupportedSourceFormat(format, parsers.keySet());
 var job = new ImportJob(selected, repository);
 ```
 
 Every supported format is now readable in one place, and adding one is a map entry rather than a
-class plus its wiring.
+class plus its wiring. The required-key check precedes lookup because the `Map.of` registry
+need not accept a null query. Missing and unsupported formats follow explicit failure paths.
 
 Share instances only when the parser and its collaborators support concurrent reuse and their
 lifetime permits it. A supplier is a creation function replacing the GoF hook, not that

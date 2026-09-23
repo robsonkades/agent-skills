@@ -60,7 +60,7 @@ Q2 (different/coarser interface): what boundary is translated?
 | **Decorator** | Same           | One, same type                            | It has the thing        | Two could be stacked, in an order     |
 | **Proxy**     | Same           | One, same type                            | It **has** the thing    | It controls whether you reach it      |
 
-## Behavioural lookalikes, in one line each
+## Other lookalikes, in one line each
 
 ```text
 Strategy vs State
@@ -113,7 +113,8 @@ Factory Method vs Abstract Factory vs Builder
     Staged construction → Builder; many parameters alone are insufficient.
 
 Factory Method vs static factory method
-    A subclass hook inside an inherited algorithm → the GoF pattern.
+    Overridable creation with product choice deferred to subtypes → the GoF pattern.
+    An inherited algorithm can call it, but is not required.
     A named constructor on the type → Effective Java's Item 1. Not it.
 
 Singleton vs Flyweight
@@ -173,8 +174,8 @@ contract consequence and any unresolved evidence. Do not refactor working code j
   questions, the composed cases (a decorator over a proxy over an adapter) and how to describe
   them, and how to classify an existing wrapper in three questions. Read when naming or reviewing
   a wrapper.
-- [Behavioural lookalikes](references/behavioural-lookalikes.md) — Strategy/State/Template
+- [Behavioural and creational lookalikes](references/behavioural-lookalikes.md) — Strategy/State/Template
   Method/Command, Observer/Mediator, Chain/Decorator, Composite/Decorator, Visitor/Iterator,
-  Command/Event, and Memento/snapshot/event sourcing, each with the discriminating question, a
-  worked misclassification and the concrete cost of getting it wrong. Read when a behavioural
-  pattern's name is disputed.
+  Command/Event, Factory Method/Abstract Factory/Builder/static factory, Singleton/Flyweight and
+  Memento/snapshot/event sourcing, with discriminating questions, misclassifications and concrete
+  costs. Read when a non-wrapper comparison above is disputed, including creation patterns.

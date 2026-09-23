@@ -28,7 +28,7 @@ source and in types, and safe review boundaries for reversible cryptography.
 
 **Does not cover:** transport security, nor framework configuration — filter chains, JWT and
 OAuth2 resource server, method-security wiring and CORS belong to `spring-security-for-apis`,
-in a different repository, not installed alongside this skill. Nor does it apply to a service
+available separately in this catalog. Nor does it apply to a service
 with no credential store, no untrusted input and no per-instance ownership rule: threading an
 `Actor` through that domain is cost, no benefit.
 

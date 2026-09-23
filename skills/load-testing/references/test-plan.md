@@ -56,6 +56,14 @@ Use iteration rate and duration, not request RPS unless one iteration is one req
 or deadline bounds can guide allocation, but a pilot must cover client code, distribution,
 connections and overhead.
 
+For k6, use the chosen scenario's full iteration duration, including its client code,
+retries and sleeps, rather than HTTP duration alone. The aggregate `iteration_duration`
+metric can contain separate `setup`/`teardown` duration samples; those are not recurring VU
+occupancy in the arrival scenario. Filter by the actual scenario name, for example
+`iteration_duration{scenario:checkout}`, and verify that the `scenario` tag is enabled and
+the selected samples exist. Do not silently substitute the unfiltered aggregate when the
+scenario evidence is missing. Retain setup/teardown timing separately for lifecycle claims.
+
 For k6 arrival-rate executors, preallocate enough VUs to avoid allocation as a confound.
 Dropped iterations mean scheduled starts could not occur; retain the achieved arrival
 process and diagnose VU supply, target/client iteration occupancy and generator resources
@@ -91,9 +99,17 @@ commitment and paging; use them only when matching production or isolating that 
 
 Prove the correctness gate can fail with a deliberately invalid response in an isolated pilot.
 In k6, a false `check()` records a failed check but does not by itself fail the test's exit
-status; bind required checks to thresholds or explicit failure handling. HTTP status success
-is also insufficient for business correctness. Keep safety abort criteria separate from
-acceptance thresholds so a planned overload experiment can retain rejection evidence.
+status; bind required checks to acceptance thresholds and verify the exit status with the
+invalid fixture. `fail()` imported from `k6` throws and aborts only the current iteration;
+it does not by itself make the test exit nonzero. HTTP status success is also insufficient
+for business correctness.
+
+When a correctness or safety fault requires stopping the whole run, use a supported test-level
+abort such as `exec.test.abort()` from `k6/execution`, after checking the installed version.
+That abort reports failure but still permits `teardown()` to run; cleanup and recovery remain
+part of the protocol. Keep safety abort criteria separate from acceptance thresholds so a
+planned overload experiment can retain rejection evidence instead of stopping at its first
+expected SLO violation.
 
 ## Timing and outcome boundaries
 
@@ -153,5 +169,8 @@ credentials/data, respect dependency quotas, verify recovery and clean only owne
 ## Sources for tool-specific interpretation
 
 - [k6 built-in metric boundaries](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
+- [k6 scenario-scoped iteration duration](https://grafana.com/docs/k6/latest/using-k6/workaround-iteration-duration/)
 - [k6 checks and thresholds](https://grafana.com/docs/k6/latest/using-k6/checks/)
+- [k6 fail: iteration abort versus test failure](https://grafana.com/docs/k6/latest/javascript-api/k6/fail/)
+- [k6 execution: test-level abort and teardown](https://grafana.com/docs/k6/latest/javascript-api/k6-execution/)
 - [k6 dropped iterations](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/dropped-iterations/)

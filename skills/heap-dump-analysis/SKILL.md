@@ -45,6 +45,8 @@ size, which names the leaf array instead of the static map holding it.
 4. **Take a second dump only when its incremental diagnostic value exceeds another global pause.**
    Choose separation from the suspected growth rate/business cycle and normalize for load, cache
    warm-up and topology. Continuous class/heap/JFR statistics may establish slope more safely.
+   Compare aggregate populations or justified domain keys, not object addresses/IDs across dumps;
+   GC can move objects and MAT's IDs belong to one snapshot.
 5. **Triage by live heap and context**, then open the Dominator Tree. A large dominator is a useful
    starting point, not a universal 30% leak threshold; caches and immutable indexes can
    legitimately dominate, while a distributed leak may have no single large owner. Check MAT's

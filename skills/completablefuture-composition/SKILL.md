@@ -73,6 +73,9 @@ pool configuration in the environment being diagnosed.
   failure aggregation remain application policy.
 - `anyOf` exposes the first normal or exceptional completion as `Object`. It is neither typed nor
   “first success,” and it does not cancel losers.
+- `applyToEither`, `acceptEither` and `runAfterEither` are not guaranteed first-success policies
+  either: when one input fails, `CompletionStage` permits normal or exceptional completion of
+  the dependent stage. Do not replace `anyOf` with an either-method to suppress an early failure.
 - Empty inputs matter: `allOf()` is already normally complete; `anyOf()` remains incomplete.
 - Do not block a continuation by joining an unfinished sibling on the same bounded executor
   or completer thread. Express that dependency with `thenCombine`/`thenCompose`; completion

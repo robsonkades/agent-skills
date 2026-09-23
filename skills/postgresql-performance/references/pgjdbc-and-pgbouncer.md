@@ -55,6 +55,11 @@ sizing and diagnosing. A metric called “connections” without its layer is am
 Statement, lock, idle-in-transaction, and transaction timeouts cover different intervals and may have
 zero defaults. Fit them with pool/JDBC/socket/caller deadlines and verify the exact SQL state. PostgreSQL
 17+ transaction timeout can bound a continuously active long transaction that idle timeout cannot.
+Unlike `statement_timeout` and `lock_timeout`, `transaction_timeout` terminates the session: verify
+that the driver/pool discards the dead connection and obtains a replacement before any safe retry.
+When enabled, it supersedes a statement or idle-in-transaction timeout of equal or longer duration.
+Prepared transactions are exempt; resolving their locks/xmin requires the transaction owner's
+two-phase-commit recovery policy, not a session timeout.
 Caller timeout or JDBC cancellation is not proof execution ended or the connection is reusable;
 verify server outcome, rollback/connection state and driver/pool recovery behavior.
 
@@ -64,3 +69,5 @@ The exceptional transaction-state branch is scoped to
 Also check [driver preparation](https://jdbc.postgresql.org/documentation/server-prepare/),
 [PostgreSQL prepared plans](https://www.postgresql.org/docs/18/sql-prepare.html), and
 [PgBouncer features](https://www.pgbouncer.org/features.html)/[configuration](https://www.pgbouncer.org/config.html).
+Timeout semantics: [PostgreSQL 17 client settings](https://www.postgresql.org/docs/17/runtime-config-client.html)
+and [PostgreSQL 18 client settings](https://www.postgresql.org/docs/18/runtime-config-client.html).

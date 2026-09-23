@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: code-review
-version: 1.0.2
+version: 1.0.3
 description: >-
   Reviewing a change as an engineering activity: setting review depth from the change's risk
   rather than its size, looking in the order that finds the expensive defects first, refusing
@@ -42,6 +42,26 @@ files:
 dependencies:
   - name: quality-gates
     version: ^1.0.0
+
+suggests:
+  - architecture-decision-making
+  - architecture-testing
+  - idempotency
+  - java-api-design
+  - java-clean-code
+  - java-code-smells
+  - java-concurrency
+  - java-dry-kiss-yagni
+  - java-exception-design
+  - java-memory-model
+  - java-null-safety
+  - java-test-doubles
+  - java-testing-strategy
+  - metrics-and-cardinality
+  - requirements-and-acceptance
+  - slo-and-alerting
+  - structured-logging
+  - tdd
 
 capabilities:
   - reads-source

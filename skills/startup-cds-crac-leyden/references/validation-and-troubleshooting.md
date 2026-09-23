@@ -61,9 +61,28 @@ This probe did not validate Corretto or a newer patched runtime.
 | Cache is much smaller/less effective than expected                          | Training coverage, unsupported archived-heap configuration, or incompatibility | Creation logs and class-source/profile comparison                              | Fix training first; select a supported build/collector rather than guessing          |
 | Assembly child has different flags/resources                                | Parent-only settings were assumed to propagate                                 | Inspect child command/log and `JDK_AOT_VM_OPTIONS`                             | Declare assembly inputs explicitly and validate output                               |
 | Training exits 0 but no `.aot` file                                         | Child JVM failed (bad `JDK_AOT_VM_OPTIONS`, resource limit)                    | Output has `Launching child process` with no `AOTCache creation is complete`   | Assert the file in CI; inspect the child's stderr                                    |
-| `CDS is disabled because early JVMTI ClassFileLoadHook is in use`           | A Java agent that transforms classes at load                                   | Message with `-Xlog:cds`                                                       | Load the agent later, scope its filter, or accept the loss and measure it            |
+| `CDS is disabled because early JVMTI ClassFileLoadHook is in use`           | Active class-file hook posting with an early-hook JVMTI environment            | Message with `-Xlog:cds`; inspect agent capabilities/event configuration       | Change the conflicting agent setting if supported, or accept the loss; see below     |
 | Gain measured in dev vanishes in the container                              | Different JDK/image/CPU/quota/flags/training path or absent generated CDS      | Image digest, `-Xlog:cds,aot`, class sources and startup phase timings         | Train inside final image; generate archive for jlink image; rerun controlled cohort  |
 | `Unrecognized VM option 'CRaCCheckpointTo=…'`                               | Standard JDK build                                                             | `PrintFlagsFinal` grepped for `crac` is empty                                  | CRaC-enabled build (Zulu, Liberica, `openjdk/crac`) or a managed equivalent          |
+
+## Agent compatibility
+
+In the JDK 25 implementation, `FileMapInfo::open_as_input` checks hook posting and the presence
+of an early-hook environment before accepting the archive. Narrowing an agent's class-name
+filter or returning unchanged class bytes does not remove that condition. The presence of a
+`-javaagent` option alone does not establish this particular early-hook conflict; inspect the
+agent's actual JVMTI configuration and native dependencies.
+
+A cache containing AOT-linked classes has additional load-time restrictions:
+`validate_aot_class_linking` rejects active `ClassFileLoadHook` posting even without early class
+hooks, and also rejects early VM-start environments and JDWP. Compatibility with ordinary CDS
+therefore does not establish compatibility with an AOT-linked cache. Match the exact diagnostic
+to the target build and mechanism before changing agent settings.
+
+Later attachment is an option only when the agent/runtime supports it and the required startup
+coverage and transformation behavior remain acceptable. Validate both cache use and the agent's
+required behavior with the resulting launch configuration; a filter change alone is not proof
+that sharing has resumed.
 
 ## Ownership in the pipeline
 
@@ -77,5 +96,7 @@ benefit when that is the adoption claim. Preserve adequate existing controls for
 
 - [Java 25 launcher: CDS/AOT options and failure modes](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [Java 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [JDK 25 archive loading and AOT-linking compatibility checks](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/cds/filemap.cpp)
+- [JVMTI 25 ClassFileLoadHook phases and capabilities](https://docs.oracle.com/en/java/javase/25/docs/specs/jvmti.html#ClassFileLoadHook)
 - [Amazon Corretto 25 changelog](https://github.com/corretto/corretto-25/blob/develop/CHANGELOG.md)
 - [JEP 483 consistency requirements](https://openjdk.org/jeps/483)

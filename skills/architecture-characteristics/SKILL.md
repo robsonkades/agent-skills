@@ -36,13 +36,17 @@ of the only requirements the system must satisfy.
    mandates as constraints rather than ranking them as qualities.
 4. **Make the names discriminating.** For each proposed driver, state a short scenario:
    stimulus, operating/failure conditions, affected operation and expected response with a
-   measure or explicit unresolved target. Read
+   measure or explicit unresolved target. A number alone does not define acceptance: preserve
+   the observation boundary, eligible workload and relevant timing/statistical interpretation.
+   Use the refinement checks in [eliciting-and-capping.md](references/eliciting-and-capping.md)
+   when those details or priorities among scenarios are unclear. Read
    [definitions-and-composites.md](references/definitions-and-composites.md) for ambiguous
    pairs, composites or apparent consistency/availability conflicts. Do not fabricate a
    threshold to make a row look complete.
 5. **Prioritize without deleting obligations.** Separate mandatory constraints and baseline
    quality requirements from the drivers receiving design attention. Compare business impact
-   and difficulty/risk of achieving the scenarios; record disagreements. A small top set is
+   and difficulty/risk at scenario level before summarizing by quality name; record disagreements
+   and unknown feasibility. A small top set is
    useful, but neither a fourth valid concern nor missing automation is grounds to discard it.
    Revisit the set when scenarios expose new needs.
 6. **Check scope and hand off.** State whether each driver applies to a journey, domain,

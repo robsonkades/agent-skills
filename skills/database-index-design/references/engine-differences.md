@@ -39,6 +39,17 @@ actual clustered key before estimating secondary-index width.
   silently weaken a constraint this way.
 - A partial/filtered index is usable only when the optimizer can prove the query predicate implies
   the index predicate at planning time. Parameterization and generic plans can defeat that proof.
+- PostgreSQL requires immutable functions/operators in index expressions and partial predicates.
+  A predicate based on `now()` cannot define a self-maintaining rolling window; do not falsely
+  mark a wrapper `IMMUTABLE` to accept it. A literal cutoff remains fixed as time passes. Compare
+  an ordinary timestamp key with the time predicate in the query, or an explicitly maintained
+  subset whose update and lifecycle rules preserve correctness.
+- SQL Server computed-column indexes have ownership, determinism, precision, type and session
+  `SET` requirements. Verify them on both migration and application connections: incompatible
+  query-session settings can cause the optimizer to ignore an otherwise existing index.
+- MySQL 8.4 functional key parts inherit generated-column restrictions, including prohibited
+  stored functions and subqueries. Check the expression's permitted functions, result type and
+  collation against the real query; successful DDL alone does not establish usable navigation.
 - PostgreSQL index order includes explicit `NULLS FIRST/LAST`; requested null placement can decide
   whether an index satisfies ordering.
 - PostgreSQL BRIN summarizes physical page ranges and fits huge correlated tables and broad scans;
@@ -60,3 +71,6 @@ does not automatically cluster heap rows; its values still affect B-tree localit
 - [PostgreSQL 18 CLUSTER](https://www.postgresql.org/docs/18/sql-cluster.html) — explicit physical
   reordering is separate from an index definition and is not maintained by subsequent writes.
 - [InnoDB clustered and secondary indexes](https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html)
+- [MySQL 8.4 functional key parts and expression matching](https://dev.mysql.com/doc/refman/8.4/en/create-index.html)
+- [SQL Server computed-column index requirements](https://learn.microsoft.com/en-us/sql/relational-databases/indexes/indexes-on-computed-columns?view=sql-server-ver17)
+- [SQL Server GUID comparison semantics](https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values?view=sql-server-ver17)

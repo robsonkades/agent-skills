@@ -1,0 +1,34 @@
+schemaVersion: 1
+name: change-data-capture-operations
+version: 1.0.0
+description: >-
+  Operating Debezium source CDC through snapshots, lag, restarts, log retention and failover.
+  Use when PostgreSQL WAL or MySQL binlogs accumulate, a connector cannot resume, a snapshot
+  is interrupted, schema history is missing, or captured tables need controlled resynchronization.
+  Covers source continuity and sink replay consequences; consumer offset resets, transactional
+  outbox design, stream runtime tuning and cross-engine migration belong to neighboring skills.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/change-data-capture-operations
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/change-data-capture-operations
+keywords: [cdc, debezium, snapshots, postgresql, mysql, replication, recovery]
+files: [SKILL.md, skill.yaml, references/]
+suggests:
+  - delivery-semantics
+  - idempotency
+  - kafka-consumers-in-java
+  - stream-processing-runtime-performance
+  - database-engine-selection-and-migration
+  - schema-evolution-and-compatibility
+capabilities: [reads-source]
+agentOverrides:
+  codex:
+    interface:
+      display_name: Change Data Capture Operations
+      short_description: Preserve CDC continuity through restart and failover
+      default_prompt: Use $change-data-capture-operations to diagnose this connector's continuity and recovery options.

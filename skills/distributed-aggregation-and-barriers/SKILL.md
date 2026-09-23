@@ -45,7 +45,9 @@ review or implementation change.
 4. **Partition by measured cost**, not merely count, when skew explains stragglers; distinguish
    deterministic data skew from host faults or transient resource contention.
 5. **Place the barriers deliberately and count them.** Every barrier converts the slowest
-   participant into everyone's latency. Ask what breaks if this one is removed.
+   participant into everyone's latency. Bind completion to the expected logical partitions
+   and their committed outputs in one epoch; worker replacement must preserve input coverage.
+   Ask what breaks if this barrier is removed.
 6. **Define attempt identity and output commit.** Every logical partition may execute more
    than once. Stage output by `(job, stage, partition, attempt)` and atomically select one
    successful attempt, or use a sink-specific idempotent/transactional commit protocol.
@@ -138,20 +140,26 @@ Speculatively re-execute a straggler only when attempts satisfy the same result 
   overflow), t-digest or HdrHistogram for
   quantiles. An in-memory exact distinct set needs memory proportional to cardinality; exact
   sorted-input or spill-based approaches trade different ordering, storage and execution costs.
-- Broadcast join when the small side fits in each worker's memory alongside its working set,
-  measured rather than assumed; shuffle join when both sides are large. A skewed join key
+- Broadcast join only when the engine supports that join type/build side and the expanded build
+  state fits in each worker's memory alongside its working set. Preserve duplicate-key multiplicity
+  and outer-join unmatched-row semantics. Inspect existing partitioning and the actual exchanges
+  before costing a shuffle join; both sides do not always need another shuffle. A skewed join key
   sends one worker most of the rows, and the stage then runs at that worker's speed whatever
   the cluster size.
 - A batch's partial failure needs a decision, not a default. Retried/speculative task outputs
   need one selected attempt per logical partition, while each external effect needs its own
   enforced retry-safe contract across attempts; selecting output does not deduplicate effects.
-  A partial result must carry an explicit completeness record naming what is missing; the
+  A partial result must carry an explicit completeness record naming what is missing. A fraction
+  of completed partitions is not an error bound or necessarily the fraction of records covered; the
   per-request version of that contract is `scatter-gather`.
 - A checkpoint needs a sink-supported commit protocol. Atomic rename works only on file
   systems that guarantee the required same-filesystem rename semantics; object stores may
   implement rename as copy/delete. Prefer immutable attempt outputs plus an atomic manifest,
-  transaction or engine-native committer. Optimize checkpoint interval from write cost,
-  failure rate and recovery work, then validate under injected failure.
+  transaction or engine-native committer, with conditional publication that rejects obsolete
+  epochs/writers; an atomic overwrite alone does not prevent checkpoint regression. Validate
+  authority and publication as one decision, including after a precondition failure. Optimize
+  checkpoint interval from write cost, failure rate and recovery work, then validate under
+  injected failure.
 - Never claim unqualified "exactly-once aggregation". State the boundary: at-least-once task execution
   plus one selected output per logical partition can provide one committed contribution per
   stage. External side effects and source/sink commits need their own boundary proof.

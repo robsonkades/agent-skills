@@ -27,8 +27,15 @@ as a separate scenario.
 | container/node | throttling, working set/OOM/eviction, network, disk, placement pressure   |
 | dependency     | calls, occupancy, latency/errors, quota, pool and partition skew          |
 
-For Prometheus classic histograms, aggregate bucket counters by all desired dimensions and
-_le_ before histogram_quantile, with a rate window appropriate to the analysis:
+For Prometheus classic histograms, first verify matching units and bucket boundaries across
+the selected series. A rollout can mix schemas: summing buckets present in only some
+replicas does not produce a fleet distribution. Keep incompatible schemas separate, or
+explicitly coarsen to boundaries present in every included histogram, including `+Inf`;
+report the lost resolution and whether it still supports the SLO decision. Do not fill
+missing buckets with zero. See [Prometheus histogram types](https://prometheus.io/docs/concepts/metric_types/#histogram).
+
+With compatible buckets, aggregate counters by all desired dimensions and _le_ before
+histogram_quantile, with a rate window appropriate to the analysis:
 
 ```promql
 histogram_quantile(

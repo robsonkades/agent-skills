@@ -32,8 +32,11 @@ overlapping cycles. Recompute SCCs after each proposed removal. Rank the candida
 1. **The edge with the cheapest safe migration.** `jdeps -verbose:class -filter:none` shows which classes
    create bytecode edges; fewer sites can be cheaper, but public contracts, reflection, data
    formats and ownership may dominate the count.
-2. **The edge that points against policy flow** — from the package that decides
-   less towards the package that decides more.
+2. **The edge that violates the intended dependency rule.** Establish the contract owner and
+   permitted direction. A policy dependency on concrete infrastructure may deserve inversion;
+   an adapter dependency on a policy-owned port may be exactly the required direction.
+   Source dependencies need not follow runtime call direction or rank packages by how much
+   they decide.
 3. **The edge caused by a misplaced class.** Ask of each contributing class:
    which package's changes does it track? If it tracks the _other_ package, the
    fix is a move, not an inversion.
@@ -88,9 +91,11 @@ public final class Warehouse {
 **Analysis.** `totalValue` is valuation: it changes when pricing policy changes
 (currency handling, promotional pricing entered valuation twice in the log) and
 never when stock handling changes. The class tracks the wrong package for that
-method — a misplaced concern, so the fix is a move, not an interface. The
-opposite edge (`pricing -> stock`) points from the deciding package towards the
-data it consumes; one direction is healthy, and it stays.
+method — ownership supports moving valuation into pricing. The opposite edge
+(`pricing -> stock`) consumes `StockLevel` as a public domain data contract, an accepted
+boundary in this example. Retaining that edge is not a general rule that policy should
+depend on lower-level infrastructure; a persistence or vendor type would need a different
+boundary assessment.
 
 **After.** Valuation lives with pricing, consuming stock data through its public
 surface:
@@ -166,3 +171,5 @@ are an optional architecture change, not runnable alongside the classes as one s
   specifies omission of source-only annotations from binaries.
 - [OpenJDK 25.0.3 jdeps options](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jdeps/share/classes/com/sun/tools/jdeps/JdepsTask.java)
   provides the implementation's filter defaults and option handling; check the actual tool build.
+- [Robert C. Martin: The Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+  distinguishes source dependency direction from control flow at a policy/adapter boundary.

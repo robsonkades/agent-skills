@@ -84,8 +84,11 @@ Two properties that become especially important with retained asynchronous messa
 - **Choose compatibility directions from actual overlap.** Existing readers receiving new
   writes need forward compatibility; new/reset readers replaying old writes need backward
   compatibility. Their windows differ: deployed reader support versus oldest replayable
-  data, including archive and DLQ recovery. Choose the covered schema versions explicitly;
-  a latest-version check does not establish compatibility with all retained history.
+  data, including compacted current values, archives and DLQ recovery. A cold key's last
+  value can retain an old schema indefinitely under compact-only cleanup; inspect the
+  actual cleanup policy instead of deriving its age from a nominal retention duration.
+  Choose the covered schema versions explicitly; a latest-version check does not establish
+  compatibility with all retained history.
   Full/transitive compatibility, upcasters or a migration cutoff are alternative policies.
   The per-format rules belong to
   `schema-evolution-and-compatibility`.
@@ -129,6 +132,24 @@ document as the schema: which service owns the current value, and how a consumer
 window rebuilds — a read API, a snapshot event, or a compacted topic. Without it, consumers'
 projections diverge and no one can say which is right.
 
+Make the recovery contract checkable:
+
+- **Snapshot-to-stream continuity.** Bind the snapshot to an authoritative revision or
+  replay position for each relevant feed/partition, and define how changes during its capture
+  are replayed or reconciled. A paginated scan followed by subscribing at the current tail can
+  omit intervening updates. Prevent snapshot installation from overwriting newer live state;
+  use a separately rebuilt projection and defined cutover, or an equivalent proven merge
+  protocol. Retain deduplication and version checks across the overlap. A timestamp alone
+  does not establish coverage; use the source/connector's supported snapshot protocol.
+- **Compaction and deletion coverage.** A compacted topic can rebuild current per-key state
+  only when keys, retained values and cleanup policy support that representation; compacting
+  operation deltas does not preserve the complete operation history. Check `cleanup.policy`
+  (`compact` versus `compact,delete`), tombstone retention and catch-up duration. A consumer
+  can miss a deletion after its tombstone expires. Replaying retained records over an old
+  projection can then retain deleted entities: rebuild into empty state with sufficient
+  coverage, use an authoritative full replacement, or explicitly reconcile missing keys.
+  Do not infer historical replay or a consistent cross-partition snapshot from compaction.
+
 ## Proving it
 
 - A CI check that runs the registry's compatibility test for the target mode against the
@@ -140,8 +161,18 @@ projections diverge and no one can say which is right.
 - Contract tests for new-producer→old-consumer, old-producer→new-consumer and replayed archive
   combinations that actually occur; include unknown enums, omitted/default fields, maximum
   payload, duplicate/out-of-order versioned state and authorization redaction.
+- Recovery cases: update and delete entities during snapshot capture, then assert the
+  recovered projection at the declared replay boundary equals the authoritative state.
+  Resume an old projection after a needed tombstone has expired; require a rebuild or
+  reconciliation that removes the deleted entity rather than reporting successful catch-up.
+- Compatibility case: retain an unchanged key in an older schema on a compact-only topic
+  beyond the nominal retention setting, then test the new reader's real bootstrap path.
+  Healthy recent traffic and a latest-schema check do not establish that this path works.
 
 ## Sources
 
 - [CloudEvents 1.0.2](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md): occurrence identity and envelope attributes.
 - [Confluent schema evolution](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html): reader/writer direction and transitive versus latest-version checks.
+- [Kafka 4.1 compaction guarantees](https://kafka.apache.org/41/design/design/#compaction): retained per-key state and the conditions for observing tombstones.
+- [Kafka 4.1 cleanup policy](https://kafka.apache.org/41/configuration/topic-configs/#cleanup.policy): compaction versus combined deletion and compaction.
+- [Debezium PostgreSQL 3.3 snapshots](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html#postgresql-snapshots): a concrete connector protocol linking snapshot capture to streaming position; inspect the deployed version and configuration.

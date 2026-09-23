@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-test-doubles
-version: 1.0.3
+version: 1.0.4
 description: >-
   Choosing and using test doubles in Java: the stub/mock/fake distinction that actually
   changes what a test proves, selecting real collaborators, fakes or mocks for the needed
@@ -60,5 +60,5 @@ agentOverrides:
   codex:
     interface:
       display_name: Java Test Doubles
-      short_description: Fakes over mocks, and Mockito hazards
+      short_description: Choosing doubles and Mockito hazards
       default_prompt: Use Java Test Doubles to review the substitution in this test.

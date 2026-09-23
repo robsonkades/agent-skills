@@ -20,15 +20,15 @@ Generation is metadata on the `ZPage`; barrier slow paths also consult the gener
 a slot or referent, not only once per page. Pointer metadata records collector state, not
 a simple object-generation bit. Barrier elision/expansion depends on the compiler.
 
-The exact bit layout, and the names of the `ZPointer*` masks in `zpointer.hpp` /
-`zaddress.hpp` / `zGlobals.hpp`, evolve between releases — the pointer representation was
-redesigned during the generational work. Check the source of the build in use before quoting
-them in an incident report.
+The exact bit layout and `ZPointer*` masks are declared in `zAddress.hpp` on JDK 25;
+`zAddress.inline.hpp` supplies pointer operations. These evolve between releases — the pointer
+representation was redesigned during the generational work. Check the source of the build in
+use before quoting them in an incident report.
 
 ## Load barrier fast path
 
-The check is a bitmask over the **pointer value itself**. No access to the pointed-to object
-happens before the pointer has been validated:
+The check uses collector metadata in the **pointer value itself**. No access to the pointed-to
+object happens before the pointer has been validated:
 
 ```
 // field_address: address of the FIELD holding the reference (e.g. an array slot)
@@ -45,6 +45,11 @@ This is conceptual pseudocode, not the emitted instruction sequence. Fast-path c
 on architecture, compiler expansion/elision, cache state and collector phase; “a fraction of
 a nanosecond” is not portable evidence. The dependency ordering is the useful invariant:
 validate/decode the reference before dereferencing relocated object memory.
+
+For example, the JDK 25 x86 C1 strong-reference fast path combines uncoloring and the metadata
+test with a shift and a conditional branch. Its non-strong-reference path tests a marking mask
+before uncoloring. Absence of a standalone mask instruction does not prove a missing barrier;
+inspect the matching compiler, access kind and architecture when reading generated code.
 
 Any pseudocode of the shape `if (obj.color != expected)`, or anything else implying a field
 read on the target before the pointer is validated, inverts the dependency order and describes
@@ -77,7 +82,7 @@ updates prevent losing concurrent sets in shared words.
 page. There is no card — no fixed-size memory slice — in the real structure. G1's one byte per
 512-byte card is a different granularity of tracked datum, not merely a different processing
 schedule. The exact bit-to-address mapping and the size of `_bitmap[2]` should be checked
-against `zRememberedSet.hpp` / `zGranuleMap.hpp` on the build in use before citing.
+against `zRememberedSet.hpp` / `zRememberedSet.inline.hpp` on the build in use before citing.
 
 ### Double buffering
 
@@ -159,6 +164,10 @@ alter uncommit behavior; lower allocation or admission changes code/service beha
 the selected axis against stall count/duration, achieved load, CPU and cgroup headroom.
 
 Sources: [JEP 439](https://openjdk.org/jeps/439),
+[JDK 25 pointer layout](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zAddress.hpp),
+[pointer operations](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zAddress.inline.hpp),
+[x86 generated barriers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/gc/z/zBarrierSetAssembler_x86.cpp),
 [JDK 25 store ordering](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zBarrierSet.inline.hpp),
 [barrier work](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zBarrier.inline.hpp),
+[remembered-set mapping](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.inline.hpp),
 [remembered-set roles](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.cpp).

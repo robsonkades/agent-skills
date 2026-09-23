@@ -125,6 +125,8 @@ IF a virtual proxy initialises lazily and is shared across threads
 THEN the target must be safely published. Exactly-once initialization is required only
      when duplicate construction has observable effects or unacceptable cost; otherwise
      benign duplicate creation may be a simpler policy.
+     Publication does not guarantee progress: inspect factory reentry and initialization
+     dependency cycles, and establish any required bound on callers waiting for initialization.
 
 IF a lazy proxy may load from a database inside a loop
 THEN inspect executed statements: it can create N+1, while batch/subselect fetching or

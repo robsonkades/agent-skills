@@ -116,10 +116,12 @@ Consider separate pipelines when:
 - A **copier**—a second consumer group—decouples offsets/failure but adds broker read/network/
   cache and downstream cost. Kafka groups have independent offsets, but share topic retention
   and compaction; another group does not preserve expired input or create independent retention.
-- **Say which window and implementation you mean.** Naive sliding windows replicate each record
-  across `size/step` windows; pane/incremental aggregation can reduce storage/CPU depending on
-  whether the function is algebraically mergeable. Continuous sessions may never finalize,
-  but state growth depends on accumulator versus raw-event/join storage.
+- **Say which window and implementation you mean.** Fixed-grid, half-open hopping/sliding
+  windows assign a record to at most `ceil(size/step)` intervals; the exact count depends on
+  alignment when the ratio is not integral. Kafka Streams `SlidingWindows` instead aligns
+  windows to event timestamps with inclusive bounds. Verify memberships before sizing or
+  migration. Pane/incremental aggregation can reduce storage/CPU when the function permits it;
+  continuous sessions may never finalize, with growth depending on accumulator versus raw state.
 - A watermark is an engine/source assertion about event-time progress, commonly the minimum
   across active partitions plus out-of-orderness/idleness policy—not a guarantee. It encodes how
   long to wait for stragglers; the late-data policy is a

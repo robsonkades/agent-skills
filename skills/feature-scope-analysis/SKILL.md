@@ -3,9 +3,10 @@ name: feature-scope-analysis
 description: >
   Fixing what a feature includes and, more usefully, what it deliberately excludes: sorting
   every candidate item into required, recommended, optional, out of scope or future work,
-  tracing each included item back to a requirement or a constraint, and catching the additions
-  that arrived because they seemed like a good idea. Use when a feature is being planned and its
-  edges are undefined, when a plan has grown a dashboard, a refactor or an abstraction nobody
+  tracing required work to commitments and constraints, recording the benefit and authority for
+  selected additions, and catching changes that arrived only because they seemed like a good idea.
+  Use when a feature is being planned and its edges are undefined, when a plan has grown a
+  dashboard, a refactor or an abstraction nobody
   asked for, when "while we are in there" appears, when an estimate keeps moving without the
   requirement changing, or when a reviewer cannot tell which parts of a change were requested.
   Does not keep an already-written diff honest (coding-agent-discipline), does not decide
@@ -35,8 +36,10 @@ scope is a decision, and it is the one that stops the argument later.
 2. **Sort each candidate** into exactly one of the five buckets below. Every candidate is
    sorted; none is left implicit. Mark a classification provisional when its deciding fact or
    authority is unknown, name the evidence needed and block only dependent commitments.
-3. **Trace every Required item** to a requirement identifier or a constraint. An item that
-   traces to neither is not required, whatever it looks like.
+3. **Trace every Required item** to an accepted commitment, necessary acceptance condition or
+   evidenced constraint. For every item selected for delivery, record that obligation or its named
+   risk/benefit, plus the source of the selection and its authority. Reuse the request, accepted
+   decisions and delegated discretion; do not invent a requirement to justify an authorized benefit.
 4. **Run the creep check** (`references/scope-creep-catalogue.md`) over the Required and
    Recommended buckets. The catalogue lists the additions that arrive without a requirement.
 5. **Give every Out of Scope item a reason and an owner** — who excluded it, and on what basis.
@@ -62,6 +65,8 @@ correctness obligation: record a provisional trace to its evidence.
 Explicitly promised documentation, migration support or other deliverables are Required even
 when the runtime feature works without them. An illustrative solution or a preference is not
 automatically a commitment; inspect its wording and prior decisions before classifying it.
+Permission to include an addition establishes authority, not by itself an obligation. If a later
+accepted scope revision commits to delivering it, update its classification and delivery baseline.
 
 ## Decision rules
 
@@ -112,11 +117,11 @@ Boundary        <one sentence>
 
 Required        SC-01  <item>  <- OBJ/BR/BAC or constraint it traces to
 Recommended     SC-02  <item>  <- RISK or cost it addresses; consequence if dropped
-Optional        SC-03  <item>
+Optional        SC-03  <item>  <- benefit
 Out of scope    SC-04  <item>  <- reason; accountable owner who excluded it
 Future work     SC-05  <item>  <- what it waits on
 
-Delivery        <selected SC-* items; proposals not yet selected>
+Delivery        <selected SC-* items with selection/authority sources; unselected proposals>
 Creep check     <items examined, and what was reclassified>
 ```
 

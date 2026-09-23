@@ -38,7 +38,8 @@ fights the tools without a measurement to justify it.
 3. **Close the outbound route.** Accessors can return deeply immutable values directly.
    Owned mutable representations still need isolation on output: arrays, dates and buffers
    need defensive access even after an inbound copy. An unmodifiable container does not
-   protect mutable elements.
+   protect mutable elements. A read-only `ByteBuffer` still has mutable cursor state and
+   may share writable backing bytes; isolate both, as described in the records reference.
 4. **Check publication.** Prefer final stable state; justify derived caches separately and
    prevent premature `this` escape. Final-field
    initialization safety protects observed constructed state, but a happens-before publication
@@ -86,7 +87,7 @@ demonstrated leak from a missing publication/binder guarantee and name the remai
 ## References
 
 - [Records and defensive copies](references/records-and-copies.md) — read when writing or
-  reviewing a record, a constructor/accessor pair, or a wither; includes the worked
+  reviewing a record, a constructor/accessor pair, a buffer component, or a wither; includes the worked
   example and the false positives (builders, cached derived fields).
 - [Safe publication and the JMM](references/safe-publication.md) — read when the object
   crosses threads, when a field cannot be final, or when reviewing lazy caching of a

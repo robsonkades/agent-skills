@@ -28,7 +28,18 @@ recommendation when evidence supports one.
 
 ## Checkpoint after the answer
 
-After updating the draft and ledgers, report:
+Record the answer's source, applicable scope and status before closing the question. A tentative
+answer, unresolved conflict or answer from a participant without the required authority leaves
+the affected distinction open; do not turn it into an accepted decision by copying it into a draft.
+
+When a later answer changes an accepted decision, use its applicable scope and the speaker's
+existing authority to identify what it supersedes. Preserve the earlier answer and its source
+as superseded only once the replacement is established; otherwise record the conflict. Reassess
+the affected questions and dependent contracts, criteria, resources and validation evidence.
+Mark records awaiting review as stale, following the existing revision convention; keep unaffected
+answers and independent work valid. Reformatting an unchanged answer does not reopen it.
+
+After updating the applicable draft or question record, report proportionately:
 
 ```text
 Checkpoint  Continue | Close the stage | Blocked

@@ -22,9 +22,17 @@ at most one pivot. A no-pivot plan contains only compensatable steps; before a p
 compensatable, and after it all are forward-only. The compiler does not enforce plan order or prove
 that a participant can compensate. Pattern-switch syntax additionally depends on the JDK.
 
+Persist the saga's **plan-definition identity** separately from its row version/ownership epoch.
+Recovery must resolve recorded step IDs against compatible code and stored context, not interpret
+old positions against today's step list. Retain the original definition and compensation handlers,
+or explicitly migrate in-flight state while preserving completed effects, command identities and
+recovery direction. A missing definition, step or compatible context must stop advancement and
+remain discoverable for repair; never skip it and report compensation complete.
+
 ## Persist intent before the call and transition atomically
 
 ```text
+Resolve the persisted plan definition and step identities before advancing.
 Claim current saga version -> receive updated state/version and ownership epoch.
 For the current step:
   Commit STARTED with stable (saga, step, operation) identity; receive the new version.
@@ -69,12 +77,12 @@ separately when heartbeats or retry bookkeeping refresh `updated_at` without bus
 ```java
 final class ChargeCard implements SagaStep.Compensatable {
     public void execute(SagaContext ctx) {
-        payments.charge(new ChargeRequest(ctx.sagaId() + ":charge", ctx.amount()));
+        payments.charge(new ChargeRequest(ctx.commandKey("charge"), ctx.amount(), ctx.currency()));
     }
     public void compensate(SagaContext ctx) {
         // Stable command key plus the exact original business effect being reversed.
         payments.refund(new RefundRequest(
-                ctx.sagaId() + ":refund", ctx.chargeId(), ctx.amount()));
+                ctx.commandKey("refund"), ctx.chargeId(), ctx.amount(), ctx.currency()));
     }
 }
 ```
@@ -83,8 +91,12 @@ The refund is a **new business fact**, not a deletion of the charge. Compensatio
 whether the charge exists and target that identity; inventing a refund for a charge that never
 existed may itself violate the payment API or ledger invariant.
 
-Here the context must retain the original charge's identity, amount and currency, not read a
-mutable order price at recovery time. The participant must account for prior refunds and current
+Here `SagaContext` is the persisted context of this step occurrence, not one shared slot for all
+charges in the saga. `commandKey` returns the stored, unambiguous key for `(saga, step occurrence,
+operation)`. Distinct charge steps, including distinct loop iterations, need distinct identities;
+retries and compensation reuse their original identities across attempts and deployments.
+Retain this step's original charge identity, amount and currency, not a mutable order price or
+another step's result. The participant must account for prior refunds and current
 eligibility when applying this command; a full refund is only this example's agreed contract.
 Do not restore a pre-saga snapshot over later independent changes. Record an authorized partial
 refund, credit or manual obligation when the original business outcome is no longer recoverable.
@@ -99,20 +111,20 @@ A transport exception, generic runtime exception or inconclusive status lookup d
 that result.
 
 ```java
-void compensateCompletedBackwards(SagaInstance saga, List<SagaStep> steps) {
+void compensateCompletedBackwards(SagaInstance saga, SagaDefinitions definitions) {
+    var plan = definitions.requireCompatible(saga.definitionId());
     store.mark(saga.id(), COMPENSATING);
     for (CompletedStep completed : store.completedStepsDescending(saga.id())) {
-        if (steps.get(completed.position()) instanceof SagaStep.Compensatable c) {
-            store.markCompensationStarted(saga.id(), c.name()); // must commit before the call
-            try {
-                c.compensate(saga.context());
-            } catch (CompensationRejectedException e) { // definite participant rejection only
-                store.mark(saga.id(), c.name(), COMPENSATION_FAILED, e.toString());
-                escalation.enqueue(saga.id(), c.name(), saga.context());
-                return;                      // policy retries or routes to manual repair
-            }
-            store.mark(saga.id(), c.name(), COMPENSATED);
+        var c = plan.requireCompensatable(completed.stepId());
+        store.markCompensationStarted(saga.id(), completed.id()); // commit before the call
+        try {
+            c.compensate(completed.context());
+        } catch (CompensationRejectedException e) { // definite participant rejection only
+            store.mark(saga.id(), completed.id(), COMPENSATION_FAILED, e.toString());
+            escalation.enqueue(saga.id(), completed.id(), completed.context());
+            return;                          // policy retries or routes to manual repair
         }
+        store.mark(saga.id(), completed.id(), COMPENSATED);
     }
     store.mark(saga.id(), COMPENSATED);
 }
@@ -129,6 +141,10 @@ and its repair intent atomically (for example an outbox), or have a durable scan
 failure; a separate `escalation.enqueue` alone has a crash gap. Resolve a refund whose response
 was lost and skip known compensated steps. Never declare the entire saga compensated while an
 effect is unknown or its pivot has committed.
+
+`completed.stepId()` selects the handler within the persisted definition; `completed.id()` identifies
+the recorded occurrence, including its own command keys and effect context. The `require*` calls
+must reject missing/incompatible definitions or roles rather than fall back to the latest plan.
 
 Other exceptions propagate to the outer durable worker: it stops this attempt and resolves
 store/participant status before retrying or marking a business failure. If the store is unavailable,
@@ -164,6 +180,13 @@ Additional cases the parameterised sketch does not reach:
 
 - **Duplicate application** — run the whole saga twice with the same saga id and assert one
   charge and one reservation. This fails when a step forgot its idempotency key.
+- **Two charge steps** — execute and retry two charges within one saga, then compensate only
+  the second. Assert two distinct charges, no duplicates and a refund of exactly the second
+  effect. Saga-only keys or a shared last-charge field must fail this case.
+- **Deployment during recovery** — record completed steps under definition v1, then deploy v2
+  with an inserted/reordered step. Resume against the compatible v1 definition and original
+  effects. With v1 unavailable or a step missing, require discoverable repair without declaring
+  `COMPENSATED`; indexing v2 by v1's saved positions must fail this case.
 - **Crash between the call and the record** — the participant succeeds, then the runner
   throws before `store.mark(..., DONE)`. On replay the step must not apply twice; the
   participant's own key is what makes that true, not the saga log.
@@ -190,3 +213,7 @@ Additional cases the parameterised sketch does not reach:
 Source: [Compensating Transaction pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction)
 for business-specific compensation, concurrent work and recovery order. The custom states and
 exception above do not implement MicroProfile LRA's participant state machine.
+
+[Step Functions state machine versions](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-state-machine-version.html)
+provide one concrete example of immutable workflow definitions. The compatibility rules above are
+design obligations for this custom Java runner; they do not assume an AWS or other engine guarantee.

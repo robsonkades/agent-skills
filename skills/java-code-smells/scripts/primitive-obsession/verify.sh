@@ -18,7 +18,7 @@ java -cp "$out" After
 
 echo
 echo "--- AfterTransposed.java: MUST fail to compile"
-if javac --release 21 -Xlint:all -XDrawDiagnostics -d "$out" AfterTransposed.java 2>"$out/err"; then
+if javac --release 21 -Xlint:all -XDrawDiagnostics -cp "$out" -d "$out" AfterTransposed.java 2>"$out/err"; then
     echo "FAIL: the transposition compiled; the wrappers are not distinguishing anything"
     exit 1
 fi

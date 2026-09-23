@@ -39,6 +39,27 @@ a misconfiguration. TLS pass-through preserves encryption to the upstream but re
 routing visibility. For proxy-originated TLS, encryption alone does not establish peer identity:
 configure certificate chain and name validation. Do not silently disable those checks for failover.
 
+### Address and identity
+
+Record four separate values: connection address, HTTP `Host`/`:authority`, upstream TLS SNI,
+and the certificate identity the TLS client verifies. They can differ deliberately, but the
+mapping must preserve the upstream's virtual-host and authentication contract. For example,
+connecting to `127.0.0.1:15001` does not establish that `payments.example` remains the request
+authority. Changing a signed authority or path can also invalidate application signatures.
+
+A local reverse-proxy URL needs explicit upstream authority/identity handling; a client
+configured with a forward proxy can retain the origin URL and use CONNECT for an HTTPS tunnel.
+Verify the client's actual proxy support. A CONNECT tunnel carrying end-to-end TLS does not
+give the ambassador visibility into the encrypted HTTP request.
+
+For TLS origination, configure a trusted destination-to-identity mapping. Setting SNI alone
+does not enable certificate verification. In Envoy, automatic SNI and automatic SAN validation
+are separate options and may derive values from request headers; validate the destination
+before relying on that mechanism. A valid certificate for an attacker-chosen host does not
+make that host an authorized destination. Never fix a localhost/authority mismatch by disabling
+name verification. Test wrong-name certificates signed by a trusted CA, forged authority and
+the legitimate upstream virtual host, checking both acceptance and rejection paths.
+
 ## Count actual pools
 
 The estimate `pods × m` holds only when `m` is the total upstream connections per identical
@@ -102,7 +123,8 @@ Use an isolated app → real proxy → counting stub path with the target image/
   Assert bounded failure, reconnection and the specified fallback for each; a synthetic 503
   alone does not test a process crash. Use open-loop load to expose the outage
   (`coordinated-omission`), only in an isolated test environment.
-- **Security/config:** present a wrong upstream certificate, forged destination/policy headers
+- **Security/config:** present both an untrusted certificate and a trusted-CA certificate for
+  the wrong name, forged authority/destination/policy headers,
   and an invalid config update. Assert rejection without bypass, retained last-good config
   where supported, visible config version and successful rollback.
 
@@ -112,6 +134,8 @@ These are implementation tests, not evidence that the skill improves agent behav
 
 Checked 2026-09-05. Envoy links use its moving latest documentation (then 1.40 development);
 verify configuration fields against the deployed version before emitting runnable config.
+Address/identity sources additionally checked 2026-09-19 against Envoy 1.40 development docs;
+these establish the option distinction, not compatibility with an unspecified deployed version.
 
 - [RFC 9110 §9.2.2](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2):
   idempotency and restrictions on automatic retries.
@@ -119,6 +143,10 @@ verify configuration fields against the deployed version before emitting runnabl
   pool partitioning and protocol-dependent concurrency.
 - [Envoy TLS](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/security/ssl):
   certificate verification requires configuration, beyond simply enabling TLS.
+- [RFC 9110 §§7.2, 9.3.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-7.2):
+  request authority identifies the target origin; CONNECT establishes a tunnel.
+- [Envoy upstream HTTP protocol options](https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/core/v3/protocol.proto#envoy-v3-api-msg-config-core-v3-upstreamhttpprotocoloptions):
+  separate automatic SNI and SAN validation controls and their header-derived inputs.
 - [Envoy router](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter):
   retry and timeout controls are implementation-specific.
 - [gRPC deadlines](https://grpc.io/docs/guides/deadlines/):

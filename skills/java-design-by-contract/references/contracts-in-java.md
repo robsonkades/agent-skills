@@ -37,10 +37,14 @@ The contract is the promise, not a description of the current code:
  */
 ```
 
-- `@throws` for failures a caller is expected to anticipate is API. Adding a new failure
-  condition to behavior narrows the contract; documenting an already observable unchecked
-  failure may instead be a clarification, while adding a checked exception is source-breaking.
-  Classify the behavioral and compatibility change separately.
+- `@throws` for failures a caller is expected to anticipate is API. Adding a failure outside
+  previously allowed outcomes weakens the guarantee; documenting an existing permitted failure
+  may clarify it. A guard for already excluded input does not by itself strengthen a precondition,
+  but must preserve promised exception types, state effects and externally relied-on behavior.
+- Adding a checked exception not covered by the existing `throws` clause can force callers to
+  catch or declare it on recompilation. Adding `FileNotFoundException` alongside `IOException`
+  adds no exception-checking obligation. Changing `throws` alone preserves binary compatibility;
+  this does not prove behavioral compatibility. Classify these dimensions separately.
 - Do not document incidental behaviour (iteration order, an accidental tolerance for
   null) unless you intend to promise it forever; once written, callers may rely on it.
 - In a JSpecify `@NullMarked` scope, unannotated class/array type uses normally exclude null,
@@ -51,8 +55,9 @@ The contract is the promise, not a description of the current code:
 ## Behavioural subtyping — the rules and their concrete violations
 
 An override stands in for the supertype's contract wherever the supertype is expected.
-It may **require less and promise more**, never the reverse. Java's compiler enforces
-none of this beyond return-type covariance and checked-`throws` narrowing.
+It may **require less and promise more**, never the reverse. Java's compiler checks signature-level
+constraints such as return-type covariance and checked-`throws` compatibility, not these semantic
+guarantees.
 
 Violations that compile cleanly:
 
@@ -67,8 +72,8 @@ Violations that compile cleanly:
   in a state the base class's methods assume impossible (the classic
   `Rectangle`/`Square` failure, in whatever domain shape it arrives).
 - **Unchecked-exception widening**: `throws` narrowing is compiler-checked only for
-  checked exceptions; an override that starts throwing a new unchecked exception on
-  inputs the contract accepted is a strengthened precondition in disguise.
+  checked exceptions; an override can compile while adding an unchecked failure the inherited
+  contract excludes. Compare the permitted conditions and outcomes, not just exception class names.
 
 ## Detection heuristics
 
@@ -99,6 +104,9 @@ Violations that compile cleanly:
   so_. For a new API, check whether clients can discover supported capabilities and handle
   the documented failure. Separate capability interfaces when that improves actual use;
   optional operations alone do not prove a substitutability defect.
+- **A documented choice of failure outcomes** is also part of the contract: `Collection.contains`
+  may throw or return false for an ineligible element. An implementation's stronger promise still
+  binds it; interface flexibility does not authorize withdrawing its established guarantee.
 - **Constructor `requireNonNull` on values "already validated" at the boundary** is not
   redundant defence: the constructor is establishing its own invariant, independent of
   any particular caller's discipline. Where boundary validation itself belongs is
@@ -127,4 +135,8 @@ Violations that compile cleanly:
 - [JEP 513: Flexible Constructor Bodies](https://openjdk.org/jeps/513)
 - [JLS §8.8.7: constructor bodies](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7)
 - [JLS §14.10: assertions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.10)
+- [JLS §11.2.3: exception checking](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html#jls-11.2.3)
+- [JLS §8.4.8.3: overriding requirements](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3)
+- [JLS §13.4.21: binary compatibility of throws clauses](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.21)
+- [Collection: optional exceptions and operations](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html)
 - [JSpecify nullness specification](https://jspecify.dev/docs/spec/)

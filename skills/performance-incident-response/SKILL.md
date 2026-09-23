@@ -70,6 +70,8 @@ urgent mitigation. Keep impact/start-time uncertainty explicit rather than inven
 For a response handoff, provide current impact, actions and actual outcomes, remaining uncertainty, artifact locations,
 active owners and next decision/check. A mitigation attempted, a workload temporarily quiet and
 a confirmed sustained recovery are different states.
+Record accepted command transfer through the existing incident process; publishing notes alone
+does not transfer ownership. Carry temporary controls and their removal criteria into the next shift.
 
 ## References
 

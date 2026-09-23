@@ -71,7 +71,7 @@ operations the JDK does not otherwise ship. The built-ins:
 | Gatherer                       | Does                                                                                           |
 | ------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `windowFixed(n)`               | groups elements into consecutive lists of size `n`                                             |
-| `windowSliding(n)`             | overlapping windows of size `n`                                                                |
+| `windowSliding(n)`             | overlapping windows of size `n`, or one short window when the entire input is shorter          |
 | `fold(supplier, folder)`       | a single running value, like a lazy `reduce` with a different state type                       |
 | `scan(supplier, scanner)`      | emits every intermediate accumulation                                                          |
 | `mapConcurrent(limit, mapper)` | applies `mapper` on **virtual threads**, at most `limit` at a time, preserving encounter order |
@@ -101,8 +101,12 @@ The limit applies to one pipeline evaluation, not all requests sharing a depende
 admission control where required. A downstream short circuit can leave speculative mapper calls
 whose results are never consumed. Cancellation is best effort and does not undo side effects;
 encounter-ordered results do not imply ordered mapper effects. Set client timeouts explicitly.
-Fixed windows include a final short batch, and both window gatherers produce unmodifiable lists;
-verify that the batch consumer accepts those contracts.
+Both window gatherers produce no windows for empty input. Fixed windows include a final short
+batch. Sliding windows produce one short window when the entire input is shorter than the
+requested size; otherwise they produce only full windows, without trailing partial suffixes.
+Both produce unmodifiable lists. Check empty, shorter-than-window, exact-size and longer input;
+the consumer must accept short windows or explicitly filter/pad them according to its contract
+before accessing fixed positions. Do not silently discard short input when it must be preserved.
 
 On Java 24+, consider a custom `Gatherer` for a reusable stream transformation
 (deduplicate-consecutive or chunk-by-predicate). A `Spliterator` still fits source traversal or
@@ -130,5 +134,6 @@ with a `peek`-plus-external-state scheme whose required callbacks can be skipped
 ## Primary references
 
 - [Java 25 Gatherers](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Gatherers.html)
+- [Java 24 window contracts](https://docs.oracle.com/en/java/javase/24/docs/api/java.base/java/util/stream/Gatherers.html)
 - [JEP 485: Stream Gatherers, final in Java 24](https://openjdk.org/jeps/485)
 - [Java 25 ForkJoinPool](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)

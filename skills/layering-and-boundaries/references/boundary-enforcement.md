@@ -47,6 +47,12 @@ can execute outward while their source dependencies point inward. Direct web →
 dependencies permit domain value types; these rules do not distinguish their use from a
 controller bypassing a use-case boundary. Add narrower rules if that distinction is required.
 
+The first rule checks only its named framework packages. For example, Hibernate's
+`org.hibernate.annotations.Formula` is outside that list; a green result does not establish
+complete framework independence. Include the target stack's provider and legacy packages,
+or define permitted domain dependencies for a stricter policy. Check representative forbidden
+imports from the actual stack, not only a Spring type already listed below.
+
 ```java
 @AnalyzeClasses(packages = "com.acme")
 class ArchitectureTest {
@@ -113,9 +119,11 @@ component-surface rules when needed. Reflection/configuration wiring needs separ
    whether a transaction happens to be open.
 2. **Framework annotations in the domain.** Usually starts with `@Entity` and ends with the
    model shaped by what maps cleanly rather than by the business.
-3. **Repository called from the controller** for "just this one read". Frequently the right
-   engineering call for a read path — and a leak when it becomes a write path, because the
-   transaction boundary and the invariants are then in the web layer.
+3. **Repository called from the controller** for "just this one read". A read shortcut can
+   be deliberate, but must preserve required authorization, tenant isolation and filtering.
+   For writes, verify that invariants and the required atomic work still have an owner that
+   every entrypoint uses. Reject a bypass of these protections on either path; a read/write
+   label alone does not establish whether the boundary is safe to skip.
 4. **Transaction demarcation in the wrong layer.** Repository-local transactions can leave
    partial commits when no encompassing atomic scope exists. Spring `REQUIRED` normally
    joins an existing outer transaction; the annotation alone does not imply one commit per
@@ -152,5 +160,6 @@ Ask, in this order:
 ## Primary references
 
 - [ArchUnit user guide](https://www.archunit.org/userguide/html/000_Index.html) — imports and dependency-rule scope.
+- [Hibernate 6.6 Formula annotation](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Formula.html) — an example of a provider package outside the illustrative denylist.
 - [Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html) — REQUIRED versus independent transaction scopes; match the deployed release.
 - [Java 25 JLS, modules](https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.7) — exports and opens.

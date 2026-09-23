@@ -70,8 +70,9 @@ consumer or runtime facts that would change the recommendation.
   several code points and one grapheme).
 - Pass or verify the contract's charset. `String.getBytes()` and `new String(byte[])` use
   the default charset; reader/writer overloads may use that default or a specified fixed/inherited
-  encoding. Since Java 18 the default charset is UTF-8, while `-Dfile.encoding=COMPAT` selects the
-  native encoding; other overrides have unspecified behaviour. Explicit UTF-8 is portable only
+  encoding. Since Java 18 the default charset is UTF-8. The supported startup values of
+  `file.encoding` are `UTF-8` and `COMPAT` (which selects the native encoding); other values have
+  unspecified behaviour. Explicit UTF-8 is portable only
   when UTF-8 is actually the boundary contract—legacy files and protocols may require another
   explicit charset.
 - Select casing and formatting from the consuming contract. `"TITLE".toLowerCase()` is
@@ -128,7 +129,9 @@ consumer or runtime facts that would change the recommendation.
   or no normalization. Java and the database must enforce the same rule.
 - Byte length and character length are different limits. A `VARCHAR(50)` may mean 50 bytes or
   50 characters depending on the database and collation, so validation written in Java
-  characters can pass while the insert fails. Validate against the real constraint.
+  characters can pass while the insert fails. Validate against the real constraint, using the
+  boundary's encoding error policy as well as its charset; counting replacement bytes does not
+  prove that the original text is valid.
 
 ## References
 

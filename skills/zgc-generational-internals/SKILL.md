@@ -82,9 +82,10 @@ and effective collector support; JDK 25 HotSpot is the source baseline, not auth
   zero samples never establish p99=0.
   Omitting a phase can bias a percentile either way. Allocation stalls block allocating
   threads, not necessarily all application threads at a global safepoint; keep them separate.
-- The load-barrier fast path tests **the pointer value** with a bitmask, before any access to
-  the pointed-to object. Any explanation shaped like `if (obj.color != expected)` inverts the
-  dependency order that makes the mechanism safe.
+- The load-barrier fast path checks collector metadata in **the pointer value** before any
+  access to the pointed-to object. The emitted check depends on architecture/compiler/access
+  kind; do not require a standalone mask instruction. Any explanation shaped like
+  `if (obj.color != expected)` inverts the dependency order that makes the mechanism safe.
 - An object's generation is represented in `ZPage` metadata on the inspected JDK 25 source,
   not inferred from a simple generation color in each oop. Pointer metadata and barrier masks
   evolve; quote exact bits only from the target source/build.

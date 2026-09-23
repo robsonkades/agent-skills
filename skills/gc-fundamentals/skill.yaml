@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gc-fundamentals
-version: 1.4.2
+version: 1.4.3
 description: >-
   How JVM garbage collectors work, as the mental model behind every GC diagnosis: the
   generational hypothesis and where it fails, mark-sweep versus mark-compact versus copying,

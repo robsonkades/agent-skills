@@ -74,15 +74,17 @@ set of regions whose count is adaptive. Generational ZGC and generational Shenan
 different page/region aging and promotion policies; Shenandoah's default `satb` mode on 25
 is non-generational. The following survivor-space model applies to Serial/Parallel/G1:
 
-- A young collection copies survivors from Eden and the from-survivor space into the
-  to-survivor space, bumping each object's age in its header, and promotes an object to
-  old when its age reaches the **tenuring threshold** — at most `MaxTenuringThreshold`
-  (15 default in the tested build). Effective age selection and overflow promotion depend
-  on collector policy and available space; the target is not a guaranteed survivor occupancy.
+- A young collection compares the object's existing header age with the **tenuring threshold**.
+  An object below the threshold can be copied to survivor space and then have its age
+  incremented. Reaching the threshold through that increment does not promote it in the
+  same collection. An age already at or above the threshold, collector policy or insufficient
+  survivor space can instead cause promotion to old. `MaxTenuringThreshold` bounds the
+  threshold (15 default in the tested build); it does not guarantee survivor occupancy or
+  successful promotion when old space is unavailable.
   Do not project these flags or header-age mechanics onto ZGC or Shenandoah.
-- **Premature promotion** is the threshold being driven down because the survivor space
-  cannot hold what survived: objects that would have died in one more young collection
-  are copied to old instead. `-Xlog:gc+age=trace` prints the computed threshold each
+- **Premature promotion** can occur when a lowered threshold or insufficient survivor space
+  moves soon-to-die objects into old. Survivor-space overflow can promote an object below
+  the age threshold. `-Xlog:gc+age=trace` prints the computed threshold each
   pause for applicable collectors. A threshold below the maximum is normal adaptive policy,
   not proof of harmful promotion; correlate survival, promoted bytes and old pressure.
 - **Promotion is one-way.** Old is collected by a mixed collection (G1), a major cycle
@@ -296,6 +298,10 @@ Baseline corrections; 25 behavior was checked on 25.0.3, later releases use prim
 - [Serial young sizing on JDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/serial/defNewGeneration.cpp)
   and [Parallel adaptive sizing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/parallel/psScavenge.cpp):
   shared flags do not imply shared collector policies.
+- Promotion paths in [G1](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ParScanThreadState.cpp),
+  [Serial](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/serial/defNewGeneration.cpp)
+  and [Parallel](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/parallel/psPromotionManager.inline.hpp):
+  the age comparison precedes the increment for objects retained in young; survivor capacity also matters.
 - [G1 mechanisms on JDK 25](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-g1-garbage-collector1.html)
   and [G1 tuning](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html):
   adaptive young sizing, marking versus reclamation and evacuation/humongous behavior.

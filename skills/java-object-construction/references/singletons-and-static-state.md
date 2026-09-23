@@ -29,12 +29,12 @@ public enum Auditor {
 }
 ```
 
-| Form            | Reflection                                                  | Deserialisation                            | Lazy                                       | Substitutable in a test    |
-| --------------- | ----------------------------------------------------------- | ------------------------------------------ | ------------------------------------------ | -------------------------- |
-| 1. public field | deep reflection may bypass, subject to access/module policy | needs `readResolve` for canonical identity | eager when enclosing class initializes     | no                         |
-| 2. factory      | same                                                        | same                                       | eager when enclosing class initializes     | only by changing the class |
-| 3. holder       | same                                                        | same                                       | deferred until holder class initialization | no                         |
-| 4. enum         | standard reflective construction rejects enum types         | enum deserialization preserves constants   | eager when enum class initializes          | no                         |
+| Form            | Reflection                                                  | Deserialisation                          | Lazy                                       | Substitutable in a test    |
+| --------------- | ----------------------------------------------------------- | ---------------------------------------- | ------------------------------------------ | -------------------------- |
+| 1. public field | deep reflection may bypass, subject to access/module policy | `readResolve` plus graph-escape review   | eager when enclosing class initializes     | no                         |
+| 2. factory      | same                                                        | same                                     | eager when enclosing class initializes     | only by changing the class |
+| 3. holder       | same                                                        | same                                     | deferred until holder class initialization | no                         |
+| 4. enum         | standard reflective construction rejects enum types         | enum deserialization preserves constants | eager when enum class initializes          | no                         |
 
 The test-substitution column assumes callers use the shown static/enum access directly;
 passing the resulting instance through an injected contract is a separate option.
@@ -49,9 +49,14 @@ That body fits forms 1–2. For the holder form, return `Holder.INSTANCE` (or `i
 there is no outer `INSTANCE` field. The alternatives above omit `Serializable`; add it only
 when serialization is a real contract, not merely to demonstrate this hook.
 
-`transient` is a separate state/attack-surface decision: `readResolve` discards the deserialized
-replacement object's identity, but its non-transient graph was still read and could be costly or
-unsafe.
+`readResolve` controls the returned replacement, not every reference created while reading the
+graph. It runs after construction of the deserialized object; an object's callback can retain a
+back-reference to the temporary singleton before replacement. The top-level result can equal
+`INSTANCE` while an extra instance remains reachable. Test that escape path when reference graphs
+or callbacks are supported; an ordinary round trip checking only the returned identity misses it.
+Primitive fields need not be `transient` merely for identity, but reference fields and callbacks
+require review. Omit unnecessary serialized graphs and route hostile-stream handling or a reviewed
+serialization-proxy design to `java-serialization-hardening`.
 
 The holder is a strong choice for parameterless, class-loader-lifetime lazy initialization: the
 JVM's class-initialization protocol safely publishes it without a per-access volatile read.
@@ -127,8 +132,8 @@ the port the JDK already ships.
 
 - [ ] A singleton's required scope, lifecycle, substitution seam and concurrency contract are
       explicit; enum/container/holder selection follows those requirements.
-- [ ] Any `Serializable` hand-rolled singleton uses `readResolve`; serialized fields are reviewed
-      independently for state, compatibility and security.
+- [ ] A `Serializable` hand-rolled singleton's replacement protocol preserves canonical identity
+      without graph/callback escape; serialized state and compatibility are also reviewed.
 - [ ] Static mutable objects are justified as process/class-loader scoped, concurrency-safe and
       lifecycle-bounded—not assumed global merely because the reference is `final`.
 - [ ] No static collection that grows with request volume; anything cached is bounded.
@@ -144,6 +149,6 @@ the port the JDK already ships.
 
 - [JLS §12.4.2: Detailed Initialization Procedure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
 - [Java Object Serialization: enum constants](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-enum-constants)
-- [Serialization §3.7: readResolve](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html#the-readresolve-method)
+- [Serialization 21 §3.7: readResolve](https://docs.oracle.com/en/java/javase/21/docs/specs/serialization/input.html#the-readresolve-method) — graph references created before replacement are not repaired.
 - [JLS 21 §8.8.10: Preventing Instantiation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.8.10)
 - [JVMS §5.3: Creation and Loading](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-5.html#jvms-5.3) — class identity includes the defining loader.

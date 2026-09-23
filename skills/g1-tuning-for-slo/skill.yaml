@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-tuning-for-slo
-version: 2.1.2
+version: 2.1.3
 description: >-
   Deriving G1 flag values from a latency SLO and proving they helped: what
   `MaxGCPauseMillis` actually controls, the young size bounds, IHOP and adaptive IHOP with

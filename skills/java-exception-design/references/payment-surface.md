@@ -54,6 +54,7 @@ message text. Mode 3 currently matches nothing and is retried or not by accident
 
 The expected outcome becomes data; the operational failures become a two-deep hierarchy
 with transport facts fixed at the throw site and retry policy kept outside the exception.
+Cancellation keeps its own control-flow type and also carries the remote-outcome fact.
 
 ```java
 public sealed interface AuthorisationResult {
@@ -86,10 +87,22 @@ public final class GatewayContractException extends GatewayException {
         super(message, cause);
     }
 }
+
+public final class GatewayCancellationException extends CancellationException {
+    public GatewayCancellationException(String message, InterruptedException cause) {
+        super(message);
+        initCause(cause);
+    }
+
+    // Interrupted HttpClient.send supplies no proof that the remote effect did not occur.
+    public RemoteOutcome remoteOutcome() { return RemoteOutcome.UNKNOWN; }
+}
 ```
 
 Translation happens once in the adapter. A general `IOException` is conservatively an unknown
-remote outcome; interruption stops the operation's retry flow:
+remote outcome; interruption stops the operation's retry flow but also leaves that outcome unknown.
+The default Java 21 HttpClient only attempts to cancel the exchange: the request may still reach
+the server. A cancellation signal is not an acknowledgment that an authorization was reversed:
 
 ```java
 public AuthorisationResult authorise(String paymentId, BigDecimal amount) {
@@ -103,10 +116,8 @@ public AuthorisationResult authorise(String paymentId, BigDecimal amount) {
                 RemoteOutcome.UNKNOWN);
     } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        var cancelled = new CancellationException(
-                "interrupted while authorising payment " + paymentId);
-        cancelled.initCause(e);
-        throw cancelled;
+        throw new GatewayCancellationException(
+                "interrupted while authorising payment " + paymentId, e);
     }
 }
 ```
@@ -136,9 +147,18 @@ handler, mapping `GatewayException` to its protocol response. Cancellation/inter
 separate request-aborted policy rather than becoming 500 or a retry. A broad final catch can map
 unexpected exceptions to 500, with one owning observability point.
 
+Handle cancellation before a broad `RuntimeException`/`Exception` catch. The owning workflow must
+retain the operation/idempotency identifier and unknown outcome under its existing recovery
+contract, even if the HTTP caller disconnects. Do not initiate another request or reconciliation
+loop on the interrupted thread; a separately owned recovery flow may reconcile later. Neither
+throwing this exception nor restoring the flag makes that handoff durable. Keep an existing
+cancellation representation when it already preserves these facts through the operation context.
+
 ## Trade-offs
 
-- Two exception types plus a result type add API surface. Controlled callers can migrate
+- Two operational exception variants, a cancellation subtype and a result type add API surface.
+  The cancellation subtype retains compatibility with `catch (CancellationException)` while
+  keeping its unknown remote outcome out of the operational-retry branch. Controlled callers can migrate
   together; published callers may need an invariant-preserving adapter/deprecation window.
   Mixed versions need compatible failure semantics, not an assumption that all clients upgrade at once.
 - An exhaustive switch makes this caller account for decline, but Java also permits a default
@@ -157,11 +177,14 @@ unexpected exceptions to 500, with one owning observability point.
   survives only in the REST boundary handler.
 - Tests: a stubbed gateway returning 402 produces a recorded decline and no exception; a
   stubbed `IOException` produces `GatewayTransportException` with `UNKNOWN` outcome and preserves
-  that cause; interruption restores the flag and produces cancellation; contract failures are
+  that cause; interruption restores the flag and produces cancellation with its original cause
+  and `UNKNOWN` outcome, including when a stub applies the remote effect before throwing.
+  Assert no repeat authorization and retained recovery facts after cancellation; contract failures are
   not blindly retried; an unknown transport outcome is retried only with the configured stable
   idempotency key/status-reconciliation policy.
 
 ## Authoritative references
 
-- [HttpClient.send interruption contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html#send(java.net.http.HttpRequest,java.net.http.HttpResponse.BodyHandler)>)
-- [CancellationException API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CancellationException.html)
+- [HttpClient.send interruption contract, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.net.http/java/net/http/HttpClient.html#send(java.net.http.HttpRequest,java.net.http.HttpResponse.BodyHandler)>)
+- [CancellationException API, Java SE 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CancellationException.html)
+- [Throwable.initCause, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Throwable.html#initCause(java.lang.Throwable)>)

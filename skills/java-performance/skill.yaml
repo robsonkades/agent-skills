@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-performance
-version: 2.6.2
+version: 2.6.3
 description: >-
   Evidence-first triage and routing for ambiguous Java/JVM performance symptoms: defining the
   affected population and work, separating latency/throughput/resource/error dimensions,

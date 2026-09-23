@@ -58,7 +58,7 @@ public interface ShippingCost {
 ```java
 Map<ShippingMethod, ShippingCost> costs = Map.of(
     STANDARD, order -> rates.flat(STANDARD),
-    PICKUP,   order -> Money.ZERO,
+    PICKUP,   order -> rates.flat(PICKUP),
     EXPRESS,  order -> order.weightKg() > rates.heavyThreshold()
                        ? rates.expressHeavy() : rates.expressBase(),
     FREIGHT,  order -> freightRates.forZone(order.destinationZone())
@@ -67,6 +67,10 @@ Map<ShippingMethod, ShippingCost> costs = Map.of(
 
 The named functional interface — rather than `Function<Order, Money>` — costs one file and gives
 every call site a domain name.
+
+With the initial configuration, preserve the existing prices: express uses the heavy rate strictly
+above 20 kg, and `hundredKilogramUnits(weight)` retains `BigDecimal.valueOf(Math.ceil(weight / 100.0))`.
+Both flat methods read their configured rates, including a nonzero pickup rate if configured.
 
 ## Step 3 — named types, when more was required
 
@@ -77,6 +81,10 @@ dependencies and carry metadata through a registration too):
 - Freight needed to declare **whether it applies at all** to a destination, so the checkout could
   hide the option.
 - Freight needed injected collaborators and its own tests.
+
+Destination eligibility is an explicit new requirement in this stage. The mechanism change does
+not introduce a minimum freight weight or alter the calculation; specify any such business change
+separately and test it. Include a supported destination below 30 kg to catch an invented threshold.
 
 This is an alternative interface for the example, not a compatible mutation of a published
 functional API. Adding independent abstract methods breaks lambda source use; an old implementation
@@ -105,7 +113,7 @@ public final class FreightShippingCost implements ShippingCost {
     @Override public ShippingMethod method() { return FREIGHT; }
 
     @Override public boolean appliesTo(Order order) {
-        return zones.supportsFreight(order.destinationZone()) && order.weightKg() >= 30;
+        return zones.supportsFreight(order.destinationZone());
     }
 
     @Override public Money costFor(Order order) {
@@ -148,7 +156,8 @@ public Money shippingCost(Order order) {
 }
 ```
 
-Three failures that used to be free shipping are now exceptions:
+The design now distinguishes three failures; only unknown-method free shipping was demonstrated
+in the original code:
 
 - An unknown method — the original bug. `ShippingMethod` is an enum parsed at the boundary, so an
   invalid code from a partner is rejected at the edge with the list of valid values; the map lookup
@@ -240,8 +249,8 @@ a stateful calculation, untested      shared contract checks to run for every st
 What got worse: the calculation for a single order is no longer readable in one method. That is the
 trade to assess here. ShippingMethod remains a closed enum even though bean implementations can vary;
 the registry does not make the key domain open.
-For four fixed branches that never grew, the original `switch` — with a `default` that threw —
-would have been the better answer.
+For four fixed branches with no extension requirement, retaining a bounded `if/else` or `switch`
+with explicit unknown-method failure may be adequate.
 
 For public interface evolution, see [JLS 17 interface binary compatibility](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.5.4)
 and [JVM interface invocation](https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html#jvms-6.5.invokeinterface).

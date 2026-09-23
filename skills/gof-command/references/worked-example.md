@@ -136,19 +136,28 @@ public record SettlePayment(
 
 ### Written with the state change
 
+Construct and retain the `SettlePayment` once at the trusted issuing boundary, before any request
+retry loop. Preserve its ID, payload, schema version and original `issuedAt`; regenerating the
+timestamp would renew an intent's expiry window.
+
+The following is only the **newly claimed request's write path**. The enclosing request protocol
+must atomically claim the tenant/operation-scoped identity, reject mismatched payload reuse and
+replay the stored outcome for completed retries. Its claim, these writes and the request outcome
+must commit together; a repeated request must not re-enter this path as a new issuance.
+
 ```java
 @Transactional
-public void requestSettlement(PaymentId id, Money amount) {
-    payments.markPendingSettlement(id);
-    outbox.enqueue(new SettlePayment(CommandId.newId(), 1, id, amount, clock.instant()));
+public void enqueueNewSettlement(SettlePayment intent) {
+    payments.markPendingSettlement(intent.paymentId());
+    outbox.enqueue(intent);       // reuse the issued identity, values and timestamp
 }
 ```
 
-This assumes both writes join the same actual transaction; `@Transactional` alone does not prove
-enlistment. The generated ID belongs to one issued intent. Retrying the request itself must reuse
-that identity or an equivalent business-operation claim rather than mint another settlement intent.
-Publishing to the broker inside the transaction
-instead would be a dual write: the broker accepts it, the transaction rolls back, and a settlement
+`@Transactional` alone does not prove enlistment or implement the omitted request protocol
+(`idempotency`). Retaining the command is necessary here, but does not itself deduplicate writes.
+See the [caller-provided retry identity and atomic recording discussion](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
+Publishing to the broker inside the transaction instead would be a dual write: the broker
+accepts it, the transaction rolls back, and a settlement
 is attempted for a payment that was never marked (`event-driven-architecture`).
 
 ### The handler

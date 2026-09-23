@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-builder
-version: 1.2.2
+version: 1.2.3
 description: >-
   Builder in modern Java: distinguish the original GoF separation of construction process from
   representation from the Effective Java fluent value builder. Covers selection signals rather

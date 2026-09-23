@@ -102,9 +102,11 @@ launch times align; otherwise include launch offsets and parent/merge/cleanup ov
 ### 5. Correlate candidate causes
 
 For an attribution claim, align slow requests with the relevant queue/admission, useful-load,
-JVM, process/container, network/storage or dependency evidence. Evidence must overlap the
-affected interval and instance. Co-occurrence alone is not causation; compare unaffected
-instances/cohorts and perform a controlled change when possible.
+JVM, process/container, network/storage or dependency evidence. Match the affected request's
+resource path and show either direct overlap or an evidenced causal chain from an earlier
+event through persistent queue/state effects. A pause can end before a later request arrives
+while its backlog still delays that request. Co-occurrence alone is not causation; compare
+unaffected instances/cohorts and perform a controlled change when possible.
 
 Use [attributing the tail](references/attributing-the-tail.md).
 

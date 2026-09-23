@@ -61,6 +61,21 @@ actual heap allocation without disabling escape analysis, but absence of a sampl
 proof of elimination. See [profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.1/docs/ProfilingModes.md)
 and [live/interval options](https://github.com/async-profiler/async-profiler/blob/v4.1/docs/ProfilerOptions.md).
 
+### Live samples have different coverage and units
+
+In async-profiler 4.1, ordinary JVMTI allocation samples carry a pressure weight of
+`max(object size, sampling interval)`. With `--live --total`, the report instead sums the
+**actual sizes of tracked sampled objects** that remain uncollected; it does not extrapolate them
+to retained heap. Its tracker holds at most 1,024 object references and can omit additional
+samples when full or contended. This is an implementation limit of that release, not a JVM
+limit. Long-lived samples can fill it, so a longer capture or smaller allocation interval
+does not necessarily improve live-population coverage.
+
+Use the surviving stacks as investigation leads. Do not divide live-report bytes by ordinary
+allocation weights to calculate a survival/promotion rate, or infer that an absent class is
+unretained. Validate retention with heap/root or lifecycle evidence when that is the question.
+See [the 4.1 sampler and live tracker](https://github.com/async-profiler/async-profiler/blob/v4.1/src/objectSampler.cpp).
+
 ## JFR: capability and recording checks
 
 Offline `jfr view` is available from JDK 21. Live `jcmd JFR.view` is a separate capability:
@@ -77,6 +92,7 @@ jcmd <pid> JFR.check
 jcmd <pid> JFR.start name=alloc-hunt settings=profile duration=60s filename=alloc.jfr
 # After completion, inspect the resulting recording
 jfr summary alloc.jfr
+jfr print --events jdk.DataLoss alloc.jfr
 jfr metadata --events jdk.ObjectAllocationSample alloc.jfr
 jfr view allocation-by-site alloc.jfr
 jfr view allocation-by-class alloc.jfr
@@ -89,6 +105,16 @@ If events are absent, check settings, capture times, target identity, supported 
 workload activity and stack-trace settings. Do not interpret an empty legacy-event view as
 zero allocation. Use `jfr print --events jdk.ObjectAllocationSample alloc.jfr` or JMC if a
 view is unavailable. Restrict raw printing to a small capture rather than flooding output.
+
+Check recording completeness before comparing weights. A `jdk.DataLoss` event reports lost
+**recording-buffer data**, not bytes of application allocation. It does not identify the
+lost event types: neither add `amount` to allocation weights nor assume all missing data
+was allocation data. Loss in the relevant capture weakens quantitative attribution until
+corroborated with independent counters or a representative capture with adequate coverage.
+Inspect the loss timestamps, recording bounds, settings and any recording errors; zero
+DataLoss events alone cannot establish completeness. Reduce recording pressure within the
+capture budget when repeating, rather than automatically raising the sample rate.
+See the [JDK 25 DataLoss schema](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml).
 
 ### Event meaning
 

@@ -18,6 +18,32 @@ One characteristic can need both a structural gate and a runtime monitor. A sche
 may justify a release hold; an alert need not page somebody if a ticket meets the required
 response time. Tailor policy to impact and detection delay, not a taxonomy cell.
 
+## Bind a verdict to the evidence it actually assessed
+
+For code or artifact checks, retain the evaluated revision or artifact identity, relevant
+rule/tool configuration, selected modules/classes/dependencies, and the report/run that
+produced the verdict. Include environment and observation window where they affect the claim.
+A recent result for another artifact does not by itself establish the candidate's fitness.
+For artifact-based evidence, compare the subject's digest with the actual artifact, as in
+[SLSA's artifact verification procedure](https://slsa.dev/spec/v1.1/verifying-artifacts);
+matching identity still does not prove the architectural property.
+
+Reuse an existing result when its inputs, coverage and freshness policy still apply. Review
+cache keys and exclusions: a rule, dependency graph or imported module change can invalidate
+reuse even if application source is unchanged. Conversely, a relevant vulnerability-feed
+update can change a verdict for identical bytes. A nonzero class count alone does not prove
+all required modules were inspected. Keep the expected population and material exclusions
+visible, and exercise a violating fixture inside that population.
+
+Verify execution separately from the enclosing job's status. For example,
+[GitHub Actions conditional jobs](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions)
+can be skipped and still satisfy a required check. An in-scope control needs positive execution
+and result evidence; an intentional out-of-scope decision needs its applicability reason.
+Do not label either as an evaluated pass merely because merging is permitted. Exercise an
+in-scope skipped run and a report with incompatible inputs alongside a genuine pass/failure;
+check the resulting gate/review response under existing policy. Pipeline wiring belongs to
+`quality-gates`; this skill defines what that wiring must establish.
+
 ## Candidate controls and their limits
 
 | Property                    | Candidate assessment                                                         | Policy and coverage caution                                                                                           |

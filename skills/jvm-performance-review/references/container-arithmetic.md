@@ -24,6 +24,11 @@ Record pod UID, container ID, node, process PID/start time, cgroup namespace/pat
 JDK build, and timestamp. `/proc/self/cgroup` from a debug container may describe the debugger, not
 the Java process, unless namespaces/cgroup placement are shared as intended.
 
+For cgroup v2, inspect applicable ancestors as well as the leaf: a child cannot escape a
+parent's limits. Siblings share ancestor budgets, so a leaf's configured maximum is not its
+guaranteed remaining capacity. If namespaces hide ancestors, obtain host-side evidence or mark
+the enforced envelope unresolved. Reconcile kernel enforcement separately from the JVM's view.
+
 Use the target JDK's container diagnostics where supported, for example a bounded startup in a
 representative container with:
 
@@ -73,6 +78,17 @@ Do not treat `-Xmx` as RSS or `memory.current`. File-backed mappings/page cache,
 kernel accounting, sidecars/other processes, and cgroup hierarchy affect totals. NMT “reserved” is
 not resident; “committed” is still not a perfect RSS decomposition; NMT is incomplete for some
 native/library allocations.
+
+For cgroup v2, compare named counter deltas over the incident window:
+
+- `high`: reclaim/throttling after crossing `memory.high`; this boundary does not invoke OOM killing.
+- `max`: attempts to exceed `memory.max`; reclaim may still succeed.
+- `oom`: allocations approaching failure at the limit; not proof of a kill.
+- `oom_kill`: processes killed by an OOM killer, including global OOM; identify victim and cause.
+
+`memory.events` normally includes descendants; check mount options and `memory.events.local`
+for attribution. A lifetime nonzero counter alone does not date an incident. Rising `high` plus
+memory pressure can explain latency without a kill; require aligned evidence before blaming GC.
 
 ### Headroom model
 
@@ -139,5 +155,4 @@ authorized environments; production diagnosis can use retained evidence and boun
 - [Linux cgroup v1 controllers](https://docs.kernel.org/admin-guide/cgroup-v1/)
 - [Kubernetes resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
 - [Kubernetes pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/)
-- [OpenJDK container metrics source](https://github.com/openjdk/jdk/tree/master/src/hotspot/os/linux)
-- [JEP 8182070: Container Awareness](https://openjdk.org/jeps/8182070)
+- [OpenJDK JDK 25 GA container discovery source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/cgroupSubsystem_linux.cpp) — inspect the shipped vendor/release source for its resource interpretation.

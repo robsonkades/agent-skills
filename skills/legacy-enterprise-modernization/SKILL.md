@@ -63,6 +63,8 @@ Contain semantic mismatch at the integration boundary.
    often (so the pain is real), is reasonably self-contained, and whose failure is survivable.
 4. **Establish data ownership before transferring writes.** Shared writers constrain
    independent semantic changes; compatible additive work and read extraction can proceed.
+   Preserve cross-table transaction contracts when introducing an owner API, and verify
+   former writers' effective permissions and in-flight work before declaring the handoff complete.
 5. **For an incremental extraction**, route the slice's traffic to new code and validate
    its contract and data-compatible rollback before retiring the old path.
 6. **Plan the lifecycle of coexistence paths**: give temporary paths an owner, removal gates

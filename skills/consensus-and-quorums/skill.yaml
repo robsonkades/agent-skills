@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consensus-and-quorums
-version: 1.2.2
+version: 1.2.3
 description: >-
   Crash-fault consensus and quorum reasoning: FLP, safety versus liveness, majority 2f+1,
   R + W > N intersection and its limits, voter/failure-domain placement, Raft terms and why

@@ -59,6 +59,16 @@ a live server or external systems. Context reuse depends on Spring's cache key, 
 eviction and dirty-context invalidation; properties and mocked beans can distinguish keys.
 Reuse compatible configurations when useful, while preserving the differences the risk needs.
 
+With `RANDOM_PORT` or `DEFINED_PORT`, an HTTP request to the servlet server runs on a
+different thread from the test. The server's transactions do not join the test-managed
+transaction: rolling back an `@Transactional` test does not undo committed server writes.
+Uncommitted fixture data may therefore be invisible to the request; flushing alone is not
+committing. Commit fixtures before requests that need them, observe committed results from
+outside the test transaction, and use deliberately committed cleanup or an isolated database
+that can be discarded. Cleanup inside the rolled-back test transaction is rolled back too.
+This differs from synchronous in-process calls that participate in that transaction; inspect
+thread and transaction boundaries before transferring rollback assumptions between scopes.
+
 ## Integration against the real engine
 
 Testcontainers with `@ServiceConnection` (Spring Boot 3.1+) starts the real engine and wires
@@ -115,7 +125,9 @@ independently specified fields and values. Recorded stubs only reflect their cap
 
 - [Boot 3.4 database replacement API](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.html)
   and [replacement modes](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
-- [Spring test transactions](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html):
+- [Boot 3.4 application testing](https://docs.spring.io/spring-boot/3.4/reference/testing/spring-boot-applications.html):
+  real-server HTTP requests and test methods use separate transactions.
+- [Spring 6.2 test transactions](https://docs.spring.io/spring-framework/reference/6.2/testing/testcontext-framework/tx.html):
   rollback, explicit flush and commit. Consult the version matching the project.
 - [Boot 3.4 MVC slice API](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/web/servlet/WebMvcTest.html)
   and [Spring context caching](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html):

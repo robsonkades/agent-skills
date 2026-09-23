@@ -43,6 +43,13 @@ explicitly when the caller intends correction. Values below the interval still c
 original observation. Post-hoc correction works from histogram equivalent-value buckets, so it
 need not be numerically identical to correcting raw values before quantisation.
 
+The following calls require a stable `raw` histogram and an exclusively owned destination.
+Plain `Histogram` is unsynchronized; copying it while another thread records or resets still
+races. With live concurrent recording, obtain a `Recorder.getIntervalHistogram()` snapshot and
+finish correction/export before returning that object for recycling. Each snapshot contains an
+interval's counts, not a cumulative total; aggregate each interval once. General recording
+ownership and histogram sizing are covered by `latency-statistics`.
+
 ```java
 Histogram corrected = raw.copyCorrectedForCoordinatedOmission(expectedIntervalNanos);
 
@@ -140,5 +147,6 @@ model, not a preferred load-tool feature, chooses the abstraction.
 
 - [HdrHistogram README: corrected versus raw recording](https://github.com/HdrHistogram/HdrHistogram#corrected-vs-raw-value-recording-calls)
 - [HdrHistogram 2.2.2 implementation/Javadoc](https://github.com/HdrHistogram/HdrHistogram/blob/HdrHistogram-2.2.2/src/main/java/org/HdrHistogram/AbstractHistogram.java)
+- [HdrHistogram 2.2.2 Recorder interval-snapshot ownership](https://github.com/HdrHistogram/HdrHistogram/blob/HdrHistogram-2.2.2/src/main/java/org/HdrHistogram/Recorder.java)
 - [Schroeder et al., “Open Versus Closed: A Cautionary Tale” (NSDI 2006)](https://www.usenix.org/conference/nsdi-06/open-versus-closed-cautionary-tale)
 - [wrk2 constant-throughput/intended-start model](https://github.com/giltene/wrk2)

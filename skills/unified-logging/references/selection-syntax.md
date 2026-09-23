@@ -20,6 +20,13 @@ Multiple -Xlog options are processed in command-line order and can override conf
 for the same output. Build the effective selection intentionally; do not concatenate flags
 from independent deployment layers without a final audit.
 
+For HotSpot JDK 25, unmentioned tag sets retain their levels: `-Xlog:class+load=info`
+followed by `-Xlog:gc=off` still enables class-load logging on stdout. Replacing an entire
+output's selection requires deliberately covering its prior sets, for example with `all=off`
+in the same comma-separated selection as the desired settings (`all=off,gc=info`);
+preserve required warning/error coverage. Decorators and output options have different update
+scopes; see [Runtime reconfiguration](runtime-reconfiguration.md).
+
 For example, `class*=info,class+load=off` suppresses the exact class,load set;
 `class+load=off,class*=info` enables it again. This ordering is implemented by
 [JDK 25 LogSelectionList::level_for](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/logging/logSelectionList.cpp).

@@ -54,15 +54,22 @@ Order is the part that decays. Choose a representation that makes the rationale 
 // named positions put the reason in the code; ties still need a policy
 enum RulePosition { TENANT_OVERRIDE, CONTRACT, PRODUCT, CATALOGUE_DEFAULT }
 
-// explicit list: useful when this composition root owns the membership
+// explicit owner construction: RuleChain copies the ordered list, as in the worked example
 @Bean
-List<Rule> rules(TenantRule t, ContractRule c, ProductRule p, DefaultRule d) {
+RuleChain ruleChain(TenantRule t, ContractRule c, ProductRule p, DefaultRule d) {
     // most specific first; DefaultRule must stay last — it always matches
-    return List.of(t, c, p, d);
+    return new RuleChain(List.of(t, c, p, d));
 }
 ```
 
-An explicit list centralizes review of membership and precedence. For contributed handlers,
+An explicit list passed to the chain owner centralizes review of membership and precedence.
+In Spring, an injected `List<Rule>` can collect the individual `Rule` beans instead of using a
+separately declared list bean. Name/qualifier matching and framework version affect resolution;
+do not assume declaring `@Bean List<Rule>` controls every collection injection. Construct the
+owner directly as above, or deliberately configure collection injection and test the actual
+consumer in its application context. `RuleChain` here is the domain owner, not a Spring API.
+
+For contributed handlers,
 documented framework ordering may already suffice; do not add a second list solely to replace
 numbers. If using named slots, validate contributed positions at assembly time.
 Also resolve ties deterministically or reject them, validate duplicates/required stages, and freeze
@@ -163,3 +170,8 @@ if (!issues.isEmpty()) throw new ValidationFailed(issues);
 Collecting is almost always better for anything a human corrects, and fail-fast is right when
 later checks are unsafe or expensive after an earlier failure. The mistake is having it be
 accidental — determined by whether a handler throws or returns.
+
+## Sources
+
+- [Spring 6.2 collection injection and ordering](https://docs.spring.io/spring-framework/reference/6.2/core/beans/annotation-config/autowired.html).
+- [Spring 6.2.12 dependency resolution](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-beans/src/main/java/org/springframework/beans/factory/support/DefaultListableBeanFactory.java): name/qualifier shortcuts and collection-element resolution precede the direct collection-bean fallback.

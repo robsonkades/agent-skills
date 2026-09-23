@@ -138,6 +138,15 @@ Cache only context-free compiled forms under bounded weight/cardinality. Include
 and semantic configuration in the key and revalidate caller authorization on use; never capture a
 request context in a shared closure. An unbounded map is the retention risk in `gof-flyweight`.
 
+Do not assume an engine's parsed expression is a context-free immutable AST. Spring's current
+SpEL documentation describes cached accessors/executors and prohibits sharing one parsed
+`Expression` across contexts with different security implications, such as privileged
+`StandardEvaluationContext` followed by restricted `SimpleEvaluationContext`. A fresh context
+or permission check does not clear that cached state. Use distinct parsed instances for distinct
+security configurations, or parse afresh; reuse is for compatible configurations. Verify the
+target engine/version's lifecycle contract and test privileged-to-restricted reuse before
+designing its cache; this restriction is separate from the pure filter's closure example.
+
 ## Evaluate, and the other folds
 
 Once the AST is a sealed type, evaluation is one fold among several:
@@ -160,6 +169,6 @@ and extension contract justify it (`gof-visitor`).
 same user expression filter in the database rather than in memory
 (`query-objects-and-specifications`).
 
-Primary sources: [Spring evaluation security](https://docs.spring.io/spring-framework/reference/core/expressions/evaluation.html),
+Primary sources: [Spring evaluation security and lifecycle](https://docs.spring.io/spring-framework/reference/core/expressions/evaluation.html),
 [CEL Java](https://github.com/cel-expr/cel-java), and [PostgreSQL 18 comparisons](https://www.postgresql.org/docs/18/functions-comparison.html).
 Verify the deployed engine/dialect rather than projecting these examples onto every implementation.

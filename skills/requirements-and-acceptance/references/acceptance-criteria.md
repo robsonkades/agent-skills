@@ -52,6 +52,28 @@ it applies:
 - The user is not permitted — 403 or 404? (Revealing existence is sometimes the leak.)
 - Nothing matches — empty result or an error? These are different requirements.
 
+### Consumer behavior is part of an export contract
+
+For the CSV example, confirm the intended consumers before selecting criteria such as:
+
+- **Spreadsheet use:** customer-supplied text is treated as text, not evaluated as a
+  formula, in the named application/version and agreed opening or import workflow.
+  Include save/reopen only when that workflow is supported; record the permitted text
+  representation instead of assuming a prefix is invisible to every consumer.
+- **Lossless machine import:** the agreed string fields round-trip to their original values
+  through the supported parser; spreadsheet-oriented prefixes must not silently alter them.
+
+Use adversarial fixtures with formula-like text (`=1+1`, `+1+1`, `-1+1`, `@SUM(1,1)`),
+embedded delimiters, quotes and newlines. Check that field content cannot create extra
+cells/records and that the required consumer interpretation holds. A CSV parser round-trip
+checks data and structure; it does not prove a spreadsheet will avoid formula evaluation.
+If the consumer cannot be exercised, that part remains unverified.
+
+When both uses are required, assess whether the agreed representation satisfies both; surface
+any incompatibility before changing data or excluding a requested consumer. These are
+conditional acceptance examples, not a universal escaping recipe; see the
+[consumer question and sources](ambiguity-checklist.md#worked-example).
+
 ## Non-functional criteria
 
 Use measurable scenarios and explicit conditions where appropriate. Qualitative constraints

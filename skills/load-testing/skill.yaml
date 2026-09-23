@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: load-testing
-version: 1.4.2
+version: 1.4.3
 description: >-
   Designing valid service load experiments: choosing open or closed workload models,
   defining offered, admitted and successful work, controlling generator and environment

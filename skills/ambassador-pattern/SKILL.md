@@ -39,8 +39,11 @@ different restart consequences; name the actual update mechanism before promisin
    existing mesh when it supports the required protocol and policy; document a concrete gap
    before adding another proxy and specify which layer owns each overlapping function.
 3. **Define the local contract.** State explicit loopback versus transparent interception,
-   listener/port, protocol, upstream selection and TLS termination points. A dedicated TCP
-   listener can select an upstream without parsing HTTP. Routing by path or `Host`/`:authority`
+   listener/port, protocol, upstream selection and TLS termination points. Distinguish a local
+   reverse-proxy endpoint from client forward-proxy/CONNECT configuration; changing a URL to
+   localhost can also change HTTP authority and TLS identity. Record the intended identity
+   on each hop; see [Address and identity](references/failure-and-policy-composition.md#address-and-identity).
+   A dedicated TCP listener can select an upstream without parsing HTTP. Routing by path or `Host`/`:authority`
    requires visible HTTP; TLS pass-through cannot inspect those fields. Allowlist destinations
    and define missing/forged routing-key behavior. Locality alone does not authenticate callers.
 4. **Check cost and failure semantics.** Compare the maintained client-library baseline with
@@ -71,6 +74,8 @@ different restart consequences; name the actual update mechanism before promisin
 - Specify failure behavior per fault: proxy unavailable, route absent, discovery stale and
   upstream failing. Bypass is possible only with a designed alternate path; do not silently
   bypass mandatory authentication, TLS or destination restrictions to improve availability.
+  For sharded state, retries and failover must stay within endpoints authorized to serve the
+  logical shard; a healthy host is not evidence that it owns that data.
 - Prefer validated, observable hot reload for frequent routing changes when supported.
   Controlled rollouts can suit rare changes. Both need config-version visibility, convergence
   checks and rollback; config acceptance is not proof that a route serves traffic correctly.

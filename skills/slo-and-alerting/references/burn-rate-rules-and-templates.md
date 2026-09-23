@@ -109,10 +109,25 @@ The 0.001 term is the budget for a 99.9% objective. Label matching for and/or op
 must be tested: inconsistent retained labels can make a rule silently fail or combine the
 wrong cohorts.
 
+Prometheus activates an alert for each returned vector element, including a value of zero.
+The comparisons above intentionally filter: `>` removes false series, while `> bool` retains
+matched false series with value 0. `and`/`or` operate on series presence, not on those values,
+so replacing the comparisons with `bool` can alert on healthy traffic. Recording 0/1 conditions
+is valid for other consumers; filter each condition before set composition, for example
+`(long_condition == 1) and (short_condition == 1)`, without `bool`. A final `== 1` after
+`long_condition and short_condition` is insufficient: `and` keeps the left value even when
+the matching right value is 0.
+
 A Prometheus `for` clause is not categorically forbidden. The window pair already supplies
 duration semantics; an added `for` requires the same resulting alert label set to stay active
 across evaluations for that duration before firing. A nonmatching evaluation while pending
 resets that wait. Check the added detection delay and missed short incidents against the policy.
+
+Put changing measurements such as `{{ $value }}` in annotations, not identity labels.
+Changing a label creates another alert identity with its own pending interval; a value that
+changes every evaluation can prevent `for` from completing despite continuous impact.
+Stable routing/cohort labels remain appropriate. Test varying above-threshold values, not
+only a constant outage fixture.
 
 `keep_firing_for` holds an already firing alert after its condition stops matching; it does
 not delay initial firing or prove current impact. In the Prometheus 3.2.1 implementation,
@@ -130,6 +145,8 @@ Do not require a new full campaign for an arithmetic explanation or an adequate 
 
 - unit-test recording/alert rules with promtool or the deployed equivalent;
 - fixture-test counter resets, missing series, zero traffic and label changes;
+- assert no alert below threshold and when only one window exceeds it, then assert firing
+  with both windows above threshold and stable identity despite changing measured values;
 - replay partial and total outages at known rates;
 - verify firing and clearing times empirically;
 - test one target missing versus the entire telemetry pipeline missing;

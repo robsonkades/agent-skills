@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: consistency-models
-version: 1.3.3
+version: 1.3.4
 description: >-
   Choosing distributed consistency guarantees as an engineering decision: linearizability,
   sequential/causal ordering, session guarantees (read-your-writes, monotonic reads), bounded
@@ -52,6 +52,7 @@ suggests:
   - consensus-and-quorums
   - delivery-semantics
   - distributed-transactions-and-sagas
+  - enterprise-transactions
   - java-memory-model
 
 capabilities:

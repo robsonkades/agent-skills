@@ -12,7 +12,10 @@ transient ──────────────► managed ─────�
 managed ── remove() ──► removed ──► deleted at flush
 ```
 
-`remove` requires a managed instance; passing a detached instance is not that transition.
+JPA `remove` makes a managed instance removed; a detached argument is rejected (possibly
+at commit). A new or already removed instance is ignored as an entity-state transition;
+configured REMOVE cascades from a new instance still apply. A nonthrowing call alone does
+not establish that the argument was managed.
 Flush sends changes without committing them. Examples assume a transaction-scoped context
 that ends at the shown transaction boundary.
 
@@ -43,6 +46,36 @@ of work. Deliberate detached editing or an extended/application-managed context 
 transactions can also be valid; define ownership, loaded state and conflict handling.
 `merge` copies into a managed target rather than reattaching the argument. Use that returned
 target for subsequent tracked writes; the detached object remains usable as detached data.
+
+## Failed flush and rollback
+
+A constraint violation at flush or an optimistic write conflict is a failed unit of work,
+not an instruction to `clear()` and keep writing. Hibernate 6.6 requires rollback and
+discarding the failed session because its internal state may no longer match the database.
+Clearing tracked entities neither repairs that state nor resets a rollback-only transaction.
+For application-owned sessions, perform rollback and close through the owning cleanup path.
+For Spring/container-managed contexts, let the transaction/lifecycle owner complete recovery;
+do not manually close an injected shared EntityManager. If retry is appropriate, retry the
+operation in a fresh owned unit, reload current state and reapply its intended change.
+Conflict policy and external-effect retry safety belong to `enterprise-transactions` and
+`offline-concurrency-control`.
+
+Rollback does not rewind the Java objects. Under JPA, affected entities become detached
+after rollback of a transaction-scoped or joined extended context, retaining their state
+at rollback. Generated IDs and versions may be inconsistent with persisted state, so a
+non-null ID is not proof of insertion and blindly merging a failed-attempt graph is not a
+reliable retry. Verify the database through a fresh context after rollback has completed.
+
+Distinguish write failure from an expected query outcome. JPA `NoResultException` does not
+itself mark the transaction rollback-only; catching a no-result branch is not equivalent
+to catching a failed flush. An exception escaping a Spring transactional interceptor can
+still trigger its rollback rules. Inspect the actual exception and transaction status.
+
+Useful isolated checks: mutate and flush a seeded row, roll back, then compare the still
+mutated Java object with a fresh-context read of the unchanged row. Separately, contrast
+a caught no-result query followed by a valid commit with a unique-constraint flush failure
+that requires rollback and a new context. These cases test lifecycle behavior; they do not
+prove that every failed business operation is safe to retry.
 
 ## Dirty checking and flush
 
@@ -188,7 +221,9 @@ causal ownership. Use it with isolated query-budget tests and statement inspecti
 (`architecture-and-performance`).
 
 Primary contracts: [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
-(context lifecycle, merge, query flush mode and bulk updates) and
+(context lifecycle, removal, rollback, merge, query exceptions/flush mode and bulk updates),
+[Hibernate 6.6 Session](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/Session.html)
+(failed-session disposal), and
 [Hibernate 6.6.56 flush guide](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/flushing/Flushing.adoc)
 (flush ordering), [persistence-context guide](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/pc/PersistenceContext.adoc)
 and [batching guide](https://github.com/hibernate/hibernate-orm/blob/6.6.56/documentation/src/main/asciidoc/userguide/chapters/batch/Batching.adoc).

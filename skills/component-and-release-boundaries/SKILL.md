@@ -90,9 +90,10 @@ Two candidate components have always been released at the same version
 
 Code is duplicated in two services and a shared library is proposed
         → first ask whether the duplication is coincidental. Two services
-          computing tax the same way today, for different reasons, will
-          diverge; the library then couples them into agreeing. Duplicate
-          deliberately and record why.
+          computing tax the same way today, for different reasons, can
+          diverge; compare change ownership before coupling them into agreeing.
+          Keep independent rules local; price maintenance and support costs
+          before extracting a stable technical or platform abstraction.
 
 The shared thing is a domain invariant both sides must agree on
         → compare a versioned library with a single authoritative service or
@@ -133,6 +134,11 @@ Nothing outside this repository consumes it
   Publication adds obligations to consumers that pin released artifacts.
 - A dependency creates compatibility and upgrade obligations. It becomes coupling to a
   release schedule when support, security deadlines or incompatible changes require it.
+- Validate a published library in a separate consumer, using its published metadata and
+  effective compile/runtime dependencies. A library's own successful build does not prove
+  that consumer resolution preserves its requirements. Read the
+  [consumer dependency checks](references/component-principles.md#check-the-published-consumer-boundary)
+  when extracting or changing a library's dependencies.
 - **Version numbers must mean something or they mean nothing.** A consumer should read the
   bump under the declared policy. For SemVer after 1.0: patch is a compatible fix, minor a
   compatible addition, major an incompatible public-contract change. Not every behavior

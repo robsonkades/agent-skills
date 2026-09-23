@@ -39,6 +39,14 @@ verify the actual proxy chain and transaction-manager behavior with route assert
 }
 ```
 
+**Routing chooses a connection, not a destination for every statement.** With
+`DataSourceTransactionManager` and transaction-aware JDBC access, an acquired connection stays
+bound to that transaction. Set the session override before physical acquisition; activating it
+after the first query does not move subsequent queries to the primary. A participating
+`PROPAGATION_REQUIRED` method normally inherits the outer transaction's read-only setting, so
+its own annotation does not establish a new route. Inspect the effective transaction boundary;
+adding `REQUIRES_NEW` changes atomicity and connection demand and is not a transparent routing fix.
+
 ## The bounded primary-read window
 
 After a write, routing that session to the authoritative writer for a window can meet a bounded
@@ -75,6 +83,15 @@ the acknowledgement/durability policy, preserve the session's requirement across
 reject or wait when no surviving path can satisfy it. A stale response with a marker explicitly
 relaxes the strict contract.
 
+**Replica readiness must precede the data snapshot.** PostgreSQL 18 `REPEATABLE READ` retains
+the snapshot established by the first non-transaction-control statement. If that snapshot
+predates the required commit, later replay progress cannot refresh it; a watermark query can
+itself establish the snapshot too early. Establish readiness for the selected server before
+creating the data snapshot, or restart the whole read transaction at a safe boundary. Verify
+that connection routing/failover does not switch to an unchecked server between the two steps.
+When an existing transaction cannot safely restart, wait/retry policy alone cannot repair its
+old snapshot: refuse the strict read or change the surrounding transaction design.
+
 ## Detecting stale reads in tests
 
 A healthy-replica test may miss the defect because lag is near zero. Make the lag real.
@@ -83,9 +100,17 @@ A healthy-replica test may miss the defect because lag is near zero. Make the la
   pause replication apply with the engine's supported control while keeping the replica readable.
   Suspending its whole container tests unavailability instead. Establish its old watermark,
   commit a new version, read through the application, and assert the route and observed version.
-- **Assert on the route, not only on the value.** Record the resolved lookup key per query
-  and assert that a post-write read inside the window went to the primary. Asserting the
-  returned value alone gives a green test whenever lag happens to be zero.
+- **Assert on the route, not only on the value.** Record the selected target at physical
+  connection acquisition and correlate executed queries with that connection. Assert that a
+  post-write read inside the window used the primary. A lookup key recomputed per query may
+  disagree with the already bound connection; a value-only check passes when lag happens to be zero.
+  Test an override activated before acquisition versus after the first query, and a read-only
+  inner `REQUIRED` scope participating in an outer read-write transaction.
+- **Keep an old snapshot open while the server catches up.** On a lagged PostgreSQL replica,
+  establish a repeatable-read snapshot before the required write is applied, then resume replay
+  and verify readiness externally. The old snapshot should still miss the write; a fresh read
+  transaction on that caught-up server should include it. The application's freshness gate must
+  reject or safely restart the old transaction instead of returning stale success.
 - **Separate session tests.** For read-your-writes, reject a snapshot missing the session's own
   committed write. For monotonic reads, reject regression below any previously observed state.
   These are distinct guarantees; in a totally ordered version history, writing version 1 then
@@ -121,3 +146,8 @@ deletion or retention rules. Verify their enforcement where the endpoint require
 For proxy acquisition semantics, consult the
 [Spring LazyConnectionDataSourceProxy API](https://docs.spring.io/spring-framework/docs/7.0.x/javadoc-api/org/springframework/jdbc/datasource/LazyConnectionDataSourceProxy.html)
 and verify the corresponding documentation and behavior for the project's resolved version.
+For effective transaction settings and connection reuse, see
+[Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html)
+and the [Spring 6.2.0 DataSourceTransactionManager source](https://github.com/spring-projects/spring-framework/blob/v6.2.0/spring-jdbc/src/main/java/org/springframework/jdbc/datasource/DataSourceTransactionManager.java).
+Snapshot timing above follows [PostgreSQL 18 isolation semantics](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ);
+other engines and isolation levels require their own verification.

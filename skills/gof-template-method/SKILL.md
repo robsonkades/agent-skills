@@ -122,9 +122,9 @@ THEN distinguish an intentional optional hook (prefer a documented base no-op) f
      required step the subtype cannot honor, which violates substitutability.
 
 IF the base class holds mutable state between hook calls
-THEN define instance confinement/lifetime and what subclasses may observe. A per-run
-     instance can be safe; a shared instance needs synchronization or, preferably,
-     a per-run context passed through hooks.
+THEN define instance lifetime, concurrency and reentrancy contracts. Synchronization
+     can serialize other threads but permits same-thread reentry; isolate invocation
+     state or reject reentry before effects when the supported contract permits it.
 
 IF only one known variant exists
 THEN seek a concrete framework/SPI/lifecycle reason for the hook. Otherwise write the
@@ -140,8 +140,8 @@ THEN the template must honor the run's deadline and define partial-run semantics
 
 - **Concurrency.** A template instance shared across threads shares whatever state the base class
   keeps between hook calls — overlapping unsynchronized runs can race through a field set by
-  `read()` and used by `write()`. Check confinement, reentrancy and whole-run synchronization.
-  Pass a per-run context object through the
+  `read()` and used by `write()`. A hook can also reenter a synchronized template on the same
+  thread and overwrite the outer run's fields. Pass a distinct per-invocation context through the
   hooks to isolate run data; also verify steps, audit/client collaborators and escaping callbacks
   before sharing the template instance
   (`java-memory-model`).
@@ -171,7 +171,7 @@ change or reason to retain inheritance, and checks executed versus pending.
 - [ ] No constructor calls an overridable hook
 - [ ] The hook surface is cohesive and documented; required `super` calls are preserved or compatibly migrated
 - [ ] Optional no-op hooks are explicit; required hooks preserve substitutability
-- [ ] Mutable cross-hook state is confined, synchronized, or carried in a per-run context
+- [ ] Mutable cross-hook state follows explicit concurrency and reentrancy contracts
 - [ ] Multiple variants or a concrete framework/SPI extension constraint exists
 - [ ] Remote deadline, transport timeout and resilience ownership are explicit
 - [ ] A partial run's effects are defined

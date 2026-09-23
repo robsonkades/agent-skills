@@ -52,7 +52,7 @@ Composite ──implies──► recursion, depth limits, and a cycle policy
 
 Decorator ──implies──► the same interface, and an order that carries meaning
           ──combines─► Proxy, Strategy (a decorator may hold one)
-          ──replaced by─► framework interceptors, for transport concerns
+          ──replaced by─► framework hooks when coverage, ordering and lifecycle fit
           ──confused with─► Proxy (access) and Adapter (interface)
 
 Facade ──implies──► a simplified boundary; access restriction needs separate enforcement
@@ -71,7 +71,7 @@ Proxy ──implies──► control over access, and a lifecycle it may own
 ## Behavioural
 
 ```text
-Strategy ──replaced by──► a lambda, when there is one stateless operation
+Strategy ──expressed by─► a compatible function value, with an explicit capture contract
          ──combines───► Template Method (an inherited skeleton may invoke injected policies)
          ──confused with─► State (lifecycle vs policy) and Command (request vs behavior)
 
@@ -126,6 +126,14 @@ Interpreter ──implies──► expression/evaluation semantics and resource 
                          Flyweight (shared terminal nodes)
             ──replaced by─► CEL, a rules engine, configuration
 ```
+
+A lambda can express a single-operation Strategy while capturing configuration or dependencies;
+state alone does not require a named class. Inspect ownership, lifetime and concurrency of captured
+objects. [JLS 17 capture rules](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2)
+require captured local variables to be final or effectively final, but a
+[final reference does not make its object immutable](https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.12.4).
+Prefer a named implementation when it clarifies related operations, invariants or lifecycle
+responsibilities; either mechanism can retain the Strategy role (`gof-strategy`).
 
 ## Compositions worth naming
 

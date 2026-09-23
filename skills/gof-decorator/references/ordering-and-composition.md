@@ -127,24 +127,34 @@ wrapper nor a completed caller future proves these lifetime guarantees.
 
 ## When the framework already has it
 
-| Concern                        | Framework mechanism                           | Prefer the framework because                           |
-| ------------------------------ | --------------------------------------------- | ------------------------------------------------------ |
-| Request logging, auth, tenancy | Servlet `Filter`, `HandlerInterceptor`        | Integration hooks with explicit ordering and coverage  |
-| Method-level cross-cutting     | Spring AOP advice, `@Order`                   | Advice ordering model; verify proxy interception       |
-| HTTP client retry/timeouts     | `RestClient` builder, Resilience4j decorators | Transport and resilience hooks; verify instrumentation |
-| Caching                        | `@Cacheable` / `CacheManager`                 | Key/eviction hooks; provider-dependent TTL and stats   |
-| Metrics                        | Micrometer instrumentation on the client      | Shared conventions when configured consistently        |
+| Concern                      | Framework mechanism                               | Prefer the framework because                           |
+| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------ |
+| Request logging and context  | Servlet `Filter`, `HandlerInterceptor`            | Integration hooks with explicit ordering and coverage  |
+| Authentication/authorization | Existing Spring Security or security filter chain | Security coverage before protected handlers            |
+| Method-level cross-cutting   | Spring AOP advice, `@Order`                       | Advice ordering model; verify proxy interception       |
+| HTTP client retry/timeouts   | `RestClient` builder, Resilience4j decorators     | Transport and resilience hooks; verify instrumentation |
+| Caching                      | `@Cacheable` / `CacheManager`                     | Key/eviction hooks; provider-dependent TTL and stats   |
+| Metrics                      | Micrometer instrumentation on the client          | Shared conventions when configured consistently        |
 
 These are integration capabilities to verify, not automatic guarantees. Cache TTL/eviction depends
 on the provider; HTTP pooling depends on the request factory; observations require configured
 registries and tracing bridges. Inspect effective configuration and exercise a representative call.
 
+MVC interceptors are not an interchangeable security boundary: their path matching and handler
+coverage can differ from controller mappings. Preserve the established security filter chain and
+verify its actual coverage. Include hostile unauthenticated and wrong-tenant requests, path variants
+accepted by the controller, and relevant dispatch types; they must not reach protected behavior or
+receive a cached result. For example, compare `/admin/orders` with `/admin;v=1/orders` under the
+project's parser/firewall settings rather than assuming two path matchers interpret them identically.
+Some configurations reject the latter before mapping, which is a valid protected outcome.
+
 Custom chains need explicit integration with ordering and observability. Otherwise their behavior
 may be invisible to operators and a second mechanism may duplicate it (`rpc-and-api-contracts`,
 `caching-strategies`).
 
-Hand-roll when the concern is domain-shaped — an approval step, a tenant-specific transformation,
-a business-rule pipeline — because frameworks have no concept of those.
+Use a custom decorator when an approval step, transformation or other domain policy needs a
+contract that existing hooks cannot express clearly. Framework hooks can host custom behavior;
+domain-specific logic alone does not justify a parallel chain.
 
 ## Functional decorators
 
@@ -180,3 +190,5 @@ genuinely vary per instance.
 
 Sources: [Spring AopProxyUtils](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/aop/framework/AopProxyUtils.html)
 and [Object equality contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html).
+For security coverage, see [Spring MVC interceptors](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-config/interceptors.html)
+and the same warning in the [Spring 6.1.0 documentation](https://github.com/spring-projects/spring-framework/blob/v6.1.0/framework-docs/modules/ROOT/pages/web/webmvc/mvc-config/interceptors.adoc).

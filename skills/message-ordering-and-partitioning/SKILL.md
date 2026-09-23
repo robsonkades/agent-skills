@@ -149,14 +149,19 @@ Require a global total order only when:
 
 ## Ordering contract template
 
+This example requires every transition, so `current + 1` assumes a contiguous event sequence
+per account within one source epoch. A merely increasing row version or a filtered stream can
+have legitimate gaps; establish an explicit predecessor relation or authoritative gap protocol
+instead of interpreting every numeric jump as a missing delivery.
+
 ```text
 Scope: accountId
-Source order: monotonically increasing account version committed by the authority
+Source order: contiguous account event sequence assigned by the authority at commit
 Broker order: same key maps to one partition within mapping epoch E
 Delivery: at-least-once; retries may be out of delivery order
 Apply rule: atomically commit v only when v == current + 1
 Duplicate rule: verify event identity/payload; quarantine conflicting equal versions
-Gap rule: park boundedly, then fetch snapshot/replay missing range
+Gap rule: park boundedly, then replay missing transitions and reconcile required effects
 Visibility: account state commits in version order; notifications may arrive later
 Mapping change: close E, record barrier, drain through barrier, open E+1
 ```
@@ -169,8 +174,10 @@ Mapping change: close E, record barrier, drain through barrier, open E+1
   gap age and provide resync/reconciliation—not silent skip.
 - Sequence counters need overflow/reset/restore semantics; database restore or producer epoch
   reset can make a numerically lower valid history appear stale.
-- Retention/compaction may remove the record needed to fill a gap. Recovery then requires an
-  authoritative snapshot with a version watermark.
+- Retention/compaction may remove the record needed to fill a gap. An authoritative snapshot
+  with a version watermark can restore projection state, but cannot by itself prove required
+  intermediate effects occurred. Replay or reconcile those effects before declaring recovery;
+  if no evidence or repair source remains, report the unresolved gap.
 
 ## References
 

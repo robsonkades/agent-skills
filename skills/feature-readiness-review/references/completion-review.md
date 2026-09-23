@@ -1,7 +1,8 @@
 # Completion review
 
-Twelve checks, in this order. The first four are the ones that find problems a review of the
-diff cannot, because they need the analysis to detect.
+Twelve checks, in this order. The first four compare the implementation with accepted analysis;
+the diff alone cannot establish that all agreed obligations were met. Reuse relevant findings
+from code review rather than requiring a duplicate investigation.
 
 ## 1. Requirements
 
@@ -105,29 +106,37 @@ output that was read, a file that was opened. Everything else is marked unverifi
 
 ## Report shape
 
+The following IDs and outcomes are illustrative, not execution evidence. In an actual report,
+link each EV to the inspected result, checked revision and environment.
+
 ```text
 Feature      Asynchronous order dispatch
-Complete     no — one Required item has no resource
+Complete     no — BAC-02 unverified, BAC-03 blocked, BAC-04 has no resource
 
 Requirements
   BAC-01 dispatch is asynchronous          RES-01, RES-03, RES-04   satisfied
   BAC-02 caller can observe completion     RES-06                   UNVERIFIED
-  BAC-03 duplicate dispatch is suppressed  -                        NOT COVERED
+  BAC-03 duplicate dispatch is suppressed  RES-07, RES-08           BLOCKED on Q-08
+  BAC-04 dispatch audit is available       -                        NOT COVERED
 Scope
   2 unplanned files; 1 kept with the impact map amended, 1 reverted
 Validation
-  9 resources validated; RES-06 qualified — no database harness, generated SQL
-  unverified against the real engine
+  RES-01/03/04 DONE: EV-01 covers their BAC-01 behavior and passed for the current revision
+  RES-06 BLOCKED: implemented, but required SQL validation cannot run without the database harness
+  RES-07/08 BLOCKED: implementation depends on Q-08; no passing mitigation evidence
 Acceptance
-  BAC-01 satisfied; BAC-02 unverified; BAC-03 not covered; BAC-05 depends on BAC-03
+  BAC-01 -> EV-01, satisfied; BAC-02/03 have no passing EV; BAC-04 has neither RES nor EV
 Decisions
   11 recorded; ED-09 and ED-11 recorded retrospectively during implementation
 Risks
-  RISK-02 mitigated by RES-07; RISK-05 accepted under GAP-02 by Operations
+  RISK-02 open: planned controls in RES-07/08 are blocked, not verified mitigation
+  RISK-05 accepted under currently valid GAP-02 by Operations; no Required criterion waived
 Unverified
-  RES-06's SQL against PostgreSQL; the migration against a production-sized table
+  RES-06's SQL against PostgreSQL; duplicate-dispatch behavior in RES-07/08
 Remaining
-  BAC-03 blocked on Q-08. RES-07 and RES-08 are defined and ready once it is answered.
+  RES-06 needs the database harness and passing validation.
+  Resolve Q-08, then recheck affected plan/readiness before RES-07/08 resume.
+  Return BAC-04 to Engineering for its missing resource and validation plan.
 ```
 
 Lead with the completion result and material gaps that determine it. Report unavailable or failed

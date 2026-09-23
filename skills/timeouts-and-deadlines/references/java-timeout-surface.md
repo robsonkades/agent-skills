@@ -61,13 +61,24 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 }
 ```
 
-| Knob                                                   | Bounds                                                              | Does not prevent                                                                      |
-| ------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Pool `connectionTimeout` (HikariCP)                    | Waiting to **lease** a pooled connection                            | Anything after the lease. It is not a TCP connect timeout, despite the name           |
-| `Connection.setNetworkTimeout` / driver socket timeout | Driver wait for database request/network activity, vendor-dependent | A guaranteed database execution/lock deadline after connectivity is lost              |
-| `Statement.setQueryTimeout`                            | Driver wait for statement execution in seconds                      | Uniform batch/result-stream behavior; driver may also apply it to `ResultSet` methods |
-| Database statement timeout                             | Server execution according to vendor semantics                      | Pool acquisition, client DNS/connect or transaction work outside that statement       |
-| Spring transaction timeout                             | Framework transaction policy, often applied to resource operations  | Guaranteed asynchronous interruption of arbitrary current Java/server work            |
+| Knob                                | Bounds                                                             | Does not prevent                                                                      |
+| ----------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Pool `connectionTimeout` (HikariCP) | Waiting to **lease** a pooled connection                           | Anything after the lease. It is not a TCP connect timeout, despite the name           |
+| `Connection.setNetworkTimeout`      | Waiting for a database reply; expiry closes the connection         | A guaranteed database execution/lock deadline after connectivity is lost              |
+| Driver socket timeout               | Vendor-specific network wait                                       | Uniform closure, cancellation or transaction-recovery semantics across drivers        |
+| `Statement.setQueryTimeout`         | Driver wait for statement execution in seconds                     | Uniform batch/result-stream behavior; driver may also apply it to `ResultSet` methods |
+| Database statement timeout          | Server execution according to vendor semantics                     | Pool acquisition, client DNS/connect or transaction work outside that statement       |
+| Spring transaction timeout          | Framework transaction policy, often applied to resource operations | Guaranteed asynchronous interruption of arbitrary current Java/server work            |
+
+Treat JDBC network timeout as a connection-failure backstop, normally longer than query/transaction
+limits so ordinary cancellation can run first. Configure it before dispatch: changes do not affect
+outstanding requests. On expiry, the connection and its statements become unusable; ensure the pool
+discards/replaces that physical connection. Query cancellation with a healthy network need not close
+them, but resolve any active transaction before reuse. Check vendor socket settings independently.
+
+For an already-stuck request, use supported `Statement.cancel` or `Connection.abort` with explicit
+resource ownership; a late `setNetworkTimeout` is not cancellation. `SQLTimeoutException` from
+statement execution establishes an attempted cancel, not remote termination or rollback.
 
 Whether pool capacity, admission or the lease policy should change belongs to connection-pool-sizing;
 removing lease timeouts by enlarging the pool can overload the database.
@@ -119,10 +130,14 @@ response headers, slow/dribbling body, JDBC execution/result streaming and cance
 caller release, connection/pool return, callee cancellation observation, database session/lock
 release and committed business outcome. Documentation gives API intent; only the deployed JDK,
 HTTP implementation, driver, database and framework versions establish operational behavior.
+For JDBC, exercise query cancellation and network expiry separately, checking transaction recovery
+and pool replacement rather than treating every timeout as a reusable-connection outcome.
 
 ## Primary references
 
 - [Spring Boot 3.5 HTTP clients](https://docs.spring.io/spring-boot/3.5/reference/io/rest-client.html) — builder and request-factory configuration.
 - [CompletableFuture](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — cancellation and timeout completion are not task interruption.
+- [JDBC `Connection.setNetworkTimeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setNetworkTimeout(java.util.concurrent.Executor,int)>) — closure, ordering and no effect on outstanding requests.
+- [JDBC `Statement.executeQuery`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Statement.html#executeQuery(java.lang.String)>) — timeout exceptions require an attempted cancellation.
 - [OpenJDK 25 `MultiExchange`](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/java.net.http/share/classes/jdk/internal/net/http/MultiExchange.java) — request timer cancelled before response-body reading in this baseline.
 - [JDK 26 `HttpRequest.Builder.timeout`](<https://docs.oracle.com/en/java/javase/26/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)>) — body-subscriber completion coverage is explicitly documented for the JDK 26 built-in implementation.

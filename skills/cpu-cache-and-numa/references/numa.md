@@ -24,6 +24,14 @@ nanosecond ratio into capacity arithmetic.
 (G1 support: JEP 345, JDK 14, Linux). G1's young-region placement aims at allocation locality;
 it does not guarantee local access to everything already on the heap.
 
+With NUMA support active, Parallel GC in HotSpot 25 uses node-local allocation spaces for Eden,
+and requests interleaved placement for old-generation pages across allowed nodes. These are
+placement policies, not proof of physical residence. On Linux local placement is a preference
+allowing fallback, not strict binding. A long-lived object promoted out of Eden therefore does not carry a guarantee
+of locality to its allocating thread, and the allocating thread need not be its eventual reader.
+For an old-generation working set, investigate actual page residence and accessing CPUs instead
+of treating an enabled flag as proof that remote accesses should disappear.
+
 ZGC also uses `UseNUMA`: JDK 25's `ZArguments` enables it by default, and Linux `ZNUMA`
 initialization reads that flag. Allocation/relocation policies and platform support are
 version-specific. Verify target-build logs/source and placement rather than extrapolating G1.
@@ -46,8 +54,9 @@ traffic. Correlate residency with CPU placement and PMU/topology evidence.
 
 Two strategies, and the choice depends on whether the workload fits in one node:
 
-- **Distribute** (`-XX:+UseNUMA` under Parallel/G1): allocation follows the thread's node.
-  Appropriate when the process legitimately spans nodes.
+- **Distribute** (`-XX:+UseNUMA` under Parallel/G1): use the collector's generation-specific
+  placement policies described above. Evaluate when the process legitimately spans nodes;
+  local allocation and interleaving have different access-locality consequences.
 - **Pin** (`numactl --cpunodebind=0 --membind=0`): confine the process to one node.
   This is a launch prefix; append the application command. Evaluate only when node 0 is allowed
   and its CPU, memory and bandwidth cover heap, native memory and workload demand. Strict memory
@@ -70,6 +79,10 @@ where possible and measure the capacity lost by confinement.
 
 ## Sources
 
+- [HotSpot 25 Parallel young generation](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/gc/parallel/psYoungGen.cpp)
+  and [old generation](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/gc/parallel/psOldGen.cpp),
+  with [space page setup](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/gc/parallel/mutableSpace.cpp)
+  and [Linux local/interleaved policies](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/os/linux/os_linux.cpp).
 - [JDK 25 ZGC Linux NUMA initialization](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp)
   and [ZGC arguments](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/z/zArguments.cpp).
 - [JDK 25 Linux topology checks](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/os/linux/os_linux.cpp).

@@ -122,7 +122,22 @@ cq.where(cb.greaterThan(root.get(Order_.placedAt), since));
 
 Enable the metamodel processor matching the Hibernate/JDK version (`hibernate-jpamodelgen`
 in older Hibernate lines; artifact names/configuration evolve) and use it wherever the API accepts an
-attribute reference. Where it does not — JPQL strings, `Sort.by("...")`, native SQL —
+attribute reference. On JDK 23+, `javac` requires explicit annotation-processing configuration;
+an ordinary compile dependency alone no longer enables classpath processor discovery. This is
+the compiler JDK's behavior even with `--release 17`. Use the build tool's processor configuration
+(for example, compatible Maven `annotationProcessorPaths` or Gradle `annotationProcessor`) and
+verify the compiler invocation. Explicit `-processor`, `--processor-path` or
+`--processor-module-path` enables processing; `-proc:full` restores implicit discovery where
+supported, but selecting the intended processors avoids executing unrelated classpath processors.
+Do not upgrade the provider or compiler just to match a configuration example.
+
+Regenerate in a clean disposable build output, compile consumers, and inspect the newly generated
+metamodel. Existing checked-in or incremental output can otherwise make a skipped processor look
+successful. A useful check renames a mapped attribute, regenerates, and confirms that a consumer
+still referring to the old generated member fails compilation. This validates generation and
+referenced source compatibility, not the deployed database contract.
+
+Where the API does not accept typed attributes — JPQL strings, `Sort.by("...")`, native SQL —
 the alternatives are:
 
 - Named constants in one place per entity, so a rename touches one file.
@@ -176,4 +191,6 @@ Do column or attribute names appear as strings anywhere?
 
 Sources: [Jakarta Persistence 3.2 XML descriptor rules](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#use-of-the-xml-descriptor),
 [MapStruct 1.6 reference](https://mapstruct.org/documentation/1.6/reference/html/),
+[JDK 23 annotation-processing change](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html),
+[Explicit processing options and older-JDK support](https://inside.java/2024/06/18/quality-heads-up/),
 [Java17 Stream.toList API](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html#toList()>).

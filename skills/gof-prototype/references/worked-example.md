@@ -4,6 +4,9 @@ Illustrative Java 17 partial examples, not a production benchmark. Domain types,
 rendering/persistence operations are omitted. Import java.util collections, Objects and static
 Collectors.toCollection/toMap. Style is deeply immutable; MetricsRecorder supports concurrent use;
 Section.copy and MergeRule.copy must duplicate owned mutable state.
+Rule keys and registry names use non-null `String.equals` semantics. Rules preserve insertion
+order; registry iteration order is not part of its API. Inputs using identity equality or custom
+comparators need a separate, explicit conversion policy before entering this model.
 
 A reporting service holds document templates configured at startup from a CMS: sections, a
 header, a style, a set of merge rules. Rendering a document mutates a working copy — sections
@@ -58,7 +61,7 @@ public final class DocumentTemplate {
     private final Map<String, MergeRule> rules;   // owned, mutable
     private final MetricsRecorder metrics;        // shared by design
 
-    // Private ownership-transfer constructor: only fresh owned containers/elements may be passed.
+    // Transfer fresh owned containers/elements; rules use String.equals and insertion order.
     private DocumentTemplate(String name, Style style, List<Section> sections,
                              Map<String, MergeRule> rules, MetricsRecorder metrics) {
         if (sections.isEmpty()) throw new IllegalArgumentException("template needs a section");
@@ -80,7 +83,8 @@ public final class DocumentTemplate {
             sections.stream().map(Section::copy).collect(toCollection(ArrayList::new)),
             rules.entrySet().stream()
                  .collect(toMap(Map.Entry::getKey, e -> e.getValue().copy(),
-                                (a, b) -> a, LinkedHashMap::new)),
+                                (a, b) -> { throw new IllegalArgumentException("duplicate rule key"); },
+                                LinkedHashMap::new)),
             metrics);
     }
 }
@@ -90,6 +94,10 @@ All construction paths must honor the ownership-transfer precondition; external 
 must first be copied, or later aliases could mutate registry prototypes. Section/rule copies here
 assume a tree of independently owned values; a graph requiring shared-node identity needs one
 copy context across fields. workingCopy requires a stable source, and failures publish no partial copy.
+The throwing merge rejects unexpected key collisions instead of dropping a rule. It does not
+validate every source map policy: construction must enforce the declared equality/order contract.
+Preserve a required comparator or identity policy in a different model; allocating a new map alone
+does not preserve it. See [collection copy semantics](copying-in-java.md#deep-or-shallow-per-field).
 
 Three things this version fixes. The copy runs the constructor, so the invariant holds. Every
 field is a deliberate decision, and the Javadoc states which are shared. And adding a field to
@@ -104,8 +112,11 @@ public final class TemplateRegistry {
 
     public TemplateRegistry(Map<String, DocumentTemplate> sources) {
         var owned = new LinkedHashMap<String, DocumentTemplate>();
-        sources.forEach((key, value) -> owned.put(Objects.requireNonNull(key),
-                Objects.requireNonNull(value).workingCopy()));
+        sources.forEach((key, value) -> {
+            Objects.requireNonNull(key);
+            if (owned.containsKey(key)) throw new IllegalArgumentException("duplicate template name");
+            owned.put(key, Objects.requireNonNull(value).workingCopy());
+        });
         this.prototypes = Map.copyOf(owned);
     }
 
@@ -184,6 +195,12 @@ utility.
 
 Suggested checks (not executed integration tests): mutate an input template after registry creation;
 mutate two instantiated documents independently; verify deliberate Style/MetricsRecorder sharing;
+preserve rule lookup, insertion order and count; reject equal-name collisions from identity-keyed
+rule/registry inputs rather than silently losing entries; verify comparator behavior in any variant
+that supports sorted inputs;
 reject invalid/unknown templates without leaking registry contents; publish a reload generation and
 check each request uses coherent state. For persistence, insert a draft alongside the source and
 verify distinct IDs, provider version initialization, child ownership and unchanged source rows.
+
+Primary source: [Collectors.toMap](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Collectors.html)
+uses the supplied merge function to resolve equal-key collisions; that function is part of the copy policy.

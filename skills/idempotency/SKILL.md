@@ -106,9 +106,14 @@ error, so a client that retried after a timeout is told its request conflicts wi
 ```text
 ABSENT --atomic claim--> PENDING(attempt, fingerprint)
 PENDING --downstream confirms same operation key--> COMPLETED(outcome)
-PENDING --definite pre-dispatch rejection--> RETRYABLE or terminal REJECTED
+PENDING --pre-dispatch rejection; no unresolved earlier attempts--> RETRYABLE/REJECTED
 PENDING --timeout/disconnect/crash--> UNKNOWN --status lookup/reconcile--> COMPLETED/RETRYABLE
+UNKNOWN --later attempt rejected before dispatch--> UNKNOWN
 ```
+
+Track uncertainty for the whole operation, including earlier SDK/proxy attempts. A new
+attempt epoch must retain that evidence: proving the latest attempt was not dispatched does
+not prove that an earlier attempt never applied or cannot still apply.
 
 Never delete or reopen `PENDING` merely because the caller received an exception. Cancellation
 and timeout describe the caller, not the effect. If a lease allows a new worker to take over,
@@ -127,7 +132,8 @@ checks actually run; do not claim exactly-once behavior from a mock or a success
 ## Security and abuse controls
 
 - authenticate before idempotency lookup and namespace by principal/tenant plus operation;
-- cap key/body lengths and validate key entropy/format to prevent index and hot-key abuse;
+- cap key/body lengths and validate the documented key format; require uniqueness within
+  the chosen namespace from the key source, not an entropy test on one supplied token;
 - never reveal whether another tenant used a key; authorize replayed resource/result again;
 - encrypt or minimize stored response data and apply retention/redaction requirements;
 - rate-limit new claims separately from cheap completed replays, and protect one key from an

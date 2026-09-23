@@ -83,7 +83,7 @@ mean compatibility or filter coverage remains unverified; state the needed evide
   classes and annotate serialization declarations with `@Serial`. Enums have fixed UID `0L` and
   ignore such declarations; records default to `0L` and waive UID matching. For ordinary classes,
   the generated value depends on the compiler's view of the class — names, modifiers,
-  members — so an innocuous edit changes it and produces `InvalidClassException` at runtime,
+  members — so an innocuous edit can change it and produce `InvalidClassException` at runtime,
   in production, on a mixed-version deploy.
 - Use the default serialized form only when the physical representation genuinely equals the
   logical content. Where it does not (a linked structure, a cache, a derived index, a doubly

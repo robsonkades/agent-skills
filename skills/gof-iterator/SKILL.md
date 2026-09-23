@@ -23,7 +23,7 @@ out its internals. The pattern is so thoroughly absorbed into Java — `Iterable
 `for`, `Stream` — that the design question is almost never "should we have an iterator" but
 "which of the three abstractions should this type expose, and what does each promise".
 
-Inspect compiler release/toolchains, source ownership, mutation policy and resource lifetime
+Inspect compiler release/toolchains, source ownership, null/mutation contracts and resource lifetime
 before choosing. Examples use Java 17 (partial domain types/imports omitted); Gatherers are
 standard in Java 24 ([JEP 485](https://openjdk.org/jeps/485)) and are optional, not a reason
 to upgrade a target project.
@@ -77,8 +77,11 @@ Traversal must be parallel
 ## When it is not
 
 - **The collection is already a `List` you can expose.** `List.copyOf` gives an unmodifiable
-  structural snapshot; `Collections.unmodifiableList` gives a live unmodifiable view. Neither
-  freezes mutable elements. Obtain a snapshot under the source's synchronization policy.
+  structural snapshot and rejects null elements; `Collections.unmodifiableList(source)` gives
+  a live unmodifiable view. If the existing API permits nulls, a snapshot can use
+  `Collections.unmodifiableList(new ArrayList<>(source))` to preserve that contract. None of
+  these freezes mutable elements. Obtain a snapshot under the source's synchronization policy;
+  see the [Java 17 List contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html).
 - **The caller needs random access or collection-style size.** A collection may be the right
   contract when materialization fits. Repeated traversal alone can use a repeatable `Iterable` or
   a factory for fresh traversals; specify independent state, replay consistency and reopening cost.
@@ -132,7 +135,8 @@ THEN say whether the traversal is a snapshot or live. Callers will
 ## Modern Java expression
 
 ```text
-Expose a collection safely           List.copyOf(...) / unmodifiable view
+Expose a collection safely           List.copyOf(...) for non-null elements;
+                                     choose a snapshot or live view preserving null policy
 
 Expose a computed sequence           Stream, via a Spliterator
 

@@ -100,8 +100,9 @@ guarantee every inverse-child update increments that version; test competing edi
 an explicit aggregate concurrency policy with `offline-concurrency-control`.
 
 Note also what did _not_ change: this is still a JPA entity. A domain model does not
-require persistence ignorance — that is a separate decision with its own price
-(see `data-source-patterns` for the trade).
+require persistence ignorance or a separate Data Mapper. A simple model may use Active
+Record; an in-memory model may need no persistence at all. Assess mapping and load costs
+only for the actual persistence strategy (`data-source-patterns`).
 
 ## Classifying a concept: entity, value, or neither
 
@@ -137,14 +138,20 @@ Obsession).
 
 ### Concept to construct
 
-| The concept is…                                              | Construct                              | Equality                    | Note                                                                                                                                                                                                                 |
-| ------------------------------------------------------------ | -------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A closed set of named constants, fixed at your release cycle | `enum`                                 | identity                    | Behaviour per constant, never `ordinal()` (`java-enums`)                                                                                                                                                             |
-| A value, immutable, every component part of what it is       | `record`                               | value, over every component | The default for values since JDK 16                                                                                                                                                                                  |
-| A value with a closed set of variants                        | `sealed interface` + `record` variants | value                       | Exhaustive `switch`, no `default`                                                                                                                                                                                    |
-| An entity: identity, lifecycle, mutable state                | class with an explicit identity policy | identity                    | Application-assigned stable ids simplify equality; generated ids need lifecycle/hash-collection care (`java-object-contracts`). A record cannot be a portable JPA `@Entity`.                                         |
-| An immutable snapshot of an entity                           | `record`                               | by default, all components  | Snapshots of one identity with different state are unequal by default. Custom identity equality is possible but needs an explicit `equals`/`hashCode` contract; event sourcing does not make entity state immutable. |
-| Neither                                                      | the primitive                          | —                           | `java-code-smells`, Primitive Obsession, carries the budget for when a wrapper earns its place                                                                                                                       |
+| The concept is…                                              | Construct                              | Equality                   | Note                                                                                                                                                                                                                 |
+| ------------------------------------------------------------ | -------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A closed set of named constants, fixed at your release cycle | `enum`                                 | identity                   | Behaviour per constant, never `ordinal()` (`java-enums`)                                                                                                                                                             |
+| A value, immutable, every component part of what it is       | `record`                               | component-based by default | A candidate since JDK 16 when component equality and mutability fit the domain contract                                                                                                                              |
+| A value with a closed set of variants                        | `sealed interface` + `record` variants | value                      | Exhaustive `switch`, no `default`                                                                                                                                                                                    |
+| An entity: identity, lifecycle, mutable state                | class with an explicit identity policy | identity                   | Application-assigned stable ids simplify equality; generated ids need lifecycle/hash-collection care (`java-object-contracts`). A record cannot be a portable JPA `@Entity`.                                         |
+| An immutable snapshot of an entity                           | `record`                               | by default, all components | Snapshots of one identity with different state are unequal by default. Custom identity equality is possible but needs an explicit `equals`/`hashCode` contract; event sourcing does not make entity state immutable. |
+| Neither                                                      | the primitive                          | —                          | `java-code-smells`, Primitive Obsession, carries the budget for when a wrapper earns its place                                                                                                                       |
+
+A record is only shallowly immutable; its default equality uses each component's equality.
+For example, a `byte[]` component remains mutable and uses array identity, not byte content,
+by default. Before selecting a record for a domain value, verify the required equality and
+ownership of mutable components; a record declaration alone does not establish those
+contracts. Use `java-immutability` and `java-object-contracts` for the implementation.
 
 Records (final in JDK 16), sealed interfaces (17) and pattern matching for `switch` with
 record patterns (both 21) let the compiler check a closed variant set. Use that capability
@@ -212,7 +219,8 @@ an approximate or stale summary cannot enforce a strict invariant merely because
 
 ## When the domain model is the wrong choice
 
-- The rules do not interact — scripts are clearer and cheaper.
+- Rules do not interact and the proposed model adds coordination or mapping costs with no
+  useful owner. Compare scripts; do not replace an adequate small model on that label alone.
 - The work is inherently set-shaped and measured hydration/round-trip cost dominates; compare
   equivalent set-based behavior rather than claiming a fixed speed ratio.
 - The data's shape is owned elsewhere and the "model" would be a renaming of a foreign
@@ -228,3 +236,4 @@ an approximate or stale summary cannot enforce a strict invariant merely because
 - [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2): entity requirements, relationship ownership, optimistic locking and bulk operations.
 - [Java 17 Record API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): default component equality and explicitly declared methods.
 - [Fowler: Domain Model](https://martinfowler.com/eaaCatalog/domainModel.html): data and behavior in the domain model.
+- [Fowler: Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html): domain behavior and persistence can coexist in one object.

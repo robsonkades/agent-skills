@@ -17,6 +17,24 @@ and a stable measurement interval. For 200 borrows/s and mean hold time 0.020 s,
 risk. Stuck borrows may not yet appear in the completed-use timer: cross-check active counts,
 transaction age and checkout traces.
 
+For HikariCP 5.1.0/6.3.3 with its Micrometer tracker, use the interval increase in
+`hikaricp.connections.usage` count divided by interval seconds for completed borrows/s, and the
+matching usage sum/count for mean `W`; handle counter resets and units. The acquisition timer
+records successful checkouts **and acquisition timeouts**, so its count is not a successful-borrow
+count. Usage records returned borrows, including ones whose SQL failed; distinguish borrow
+throughput from successful business operations. Verify these event boundaries for the resolved
+version/adapter before deriving rates. See HikariCP 6.3.3's
+[pool metric recording](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/pool/PoolBase.java)
+and [Micrometer mapping](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/metrics/micrometer/MicrometerMetricsTracker.java).
+
+`L` describes work that obtained connections. A saturated four-connection pool completing 200
+borrows/s with mean `W = 0.020 s` yields `L = 4` even when another 200 attempts/s time out. That
+does not prove four connections satisfy demand. Record offered acquisition attempts, successful
+checkouts, timeouts, cancellations and upstream rejections separately; request rate needs the
+number of borrows per request. Validate candidate sizes at the intended offered load, including
+error and queue-wait budgets. Do not multiply attempted acquisitions by completed-use `W` and
+call the result observed occupancy, or assume `W` stays fixed as database concurrency increases.
+
 For direct connections, sum each pool's maximum over peak coexisting replicas, including rolling
 deployments, batch workers and other clients of the same database. Keep administrative/recovery
 reserve available; neither an average replica count nor one pool per process is a safe assumption.
@@ -97,7 +115,8 @@ behavior separately; compare hold time and database load as well as statement co
 - [ ] `L = λ_borrow × mean(W)` calculated for one pool and stable interval
 - [ ] Direct/proxied session budgets and safe execution concurrency agreed across all pools,
       peak instances, admin/recovery reserve, workload classes and failover
-- [ ] Candidate pool size validated at representative concurrency; margin justified by evidence
+- [ ] Candidate pool size validated at intended offered load, including failed/rejected work and
+      wait/error budgets; margin justified by evidence
 - [ ] `connection-timeout` inside the endpoint's latency budget, never 0
 - [ ] `max-lifetime` derived from connection-age cutoff; in-use retirement and idle drops handled separately
 - [ ] Effective `keepalive-time` verified for the resolved HikariCP version and kept below `max-lifetime`
@@ -107,7 +126,8 @@ behavior separately; compare hold time and database load as well as statement co
 ## Monitoring
 
 - [ ] Pending/acquire latency and timeout rate assessed against request budgets and service SLO
-- [ ] Mean occupancy `L/c` cross-checked against active connections; no universal earliest-warning metric
+- [ ] Mean occupancy `L` cross-checked against interval-average active connections; `L/c` is the
+      occupied fraction of configured capacity `c`, not a connection count
 - [ ] Transaction age, idle-in-transaction duration and blockers monitored against workload expectations
 - [ ] Server idle-transaction timeout, if used, tested for rollback/client recovery and legitimate idle work
 

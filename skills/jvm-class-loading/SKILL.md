@@ -79,7 +79,12 @@ violation` means two namespaces were forced to agree on a descriptor type and di
 - Parent-first delegation preserves namespace consistency and helps prevent child artifacts from
   shadowing platform/shared API classes. Child-first isolation requires an explicit boundary:
   always delegate platform namespaces and shared contract types, define package/resource order,
-  and test split-package, service-provider and sealing behavior.
+  and test split-package, service-provider and sealing behavior. A `null` parent selects bootstrap
+  visibility, not all platform classes. On Java 17+, use `ClassLoader.getPlatformClassLoader()`
+  when the boundary requires platform APIs but not application classes; use the shared API's
+  defining loader when that contract must cross the boundary. Check custom runtime images for
+  missing modules before attributing every platform lookup failure to parent selection. See the
+  [ClassLoader parent contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/ClassLoader.html).
 - Custom loaders are not parallel-capable by default. For the standard
   `loadClass` implementation, absent successful `registerAsParallelCapable()` registration,
   `getClassLoadingLock` uses the whole loader rather than a per-name lock. Overrides can
@@ -115,9 +120,10 @@ Thread.print` is `- waiting on the Class initialization monitor for X` under a t
   instead, and reserve loaders for isolated **code**.
 - Every reloadable component needs a symmetric stop protocol: cancel/join its threads, close
   executors/resources, deregister JDBC drivers/MBeans/listeners/providers, clear TCCLs and remove
-  parent-owned cache entries keyed by its `Class` objects. Moving an implementation to a shared
-  loader trades unloadability for process-wide version coupling; share stable contracts, not all
-  self-registering implementations by default.
+  parent-owned cache entries keyed by its `Class` objects. Stop admission and drain in-flight plugin
+  calls before closing a `URLClassLoader`; concurrent class loading during `close()` is undefined.
+  Moving an implementation to a shared loader trades unloadability for process-wide version
+  coupling; share stable contracts, not all self-registering implementations by default.
 - Class loaders and module layers are namespace/access mechanisms, not a sandbox for hostile code.
   Code defined into the process can consume CPU/memory, call available native/process APIs and
   exploit granted capabilities; isolate untrusted plugins at an OS/process boundary.
@@ -186,8 +192,9 @@ Name unresolved evidence only where it changes the conclusion; scale the answer 
 - [Module access](references/module-access.md) — static versus reflective access across
   module boundaries, `--add-exports` versus `--add-opens`, where the flags can be placed
   (command line, `JDK_JAVA_OPTIONS`, the `Add-Opens` manifest attribute and its `-jar`-only
-  scope), and how the module system changes loader delegation. Read when an
-  `IllegalAccessError` or `InaccessibleObjectException` names a module.
+  scope), resource encapsulation, and how the module system changes loader delegation. Read when
+  an `IllegalAccessError` or `InaccessibleObjectException` names a module, or a packaged resource
+  is missing even though its class loads.
 - [Startup: CDS and the AOT cache](references/startup-and-aot-cache.md) — what JEP
   483/514/515 actually cache, how the cache is invalidated, and how to verify it is being
   used. Read when reducing cold start.

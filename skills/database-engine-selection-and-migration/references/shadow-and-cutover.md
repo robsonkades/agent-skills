@@ -4,14 +4,24 @@
 
 1. Capture an anonymized corpus containing common and edge parameters, expected results, and allowed
    nondeterminism.
-2. Replay side-effect-free reads against comparable snapshots or an established applied-change
-   watermark. Compare row multiplicities (multisets), types, warnings/errors and precision; compare
+2. Replay side-effect-free reads against equivalent committed data versions. Establish a common
+   comparison boundary, not just an applied-change watermark. Compare row multiplicities
+   (multisets), types, warnings/errors and precision; compare
    ordering only when the contract defines it, including tie-breakers. Set equality can hide a
    duplicated or missing duplicate row. Normalize only explicitly allowed differences.
 3. Compare plans by work: examined rows, reads/buffers, loops, spill, log/WAL, and locks. Time alone
    confounds hardware and cache.
 4. Run barrier-controlled concurrency tests for every integrity invariant.
 5. Simulate restart, failover, replica lag, timeout, invalid load chunks, and interrupted DDL.
+
+An applied watermark proves progress through a source position; it does not freeze either query's
+view or exclude later commits. For example, PostgreSQL READ COMMITTED takes a new snapshot for
+each statement. If the source read precedes an update and the destination read follows its
+application, a correct migration can appear different. Use matched snapshot/replay boundaries,
+isolated frozen copies, or version-aware comparisons that can reconstruct the required state,
+including updates and deletes. Treat comparisons without a proven common boundary as inconclusive,
+then retry with suitable evidence and report their coverage separately from matches/mismatches.
+See [PostgreSQL 18 snapshot semantics](https://www.postgresql.org/docs/18/transaction-iso.html).
 
 Bound shadow traffic and isolate credentials, session state and side effects. A `SELECT` can
 invoke a writing function, consume a sequence or acquire disruptive locks; a read-like endpoint
@@ -47,6 +57,7 @@ Specify:
 freeze or replication catch-up boundary:
 all writer identities and fencing/drain mechanism, including jobs, retries and old pools:
 final source commit marker and destination applied marker:
+destination ID-generator state/ranges and first-write validation:
 pre-cutover invariant and lag checks:
 traffic ramp stages and owner:
 abort thresholds for correctness, error, latency, lag, and resource saturation:
@@ -58,6 +69,16 @@ deadline after which rollback becomes a forward-fix:
 Rehearse backup/restore and rollback using production-scale timing. A rollback that cannot account for
 writes accepted after cutover is not a rollback plan.
 
+After final catch-up and before opening writes, reconcile sequence/identity generators separately
+from copied rows. PostgreSQL native logical replication can copy every identity/serial value while
+leaving its destination sequence at the start value, causing a later generated insert to collide.
+Respect increment/cycle settings, reserved ranges and ORM allocation blocks; retire stale allocators
+before reseeding rather than applying `MAX(id) + 1` while they can still issue keys. Rehearse the
+first generated-key writes with the actual driver/ORM and relevant concurrent allocators. A
+transaction rollback is not a universal undo for this preparation: PostgreSQL `nextval` and
+`setval` changes are not rolled back. Record the recovery action and repeat allocator validation
+on the source after reverse-sync, before reopening source writes.
+
 For a single-authority cutover: fence source writers, drain or resolve in-flight transactions,
 record the final committed boundary, apply through it and reconcile, then enable destination
 writes. Route changes alone do not stop existing connections or delayed jobs. Traffic ramps
@@ -68,4 +89,5 @@ destination-only write before declaring rollback safe. Explicitly identify irrev
 or semantic transformations that require a forward repair instead.
 
 Sources: [PostgreSQL 18 logical replication restrictions](https://www.postgresql.org/docs/18/logical-replication-restrictions.html)
-and [logical decoding, replay and retained resources](https://www.postgresql.org/docs/18/logicaldecoding-explanation.html).
+and [logical decoding, replay and retained resources](https://www.postgresql.org/docs/18/logicaldecoding-explanation.html);
+[sequence state and transaction behavior](https://www.postgresql.org/docs/18/functions-sequence.html).

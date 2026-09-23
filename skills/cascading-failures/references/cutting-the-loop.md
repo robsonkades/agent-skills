@@ -5,12 +5,16 @@ edge can break one loop; simultaneous loops and shared infrastructure still need
 
 ## The four points and their controls
 
-| Point                    | What it amplifies                                          | Control                                                                        | Owner                                |
-| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
-| Retry                    | one logical call into N requests, multiplied across layers | one retrying layer, full jitter, a retry **budget** rather than an attempt cap | `retries-and-backoff`                |
-| Unbounded queue          | overload into latency/memory and expired work              | bounded queue + deadline/priority/durability-aware rejection or expiry         | `rate-limiting-and-load-shedding`    |
-| Pool / thread exhaustion | one slow dependency into failure of unrelated endpoints    | one limit per dependency, `tryAcquire` with a timeout                          | `concurrency-limiting-and-bulkheads` |
-| Timeout stack            | an abandoned call into resources held for the difference   | deadline propagation; inner bound < caller's remaining budget                  | `timeouts-and-deadlines`             |
+| Point                    | What it amplifies                                          | Control                                                                                       | Owner                                |
+| ------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Retry                    | one logical call into N requests, multiplied across layers | designated retry owner, jitter, per-call attempt/deadline caps plus an aggregate retry budget | `retries-and-backoff`                |
+| Unbounded queue          | overload into latency/memory and expired work              | bounded queue + deadline/priority/durability-aware rejection or expiry                        | `rate-limiting-and-load-shedding`    |
+| Pool / thread exhaustion | one slow dependency into failure of unrelated endpoints    | per-dependency active limit plus bounded waiting admission and explicit rejection             | `concurrency-limiting-and-bulkheads` |
+| Timeout stack            | an abandoned call into resources held for the difference   | deadline propagation; inner bound < caller's remaining budget                                 | `timeouts-and-deadlines`             |
+
+An aggregate retry budget limits extra traffic over its scope and refill window. It does not
+replace the attempt/deadline cap for one logical call; keep both and account for retries at
+other layers under the declared end-to-end owner (`retries-and-backoff`).
 
 Two controls are worth stating as arithmetic a reviewer can check:
 
@@ -60,7 +64,7 @@ request. Map rejection to the application contract (for HTTP, commonly 503), and
 retry delay only when justified and compatible with retry budgets. Preserve or explicitly reject
 accepted durable work; rejection must not become a silent successful submission.
 
-`CallerRunsPolicy` is not a rejection: it applies backpressure by executing the task on the
+`CallerRunsPolicy` does not throw a rejection exception: it applies backpressure by executing the task on the
 submitting thread, which on a request thread means the request thread becomes the worker. It
 can throttle an internal producer, but defeats isolation when the submitter must remain responsive
 (especially an event loop). It silently discards the task after shutdown, so it is unsuitable when
@@ -69,6 +73,12 @@ submission requires explicit acceptance/rejection or durable delivery without ad
 The same rule applies to queues you did not write: an HTTP client's pending-acquire queue, a
 message consumer's prefetch buffer, an in-memory batch accumulator. Each needs a bound and a
 defined rejection.
+
+For a semaphore, timed `tryAcquire` limits one caller's waiting duration, not how many callers
+can wait or how much state they retain. Bound admission before that waiting point, or use
+immediate acquisition and handle `false` as rejection. A positive blocking wait also stalls an
+event-loop thread. Release only acquired permits, and only when the protected operation has
+actually relinquished the resource; a caller timeout alone may not establish that.
 
 ## Criticality classification
 
@@ -114,9 +124,9 @@ that trade must be made deliberately and recorded, not inherited from a `catch` 
 - [ ] Sequential work and retries fit the remaining deadline; nested budgets are not double-counted.
 - [ ] Retry ownership is explicit; layered retries have non-overlapping purposes and one bounded
       end-to-end attempt budget rather than an accidental multiplier.
-- [ ] The retry policy has a budget, not just an attempt count.
+- [ ] Per-call attempt/deadline caps and an aggregate retry budget are both defined.
 - [ ] Every queue and executor is bounded, with a rejection mapped to a real response.
-- [ ] There is one concurrency limit per dependency, not one shared across all of them.
+- [ ] Each dependency has an active-work limit and bounded waiting admission; event loops do not block on acquisition.
 - [ ] Aggregate live demand includes fan-out, rollout surge, surviving work and recovery callers
       outside the same controls, and fits measured capacity.
 - [ ] Every dependency is labelled critical or non-critical, and each non-critical one has a

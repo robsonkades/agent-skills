@@ -63,6 +63,14 @@ spin/contention.
 
 ## Symptom trees
 
+### Workers wait while ready children remain queued
+
+Trace each parent's awaited Future to its executor and resource needs. If all worker slots are
+held by parents whose children need those slots, investigate task dependency starvation before
+interpreting low CPU as spare capacity. Repeat the check for permits/connections held across child
+waits, including with virtual threads. Use the dependency test in
+[Sizing and adoption experiments](sizing-and-adoption.md) before changing pool size.
+
 ### Latency rose after virtual-thread migration
 
 ```text

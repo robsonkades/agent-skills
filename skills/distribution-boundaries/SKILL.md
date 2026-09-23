@@ -29,6 +29,11 @@ The first law here is old and still correct: **do not distribute your objects.**
 when a concrete driver justifies it, and design the boundary to be worth its cost. The law
 warns against transparent remote objects, not against every service boundary.
 
+Java snippets are partial architectural illustrations, not a runnable application or a
+declared Java baseline. Before implementing a client, transaction or cancellation choice,
+inspect the project's JDK/toolchain, resolved framework/client versions and runtime
+configuration. Applying this skill does not authorize upgrades or preview features.
+
 ## What crossing a process boundary actually costs
 
 | Property       | In-process                            | Across a process boundary                                                     |
@@ -86,8 +91,9 @@ The two sides change together in most commits
 
 The driver is independent deployability, and the module has a stable,
 narrow, business-shaped interface
-        → a candidate. Extract as a module first, run it that way, then
-          separate the process when the interface has stopped churning.
+        → a candidate. Rehearse as a module when feasible; reuse evidence
+          from an existing module. Direct extraction needs a stated constraint
+          and explicit migration risks, not a mandatory local trial.
 
 The driver is scaling one part independently
         → measure CPU, memory, I/O, bottlenecks and load curves. Low CPU

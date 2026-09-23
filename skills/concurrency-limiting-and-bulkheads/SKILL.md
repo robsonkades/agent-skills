@@ -80,9 +80,13 @@ global ordering/cycle analysis.
 ## Permit ownership
 
 - Acquire interruptibly or with a remaining monotonic deadline on cancellable paths.
+- A timed acquisition can still block its caller. Do not wait on an event loop or exhaust the
+  executor needed to complete work and release permits. Use immediate admission/rejection or
+  bounded asynchronous admission where blocking is incompatible with the execution model.
 - For synchronous work, enter `try/finally` only after acquisition succeeds and release exactly
   once when protected resource use ends. For async work, transfer the lease to the real operation's
   completion/cleanup path; returning a future or timing out its observer must not release early.
+  Streaming results can outlive successful response-future completion; cover their resource use too.
 - A semaphore has no owner: any thread can release and over-release silently raises capacity. Wrap it
   behind an API that makes the permit a scoped capability.
 - `Semaphore(1)` is not a reentrant/owned mutex. Use a lock when mutual exclusion and ownership are

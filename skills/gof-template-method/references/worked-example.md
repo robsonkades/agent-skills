@@ -207,11 +207,11 @@ abstract class SettlementStepsContractTest {
     protected abstract SettlementSteps steps();
     protected abstract Batch nonEmptyBatch();
 
-    @Test final void validate_is_pure() {
+    @Test final void validate_does_not_mutate_input() {
         var batch = nonEmptyBatch();
         var copy = batch.copy();
         steps().validate(batch, aContext());
-        assertThat(batch).isEqualTo(copy);              // no in-place mutation, ever again
+        assertThat(batch).isEqualTo(copy);              // input equals the baseline after this call
     }
 
     @Test final void settle_is_idempotent_for_the_same_run_id() { ... }
@@ -228,4 +228,7 @@ because a variant "fixing" a contract test would remove the guarantee the base e
 
 The first test in that list encodes the second defect from the original design: `validate` must not
 mutate. It requires a deep enough baseline copy and semantic equality covering mutable contents;
-inheritance alone cannot establish that those assertions detect all changes.
+it checks the input's final state for that fixture, not temporary mutation restored before return.
+It does not prove purity: a validator could preserve the input while writing externally or returning
+nondeterministic results. Verify those separate contracts with appropriate effect and result checks;
+inheritance alone cannot establish them.

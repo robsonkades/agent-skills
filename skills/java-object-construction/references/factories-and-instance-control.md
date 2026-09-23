@@ -9,7 +9,7 @@
 | Same as above but arguments need normalising or a different external shape                  | record + named factory; canonical constructor remains accessible at record visibility | Factory names intent, but a public record cannot hide its public canonical construction path             |
 | Two or more creation paths that differ in _meaning_                                         | named static factories                                                                | A name distinguishes `ofMinorUnits` from `ofMajorUnits`; overload resolution cannot                      |
 | Optionality, invalid combinations or transposable arguments impose demonstrated caller cost | compare named factories, distinct role types and a builder                            | Parameter count is a signal, not a threshold; java-fluent-apis owns builder mechanics                    |
-| The caller must not depend on the concrete class                                            | static factory returning an interface or sealed supertype                             | The implementation can change, split by input, or become cached, without touching call sites             |
+| The caller must not depend on the concrete class                                            | static factory returning a common abstraction                                         | Implementation changes must preserve its contract; a public sealed variant set is also API               |
 | Instances are interchangeable and cheap to share                                            | static factory with instance control                                                  | See below — this is a contract, not an optimisation                                                      |
 
 A constructor cannot be renamed, return a substitute object or reuse an existing instance;
@@ -180,6 +180,12 @@ and usability after successful return; `java-resource-management` owns that prot
   A factory declared to return the concrete class has given some of that freedom away, and
   narrowing the return type later is binary-incompatible when the old method descriptor no longer
   resolves, even when the same consumer source still compiles.
+- A published sealed return hierarchy may be consumed through exhaustive pattern switches.
+  Adding a permitted subtype can preserve binary linkage while an old switch throws
+  `MatchException` when the factory returns that new variant. Recompiling the consumer can
+  reveal lost exhaustiveness. Review both existing binaries and source callers before expanding
+  the variant set; use a common interface with hidden implementations when callers should rely
+  only on shared operations, and a sealed API when its closed alternatives are intentional.
 
 ## Authoritative references
 
@@ -189,3 +195,4 @@ and usability after successful return; `java-resource-management` owns that prot
 - [List.copyOf contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)
 - [BigDecimal exact conversion, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html#longValueExact()>) — fractional or out-of-range results fail instead of truncating.
 - [JLS 21 §13.4: Evolution of Classes](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4) — constructor signatures, access and method result types affect existing binaries.
+- [JLS 21 §13.5.2: sealed interface evolution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.2) — adding a variant can preserve linkage while breaking an old exhaustive switch at execution.

@@ -51,6 +51,21 @@ who/what causes the stimulus, what happens, under which conditions, what is affe
 response and how to assess it. A target can be pending; identify who must supply or validate it.
 Use `requirements-and-acceptance` when the underlying requirement is ambiguous.
 
+A numerical target can still admit incompatible interpretations. Refine only the dimensions
+that change this decision; preserve agreed details instead of asking stakeholders to repeat them.
+
+| Scenario shape                               | Clarification that changes acceptance                                                                                                                                                 | Unsupported shortcut to avoid                                                                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Confirmation within two seconds              | Where the clock starts; acknowledgement versus completed/durable work; eligible operations and workload; required statistic and observation window; treatment of timeouts and retries | Substituting mean server processing time for a user-visible completion target, or silently inventing p99                                         |
+| Recovery within a stated time                | Named failure and affected scope; clock origin; required usable state and tolerated data loss                                                                                         | Resetting the clock at detection, equating process restart with recovered business service, or assuming one target covers node and regional loss |
+| Add a capability within a stated effort/time | Representative change; affected scope and preserved contracts; whether analysis, tests, deployment and approvals count; effort versus elapsed time and team assumptions               | Treating coding time or lines changed as proof of end-to-end changeability                                                                       |
+
+An unresolved dimension is a targeted evidence request, not permission to change the goal.
+For example, retain a supplied two-second limit while marking its statistic as pending; do
+not claim a mean-only measurement satisfies it. If the owner actually specifies a mean,
+preserve that interpretation rather than imposing a different target. These are scenario
+refinement checks, not a request to implement SLOs or pick architecture mechanisms.
+
 [SEI's ATAM report](https://sei.cmu.edu/documents/629/2000_005_001_13706.pdf), sections 5.3 and 8.5,
 uses scenario refinement and assesses importance and perceived difficulty/risk, often coarsely
 as high/medium/low. These are separate dimensions: high importance with low risk is not a waiver;
@@ -62,6 +77,21 @@ For this skill, use that as a lightweight re-check, not a claim to have performe
 fourth concern emerges, compare all affected scenarios together. It may join the retained drivers,
 change the top focus, expose a baseline obligation or remain pending evidence. Record the reason;
 do not force a swap solely to preserve three slots.
+
+Prioritize the concrete scenarios before collapsing them into a driver label. Planned releases,
+node failure and regional recovery can all concern availability/reliability while having
+different obligations, urgency and uncertainty. Preserve those distinctions in the summary;
+a low-priority scenario cannot dilute another mandatory scenario through an average score.
+Likewise, a scenario that spans several qualities is one requirement with several implications,
+not several independent votes. This follows the scenario-level refinement in
+[SEI's ATAM overview](https://www.sei.cmu.edu/library/architecture-tradeoff-analysis-method-collection/).
+
+When there is no architecture yet, continue elicitation: SEI's
+[Quality Attribute Workshop](https://www.sei.cmu.edu/library/quality-attribute-workshop-collection/)
+explicitly supports that situation. Stakeholder agreement establishes a desired outcome,
+not its technical feasibility. Mark difficulty/feasibility unknown where the available
+evidence cannot support it; identify the analysis or experiment needed without selecting a
+design here. A prioritized scenario list is not evidence that an architecture meets it.
 
 ## Make deferral reviewable
 

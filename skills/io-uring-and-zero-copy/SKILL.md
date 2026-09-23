@@ -59,6 +59,9 @@ binding or external component behind an "io_uring in Java" claim.
 
 - io_uring can amortize submission/completion transitions through batching and shared rings;
   ordinary operation still commonly uses `io_uring_enter`. Zero-copy is a separate property.
+- Submission order does not guarantee execution or completion order. For an owned binding,
+  correlate completions with requests and explicitly preserve required stream/dependency ordering;
+  see `references/choosing-the-mechanism.md` before pipelining operations.
 - Stock OpenJDK's `java.nio` and `java.net` have no built-in io_uring transport through 25.
   Do not invent an enabling flag or infer a custom provider's backend from its Java API.
 - Ordinary socket and buffered-file I/O still copy payloads through kernel buffers. Direct
@@ -89,6 +92,8 @@ binding or external component behind an "io_uring in Java" claim.
   objectives; "large for throughput, small for latency" is not a sufficient rule.
 - Report throughput, CPU per unit of work and tail percentiles for I/O benchmarks. Preserve
   payload, concurrency, connection lifecycle and backpressure behavior between comparisons.
+  State the CPU accounting scope and include attributable kernel poller/worker cost; a drop
+  in JVM-process CPU alone can reflect work moved elsewhere.
 - Treat every throughput and CPU figure as environment-specific. Validate the fallback path and
   behavior under queue saturation, peer cancellation, shutdown and native-memory exhaustion.
 

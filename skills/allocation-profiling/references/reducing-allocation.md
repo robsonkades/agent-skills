@@ -36,6 +36,23 @@ under representative compilation and call-site types. Do not rewrite all streams
 elimination from a missing sample; detailed mechanism belongs to
 `jit-inlining-and-escape-analysis`.
 
+### Moving bytes outside the heap
+
+Replacing a heap buffer with a direct buffer can lower measured heap bytes while adding
+native allocation and retained capacity. Heap allocation counters and ordinary allocation
+profiles do not count that backing storage; wrappers and bookkeeping can still allocate
+on heap. Report a measured heap reduction as such, not as proof of lower total memory or
+end-to-end cost. Preserve buffer API requirements too: callers relying on an accessible
+backing array may not accept a direct buffer.
+
+For this candidate, compare native/direct-buffer growth, resident memory and service metrics
+over the relevant lifecycle; establish ownership, release behavior and bounded retained
+capacity. `BufferPoolMXBean` reports estimates for its buffer pools, not all native memory;
+capacity and memory-used estimates can differ, and an unavailable estimate is not zero.
+Delegate native allocation/lifetime diagnosis to `off-heap-memory` rather than approving a
+rewrite from the heap profile alone. See [ByteBuffer's direct-buffer contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/ByteBuffer.html)
+and [BufferPoolMXBean](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/BufferPoolMXBean.html).
+
 ## Pooling is a tradeoff to demonstrate
 
 Default against pooling small, cheap, short-lived objects: reuse adds ownership, cleanup

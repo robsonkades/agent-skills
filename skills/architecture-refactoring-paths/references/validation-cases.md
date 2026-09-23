@@ -3,13 +3,13 @@
 Status: documented, not executed. These evaluate migration decisions made with this skill;
 they are not application integration tests or evidence of measured improvement.
 
-Run each request in fresh sessions with the same model/version, settings, tools and repository
-context. Baseline omits this skill; treatment receives SKILL.md and the two path references.
-Keep this entire file and other evaluation artifacts private to the evaluator in both arms;
-supply only the selected request/context to the task agent. Record outputs and tool actions,
-then mark required characteristics pass/fail with evidence rather than comparing wording.
-For selection, hold neighboring descriptions constant. No isolated paired model runner was
-used for this revision.
+These shipped cases are teaching material with visible answers. Use separate task inputs and
+evaluator-only criteria for an unseen comparison. Hold model/version, settings, tools and
+repository context constant; baseline omits the skill, treatment includes its normal resources.
+If this file is withheld, report that restricted treatment explicitly. Fresh sessions alone
+do not isolate shared files or prior outputs. Record actual resource access, outputs and tool
+actions, then judge decisions with evidence rather than comparing wording. For selection,
+hold neighboring descriptions constant. No isolated paired model runner was used for this revision.
 
 ## 1. Representative mapper migration
 
@@ -106,10 +106,40 @@ protection or propose a shared protocol/isolation mechanism with verified engine
 **Failure:** Treats per-row versions or one transaction per operation as sufficient; assumes a
 guard row protects inserts/deletes whose writers do not participate; retries inside a failed transaction.
 
+## 9. Flag cutover with a delayed former writer
+
+**Request/context:** “Move tenant T from the monolith to the extracted service. Requests cache
+the routing flag at entry. An old request is paused immediately before its database update;
+we flip the flag, let the new service write, then resume the old request. Both have write
+credentials and there is no ownership check at storage. Approve this zero-downtime cutover.”
+
+**Expected behavior:** Reject the claim that routing already enforces exclusive ownership.
+**Required:** A drain/reconciliation checkpoint or atomic resource-enforced ownership protocol
+covering all writers, a catch-up boundary, and the same transfer discipline on rollback. Use
+the supplied paused-request interleaving as a rehearsal; retain a write pause if needed.
+**Failure:** Treats the flag, stop signal or unenforced token as fencing; enables a new owner
+before accepted old work is accounted for; assumes toggling back reconciles new writes.
+
+## 10. Rollback past the compatibility release
+
+**Request/context:** “V1 reads only the old representation. V2 reads old and new but still
+writes old. V3 starts writing a new subtype in both schemas atomically; V1 rejects that subtype.
+Most hosts reached V2, but a dormant job and the autoscaling image remain V1. We retained every
+table. Activate V3 now and list V1 as instant binary rollback.”
+
+**Expected behavior:** Withhold activation until every eligible reader is compatible or excluded;
+reject V1 as the stated rollback target after new-subtype writes.
+**Required:** Exact rollback artifact, read/write compatibility including subtype semantics,
+job/restart coverage and upgrade/downgrade rehearsal. Explain why atomic dual writes and retained
+tables do not establish old-code compatibility; keep feature activation separate where useful.
+**Failure:** Uses rollout percentage as reader readiness, equates atomicity with representability,
+or permits rollback through a compatibility release without handling new data.
+
 ## Evidence limits
 
 Technical anchors consulted for this revision are linked at their claims in the path references.
-An attempted retrieval of Martin Fowler's parallel-change article failed; it is not treated as
-verified evidence. The sequencing and acceptance guidance is engineering inference from the
+Danilo Sato's [Parallel Change](https://martinfowler.com/bliki/ParallelChange.html), hosted by
+Martin Fowler, was successfully consulted on 2026-09-19; it supports staged interface migration,
+not a universal database rollback guarantee. The sequencing and acceptance guidance is engineering inference from the
 identified failure mechanisms. No target application's migration, database behavior, recovery
 procedure or generated code was executed. Repository checks validate packaging, not these decisions.

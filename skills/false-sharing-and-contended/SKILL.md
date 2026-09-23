@@ -5,8 +5,9 @@ description: >
   Covers ownership and address/layout hypotheses, coherence/HITM evidence limits, JMH topology,
   arrays and object placement, `@Contended` module/restriction mechanics, grouping and padding,
   JOL/address validation, manual padding fragility, striping, compact headers, memory cost and
-  cross-socket/NUMA validation. Use after excluding logical contention; cache fundamentals,
-  lock contention and general object sizing have separate owners.
+  cross-socket/NUMA validation. Use when updates to distinct fields scale poorly, when padding
+  is proposed, or when `@Contended` appears ignored. Cache fundamentals, logical contention
+  and general object sizing have separate owners.
 ---
 
 # False sharing and `@Contended`
@@ -53,14 +54,19 @@ memory/GC/locality cost and next bottleneck:
 | capacity/cache locality  | working set misses without writer invalidation | miss/working-set/topology                   | compact/block/localize/prefetch |
 
 Padding true contention does not make the logical hotspot independent.
+True contention and false sharing can coexist: threads may contend on one CAS word while its
+writes invalidate another core's copy of a distinct neighboring field. Attribute interference
+to named access pairs; separating neighbors does not remove contention on the shared word.
 At least one participant must write; read-only sharing does not create this invalidation
 mechanism. Padding and `@Contended` do not add happens-before, visibility or atomicity:
 retain required volatile/atomic/locking semantics or explicit ownership and handoff.
 
 ## Evidence ladder
 
-1. Localize the scaling/tail/CPU regression and rule out load, locks, CAS hotspot, GC/JIT and I/O.
-2. Map writers to independent fields/array slots and their actual runtime layout/address relationship.
+1. Localize the scaling/tail/CPU regression and compare load, locks, CAS hotspots, GC/JIT and I/O
+   as competing or coexisting contributors.
+2. Map writer/reader access pairs to logical variables and runtime layout/address relationships;
+   distinguish same-variable contention from interference between distinct fields/array slots.
 3. Collect supported coherence/cache events (for example HITM/snoop variants on some CPUs/tools),
    validating event semantics, multiplexing, skid, process/CPU scope and topology.
 4. Apply a controlled separation/ownership perturbation without changing useful semantics/work.

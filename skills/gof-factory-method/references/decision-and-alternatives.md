@@ -2,14 +2,19 @@
 
 ## Separating the three
 
-| Name                         | Shape                                                                                      | Problem it solves                                         | Judge it by                             |
-| ---------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------- | --------------------------------------- |
-| **GoF Factory Method**       | `protected abstract Product create()` overridden by a subclass, called from inherited code | An inherited algorithm must not know the concrete product | Is there an inherited algorithm at all? |
-| **Static factory method**    | `public static Money of(...)` on the product type                                          | Naming, instance control, returning a subtype, caching    | Naming conventions and instance control |
-| **"a method named createX"** | Shape alone does not identify a pattern                                                    | May expose a meaningful provider/creation contract        | Consumer contract, not the name alone   |
+| Name                         | Shape                                                                               | Problem it solves                                      | Judge it by                             |
+| ---------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------- |
+| **GoF Factory Method**       | `Product create(...)` overridden by a subclass; called by inherited code or clients | Defer concrete product selection to subclasses         | What justifies subclass-based creation? |
+| **Static factory method**    | `public static Money of(...)` on the product type                                   | Naming, instance control, returning a subtype, caching | Naming conventions and instance control |
+| **"a method named createX"** | Shape alone does not identify a pattern                                             | May expose a meaningful provider/creation contract     | Consumer contract, not the name alone   |
 
 Effective Java's Item 1 is the middle row. It is not this pattern, and treating them as one is
 how a two-line `static of` becomes an abstract class with two subclasses.
+
+The [GoF Factory Method participants](https://erp.metbhujbalknowledgecity.ac.in/StudyMaterial/01SG042017008670012.pdf)
+allow the creator to call its factory method, but do not require an inherited workflow.
+Distinguish recognizing the pattern from justifying it: a creation-only hierarchy can match
+the pattern and still be replaceable when its extension contract permits composition.
 
 Static factories earn their place for reasons the GoF pattern never claims: `Optional.of` versus
 `Optional.ofNullable` are two names for one signature; `List.of` may return a specialised
@@ -68,8 +73,8 @@ Compare fixes against creation frequency and ownership:
 3. **Two-phase init.** A separate `initialise()` the caller must invoke — the weakest option,
    unless a controlled factory/framework prevents use before initialization completes.
 
-Avoid overridable calls during construction: the hook exists to be called from inherited code,
-but its implementation may depend on subclass state that is not ready yet.
+Avoid overridable calls during construction: the hook's implementation may depend on subclass
+state that is not ready yet, regardless of who normally invokes it.
 
 ## Selection keys from outside the process
 
@@ -86,9 +91,15 @@ private static final Map<String, Supplier<Command>> KINDS = Map.of(
     "payment.submitted", PaymentSubmitted::new,
     "payment.settled",   PaymentSettled::new);
 
+if (type == null) throw new IllegalArgumentException("command type is required");
 Supplier<Command> factory = KINDS.get(type);
 if (factory == null) throw new UnknownCommandType(type, KINDS.keySet());
 ```
+
+Reject a missing required key before lookup. A map may reject null queries, so a null result
+check after `get` does not handle absence reliably; see the [Java 17 Map contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html).
+Preserve the caller's declared failure policy; this sketch uses `IllegalArgumentException`
+for a missing key and the domain exception for an unsupported one.
 
 [`Class.forName(String)`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html#forName(java.lang.String)>)
 initializes the selected class; a cast after loading/instantiation is too late to prevent its

@@ -6,19 +6,27 @@ small change into a whole-repository survey.
 
 ## Ground truth first
 
-| Question                            | Where to look                                                                           |
-| ----------------------------------- | --------------------------------------------------------------------------------------- |
-| What builds this, and how is it run | Build file, wrapper scripts, CI workflow, container definition                          |
-| Which language and runtime version  | Build file, toolchain declaration, container base image                                 |
-| Which framework and which version   | Relevant module build, parent/BOM/catalog/constraints, resolved graph and runtime image |
-| Which modules exist                 | Directory layout, module or project declarations                                        |
-| What the tests are and how they run | Test directories, the CI job that runs them                                             |
+| Question                                    | Where to look                                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------------- |
+| What builds this, and how is it run         | Build file, wrapper scripts, CI workflow, container definition                          |
+| Which build JDK, release target and runtime | Toolchain, compiler release settings, image definition and deployment evidence          |
+| Which framework and which version           | Relevant module build, parent/BOM/catalog/constraints, resolved graph and runtime image |
+| Which modules exist                         | Directory layout, module or project declarations                                        |
+| What the tests are and how they run         | Test directories, the CI job that runs them                                             |
+
+Record compiler/toolchain JDK, language/API target and runtime separately. For example, a JDK 21
+toolchain with `--release 17` targets Java 17 language and JDK APIs; it does not establish the
+deployed JVM. An image definition establishes configuration, while a claim about production
+needs evidence tied to that deployment.
 
 Framework versions can change available APIs and behavior; guidance for one version may not work
-on another. Read the version before asserting anything version-sensitive. A dependency declaration can differ from
-the selected version/scope; identify the target profile or Gradle configuration. Reuse available
-resolution reports or inspect the project's supported dependency-report command. If execution
-needs unavailable artifacts/access, retain that limitation rather than silently selecting a version.
+on another. Read the version before asserting anything version-sensitive. A dependency declaration
+can differ from the selected version/scope; identify the target profile or Gradle configuration.
+Maven `dependencyManagement`/BOM entries and Gradle dependency constraints can govern versions
+without including the artifact; confirm inclusion in the relevant dependency graph before
+reporting it available. Reuse available resolution reports or inspect the project's supported
+dependency-report command. If execution needs unavailable artifacts/access, retain that limitation
+rather than silently selecting a version.
 
 ## Structure and conventions
 
@@ -95,7 +103,8 @@ controller. Start with comparable paths and independent contexts, looking for co
 where they could change the finding. Report counts within the inspected sample and name its scope;
 enumerate the full population only when the needed claim requires that coverage.
 
-## Sources for dependency evidence
+## Sources for build and dependency evidence
 
 - [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html): mediation, management, inheritance and scopes.
 - [Gradle dependency reports](https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html): resolved configuration graphs and selection reasons; use the project's wrapper version.
+- [Gradle Java toolchains](https://docs.gradle.org/current/userguide/toolchains.html): compiler/toolchain selection and the separate `--release` target; inspect task-specific settings.

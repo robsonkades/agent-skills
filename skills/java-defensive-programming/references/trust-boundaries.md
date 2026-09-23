@@ -1,8 +1,9 @@
 # Trust boundaries
 
 A trust boundary is any seam where data arrives from code whose correctness this codebase
-does not control. Validation belongs _on_ the boundary; inside it, the type system carries
-the proof.
+does not control. Establish value invariants there; validated types can carry them across trusted
+calls when construction, accessors and ownership preserve them. State-transition checks still
+belong where the transition occurs.
 
 ## Finding the boundaries
 
@@ -39,8 +40,12 @@ here without any compile error in this module?_ Yes → boundary.
 
 ## What to do at a boundary
 
-Order matters: **bound raw representation → decode strictly → canonicalize if the contract says so
-→ validate semantics → construct the proof-carrying type**.
+Order matters: **bound raw representation → decode strictly → enforce raw-input restrictions
+→ canonicalize if the contract says so → validate semantics → construct the validated type**.
+
+Check a forbidden raw form before a permitted transformation erases it. For example, if a field
+rejects control characters, stripping outer whitespace first can hide a tab or newline. A field
+whose contract permits those characters as removable whitespace has a different validation policy.
 
 ```java
 public static AccountId parse(String raw) {
@@ -78,17 +83,19 @@ smuggled in as cleanup; changing existing behavior also requires a compatibility
 
 ## The overengineering line
 
-Defence past the boundary is noise. Concretely:
+Repeating the same invariant without a new risk can be noise. Establish the trusted caller,
+non-null value and invariant-preserving ownership before removing checks such as these:
 
 - A private method `requireNonNull`-ing arguments its only two callers construct three
   lines earlier.
 - `if (list != null)` on a field initialised to `List.of()` and never reassigned to null.
 - `catch (Exception e) { return defaultValue; }` "so it never crashes" — the crash was
   the information; the default is corruption with a calm face.
-- Re-validating an email's format in the service, the mapper and the entity, when an
-  `EmailAddress` record exists — three copies that will drift, none authoritative.
-- Checking `assert x != null` _and_ throwing on null for the same parameter: pick one
-  based on who supplies `x`.
+- Re-validating an email's format in each layer after receiving a non-null `EmailAddress`
+  whose construction and accessors already enforce that format.
+- Checking `assert x != null` _and_ throwing on null for the same parameter: retain the
+  explicit runtime check when the failure contract or correctness requires enforcement,
+  even for internal callers. An assertion is optional diagnostic evidence, not its replacement.
 
 Do not argue CPU cost or JIT elimination without relevant evidence. The maintenance cost is that
 readers can no longer tell which checks encode real risk, and that the noise checks are

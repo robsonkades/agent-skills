@@ -1,13 +1,17 @@
 # Behavioral validation cases
 
 Status: written cases, not executed model evaluations. No measured improvement is claimed.
-These test the skill's decisions; query-budget tests or load tests of an application are
-different evidence.
+These teach the skill's decisions; query-budget tests or load tests of an application are
+different evidence. Because the examples and answers ship with the skill, their execution
+is a known-example regression check, not an unseen holdout.
 
 For each case, submit only the request/context in a fresh session. Compare the same model/version,
 settings, tools and surrounding instructions without this skill versus with SKILL.md and access
-to its references. Keep expected answers hidden. Record output, tool calls, environment and
-pass/fail for each required characteristic with supporting excerpts. For selection, keep the
+to its references. Prepare independent cases and keep evaluator-only answers outside actor
+access for a fresh comparison. If this reference is withheld to hide its answers, report that
+the treatment excludes a shipped resource; results apply to that restricted configuration.
+Record output, tool calls, environment and pass/fail for each required characteristic with
+supporting excerpts. For selection, keep the
 same neighboring descriptions in both runs, adding this skill's description in the treatment.
 Judge observable reasoning and changes, not exact wording. Execution and results remain pending.
 
@@ -133,3 +137,40 @@ minimum for the cited Hibernate 7.1 baseline distinguished from the Java 11 targ
 **Failure:** Shared EntityManager in workers, transaction propagation assumed from the caller's
 annotation, independent transactions claimed to preserve the original snapshot automatically,
 or upgrading dependencies to make the reference example fit.
+
+## 9. Local CPU work affects another resource's occupancy
+
+**Request/context:** “At 100 successful checkouts/s, checkout-to-return averages 70 ms:
+30 ms for SQL and other work, then 40 ms mapping while the connection remains borrowed.
+An isolated mapper experiment takes 10 ms with unchanged output. Reject it because a faster
+mapper cannot improve pool waits, and increase the pool instead. No integrated measurement
+of the proposed change exists.”
+
+**Expected behavior:** Distinguish the measured local saving from its conditional effect on
+connection occupancy and the unmeasured effect on queueing and endpoint latency.
+
+**Required output:** With unchanged remaining hold time and checkout rate, estimate mean
+occupancy falling from 7 to 4. Verify mapping's location within the borrow/return interval,
+waits and comparable offered work; no automatic pool increase or fixed p99 prediction.
+
+**Failure:** Denying any possible pool effect because SQL is unchanged, presenting 4 as a
+recommended pool size, or claiming the mapper benchmark proves end-to-end improvement.
+
+## 10. Trace evidence has causality, clock and selection limits
+
+**Request/context:** “Our trace store retains errors and traces over 100 ms. From these traces,
+calculate the endpoint population p99 and prove a database extraction will fix it. One local
+request-response span is 120 ms. Its linked background export takes 800 ms and is not awaited;
+the endpoint promises only durable enqueue. Remote host clock offsets are unknown and the
+viewer adjusted some timestamps. Treat every linked duration as part of response time.”
+
+**Expected behavior:** Reject the population percentile and response-time sum from the supplied
+evidence; retain background demand in the capacity model and the durable-enqueue contract.
+
+**Required output:** Obtain representative request metrics, use local elapsed evidence without
+inventing cross-host gaps, inspect causal waits/raw timestamps and leave extraction benefit
+conditional on a demonstrated limiting resource.
+
+**Failure:** Population p99 from the biased retained set, adding 800 ms to the 120 ms response,
+discarding background resource demand entirely, or interpreting clock-adjusted gaps as measured
+one-way network latency.

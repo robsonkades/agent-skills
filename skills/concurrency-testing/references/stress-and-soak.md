@@ -19,26 +19,28 @@ void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception 
 
     var exec = Executors.newVirtualThreadPerTaskExecutor();
     List<Future<?>> tasks = new ArrayList<>();
-    try {
-        for (int t = 0; t < threads; t++) {
-            tasks.add(exec.submit(() -> {
-                start.await(5, TimeUnit.SECONDS);      // overlap without an unbounded barrier
-                for (int i = 0; i < opsPerThread; i++) {
-                    if (account.withdraw(10)) succeeded.incrementAndGet();
-                    else refused.incrementAndGet();
+    assertAll("workers and teardown",
+        () -> {
+            try {
+                for (int t = 0; t < threads; t++) {
+                    tasks.add(exec.submit(() -> {
+                        start.await(5, TimeUnit.SECONDS); // overlap with a bounded barrier
+                        for (int i = 0; i < opsPerThread; i++) {
+                            if (account.withdraw(10)) succeeded.incrementAndGet();
+                            else refused.incrementAndGet();
+                        }
+                        return null;
+                    }));
                 }
-                return null;
-            }));
-        }
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
-        for (Future<?> task : tasks) {
-            task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
-        }
-    } finally {
-        tasks.forEach(task -> task.cancel(true));
-        exec.shutdownNow();
-        assertTrue(exec.awaitTermination(2, TimeUnit.SECONDS));
-    }
+                long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(20);
+                assertAll("worker outcomes", tasks.stream().map(task -> () ->
+                        task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)));
+            } finally {
+                tasks.forEach(task -> task.cancel(true));
+                exec.shutdownNow();
+            }
+        },
+        () -> assertTrue(exec.awaitTermination(2, TimeUnit.SECONDS), "executor survived teardown"));
 
     // Invariants, not schedules:
     assertTrue(account.balance() >= 0);
@@ -47,9 +49,12 @@ void balanceConservesSuccessfulWithdrawalsAfterWorkersFinish() throws Exception 
 }
 ```
 
-The barrier makes workers eligible together, not simultaneous. Observing every Future exposes
-worker assertions/exceptions. The final balance assertions check quiescent conservation; they
-do not prove the balance was never negative transiently. For that stronger contract, record
+The barrier makes workers eligible together, not simultaneous. Grouped assertions observe each
+Future even when an earlier worker fails, using one wait budget rather than a timeout per worker.
+The outer group retains a teardown failure alongside worker failures, instead of replacing them
+with an assertion in `finally`. This is ordinary failure reporting, not recovery from fatal VM errors.
+The final balance assertions run only after successful workers and termination. They check
+quiescent conservation, not whether the balance was negative transiently. For that stronger contract, record
 the relevant transitions/history and check it against the operation's specification without
 adding synchronization that accidentally fixes the race.
 
@@ -138,7 +143,7 @@ in an incident.
 | ---------------------------- | --------------------------------------------------------------------------- |
 | Dependency slow (p99 → 10 s) | caller timeout plus the specified stop or bounded residual-work policy      |
 | Dependency failing           | declared failure or fallback outcome, counted with original failure visible |
-| Dependency intermittent      | retries are bounded and do not amplify                                      |
+| Dependency intermittent      | total attempts obey the retry budget; measure attempts per logical request  |
 | Saturation at the limit      | the designed rejection, with its metric                                     |
 | Connection dropped mid-call  | the connection is discarded, not returned poisoned to the pool              |
 | Slow consumer                | backpressure or a bounded buffer, not unbounded growth                      |
@@ -167,10 +172,13 @@ the isolated process.
 
 A stress test that fails once in fifty runs has found something. Before touching the test:
 
-1. Capture the seed, the thread count and the machine — reproduction usually needs all three.
+1. Retain the failed oracle, all worker failures, inputs, thread count, JDK/flags and machine;
+   record the seed when the harness uses randomness. A seed does not replay the OS schedule.
 2. Take a thread dump if it hung rather than failed (`concurrency-diagnostics`).
-3. Re-run with the same configuration and a higher repeat count to estimate the rate.
-4. Only then reason about the interleaving that could produce the observed value.
+3. Inspect the original evidence for a product defect, faulty oracle, harness coordination or
+   environment limit. Form a candidate interleaving or failure mechanism before changing the test.
+4. Use focused, budgeted reruns or a controlled checkpoint to test that explanation. Preserve the
+   original failure even if reruns pass; observed frequency alone is not a probability guarantee.
 
 Increasing a timeout, lowering the thread count or adding a retry moves the failure rate below
 the observation threshold. It does not move the bug.
@@ -179,4 +187,5 @@ the observation threshold. It does not move the bug.
 
 - [OpenJDK jcstress: experimental concurrency stress harness](https://github.com/openjdk/jcstress)
 - [JUnit 5.11.4 timeouts and thread modes](https://docs.junit.org/5.11.4/user-guide/index.html#writing-tests-declarative-timeouts)
+- [JUnit 5.11.4 grouped assertions](<https://docs.junit.org/5.11.4/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html#assertAll(java.lang.String,java.util.stream.Stream)>) — aggregation and unrecoverable-error limits
 - [Herlihy and Wing: Linearizability](https://cs.brown.edu/~mph/HerlihyW90/p463-herlihy.pdf) — legal sequential histories and real-time ordering constraints

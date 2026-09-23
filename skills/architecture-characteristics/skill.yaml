@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-characteristics
-version: 1.2.1
+version: 1.2.2
 description: >-
   Derive and prioritize architectural quality drivers when requirements say only scalable
   or reliable, too many qualities are called top priority, stakeholders disagree on their

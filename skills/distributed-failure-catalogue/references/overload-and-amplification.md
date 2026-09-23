@@ -52,11 +52,14 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
   a maximum, and retries add further terms. Stopping the wait and stopping the work are
   separate mechanisms.
 - **Discriminator** — inspect the accepted operation lifetime, effective outer/server bounds
-  and observed resource release. Deliberately accepted durable work has a separate lifetime;
+  and observed resource release. Compare the budget passed at each hop with the remaining
+  caller budget: granting a fresh full timeout can extend work even with synchronized clocks.
+  Deliberately accepted durable work has a separate lifetime;
   continuing inside that contract is not abandoned request work. Missing one timeout/cancel API
   does not establish a defect, and a cancellation signal does not prove termination or no effect.
 - **Where it hides** — `future.get()` with no effective enclosing bound; a connect timeout
-  with no read or request timeout; a retry policy whose total exceeds the caller's budget; `TimeoutException` caught
+  with no read or request timeout; a relative timeout reset at every hop; a retry policy whose
+  total exceeds the caller's budget; `TimeoutException` caught
   without cancelling; a JDBC call with no `setQueryTimeout`.
 - **Owner** — `timeouts-and-deadlines` (deadline propagation and cancellation).
 
@@ -167,3 +170,8 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 - **Discriminator** — group failures by failure-domain labels and change/event timeline, not
   instance ID. Correlation follows a shared dimension.
 - **Owner** — `failure-models`; `architecture-characteristics` for required independence.
+
+## Source
+
+- [gRPC deadline propagation](https://grpc.io/docs/guides/deadlines/#deadline-propagation) —
+  propagation deducts elapsed time; a fresh full timeout does not preserve the caller's budget.

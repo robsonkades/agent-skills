@@ -62,7 +62,8 @@ transaction-context propagation. Do not upgrade the project to match an example.
    XA participation or required validation under a lock needs its own scope/cost assessment.
 4. **Choose isolation deliberately, once**, and record why if it is not the default.
    Raising isolation to fix a specific race is legitimate; raising it globally because a
-   race exists somewhere is how throughput disappears.
+   race exists somewhere can add blocking or conflict retries to unrelated paths.
+   Compare those costs under the target workload before making a global change.
 5. **Verify rollback actually happens** for the failures you care about. By default Spring's
    transaction interceptor rolls back on `RuntimeException`/`Error`, not checked exceptions.
    Self-invocation in proxy mode does not apply the inner method's transaction attributes; it may
@@ -104,13 +105,15 @@ A lock must survive a user's thinking time
           Use an offline concurrency protocol (offline-concurrency-control).
 
 A race that isolation could fix (lost update, phantom)
-        → prefer a targeted mechanism: a unique constraint, a version
-          column, SELECT ... FOR UPDATE on the one path. Global isolation
-          escalation costs every other path.
+        → choose a mechanism that covers the invariant: a unique constraint,
+          a version column, or verified row/range locking. Row locks alone
+          need not protect missing rows or a changing set. Compare with
+          SERIALIZABLE plus retry on the affected use case before changing defaults.
 
 Nested use cases where the inner must survive the outer's rollback
-        → REQUIRES_NEW, deliberately, knowing it takes a second
-          connection and can deadlock against the outer transaction.
+        → REQUIRES_NEW, deliberately. Inner JDBC work can require another
+          connection while outer resources remain held, and can wait on
+          locks held by the suspended outer transaction.
 ```
 
 ## Rules

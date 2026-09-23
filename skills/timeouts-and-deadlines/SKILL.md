@@ -96,6 +96,8 @@ remaining server work separately.
   and `Connection.abort`, with distinct semantics and driver support. Prefer a database-side
   statement timeout as the authoritative execution/lock bound when available, align the driver
   and transaction limits, and verify whether cancel releases server work and locks promptly.
+  Distinguish network expiry from query cancellation before reusing a connection; the Java
+  timeout surface covers their different resource lifecycles.
 - Kafka: processing that delays `poll()` can exceed `max.poll.interval.ms`; broker request and
   heartbeat/session limits are different. Static membership can defer reassignment until session
   expiry, and under the consumer group protocol the broker controls session/heartbeat settings.

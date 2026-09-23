@@ -83,6 +83,15 @@ Avoid duplicating the same high-rate event through multiple agents unless the ex
 requires a comparison. Combined overhead, signal handlers, perf descriptors, JFR samples,
 bytecode transforms, and export buffers can interact.
 
+JFR recordings in one JVM do not have independent event collection settings. An overlapping
+diagnostic recording can admit additional events into the continuous recording even while
+its own settings map stays unchanged; the
+[`FlightRecorderMXBean` contract](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management.jfr/jdk/management/jfr/FlightRecorderMXBean.html)
+explicitly warns of this. Inventory active recordings and streams, budget their joint
+configuration, and preserve overlap start/stop times as evidence epochs. Verify event rates
+and overhead return to baseline after diagnostic capture ends. Callback filtering does not
+isolate collection cost.
+
 ## Cost model
 
 ### Collection
@@ -197,6 +206,8 @@ the need to validate profiler overhead, coverage, labels, and causal interpretat
 - Backend unavailability stays within local CPU/memory/disk limits and later recovery policy.
 - A forbidden/high-cardinality label is rejected before export.
 - JDK/agent/collector upgrade creates a visible schema/config epoch.
+- A diagnostic JFR recording changes the effective collection epoch and stays within the
+  combined budget; stopping it restores the expected baseline event policy.
 - An incident snapshot remains queryable after rolling retention expires.
 - A compromised/unauthorized producer cannot impersonate another service or promote evidence.
 

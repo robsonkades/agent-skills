@@ -37,8 +37,9 @@ upgrades, and generic gRPC guidance does not establish a Java transport's exact 
 ## Workflow
 
 1. Draw `call -> channel -> transport connection -> HTTP/2 stream -> proxy hops -> backend`.
-   Count each object; never use the terms interchangeably. A retry creates another attempt/stream;
-   a terminating proxy has separate downstream/upstream connections, settings and flow control.
+   Count each object; never use the terms interchangeably. A retry creates another attempt, which
+   may fail locally before an HTTP/2 stream is allocated. A terminating proxy has separate
+   downstream/upstream connections, settings and flow control.
 2. Locate the limit: application admission, executor/event loop, stream concurrency, connection
    or stream window, socket/network, proxy, or backend.
 3. Compare aligned per-hop evidence. A smaller Protobuf payload can reduce encoding and bytes but
@@ -85,6 +86,6 @@ supported no-change result does not require a tuning campaign.
 ## References
 
 - [HTTP/2 and gRPC mechanics](references/http2-and-grpc.md) — read when diagnosing stream stalls,
-  channel pools, flow control or Netty execution.
+  channel pools, flow control, deadline expiry or Netty execution.
 - [Service-mesh cost and policy composition](references/service-mesh.md) — read when a proxy,
   mTLS, outlier detection or mesh retry participates in the path.

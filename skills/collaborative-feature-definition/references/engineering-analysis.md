@@ -134,6 +134,12 @@ TC-01   Under <load/failure/environment>, <measurable technical property> holds.
         Verify: <test, benchmark, experiment, inspection, or runbook exercise>
 ```
 
-Analysis is complete only when linked artefacts have an owner and usable status. A planned PoC, draft
-ADR, or unspecified contract is an explicit blocker unless an accountable engineering owner accepts
-the risk and `feature-engineering` agrees it is non-blocking for the next lifecycle phase.
+Analysis is complete for submission only when linked artefacts have an owner and usable status.
+A planned PoC, draft ADR, or unspecified contract remains unresolved; listing it does not establish
+feasibility or acceptance. If it blocks the current stage, keep the analysis open. Closing with an
+unresolved item requires the complete `GAP-*` record and accountable acceptance defined in `SKILL.md`,
+with an explicit reason it does not block this stage. That permits submitting the accepted snapshot
+as `Ready for validation`, with validation `Not run`; it does not approve the next lifecycle phase.
+`feature-engineering` then independently decides whether the proposed gap is valid and non-blocking
+for that phase. A rejection reopens the affected analysis; do not invent its agreement to close the
+workshop or demand its result before submitting the snapshot for review.

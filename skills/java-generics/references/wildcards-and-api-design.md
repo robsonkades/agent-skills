@@ -134,7 +134,9 @@ do not require every implementor to change merely because type parameters were a
 
 ## Reviewing a generic signature
 
-- [ ] No raw types outside class literals and `instanceof`.
+- [ ] Raw types are confined to class literals, deliberate `instanceof` tests, or justified
+      legacy interoperation. Retained legacy boundaries preserve the supported contract;
+      unchecked operations have a local proof or appropriate runtime validation.
 - [ ] Every parameter's variance matches the direction data actually flows.
 - [ ] Return wildcards have a deliberate covariance/unknown-subtype reason.
 - [ ] Single-parameter-only type variables are replaced by wildcards when no relationship is lost.
@@ -148,5 +150,6 @@ do not require every implementor to change merely because type parameters were a
 
 - [JLS 21 §15.12.2.1: potential applicability and lambda arity](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12.2.1)
 - [JLS 21 §4.6: type-variable erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6)
+- [JLS 21 §4.8: raw types and legacy compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.8)
 - [Java 21 Collections: rotation and supported mutations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html)
 - [JLS 21 §13: binary compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html)

@@ -115,7 +115,9 @@ THEN decide whether consumers now depend on vendor semantics. Translate when the
 
 IF a domain-facing port promises failure isolation but exposes the adaptee's exception type
 THEN translate to the promised failure contract while preserving diagnostic cause; consumers
-     must not need vendor-specific catches. Thin interoperability contracts may differ explicitly.
+     must not need vendor-specific catches or inspect vendor causes for normal policy. Expose
+     needed distinctions as domain failure types or typed fields. Thin interoperability
+     contracts may differ explicitly.
 
 IF the adapter interprets, defaults or decides
 THEN distinguish provider-specific protocol interpretation from domain policy. Keep required

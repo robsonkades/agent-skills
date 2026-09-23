@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: event-driven-architecture
-version: 1.3.2
+version: 1.3.3
 description: >-
   Choosing facts, asynchronous commands or request/response across services; then designing
   choreography/orchestration, payload authority, evolution horizon and consumer runtime.

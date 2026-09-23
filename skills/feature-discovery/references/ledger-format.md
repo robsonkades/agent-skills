@@ -60,8 +60,17 @@ UNK    U-01  Whether the caller needs to observe completion, and how.
 
 The resolution says where the answer came from. Three sources are not interchangeable: **the
 repository** (evidence), **a participant** (intent plus their established authority), and **the
-agent** (a proposal that still needs the accountable role when consequential). A later disagreement
-is settled by source, role, and revision rather than conversational recency.
+agent** (a proposal that still needs the accountable role when consequential). Use supplied
+evidence of scope, authority and supersession to incorporate an established resolution;
+conversational recency alone does not establish one.
+
+When sources remain incompatible, facts about what each source says can coexist; their
+mutually exclusive claims about the system cannot both be established for the same scope.
+Keep the effective value or requirement as UNKNOWN with links to both sources and the
+consequence of choosing incorrectly. Mark an affected prior claim as disputed while retaining
+its history, and identify downstream entries that relied on it as needing revalidation.
+Hand off the unresolved conflict to context or clarification instead of silently picking a
+source, replacing the old claim, or reopening a resolution already supported by the input.
 
 ## Two failure shapes to check the ledger against
 

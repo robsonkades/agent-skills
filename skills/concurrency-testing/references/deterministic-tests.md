@@ -120,18 +120,21 @@ void taskStopsPromptlyWhenInterrupted() throws Exception {
         }
     });
 
-    try {
-        assertTrue(entered.await(2, SECONDS));
-        t.interrupt();
-        assertTrue(t.join(Duration.ofSeconds(2)));
-        assertNull(workerFailure.get(), "unexpected worker failure");
-        assertTrue(finished.get());
-        worker.assertInterruptionObserved();
-    } finally {
-        worker.abortForTeardown(); // independent fixture release, bounded and nonthrowing
-        t.interrupt();
-        assertTrue(t.join(Duration.ofSeconds(2)));
-    }
+    assertAll("interruption and teardown",
+        () -> {
+            try {
+                assertTrue(entered.await(2, SECONDS));
+                t.interrupt();
+                assertTrue(t.join(Duration.ofSeconds(2)));
+                assertNull(workerFailure.get(), "unexpected worker failure");
+                assertTrue(finished.get());
+                worker.assertInterruptionObserved();
+            } finally {
+                worker.abortForTeardown(); // independent, bounded, nonthrowing fixture release
+                t.interrupt();
+            }
+        },
+        () -> assertTrue(t.join(Duration.ofSeconds(2)), "worker survived teardown"));
 }
 ```
 
@@ -140,6 +143,9 @@ before a blocking call also permits interrupt-before-block; testing an already b
 needs provider-specific evidence. Joining a thread proves termination, not successful handling:
 uncaught assertions and exceptions must reach the test. This worker's terminal contract handles
 interruption and returns normally; assert a different expected outcome when its API propagates it.
+The separate teardown assertion preserves the original failure through JUnit's `assertAll`;
+an assertion thrown from `finally` would replace it. Aggregation handles ordinary test failures,
+not recovery from fatal VM errors.
 
 For a boundary whose contract translates interruption to an unchecked exception while preserving
 the caller's status, test that specific policy:
@@ -239,9 +245,10 @@ void scopeCancelsSiblingsAndReturnsPromptly() {
     AtomicBoolean siblingStopped = new AtomicBoolean();
     CountDownLatch siblingEntered = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
+    IllegalStateException expectedFailure = new IllegalStateException("boom");
     long start = System.nanoTime();
 
-    assertThrows(StructuredTaskScope.FailedException.class, () -> {
+    var failure = assertThrows(StructuredTaskScope.FailedException.class, () -> {
         try (var scope = StructuredTaskScope.open()) {
             scope.fork(() -> {
                 siblingEntered.countDown();
@@ -251,7 +258,7 @@ void scopeCancelsSiblingsAndReturnsPromptly() {
             });
             scope.fork(() -> {
                 if (!siblingEntered.await(2, SECONDS)) throw new AssertionError("sibling absent");
-                throw new IllegalStateException("boom");
+                throw expectedFailure;
             });
             scope.join();
         } finally {
@@ -259,12 +266,14 @@ void scopeCancelsSiblingsAndReturnsPromptly() {
         }
     });
 
+    assertSame(expectedFailure, failure.getCause());
     assertTrue(siblingStopped.get());
     assertTrue(System.nanoTime() - start < TimeUnit.SECONDS.toNanos(5));
 }
 ```
 
 The sibling-entry handshake prevents failure cancelling the scope before that sibling starts.
+Checking the cause ensures an unintended fixture or sibling failure cannot satisfy the oracle.
 The elapsed assertion only runs after `close()` returns; it cannot rescue a hang in close.
 This example's latch wait is interruptible. Test an uninterruptible provider in a forked
 process with an external deadline and an independent abort path.
@@ -282,18 +291,20 @@ void clientDoesNotHoldTheCarrier() throws Exception {
     long start = System.nanoTime();
     var exec = Executors.newVirtualThreadPerTaskExecutor();
     List<Future<?>> tasks = new ArrayList<>();
-    try {
-        for (int i = 0; i < 20; i++) tasks.add(exec.submit(() -> client.call()));
-        long deadline = start + TimeUnit.SECONDS.toNanos(10);
-        for (Future<?> task : tasks) {
-            task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
-        }
-    } finally {
-        client.abortForTeardown();
-        tasks.forEach(task -> task.cancel(true));
-        exec.shutdownNow();
-        assertTrue(exec.awaitTermination(2, SECONDS));
-    }
+    assertAll("client calls and teardown",
+        () -> {
+            try {
+                for (int i = 0; i < 20; i++) tasks.add(exec.submit(() -> client.call()));
+                long deadline = start + TimeUnit.SECONDS.toNanos(10);
+                assertAll("call outcomes", tasks.stream().map(task -> () ->
+                        task.get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)));
+            } finally {
+                client.abortForTeardown(); // bounded, nonthrowing fixture release
+                tasks.forEach(task -> task.cancel(true));
+                exec.shutdownNow();
+            }
+        },
+        () -> assertTrue(exec.awaitTermination(2, SECONDS), "executor survived teardown"));
     assertTrue(System.nanoTime() - start < allowedElapsedNanos); // calibrated fixture bound
 }
 ```
@@ -317,6 +328,9 @@ removed monitor-induced pinning, while native/foreign behavior remains version-s
 
 ## Sources
 
+- [JUnit 5.11.4 grouped assertions](<https://docs.junit.org/5.11.4/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html#assertAll(java.lang.String,java.util.stream.Stream)>) — ordinary failures are aggregated while remaining assertions run
+- [JLS 25 try-finally completion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.20.2) — abrupt cleanup can discard the original failure
+- [Java 25 StructuredTaskScope](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html) — default joiner, failure cause and closing behavior; preview API
 - [Java 25 Thread termination and uncaught exceptions](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
 - [Java 25 Future result, failure and cancellation contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
 - [Java 25 CountDownLatch memory effects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)

@@ -123,6 +123,11 @@ JMH attempts to exclude invocation fixture time; it does not make it free. The o
 concurrent benchmarks. Prefer precomputed immutable inputs, indexed pools, or iteration reset when
 they preserve semantics; validate exhaustion and wraparound.
 
+For destructive operations, check the input seen by successive invocations: resetting once per
+iteration does not keep a repeatedly sorted array unsorted or a drained queue populated. Include
+copy/reset cost when it belongs to the requested operation; otherwise justify a fresh-input
+protocol and its cache/timing effects. See the validation reference for the boundary decision.
+
 Do not subtract an independently measured empty benchmark as a universal correction. Harness and
 payload interact. Use empty/no-op cases as diagnostics, or design a direct paired/differential
 operation when the difference itself is the stated estimand and both paths share the same context.
@@ -169,6 +174,13 @@ the outcome; a fresh fork alone does not include startup in the JMH score.
 `@OperationsPerInvocation(N)` rescales the score; it does not stop hoisting, vectorization,
 amortization, loop unrolling, or partial elimination. Declare whether one reported operation is one
 element, one batch, or one transaction and verify the arithmetic with a known case.
+
+JMH `batchSize` and operations-per-invocation are different controls. With JMH 1.37
+`SingleShotTime`, `batchSize = B` and the default operations-per-invocation, the score covers the
+whole batch of B calls. Do not label it per-call time merely because the unit ends in `/op`.
+Normalizing batch duration gives amortized cost; its percentiles are not individual-element
+latency percentiles. Read the validation reference when batching or variable work changes the
+denominator.
 
 ## State and concurrency basics
 
@@ -270,5 +282,5 @@ planned, executed, missing and inapplicable checks distinctly rather than manufa
 - [OpenJDK JMH project and samples](https://github.com/openjdk/jmh)
 - [JMH sample: dead-code elimination](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_08_DeadCode.java)
 - [JMH sample: constant folding](https://github.com/openjdk/jmh/blob/master/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_10_ConstantFold.java)
-- [JMH `Level.Invocation` API contract](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)
+- [JMH 1.37 `Level.Invocation` API contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Level.java)
 - [JMH 1.37 result statistics source](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java)

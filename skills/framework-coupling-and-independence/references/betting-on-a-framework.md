@@ -86,8 +86,9 @@ representative migration slice to estimate work and test the claimed isolation.
 ## Deciding: isolate, adopt, or upgrade
 
 ```text
-Is the dependency a FRAMEWORK (owns lifecycle, wiring, request flow)
-or a LIBRARY (you call it; it does not call you)?
+Is the dependency a FRAMEWORK (owns application lifecycle, wiring, request flow)
+or a LIBRARY (application chooses its use, possibly supplying callbacks)?
+Classify actual lifecycle/control ownership; a callback alone does not decide it.
 
   LIBRARY  → use an adapter for an external protocol/failure boundary or
              application-owned contract; do not wrap stable value APIs by default.
@@ -150,8 +151,10 @@ Stated plainly, because the literature on this topic under-weights it:
   so can failure isolation, contract ownership or a test seam with one implementation
   (`enterprise-architecture-smells`).
 
-## Primary migration sources
+## Primary sources
 
+- [Java 17 Collections.sort with a Comparator](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#sort(java.util.List,java.util.Comparator)>):
+  a library may invoke application-provided behavior without owning the application's lifecycle.
 - [Spring Boot 3.0 migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide):
   Java 17 baseline, Jakarta API changes and dependency compatibility; this is historical guidance,
   not authorization to upgrade the target project.

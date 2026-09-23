@@ -7,13 +7,19 @@ owner and the stage/resource where they become prerequisites. Reuse existing aut
 
 ## Definition intake
 
-| #   | Item                                                                  | Blocking |
-| --- | --------------------------------------------------------------------- | -------- |
-| 0a  | Exact Product/Engineering or Tech Feature revisions are identified    | yes      |
-| 0b  | Each stage has an accountable owner and accepted status               | yes      |
-| 0c  | Required Engineering Analysis is complete or validly not required     | yes      |
-| 0d  | Depth and persistence have evidenced drivers                          | yes      |
-| 0e  | Every GAP-* has consequence, authorized owner, expiry and reopen rule | yes      |
+| #   | Item                                                               | Blocking |
+| --- | ------------------------------------------------------------------ | -------- |
+| 0a  | Exact Product/Engineering or Tech Feature revisions are identified | yes      |
+| 0b  | Each stage has an accountable owner and accepted status            | yes      |
+| 0c  | Required Engineering Analysis is complete or validly not required  | yes      |
+| 0d  | Depth and persistence have evidenced drivers                       | yes      |
+| 0e  | Every GAP-* is complete and remains valid for the reviewed scope   | yes      |
+
+For 0e, check the missing decision/evidence, reason, consequence, accountable authority, expiry,
+reopen trigger and `Blocks` field. Evaluate those conditions against the current revision and stage,
+not just the presence of fields. An expired or reopened gap needs reassessment of affected resources;
+an accepted gap may still block some resources while allowing others. Reuse unaffected acceptance
+and existing authority; do not treat acceptance as permission to skip a declared prerequisite.
 
 ## Understanding
 

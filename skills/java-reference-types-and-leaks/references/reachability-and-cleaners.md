@@ -47,16 +47,24 @@ appear as if entries disappeared asynchronously.
 
 Two rules make it usable:
 
-1. **No value may reference its key**, directly or through any chain. That includes the
-   common accident of an inner value class holding the key object, and the very common one of
-   a value that is a lambda capturing the key. If appropriate, weaken the value's link to
-   its key. Storing a weak reference to the entire value is a different contract: the value
-   can then disappear even while the key is strongly owned. Choose that only if allowed.
+1. **Trace strong paths from values to every key, not just their own.** If `v1` strongly
+   references `k2` and `v2` strongly references `k1`, both entries remain retained while the
+   map is reachable even after callers release the keys. An inner value class or a lambda
+   capturing a key can create the same ownership mismatch. If appropriate, weaken the
+   value-to-key link; a `WeakReference` to the key does not itself keep the key strongly reachable.
+   Storing a weak reference to the entire value is a different contract: the value can then
+   disappear even while the key is strongly owned. Choose that only if allowed.
 2. **Keys must have an independent lifetime and stable equality semantics.** `WeakHashMap`
    uses `equals`/`hashCode`, not identity. A `String` key's lifetime depends on its actual
    strong roots: literals are commonly retained while their defining class remains loaded,
    while modern HotSpot can unlink otherwise-unreachable interned strings. Class, loader or
    session keys are suitable only when that reachability contract is intentional.
+
+The `null` key has no external object's lifetime to follow. In
+[OpenJDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/WeakHashMap.java),
+it is represented by a strongly held static sentinel, so its entry does not disappear through
+weak-key collection while the map is live. Remove or replace that mapping when its value becomes
+obsolete; do not expect dropping an external reference to expire it.
 
 `ConcurrentHashMap` has no weak-key variant in the JDK; Guava's `MapMaker`/`CacheBuilder` and
 Caffeine provide one, but their `weakKeys()` use identity (`==`) rather than `equals`;
@@ -151,7 +159,7 @@ with `AutoCloseable`, adding a `Cleaner` only where best-effort fallback is usef
 ```text
 Needs release at a known point            -> AutoCloseable + try-with-resources   (java-resource-management)
 Bounded memory for hot values             -> capacity policy; expiry if needed   (caching-strategies)
-Canonicalising map, keys owned elsewhere  -> WeakHashMap, values never touch keys
+Canonicalising map, keys owned elsewhere  -> WeakHashMap, no strong value-to-key paths
 Listener/callback registry                -> explicit lifetime; weak refs if reachability is the contract
 Native/OS handle, useful fallback         -> AutoCloseable + optional Cleaner safety net
 Anything at all                           -> not finalize()

@@ -36,7 +36,19 @@ committed next-to-process offset **in each partition**, if recovery resumes ther
 commit may already have advanced that position; inspect authoritative progress. A batch can span partitions, and Kafka offsets
 are positions within a partition, not batch-level or record-level acknowledgements. Explicit
 per-partition commits can shrink that window but add calls and coordination; commit the next
-offset to process, preserve contiguous completion, and never jump over unfinished work.
+offset to process, preserve completion in delivery order, and never jump over unfinished work.
+Compaction and control records create valid offset gaps; `read_committed` also skips aborted
+records. For delivered offsets 40 and 43, completing 40 permits progress to 43; it does not require seeing 41 or 42,
+and completing 43 first does not permit progress past unfinished 40.
+
+Failure recovery must distinguish **local position** from **committed progress**. Suppose
+`poll` returns 40 and 43 and advances its position to 44; the handler completes 40 but fails
+on 43. Omitting `commitSync` leaves durable progress unchanged, but the next `poll` does not
+automatically replay 43. A later batch commit can then skip it permanently in normal recovery.
+Retain/retry unfinished work, seek still-owned partitions to the chosen replay point, or
+stop and recover from authoritative progress. Keep completion state for other partitions;
+do not commit their unfinished records through a no-argument commit. A framework may provide
+this recovery, but verify its error-handler contract. Intentional skip/DLQ is a separate policy.
 
 ## Position 3 — side effect and offset in one transaction
 
@@ -106,7 +118,8 @@ handler nor fences its effects; that protection must be enforced where the effec
 - [ ] The handler is repeat-safe, or the path is documented as at-most-once on purpose.
 - [ ] Total batch processing time fits `max.poll.interval.ms`; bounding record count alone
       is insufficient if individual work is unbounded. Otherwise the consumer can be evicted mid-batch. Parallel processing keeps
-      polling, pauses assigned partitions and commits only contiguous completed offsets.
+      polling, pauses partitions with outstanding work and commits only the completed prefix
+      of delivered records per partition, regardless of numeric offset gaps.
 - [ ] Visibility lease has measured headroom or a heartbeat extension, a maximum work
       deadline, and metrics for extension failure, age and concurrent duplicate execution.
 - [ ] Shutdown stops intake, drains only within its deadline, and commits no offset for work
@@ -117,5 +130,6 @@ handler nor fences its effects; that protection must be enforced where the effec
 
 ## Source
 
+- [Kafka 4.1 consumer: local position, committed progress and offset gaps](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
 - [Jakarta Messaging 3.1 receive timeout and consumer lifecycle](https://jakarta.ee/specifications/messaging/3.1/apidocs/jakarta.messaging/jakarta/jms/messageconsumer)
 - [Jakarta Messaging 3.1 specification, section 12.3: container acknowledgement and transactions](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.pdf)

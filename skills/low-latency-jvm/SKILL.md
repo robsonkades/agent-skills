@@ -68,7 +68,9 @@ that can change the decision, without requiring a new capture or tuning change o
 - Pin CPU, memory and interrupts as one placement design. CPU affinity without memory/IRQ placement
   can move rather than remove jitter.
 - Busy spin spends dedicated cores and power and can starve GC/JIT/OS work. Use it only where the
-  latency distribution pays for that reserved capacity.
+  latency distribution pays for that reserved capacity. Compare blocking or bounded spin-then-park
+  when CPUs are shared or quota-limited; affinity does not reserve CPU bandwidth. A spin hint does
+  not provide the queue's publication, wake-up or shutdown protocol. See the runtime reference.
 - Kernel bypass is justified only after kernel/network time is a material part of the measured
   budget. It does not repair GC, NUMA, queues or application allocation.
 - Never copy a JVM flag block. Confirm support, effective value and mechanism on the exact build.

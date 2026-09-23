@@ -13,7 +13,16 @@ Choose percentage sizing when startup memory-relative sizing is useful; choose f
 when the heap budget is explicit. Neither provides automatic adaptation to in-place limit
 changes. Set `-Xms` separately from the maximum, based on startup/footprint needs; fixed
 maximum sizing does not require equal initial size. If `-Xmx` is explicit, do not expect
-`MaxRAMPercentage` to override it. Never set `-Xmx` numerically equal to `limits.memory`.
+`MaxRAMPercentage` to override it. Never assign the entire memory limit to the maximum heap.
+
+Normalize units before comparing budgets. HotSpot `-Xmx1g` denotes 1,073,741,824 bytes,
+equivalent to Kubernetes `1Gi`; Kubernetes `1G` denotes 1,000,000,000 bytes. With that heap
+maximum, a limit of `1100M` leaves only 26,258,176 bytes for all other charges, not 100 MB.
+This is a budget calculation, not measured resident headroom; inspect the actual resolved
+`MaxHeapSize` and effective cgroup limit. Kubernetes memory `m` means millibytes, unlike
+HotSpot's `m` heap suffix; CPU `m` is a different quantity again. See the
+[launcher size examples](https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html)
+and [Kubernetes memory units](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#memory-resource-units).
 
 ## Memory headroom procedure
 
@@ -34,6 +43,11 @@ Why no fixed multiplier works: native footprint is driven by thread count, dynam
 generated classes, allocators, agents and direct buffers, while cgroups can charge cache and
 kernel memory that NMT does not own. These are application/runtime properties, not a fixed
 function of `Xmx`.
+
+On cgroup v2, also assess any configured `memory.high` against charged working-set peaks
+and latency. Staying below `memory.max` does not establish freedom from reclaim/throttling.
+Evaluate threshold changes against workload and shared-capacity goals, then repeat the
+memory/latency measurement; an increasing event counter alone is not a reason to disable it.
 
 ## CPU limit procedure
 

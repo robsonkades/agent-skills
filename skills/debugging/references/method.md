@@ -52,6 +52,13 @@ unrelated build failure must not silently classify the target fault as present. 
 known revision incompatibilities to skip and infrastructure/harness failures to abort. Verify
 both endpoints, keep dependencies/data stable and use an isolated checkout to preserve edits.
 
+Keep the classifier and reproducer unchanged across checkouts, preferably outside the checkout
+being bisected. If compatibility adaptations are necessary, record them and preserve the same
+failure predicate. A successful test command is not enough: verify that the intended case actually
+executed and evaluated its assertion. A missing, skipped or undiscovered test is not a good
+revision; classify it through the skip/abort policy above. Likewise, count a bad result only when
+it matches the target failure, not merely because some test failed.
+
 ```
 git bisect start <bad> <good>
 git bisect run ./reproduce.sh
@@ -59,7 +66,8 @@ git bisect log
 git bisect reset
 ```
 
-The sketch assumes a POSIX shell and executable harness. Save the log before reset. Skipped
+The sketch assumes a POSIX shell and an unchanged executable harness at `./reproduce.sh`;
+use its external path instead when keeping it outside the checkout. Save the log before reset. Skipped
 revisions can leave several possible first-bad commits. Re-test the candidate and its relevant
 parent with the same harness; a regression boundary is not automatically the original defect.
 For intermittent faults, repeat enough to bound false-good risk under stated independence/rate

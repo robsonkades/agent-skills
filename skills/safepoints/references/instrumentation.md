@@ -77,7 +77,9 @@ or in an isolated disposable test `-XX:+UnlockDiagnosticVMOptions -XX:+AbortVMOn
 which aborts the JVM on timeout and attempts an `hs_err`; stack reporting can be incomplete. The
 aligned stack/profile may show a long poll-free compiled region, runtime transition, page
 fault or descheduled runnable thread. Ordinary native-state JNI/FFM execution is already
-safepoint-safe; do not infer a native cause from the method name alone.
+safepoint-safe; do not infer a native cause from the method name alone. FFM critical downcalls
+and collector-specific JNI critical behavior need the distinctions in
+[TTSP triage](ttsp-triage.md#distinguish-the-native-paths).
 
 ## JFR
 
@@ -96,8 +98,8 @@ jcmd <pid> JFR.start name=safepoints duration=60s filename=safepoints.jfr settin
 `JFR.start` returns asynchronously. Wait boundedly for recording completion (or use a supported
 dump), verify the resulting file is complete/readable and inspect event counts before parsing.
 
-The events the JVM actually emits on 25.0.3 (`jfr metadata`, executed) — and where each
-field really lives:
+Event types and fields present in the historical 25.0.3 `jfr metadata` output follow.
+This establishes their metadata, not that a particular recording captured them:
 
 | Event                               | Fields beyond `startTime`/`duration`/`eventThread`                                                                                |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |

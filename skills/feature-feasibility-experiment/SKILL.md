@@ -68,6 +68,9 @@ THEN it becomes a planned RES-* and must satisfy ordinary architecture, security
 - Time-boxing limits cost but does not define success. Always state a decision threshold.
 - Declare validity conditions and stopping rules as well as pass/fail criteria. A timebox
   exhausted before a valid measurement is inconclusive, not evidence the option is infeasible.
+- When acceptance depends on noisy measurements, predeclare how uncertainty affects the
+  decision. Evidence that cannot distinguish acceptable from unacceptable outcomes under that
+  rule is inconclusive; a favorable point estimate alone is not a pass.
 - Do not use production data unless its use and handling are explicitly authorized.
 - Do not claim scalability, reliability, or security beyond the conditions actually exercised.
 - Do not repair a prototype by silently changing the target JDK, dependency, environment or

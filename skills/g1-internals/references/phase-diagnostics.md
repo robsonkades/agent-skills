@@ -6,6 +6,11 @@
 java -Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=20m -jar app.jar
 ```
 
+Omitting the level selects `info`: this captures top-level phases, but not the debug sub-phases
+or per-region humongous details used below. Add `gc+phases=debug,gc+humongous=debug` to the
+selector list for those questions. Empty `gc+humongous` output at `info` does not establish
+that no humongous objects were allocated or reclaimed.
+
 Illustrative young-pause excerpt in JDK 25 format (`gc,age`, `gc,remset` and
 `gc,ergo` omitted):
 
@@ -128,11 +133,13 @@ was enabled or exercised. Inspect `jfr metadata` and recording settings when an 
 
 The string `To-space exhausted` no longer exists in the JDK 25 binary; a grep for it on a
 current log is empty even while the failures are happening. The failure is a third
-parenthesis on the summary line — `Allocation` when no free region was available for a
-survivor, `Pinned` when the region held an object pinned by a JNI critical section (JEP 423,
-JDK 22, which replaced the GC locker for G1). Objects that could not be copied stay where
-they are, self-forwarded; the region is kept as an old region and remains a candidate
-(`G1RetainRegionLiveThresholdPercent`, experimental), and `gc+phases=debug` reports
+parenthesis on the summary line — `Allocation` when a copy destination cannot be allocated
+in Survivor or Old, `Pinned` when the region held an object pinned by a JNI critical section
+(JEP 423, JDK 22, which replaced the GC locker for G1). Objects that could not be copied stay
+where they are, temporarily self-forwarded during recovery; the region is kept as an old region.
+Retaining it as a collection candidate is a separate policy decision: on JDK 25 its live bytes
+must be strictly below the region capacity times `G1RetainRegionLiveThresholdPercent` / 100
+(experimental). Do not infer candidate retention merely from the failure. `gc+phases=debug` reports
 `Evacuation Failed Regions` / `Allocation Failed Regions` under `Restore Evacuation Failed
 Regions`. Allocation pressure may lead to expansion or full compaction; explicit/external GC requests
 and humongous contiguous-space failure can also cause Full GC without repeated young failures.
@@ -185,6 +192,10 @@ When measuring and validating:
 - [Java 25 jcmd command and impact descriptions](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [OpenJDK 25 region-size rounding](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1HeapRegion.cpp)
 - [OpenJDK 25 collector selection](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/gcConfig.cpp)
+- [OpenJDK 25 phase logging levels](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1GCPhaseTimes.cpp)
+- [OpenJDK 25 humongous logging and failed-region recovery](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1YoungGCPostEvacuateTasks.cpp)
+- [OpenJDK 25 retained-candidate policy](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1Policy.cpp)
+- [OpenJDK 25 copy-allocation destinations](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1ParScanThreadState.cpp)
 
 An isolated Temurin 25.0.3 G1 process confirmed that default `GC.class_histogram` requested a
 `Heap Inspection Initiated GC`, while `-all` did not request that collection. This is a runtime

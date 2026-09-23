@@ -50,6 +50,15 @@ dependency rule, not compilation, to fail. Restore the dependency and expect a p
 exercise a wrong import root so the explicit selection guard fails. Do not globally disable
 empty-selection protection.
 
+The guard above proves only that some domain classes were imported. For a multi-module
+promise, derive the required modules from the build, include each production output and assert
+that a known production type from each required module is in the imported set. Name strings
+can let an omitted artifact fail the coverage assertion instead of test compilation. Check
+import locations and exclusions too: one representative type proves module participation,
+not that every class in that module was included. Temporarily omit one required output while
+leaving another populated; the coverage check must fail even though the rule's selection is
+nonempty. Restore the output and exercise a forbidden dependency in that module.
+
 Other useful rules need equally accurate names:
 
 - A repository suffix restriction is a naming convention. “One repository per aggregate”
@@ -66,7 +75,9 @@ through a broad package wildcard. A build-enforced boundary still needs discover
 coverage checks.
 
 Source: [ArchUnit guide](https://www.archunit.org/userguide/html/000_Index.html),
-checked 2026-09-05 (1.5.0): bytecode import, rule execution and empty-selection behavior.
+checked 2026-09-19 (1.5.0): classpath-dependent package import, rule execution and
+empty-selection behavior. The module inventory check is a test-design safeguard derived
+from those import limits, not an automatic ArchUnit completeness guarantee.
 
 ## Web boundaries
 

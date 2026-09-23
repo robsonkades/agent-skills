@@ -79,12 +79,18 @@ version/configuration facts; no fixed 1/10/20 ms rule proves absence. When absen
 coverage matters, establish sensitivity with an applicable positive control and opportunity estimate;
 reuse adequate prior validation. Acquisitions still in progress may not yet have committed events.
 
+Event completion and Java method completion are different boundaries. For `Object.wait` latency,
+verify whether `JavaMonitorWait` includes reacquisition; a completed event need not mean the call
+returned. A `JavaMonitorEnter` waiter stack and `previousOwner` identity do not establish the
+owner's hold stack or explain the whole delay. Read `references/measuring-contention.md` before
+making either attribution.
+
 ## Measurement
 
 When runtime attribution is needed, select missing evidence that can change the conclusion and
 align it to workload:
 
-- event count and duration distribution by monitor class/address/owner stack where available;
+- event count and duration distribution by monitor class/address/acquisition stack where available;
 - affected operations, wait per operation and fraction of requests encountering wait;
 - concurrent blocked population/queue trajectory, not only summed thread durations;
 - owner hold path and hold-time proxy/instrumentation when acquisition events cannot show it;

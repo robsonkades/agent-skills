@@ -59,7 +59,9 @@ are missing, state the hypothesis and smallest discriminating capture or experim
 
 ## Rules
 
-- Never set GC flags copied from a blog post without the log that justified them.
+- Require matching diagnostic evidence before presenting tuning flags as a fix; a copied
+  flag list is not evidence. For a new service, state the initial policy as a hypothesis
+  and define the measurements that would justify retaining it.
 - Choose the least risky lever that addresses the measured mechanism. Allocation/lifetime
   changes can be architecturally larger than a collector switch, while one flag can be more
   dangerous than either; there is no universal order by “size.”
@@ -85,7 +87,9 @@ are missing, state the hypothesis and smallest discriminating capture or experim
   contract before declaring a defect. No collector removes strongly reachable state.
 - Unplanned G1 Full GC on a latency-sensitive path warrants investigation. Acceptance
   depends on the declared deadline, frequency and recovery budget; Parallel/Serial full
-  collections may be normal for a batch workload. An evacuation failure means objects
+  collections may be normal for a batch workload. Read the cause first: explicit application
+  or diagnostic requests do not establish heap exhaustion; trace the caller before changing
+  capacity or suppressing explicit GC (see the reference). An evacuation failure means objects
   could not be moved as planned; inspect the logged reason, usable to-space, live set,
   promotion spike, pinning, humongous topology and reserve before choosing heap growth.
 - Prefer fewer tuning overrides: they may constrain adaptive policy or create maintenance

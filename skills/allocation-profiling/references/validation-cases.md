@@ -1,15 +1,20 @@
 # Behavioral validation cases
 
-Use these as review exercises or paired agent evaluations. They test diagnostic decisions,
-not Java runtime correctness or repository packaging. All numbers below are synthetic inputs.
+Use these as teaching exercises or known-case regression checks. They test diagnostic
+decisions, not Java runtime correctness or repository packaging. All numbers below are
+synthetic inputs. The expected answers ship with the skill, so these are not unseen tests.
 
 ## Reproducible procedure
 
 For each case, give a fresh agent the request and context verbatim. Keep model/version,
 reasoning settings, tools, repository context and tool permissions identical across runs.
-The baseline receives no allocation-profiling content; the treatment receives its description,
-SKILL.md and access to its routed references. Prevent automatic discovery of the skill in
-the baseline. Do not expose expected behavior/failure criteria until judging outputs.
+For a paired comparison, the baseline receives no allocation-profiling content; the treatment
+receives its description, SKILL.md and access to its routed references. Prevent automatic
+discovery of the skill in the baseline. This reference is ordinarily accessible to the
+treatment: record that exposure and describe these results as known-case checks. For an
+unseen test, define separate inputs and grading criteria outside actor access before the run;
+do not claim these shipped answers were hidden. If the harness excludes this reference,
+report that restriction because it changes the treatment being evaluated.
 Record prompts, loaded resources, tool calls, outputs and pass/fail reasons against each
 criterion. For selection cases, expose the description among the same neighboring descriptions
 and record selection before supplying any body. If a valid isolation cannot be arranged,
@@ -141,8 +146,6 @@ capture despite sufficient retained evidence, or refusing the goal merely becaus
 These cases have not been executed as paired agent runs. Repository verification and any
 local JDK smoke checks are technical checks, not measured behavioral improvement.
 
-The revision checked primary OpenJDK 25 GA sources, Oracle API/command documentation and
-async-profiler 4.1 documentation. Previous Temurin reproduction totals lacked shipped
-fixtures/recordings and were removed as evidence. The JEP 519 page returned HTTP 403 during
-review; no claim of a locally measured compact-header benefit or verified rollout history
-is made. Commands still require validation on the deployed OS/JDK/profiler combination.
+Version-sensitive guidance cites OpenJDK 25 GA sources, Oracle API/command documentation and
+async-profiler 4.1 sources. Source review does not demonstrate command compatibility or a
+performance benefit on a particular service; validate the deployed OS/JDK/profiler combination.

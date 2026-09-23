@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: unified-logging
-version: 1.2.2
+version: 1.2.3
 description: >-
   Constructing, validating and operating HotSpot unified JVM logging: exact versus
   wildcard tag-set selection, levels, outputs, decorators, file rotation, asynchronous

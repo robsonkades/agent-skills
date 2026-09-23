@@ -62,7 +62,9 @@ The addition is cross-cutting and the interface is stable
 - **The framework already provides it.** Servlet filters, `HandlerInterceptor`, Spring AOP
   advice, `RestClient` request interceptors, Micrometer instrumentation and Resilience4j
   decorators already provide composition mechanisms. Verify their ordering, async-context and
-  observability semantics; hand-rolling beside them otherwise puts policy in two places.
+  observability semantics; hand-rolling beside them otherwise puts policy in two places. Do not
+  substitute an MVC interceptor for the application's security chain; see the coverage checks
+  in `references/ordering-and-composition.md`.
 - **Behaviour differs by the object's state.** That is State (`gof-state`).
 
 ## Ordering is semantics

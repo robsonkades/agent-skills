@@ -87,6 +87,10 @@ query-count reduction or configuration change alone.
   to-one fetches or a single nested chain do not create that independent sibling product, though
   nested child volume still matters. Split independent collections when their product exceeds
   the budget; retain a supported, adequately bounded fetch shape.
+- **Preserve collection completeness when choosing a fetch plan.** Restricting a fetch-joined
+  collection can initialize only its matching elements. If the contract requires all children
+  of qualifying roots, separate root selection from collection fetching. A filtered scalar
+  projection can be appropriate when the requested result is intentionally a subset.
 - **Pagination over a collection fetch requires version- and query-specific verification.** Common
   Hibernate query shapes warn and page in memory because SQL row limits do not equal root-entity
   limits. When SQL pagination is required, fail on that fallback in tests; use a root-id page
@@ -108,6 +112,8 @@ query-count reduction or configuration change alone.
   batching for entities using IDENTITY; this does not disable unrelated updates/deletes.
   Pre-insert identifiers (for example sequences or assigned UUIDs) permit insert batching;
   sequence pooling reduces identifier round trips separately and needs a compatible schema.
+  For versioned updates/deletes, verify that driver batch counts preserve optimistic-lock
+  detection; successful batch execution alone does not prove stale writes are rejected.
 - **A page's `count` query can be expensive independently.** Measure it separately; optimise it
   or omit it only if the response contract permits doing without the total.
 - **An individually slow statement has its own diagnosis.** Hand its SQL, bindings, rows and

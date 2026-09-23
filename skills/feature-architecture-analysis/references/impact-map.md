@@ -34,7 +34,12 @@ IMP-01  <path>[:line]   NEW | MODIFIED | READ   INTERNAL | EXTERNAL   <change> <
   moves/renames. Trace remaining callers, configuration, retained data and rollback compatibility;
   deleting a file does not remove the impact on its consumers.
 - **READ** — does not change, but the feature depends on its current behaviour. Include it when
-  the dependency is new or heavier than before; that is how a change breaks a file nobody edited.
+  the dependency is new, heavier or used under different conditions, such as input values,
+  ordering, transaction scope or failure handling. Unchanged call counts do not imply unchanged
+  effects. For example, splitting two queries from one PostgreSQL Repeatable Read transaction
+  into separate transactions can change their snapshot relationship while leaving the DAO code
+  untouched. Map that DAO and the consistency question; inspect the actual engine/isolation before
+  concluding what changed.
 
 For each entry include the evidence locator, affected party and expected verification; an
 external locator can be a topic/schema ID, qualified table, dashboard URL or deployment key.
@@ -109,3 +114,4 @@ the end.
 
 - [JLS 25 binary compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html) — consult the target Java version; binary compatibility does not establish source or behavioral compatibility.
 - [Protocol Buffers message evolution](https://protobuf.dev/programming-guides/proto3/#updating) — binary wire-safe changes can still affect application code; JSON and other formats have different rules. Apply the actual protocol/version rather than assuming every additive field is safe.
+- [PostgreSQL 18 transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html) — when transaction scope changes, check snapshot and visibility rules even for unchanged queries; verify the target engine/version.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: async-profiler-advanced
-version: 1.3.2
+version: 1.3.3
 description: >-
   Configure and validate async-profiler when recordings are empty, idle-heavy,
   truncated, permission-blocked, containerized, multi-event, or version-sensitive.
@@ -46,6 +46,7 @@ dependencies:
 
 suggests:
   - concurrency-diagnostics
+  - heap-dump-analysis
   - off-heap-memory
   - ebpf-for-jvm
   - continuous-profiling

@@ -101,11 +101,14 @@ reuse are acceptable.
   can return a specialized future: Java 25's default `HttpClient.sendAsync` futures support
   `cancel(true)` as an attempt to cancel the exchange. Inspect the returned handle's contract;
   neither behavior proves that the work or its effects have stopped.
-- wait timeouts such as `get(timeout)` bound the waiter, not the producer. `orTimeout` completes the
-  stage exceptionally but does not universally stop underlying work.
+- wait timeouts such as `get(timeout)` bound the waiter, not the producer. `orTimeout` mutates and
+  returns the same future; it does not universally stop underlying work. If its timeout wins on
+  a shared future, other callers observe that timeout too.
 
-Bridge cancellation explicitly when adapting callback/client APIs: retain the underlying handle,
-propagate terminal state both directions once, and resolve completion-versus-cancel races.
+Bridge cancellation only under the underlying operation owner's policy: retain its handle and
+resolve completion-versus-cancel races. One caller abandoning a shared operation does not by
+itself authorize aborting work still needed by other callers. Keep caller-local outcomes separate
+from owner-initiated cancellation; use `completablefuture-composition` for graph/view construction.
 The `Future.cancel` return value alone does not necessarily report the current cancelled state.
 Inspect the public outcome separately from the underlying operation's termination and release.
 
@@ -154,6 +157,8 @@ process so a failing termination assertion cannot hang the test suite.
 
 - cancel before start, during CPU work, at each blocking point and after semantic commit;
 - multiple sources racing with normal completion/failure;
+- one caller abandoning shared work while another still needs it;
+- a blocking abort hook, saturated abort dispatcher or rejected abort request;
 - swallowed/cleared interrupt and task/framework boundary translation;
 - noninterruptible provider/native call and owner close/abort;
 - resource released/reusable versus deliberately closed;

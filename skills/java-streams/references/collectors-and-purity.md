@@ -68,6 +68,12 @@ Map<String, Order> byCustomer = orders.stream()
   from `HashMap`'s tolerance. If values may be null,
   use `groupingBy` with a list downstream, or a loop, or make the absence explicit with a
   sentinel/`Optional` value type.
+- **A null merge result removes the mapping.** The merge overloads follow `Map.merge` here;
+  this differs from a null value returned by the value mapper. Returning null does not mean
+  "ignore the incoming value" or "exclude this key forever": in a sequential stream, two
+  colliding values remove the entry, and a third can insert it again. Return the retained value
+  to keep one, or reject invalid duplicates explicitly. If deletion is intentional, define it
+  as part of the result contract and check collector associativity under partition/combination.
 - **Null-key behaviour is collector/map dependent.** The default `toMap` implementation currently
   uses a `HashMap`, which can accept a null key, but the collector contract does not promise a map
   type and a supplied map may reject it. `groupingBy` rejects a null classifier result. Normalize
@@ -163,7 +169,7 @@ covers the wider choice between exceptions and result types.
 - [ ] Terminal effects/accumulation follow their ordering, failure and ownership contract;
       confined sequential mutation is distinguished from unsafe shared parallel mutation.
 - [ ] Every `toMap` states whether duplicates are invalid or defines an explicit merge policy;
-      nullable values and keys are accounted for.
+      nullable values and keys, null merge results and repeated collisions are accounted for.
 - [ ] `groupingBy` has an explicit downstream whenever the value is not a plain list.
 - [ ] `reduce` accumulators are pure; mutable accumulation uses `collect`.
 - [ ] Collector-produced collections' mutability and iteration order match what callers assume.
@@ -174,4 +180,5 @@ covers the wider choice between exceptions and result types.
 - [Java 21 Stream contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html)
 - [Java 21 Collector laws](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collector.html)
 - [Java 21 Collectors](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Collectors.html)
+- [Java 21 Map.merge null-result semantics](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html#merge(K,V,java.util.function.BiFunction)>)
 - [Java 21 BigDecimal scale and equality](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/math/BigDecimal.html)

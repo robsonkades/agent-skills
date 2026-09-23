@@ -18,8 +18,10 @@ independent review or incident mitigation.
 - Is each operation naturally idempotent, guarded by state, or does it need a key and a dedup
   store? → `idempotency`
 - If a key: what is its source, its scope, and its retention? What does a duplicate return?
-- Only once this is settled: what is retryable, with what backoff and what budget?
-  → `retries-and-backoff`
+- Establish repeat-safety or evidence that the previous attempt could not have applied,
+  then decide what is retryable, with what backoff and what budget → `retries-and-backoff`.
+  A response timeout alone does not establish non-application; for HTTP, see
+  [RFC 9110 retry semantics](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2).
 
 ## 3. Time
 
@@ -89,8 +91,11 @@ independent review or incident mitigation.
 
 - Can one request be followed end to end? → `distributed-tracing-design`, `structured-logging`
 - What is the SLI, measured where the user crosses the boundary? → `slo-and-alerting`
-- Is there a signal for **absence** — a consumer that stopped, a job that has not run? Error-rate
-  monitoring cannot see it. → `distributed-failure-catalogue`
+- Is there a signal for **absence** — a consumer that stopped, a job that has not run?
+  Route freshness/completion objectives and missing-data behavior to `slo-and-alerting`;
+  an error rate alone does not establish progress. For example, [batch-job monitoring](https://prometheus.io/docs/practices/instrumentation/#batch-jobs)
+  tracks the last successful completion. Use `distributed-failure-catalogue` only when the
+  underlying failure mechanism remains unclear.
 - Has anyone computed the cardinality budget of the new metrics? → `metrics-and-cardinality`
 
 ## 10. Proof
@@ -106,7 +111,7 @@ independent review or incident mitigation.
 
 - No fault model written down.
 - "Exactly-once" claimed with no boundary named.
-- A retry policy over an operation whose repeat-safety nobody has established.
+- A retry policy with neither established repeat-safety nor evidence of non-application.
 - A distributed lock protecting a resource that cannot enforce ownership and whose duplicate
   effect is not survivable.
 - An unbounded queue, an unbounded executor, or a timeout of zero meaning infinite.

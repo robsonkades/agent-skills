@@ -39,15 +39,34 @@ charged to the application container's leaf limit, but can contribute at a share
 
 Choose `-Xms` separately from startup, residency/uncommit and SLO evidence; equality with
 `-Xmx` is not implied by this capacity arithmetic. The percentage is derived from the
-subtraction, never chosen first. The defaults, measured
-on 25.0.3 with `-XX:MaxRAM` standing in for the cgroup limit: `MaxRAMPercentage=25` gives a
-quarter of the limit (4 GB → 1 GB), floored at 128 MB (512 MB → 128 MB), and below 256 MB
-of limit `MinRAMPercentage=50` takes over (200 MB → 100 MB). On that verified setup, an
-unsized JVM in a 2 GB limit selected a 512 MB max heap; the remainder is available to
-committed/native memory, file cache, sidecars and unused headroom—not “nothing.” Derive a
-higher percentage only from measured peaks; at 90%, roughly 200 MB remains for every
-non-heap/cgroup charge, which may or may not fit. `-Xmx` wins over `MaxRAMPercentage` when both are
-present. What the JVM detects from the cgroup, and every ergonomic derived from it, is
+subtraction, never chosen first. In Windows Temurin 25.0.3 startup probes with `-XX:MaxRAM`
+standing in for detected memory, defaults selected 1024 MiB from 4096 MiB, 128 MiB from
+512 MiB, 100 MiB from 200 MiB and 512 MiB from 2048 MiB. These are observed points, not a
+universal 128 MiB floor or fixed transition. `MinRAMPercentage` sizes the **maximum heap
+on small-memory systems**, not `-Xms`. In that same build, `MaxRAM=200m` with
+`MaxRAMPercentage=10` still selected 100 MiB; `MaxRAM=2g` with the same percentage selected
+206 MiB after alignment. A percentage alone does not guarantee the calculated ceiling.
+
+Verify the effective `MaxHeapSize` with the candidate flags and target build/collector,
+then repeat inside the actual container. These startup probes do not test cgroup detection
+or workload fit:
+
+```bash
+java -XX:MaxRAM=200m -XX:MaxRAMPercentage=10 -XX:+PrintFlagsFinal -version
+java -XX:MaxRAM=2g -XX:MaxRAMPercentage=10 -XX:+PrintFlagsFinal -version
+# Fixed ceiling: on the verified build this selects 20 MiB, overriding percentage sizing.
+java -XX:MaxRAM=200m -XX:MaxRAMPercentage=10 -Xmx20m -XX:+PrintFlagsFinal -version
+```
+
+Use explicit `-Xmx` when a fixed ceiling is required, and inspect the effective value for
+alignment/other constraints. For percentage sizing, inspect the small-memory rule and
+effective flags rather than assuming `MaxRAMPercentage` always wins.
+See [JDK 25 heap ergonomics](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/arguments.cpp)
+(`Arguments::set_heap_size`) for the ordering. The remainder of the identified cgroup
+budget covers native memory, file/kernel charges, other processes in that scope and
+headroom. Derive a higher percentage only from measured peaks; at 90% of 2048 MiB, about
+205 MiB remains for all of these charges before heap alignment, which may or may not fit.
+What the JVM detects from the cgroup, and every ergonomic derived from it, is
 container-awareness; what the cgroup charges beyond RSS is linux-for-jvm.
 
 The GC line deserves its own measurement: the collector's native structures scale with
@@ -108,7 +127,12 @@ jcmd <pid> VM.native_memory summary.diff        # per-region delta against the b
 Without `jcmd` access, periodic JFR events such as `jdk.NativeMemoryUsage`,
 `jdk.NativeMemoryUsageTotal`, `jdk.ResidentSetSize` and `jdk.ContainerMemoryUsage` (verify
 presence, enablement and period on the exact JDK/settings) provide correlated series. They
-do not make NMT committed, RSS and cgroup usage interchangeable.
+do not make NMT committed, RSS and cgroup usage interchangeable. The two NMT events require
+NMT to have been enabled at startup; enabling their JFR settings later does not activate NMT
+([JDK 25 event implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/periodic/jfrNativeMemoryEvent.cpp)).
+When NMT was off, use available process maps, RSS/cgroup and pool metrics, and label missing
+category attribution as unknown. An empty NMT event stream does not mean zero native memory;
+plan a restart with NMT only when that additional evidence is needed and a restart is feasible.
 
 ## When RSS is bigger than NMT
 

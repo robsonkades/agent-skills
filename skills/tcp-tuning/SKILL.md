@@ -52,7 +52,8 @@ return a supported no-change conclusion or the next discriminating check where a
    `tcp_tw_reuse`, port ranges, bind addresses, backlog or buffers affect different mechanisms
    and security/operational boundaries; choose only after proving which bound was hit.
 5. **Confirm the setting actually took.** Read the option back from the socket, or observe the
-   `setsockopt` call. A configured value is not an applied value.
+   `setsockopt` call. A configured value is not an applied value. Label buffer readings as
+   Java API values or kernel accounting; their representations can differ (see the options reference).
 6. **Validate a proposed change before persistence.** Within existing authorization, test one scoped change
    with an old value, rollback and comparable load. Persist only the validated setting through
    the deployment's configuration owner; re-measure throughput, latency, errors and memory.

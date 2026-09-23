@@ -36,8 +36,9 @@ dependencies, preview features and toolchain upgrades require their own justific
    is justified when proxying, wiring or cross-layer behavior is the assertion; inspect slow-suite
    timing before assuming that a large context is the cause.
 3. **Control the observation.** Define fixture state, transaction ownership, caches, execution
-   scope, cleanup and time bounds. Count selected classes/tests or observed operations where
-   an empty selection or disabled instrument could produce a false green.
+   scope, cleanup and time bounds. Check required modules as well as selected classes/tests
+   or observed operations: a nonempty selection can still omit an entire module, and disabled
+   instrumentation can produce a false green.
 4. **Prove the test detects the defect.** Use a small violating fixture or a temporary mutation:
    forbidden dependency, missing transaction, lazy fetch regression or stale write. Observe the
    intended assertion fail, then restore the valid state and rerun. A compile/setup error is not

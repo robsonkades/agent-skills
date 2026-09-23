@@ -70,7 +70,8 @@ capability and ownership—not by a universal decision tree.
 | Portability              | runtime/platform matrix | JDK/JVM matrix        | kernel/architecture matrix               | vendor matrix           |
 
 Hybrids are normal: low-cost JFR for JVM chronology, sampled CPU profiles for code cost, and
-short elevated capture for incidents. See
+short elevated capture for incidents. Concurrent JFR recordings can change effective
+collection settings; calibrate their combined cost and mark overlap periods in comparisons. See
 [Architecture and cost model](references/architecture-choice.md).
 
 ## Permanent overhead budget
@@ -182,7 +183,13 @@ Before comparing windows, establish:
 4. deploy/config/dependency/infrastructure differences;
 5. enough independent windows and observations for the claim;
 6. normalization appropriate to the question (per CPU time, wall time, request, byte, or
-   completed operation).
+   completed operation), with numerator and denominator covering the same process lifetimes,
+   collection intervals, and workload filters.
+
+Partial-fleet profiles must not be divided by fleet-wide operations. Preserve the actual
+covered cohort and gaps, not just the intended rollout percentage; missing profiles are not
+zero cost. For aggregation and extrapolation limits, read
+[cohort normalization](references/setup-and-queries.md#cohort-normalization).
 
 “Same weekday one week apart” is only a candidate control; it does not prove comparable load.
 A percent change in profile samples can reflect more traffic, fewer samples elsewhere, a new

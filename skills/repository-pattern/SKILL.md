@@ -140,6 +140,10 @@ Bulk or set-based work over the aggregate's table
   dirty checking versus explicit save, detached results and lazy-access boundaries; transaction
   completion alone does not always end an extended persistence context. Map outward-facing
   DTOs before required lazy state becomes unavailable (`orm-behavioral-patterns`).
+- A repository `Stream` can carry an open database resource despite using only JDK types.
+  Define who consumes and closes it, and keep its required context/transaction alive through
+  consumption. Distinguish a cursor from a stream of already materialized independent values;
+  the return type alone proves neither a resource leak nor bounded memory.
 - Reads and writes have different requirements and may legitimately use different paths.
   Measure query counts, fetched rows/bytes and hydration before attributing slow screens to
   the repository structure (`architecture-and-performance`).
@@ -167,7 +171,7 @@ Bulk or set-based work over the aggregate's table
 
 - [Repository boundaries](references/repository-boundaries.md) — the domain-owned interface
   with its adapter implementation in Java, what the aggregate boundary means for the
-  methods, reconstitution and detachment, read models beside the repository, and the
+  methods, reconstitution and detachment, read models and stream lifetimes, and the
   narrowing that justifies a hand-written interface over Spring Data. Read when designing or
   reviewing a repository.
 - [Repository misuse](references/repository-misuse.md) — the layered nothing, the generic

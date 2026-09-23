@@ -11,7 +11,7 @@ low-risk work, most of them collapse to seconds rather than disappearing.
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Understand | Find the pool implementation/version, effective configuration and interactions with minimum idle, connection lifetime and database limits.             |
 | Clarify    | Establish the intended problem from the request, incident or configuration history. Ask only if the reason or required outcome is still missing.       |
-| Risk       | Higher than the diff suggests. This affects every database call under load.                                                                            |
+| Risk       | Establish whether the setting takes effect; changed idle retirement can increase reconnect work and acquisition latency after quiet periods.           |
 | Tests      | Verify effective binding and the changed idle/reconnect behavior when material; an assertion of the literal alone cannot establish operational safety. |
 | Implement  | One line.                                                                                                                                              |
 | Verify     | Required repository gates plus targeted checks; record connection churn, acquisition latency and database load to watch if deployed.                   |
@@ -20,8 +20,13 @@ low-risk work, most of them collapse to seconds rather than disappearing.
 | Deliver    | Name the metric that will show whether it helped.                                                                                                      |
 
 **The trap:** a one-line diff invites a one-second review. Timeouts, pool sizes, retry counts,
-feature-flag defaults and cache TTLs are the highest risk-per-line changes in most systems,
-because their effect appears only under production load and only after deploy.
+feature-flag defaults and cache TTLs can have broad effects, but the configuration name alone
+does not establish impact. Check when the changed setting applies and exercise that condition.
+For example, [HikariCP 7.0.2's `idleTimeout`](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-7.0.2/README.md#frequently-used)
+only applies when `minimumIdle < maximumPoolSize`; changing it in a fixed-size pool does not
+establish changed idle-retirement behavior. Check the project's actual pool/version rather
+than adopting this example's library or settings. A representative idle-then-burst check can
+expose reconnect effects before deployment; continuous load alone may miss them.
 
 ## Medium risk: a new endpoint
 
@@ -54,13 +59,13 @@ to the migration's actual impact and reversibility.
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Understand | Every reader and writer of the column, including reports, exports and other services.                                                                                                                                                 |
 | Clarify    | What is the rule for splitting existing values? Mononyms, prefixes, multi-word families — this decision is the feature, and it cannot be inferred.                                                                                    |
-| Risk       | Irreversible. Data can be lost by a bad split and not noticed for months.                                                                                                                                                             |
+| Risk       | Data can be lost or misinterpreted by a bad split. Reversibility depends on retained originals, concurrent writes and the migration phase.                                                                                            |
 | Tests      | Migration from empty to head; migration over seeded pre-migration data; the backfill rule as unit tests over real awkward names; the **previous** application version running against the **new** schema.                             |
 | Implement  | Separate expand, migration and contract phases; choose deploy count from compatibility and observation needs. Preserve original values, define the authoritative write path and prevent backfill from overwriting concurrent updates. |
 | Verify     | The full pipeline, plus the backfill timed against production-sized data. A backfill that took 20 minutes on the test dataset can take six hours on production.                                                                       |
 | Review     | Apply repository requirements and involve data expertise where needed. Review recovery and concurrent-writer behavior, not only DDL.                                                                                                  |
 | Record     | A decision record: the split rule, what happens to unsplittable values, and why.                                                                                                                                                      |
-| Deliver    | The runbook: order of deploys, how to verify each, how to roll back each.                                                                                                                                                             |
+| Deliver    | The runbook: order of deploys, checks and stop conditions for each phase, and the tested recovery path: rollback where valid, otherwise forward repair or restore.                                                                    |
 
 Mixed application versions during rollout and recovery validation also matter for endpoint
 and configuration changes. The migration adds durable-data risk: removing the old column
@@ -72,6 +77,16 @@ The phase separation and compatibility concerns follow
 [Sadalage and Fowler's evolutionary database design](https://martinfowler.com/articles/evodb.html).
 The exact locking, online-DDL and transaction behavior must come from the deployed database
 and migration tool, not this illustrative workflow.
+
+## Incident mitigation before reproduction
+
+If waiting for a reproduction prolongs an active outage or data corruption, follow the
+authorized incident response and its time budget. Preserve affordable evidence, apply the
+selected mitigation and verify the observed recovery. Keep root-cause investigation and
+permanent-fix validation open; recovery alone does not prove either. This sequencing follows
+[Google SRE's triage guidance](https://sre.google/sre-book/effective-troubleshooting/#triage);
+`debugging` owns the investigation and production-evidence procedure. An urgent label does
+not itself authorize production changes or waive repository-required gates.
 
 ## What never collapses
 

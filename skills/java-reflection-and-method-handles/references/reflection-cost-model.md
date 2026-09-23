@@ -12,9 +12,9 @@ java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHan
 java.base/java.lang.reflect.Method.invoke(Method.java:565)
 ```
 
-The stack frame is evidence for this build, not a supported internal API. JDK 18 moved core
-reflection to MethodHandle/VarHandle machinery; implementations may add hidden adapters/stubs and
-change thresholds. JDK 22 removed the old implementation. What that changes:
+The stack frame is evidence for this build, not a supported internal API. JDK 18 made
+method-handle-based core reflection the default; implementations may add hidden adapters/stubs
+and change thresholds. JDK 22 removed the old implementation. What that changes:
 
 | Belief from the old implementation                                                 | Status on JDK 25                                                                                                              |
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -46,7 +46,9 @@ mutable call sites require their documented publication protocol and may prevent
 ## Turning one resolution into ordinary calls
 
 - `LambdaMetafactory` can link a compatible direct method handle to a functional-interface call
-  site; it is a low-level linker with strict type/capture rules, not a generic wrapper function.
+  site with a full-privilege caller lookup; it has strict type/capture rules. A cross-module
+  private lookup or a bound handle may not meet its linkage requirements; see
+  [lookup and linkage constraints](method-handles-and-encapsulation.md).
 - `MethodHandleProxies.asInterfaceInstance` is a reflective adapter with interface/module and
   wrapper semantics; measure it rather than assuming equivalence to metafactory output.
 - Generated accessors may use source generation or `Lookup.defineHiddenClass`; weak versus

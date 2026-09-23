@@ -221,6 +221,9 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
   client may retry it under its policy. The error format itself belongs to `rpc-and-api-contracts`.
 - Document both statuses, the header, and the limit's unit and key in the API contract. An
   undocumented limiter does not shift load, it just relocates the failure into the client.
+- The sketch assumes enough headroom to construct and send the response. If error encoding,
+  logging or connection handling dominates under extreme load, use the policy reference's
+  "When rejection itself overloads the service" decision before changing transport behavior.
 
 ## Libraries, by role
 

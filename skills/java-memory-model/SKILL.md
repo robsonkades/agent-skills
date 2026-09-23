@@ -60,7 +60,7 @@ test never failing, it is not yet a JMM proof.
 
 - Two accesses conflict when they target the same variable, at least one is a write, and they are
   not both reads. A data race exists when conflicting accesses are not ordered by happens-before.
-- Program order orders actions within a thread according to that thread's inter-thread semantics;
+- Program order orders actions within a thread according to that thread's intra-thread semantics;
   it is not a global wall-clock order.
 - Synchronization actions participate in a synchronization order. Specific pairs create
   **synchronizes-with** edges; happens-before is program order plus synchronizes-with plus
@@ -85,7 +85,7 @@ derived guarantees. Expand them into actual actions before treating them as a pr
 | volatile write                  | subsequent volatile read                   | same variable, synchronization order              |
 | thread actions before `start()` | actions in started thread                  | correct `Thread` lifecycle                        |
 | actions in thread               | successful detection of termination        | for example `join()` return/isAlive false per JLS |
-| interrupt call                  | interrupted thread determines interruption | exact detection API/control flow matters          |
+| interrupt call                  | a thread detects the target's interruption | detector may be another thread; exact JLS rule    |
 | class initialization            | subsequent active use                      | class/interface initialization rules              |
 | concurrent utility handoff      | documented memory-consistency effect       | read the exact API contract                       |
 
@@ -93,6 +93,12 @@ Default initialization also has a happens-before rule. Final-field semantics are
 dereference rules and should not be mislabeled as a generic publication happens-before edge.
 Timed `join` can return before termination, and `isAlive() == false` on an unstarted thread
 does not detect completed work. Confirm the actual lifecycle before using termination ordering.
+
+Interruption orders actions before the interrupt in the interrupting thread with actions after
+successful detection, including another thread observing `target.isInterrupted()` as true.
+Identify the interrupt detected; a false status check does not establish this edge, and a true
+status may reflect an earlier interrupt. This edge alone neither publishes the target's results
+nor proves that the target has terminated.
 
 ## Volatile publication
 
@@ -133,10 +139,11 @@ formally proven protocol.
 
 ## Final-field semantics
 
-At normal constructor completion, writes to final fields are frozen. If the object reference is
-later observed through a permitted execution and `this` did not escape during construction, special
-final-field rules provide stronger guarantees for the final values and referenced object/array state
-reachable through those finals as defined by JLS 17.5.
+For a final field written in a constructor, a freeze occurs when that constructor exits, normally
+or abruptly, under JLS 17.5.1. A freeze does not establish successful construction or a valid object
+invariant. If the object reference is later observed through a permitted execution and `this` did
+not escape during construction, special final-field rules provide stronger guarantees for the final
+values and referenced object/array state reachable through those finals as defined by JLS 17.5.
 
 This is not “safe publication for free”:
 

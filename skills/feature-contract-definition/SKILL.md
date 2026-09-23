@@ -41,8 +41,11 @@ shape.
    coexistence window, migration/deprecation, rollout order, rollback limit, and consumer evidence.
    Name exact producer/consumer/schema revisions and retained data that remain supported;
    syntactic compatibility alone does not establish unchanged meaning or failure behaviour.
-6. **Maintain one source of truth.** Amend and link the authoritative OpenAPI, AsyncAPI, schema, protocol, or
-   equivalent artefact. Summaries point to it; they do not become a second copy.
+6. **Maintain one source of truth.** Amend and link the authoritative OpenAPI, AsyncAPI, schema,
+   protocol, or equivalent artefact within the project's established ownership and authority.
+   For an externally owned contract, link its applicable revision and keep local integration
+   obligations separate; a local specification cannot change a supplier's guarantees.
+   Summaries point to the sources; they do not become a second copy.
    Follow its declared specification/toolchain version and repository validation commands;
    do not upgrade a format, generator or runtime simply to express the change. External
    publication or messaging requires authorization for that action.
@@ -71,7 +74,8 @@ THEN define operation/event identity scope, payload reuse policy, deduplication 
 ordering scope and replay behavior; a timeout is not proof that no effect occurred.
 
 IF an authoritative specification already exists
-THEN amend and link it; do not copy it into the feature dossier.
+THEN link it and amend only within established ownership; record gaps in externally owned
+contracts without rewriting their guarantees or copying the specification into the feature dossier.
 
 IF a contract choice changes product behavior
 THEN return that decision to Product instead of resolving it as an engineering detail.

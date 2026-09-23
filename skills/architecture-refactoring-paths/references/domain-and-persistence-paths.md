@@ -116,7 +116,7 @@ record. See [Oracle's record-class guide](https://docs.oracle.com/en/java/javase
 polymorphic query is too expensive at volume
 (`inheritance-mapping-strategies`).
 
-This one is a data migration, so it follows expand/contract strictly:
+For a migration requiring old/new coexistence, use these expand/contract phases:
 
 ```text
 1. Verify            No foreign key from elsewhere blocks the target
@@ -131,8 +131,8 @@ This one is a data migration, so it follows expand/contract strictly:
                      and a per-subtype checksum.
 
 5. Switch reads      Mapping changes to the new strategy. DEPLOY.
-                     ← Rollback from here is a deploy, because the old
-                       shape is still being written.
+                     ← A binary rollback is possible only to a verified
+                       compatible version while the old shape is current.
 
 6. Stop dual write   DEPLOY.
 
@@ -232,6 +232,44 @@ Before using dual writes or a backfill, specify:
 - Mixed-version compatibility and the last phase where old data remains current. Retain the
   old representation only as long as the recovery plan requires, with an explicit owner.
 
+### Name the oldest safe rollback version
+
+Record the exact artifact/configuration to which each checkpoint can return. A preparatory
+release may be required before activating new states or formats: V1 reads/writes only the old
+format; V2 reads both but writes old; V3 writes new. After V3 writes new data, V2 may be a safe
+rollback target while V1 is not. Confirm every eligible reader is prepared, including jobs,
+restart/autoscaling images and supported rollback artifacts; a healthy deployment percentage
+does not prove that coverage. Exercise upgrade, overlap and downgrade with data written by
+each participating version.
+
+Atomic dual writes prove that both writes commit together, not that their representations
+preserve the same business meaning. Validate transformations for new subtypes, null/default
+semantics, precision and deletes. If a new state cannot be represented for old readers, delay
+activating it, introduce a compatible reader first, or declare the recovery boundary; do not
+invent a lossy reverse mapping and label it rollback. Rehearse old-code updates too: reading a
+new field successfully is insufficient if saving silently discards it.
+
+### Authority-transfer checkpoint
+
+When ownership moves, establish which mechanism prevents the former writer from committing
+after handoff. Stop new admissions to the old path, and either drain/reconcile accepted work
+before enabling the new owner or enforce a durable ownership generation at the authoritative
+write boundary. The generation check must be atomic with the protected write; checking a flag
+once at request entry leaves a check/write race. All writers, jobs and delayed retries must
+participate. A token attached to a request without recipient enforcement provides no exclusion.
+
+Record the last accepted old write and how the new owner catches up to it before activation.
+An external side-effect recipient may not support fencing; in that case require proven drain
+or a shared execution/deduplication protocol covering the same operation before overlap.
+If neither can be established, keep a bounded write pause instead of promising zero downtime.
+Rollback reverses the ownership transfer too: fence/drain the new writer, reconcile its accepted
+work, then restore the old writer only if its data and contracts remain compatible.
+
+Rehearse a paused old request that resumes after handoff, stale routing configuration, a retry
+crossing the switch and interruption halfway through the transfer. Each must complete under
+the declared authority or be rejected/reconciled without an unaccounted write. A stop signal
+or a feature-flag change alone is not evidence that admitted work has stopped.
+
 ## Verified technical anchors
 
 - [Jakarta Persistence 3.2, locking and bulk updates](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html):
@@ -240,3 +278,9 @@ Before using dual writes or a backfill, specify:
 - [PostgreSQL 17 lock modes](https://www.postgresql.org/docs/17/explicit-locking.html): UPDATE
   takes a table ROW EXCLUSIVE lock and row locks; this is not an exclusive lock against all
   table access. Validate DDL and backfill costs for the actual engine/version and workload.
+- [AWS rollback-safety account](https://d1.awsstatic.com/builderslibrary/pdfs/ensuring-rollback-safety-during-deployments.pdf),
+  checked 2026-09-19: preparatory readers, writer activation and the restricted rollback target.
+- [HDFS 3.4.2 HA architecture](https://hadoop.apache.org/docs/r3.4.2/hadoop-project-dist/hadoop-hdfs/HDFSHighAvailabilityWithQJM.html#Architecture),
+  checked 2026-09-19: catch-up before takeover and JournalNode enforcement of a single writer
+  illustrate recipient-side exclusion. This is evidence for the failure mechanism, not a
+  recommendation to add Hadoop or proof that an application's flag/token provides equivalent fencing.

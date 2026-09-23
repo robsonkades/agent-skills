@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: technical-debt-decisions
-version: 1.1.2
+version: 1.1.3
 description: >-
   Deciding when a shortcut is a legitimate trade and when it is just damage: separating
   deliberate and inadvertent debt, constraints delivery pressure does not waive, containing a

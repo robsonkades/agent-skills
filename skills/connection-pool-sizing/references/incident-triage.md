@@ -16,6 +16,16 @@ A sampled zero pending count does not rule out bursts between scrapes. Acquisiti
 also accompany inability to create/validate connections, not just a fully occupied healthy pool.
 Check acquisition distributions, timeout deltas, effective limits and connectivity together.
 
+Check which outcomes each metric covers. In HikariCP 5.1.0/6.3.3, successful acquisitions and
+acquisition timeouts both feed the `acquire` timer; an interrupted pool wait feeds neither that
+timer nor the timeout counter. A timeout is already in the acquisition count: adding timeout
+count to it double-counts those attempts. Outstanding waits and work rejected before reaching
+the pool need separate evidence. A percentile alone can hide a small but SLO-breaking error
+fraction; retain failure/cancellation rates and correlate request outcomes. These are tracker
+semantics, not a portable JDBC contract; inspect the target version's
+[acquisition paths](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/src/main/java/com/zaxxer/hikari/pool/HikariPool.java)
+and use the [sizing reference](sizing-and-configuration.md) for the completed-borrow rate.
+
 ## 2. Is W inflated, and for whom?
 
 ```

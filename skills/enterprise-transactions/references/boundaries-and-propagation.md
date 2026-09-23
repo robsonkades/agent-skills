@@ -17,6 +17,9 @@ Choose propagation from commit semantics. An audit attempt may commit independen
 For one datasource, ten outer transactions holding ten connections can all wait for an inner
 connection from a pool of ten. Bound concurrent outer work and model nesting, pool-acquisition
 timeouts and lock dependencies; there is no universal "effective pool of five" rule.
+Count acquired physical connections, not annotations: with a configured lazy datasource,
+an empty transactional scope may never borrow a connection. This does not remove the extra
+connection demand when both outer and inner scopes perform JDBC work.
 
 An inner `REQUIRED` normally joins the outer isolation/timeout/read-only settings rather
 than upgrading them. Inspect manager validation options when mismatches must be rejected.
@@ -118,9 +121,20 @@ Candidate shapes, selected by business semantics rather than a universal ranking
    by local failure, and local success followed by remote failure.
 2. **Outbox**: write the order and a `pending_charge` row in the same transaction; a relay
    reads the outbox after commit and calls the gateway with retries. Atomic locally, at
-   least once remotely with durable retry/recovery. Relay crashes can duplicate publication.
-3. **Compensate**: charge first, then write; if the write fails, refund. Only where the
-   remote system supports a reliable reversal.
+   least once remotely with durable retry/recovery. A crash after the charge but before
+   recording completion can repeat it. Reuse a durable operation ID with the gateway's
+   verified idempotency contract; reconcile unknown outcomes when safe repetition cannot
+   be guaranteed. The outbox alone does not deduplicate the charge (`idempotency`).
+3. **Compensate**: charge, attempt the local change, then refund if recovery requires it.
+   First persist a recoverable workflow identity and intent; retain the information needed
+   to reconcile charge outcomes and schedule compensation after a crash. The business must
+   accept the intermediate state and the gateway must support the required refund.
+   Compensation can also fail: persist progress, make retries safe and define escalation
+   for unresolved outcomes. A refund is a new business action, not database rollback.
+
+Test a crash after remote success but before recording completion, and a timeout during
+compensation. Verify that recovery preserves the operation identity, avoids an extra charge
+and retains unresolved work for reconciliation rather than silently marking it complete.
 
 The one shape that is never correct is a remote call inside the transaction with the
 justification that "it will be rolled back if the call fails" — the remote side has already
@@ -184,8 +198,8 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 - [ ] Rollback rule matches the exceptions actually thrown
 - [ ] No reliance on self-invoked transaction attributes
 - [ ] Batch atomicity preserved, or partial progress accepted with durable restartability
-- [ ] `REQUIRES_NEW` used only where the inner work must survive an outer rollback, and the
-      pool is sized for the extra connection
+- [ ] `REQUIRES_NEW` used where independent commit/rollback is required, with capacity
+      for actual nested connection demand and no unbounded wait on outer locks
 - [ ] The non-atomic edge (message, remote call) has a named strategy: outbox, retry or
       compensation
 
@@ -195,3 +209,6 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 - [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html): default rules and overrides.
 - [Spring transaction annotation settings](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html): proxy interception and the 6.2+ global rollback default. Consult the project's version.
 - [Spring 6.2.19 `DataSourceTransactionManager`](https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/jdbc/datasource/DataSourceTransactionManager.html): bound JDBC connection access and optional database read-only enforcement; verify the target provider.
+- [Spring 6.2 `LazyConnectionDataSourceProxy`](https://docs.spring.io/spring-framework/docs/6.2.x/javadoc-api/org/springframework/jdbc/datasource/LazyConnectionDataSourceProxy.html): physical connection acquisition can be deferred until statement creation.
+- [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): duplicate delivery and idempotent processing at the remote edge.
+- [Azure compensating transaction](https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction): recoverable progress, retryable compensation and business-specific restoration.

@@ -8,29 +8,36 @@ An enclosing native frame or, on JDK 21–23, held monitor can prevent an otherw
 unmountable operation from releasing its carrier. `HttpClient` callbacks and custom body
 handlers must be classified separately from its supported network waits.
 
-| Operation                                                   | On a virtual thread             | Carrier                |
-| ----------------------------------------------------------- | ------------------------------- | ---------------------- |
-| Socket read/write/connect/accept (`java.net`, NIO blocking) | unmounts                        | free                   |
-| `HttpClient` send / body reads                              | unmounts                        | free                   |
-| `BlockingQueue` put/take, `CountDownLatch`, `Semaphore`     | unmounts                        | free                   |
-| `Thread.sleep`, `LockSupport.park`                          | unmounts                        | free                   |
-| `ReentrantLock`, `Condition.await`                          | unmounts                        | free                   |
-| `synchronized` entry and `Object.wait` — **JDK 24+**        | unmounts                        | free                   |
-| Blocking while holding `synchronized` — JDK 21–23           | **pins**                        | held, no compensation  |
-| Contended monitor entry — JDK 21–23                         | retains carrier                 | no compensation        |
-| `Object.wait` — JDK 21–23                                   | **captures**                    | compensation may apply |
-| Recognized synchronous file-I/O blocking regions            | **captures**                    | compensation may apply |
-| A blocking call inside a JNI or FFM frame                   | **pins**                        | held, no compensation  |
-| Blocking inside a class initialiser (`<clinit>`), JDK ≤ 25  | **pins**                        | held, no compensation  |
-| CPU-bound computation                                       | neither — nothing to unmount at | held until it finishes |
+| Operation                                                    | On a virtual thread             | Carrier                                      |
+| ------------------------------------------------------------ | ------------------------------- | -------------------------------------------- |
+| Socket read/write/connect/accept (`java.net`, NIO blocking)  | unmounts                        | free                                         |
+| `HttpClient` send / body reads                               | unmounts                        | free                                         |
+| `BlockingQueue` put/take, `CountDownLatch`, `Semaphore`      | unmounts                        | free                                         |
+| `Thread.sleep`, `LockSupport.park`                           | unmounts                        | free                                         |
+| `ReentrantLock`, `Condition.await`                           | unmounts                        | free                                         |
+| `synchronized` entry and `Object.wait` — **JDK 24+**         | unmounts                        | free                                         |
+| Java park while holding `synchronized` — JDK 21–23           | **pins**                        | held; pinning alone requests no compensation |
+| Contended monitor entry — JDK 21–23                          | retains carrier                 | no compensation                              |
+| `Object.wait` — JDK 21–23                                    | **captures**                    | compensation may apply                       |
+| Recognized synchronous file-I/O blocking regions             | **captures**                    | compensation may apply                       |
+| Java park inside an enclosing JNI or FFM frame               | **pins**                        | held; pinning alone requests no compensation |
+| Direct native blocking without a JDK compensation hook       | retains carrier                 | held, no compensation                        |
+| Java park inside a class initialiser (`<clinit>`), JDK 21–25 | **pins**                        | held; pinning alone requests no compensation |
+| CPU-bound computation                                        | neither — nothing to unmount at | held until it finishes                       |
 
-The three outcomes are genuinely different problems:
+The useful distinction is the outcome of the actual wait:
 
 ```text
-unmount      the carrier runs someone else's work.            Nothing to fix.
-capture      the scheduler adds a carrier to cover for it.    Costs threads + memory; has a ceiling.
-pin          the carrier is gone until the call returns.      Costs a carrier outright; no ceiling protects you.
+unmount                  the carrier can run another task; downstream limits still apply.
+retain + compensate      spare capacity may be provided within scheduler/resource limits.
+retain, no compensation  carrier unavailable until progress; enough such waits can starve queued work.
 ```
+
+Do not infer compensation solely from the presence of a native frame. For example, OpenJDK
+25's `Blocker.begin()` asks `CarrierThread.beginBlocking()` to compensate before a recognized
+blocking region; this can wrap native I/O. A failed unmount due to pinning does not itself
+invoke that mechanism. These implementation hooks are evidence to inspect, not application
+APIs to call.
 
 ## Telling them apart with evidence
 
@@ -40,13 +47,18 @@ is a startup input, not an immutable ceiling after runtime parallelism changes. 
 `virtual-threads-internals` for unavailable estimates and compensation limits.
 
 ```bash
-# Candidate carriers over time. Names are implementation details; correlate with workload.
+# Capture logical request stacks and platform-thread context for the same workload window.
 jcmd <pid> Thread.dump_to_file -format=json /tmp/d.json
-grep -c 'VirtualThread-unparker\|ForkJoinPool-1-worker' /tmp/d.json
+jcmd <pid> Thread.print > /tmp/platform-threads.txt
 
 # Pinning events: check recording settings; the default 20 ms threshold hides short cases.
 jfr print --events jdk.VirtualThreadPinned recording.jfr
 ```
+
+On JDK 21–23, identify candidate carriers from scheduler containers/stacks and correlate
+their counts across captures; names are implementation details. Do not count
+`VirtualThread-unparker` timer helpers or pollers as carriers. These shell commands assume
+a POSIX shell, compatible JDK tools, attach access and an existing recording.
 
 Rules of reading:
 
@@ -70,16 +82,24 @@ implementation's maximum-pool-size policy. Platform-stack reservation, commit, g
 and native overhead vary by OS, JVM and `-Xss`; measure native memory and process thread
 count rather than multiplying by a presumed 1 MB constant.
 
+For a concrete OpenJDK 25 example, `FileChannelImpl` read paths use
+`Blocker.begin(direct)` and write paths use `Blocker.begin(sync || direct)`. Ordinary
+buffered reads therefore do not request compensation through that hook. Here `direct`
+means the file's direct-I/O mode, not a direct `ByteBuffer`. Inspect the operation and
+open mode before predicting carrier growth; do not change storage semantics to induce it.
+
 Three responses, in order of preference:
 
 1. **Reduce the concurrency of the file work.** Put a semaphore before acquisition and find
-   its size experimentally from throughput, p99, device queueing, CPU and memory. HDDs,
-   local NVMe, network filesystems and page-cache hits have radically different optima.
+   its size experimentally from throughput, p99, device queueing, CPU and memory. Bound
+   waiting admission too; a semaphore alone does not bound the number of retained requests.
+   HDDs, local NVMe, network filesystems and page-cache hits have different optima.
 2. **Isolate it.** Run file I/O on a dedicated, sized platform executor, keeping the
    virtual-thread scheduler for network work. Blocking a thread you provisioned is fine;
    retaining a shared carrier may justify isolation when measurements show interference.
-3. **Raise `maxPoolSize` deliberately**, as a memory budget with an alarm on saturation —
-   not as a reflex. It buys headroom; it does not remove the capture.
+3. **Consider `maxPoolSize` only for waits that request compensation**, with measured native
+   memory headroom and an alarm on saturation. It does not remove carrier retention or
+   help an uncompensated file wait.
 
 Memory-mapped I/O (`MappedByteBuffer`) can stall on page faults while retaining the carrier,
 without a Java park or scheduler compensation. JFR file-read and pinning events alone do
@@ -127,19 +147,25 @@ internals mean a JDBC product name is not enough to classify the complete call p
 
 ## What to do with each finding
 
-| Finding             | Action                                                                    |
-| ------------------- | ------------------------------------------------------------------------- |
-| Unmounts            | nothing; size the downstream resource and move on                         |
-| Captures (file I/O) | bound the concurrency, or isolate on a sized platform pool                |
-| Pins (native frame) | isolate on a sized platform executor; the carrier pool must not absorb it |
-| Pins (`<clinit>`)   | force class initialisation at startup, before the load arrives            |
-| CPU-bound           | a fixed pool sized to cores; virtual threads add nothing                  |
+| Finding             | Action                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| Unmounts            | nothing; size the downstream resource and move on                                                   |
+| Captures (file I/O) | bound the concurrency, or isolate on a sized platform pool                                          |
+| Pins (native frame) | isolate the blocking native invocation when duration/frequency justify it                           |
+| Pins (`<clinit>`)   | move blocking initialization to explicit startup when feasible; inspect initialization dependencies |
+| CPU-bound           | bound CPU parallelism from effective CPU capacity; isolate long phases when they impair other work  |
 
 Use isolation when retained-carrier duration and frequency justify it, rather than for
 every native call. Bound queued work as well as workers, propagate failures, and retain
 resource ownership until the operation actually finishes. Cancellation or a timed-out
 Future does not prove a native call stopped; configure operation deadlines and account for
 work that continues after the caller leaves.
+
+Place the offload boundary outside the frame that prevents unmounting. A JNI callback that
+submits inner work and waits for its Future still has the native frame on its stack; it
+can retain its carrier while the worker runs. The same concern applies to waits inside
+class initialization. Initializers that await tasks requiring that same class can also
+deadlock; warming them at startup does not repair the dependency cycle.
 
 ## Sources
 
@@ -156,3 +182,13 @@ work that continues after the caller leaves.
   These are implementation details, not API contracts.
 - [JDK 21 VirtualThread implementation](https://github.com/openjdk/jdk/blob/jdk-21-ga/src/java.base/share/classes/java/lang/VirtualThread.java):
   pinned parking and event emission; direct native blocking need not take this path.
+- [OpenJDK 25 Blocker](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/misc/Blocker.java)
+  and [CarrierThread](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/misc/CarrierThread.java):
+  explicit compensation regions, independent of the native operation's inability to unmount.
+- [OpenJDK 25 VirtualThread](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/lang/VirtualThread.java):
+  scheduler carriers versus timer/unblocker helpers.
+- [OpenJDK 25 FileChannelImpl](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/sun/nio/ch/FileChannelImpl.java):
+  compensation conditions depend on the operation and file mode.
+- [JLS 25 initialization procedure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2):
+  another thread needing the initializing class waits for initialization to finish; use this
+  dependency rule to identify cycles before moving initialization work.

@@ -8,6 +8,13 @@ guarantee escalation cannot occur.
 An old or quiet transaction is a lead, not proof that it holds the blocking lock or retains the
 versions in question; correlate the actual transaction, requests, generation and cleanup evidence.
 
+`NOLOCK`/`READUNCOMMITTED` changes the read contract: results can include uncommitted data or omit
+or duplicate rows. Consider it only when that consumer can tolerate those anomalies. It still takes
+schema-stability (Sch-S) locks during compilation and execution, so schema-modification (Sch-M)
+locks can block it. For data-lock blocking, compare query/transaction changes and row versioning
+against the required consistency; for schema-lock blocking, investigate the actual DDL and wait
+chain. Neither `NOLOCK` nor RCSI is a general escape from schema locks.
+
 For deadlocks, read the resource list and access paths that close the cycle, then the process order.
 Choose deterministic access order, a narrower lock range, shorter transaction, or bounded retry from
 the mechanism—not from which transaction SQL Server selected as victim.
@@ -71,6 +78,7 @@ from successful ones and keep duration units explicit (`avg_duration` is in micr
 
 ## Primary references
 
+- [Table hints, Microsoft documentation source](https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/hints-transact-sql-table.md) — READUNCOMMITTED/NOLOCK anomalies and Sch-S/Sch-M behavior.
 - [Row versioning guide](https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-transaction-locking-and-row-versioning-guide?view=sql-server-ver16) — ADR/PVS, retention and monitoring.
 - [MAXDOP](https://learn.microsoft.com/en-us/sql/database-engine/configure-windows/configure-the-max-degree-of-parallelism-server-configuration-option?view=sql-server-ver16) — task scope and overrides.
 - [Query Store runtime statistics](https://learn.microsoft.com/en-us/sql/relational-databases/system-catalog-views/sys-query-store-runtime-stats-transact-sql?view=sql-server-ver16) — aggregation keys and execution types.

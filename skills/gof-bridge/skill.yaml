@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-bridge
-version: 1.2.2
+version: 1.2.3
 description: >-
   Bridge in modern Java: separating an abstraction hierarchy from an implementation hierarchy so
   the two vary independently instead of multiplying into N×M classes. Covers the two-axis test

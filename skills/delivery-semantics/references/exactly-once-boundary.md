@@ -28,14 +28,17 @@ while (running) {
     for (var record : records) {
         producer.send(new ProducerRecord<>("out", transform(record.value())));
     }
-    producer.sendOffsetsToTransaction(offsetsOf(records), consumer.groupMetadata());
+    producer.sendOffsetsToTransaction(records.nextOffsets(), consumer.groupMetadata());
     producer.commitTransaction();
 }
 ```
 
-`offsetsOf(records)` is an omitted helper: return each partition's next position after its
-completed records, never its last processed offset or an offset past unfinished work. The
-production loop also needs these state transitions, not a catch-and-continue wrapper:
+Kafka 4.1 `records.nextOffsets()` carries the next positions and leader-epoch metadata for
+this poll. It is safe here only because all returned records finish before the call, with
+no unfinished earlier batch. A partial or parallel handler must supply offsets for its
+completed per-partition prefix, not this whole map. On older clients inspect the available
+API and retain equivalent metadata; do not upgrade merely to copy the sketch.
+The production loop also needs these state transitions, not a catch-and-continue wrapper:
 
 - On an abortable failure, abort and replay the uncommitted input: aborting the producer does
   not rewind the consumer position. Seek the still-owned partitions to the batch start or
@@ -54,6 +57,11 @@ production loop also needs these state transitions, not a catch-and-continue wra
 - **A second Kafka cluster.** MirrorMaker-style replication is a separate producer.
 - **The same business intent at distinct input offsets.** Both records may commit normally;
   Kafka transactions do not discover application-level identity or collapse those duplicates.
+- **One complete transaction per downstream `poll` or handler.** Commit atomicity does not
+  make a poll a transaction envelope. Poll limits can split results; partition assignment,
+  seeking, compaction and retention can leave a consumer seeing only part of a transaction.
+  If a downstream invariant needs several records applied together, define that application's
+  grouping, completeness and atomic-effect protocol; `read_committed` alone does not supply it.
 - **Downstream consumers reading `read_uncommitted`.** They
   observe aborted records, and the guarantee ends at their first read.
 - **Reproducibility.** A nondeterministic transformation can produce a different value after
@@ -169,3 +177,6 @@ records can be acceptable while duplicate charges are not.
 ## Source
 
 - [Kafka 4.1 producer transaction configuration and recovery contracts](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)
+- [Kafka 4.1 `ConsumerRecords.nextOffsets`](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/ConsumerRecords.html)
+- [Kafka 4.1 consumer configuration](https://kafka.apache.org/41/configuration/consumer-configs/) — `max.poll.records` bounds each poll.
+- [KIP-98 transaction guarantees](https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging) — consumer-side completeness limits; use the versioned API for current recovery behavior.

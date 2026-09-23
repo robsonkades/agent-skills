@@ -9,7 +9,7 @@
 | Traces             | Where the time went across services; which hop failed       | What the code was doing inside a span            | Sampled             | Low, if sampling caught it       |
 | Thread dump        | Captured thread stacks and supported lock information       | Past execution; threads omitted by the mechanism | **Lost on restart** | Target/thread-count dependent    |
 | Heap dump          | Captured objects and reference graph                        | Allocation history without other evidence        | **Lost on restart** | Potential long pause, large file |
-| JFR recording      | Allocation, GC, locks, I/O, exceptions over a window        | Fine detail outside the enabled events           | Rolling buffer      | Low overhead                     |
+| JFR recording      | Configured events/samples over the retained window          | Disabled, thresholded or unsampled observations  | Rolling buffer      | Settings/workload dependent      |
 | Database state     | What was actually committed                                 | What was attempted and rolled back               | Mutating            | Low; beware read locks           |
 | Deployment history | What changed and when                                       | Whether the change is the cause                  | Retained            | Free                             |
 
@@ -49,6 +49,17 @@ configuration and raw artifacts securely; dumps/logs may contain credentials or 
 Copy an existing rolling JFR window before it expires when relevant, rather than assuming a new
 recording can recover history. JFR contents and overhead depend on enabled events/settings.
 
+Before ruling out a cause from **zero JFR events**, verify the target event exists, is enabled,
+and covers the operation and retained time window. Check duration thresholds, sampling/throttling,
+reported data loss and analysis filters; an enabled event is not necessarily a complete census.
+Missing stack traces are a separate coverage gap: inspect stack settings before inferring that a
+particular caller was absent. For example, the OpenJDK 25 default JFC throttles
+`jdk.ObjectAllocationSample` and `jdk.JavaExceptionThrow`, and thresholds `jdk.JavaMonitorEnter`.
+Reuse a known qualifying event as a positive control, or reproduce one in an isolated/bounded
+experiment when needed. A positive control checks the collection path, not completeness. If
+coverage remains unknown, report the empty result without claiming the operation never happened.
+Detailed event selection and JFC configuration belong to `jfr-advanced`.
+
 ## Reading the sources against each other
 
 Correlate independent sources to test hypotheses; two agreeing signals can still share a confounder.
@@ -77,7 +88,8 @@ records, missing correlation or earlier corruption can put the initiating fault 
 When a fault falls in that gap, resist adding a hundred log lines to production. Prefer:
 
 - reproducing in an environment where a debugger or a fuller log level is acceptable;
-- a JFR recording, which captures exceptions, allocation and locks without code changes;
+- a JFR recording whose enabled events and resolution cover the suspected exception, allocation
+  or wait; inspect settings and measured overhead before increasing event volume;
 - one carefully chosen structured log line at the boundary, shipped deliberately, with the
   correlation id (structured-logging).
 
@@ -93,4 +105,7 @@ metric, span or log field only when its diagnostic value justifies its cost. Rec
 do not claim recurrence is prevented merely because a test or dashboard was added.
 
 Sources: [JDK 25 jcmd command impact and syntax](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
-and [JEP 444 thread-dump coverage](https://openjdk.org/jeps/444). Verify the deployed JDK's behavior.
+and [JEP 444 thread-dump coverage](https://openjdk.org/jeps/444). Event coverage examples follow the
+[OpenJDK 25 default JFC](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.jfr/share/conf/jfr/default.jfc).
+Verify the deployed JDK's behavior and active settings rather than assuming its configuration
+matches this template.

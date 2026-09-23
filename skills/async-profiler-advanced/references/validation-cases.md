@@ -1,14 +1,17 @@
-# Behavioral validation cases
+# Decision checks
 
-These are reproducible evaluations of the skill's decisions, separate from tests of the
-profiler, converter, or repository packaging. Run each request in a fresh context with the
-stated fixture. For a comparison, keep model/version, tools, context, and generation settings
-constant; provide this skill and its technical references only to the skill-enabled arm.
-This file is evaluator-only: supply the selected request/context as input and keep this file
-and judging criteria outside response agents' accessible files and tools, including the
-routed reference path. Instructions not to read available criteria are not access isolation. Record tool
-calls, response, observed decisions, and failures; compare decisions, not wording. Do not
-attach to a real service or change host policy to execute these cases.
+Use these examples to challenge a proposed capture or interpretation against common failure
+modes. Requests are illustrative; expected behavior explains the decision and its evidence
+requirements. No request below authorizes attaching to a real service or changing host policy.
+
+These are shipped teaching examples and can also serve as known regression cases. They are
+not held-out evaluations or evidence that an agent followed the skill. For behavioral runs,
+give the actor only the selected request/context as its task and retain this ordinary
+reference as part of the skill; record its exposure to the examples. Freeze evaluator
+criteria separately before running, use fresh sessions, and keep model, tools and context
+comparable across baseline/revised arms. A held-out case needs independently prepared input
+and criteria unavailable to the actor. Report executed behavior separately from structural,
+source or converter checks; written cases alone establish no measured improvement.
 
 ## 1. Representative multi-event conversion
 
@@ -129,29 +132,29 @@ perturbation rather than inferring it from emitted event count.
 **Failure:** Reuses incompatible filter syntax, invents -e trace, or guarantees low overhead
 from the count of calls passing the duration threshold.
 
-## Earlier verification record and limits (1.3.1)
+## 9. CPU fallback established by recorded settings
 
-During that revision, the official v4.5 Linux x64 release's `asprof --help` was executed
-through WSL, and its packaged converter's `--help` was executed through `java -jar` on
-Windows using JDK 25. The differential fixture in `output-and-conversion.md` was converted
-to collapsed and HTML output; collapsed baseline/candidate weights and reversed input order
-were checked. An initial assertion expecting a reversed row for a baseline-only stack failed:
-v4.5 omits that stack. Source inspection confirmed candidate-tree traversal, and the documented
-expectation now records that limitation. These are command/interface and converter tests,
-not behavioral evaluations.
+**Request/context:** “v4.5 CPU capture lacks kernel frames. Its async-profiler
+`jdk.ActiveSetting` entries show `event=cpu`, `engine=ctimer`, and `version=4.5`.
+Tell me whether absence of kernel frames proves sample loss; we may repeat with user-space
+perf events if necessary.”
 
-Lock semantics, native free matching, tracing syntax, and timeout behavior were checked
-against the linked v4.5 primary documentation/source. No live JVM attach, perf-access probe,
-lock/native capture, tracing-overhead trial, or controller-loss experiment was executed.
-The WSL converter launcher could not run directly because that environment had no JDK;
-the packaged converter ran using the Windows JDK instead.
+**Expected behavior:** Use the supplied engine evidence before asking for it again.
+**Required:** Identify the timer engine and its lack of kernel stacks; keep sample loss
+unknown unless diagnostics establish it. If perf is needed, propose the explicit Linux
+`cpu-clock --all-user` event with access checks and a bounded session owned by this controller.
+**Failure:** Calls the engine unknown despite the settings, equates missing kernel frames
+with lost CPU samples, or promises that `--all-user` bypasses seccomp/capability restrictions.
 
-The eight behavioral cases and a controlled with/without-skill comparison remain unexecuted.
-No isolated agent-evaluation runner was used, and no measured behavioral improvement is
-claimed. The follow-up review checked version/filter/resource option scopes against v4.5
-documentation. Converter tests used folded lines `root;ServiceWorker 20`, `root;Servic 5`,
-and `root;Other 10`: `-I 'Service.*'` retained only ServiceWorker; `-I 'Service*'` retained
-only Servic. Both assertions passed. An initial fixture using the name `new` failed to
-distinguish `new*` from `new.*`, since both regexes match that name; the discriminating fixture
-above replaced it. These checks do not validate live filtering, resource exhaustion or
-instrumentation overhead.
+## 10. Incompatible live-byte comparison
+
+**Request/context:** “v4.5 on HotSpot 21: ordinary allocation totals are 2 GB, but
+`--live --total` reports 200 KB and lacks the class retaining most of our heap.
+Compute the survival percentage. Use `--alloc 1k --tlab --live` next time to capture more.”
+
+**Expected behavior:** Reject the ratio and verify event populations and allocation engine.
+**Required:** Distinguish allocation pressure weights from actual sampled survivor sizes,
+state the 1,024-reference live-tracker limit and omissions, reject the forced TLAB/live
+combination, and route retention/root evidence to `heap-dump-analysis`.
+**Failure:** Reports a heap survival percentage, treats missing samples as no retention,
+or guarantees that a shorter interval removes tracker saturation.

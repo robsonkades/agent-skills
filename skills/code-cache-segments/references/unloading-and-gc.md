@@ -1,20 +1,20 @@
 # Unloading and the GC
 
 JDK 20 removed the code cache sweeper (JDK-8290025, "Remove the Sweeper", integrated
-2022-08-25). Everything below describes JDK 25 behaviour; the source references are
-`codeCache.cpp`, `nmethod.cpp` and `compileBroker.cpp` at the `jdk-25-ga` tag, and every
-log line and GC cause was reproduced on Temurin 25.0.3.
+2022-08-25). This reference describes JDK 25 behaviour. Epoch arithmetic and compiler
+restart conditions are checked against `jdk-25.0.3+9`; historical capture examples use
+Temurin 25.0.3. Revalidate collector-specific behavior and failure paths on the target runtime.
 
 ## What changed
 
-| Before JDK 20                                                              | JDK 20 and later                                                                             |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `NMethodSweeper` thread scans stacks periodically                          | No thread. nmethod entry barriers stamp each nmethod with the GC epoch of its last entry     |
-| `not_entrant → zombie → freed`, one sweeper pass per transition            | `not_entrant → unlinked → freed`, performed by the GC's code-cache unloading phase           |
-| "Code cache flushing" marks cold code not-entrant ahead of need            | `is_cold()` lets the GC unload an nmethod not entered for `2 × cold_gc_count` marking cycles |
-| Sweeper triggered by its own threshold                                     | `CodeCache::gc_on_allocation()` **requests a GC** when allocation crosses a threshold        |
-| `UseCodeAging`, `SweeperLogEntries`, sweeper JFR events                    | Removed. `jfr metadata` on 25 lists no `CodeSweeper*` or `SweepCodeCache` event              |
-| `UseCodeCacheFlushing`, `MethodFlushing`, `NmethodSweepActivity`, `Sweep*` | Retained with new semantics — see the flag table below                                       |
+| Before JDK 20                                                              | JDK 20 and later                                                                                |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `NMethodSweeper` thread scans stacks periodically                          | No sweeper thread; entry barriers support tracking nmethod activity in GC epochs                |
+| `not_entrant → zombie → freed`, one sweeper pass per transition            | `not_entrant → unlinked → freed`, performed by the GC's code-cache unloading phase              |
+| "Code cache flushing" marks cold code not-entrant ahead of need            | `is_cold()` uses an epoch-age comparison; two epoch increments represent one full marking cycle |
+| Sweeper triggered by its own threshold                                     | `CodeCache::gc_on_allocation()` **requests a GC** when allocation crosses a threshold           |
+| `UseCodeAging`, `SweeperLogEntries`, sweeper JFR events                    | Removed. `jfr metadata` on 25 lists no `CodeSweeper*` or `SweepCodeCache` event                 |
+| `UseCodeCacheFlushing`, `MethodFlushing`, `NmethodSweepActivity`, `Sweep*` | Retained with new semantics — see the flag table below                                          |
 
 The consequence that matters in production: **reclaiming installed nmethods normally depends
 on GC unloading**, and code-cache pressure can schedule it. Temporary compiler `BufferBlob`s
@@ -25,7 +25,7 @@ Java heap is healthy can still show collections whose cause names the code cache
 
 ```
 not_installed          allocated, code being installed
-   → in_use            entered normally; entry barrier records the GC epoch on each entry
+   → in_use            entered normally; entry-barrier processing records GC-epoch activity
    → not_entrant       retirement after replacement or invalidation; existing frames may remain
 in_use or not_entrant
    → (unlinked)        GC identifies an unloading-eligible nmethod, including cold code
@@ -87,9 +87,14 @@ column; this reference covers why it says what it says.
 Run at each unloading. It estimates the allocation rate since the last unloading, computes
 how long until the aggressive threshold would be hit at that rate, and divides by
 `NmethodSweepActivity` (4) to get a "cold timeout"; that timeout in GC intervals is
-`cold_gc_count` (never below 2). An nmethod not entered for more than `2 × cold_gc_count`
-marking cycles is unloaded even though it is still valid — and recompiled if it becomes hot
-again, which is the thrashing pattern where per-heap usage oscillates without settling.
+`cold_gc_count` (never below 2). On 25.0.3+9, the age test is
+`previous_completed_gc_marking_cycle() > nmethod_gc_epoch + 2 * cold_gc_count`.
+The code-cache epoch increments at both marking start and finish: the factor two converts
+intervals to epoch units, not twice that many complete GC cycles. The strict comparison,
+current phase and nmethod activity matter; this is not a fixed wall-clock expiration.
+Eligible cold code can be unloaded while still semantically valid and later recompiled
+when hot again. Correlate recompilation and unloading before attributing usage oscillation
+to this heuristic.
 
 The log line to read, `-Xlog:codecache=info`:
 
@@ -100,8 +105,10 @@ cold gc count: 4, used: 4.533 MB (18.886%), last used: 3.601 MB (15.004%), gc in
 
 `No code cache pressure; don't age code` means no allocation since the last unloading —
 nothing is cold-flushed. `Code cache critically low; use aggressive aging` means free space is
-under `StartAggressiveSweepingAt` and `cold_gc_count` was forced to 2. Platforms without
-nmethod entry barriers get no cold heuristic at all (`is_cold` returns `false`).
+under `StartAggressiveSweepingAt` and `cold_gc_count` was forced to 2. Temporal aging needs
+supported nmethod entry barriers. Independently, with `MethodFlushing` enabled, the predicate
+can accept a not-entrant, off-stack nmethod before its barrier-support check; absence of
+barriers does not establish that all retired code must remain allocated.
 
 ## Flags that survived, and what they mean now
 
@@ -134,35 +141,44 @@ code-cache GC messages alone do not establish improvement.
 code heap size using -XX:ProfiledCodeHeapSize=` — dumps the `Compiler.codecache` summary to
   stdout, and commits `jdk.CodeCacheFull`. With `-XX:+UnlockDiagnosticVMOptions
 -XX:+PrintCodeHeapAnalytics` it also prints the full analytics at that moment.
-- After a GC frees memory, `CodeCache::maybe_restart_compiler` re-enables compilation, logs
-  `Restarting compiler`, commits `jdk.JITRestart` (`freedMemory`, `codeCacheMaxCapacity`) and
-  increments `restarted_count`.
+- After nmethod purging reports freed memory, `CodeCache::maybe_restart_compiler` attempts
+  to resume compilation. A successful stopped-to-running transition increments
+  `restarted_count`. In 25.0.3+9 the function emits `Restarting compiler` and `jdk.JITRestart`
+  (`freedMemory`, `codeCacheMaxCapacity`) without checking whether that transition succeeded.
+  `Compilation: enabled` establishes current eligibility; an increase in `restarted_count`
+  across the observed window establishes a restart transition. Productive recovery requires
+  successful work started after that transition;
+  completion of older in-flight tasks is insufficient. Check `UseCompiler` and shutdown errors
+  rather than treating the log/event as proof of recovery from permanent shutdown.
 
-So on 25 with defaults, "Compiler has been disabled" is a transient state that flips back
-after the next unloading GC, and `stopped_count`/`restarted_count` climbing together is the
-oscillation signature. A `stopped_count` of 1 with `restarted_count` 0 and `Compilation:
-disabled` for minutes means either flushing is off or nothing is freeable — read
-`Compiler.CodeHeap_Analytics` for what occupies the heap.
+With normal flushing, exhaustion can cause a recoverable stop; the next GC is not guaranteed
+to reclaim eligible nmethods or restore useful capacity. Repeated stopped/restarted counter
+increments demonstrate repeated transitions, not their cause. If compilation stays disabled,
+check flushing and unloading settings, pinned/live code, permanent compiler shutdown and the
+surrounding error log before choosing a remedy.
 
-An accompanying `C1 initialization failed. Shutting down all compilers` after the warning is
-`UseDynamicNumberOfCompilerThreads` starting a thread while compilation is stopped; it is a
-follow-on, not a second fault.
+`C1 initialization failed. Shutting down all compilers` is not sufficient to diagnose a
+harmless follow-on from cache pressure. `shutdown_compiler_runtime` also handles compiler
+initialization failure; inspect preceding errors and `UseCompiler`. A permanently disabled
+compiler cannot be repaired merely by waiting for another unloading GC, and its shutdown
+need not increment `stopped_count`.
 
 ## Decisions
 
-| Situation                                                                   | Decision                                                                                                                                   |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Code-cache-triggered collections consume material CPU or pause budget       | Confirm expected compilation/class-generation demand and reclaimed bytes; then compare more capacity with reducing the source of churn     |
-| Same, on Serial or Parallel                                                 | Attribute the observed Full GC cost before changing heap or code-cache capacity; validate the selected change under representative load    |
-| Per-heap `used` oscillating, `stopped_count` and `restarted_count` climbing | Thrashing: capacity, not flags. Do not set `-XX:-UseCodeCacheFlushing` to "stop the churn" — it converts oscillation into a permanent stop |
-| Proposal to set `NmethodSweepActivity=0`                                    | Treat as a bounded diagnostic experiment; compare recompilation cost, GC cost, exhaustion risk and recovery behavior                       |
-| `Compilation: disabled` for minutes, `restarted_count=0`                    | Check `UseCodeCacheFlushing`, then `CodeHeap_Analytics` for what cannot be freed — pinned by frames, or live and simply too much code      |
+| Situation                                                                   | Decision                                                                                                                                                                                                |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code-cache-triggered collections consume material CPU or pause budget       | Confirm expected compilation/class-generation demand and reclaimed bytes; then compare more capacity with reducing the source of churn                                                                  |
+| Same, on Serial or Parallel                                                 | Attribute the observed Full GC cost before changing heap or code-cache capacity; validate the selected change under representative load                                                                 |
+| Per-heap `used` oscillating, `stopped_count` and `restarted_count` climbing | Possible thrashing: correlate recompilation, unloading and capacity demand before choosing a remedy. Do not disable flushing to mask churn; a subsequent full cache can permanently disable compilation |
+| Proposal to set `NmethodSweepActivity=0`                                    | Treat as a bounded diagnostic experiment; compare recompilation cost, GC cost, exhaustion risk and recovery behavior                                                                                    |
+| `Compilation: disabled` for minutes, `restarted_count=0`                    | Check `UseCompiler`, shutdown errors and flushing/unloading settings; then inspect code that remains live or pinned                                                                                     |
 
 ## Authoritative sources
 
 - [JDK-8290025: Remove the Sweeper](https://bugs.openjdk.org/browse/JDK-8290025)
-- [JDK 25 HotSpot `codeCache.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeCache.cpp)
-- [JDK 25 HotSpot `nmethod.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
+- [JDK 25.0.3+9 HotSpot `codeCache.cpp`: epochs and restart attempt](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp)
+- [JDK 25.0.3+9 HotSpot `nmethod.cpp`: cold-code predicate](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/nmethod.cpp)
 - [JDK 25 HotSpot `ciEnv.cpp`: replacement retirement](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/ci/ciEnv.cpp)
 - [JDK 25 HotSpot `codeBlob.cpp`: explicit runtime-blob freeing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeBlob.cpp)
-- [JDK 25 HotSpot `compileBroker.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)
+- [JDK 25.0.3+9 HotSpot `compileBroker.cpp`: initialization failure and shutdown](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
+- [JDK 25.0.3+9 HotSpot `compileBroker.hpp`: compiler state transitions](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.hpp)

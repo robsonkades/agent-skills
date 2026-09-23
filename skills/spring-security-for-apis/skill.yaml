@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: spring-security-for-apis
+version: 1.0.0
+description: >-
+  Configure and review Spring Security Servlet APIs when filter-chain matchers leave
+  routes uncovered, bearer tokens need JWT or opaque-token validation, claim mapping
+  produces unexpected authorities, method checks are bypassed, or CSRF, CORS and
+  401/403 behavior are unclear. Covers resource-server wiring and adversarial security
+  tests; object ownership, tenant policy and transactional authorization belong to
+  java-application-security-basics and service-layer-design. Excludes WebFlux and
+  implementing an identity provider.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-security-for-apis
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-security-for-apis
+
+keywords:
+  - java
+  - spring-security
+  - servlet
+  - oauth2
+  - jwt
+  - authorization
+  - csrf
+  - cors
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/
+
+suggests:
+  - java-application-security-basics
+  - service-layer-design
+  - query-objects-and-specifications
+  - structured-logging
+  - rpc-and-api-contracts
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Security for APIs
+      short_description: Servlet filter chains, bearer validation and browser security

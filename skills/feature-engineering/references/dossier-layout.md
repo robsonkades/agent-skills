@@ -49,8 +49,10 @@ directories. External writes still follow the user's authorization and available
 - **progress.md** — the entry point for resumption: current status, blockers, baseline revisions
   and links to the active plan, decisions, contracts and evidence. Those authoritative records
   must also be current or explicitly stale; read affected records before resuming implementation.
-- **execution-log.md** — append-only. Entries are never edited or deleted, because the value is
-  the chronology; a correction is a new entry.
+- **execution-log.md** — preserve chronology by appending corrections instead of rewriting past
+  outcomes. Avoid secrets and personal payloads. If sensitive content was recorded, follow the
+  repository's authorized redaction procedure and retain a sanitized correction trail; append-only
+  history does not require preserving exposed sensitive content.
 - **decisions/** — ADRs for choices that warrant a separate record; routine decisions stay in
   the existing decision log. Follow the local lifecycle through architecture-decision-making,
   preserving prior rationale when a choice changes.

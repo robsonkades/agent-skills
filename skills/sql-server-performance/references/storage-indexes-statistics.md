@@ -23,6 +23,13 @@ A targeted `UPDATE STATISTICS` comparison may help when the evidence and authori
 that mutation; it is not a prerequisite for every review. Generic
 calendar thresholds and `sp_updatestats` do not establish that the important histogram is accurate.
 
+`UPDATE STATISTICS` commits independently of an enclosing transaction; a later `ROLLBACK` does
+not restore the previous statistics. It can also trigger plan recompilation. Before an authorized
+comparison, preserve relevant statistics, plans and runtime evidence and identify how to mitigate
+a regression. Check affected parameter populations after the change. A scoped, monitored plan
+control may recover acceptable performance, but it is not restoration of the old statistics;
+see the concurrency/plans reference for forcing limits and reassessment.
+
 Query Store supplies plan history and aggregated runtime intervals. Correlate it with independently
 captured parameter distributions, statistics and compatibility changes; history alone does not
 prove which change caused a regression. See the concurrency/plans reference for capture limits.
@@ -55,6 +62,8 @@ log/replica impact, scratch space, stop conditions, and validity after resume/fa
 
 ## Primary references
 
+- [Transaction guide](https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-transaction-locking-and-row-versioning-guide?view=sql-server-ver16) — UPDATE STATISTICS commits independently of an enclosing transaction.
+- [UPDATE STATISTICS](https://learn.microsoft.com/en-us/sql/t-sql/statements/update-statistics-transact-sql?view=sql-server-ver16) — recompilation and update costs.
 - [Index architecture](https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-index-design-guide?view=sql-server-ver16) — rowstore, locators and layout alternatives.
 - [GUID comparison](https://learn.microsoft.com/en-us/sql/connect/ado-net/sql/compare-guid-uniqueidentifier-values?view=sql-server-ver17) — SQL Server ordering differs from binary timestamp ordering.
 - [RFC 9562, UUIDv7](https://www.rfc-editor.org/rfc/rfc9562.html#section-5.7) — timestamp-first layout; combine with SQL Server's comparison rules before assuming insertion order.

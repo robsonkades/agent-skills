@@ -9,8 +9,8 @@ description: >
   domain and the price is not stated, when a base class from the framework appears in business
   code, or when a framework's programming model is spreading beyond the adapters. Does not
   cover which patterns a framework already implements (patterns-and-modern-frameworks), layer
-  dependency direction (layering-and-boundaries), the data-access pattern behind the
-  one-model/two-model choice (data-source-patterns), the mapping itself
+  dependency direction (layering-and-boundaries), data-access ownership patterns
+  (data-source-patterns), the mapping itself
   (orm-structural-mapping), releasable component boundaries
   (component-and-release-boundaries), or testing strategy (architecture-testing).
 ---
@@ -66,7 +66,8 @@ Use this ladder as an initial hypothesis, then adjust for the actual semantics a
 CHEAP — usually mechanical, with cost proportional to occurrences
   Constructor injection, @Component/@Service on a class you own.
   The design may remain plain Java, but annotated classes still require
-  the annotation dependency to compile and framework scanning to wire.
+  the annotation dependency to compile. Managed wiring needs bean registration
+  and configuration; component scanning is one option, not a requirement.
 
 MODERATE — replaceable per call site, tediously
   @Transactional, @Scheduled, @Cacheable, @RestController mappings.

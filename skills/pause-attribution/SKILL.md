@@ -82,9 +82,11 @@ a production change improved latency.
 - A safepoint-log parser written for one decorator set can silently match nothing against
   another. A report of "0 events found" requires checking that events actually occurred,
   rotation/loss, level/tags and parser coverage before drawing a runtime conclusion.
-- High TTSP can arise from long intervals between polls, compiler/runtime/native regions,
-  thread transitions, page faults or OS descheduling. Counted-loop strip mining is one common
-  model, not an exhaustive catalogue; prove the delayed thread and stack/time window.
+- High TTSP can arise from long intervals between polls, compiler/runtime no-poll regions,
+  unsafe thread transitions, page faults or OS descheduling. A long native call alone is not
+  evidence: HotSpot can consider a stable native-state thread safepoint-safe. Counted-loop
+  strip mining is one common model, not an exhaustive catalogue; prove the delayed thread's
+  state and stack/time window using `references/attributing-time-to-safepoint.md`.
 - `-XX:+UseCountedLoopSafepoints` is a candidate only when the effective value and compiled
   loop show missing backedge polls. Parallel/Serial defaults were `false` (executed, 25.0.3);
   calls and other points inside a loop may still poll. Under G1, ZGC and

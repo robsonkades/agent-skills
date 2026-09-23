@@ -38,7 +38,8 @@ are not portable Java guarantees.
    interpreting events, counters, empty profiles, or virtual-thread data.
 3. **Attribute bytes under representative load.** Use weighted allocation stacks to rank
    sites, preserving the sample population, interval/throttle, filters and window. Verify
-   events and stacks are present and the target path ran. Reconcile totals with independent
+   events and stacks are present, check recording loss, and confirm the target path ran.
+   A readable recording is not proof of complete coverage. Reconcile totals with independent
    counters where available. A missing site may be undersampled or filtered; it does not
    prove that the JIT eliminated it. First-instrument and general capture planning belong
    to `jfr-and-async-profiler`.
@@ -58,8 +59,9 @@ are not portable Java guarantees.
 6. **Validate both bytes and outcome.** Repeat a matched workload in the affected lifecycle
    phase with comparable instrumentation: warm it for steady-state claims, but retain cold
    start or ramp allocation when that is the goal. Compare site bytes, total bytes/op,
-   throughput, CPU, retained heap and the original latency/GC metric. Repeat enough to
-   distinguish the effect from variation.
+   throughput, CPU, retained heap and the original latency/GC metric. If buffers move off
+   heap, include native memory and ownership costs; use `off-heap-memory` for that analysis.
+   Repeat enough to distinguish the effect from variation.
    A smaller percentage alone is insufficient, and moving bytes to another site is not a
    reduction. JMH `-prof gc` can test an isolated mechanism; it does not establish a service
    latency improvement. Report inconclusive results and the next discriminating measurement.

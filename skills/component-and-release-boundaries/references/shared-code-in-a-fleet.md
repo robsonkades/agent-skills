@@ -137,14 +137,19 @@ case; they legitimately share the entity and the schema.)
 
 ## Deciding: duplication or a library
 
-Duplication has a bad reputation earned in a single codebase, where two copies of one rule
-means a fix applied once. Across independently released services the calculus is different,
-because the library adds a coupling that the duplicate does not.
+Duplicating one rule can require repeating fixes and tests. Across independently released
+services, compare that maintenance cost with a library's compatibility and upgrade obligations.
+Keep independently owned domain policies separate as described above. For stable technical or
+platform code, reuse can be worthwhile even when divergence would be allowed; the absence of a
+mandatory shared invariant does not by itself settle the economics.
 
 ```text
-Is divergence between the two copies a DEFECT (not merely untidy)?
-        no  → duplicate. Note in both places that the other exists
-              and that they are deliberately independent.
+Do consumers need the same stable abstraction, rather than coincidentally similar code?
+        no  → keep independent copies and record the ownership/change reasons.
+        yes ↓
+
+Does reuse avoid enough maintenance cost or correctness risk to justify a release unit?
+        no  → keep it local; name the evidence that would justify extraction later.
         yes ↓
 
 Can supported old consumers coexist for the agreed upgrade window?
@@ -205,6 +210,10 @@ believing:
   sources against a candidate compatible library and test already-built old binaries with it
   when that deployment mode is supported. Recompiling today's source against an arbitrarily
   old library tests the wrong direction: using a newly added API does not imply lockstep.
+- **The publication test.** Build a separate consumer from the candidate artifact and
+  metadata, then exercise its resolved runtime dependencies. Follow the
+  [consumer dependency checks](component-principles.md#check-the-published-consumer-boundary);
+  a passing producer build or converged dependency tree alone does not establish compatibility.
 - **The upgrade blast radius.** Count consumers affected and distinguish upgrades required
   eventually, within a deadline, or simultaneously. Only the last establishes a lockstep
   deployment requirement for that change; record the contract that forces it.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-api-design
-version: 1.2.2
+version: 1.2.3
 description: >-
   Java API design from ordinary, advanced and invalid consumer calls: names carrying domain vocabulary,
   method and boolean naming conventions, arity and parameter objects, overload hazards,

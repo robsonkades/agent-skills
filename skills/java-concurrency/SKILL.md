@@ -86,7 +86,8 @@ JDK/API status and framework constraints:
 - **Lexical lifetime favors structured ownership**, when a supported API/framework fits. Long-lived
   consumers, schedulers and supervisors need an explicit service lifecycle.
 - **A future is a value handle; reactive streams are a demand protocol.** Do not select either only
-  to avoid blocking syntax.
+  to avoid blocking syntax. Demand counts items; assess retained bytes and outstanding downstream
+  work separately before claiming that resources are bounded.
 - **State ownership precedes primitive choice.** Prefer immutable snapshots/confinement when they
   match semantics; otherwise define atomic invariants and happens-before before locks/atomics.
 - **Overload behavior is part of correctness.** Bound, reject, queue, shed, degrade, or backpressure

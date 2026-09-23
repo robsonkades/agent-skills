@@ -24,11 +24,11 @@ decision in an enterprise application affects what a change costs for
 the rest of the system's life, and it is routinely made by habit — a domain model because
 the team read about aggregates, or a service class because the previous project had one.
 
-Two failures recur. A rich domain model over five CRUD
-screens buys mapping code, aggregate loads and a learning curve to protect invariants that
-do not exist. A procedural service layer over genuinely interacting rules produces the same
-rule written four times, each slightly different, discovered when they disagree in
-production.
+Two failures recur. Introducing a rich domain model for CRUD screens can add mapping,
+loading and learning costs without an invariant that benefits from that structure.
+Procedures that each encode the same interacting rules can diverge, with the disagreement
+discovered only in production. Inspect the actual ownership and costs before diagnosing
+either failure from a pattern label.
 
 ## The three organisations
 
@@ -39,12 +39,14 @@ Transaction Script     one procedure per business transaction; data is
 
 Domain Model           objects with data and behaviour, mirroring the
                        business; invariants enforced by the objects that
-                       own them. Costs a mapping layer and a load path.
+                       own them. If persisted, assess mapping and loading
+                       costs under the chosen data-access pattern.
 
 Table Module           one class per table (or per record type) holding
                        the logic for all rows of that table; operates
-                       over a record set rather than per-instance.
-                       Set-oriented, close to the data, no identity map.
+                       over a record set rather than one domain object
+                       per row. Business ownership distinguishes it
+                       from a persistence-only Table Data Gateway.
 ```
 
 The distinction that matters is not "objects versus procedures" but **where an invariant is
@@ -52,6 +54,13 @@ enforced**: in every procedure that touches the data, in the object that owns th
 in the table class that owns the set.
 
 ## Workflow
+
+The pattern choice has no Java release requirement. For implementation changes, inspect the
+project's compiler/runtime, Spring/JPA versions, persistence access strategy and transaction
+configuration. Examples are partial sketches with fixture types omitted; the JdbcClient
+variant needs Spring 6.1+ and Java 17+. The Domain Model reference states each language
+construct's release requirement. Preserve the target and use its existing APIs rather than
+upgrading it to copy a sketch.
 
 1. **Inventory the rules, not the entities.** List the actual business rules, then mark
    which ones depend on other rules or on state the operation must first establish. Rule
@@ -85,7 +94,8 @@ in the table class that owns the set.
 
 ```text
 Data in, validate, write out; rules do not interact; a few branches
-        → Transaction Script. The domain model here is pure cost.
+        → Transaction Script is a simple starting point. Retain a small
+          adequate model when replacing it has no demonstrated benefit.
 
 Rules interact and coordinating their state across operations is costly
         → Consider Domain Model with explicit invariant ownership; compare
@@ -105,17 +115,20 @@ record-set tooling; reporting and bulk updates dominate
 
 Complex logic on data owned and shaped by someone else (mainframe, vendor
 schema, partner feed)
-        → Domain Model plus a translation layer, so the foreign shape does
-          not become the model (legacy-enterprise-modernization).
+        → Consider Domain Model plus translation when business concepts
+          need independent state and behavior. A translation with shared
+          policies may suffice (legacy-enterprise-modernization).
 
 Mostly CRUD with a handful of validations, screens map to tables
-        → Transaction Script or Active Record. Both are honest; the
-          domain model is not (data-source-patterns).
+        → Consider Transaction Script or a simple model. Active Record
+          is a separate persistence option when its coupling fits;
+          CRUD alone does not decide ownership (data-source-patterns).
 
 Cannot tell yet, module is new and small
-        → Transaction Script. It is the cheapest to write and the cheapest
-          to convert once the rules reveal their shape
-          (architecture-refactoring-paths).
+        → Start provisionally with Transaction Script if there is no
+          evidence for another owner. Keep rules testable and caller
+          contracts narrow; conversion cost depends on coupling and
+          persistence contracts (architecture-refactoring-paths).
 ```
 
 ## Rules
@@ -138,10 +151,10 @@ Cannot tell yet, module is new and small
   that leaked into services anyway, and read paths forced through the write model.
   Load amplification is visible in traces/query logs; leaked business decisions require
   source and change-history inspection as well.
-- Table Module is dismissed too quickly in Java, where record-set tooling is weaker than
-  the platforms it was written for — but its idea survives as a gateway or a service that
-  owns set-based SQL for one table, and that is frequently the right home for bulk work
-  next to a domain model doing per-instance work.
+- A Table Module owns business behavior over rows; a Table Data Gateway owns database
+  access. A Java service owning table-level policy may adapt the former with set-based SQL,
+  but a bulk statement alone does not establish that organization. Trace who chooses the
+  business predicates and calculations (`data-source-patterns`).
 - Reads and writes may use different organisations when their forces differ. Preserve write
   invariants; use projections or SQL when they avoid unnecessary model loads, and retain bounded
   entity reads when appropriate (`query-objects-and-specifications`).
@@ -154,10 +167,6 @@ Cannot tell yet, module is new and small
 
 ## References
 
-For implementation changes, inspect compiler/runtime, Spring/JPA versions, persistence access
-strategy and transaction proxy configuration. Examples are partial sketches with fixture types
-omitted; the JdbcClient variant needs Spring 6.1+ and Java 17+, while sealed/pattern constructs
-have the release requirements stated below. Preserve the target rather than upgrading it.
 When rules or workload evidence are missing, document the provisional choice and the smallest
 example/measurement that could change it.
 

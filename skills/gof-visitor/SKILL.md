@@ -89,8 +89,10 @@ short-circuit
 - **Growth requires new behavior in most operations.** Compare the actual update cost with
   polymorphism. Frequent new kinds alone do not invalidate an established Visitor whose extension
   or fallback contract already meets those operations.
-- **The operation belongs to the element.** `area()` on a shape is not a visitor's business;
-  moving intrinsic behaviour out produces an anaemic model (`java-tell-dont-ask`).
+- **The operation belongs to an element you control.** Prefer `area()` on a shape when the
+  model owns that behaviour and its API can support it (`java-tell-dont-ask`). Library-owned
+  types or an established external operation API can justify Visitor; inspect ownership and
+  compatibility before moving the operation.
 - **The hierarchy is open and you own the switch.** Exhaustiveness needs a catch-all policy.
   Explicit rejection may be correct; do not assume that either a switch or Visitor automatically
   handles arbitrary new plugin types.
@@ -198,7 +200,7 @@ THEN traversal is a variation point of its own — separate walking from
 - [ ] Mutable visitors have explicit confinement, reset and reentrancy contracts
 - [ ] Deep/untrusted structures have enforced resource limits and stack-safe traversal
 - [ ] Unknown handling preserves each operation's required result; any omission is explicitly permitted
-- [ ] Intrinsic behaviour stayed on the elements
+- [ ] Operation placement respects model ownership and existing public contracts
 
 ## References
 

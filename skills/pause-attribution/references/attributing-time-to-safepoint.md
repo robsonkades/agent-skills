@@ -6,11 +6,22 @@ For a confirmed C2 counted loop with strip mining active, the first rows are use
 They are not a complete TTSP taxonomy: OS descheduling/throttling, page faults, runtime stubs,
 native transitions and other no-poll regions can delay acknowledgement too.
 
-| Cause                                                                                         | Evidence that discriminates it                                                                                        | Fix                                                              |
-| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Loop body expensive enough that one strip takes real time                                     | TTSP ≈ `LoopStripMiningIter` × per-iteration cost. Test arithmetic against compiled polls and aligned thread evidence | Consider per-strip work or a measured strip-size experiment      |
-| Loop not recognised as counted by C2 (complex control flow, bound depending on mutable state) | Compiled loop evidence lacks strip mining; a mismatched estimate alone is insufficient                                | Preserve semantics; inspect compiled code before restructuring   |
-| Native/runtime path outside the loop-poll model                                               | timeout identifies a non-arrived thread; aligned wall profile/dump shows the native/runtime stack                     | Shorten/batch work or fix host scheduling after proving the path |
+| Cause                                                                                         | Evidence that discriminates it                                                                                        | Fix                                                                                                |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Loop body expensive enough that one strip takes real time                                     | TTSP ≈ `LoopStripMiningIter` × per-iteration cost. Test arithmetic against compiled polls and aligned thread evidence | Consider per-strip work or a measured strip-size experiment                                        |
+| Loop not recognised as counted by C2 (complex control flow, bound depending on mutable state) | Compiled loop evidence lacks strip mining; a mismatched estimate alone is insufficient                                | Preserve semantics; inspect compiled code before restructuring                                     |
+| Native/runtime work while the thread is not safepoint-safe                                    | Non-arrived thread identity/state and aligned stack establish an unsafe path; a native frame alone is insufficient    | Correct the proven no-poll/transition or host cause; native-call changes belong to **jni-and-ffm** |
+
+Native execution is not automatically a synchronization blocker. In the
+[checked HotSpot 25 implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/safepoint.cpp),
+`safepoint_safe_with` accepts a stable `_thread_in_native` state when there is no last Java
+frame or that frame is walkable. The thread need not return from that native function before
+the VM can synchronize. A native frame in a profile does not establish the HotSpot thread
+state: correlate the timeout's non-arrived identity/state with the stack and time window,
+then distinguish unsafe VM/transition/no-poll work from OS descheduling. If the thread was
+already safepoint-safe, investigate its native duration as a per-thread delay or find another
+synchronization blocker; do not shorten native calls or change loop flags solely because a
+native function ran for a long time.
 
 Arithmetic is a falsifiable hypothesis, not sufficient attribution. If compiled-code evidence
 shows 1000 iterations between polls and each iteration takes 2.9 ms without intervening polls,

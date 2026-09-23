@@ -53,12 +53,14 @@ project or add instrumentation dependencies merely to apply this skill.
 
 1. **Ask which property the claim is about.** "Is this blocking?" is four questions;
    answer the one that determines the decision at hand.
-2. **Classify each I/O call on the path**: does it unmount, capture the carrier with
-   compensation, or pin? The three have different costs and different fixes.
+2. **Classify each I/O wait on the path**: can it unmount? If it retains the carrier,
+   does the implementation request compensation, or does it block without compensation?
+   Identify any pinning frame separately; the actual path determines the cost and fix.
 3. **Check for file system I/O.** Identify the concrete synchronous path and whether the
    JDK marks it for compensation; a package name alone does not establish this.
-4. **Check for foreign code**: JNI, FFM, a driver with a native transport. A native frame
-   pins, and pinning is not compensated.
+4. **Check for foreign code**: JNI, FFM, a driver with a native transport. An enclosing
+   native frame prevents unmounting. Pinning alone does not request compensation; check
+   whether the actual blocking operation has a separate compensation hook.
 5. **If an event loop is involved, find every blocking call inside it** — one is enough to
    stall every connection that loop serves.
 6. **Measure before concluding.** Carrier count over time, `jdk.VirtualThreadPinned`, and a
@@ -81,14 +83,16 @@ project or add instrumentation dependencies merely to apply this skill.
   scheduler under an expansion policy initialized by `jdk.virtualThreadScheduler.maxPoolSize`.
   Do not generalize this to every provider, native call or memory-mapped access; inspect the
   path and measure.
-- **Capture with compensation is not pinning.** Compensation can add carriers to preserve
-  progress within resource limits, at the cost of memory and OS threads. Pinning — a native
-  frame or a blocking class initialiser — gets no compensation, so it removes a carrier
-  outright. Raising `maxPoolSize` helps the first and does nothing for the second.
+- **Carrier retention and compensation are separate questions.** Recognized blocking
+  regions can request spare carriers, at the cost of memory and OS threads. Pinning — for
+  example, a native frame preventing a Java park from unmounting — does not itself request
+  compensation. A native operation explicitly wrapped in a JDK compensation region can
+  still be compensated. Raising `maxPoolSize` only creates possible compensation headroom;
+  it cannot make an otherwise uncompensated wait trigger expansion.
 - The number of platform threads in the scheduler may therefore legitimately exceed
   `availableProcessors()`. Growth towards `maxPoolSize` under operations the scheduler
-  recognizes for compensation is the system working as designed; native-frame pinning is
-  specifically **not** compensated. Sustained saturation says the compensated-blocking
+  recognizes for compensation is the system working as designed; pinning alone does not
+  trigger that growth. Sustained saturation says the compensated-blocking
   workload reached this implementation ceiling, not that raising it is automatically safe.
 - **`synchronized` no longer pins** on JDK 24 and later (JEP 491), and `Object.wait` unmounts
   too. On these releases, replacing `synchronized` solely for pinning is unnecessary;
@@ -110,9 +114,9 @@ project or add instrumentation dependencies merely to apply this skill.
 - A "non-blocking" client library is only non-blocking to the boundary of its own API. A
   reactive database driver that hands work to a bounded internal pool has a worker/queue
   ceiling distinct from connection limits and database capacity; inspect each bound.
-- Virtual threads make blocking calls **cheap**, not **free**: each in-flight call still
-  holds a stack on the heap, a connection, a buffer and any lock it took. The scarce
-  resource moved; it did not disappear.
+- Unmounting makes thread waiting **cheap**, not **free**: in-flight calls retain stack
+  state and any resources they still own, such as connections, buffers or locks. Bound
+  admission as well as active I/O; a semaphore's waiters can still retain unbounded state.
 - Readiness-based socket polling does not characterize every `java.nio` API or provider.
   Verify the target implementation before claiming io_uring or completion-based I/O;
   use `io-uring-and-zero-copy` for that investigation.

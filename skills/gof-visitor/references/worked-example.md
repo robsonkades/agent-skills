@@ -55,13 +55,22 @@ components; assess whether derived operations or narrow methods avoid extra repr
 
 ## After — sealed nodes and folds
 
+This example requires non-null components; an empty image `alt` string is allowed. Preserve a
+real model's declared nullability contract rather than adopting this example's policy implicitly.
+
 ```java
 public sealed interface Node permits Node.Text, Node.Image, Node.Table, Node.Section {
 
     record Text(String value, Emphasis emphasis) implements Node {
         public Text { Objects.requireNonNull(value); Objects.requireNonNull(emphasis); }
     }
-    record Image(URI source, String alt, Dimensions dimensions) implements Node { }
+    record Image(URI source, String alt, Dimensions dimensions) implements Node {
+        public Image {
+            Objects.requireNonNull(source);
+            Objects.requireNonNull(alt);
+            Objects.requireNonNull(dimensions);
+        }
+    }
     record Table(List<Row> rows, ColumnSpec spec) implements Node {
         public Table { rows = List.copyOf(rows); Objects.requireNonNull(spec); }
     }
@@ -124,8 +133,9 @@ Neither mechanism proves semantics or makes separately compiled old consumers un
 
 ## The traversal, separated once
 
-Three of the four operations walk the tree the same way; `validate` needs to prune (it does not
-descend into sections marked `verbatim`).
+Three of the four operations walk the tree the same way; `validate` prunes descendants of
+sections selected by the supplied `StyleGuide` policy. This is an operation-specific decision;
+the `Section` record above has no traversal-control flag.
 
 ```java
 public static Stream<Node> preOrder(Node root) {

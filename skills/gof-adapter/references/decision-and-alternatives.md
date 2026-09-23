@@ -41,6 +41,9 @@ signature (`layering-and-boundaries`).
 
 ## Error translation — the duty adapters usually skip
 
+Partial translation sketch using the fictional SDK and domain failure vocabulary from the
+worked example:
+
 ```java
 @Override
 public Authorisation authorise(Payment payment) {
@@ -48,11 +51,13 @@ public Authorisation authorise(Payment payment) {
         var response = stripe.charges().create(toRequest(payment));
         return toAuthorisation(response);
     } catch (StripeCardException e) {
-        throw new PaymentDeclined(payment.id(), declineReason(e.getCode()), e);   // permanent
-    } catch (StripeRateLimitException | StripeConnectionException e) {
-        throw new PaymentTemporarilyUnavailable(payment.id(), e);                 // transient
+        throw new PaymentDeclined(payment.id(), declineReason(e.getDeclineCode()), e);
+    } catch (StripeRateLimitException e) {
+        throw new PaymentTemporarilyUnavailable(payment.id(), UnavailabilityReason.THROTTLED, e);
+    } catch (StripeConnectionException e) {
+        throw new PaymentTemporarilyUnavailable(payment.id(), UnavailabilityReason.CONNECTION_FAILURE, e);
     } catch (StripeException e) {
-        throw new PaymentGatewayFailure(payment.id(), e);                         // unknown
+        throw new PaymentGatewayFailure(payment.id(), e);
     }
 }
 ```
@@ -66,7 +71,9 @@ Four rules:
 3. **Preserve failure semantics.** A connection failure can leave the remote outcome unknown.
    Distinguish definitive rejection, throttling, protocol failure and unknown outcome; provider
    semantics plus the operation/idempotency contract decide whether a retry is safe. A category
-   named transient alone does not authorize it (`retries-and-backoff`, `java-exception-design`).
+   named transient alone does not authorize it. Expose required distinctions through domain types
+   or fields such as `reason()`; callers must not inspect vendor causes to recover information
+   lost by translation (`retries-and-backoff`, `java-exception-design`).
 4. **Do not translate an error into a value silently.** Returning `Optional.empty()` for a
    connection failure makes an outage indistinguishable from a negative result.
 
@@ -77,7 +84,7 @@ not invent domain policy to fill missing provider data; some provider-specific d
 
 | In the adapter                                            | Verdict                                                                                          |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `dto.amount()` → `Money.of(dto.amount(), dto.currency())` | Mechanical — fine                                                                                |
+| `dto.amount()` → `Money.of(dto.amount(), dto.currency())` | Mechanical when units, precision, range and currency semantics are compatible                    |
 | `if (dto.status() == null) status = ACTIVE`               | Invented state unless the provider contract defines it; otherwise require explicit domain policy |
 | Mapping a foreign enum onto your own, exhaustively        | Translate with explicit unknown-value policy                                                     |
 | `if (amount > 10_000) requireApproval()`                  | Business rule — must not be here                                                                 |

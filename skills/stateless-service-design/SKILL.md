@@ -119,7 +119,8 @@ Prefer leader election (leader-election) instead when:
   cart contents, a multi-step form, an authorisation decision — needs a loss/staleness policy;
   it may be authoritative or reconstructible from another authority. Spring
   Session changes the store without changing the servlet API: a placement change, not a
-  rewrite.
+  rewrite. Shared placement does not make overlapping session read-modify-write operations
+  atomic; verify conflict handling across eligible instances (`session-state-strategies`).
 - **Sticky sessions give affinity, not a guarantee.** Affinity ends when the replica dies,
   when a rolling update drains it, when the client drops the cookie, or when the balancer's
   table is rebuilt. Each of those is user-visible if the state existed only there.

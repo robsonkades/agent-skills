@@ -25,7 +25,7 @@ failures to argue a design against rather than a general appeal to robustness.
 ## Workflow
 
 This is a protocol/operations catalogue, with no Java language minimum. The scheduled-task
-reference uses the Java 25 API documentation for a long-standing contract. Inspect the target
+and elapsed-time references use Java 25 API documentation for long-standing contracts. Inspect the target
 runtime, scheduler/framework, client retry defaults and deployment configuration before
 applying version-sensitive claims; this skill does not authorize upgrades or fault injection.
 
@@ -71,30 +71,30 @@ Prefer instead when:
 
 ## Recognition index
 
-| Observation                                                        | Pattern                        | Owner                                  |
-| ------------------------------------------------------------------ | ------------------------------ | -------------------------------------- |
-| Synchronised spike after a restart, deploy, TTL expiry or recovery | Thundering herd                | `cascading-failures`                   |
-| Dependency inbound rate rises while its success rate falls         | Retry storm                    | `retries-and-backoff`                  |
-| Failure spreads to services that never call the failing one        | Cascading failure              | `cascading-failures`                   |
-| Request-owned work continues beyond its accepted lifetime          | Timeout stacking               | `timeouts-and-deadlines`               |
-| Queue depth and latency grow without bound; goodput falls          | Unbounded queue growth         | `rate-limiting-and-load-shedding`      |
-| Pool acquisition timeouts on unrelated endpoints; FD or OOM errors | Resource exhaustion            | `concurrency-limiting-and-bulkheads`   |
-| Node is up, health check green, answering ten times slower         | Gray failure / slow node       | `failure-models`                       |
-| Only some callers/regions can reach a dependency                   | Asymmetric partition           | `failure-models`                       |
-| Two records for one intent; a side effect applied twice            | Duplicate processing           | `delivery-semantics`, `idempotency`    |
-| Two instances both believe they hold the lock or the leadership    | Split-brain                    | `distributed-locks-and-leases`         |
-| Negative durations, leases expiring early, out-of-order timestamps | Clock skew                     | `distributed-locks-and-leases`         |
-| Errors only while a rollout is in progress, then they stop         | Version skew                   | `rpc-and-api-contracts`                |
-| Everything is green and a downstream dataset stopped changing      | Absence of errors as an error  | `slo-and-alerting`                     |
-| Error rate spiked but nothing is broken — or the reverse           | Expected vs unexpected errors  | `rpc-and-api-contracts`                |
-| Work completes long after anyone wanted it; results are rejected   | Stale or obsolete work         | `task-queues-and-competing-consumers`  |
-| A cleanup job removed far more rows or objects than intended       | Destructive cleanup            | this catalogue (guard rails)           |
-| One request produces millions of downstream operations             | Input explosion                | `rate-limiting-and-load-shedding`      |
-| An "optional" dependency's outage took the request path down       | Optional-dependency assumption | `failure-models`                       |
-| The replacement is more general, more distributed, less reliable   | Second-system effect           | `architecture-decision-making`         |
-| Trigger is gone but the system remains in a bad equilibrium        | Metastable failure             | `cascading-failures`                   |
-| Independent replicas fail together on one shared dependency/change | Correlated/common-mode failure | `failure-models`                       |
-| Data plane fails because discovery/control plane is unavailable    | Control-plane coupling         | `failure-models`, `caching-strategies` |
+| Observation                                                        | Pattern                        | Owner                                                    |
+| ------------------------------------------------------------------ | ------------------------------ | -------------------------------------------------------- |
+| Synchronised spike after a restart, deploy, TTL expiry or recovery | Thundering herd                | `cascading-failures`                                     |
+| Dependency inbound rate rises while its success rate falls         | Retry storm                    | `retries-and-backoff`                                    |
+| Failure spreads to services that never call the failing one        | Cascading failure              | `cascading-failures`                                     |
+| Request-owned work continues beyond its accepted lifetime          | Timeout stacking               | `timeouts-and-deadlines`                                 |
+| Queue depth and latency grow without bound; goodput falls          | Unbounded queue growth         | `rate-limiting-and-load-shedding`                        |
+| Pool acquisition timeouts on unrelated endpoints; FD or OOM errors | Resource exhaustion            | `concurrency-limiting-and-bulkheads`                     |
+| Node is up, health check green, answering ten times slower         | Gray failure / slow node       | `failure-models`                                         |
+| Only some callers/regions can reach a dependency                   | Asymmetric partition           | `failure-models`                                         |
+| Two records for one intent; a side effect applied twice            | Duplicate processing           | `delivery-semantics`, `idempotency`                      |
+| Two instances both believe they hold the lock or the leadership    | Split-brain                    | `distributed-locks-and-leases`                           |
+| Negative durations, leases expiring early, out-of-order timestamps | Clock skew                     | `timeouts-and-deadlines`, `distributed-locks-and-leases` |
+| Errors only while a rollout is in progress, then they stop         | Version skew                   | `rpc-and-api-contracts`                                  |
+| Everything is green and a downstream dataset stopped changing      | Absence of errors as an error  | `slo-and-alerting`                                       |
+| Error rate spiked but nothing is broken — or the reverse           | Expected vs unexpected errors  | `rpc-and-api-contracts`                                  |
+| Work completes long after anyone wanted it; results are rejected   | Stale or obsolete work         | `task-queues-and-competing-consumers`                    |
+| A cleanup job removed far more rows or objects than intended       | Destructive cleanup            | this catalogue (guard rails)                             |
+| One request produces millions of downstream operations             | Input explosion                | `rate-limiting-and-load-shedding`                        |
+| An "optional" dependency's outage took the request path down       | Optional-dependency assumption | `failure-models`                                         |
+| The replacement is more general, more distributed, less reliable   | Second-system effect           | `architecture-decision-making`                           |
+| Trigger is gone but the system remains in a bad equilibrium        | Metastable failure             | `cascading-failures`                                     |
+| Independent replicas fail together on one shared dependency/change | Correlated/common-mode failure | `failure-models`                                         |
+| Data plane fails because discovery/control plane is unavailable    | Control-plane coupling         | `failure-models`, `caching-strategies`                   |
 
 ## Rules
 

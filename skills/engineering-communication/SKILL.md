@@ -46,6 +46,8 @@ do not know. That last part is what makes the rest of it trustworthy.
    after it materialises is not a warning, it is an explanation.
 7. **Check the draft against the inputs.** Preserve dates, scope, uncertainty and ownership;
    do not invent measurements, confidence percentages, approval, recipients or delivery promises.
+   Retain a measurement's source, population and time window when they affect its meaning;
+   a dated observation does not establish the current state or an entire incident's impact.
    Use a visible placeholder or one focused question for missing decision-critical facts.
 
 Deliver the message at the requested length and register, plus only material unresolved

@@ -72,7 +72,8 @@ var heartbeat = scheduler.scheduleAtFixedRate(
 ```
 
 If the work thread wedges — a socket read with no timeout, a deadlock, an infinite loop — the
-heartbeat thread is healthy and keeps renewing. The message can remain hidden until renewal stops or a broker cap is reached.
+heartbeat thread is healthy and keeps renewing. After renewal stops, the message can remain
+hidden until the last granted timeout expires.
 SQS limits the visibility window to 12 hours from when SQS receives the ReceiveMessage request;
 renewal does not reset that maximum. A ChangeMessageVisibility value greater than the remaining
 maximum fails, so setting 43,200 seconds after receipt can already be too large. This is a
@@ -81,9 +82,19 @@ implementations can renew indefinitely. Unbounded renewal can turn recovery into
 
 Bound renewal with these conditions; they do not eliminate duplicate execution:
 
-- **A hard cap on total lease time.** Stop renewing at `maxProcessingTime`, let the lease
-  lapse, and cancel/guard the old work. Redelivery can overlap a handler that ignores cancellation. The cap is a business decision — the longest this item
-  may plausibly take — not a multiple of the base timeout.
+- **A deadline for processing and renewal.** Stop starting renewal attempts at
+  `maxProcessingTime` and cancel/guard the old work. Redelivery can overlap a handler that
+  ignores cancellation. State whether this budget starts at receive or handler start; choose
+  it from the business limit, not a multiple of the base timeout.
+- **Account for the last granted visibility interval.** Stopping renewal does not revoke it.
+  SQS starts the new duration at the `ChangeMessageVisibility` call: a successful change at
+  `t45` for 30 seconds gives nominal expiry at `t75`, even if renewal stops at `t60`.
+  If visibility should expire by a receive-based deadline, fit the initial timeout and every
+  renewal within its remaining budget, with allowance for request delay and time resolution.
+  Include in-flight or outcome-unknown extensions; cancelling a scheduler or timing out a
+  request does not prove the broker did not apply it. Without bounded delay assumptions,
+  report an estimate rather than a hard expiry guarantee. Expiry permits another receive;
+  it does not schedule redelivery or stop the old handler.
 - **Renew on credible progress where progress is observable.** Atomic CPU work or one long
   database operation may have no intermediate marker; inventing one is worse than a conservative
   maximum. Renewal must stop on cancellation/deadline, failed ownership validation or a stale
@@ -133,7 +144,8 @@ state these limits without inventing runtime measurements.
 
 - [ ] Timeout derived from receive-to-ack exposure and a stated duplicate/recovery objective.
 - [ ] Alerts cover exposure headroom, extension failure/cap and redelivery overlap.
-- [ ] Heartbeat has a total cap, observed failures and credible progress where observable.
+- [ ] Renewal deadline and last-grant expiry are budgeted, including uncertain extensions;
+      failures are observed and renewal uses credible progress where observable.
 - [ ] Available redelivery flag/count and task/attempt IDs are recorded; missing broker evidence
       is not proof of first delivery.
 - [ ] Handler is repeat-safe, or the path is documented as tolerating a duplicate.
@@ -142,6 +154,6 @@ state these limits without inventing runtime measurements.
 ## Primary references
 
 - [SQS visibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) — visibility and duplicate-delivery semantics.
-- [SQS processing time](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/best-practices-processing-messages-timely-manner.html) and [ChangeMessageVisibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ChangeMessageVisibility.html) — request-origin maximum and remaining-time errors.
+- [SQS processing time](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/best-practices-processing-messages-timely-manner.html) and [ChangeMessageVisibility](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ChangeMessageVisibility.html) — per-call timeout origin, request-origin maximum and remaining-time errors.
 - [SQS DeleteMessage](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessage.html) — old receipt success need not remove the message.
 - [ScheduledExecutorService](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledExecutorService.html) — periodic task failure suppresses subsequent executions; match the deployed JDK.

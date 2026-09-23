@@ -73,9 +73,9 @@ unavailable, state the gap and keep the diagnosis provisional.
   layout contract.
 - Compact Object Headers gives an 8-byte header in HotSpot: product in JDK 25 behind
   `-XX:+UseCompactObjectHeaders` (JEP 519), **off by default through JDK 26**. JEP 534
-  enables it by default in upstream JDK 27, which is in the **release-candidate phase as of
-  2026-09-10**. Vendors can backport support or change
-  defaults; inspect the actual build. It can change offsets — and by packing more fields per
+  enables it by default in upstream JDK 27. Vendors can backport support or change
+  defaults; inspect the actual build, including after an upgrade with no explicit header flag.
+  It can change offsets — and by packing more fields per
   line it can **worsen** false sharing while improving footprint.
 - Do not resurrect obsolete layout flags such as `CompactFields` or `UseEmptySlotsInSupers`.
   Inspect options supported by the target build; header modes and packing still evolve.
@@ -104,7 +104,8 @@ unavailable, state the gap and keep the diagnosis provisional.
   counters; published nanoseconds are orientation, not a production model.
 - `-XX:+UseNUMA` governs supported Parallel GC and G1 policies (G1 since JDK 14, Linux).
   ZGC also uses this flag: JDK 25 enables it ergonomically by default, subject to platform/topology
-  support. Collector allocation/relocation behavior differs. Verify effective flags, startup
+  support. Placement differs by collector and generation; the flag does not keep all objects local
+  to their users (see the NUMA reference). Verify effective flags, startup
   logs and page placement; CPU/memory confinement can disable NUMA support.
 
 ## References
@@ -117,4 +118,4 @@ unavailable, state the gap and keep the diagnosis provisional.
   why a requested flag is disabled on a single available node.
 - [OpenJDK JOL](https://github.com/openjdk/jol) — supported VM layouts and measurement caveats.
 - [JEP 519](https://openjdk.org/jeps/519) and [JEP 534](https://openjdk.org/jeps/534) — compact-header release/default boundaries.
-- [JDK 27 status](https://openjdk.org/projects/jdk/27/) — check release status; a delivered JEP is not evidence of a GA runtime.
+- [JDK 27 release notes](https://www.oracle.com/java/technologies/javase/27-relnote-issues.html) — the September 15, 2026 release and compact headers enabled by default.

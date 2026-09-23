@@ -154,15 +154,16 @@ The API is REST over resources
 - The framework's model map is a presentation concern. Putting entities in it couples the
   template to entity properties and can trigger lazy loading during rendering
   (`orm-behavioral-patterns`).
-- Validation splits in two and both halves are needed: **syntactic** (required, format,
-  range) belongs at the boundary, on the request type; **semantic** (this customer may not
-  order this product) belongs in the domain, where it can be enforced regardless of the
-  caller.
+- Validate request shape and transport limits at the boundary. Classify other checks by
+  the contract, not the annotation: a positive order quantity is a domain invariant even
+  if a request DTO also checks its range. Enforce business legality regardless of caller;
+  Bean Validation on a web request alone does not protect imports or other entry points.
 - One deliberate error contract across the application's HTTP boundaries. RFC 9457 problem details give a standard
-  target (`rpc-and-api-contracts`).
-- **Application Controller is the least-known pattern here and the most useful** where it
-  applies: multi-step flows, approval chains, state machines. Its value is that the flow
-  becomes a testable object rather than a set of redirects spread over handlers.
+  target (`rpc-and-api-contracts`); already committed responses require a late-failure
+  policy, since their status and emitted body cannot be replaced.
+- Application Controller can give shared or complex multi-step journey decisions a
+  testable owner instead of spreading them across redirects. Preserve the distinction
+  between navigation and authoritative domain transitions.
 - Do not map classical page-flow patterns onto an HTTP API by analogy. An API may expose resources,
   commands, workflows and hypermedia; Remote Facade is useful when network granularity requires it,
   not a synonym for every REST endpoint

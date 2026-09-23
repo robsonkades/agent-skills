@@ -51,6 +51,11 @@ decorations and sink; default tags can be padded, such as `[jit,inlining   ]`. I
 to a caller by adjacency alone. Preserve the complete capture; when identity is ambiguous,
 use a bounded caller-scoped capture or the explicit task identities in JFR/LogCompilation.
 
+An `inline (hot)` decision describes that attempt's graph construction, which may still end
+in a bailout before installation. Confirm the enclosing task's outcome before treating its
+tree as the code that ran; a failed task's tree remains evidence for why that attempt failed.
+Use the outcome checks in [the compilation format reference](printcompilation-format.md).
+
 ## The verdict strings
 
 C2's strings come from `bytecodeInfo.cpp`, C1's from `c1_GraphBuilder.cpp`; the examined
@@ -130,8 +135,8 @@ non-tiered operation, use the actual enabled compiler and format; a missing tier
 
 ```
 Suspect method
-├── 1. Appears in PrintCompilation / Compiler.codelist at tier 4?
-│      no → step 2; yes → step 4
+├── 1. Successful tier-4 outcome/installation confirmed for this method?
+│      no → step 2; yes → step 4; header alone → resolve the attempt's outcome first
 ├── 2. Which shape of "no"?
 │      tier 3 only        → inspect thresholds/counters, queues, directives, failures and code-cache state
 │      tier 2             → inspect C2 queue and load-feedback scaling; do not assume threshold alone
@@ -213,8 +218,10 @@ jfr view longest-compilations jit.jfr
 ```
 
 Join `compileId` to `jdk.Compilation` and inspect `compiler`, `compileLevel`, `isOsr` and
-`succeded` (the actual field spelling on this build). Compiler thread names are supporting
-evidence, not a portable compiler classifier. Measure event counts and bytes over the same
+`succeded` (the actual field spelling on this build). A false outcome means the associated
+inlining decisions belong to a failed attempt; a missing event leaves the outcome unknown.
+Compiler thread names are supporting evidence, not a portable compiler classifier.
+Measure event counts and bytes over the same
 capture interval; lifetime `jstat` totals and a fixed events-per-compilation ratio cannot size it.
 
 ## LogCompilation and JITWatch

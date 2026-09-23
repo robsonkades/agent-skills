@@ -108,6 +108,9 @@ team; this checker does not validate their semantics, uniqueness or cross-record
 A lastVerdict is only the date of a recorded review, not the verdict itself. Keep actual outcome,
 evidence and follow-up in a linked record. Pending controls can be documented as uncovered with
 the gap and plan; do not invent a past verdict to make the register pass.
+The linked evidence must establish which revision/artifact and control inputs the verdict
+assessed when applicable. This checker does not validate that correspondence; a recent review
+date is not proof that the current candidate was evaluated.
 
 ## Run and interpret the checker
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-memory-regions
-version: 1.6.3
+version: 1.6.4
 description: >-
   The major memory-accounting domains of a JVM process — heap, Metaspace/class space, code
   cache, thread stacks, direct/native/JVM-internal memory and mapped/file-backed pages — and

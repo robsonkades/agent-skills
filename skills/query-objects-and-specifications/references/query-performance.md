@@ -136,10 +136,20 @@ tests. A narrow review can reuse adequate existing evidence:
 - Seed one order with two matching child rows and another with separately matching children.
   Assert the requested same-child versus any-child semantics, unique root results and total
   count. Two to-one joins need not change counts, so inspect emitted SQL as well.
+- For "urgent OR has a red line", seed an urgent order with no lines and a non-urgent order
+  with a red line; both must survive. Change only OR to AND and neither should match.
+  For "has no red lines", seed empty, red-plus-blue and blue-only line collections;
+  expect the empty and blue-only orders, never the mixed collection.
 - Test absent filters, empty sort, both directions, equal sort values, both date boundaries
   (including a zone transition), mixed currencies and empty authorization scope.
 - Seed another tenant and an unauthorized customer that match a user OR clause. Assert no
   data, count, existence or export path leaks them; user NOT must not negate mandatory scope.
+- With matching rows present, set the trusted allowed-customer scope to empty and compose it
+  through the actual framework path, including empty `anyOf` and negated absent specifications
+  if the builder uses them. Assert empty content/export, zero count and false existence even
+  when a user OR branch matches every row. Separately, omit optional user filters while retaining
+  a nonempty trusted scope; authorized matches must remain. Check both current and proposed
+  framework releases when these composition semantics are part of an upgrade.
 - For paging, assert deterministic order and page traversal on a fixed fixture. Distinguish
   a List content-query budget from Page content-plus-count and Slice continuation behavior.
 - For streaming/chunks, abort during processing and verify resources are released and restart

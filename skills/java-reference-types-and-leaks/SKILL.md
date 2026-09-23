@@ -74,8 +74,9 @@ and ownership requirements; ask only for missing information that changes the di
 - `WeakHashMap` is for mappings whose key reachability elsewhere controls entry lifetime,
   with stable `equals`/`hashCode` semantics. It is not an identity map: an equal lookup can
   find an entry, while the particular stored key can still disappear when no strong owner
-  retains it. It retains entries whenever the _value_ references
-  its own key, directly or transitively, because that makes the key strongly reachable.
+  retains it. Trace strong paths from all map values to any stored key, including paths
+  across entries; weak keys cannot disappear while such a path keeps them strongly reachable.
+  A weak value-to-key link has different reachability semantics from a strong one.
 - Never use `finalize()`. It is deprecated for removal (JEP 421), can already be turned off
   at runtime with `--finalization=disabled`, runs on an unspecified thread with no ordering
   or timeliness guarantee, can resurrect objects and delay reclamation. Do not infer a portable

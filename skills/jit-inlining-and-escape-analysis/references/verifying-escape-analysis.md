@@ -118,8 +118,14 @@ when the pipeline is hot and the measured benefit justifies the change.
 jfr print --events jdk.ObjectAllocationSample recording.jfr
 ```
 
-`jdk.ObjectAllocationSample` is enabled in the referenced default configuration; it is a
-sample, not an allocation census. The TLAB events are not
+`jdk.ObjectAllocationSample` is enabled in the referenced default configuration. Aggregate
+its byte-valued `weight` by class/stack over a representative window; raw event counts can
+rank allocation pressure incorrectly because weights differ. This estimates pressure from
+sampled allocations, not exact object counts, individual object sizes or retained heap.
+Sparse samples and missing stacks limit attribution; no sample does not prove elimination.
+`allocation-profiling` owns detailed attribution and recording configuration.
+
+The TLAB events are not enabled in that default configuration
 (JDK-8257602, JDK 16), so a zero from `jdk.ObjectAllocationInNewTLAB` requires checking enablement,
 thresholds, workload opportunity and loss before concluding anything. For each of the top allocated types, ask in order:
 
@@ -137,15 +143,17 @@ thresholds, workload opportunity and loss before concluding anything. For each o
 ## Reading the inlining chain
 
 ```bash
-java -XX:+UnlockDiagnosticVMOptions -XX:CompileCommand=quiet \
+java -XX:+UnlockDiagnosticVMOptions -XX:+PrintCompilation -XX:CompileCommand=quiet \
      -XX:CompileCommand=PrintInlining,com.example.Hot::* -jar app.jar
 ```
 
 The method-specific option prints inlining while compiling matching root methods; it is not
 an arbitrary caller bytecode-index filter. Adding global `-XX:+PrintInlining` enables output
-for other compilations too. Under default tiered policy, read the C2/tier-4 tree—the tier-3 tree is C1's
-and follows C1's separate budgets/policy, which can also use profile information. On the
-hot path, three verdicts matter most:
+for other compilations too. Keep compilation headers so the root, tier and caller/BCI remain
+identifiable; use `LogCompilation` when interleaved text makes attribution ambiguous. Under
+the stated C2 configuration, tier 4 is C2; levels 1–3 follow C1's separate budgets/policy,
+which can also use profile information. A callee can inline without its own standalone
+compilation. On the hot path, three verdicts matter most:
 
 - `hot method too big` — the callee exceeds the selected raised size policy (default
   `FreqInlineSize` 325 bytecode bytes). Selected EA constructors/unboxing can also choose
@@ -183,5 +191,6 @@ ownership. Measure the actual effect; neither pooling nor scalar replacement gua
 - [HotSpot C2 macro expansion/scalar replacement](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
 - [ThreadMXBean allocated-memory API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html)
 - [JDK 25 `jfr` artifact inspection](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
+- [JFR allocation-sample weight contract](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)
 - [JEP 416: Reimplement Core Reflection with Method Handles](https://openjdk.org/jeps/416)
 - [JDK-8287061: reduce allocation merges](https://bugs.openjdk.org/browse/JDK-8287061)

@@ -111,6 +111,24 @@ queue discipline is a decision:
 Never evict work already executing unless its cancellation semantics are safe; sunk work and
 remote effects change the economics. Bound every queue and expose age/slack by class.
 
+## When rejection itself overloads the service
+
+Keep normal quota/overload responses while there is headroom to send them. Under attack or
+extreme traffic, even generating a 429 for every request can exhaust resources; RFC 6585
+§7.2 permits dropping connections or other protective measures. Measure the rejection path
+before choosing earlier edge/listener controls over more application-level responses.
+Rejecting new connections and rejecting requests on an existing connection are different
+actions: inspect the deployed proxy/server and protocol. Do not reset established connections
+indiscriminately and destroy accepted work, especially when they carry multiple requests.
+Drops also remove explicit retry guidance; check reconnect/retry amplification and preserve
+the bounded health/control access needed for recovery.
+
+Include error encoding, allocation and telemetry in that cost. Prefer bounded counters and
+aggregated or sampled diagnostic logs where their contract permits; a synchronous log per
+rejection or an unbounded asynchronous logging queue can defeat admission control. Preserve
+required audit records and define their failure policy explicitly. Smaller bodies or bounded
+logging may suffice without changing transport behavior; verify this before escalating.
+
 ## What to alert on, what to plot
 
 - **Page on goodput and on the latency of admitted work.** Those describe what users get.
@@ -138,6 +156,10 @@ assert is here.
 3. **Assert rejection is cheap.** At 3× load, per-rejection CPU cost should be a small fraction
    of a success. Total CPU can still rise because even cheap rejection has nonzero cost;
    measure marginal rejection cost and remaining headroom before inferring rejection is too late.
+   Enable production error formatting and telemetry, then slow the logging sink and test a
+   burst of new connections. Check bounded memory/queues and accepted-work completion. If
+   testing earlier connection drops, record them separately from HTTP rejections, include the
+   generator's failed requests in offered-load outcomes, and check reconnect load and recovery.
 4. **Assert class isolation and fairness.** Send mixed authenticated priority traffic, confirm
    reservations and shedding order, then attack the high-priority path and prove its own bound.
 5. **Assert recovery.** Drop the load back to 0.8× and measure how long until shedding stops.
@@ -155,6 +177,7 @@ results are inconclusive, not evidence that overload handling passed.
 ## Primary references
 
 - [RFC 6585 §4: 429 Too Many Requests](https://www.rfc-editor.org/rfc/rfc6585#section-4)
+- [RFC 6585 §7.2: resource costs of returning 429 under attack](https://www.rfc-editor.org/rfc/rfc6585#section-7.2)
 - [RFC 9110 §10.2.3: Retry-After](https://www.rfc-editor.org/rfc/rfc9110#section-10.2.3)
 - [Google SRE: Handling Overload](https://sre.google/sre-book/handling-overload/)
 - [CoDel controlled delay queue management](https://queue.acm.org/detail.cfm?id=2209336)

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: lock-free-patterns
-version: 1.2.2
+version: 1.2.3
 description: >-
   Designing and reviewing nonblocking Java algorithms: linearization points, lock-free,
   wait-free and obstruction-free progress, CAS/RMW loops, success/failure ordering, contention

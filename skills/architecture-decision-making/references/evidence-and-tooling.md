@@ -62,6 +62,13 @@ a deleted/renamed target. Determine impacted incoming references or scan the dec
 directory. Baseline legacy violations explicitly if adopting a new check; do not claim
 the baseline means the old records are valid.
 
+Link and cycle checks alone do not establish one applicable decision. Review an accepted
+future-effective replacement before and after its activation condition, and two accepted
+successors whose scopes overlap. The current guidance must remain discoverable for each
+affected cohort without assuming that the newest ID wins. If applicability lives in prose
+and the checker cannot interpret it, record the manual review; do not claim graph lint
+verified precedence or completion of a rollout gate.
+
 Do not require contiguous numbering unless local tooling actually needs it. Stable unique
 IDs matter for links; a gap is not evidence that rationale was deleted. Do not enforce
 “at least two options” when only one was feasible, or when the task is historical recovery
@@ -108,5 +115,5 @@ the consequence and what would resolve uncertainty. Examples:
 
 The primary sources in the lifecycle reference document conventions and process choices.
 This revision does not claim measured reductions in defects, rework or decision time.
-Use `validation-cases.md` for paired skill evaluations and report executed checks
-separately from evaluation plans.
+Use `validation-cases.md` for teaching examples and behavioral evaluation cases, and report
+executed checks separately from evaluation plans.

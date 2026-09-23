@@ -46,8 +46,10 @@ measurement needed, not a production sizing or confirmed incident diagnosis.
    full request rate with the cache empty, the cache is an availability component. Separate this
    from durability: the cache does not become the authoritative data store by being essential.
 2. **Do the node-loss arithmetic before choosing a topology.** Measure the request share owned by
-   each node; `total_rate / N` is only the uniform approximation. Losing node `i` can send its
-   request share to the origin, plus secondary evictions and retries. Compare rate, concurrency,
+   each node; `total_rate / N` is only the uniform approximation. Establish which requests
+   actually lose a usable cache path: cluster coverage/quorum policy can affect healthy shards
+   too. Apply the configured fallback, error or shedding behavior before estimating origin
+   demand, including secondary evictions and retries. Compare rate, concurrency,
    query mix and duration to the origin's measured capacity. The worked example is
    `references/node-loss-and-origin-protection.md`.
 3. **Choose sharding or full replication from the working set.** If the whole working set
@@ -88,8 +90,9 @@ Prefer a proxy or a clustered cache over client-side sharding when:
 Prefer client-side sharding when:
 - clients are few and share a runtime, and the extra network hop is a measurable share of
   the cache's own latency — the point of a cache is that it is fast
-Do not add a cache node to fix a hot key:
-- one key has one owner under every mapping function (hot-partitions-and-rebalancing)
+Adding owner shards does not split a hot key:
+- replica reads may distribute its read load if the product, routing and consistency contract
+  allow it; adding a shard alone does not divide the key's work (hot-partitions-and-rebalancing)
 ```
 
 ## Rules
@@ -126,9 +129,9 @@ Do not add a cache node to fix a hot key:
   and authorization distinctions in keys and access checks; a key prefix is not access control.
   Check whether one tenant's refill can consume the shared origin budget before widening replication.
 - A proxy costs one extra network hop on the cache path, which is the path chosen for being
-  fast. Measure the hop against `T_source` before rejecting it: a fraction of a millisecond
-  in front of a source costing tens of milliseconds is usually the right trade, and it buys
-  topology changes without client deploys.
+  fast. Measure hit and miss paths and end-to-end tail latency against their budgets. A slow
+  origin does not justify violating the cache-hit latency target. Weigh that cost against
+  simpler routing coordination and topology changes without client deploys where supported.
 - A clustered cache with server-owned placement moves membership out of application config.
   Cross-slot multi-key semantics vary by product; Redis Cluster rejects many such operations,
   while other systems coordinate them at extra latency/availability cost. Check the exact command

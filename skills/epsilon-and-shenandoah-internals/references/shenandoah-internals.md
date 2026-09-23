@@ -54,8 +54,9 @@ Three things follow for diagnosis:
 - **The slow path is mutator evacuation.** A thread that loads a not-yet-copied object in the
   collection set copies it itself. That is where the barrier's latency lands: in the
   application thread that touched the object, during `Concurrent evacuation`, with no pause
-  line in the log. `ShenandoahEvacReserve` (5%, experimental) is the space kept for these
-  copies; exhausting it is an evacuation failure, which is one route to a degenerated cycle.
+  line in the log. The evacuation reserve serves copies by GC workers and mutators; its
+  exhaustion is not itself proof of evacuation failure. See the capacity constraint below
+  for overflow borrowing and the resulting trade-off with allocation headroom.
 - **It is a load barrier.** Writes carry other barriers: during marking (`gc_state &
 MARKING`) a reference store first records the previous value for SATB —
   `ShenandoahRuntime::write_ref_field_pre`, leaf name `shenandoah_wb_pre` — and in
@@ -170,7 +171,7 @@ java -XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -jar app.jar
 # without that flag: single-generation ("satb"), verified default on 25.0.3
 java -XX:+UseShenandoahGC -jar app.jar
 
-# confirm what is running
+# startup logs show active policy; flags can retain an ignored heuristic request
 java ... -Xlog:gc+init | grep -E "Mode:|Heuristics:"      # Mode: Generational / Snapshot-At-The-Beginning (SATB)
 jcmd <pid> VM.flags -all | grep -E "ShenandoahGCMode|ShenandoahGCHeuristics"
 ```
@@ -272,7 +273,12 @@ collection set is bounded so that its live data fits into the free set with
 evacuation (flag descriptions). A heap too small for its live set shows up as small
 collection sets, low actual free space and repeated failures. In single-generation adaptive
 mode, `Max Evacuation = soft capacity × EvacReserve% / EvacWaste`; it is not a live free-space
-gauge. No threshold creates space for an oversized live set. Do not quote a fixed
+gauge. `ShenandoahEvacReserveOverflow=true` by default permits attempts to borrow from the
+mutator free set after reserved space runs out. The reserve serves GC-worker and mutator
+copies; it is not a hard failure boundary. Borrowing can avoid evacuation failure at the cost
+of application allocation headroom, and can still fail if usable space is unavailable.
+Inspect actual allocation outcomes before diagnosing degeneration from the reserve alone.
+No threshold creates space for an oversized live set. Do not quote a fixed
 multiplier of the live set as "the" requirement; read `At end of GC: … available:` and the
 CSet lines instead.
 
@@ -313,6 +319,12 @@ acceptance/recovery criteria; the sample is not a universal result.
 
 ## Heuristics and modes
 
+The heuristic choices below apply to `satb`. JDK 25 generational mode supports only
+`adaptive`; on the tested 25.0.3 build, requests for `static`, `compact` or `aggressive`
+produce an ignored-option warning and still run Adaptive. `PrintFlagsFinal` can retain the
+requested string. Inspect startup `gc+init` and warnings before interpreting a comparison or
+tuning a heuristic; flag presence and successful startup do not prove it is active.
+
 | `ShenandoahGCHeuristics` | Unlock needed                               | Trigger (flag description, JDK 25)                                                         | Use                                                                          |
 | ------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `adaptive` (default)     | none                                        | Learning on `InitFreeThreshold`, then rate and spike prediction; `MinFreeThreshold` always | Production default; converges on the workload's real behaviour               |
@@ -346,7 +358,7 @@ command line or the JVM refuses to start.
 | Flag                                             | Default          | Kind         | Meaning                                                                                                                                                                                |
 | ------------------------------------------------ | ---------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ShenandoahGCMode`                               | `satb`           | product      | `satb`, `generational`, `passive` (diagnostic)                                                                                                                                         |
-| `ShenandoahGCHeuristics`                         | `adaptive`       | product      | `adaptive`, `static`, `compact`, `aggressive` (diagnostic)                                                                                                                             |
+| `ShenandoahGCHeuristics`                         | `adaptive`       | product      | `satb`: `adaptive`, `static`, `compact`, `aggressive` (diagnostic); generational supports only `adaptive`                                                                              |
 | `ShenandoahInitFreeThreshold`                    | 70               | experimental | Learning-phase trigger, % of soft max heap                                                                                                                                             |
 | `ShenandoahMinFreeThreshold`                     | 10               | experimental | Trigger floor during/after learning; generation-specific scope in generational mode                                                                                                    |
 | `ShenandoahLearningSteps`                        | 5                | experimental | Learned-cycle threshold; confirm active learning from trigger logs instead of inferring it from every fallback                                                                         |
@@ -473,6 +485,8 @@ acceptance criteria. Retain an adequate measured configuration when no change is
 - [JDK 25 adaptive heuristics](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/shenandoah/heuristics/shenandoahAdaptiveHeuristics.cpp) — trigger ordering, spike adjustment and evacuation budget.
 - [JDK 25 pacer](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/shenandoah/shenandoahPacer.cpp) — deadline checks and forced allocation after waiting.
 - [JDK 25 passive mode](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/shenandoah/mode/shenandoahPassiveMode.cpp) — barrier defaults and explicit collection policy.
+- [25.0.3 Shenandoah flags](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shenandoah/shenandoah_globals.hpp) — generational heuristic restriction and evacuation-reserve overflow default.
+- [25.0.3 free-set allocation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shenandoah/shenandoahFreeSet.cpp) — borrowing from mutator space when evacuation reserve overflows.
 - [JEP 521](https://openjdk.org/jeps/521) — generational mode in JDK 25. Pin source to the deployed build tag before depending on implementation details.
 - [JEP 535](https://openjdk.org/jeps/535) — default change targeted to JDK 28; verify status separately from deployed behavior.
 - [JEP 439](https://openjdk.org/jeps/439) — generational ZGC moves ordinary marking responsibility from load to store barriers.

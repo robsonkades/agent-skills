@@ -77,6 +77,9 @@ configuration. Existing project versions govern implementation; do not upgrade t
   before the next `poll` or close, as the Kafka client documentation requires. Asynchronous
   workers violate that coupling unless auto-commit is disabled and only completed per-
   partition offsets are committed.
+- With manual commits, withholding an ack does not rewind Kafka's local position. After
+  partial handler failure, preserve or restore unfinished work before later progress can
+  pass it; a catch-and-continue loop may skip it. See [Ack placement](references/ack-placement.md).
 - A consumer rebalance can replay completed records at or after the recovered committed position.
   Replay depends on authoritative progress and recovery policy, not the last client's error.
   Duplicates are possible even with zero application retries and zero broker failures.
@@ -100,7 +103,9 @@ configuration. Existing project versions govern implementation; do not upgrade t
   policy, unrecoverable storage loss and operator deletion can still lose the business work.
   State those assumptions and provide reconciliation for paths where loss is unacceptable.
 - Preserve per-partition commit monotonicity. With parallel workers, committing offset 42
-  while 41 is unfinished loses 41 on crash; track contiguous completion or pause partitions.
+  while 41 is unfinished loses 41 on crash; track the completed prefix of delivered records
+  and commit only that progress. Pausing partitions bounds new intake; it does not prove
+  outstanding work finished. Offset numbers may legitimately have gaps; do not wait for every integer.
 - An acknowledgement response can itself be lost. After a confirmed effect and an offset
   commit timeout, the effect remains known; progress may be unknown. Inspect authoritative
   committed offsets before claiming replay, and make any replay safe for completed effects.

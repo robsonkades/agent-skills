@@ -11,7 +11,8 @@ Pause Young (Concurrent Start)     STW, piggybacked on a young GC —
                                    marks roots, arms the SATB write barrier
 Concurrent Mark Cycle              wrapper line; "Concurrent Undo Cycle" instead means
                                    eager reclaim already resolved the trigger (JDK 17+)
-Concurrent Scan Root Regions       concurrent — scans survivor regions
+Concurrent Scan Root Regions       concurrent — scans recorded root memory ranges above TAMS,
+                                   including survivor and old regions
 Concurrent Mark                    concurrent — contains:
   Concurrent Mark From Roots         walks the graph using the mark bitmap and TAMS;
                                      local SATB buffers flush into the global queue

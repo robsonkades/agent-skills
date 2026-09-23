@@ -119,7 +119,7 @@ costs in `references/dependency-breaking-catalogue.md`; read it before applying 
 | Only a subset of a fat class's methods are needed                               | **Extract Interface** — of that subset only                           |
 | The good name belongs to the class, not the interface                           | **Extract Implementer**                                               |
 | One awkward call inside an otherwise reachable method                           | **Extract and Override Call**                                         |
-| Logic that touches no instance state, in an unconstructible class               | **Expose Static Method**                                              |
+| Instance-independent logic; construction blocked but class initialization safe  | **Expose Static Method**                                              |
 | A long method whose locals are hopelessly entangled                             | **Break Out Method Object**                                           |
 | Nothing works and the class is `final` with a `private` constructor             | Reconsider **Sprout** below                                           |
 
@@ -201,8 +201,11 @@ You must add behaviour to a 600-line method by Thursday. Reading it is a week yo
 - **Sprout Method / Sprout Class** — write the new behaviour as a new, fully tested unit and call
   it from one line inside the untested body. Read the surrounding control flow and effects to
   prove placement, frequency, ordering and error propagation; testing the sprout alone cannot.
-- **Wrap Method / Wrap Class** — rename the original, give the new method the old name, and have
+- **Wrap Method** — rename the original, give the new method the old name, and have
   it call both. Use when the new behaviour must happen _around_ the old rather than inside it.
+- **Wrap Class** — hold the legacy object in a decorator and route the required callers through
+  it. References that still call the original bypass the added behaviour; verify the production
+  wiring as well as the wrapper's unit tests.
 
 Say the honest thing when you use these: they buy safety for the **new** code and leave the legacy
 body exactly as untested as it was, plus one more seam in a class that already had too many

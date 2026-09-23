@@ -64,6 +64,15 @@ When filtering a range on one column and ordering by another:
 
 Test the most selective and least favorable parameters, not only the median.
 
+Check scan direction before adding a second ordering index. In PostgreSQL 18, a B-tree on
+`(a ASC, b ASC)` can supply `(a DESC, b DESC)` by scanning backward; it does not supply the
+general mixed order `(a ASC, b DESC)` without additional sorting or a suitable mixed-direction
+index. Reversal also changes null placement. Compare the complete ordering, collation and plan.
+Columns fixed to one equality value can be omitted from the required sort order; an `IN` list
+with multiple possible matches or a range spanning multiple values does not establish that.
+Validate the corresponding engine/version's scan
+capabilities and costs rather than treating every direction change as a new index requirement.
+
 ## Coverage
 
 Coverage is valuable when it avoids many random lookups, not merely because a column can be added.
@@ -74,3 +83,4 @@ a schema addition.
 ## Source
 
 - [PostgreSQL 18 multicolumn B-tree navigation and skip scan](https://www.postgresql.org/docs/18/indexes-multicolumn.html)
+- [PostgreSQL 18 index scan direction and ordering](https://www.postgresql.org/docs/18/indexes-ordering.html)

@@ -37,8 +37,9 @@ means check removal remains conditional, not proven safe.
    and every public entry point of a published library. When unsure whether a seam is a
    boundary, read [references/trust-boundaries.md](references/trust-boundaries.md).
 2. **Bound before expensive work.** Limit bytes, nesting, collection counts and decompressed
-   expansion; decode strictly; then apply only contract-defined canonicalization and validate
-   semantics. Preserve raw input separately only when audit/legal needs justify its risk.
+   expansion; decode strictly; enforce raw-input restrictions before transformations that would
+   hide a violation. Then apply only contract-defined canonicalization and validate semantics.
+   Preserve raw input separately only when audit/legal needs justify its risk.
 3. **Carry validated state across trusted calls.** Retain an adequate validated class or
    local check; introduce a value type when it makes invariant ownership clearer than passing
    raw values. A record with a validating compact constructor is one option, not a required

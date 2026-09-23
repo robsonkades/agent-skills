@@ -190,9 +190,18 @@ public PaymentReceipt authorise(PaymentCommand command) { ... }
 - `random = true` randomizes Spring Retry's multiplier according to its documented version; do
   not assume it implements AWS-style full jitter. Use a custom policy when distribution
   matters and test sampled bounds rather than annotation presence.
-- `@Retryable` is proxy-based, so a call through `this` is never intercepted — no retry, no
-  warning — and a `@Recover` whose signature does not match the thrown and returned types is
-  not selected, surfacing the underlying failure instead of the fallback. Test both paths.
+- `@Retryable` is proxy-based: self-invocation through `this` bypasses retry advice. Test the
+  actual caller path through the bean proxy, not only the annotated method in isolation.
+- Recovery has its own contract. Match the `@Recover` return type and method arguments;
+  an optional first `Throwable` parameter selects by exception type. Test overload selection
+  and any explicit `recover` method name. In Spring Retry 2.0.12, when the annotation recovery
+  handler runs but finds no matching method, it throws `ExhaustedRetryException` with the
+  original failure as its cause; do not promise the original exception directly. Assert the
+  caller-visible type/cause as well as attempts and fallback value.
+- `noRetryFor` prevents another attempt, but can still invoke recovery. `notRecoverable`
+  prevents recovery, but can still allow retries. To propagate a specified terminal exception
+  immediately without a fallback, configure both and verify the proxy invocation. A fallback
+  result must preserve the operation's outcome contract, especially unresolved writes.
 - Check whether the advice sits inside or outside `@Transactional`: inside, the backoff can
   retain the transaction and any acquired connection.
   Outside advice still joins an ambient transaction with REQUIRED propagation. Ensure each attempt
@@ -214,6 +223,8 @@ does not prove the peer failed to apply a write.
 - [gRPC A6 retry design at dc9fd4f](https://github.com/grpc/proposal/blob/dc9fd4fe5b94b90b82fe2833ad1d80938e6a49c1/A6-client-retries.md) — design reference; verify the deployed client's implementation/version
 - [Spring Retry 2.0.12 `@Backoff` source](https://github.com/spring-projects/spring-retry/blob/v2.0.12/src/main/java/org/springframework/retry/annotation/Backoff.java)
 - [Spring Retry 2.0.12 `@Retryable`](https://docs.spring.io/spring-retry/docs/2.0.12/apidocs/org/springframework/retry/annotation/Retryable.html)
+- [Spring Retry 2.0.12 `@Recover` contract](https://docs.spring.io/spring-retry/docs/2.0.12/apidocs/org/springframework/retry/annotation/Recover.html)
+- [Spring Retry 2.0.12 recovery selection and unmatched-method failure](https://github.com/spring-projects/spring-retry/blob/v2.0.12/src/main/java/org/springframework/retry/annotation/RecoverAnnotationRecoveryHandler.java)
 - [Resilience4j Retry configuration](https://resilience4j.readme.io/docs/retry)
 - [Resilience4j 2.3.0 RetryConfig](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-retry/src/main/java/io/github/resilience4j/retry/RetryConfig.java)
 - [Resilience4j 2.3.0 breaker classification and admission](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java)

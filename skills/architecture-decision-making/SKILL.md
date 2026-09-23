@@ -48,7 +48,9 @@ transition, or a review finding; it need not be a new full ADR.
    [templates and lifecycle](references/templates-and-lifecycle.md) before selecting a
    format, recording acceptance/rejection, reconstructing history or superseding a decision.
    Preserve accepted rationale when changing the choice, and maintain explicit replacement
-   links. Record acceptance only when the provided context or authorized decision process
+   links. Distinguish acceptance from effective scope/date and rollout: older guidance may
+   still govern transition cohorts or remain in force until a stated condition is met.
+   Record acceptance only when the provided context or authorized decision process
    supports it; otherwise retain a proposed outcome and name the missing decision.
    A request to document an already authorized decision does not require another approval.
 6. **Make verification and reconsideration actionable.** Name how implementation adherence
@@ -85,6 +87,6 @@ For a review: location, evidence, consequence, proposed adjustment and validatio
 actionable finding. For a trivial choice: a concise rationale and why an ADR adds no value
 under local policy is enough.
 
-When evaluating this skill's selection or decisions, use
-[validation cases](references/validation-cases.md). Written cases and document linting are
-not evidence of measured behavioral improvement.
+For worked lifecycle boundaries or when evaluating this skill's selection or decisions, use
+[validation cases](references/validation-cases.md). These teaching cases include expected
+behavior; written cases and document linting do not establish measured behavioral improvement.

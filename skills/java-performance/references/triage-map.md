@@ -24,6 +24,15 @@ restart” suggests accumulated/reset state, not specifically code-cache exhaust
 First compare CPU demand per completed work, offered/accepted work, errors/retries, user versus
 system/steal/throttled time, and target versus host/cgroup scope.
 
+Before calling a stack change a cost increase, establish the event, eligible thread/process
+population, window, sampling interval/selection, aggregation weight and loss. Counts, weighted
+values and percentages are different quantities; dividing raw samples by operations does not
+repair incompatible capture settings. In a synthetic comparison, path weight `20` out of total
+`100` is 20%; the same path weight out of total `50` is 40%. Its share doubled while its selected
+weight stayed constant. Cost comparison still requires compatible sampling, scope and work;
+these numbers alone establish neither a regression nor its absence. Hand the raw totals and
+capture settings to `flame-graph-analysis` before selecting a code optimization.
+
 | Evidence                                                       | Candidate/route                                            |
 | -------------------------------------------------------------- | ---------------------------------------------------------- |
 | application CPU stack materially changed under same work       | `flame-graph-analysis`, then code/mechanism owner          |
@@ -42,15 +51,15 @@ mix, completed work, profiles, and runtime compilation evidence.
 Compare the full distribution, timeout/cancellation/error treatment, client/server timing,
 offered/completed load, queue depth/wait, utilization, and fanout.
 
-| Evidence                                           | Candidate/route                                                              |
-| -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| CPU per work and CPU stacks rise                   | CPU/code/GC/runtime owner                                                    |
-| queue/pool wait and utilization approach a bound   | `littles-law-and-queueing`, pool/bulkhead owner                              |
-| off-CPU/socket/trace dependency duration dominates | distributed/I/O/timeout owner                                                |
-| monitor/park contention with ownership             | `concurrency-diagnostics`, lock owner                                        |
-| GC/safepoint/OS scheduling pause aligns            | `pause-attribution`, `safepoints`, `linux-for-jvm`                           |
-| only client sees delay                             | network/LB/client queue/timing; distributed tracing and packet/host evidence |
-| low load and low resource demand                   | verify whether service is actually slow versus idle/sparse-sample artifact   |
+| Evidence                                                   | Candidate/route                                                              |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| CPU per work rises and comparable CPU profiles localize it | CPU/code/GC/runtime owner                                                    |
+| queue/pool wait and utilization approach a bound           | `littles-law-and-queueing`, pool/bulkhead owner                              |
+| off-CPU/socket/trace dependency duration dominates         | distributed/I/O/timeout owner                                                |
+| monitor/park contention with ownership                     | `concurrency-diagnostics`, lock owner                                        |
+| GC/safepoint/OS scheduling pause aligns                    | `pause-attribution`, `safepoints`, `linux-for-jvm`                           |
+| only client sees delay                                     | network/LB/client queue/timing; distributed tracing and packet/host evidence |
+| low load and low resource demand                           | verify whether service is actually slow versus idle/sparse-sample artifact   |
 
 High latency plus low average CPU does not prove a queue, although all waiting systems involve
 some queue/state. Locate where elapsed time resides and who owns the limit.
@@ -165,3 +174,10 @@ discriminator that can change the route or decision, rather than collecting for 
 branch. Hand off once the question and evidence are sufficient for a specialist to advance it;
 confirmation of the whole mechanism can remain that owner's work. If available evidence already
 supports the goal, record no change and a condition for reopening the investigation.
+
+## Profile comparison references
+
+- [Flame Graphs: profile population and frame width](https://www.brendangregg.com/flamegraphs.html)
+- [async-profiler options: event-dependent intervals, samples and total weight](https://github.com/async-profiler/async-profiler/blob/master/docs/ProfilerOptions.md)
+  — check the documentation matching the producing version; this is evidence interpretation,
+  not a prescription to collect another profile.

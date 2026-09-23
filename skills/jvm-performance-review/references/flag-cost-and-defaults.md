@@ -98,13 +98,26 @@ after measuring both paths. Test direct-memory exhaustion and cleanup explicitly
 
 ## Extract a defaults snapshot
 
-For every supported JDK/resource class, retain:
+For every supported JDK/resource class, retain the commands below with their environment and
+resolved Java executable. A bare command is not necessarily an unmodified default: inherited
+`JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS`, and HotSpot's undocumented `_JAVA_OPTIONS` can inject
+options even into `-version` probes.
 
 ```bash
 java -version
 java -XX:+PrintCommandLineFlags -version
 java -XX:+PrintFlagsFinal -version
 ```
+
+Keep the deployed launcher/environment snapshot. If a default comparison is needed, run a
+separate disposable child with option-injection variables removed and the exact Java executable
+invoked directly, under the same resource envelope. Record which sources were removed, inspect
+other build-specific sources, and verify origins in both outputs. Do not clear the live service's
+environment or label the inherited snapshot as an ergonomic baseline. Startup probes do not
+establish workload behavior.
+
+An origin alone does not recover the original option source: `JDK_JAVA_OPTIONS` is prepended by
+the launcher and can appear as `{command line}` in HotSpot output. Retain launcher provenance.
 
 For the running workload, add effective runtime flags and subsystem evidence. Diff snapshots across
 JDK builds as data. Do not assume printed product defaults describe values later changed by
@@ -132,6 +145,7 @@ or superseded, and rollout evidence verifies behavior. Do not remove solely beca
 
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)
 - [OpenJDK JDK 25 GA flag declarations and ergonomics](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot) — inspect the target release/vendor source when different.
+- [JDK 25 GA option-source parsing](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/arguments.cpp) — includes `JAVA_TOOL_OPTIONS` and undocumented `_JAVA_OPTIONS`; launcher handling of `JDK_JAVA_OPTIONS` is documented in the `java` manual.
 - [JDK 25 Flight Recorder configurations](https://docs.oracle.com/en/java/javase/25/jfapi/flight-recorder-configurations.html) — recording detail and overhead depend on the selected settings; measure their cost on the workload.
 - [Linux proc process memory](https://docs.kernel.org/filesystems/proc.html)
 - [cgroup v2 memory controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory)

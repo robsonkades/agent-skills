@@ -36,7 +36,9 @@ harness that expects to observe the error in-process, or a test that asserts on 
 **Committing is lazy unless `-Xms` equals `-Xmx`.** Epsilon commits in steps of
 `EpsilonMinHeapExpand` (128 MB, experimental) and prints `Consider setting -Xms equal to
 -Xmx to avoid resizing hiccups` at start-up when they differ, plus `Consider enabling
--XX:+AlwaysPreTouch to avoid memory commit hiccups` in every case (verified). For a latency
+-XX:+AlwaysPreTouch to avoid memory commit hiccups` only when `AlwaysPreTouch` remains
+at its default false value. Explicitly enabling or disabling it suppresses that hint
+(verified on 25.0.3); an absent hint does not prove pre-touch is enabled. For a latency
 benchmark these controls can exclude resizing/first-touch work from the timed region, but
 pre-touch adds startup work and resident memory. Keep that cost in a cold-start experiment.
 
@@ -130,7 +132,7 @@ under `-Xint` is a different claim.
 ```
 
 Verified output on 25.0.3: `Using Epsilon`, the `gc+init` block (`Heap Max Capacity`, `TLAB
-Size Max`, `TLAB Size Elasticity`, `TLAB Size Decay Time`), the two `Consider …` hints, the
+Size Max`, `TLAB Size Elasticity`, `TLAB Size Decay Time`), applicable `Consider …` hints, the
 `Heap:` occupancy lines, then at exhaustion:
 
 ```
@@ -196,3 +198,4 @@ change is warranted and verify its correctness separately.
 
 - [JEP 318](https://openjdk.org/jeps/318) — intended uses and finite heap constraints.
 - [Epsilon initialization, JDK 25 update sources](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/epsilon/epsilonArguments.cpp) — OOM exit default and non-GC safepoint support; use the target build tag.
+- [25.0.3 Epsilon startup logger](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/epsilon/epsilonInitLogger.cpp) — conditions for heap-size and pre-touch hints.

@@ -136,6 +136,8 @@ diagnostics require an alternative evidence source, not an assumed result.
   maturity; reproduce after warm-up and after deoptimization/recompilation.
 - State whether evidence is bytecode, ideal graph, compiler log, assembly, allocation sample or
   benchmark. Each can falsify different hypotheses and none substitutes for all others.
+- For graph comparisons, identify the compilation and phase: node IDs can be renumbered,
+  and an absent `Allocate` after macro expansion can mean lowering rather than elimination.
 - Test semantic edge cases before refactoring for the compiler: exceptions, overflow, NaN,
   aliasing, concurrency/publication and uncommon paths can be the guards preventing an opt.
 - Validate end-to-end throughput/tail/CPU/code-cache effects. A microbenchmark win under forced
@@ -148,9 +150,9 @@ the semantic constraints and before/after metric; say explicitly when it remains
 ## References
 
 - [C2 phases and the IR](references/c2-phases-and-ir.md) — the five tiers, the seven-phase
-  pipeline, the three edge types of the sea-of-nodes graph, the inlining size limits and the
-  three escape states, as tables. Read when you need to say _where_ in the pipeline a decision
-  was made, or which limit a specific inlining verdict came from.
+  diagnostic map, control/value/memory dependencies, precedence edges and alias slices,
+  the inlining size limits and the three escape states. Read when locating a decision in
+  the pipeline, interpreting graph changes, or identifying an inlining refusal's limit.
 - [JIT diagnosis recipes](references/jit-diagnosis-recipes.md) — the exact flag combinations
   for tier, inlining and escape diagnosis, the factor-isolation runs, and the correct threshold
   tuning flags. Read when you are about to run the JVM to answer one of these questions.

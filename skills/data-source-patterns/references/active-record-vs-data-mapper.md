@@ -89,9 +89,19 @@ final class InvoiceMapper {
 ```
 
 The rule reads in the business's language and the mapper can isolate column renames.
-Preserve identity and the loaded version in both mapping directions; updating with a newly
-read version would conceal a stale-write conflict. The cost is `InvoiceMapper` and `InvoiceRow`, and a
-place where a bug can live that neither side exhibits alone.
+Preserve identity and carry the loaded version as the expected token for the write; replacing
+it with a newly read version conceals a stale-write conflict. When updating through a managed
+JPA entity, compare its loaded version with that expected token before copying domain changes,
+reject a mismatch, and let the provider maintain `@Version`. Do not overwrite the managed
+version field to force acceptance. The provider's write-time check still guards races after
+the comparison; failure may surface at flush or commit, not at the setter call.
+
+For a custom SQL mapper, put the expected version in the write predicate and require the
+intended affected-row count; a single-row update returning zero has not succeeded. Refresh
+the domain's token from the successful persistence outcome before reusing it for another write.
+The cost is `InvoiceMapper` and `InvoiceRow`, and a place where a bug can live that neither
+side exhibits alone. Test a domain object loaded at version 5 against a row advanced to 6;
+reloading version 6 in the mapper must not silently authorize the stale version-5 decision.
 
 **Reconstitution** is the detail most often got wrong: loading must be able to produce an
 object in a valid lifecycle state the creation constructor does not create (a settled invoice,

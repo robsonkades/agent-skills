@@ -46,10 +46,14 @@ lie.) If the pulled-up code calls an overridable method, the override executes a
 unconstructed subclass.
 
 Java 25 changes what is available, not what is safe: flexible constructor bodies (JEP 513)
-let a subclass constructor validate arguments and **assign** its own fields in a prologue
-before `super(...)`, so a field the pulled-up code reads can be set in time. The prologue
-still cannot read `this`, and needing it means the base class is calling an overridable
-method — fix that instead where you can.
+let a subclass constructor validate arguments and assign its own instance fields in a prologue
+before `super(...)`, subject to the early-construction rules. Such a field must lack a declaration
+initializer, and the write must be a simple assignment, not a read/modify/write operation.
+The prologue cannot read the current object's instance fields or invoke its instance methods;
+assigning a field there is not permission to expose the unfinished object. Check the full
+initialization order and avoid superclass calls to overridable methods where possible. See
+[JLS 25 early field access](https://docs.oracle.com/javase/specs/jls/se25/html/jls-6.html#jls-6.5.6.1)
+and [initialization order](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.5).
 
 ## Push Down Method / Push Down Field
 
@@ -108,7 +112,7 @@ values, unmapped subtype rows or changed query results. Actual failure versus si
 depends on provider, mapping and query; validate existing rows and relevant consumers.
 The collapse can require a data migration. Even a rename can change a default string
 discriminator based on the entity name; explicit entity/discriminator names may preserve it
-(inheritance-mapping-strategies, `schema-evolution.md`).
+(inheritance-mapping-strategies, especially its `references/schema-evolution.md`).
 
 ## Replace Type Code with Subclasses
 

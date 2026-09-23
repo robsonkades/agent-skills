@@ -56,6 +56,20 @@ Use expand/contract with an explicit compatibility window. It does not itself gu
 zero downtime or reversibility; state the lock budget, failure recovery and irreversible
 contract point. If safe capture is unavailable, choose an agreed write freeze.
 
+Include ORM state in that window. Jakarta Persistence bulk DML bypasses ordinary optimistic
+locking checks and does not synchronize managed instances. Migration SQL must implement its
+own writer exclusion or version-check/update protocol; it does not automatically gain ORM
+version handling. Before reclassification or cutover, drain affected units of work and settle
+pending changes under that protocol before retiring old contexts; blindly clearing them can
+discard unflushed changes. Updating a discriminator does not change an existing Java object's
+class. Reload reclassified rows through a fresh context instead of expecting `refresh` to
+transform an old object.
+
+For configured entity, collection or query caches, define invalidation or bypass across all
+nodes and prevent old transactions from repopulating stale entries. Hibernate 6.6 caches do
+not detect changes made by other applications. A fresh persistence context alone is therefore
+insufficient when an affected shared cache can still supply old state.
+
 ### Single table → joined
 
 Protocol sketch, not a runnable migration:
@@ -147,12 +161,19 @@ Use the project's provider, transaction setup and real database dialect to test:
   sibling exclusivity and base-row completeness separately.
 - Exercise old/new readers during subtype introduction and concurrent backfill/update/delete,
   including a dual-write failure and rollback before the contract point.
+- Warm a context and any configured caches before reclassification or SQL migration; verify
+  fresh reads see the intended subtype/state and an old pending write cannot silently restore
+  stale state. Exercise the declared version/conflict handling and cache cutover on every node.
 
 These are proposed integration cases, not executed tests. Include any hand-written UNION
 views when adding a subtype; providers normally derive hierarchy queries from their mappings.
 
 ## Primary sources
 
+- [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
+  section 4.11 and the EntityManager contract: bulk DML, versions and managed-instance state.
+- [Hibernate ORM 6.6 caching](https://docs.hibernate.org/orm/6.6/userguide/html_single/#caching):
+  cache visibility limits for changes made by other applications.
 - [PostgreSQL 18 ALTER TABLE](https://www.postgresql.org/docs/18/sql-altertable.html):
   lock levels, constraint validation and rewrite conditions.
 - [PostgreSQL 18 pg_constraint](https://www.postgresql.org/docs/18/catalog-pg-constraint.html):

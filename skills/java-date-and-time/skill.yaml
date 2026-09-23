@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: java-date-and-time
+version: 1.0.0
+description: >-
+  Model and validate Java date and time values when choosing between civil dates,
+  local date-times and instants, resolving DST gaps or overlaps, applying calendar
+  arithmetic, testing time-dependent rules, or preserving temporal meaning across
+  parsing, JSON and JDBC. Covers java.time types, region versus offset, Duration
+  versus Period, Clock injection and precision contracts. Does not cover calendar
+  job scheduling or operational timeout budgets (timeouts-and-deadlines).
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-date-and-time
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-date-and-time
+
+keywords:
+  - java
+  - java-time
+  - dates
+  - time-zones
+  - daylight-saving
+  - clock
+  - jdbc
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - timeouts-and-deadlines
+  - rpc-and-api-contracts
+  - orm-structural-mapping
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Date and Time
+      short_description: Temporal meaning, DST, clocks and boundary precision

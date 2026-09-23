@@ -16,11 +16,11 @@ skills:
       - logs
       - metrics
       - daemonset
-    latest: 2.3.1
+    latest: 2.3.2
     versions:
-      - version: 2.3.1
+      - version: 2.3.2
         path: skills/adapter-sidecar-pattern
-        integrity: sha256-Cg4OjxV+i8SgUAMQrGDjcNjWmWxiFFE6p+AjOVQtTZc=
+        integrity: sha256-40CNAsZIUgSsP7WA3cJA4dItUxDGLq8DyW1+6xSUIVg=
   - name: allocation-profiling
     description: Attribute Java heap allocation to code and validate reductions in bytes per operation. Use when allocation
       or GC frequency regresses, JFR allocation events are empty or disagree with counters, large buffers trigger G1
@@ -36,11 +36,11 @@ skills:
       - profiling
       - jfr
       - async-profiler
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/allocation-profiling
-        integrity: sha256-w6KotUn/lgx682grZKKkvulIZipKgPomANJO7Gw54zI=
+        integrity: sha256-g6Gm4BvqQw5Z4WtkphbDAbKJTUJa2u8vNWUOd6Cjnh4=
   - name: ambassador-pattern
     description: Choose or review a local outbound proxy when discovery or routing changes require client releases, a canary
       or shadow needs routing outside the app, or retries overlap across app, proxy and mesh. Define the listener,
@@ -54,11 +54,11 @@ skills:
       - sharding
       - canary
       - service-mesh
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/ambassador-pattern
-        integrity: sha256-FUzGloVVGuKyO0a4NpZfi30X8rQWXM4G7ZjwpKXjPW4=
+        integrity: sha256-EC6RnQnNwOvoS1Jd5/3cjMDqgKNNScBcrWUT7FelTF4=
   - name: architecture-and-performance
     description: Attribute endpoint latency and throughput limits to architectural choices when query counts grow with
       result size, remote calls are chatty, connections are held across other work, or a cache, layer removal or service
@@ -73,11 +73,11 @@ skills:
       - transaction-duration
       - query-budget
       - enterprise
-    latest: 1.3.1
+    latest: 1.3.2
     versions:
-      - version: 1.3.1
+      - version: 1.3.2
         path: skills/architecture-and-performance
-        integrity: sha256-Rtb55mbzoNyzUuHZQpSRuLN2txA5qQNEKmz3EYY//tg=
+        integrity: sha256-ohNuLsPqdhkmMLlAn9JchH0S5s1myuZ/S8v/9wy7ZBs=
   - name: architecture-characteristics
     description: Derive and prioritize architectural quality drivers when requirements say only scalable or reliable, too
       many qualities are called top priority, stakeholders disagree on their meaning, or one list is applied across
@@ -92,11 +92,11 @@ skills:
       - architecture-quantum
       - fitness-functions
       - iso-25010
-    latest: 1.2.1
+    latest: 1.2.2
     versions:
-      - version: 1.2.1
+      - version: 1.2.2
         path: skills/architecture-characteristics
-        integrity: sha256-jtmMAoRiy26dOX5MsU5cxOL8i8GqqQcaYEYMlIyCEBU=
+        integrity: sha256-8EDFlc42Axa21MKBf411VGajgXVFqFNd3+ohUx/+760=
   - name: architecture-coupling-and-quanta
     description: Map release and runtime coupling when services ship together, event-driven components still require
       coordinated changes, shared data obscures ownership, or a proposed architecture quantum boundary cannot be
@@ -110,11 +110,11 @@ skills:
       - connascence
       - change-coupling
       - deployability
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/architecture-coupling-and-quanta
-        integrity: sha256-EmvzI5/0fecUQMOctsDpMH4C2/jU8t2cgkWpGlA6Tvo=
+        integrity: sha256-F2s0ozRjFTJ08WOsFvxs3ywE8uwJMHWU+LinwXlD+xo=
   - name: architecture-decision-making
     description: Write, review, reconstruct or supersede architecture decision records when rationale is missing, a decision
       is repeatedly reopened, a proposal needs an explicit outcome, or an accepted choice changes. Decide how much
@@ -129,11 +129,11 @@ skills:
       - decision-record
       - reversibility
       - supersession
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/architecture-decision-making
-        integrity: sha256-h6NCSo1/Ap+CZaq7ZSarY+q/HS5d/2zPYktlhw6vQas=
+        integrity: sha256-YqKHXLCBQc/amho2cVwIXvyW8nouuk09xKcq8C/a3Ro=
   - name: architecture-fitness-functions
     description: Define or review checks that preserve architectural qualities when a green pipeline misses incidents,
       inherited rules are skipped or unexplained, a characteristic lacks evidence, or a metric is being promoted to a
@@ -148,11 +148,11 @@ skills:
       - architecture-characteristics
       - evolutionary-architecture
       - objectivity
-    latest: 1.3.1
+    latest: 1.3.2
     versions:
-      - version: 1.3.1
+      - version: 1.3.2
         path: skills/architecture-fitness-functions
-        integrity: sha256-8qzSAZgCZScFoWS/elM0jI2y4iTtpVO0YWsaCJN/vck=
+        integrity: sha256-Oed6iRtXfOOUPh3BedjMWqnJr1R4uUpE631VK8jve5k=
   - name: architecture-refactoring-paths
     description: "Sequence a chosen enterprise architecture change into compatible, testable checkpoints: domain and
       persistence refactoring, remote boundaries, session state, locking or events. Use when old and new paths must
@@ -167,11 +167,11 @@ skills:
       - incremental
       - architecture
       - enterprise
-    latest: 1.4.1
+    latest: 1.4.2
     versions:
-      - version: 1.4.1
+      - version: 1.4.2
         path: skills/architecture-refactoring-paths
-        integrity: sha256-OOHKUiu2pUiqz7uP8hLlGoAga6sLiFTbM81cjhPyG6g=
+        integrity: sha256-iJu5JqcuRErq7QqsFWgBjtOrnBYHFjVetC5TDOiMp4A=
   - name: architecture-testing
     description: "Write or review tests for architectural promises: dependency boundaries, transaction atomicity,
       persistence mappings, stale-write detection, query budgets and API/event compatibility. Use when green tests
@@ -185,11 +185,11 @@ skills:
       - query-budget
       - concurrency-tests
       - contract-tests
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/architecture-testing
-        integrity: sha256-RZfAH7VUKeIHpEJS7GMt0U0m9XbrBfEoDMTaIcwyb18=
+        integrity: sha256-Ye0Ktlx2N6LWyu3s7hWGs+CdUW8uNuRGpxgB/ZC9xFc=
   - name: architecture-trade-off-analysis
     description: Compare architectural alternatives when quality goals conflict, a scorecard or case study is being used as
       a verdict, options mix abstraction levels, advocates disagree, or a benchmark needs a decision rule. Build
@@ -203,11 +203,11 @@ skills:
       - mece
       - coupling
       - bias
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/architecture-trade-off-analysis
-        integrity: sha256-yKaLe6iKo8BZe6xpTN9E1Cl0tsSSVC2akjVBmsMuiyY=
+        integrity: sha256-WqVfCjpyPesOsK6VtFgAU46SIQJR412LOy3bXSLQmPs=
   - name: async-profiler-advanced
     description: Configure and validate async-profiler when recordings are empty, idle-heavy, truncated, permission-blocked,
       containerized, multi-event, or version-sensitive. Choose event weights and engines, bound collection overhead,
@@ -221,11 +221,11 @@ skills:
       - perf-events
       - ctimer
       - flame-graph
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/async-profiler-advanced
-        integrity: sha256-JN5ONMmyQfpvVnAB+Pvezx1G5ZpKknheHxhWtgm7/18=
+        integrity: sha256-hhHVpY1f/8P2tLpi7yMFq0/lLm4vTYgsmS3ZzCBY5M4=
   - name: blocking-and-nonblocking-io
     description: "Four things routinely conflated into one: a blocking API, a blocked OS thread, non-blocking I/O at the
       syscall, and an asynchronous programming model. Covers which JDK operations unmount a virtual thread and which
@@ -245,11 +245,11 @@ skills:
       - event-loop
       - netty
       - pinning
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/blocking-and-nonblocking-io
-        integrity: sha256-WKu0rH+id8uTECOL8RER7Ui5tHib66ROfC4zpa8un4s=
+        integrity: sha256-F5SFZR+hP577d16V5wx8jmaGVB9NPhrdyO9CeNIiV0I=
   - name: c2-sea-of-nodes
     description: "How HotSpot actually executes and compiles: the runtime-generated template interpreter, C2's sea-of-nodes
       IR, a release-scoped diagnostic map of compilation phases, and why a given transformation fired or did not. Use
@@ -267,11 +267,11 @@ skills:
       - sea-of-nodes
       - escape-analysis
       - inlining
-    latest: 1.4.3
+    latest: 1.4.4
     versions:
-      - version: 1.4.3
+      - version: 1.4.4
         path: skills/c2-sea-of-nodes
-        integrity: sha256-ve6z/U4qOY23n6kmk+JfBQWx6XsrEfIggucVCzVWFa0=
+        integrity: sha256-byB0ey7SQVY6/ChWsOv1h0Aaq2Anuu28xFsnmHk77NQ=
   - name: cache-sharding-and-replication
     description: "Topology for a cache that no longer fits one node: client-side sharded, proxy-fronted, clustered, and
       fully replicated, compared on failure behaviour, cost and client complexity; and why a read after a write on a
@@ -289,11 +289,11 @@ skills:
       - topology
       - distributed-systems
       - availability
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/cache-sharding-and-replication
-        integrity: sha256-TPAwnlg5idTGv7oSe2SYH/b0HQuaRkTbSbyXjLKBqUo=
+        integrity: sha256-Tkt+Wto2Mor4P3fyBhhsWgSymm/F8ZMB9oysMuK3rmA=
   - name: caching-strategies
     description: "Deciding whether to cache, then doing it safely: saved origin work and latency, bounded size or weight,
       TTL and jitter, stampede and its four distinct scopes, cache-aside versus refreshAfterWrite, immutable DTOs rather
@@ -311,11 +311,11 @@ skills:
       - stampede
       - invalidation
       - spring-cache
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/caching-strategies
-        integrity: sha256-EhkaGEe0XiPAAEZLg89pRmqJ6ZZEhyW6EpQYR0OlSv0=
+        integrity: sha256-gw9i5Eozm9ePwAd7pXhmbL1qNeZ29h2TRx4UvGiFvYE=
   - name: cancellation-and-interruption
     description: Designing cooperative cancellation in Java across interruption, Future/CompletableFuture, executor/scope
       shutdown, deadlines, resource close/abort, CPU loops, blocking APIs, native calls, partial side effects and
@@ -331,11 +331,11 @@ skills:
       - interruptedexception
       - future
       - timeout
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/cancellation-and-interruption
-        integrity: sha256-LQadwmqhrWL5XxP71IfUww2ybam9jXln1sxccHOBTV8=
+        integrity: sha256-bahtvlrNVqSUumMz4c5+6gOlrWVbyJWz3QGubdg6wl8=
   - name: capacity-planning
     description: "Evidence-based capacity decisions for Java services: defining demand and failure scenarios, measuring
       feasible capacity envelopes, selecting replica and resource configurations, forecasting exhaustion with
@@ -352,11 +352,11 @@ skills:
       - slo
       - forecasting
       - cost
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/capacity-planning
-        integrity: sha256-IQTqY6NhFJypqiPNH55GL3NM8HKyXR9pg0JCZ8/IudI=
+        integrity: sha256-BwVn1/i+ZVrmU4KsS9LENXhJROnDI141eG2ynH43wJk=
   - name: cascading-failures
     description: "How one slow dependency becomes a total outage: the amplification loop and the four points that close it —
       retry storms, unbounded queues, thread and connection exhaustion, an inner timeout longer than the outer one.
@@ -374,11 +374,30 @@ skills:
       - metastable
       - overload
       - resilience
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/cascading-failures
-        integrity: sha256-EQyMe2m7RWEqyyF2UEZ1LgQ2SJx4puvg1oAsDkt6bCI=
+        integrity: sha256-3SdR3b58dY6I+j74vP6Ej5xZhyTaDCDKu65C7h4fMW4=
+  - name: change-data-capture-operations
+    description: Operating Debezium source CDC through snapshots, lag, restarts, log retention and failover. Use when
+      PostgreSQL WAL or MySQL binlogs accumulate, a connector cannot resume, a snapshot is interrupted, schema history
+      is missing, or captured tables need controlled resynchronization. Covers source continuity and sink replay
+      consequences; consumer offset resets, transactional outbox design, stream runtime tuning and cross-engine
+      migration belong to neighboring skills.
+    keywords:
+      - cdc
+      - debezium
+      - snapshots
+      - postgresql
+      - mysql
+      - replication
+      - recovery
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/change-data-capture-operations
+        integrity: sha256-Dwwmw4VPUUAjHFwgF0rRH+re9nCvoWWuAdpZVsXG3lA=
   - name: circuit-breakers
     description: "The breaker as a state machine that stops calling a failing dependency: closed, open and half-open;
       choosing rate windows versus consecutive failures; recovery probe limits and in-flight work across state
@@ -397,11 +416,11 @@ skills:
       - fallback
       - resilience4j
       - java
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/circuit-breakers
-        integrity: sha256-a61hRXzCOAlcpMMUx/Hg99GTaahP0/Wd78ZZHmMALT0=
+        integrity: sha256-mICoZoP3SpFljCnPuVMyPc+7EaOJ3M+KtlQ9x8yO8LE=
   - name: clean-delivery-workflow
     description: "The order of work for a change, and how much of that order a given change actually warrants: understanding
       before editing, clarifying what is ambiguous, deciding the test approach, implementing in reversible steps,
@@ -420,11 +439,11 @@ skills:
       - risk
       - commits
       - process
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/clean-delivery-workflow
-        integrity: sha256-U+iOCwLGM+t0XijkHpAufR+vmkZLJVEXP9jU+F4b7yY=
+        integrity: sha256-zQ5BDKy/RiljBqQh3TDhuhxfrbkEgA5o98c0JxYa8l0=
   - name: code-cache-segments
     description: The JDK 17-25 segmented code cache, GC-driven unloading, fragmentation, segment sizing, and jcmd
       Compiler.codecache/CodeHeap_Analytics. Use when aggregate usage looks healthy but one CodeHeap is exhausted,
@@ -441,11 +460,11 @@ skills:
       - codeheap
       - fragmentation
       - sizing
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/code-cache-segments
-        integrity: sha256-5qywJed5QgmY8Tv7m8HVYBlTBn1xs+8Srur72O5Ivlk=
+        integrity: sha256-yV4hTM2h/3yV2rdxTvSV6IoipE/b1YhzYNaye/3EfTc=
   - name: code-review
     description: "Reviewing a change as an engineering activity: setting review depth from the change's risk rather than its
       size, looking in the order that finds the expensive defects first, refusing to spend human attention on what a
@@ -462,11 +481,11 @@ skills:
       - pairing
       - review-depth
       - collaboration
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/code-review
-        integrity: sha256-LWxFBZEA9gJuPwMAycSN/j65nsXj3zmeMpFvGh0LJhg=
+        integrity: sha256-lyiIZfK2gliFwdXpio82lYtN7sT0XNzovA/3YBCpidc=
   - name: coding-agent-discipline
     description: "The reporting and restraint rules for an AI agent changing someone's codebase: never claiming a result
       that was not observed, saying which commands ran and what they printed, reporting what could not be verified
@@ -484,11 +503,11 @@ skills:
       - reporting
       - honesty
       - restraint
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/coding-agent-discipline
-        integrity: sha256-GiwcmZAM7AilFykHNoYOy1DOyREI94NPp0CvqHaUFmU=
+        integrity: sha256-BGPXYZArxLvSf3SwJJTwLvIkrXv+ypxQsD13dkuPx0s=
   - name: collaborative-feature-definition
     description: Co-authoring Product Features and Tech Features through focused question-and-revision rounds. For a Product
       Feature, separates the business definition from an optional engineering analysis owned by an architect or senior
@@ -503,11 +522,11 @@ skills:
       - collaboration
       - requirements
       - acceptance-criteria
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/collaborative-feature-definition
-        integrity: sha256-FHGz4fUVd5C2Wc6m8YHqUijoateBGH5YFrEFroDDcjc=
+        integrity: sha256-XYPUFNat6RybrR1VCmTz2Vv+WJwVivGr+odZKmnQZ64=
   - name: compilation-and-inlining-logs
     description: "Reading what the JIT actually did: the columns of -XX:+PrintCompilation and its flag characters,
       -XX:+PrintInlining and its verdict strings, -XX:+LogCompilation with JITWatch, the -Xlog:jit+compilation and JFR
@@ -528,11 +547,11 @@ skills:
       - jitwatch
       - c2
       - compiler-directives
-    latest: 2.0.2
+    latest: 2.0.3
     versions:
-      - version: 2.0.2
+      - version: 2.0.3
         path: skills/compilation-and-inlining-logs
-        integrity: sha256-glUbqUK4a2MufeTLpVMwaaEpA+zrY7ZE2ieHVBP6ZME=
+        integrity: sha256-3naWYwjCa4JLngxWbdBEijq3uxFN+5s2t0jd0/Yb6nQ=
   - name: completablefuture-composition
     description: Design and diagnose CompletionStage graphs with explicit execution, ownership, failure, timeout,
       cancellation, context and admission semantics. Use when a continuation runs on an I/O thread, a branch failure
@@ -546,11 +565,11 @@ skills:
       - composition
       - forkjoinpool
       - error-handling
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/completablefuture-composition
-        integrity: sha256-CpmANDVGuhNcF8vLBKirPSiI++0xdXakcgltDR3SZzc=
+        integrity: sha256-2eMhBSiWjaklhYr7c+A3ORfU1zNO3HHdssrf/i2cNIY=
   - name: component-and-release-boundaries
     description: "Deciding what becomes an independently releasable component — a Maven module, a JPMS module, a published
       library — and what that costs: the tension between reusing code and being able to release it, why a shared jar
@@ -570,11 +589,11 @@ skills:
       - versioning
       - dependency-management
       - monorepo
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/component-and-release-boundaries
-        integrity: sha256-qHgYOyeGHooX7V63xuuEt5ni3Q3ffnXXbW2J3/Xaz0A=
+        integrity: sha256-FGa7dTzvbb4VS4mVGMti+KMCNYW+Ub0Yzvh2SaYq0hk=
   - name: concurrency-diagnostics
     description: Evidence-led diagnosis of deadlock, starvation, livelock, saturation, leaks and virtual-thread scheduler
       problems. Compares traditional platform-thread dumps, jcmd all-thread dumps, ThreadMXBean,
@@ -589,11 +608,11 @@ skills:
       - jfr
       - deadlock
       - diagnostics
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/concurrency-diagnostics
-        integrity: sha256-a/w50aW3FuyHqqjwP2hYEZw335L5+9+FJVzqhdMvo/Q=
+        integrity: sha256-bKyUCZQF97hO9oiDPALdXba7AyTdtmzV9VKP/2ziG80=
   - name: concurrency-limiting-and-bulkheads
     description: Engineer process-local concurrency limits and bulkheads around scarce resources, with explicit admission
       deadlines, permit ownership, weighted work, partitioning, fairness, observability and overload validation.
@@ -608,11 +627,11 @@ skills:
       - rate-limiting
       - backpressure
       - resilience
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/concurrency-limiting-and-bulkheads
-        integrity: sha256-NnZGMA5IS3c3Wh64tdLuQW76aOOBDpANArnZzUmhOsY=
+        integrity: sha256-iZZrOF/uDyUD/CrujBHkjpII2kE6KkCDnZwPwNHnORk=
   - name: concurrency-testing
     description: "Testing concurrent Java so failures appear in CI rather than in an incident: what a passing concurrency
       test does and does not prove, replacing sleeps with latches and deterministic executors, explicitly exercising
@@ -632,11 +651,11 @@ skills:
       - stress-test
       - soak
       - fault-injection
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/concurrency-testing
-        integrity: sha256-ER21+gIgaqOBs1c7FFFuIJIHHaNXm1sh8Yaw6tiGk0M=
+        integrity: sha256-COiFsIMOw1OrGavd3H1LCeAWjC2UDInq6Vp+woh16r4=
   - name: concurrent-collections-and-synchronizers
     description: "Choosing between the members of java.util.concurrent once the family is settled, and the parameter that
       makes it correct: which BlockingQueue and which of its four insert and remove forms, which ConcurrentHashMap
@@ -656,11 +675,11 @@ skills:
       - semaphore
       - locks
       - synchronizers
-    latest: 1.2.3
+    latest: 1.2.4
     versions:
-      - version: 1.2.3
+      - version: 1.2.4
         path: skills/concurrent-collections-and-synchronizers
-        integrity: sha256-0lbDaIA3HBdVMZlav0kQUDiutQsayUDwm7JJsPnsun0=
+        integrity: sha256-4Jilr+MX7Tj9vvJSVBpDprELw5yuoIWqKcvYTONSaIg=
   - name: connection-pool-sizing
     description: "Sizing and diagnosing a JDBC connection pool: L = λ × W where W is connection hold time rather than query
       latency, the database-side ceiling, HikariCP timeouts and lifetimes, transaction boundaries and
@@ -678,11 +697,11 @@ skills:
       - transaction
       - n-plus-one
       - sizing
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/connection-pool-sizing
-        integrity: sha256-Nsblw+dFVxstjb7njdI+2Z5m9zI9Ko+JtHwriRG0avg=
+        integrity: sha256-sli699Xse1R05d3DIxdqJ+QW7lULWkJDsNGszMqZt0c=
   - name: consensus-and-quorums
     description: "Crash-fault consensus and quorum reasoning: FLP, safety versus liveness, majority 2f+1, R + W > N
       intersection and its limits, voter/failure-domain placement, Raft terms and why external fencing still requires
@@ -700,11 +719,11 @@ skills:
       - etcd
       - zookeeper
       - availability
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/consensus-and-quorums
-        integrity: sha256-/C+czFjgd0InKuNrGasyYQtOlbHRR83EKG10JeNa5CY=
+        integrity: sha256-RcaJVCxOCD5nY+dWA8fyDcdu/H0u29TTm9YC7kezefE=
   - name: consistency-models
     description: "Choosing distributed consistency guarantees as an engineering decision: linearizability, sequential/causal
       ordering, session guarantees (read-your-writes, monotonic reads), bounded staleness and eventual convergence,
@@ -723,11 +742,11 @@ skills:
       - pacelc
       - replication
       - read-your-writes
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/consistency-models
-        integrity: sha256-VHfCkolKCYia3X95vdlN6EYDCK/fNvCUAkUXP9QLOec=
+        integrity: sha256-RclDZt9xHntfA2BRI710fJ83JgXg8MflW+naClg96rA=
   - name: consistent-hashing
     description: "Stable key-to-node placement across membership changes: modulo remapping, consistent-hash rings, virtual
       points, rendezvous hashing, collision-safe Java implementations, hash contracts, replica selection, weighting,
@@ -742,11 +761,11 @@ skills:
       - partitioning
       - distributed-systems
       - java
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/consistent-hashing
-        integrity: sha256-gTjE6NdIcmzPaaHZLfWpWfOyQJBHjIA5SQ/ePVwiQJU=
+        integrity: sha256-pCLfC5iing3FDIVfU+J44utyOuQNLaHchjFZ7ICtdME=
   - name: container-awareness
     description: "What the JVM actually detects inside a container: cgroup v1 versus v2 detection, ActiveProcessorCount and
       how a CPU quota becomes a processor count, MaxRAMPercentage and every ergonomic derived from it, GC and JIT thread
@@ -765,11 +784,11 @@ skills:
       - kubernetes
       - ergonomics
       - throttling
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/container-awareness
-        integrity: sha256-+nmJMNj8u1K2s9lr7As4vRvPJSSp14E5gXwI14Ry3UY=
+        integrity: sha256-1AvrprSlZA9XMY0N6g3oEbwLIyqJ3mPfM5CXa8yO0+s=
   - name: continuous-profiling
     description: "Designing and operating always-on production profiling: question-driven signal choice, permanent overhead
       and coverage budgets, in-process versus host collection, context-label propagation, profile schemas, storage and
@@ -786,11 +805,11 @@ skills:
       - jfr
       - observability
       - production
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/continuous-profiling
-        integrity: sha256-uekVz9+2xrfkSdSjsebXBJUNWBe6oTq86ebvLekln10=
+        integrity: sha256-5zoMx+ooy7Pwrtf2JldaNgxDxYSB65TFCWDnLwmjOZs=
   - name: coordinated-omission
     description: "Coordinated omission in depth: response-coupled sampling, open/closed/semi-open workload models,
       scheduled-versus-actual clocks, generator saturation, correction at recording time versus at generation time,
@@ -808,11 +827,11 @@ skills:
       - percentiles
       - open-loop
       - benchmarking
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/coordinated-omission
-        integrity: sha256-RBXHNQWoEpyb7J7b1u0W4GHJfWy4XVAp4CA8BGxqkxE=
+        integrity: sha256-65NIVKJJSMEb+NrdmPwmtt+OvjczFUfso3a21/mRtf8=
   - name: cpu-cache-and-numa
     description: "Hardware-aware Java: cache-line coherence and locality, false sharing and how it differs from lock
       contention, object layout measured with JOL, LongAdder versus AtomicLong, data locality in arrays and collections,
@@ -830,11 +849,11 @@ skills:
       - jol
       - longadder
       - scalability
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/cpu-cache-and-numa
-        integrity: sha256-g4RmH023MYzXxKsV5tVmgnX5r8sXkcArWZqTeTsKh3o=
+        integrity: sha256-eSQ1NmQT+p2P/hP4kwbmI8PRItzHCfL5iYxiFvMtRqQ=
   - name: data-source-patterns
     description: Choosing how code reaches the database — Table Data Gateway, Row Data Gateway, Active Record or Data Mapper
       — from the shape of the domain logic rather than from framework habit, and knowing what each one couples together.
@@ -852,11 +871,11 @@ skills:
       - jdbc
       - jpa
       - persistence
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/data-source-patterns
-        integrity: sha256-sAAQOP5VF7i2CxMnWhckqwBZ2iwq+WldL60p7AVghRI=
+        integrity: sha256-Dk1BDUnpecl7O4qPHMftt3T6lMNH6gIqevJ9Y7bMg5g=
   - name: database-bulk-loading
     description: "Designing and diagnosing high-volume database ingestion from the JVM across PostgreSQL, MySQL, and SQL
       Server: JDBC batching and statement rewrite, native COPY/LOAD DATA/Bulk Copy, staging, transaction and
@@ -871,11 +890,11 @@ skills:
       - load-data
       - sql-server-bulk-copy
       - java
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/database-bulk-loading
-        integrity: sha256-1FBjKHRoAcBr2LRBgwFH9PuniYiPswalyRBm2tB/Ib8=
+        integrity: sha256-OoUiVdRWG+BN+uGw69R/2ZkSx8Wr8wM1e0NhdF0ZyaU=
   - name: database-engine-selection-and-migration
     description: Choosing among SQL Server, MySQL/InnoDB, and PostgreSQL for a greenfield system, or planning a migration
       between them, from explicit semantic, workload, operational, JVM-driver, DDL, cost, and team constraints. Use when
@@ -889,11 +908,11 @@ skills:
       - mysql
       - postgresql
       - adr
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/database-engine-selection-and-migration
-        integrity: sha256-xaM3o5A4Xf1o2aKsDb4vTHpz6gEagJA4un1LLCRLpQI=
+        integrity: sha256-jxNL4MMJAa+PXK+IiEG2tf4ipCU7nWQFQ3vBT4NhSc8=
   - name: database-index-design
     description: "Designing and governing an index portfolio across SQL Server, MySQL/InnoDB, and PostgreSQL: deriving
       composite keys from a workload, equality/range/order trade-offs, covering and partial indexes, write
@@ -908,11 +927,11 @@ skills:
       - mysql
       - postgresql
       - performance
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/database-index-design
-        integrity: sha256-HXl54qw7PL6yv0WhmcgkgmMdzUHUa+Ykeohet0vTqPY=
+        integrity: sha256-Nib8EDhvgP8H0WFmqMcwSjBfUQgMdDmncO1ZxUT5+ho=
   - name: database-performance
     description: Evidence-first triage and routing for database performance questions across SQL Server, MySQL/InnoDB,
       PostgreSQL, JDBC pools, ORM behavior, index portfolios, and bulk loading. Use when the symptom spans layers, the
@@ -926,11 +945,11 @@ skills:
       - postgresql
       - jdbc
       - triage
-    latest: 1.0.2
+    latest: 1.0.4
     versions:
-      - version: 1.0.2
+      - version: 1.0.4
         path: skills/database-performance
-        integrity: sha256-FDlPUxKtbb46Jymvqj6tjtE01vbf8aaB0Sbn+Q1so5c=
+        integrity: sha256-MQq/oQVIdYe/Rtrdg2hV0VaGnA0ednQWjNdkcgWstCU=
   - name: debugging
     description: "Finding the cause of a fault instead of a change that makes the symptom go away: reproducing before
       diagnosing, shrinking the reproduction until nothing is removable, stating a hypothesis that predicts an
@@ -948,11 +967,11 @@ skills:
       - bisect
       - thread-dump
       - reproduction
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/debugging
-        integrity: sha256-E/96dFi7bxzwhaxmUz4BFCmTBeUrUYg2Tke1oLVvHLU=
+        integrity: sha256-EHH7ptyyzTtYcRv+aS/hfX5ZONzMa8h18tiGSvw7MV0=
   - name: delivery-semantics
     description: "Precise end-to-end delivery and processing semantics: acknowledgement placement, loss and duplicate
       windows, Kafka transactions, visibility leases, ambiguous outcomes and external side effects. Use when reviewing
@@ -966,11 +985,11 @@ skills:
       - exactly-once
       - acknowledgement
       - duplicates
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/delivery-semantics
-        integrity: sha256-DCGoP12r/X8tIkj4zhe+OXIxI2Y8sgmbRc196ugDpIQ=
+        integrity: sha256-N+2w+JlhzaJUQd4pfHscy06WDGcByq6J6pcJ1F5hTI4=
   - name: deoptimization
     description: "Deoptimisation and recompilation on HotSpot: uncommon traps and their reason codes, the none /
       maybe_recompile / reinterpret / make_not_entrant / make_not_compilable actions, jdk.Deoptimization in JFR,
@@ -990,11 +1009,11 @@ skills:
       - uncommon-trap
       - c2
       - jfr
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/deoptimization
-        integrity: sha256-TGkycCDb/TiN78OY6Js7XCdsCRNR/OJHv9AsfO4lAH0=
+        integrity: sha256-v/xT8ZKKID1eC9PmbxA2mMMjPlgGBX5NBGgJwHzvpUE=
   - name: distributed-aggregation-and-barriers
     description: "Correct and recoverable aggregation across workers: algebraic laws, duplicate attempts, numeric
       reproducibility, mergeable summaries, barriers, joins, skew, checkpointing and partial results. Use when totals
@@ -1009,11 +1028,11 @@ skills:
       - hyperloglog
       - distributed-join
       - java
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/distributed-aggregation-and-barriers
-        integrity: sha256-Rx2gSDM75CDDCeJDESJHRVabI0LY5rFflnGhmEXpnNM=
+        integrity: sha256-KygzwbEnkLCM74Il+8cmJunykC7t8KZTFFN1qs1kbyM=
   - name: distributed-failure-catalogue
     description: "Evidence-oriented recognition index for recurring distributed failure shapes: overload amplification, gray
       and asymmetric failure, split ownership, stale work, mixed versions, correlated faults, silent stagnation and
@@ -1026,11 +1045,11 @@ skills:
       - incident-response
       - catalogue
       - troubleshooting
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/distributed-failure-catalogue
-        integrity: sha256-tWRSHgevT6dZntq4RBU8qGIL4Q2B87U+wD/SA+QRyVQ=
+        integrity: sha256-BdsUw/cP3OgGvclxWDNpkFiLR+BVEgLuJS4YDejEkk0=
   - name: distributed-locks-and-leases
     description: "Cross-process exclusion through leases, session/transaction locks and fencing: stale holders, owner-safe
       release, Redis/Redlock assumptions, database advisory locks, resource claims and lock-free alternatives. Use when
@@ -1044,11 +1063,11 @@ skills:
       - redis
       - redlock
       - concurrency
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/distributed-locks-and-leases
-        integrity: sha256-wGmVucpbZqbdxProJ3HYFvHRH/gBX3CEmrGcJcRfFNg=
+        integrity: sha256-5S0jPWKk5/EAgpPM9XbS1MLL7vIeN5/Wm3sK0+49yig=
   - name: distributed-systems
     description: Triage and routing entry point for cross-process Java systems. Classifies design questions and production
       symptoms, establishes boundary and fault assumptions, then selects the specialist skill for delivery, consistency,
@@ -1061,11 +1080,11 @@ skills:
       - architecture
       - reliability
       - java
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/distributed-systems
-        integrity: sha256-ESf77/e5yAYOP+2KX9eznbnKD/BlQW9JkXpoyDnRmF4=
+        integrity: sha256-1g4aO1v1c+oMEESJHOKiYcZ4HT9oCphH9NOkACUMQ7o=
   - name: distributed-systems-testing
     description: "Testing the failure behaviour a distributed system claims: injecting latency, errors, partitions and
       process death; verifying that timeouts, retries, breakers and fallbacks do what their configuration says; checking
@@ -1084,11 +1103,11 @@ skills:
       - resilience
       - reliability
       - idempotency
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/distributed-systems-testing
-        integrity: sha256-21m+XCBpo4BgENQ8OogGdjN2V0u/noEF4+hCUB7KAbE=
+        integrity: sha256-fhNaGRQ/sftvSQpzzNR0JETN8+dOi6bFKAuvlCPusbE=
   - name: distributed-tracing-design
     description: "Designing trace topology and semantics: selecting actionable span boundaries, stable operation names,
       kinds, status and attributes; modelling synchronous, asynchronous, messaging, batch, retry and long-running
@@ -1103,11 +1122,11 @@ skills:
       - span-links
       - opentelemetry
       - messaging
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/distributed-tracing-design
-        integrity: sha256-VCNTWQ3k7bDG+C5qJ0xUcdmRu93moED1deE/jETJ67c=
+        integrity: sha256-hhLTbWohX9yE7GGasKYJaHXLc+9M8PKjO3aOngnCWE8=
   - name: distributed-transactions-and-sagas
     description: "Coordinating a business operation across transactional owners: dual writes, XA/2PC, persisted sagas,
       compensation, pivot/forward recovery, ambiguous outcomes and manual repair. Use when a local transaction is
@@ -1121,11 +1140,11 @@ skills:
       - distributed-transactions
       - orchestration
       - java
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/distributed-transactions-and-sagas
-        integrity: sha256-DltZWUhglcVUyQ+qMQwPzgmv8YIHgIuj+I1xD1eLgaU=
+        integrity: sha256-RsRUYwhIP5yn3LAy/WOqskiI27v+9ESgwmnoYHWdAMo=
   - name: distribution-boundaries
     description: "Deciding whether a boundary should be a process boundary, and designing it when it must be: what
       distribution actually costs (latency, serialisation, partial failure, lost atomicity, independent deployment),
@@ -1144,11 +1163,11 @@ skills:
       - saga
       - outbox
       - boundaries
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/distribution-boundaries
-        integrity: sha256-fL4Acthw5PR3ItkZnpPcMfCfxdxJK/204FVul7vTaMM=
+        integrity: sha256-KAvcqZiBqKN9tQqnwAvDjNTiyGwpMWXDZCEQFMKBxZM=
   - name: domain-logic-organization
     description: Choosing where business rules live — Transaction Script, Domain Model or Table Module — from the shape of
       the logic rather than from convention, and recognising when the choice made no longer fits. Use when starting a
@@ -1167,11 +1186,11 @@ skills:
       - anaemic-model
       - business-logic
       - enterprise
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/domain-logic-organization
-        integrity: sha256-WwrRYhwPYX9iSq/xx/PmfgRC1Fl3RgGsmChk7+CLc+Y=
+        integrity: sha256-j5nScRzn0U6gfRNKehK/mSNOoLc0PLbJPMzedZ+098M=
   - name: ebpf-for-jvm
     description: "Using eBPF/bpftrace to measure kernel-visible behavior around a JVM without inventing attribution:
       selecting stable tracepoints versus kprobes/uprobes/USDT, scoping by process/thread/cgroup, tracking
@@ -1188,11 +1207,11 @@ skills:
       - tracepoint
       - usdt
       - profiling
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/ebpf-for-jvm
-        integrity: sha256-8MzvvsvMaLUbRoZ8afC6U591FDGyxzhXSt7PnemSTm4=
+        integrity: sha256-ZDlOLTWImcGxBg0csh6dI4YpU7DxWS/qRO0fNSf4bOk=
   - name: engineering-communication
     description: "Communicating engineering facts to people who will act on them: stating what is true, what follows from
       it, what is still uncertain, and the options and recommendation when needed. Covers raising a risk early, saying
@@ -1210,11 +1229,11 @@ skills:
       - incident-updates
       - disagreement
       - uncertainty
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/engineering-communication
-        integrity: sha256-fZyqtqIxdIOiDNZcNh16tBl5tMjlcso4rxxKjC/xsWI=
+        integrity: sha256-WHxPXO7NPA22hyXugVjgvCy65OfalTtR+MjGW6CbKYQ=
   - name: enterprise-application-architecture
     description: "The entry point for reasoning about an enterprise application's architecture: what makes these systems
       distinctive (data that outlives the code, concurrent users, integration, rules that change), the forces that shape
@@ -1231,11 +1250,11 @@ skills:
       - application-types
       - forces
       - navigation
-    latest: 1.2.4
+    latest: 1.2.5
     versions:
-      - version: 1.2.4
+      - version: 1.2.5
         path: skills/enterprise-application-architecture
-        integrity: sha256-c7drGuye6uYcXoWHo5I+kfA7WIMB0DefUfS+bR8Z7Lk=
+        integrity: sha256-yZ14/NW/rtYaD1L4psUx5PtVYpY62qnOMcP5NUV0ky0=
   - name: enterprise-architecture-smells
     description: "Detecting structural problems in an enterprise application from evidence, and telling genuine harm apart
       from unfamiliar-but-fine: anaemic domain models, god services, transaction-script sprawl, generic repositories,
@@ -1253,11 +1272,11 @@ skills:
       - god-service
       - review
       - architecture
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/enterprise-architecture-smells
-        integrity: sha256-pc7F2DHll1hGXb0VhlbPGbtVAEApIMgGJxnFl2u+bL4=
+        integrity: sha256-IG6HHoANaOTMARihNrJ0uwYOQlB9cIUanpjDzaobdUU=
   - name: enterprise-base-patterns
     description: The small structural patterns that hold an enterprise application together — Gateway, Mapper, Layer
       Supertype, Separated Interface, Registry, Special Case, Plugin and Service Stub — with the judgement about when
@@ -1276,11 +1295,11 @@ skills:
       - registry
       - special-case
       - service-stub
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/enterprise-base-patterns
-        integrity: sha256-Ng+WoD6hO0FpAr32p6u6j/nf9b2I4yJMTyVzuY4Q/Ec=
+        integrity: sha256-ThldAk0N9d2s8rWTNRNG2lVChU2tYAmckcWyoop/AtQ=
   - name: enterprise-transactions
     description: "Transaction boundaries as an architectural decision: where a transaction starts and ends, what isolation
       level actually buys, how propagation and rollback rules behave in practice, the costs of spanning a network call
@@ -1300,11 +1319,11 @@ skills:
       - jpa
       - spring
       - enterprise
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/enterprise-transactions
-        integrity: sha256-D52/onOk4Dz+Zi3wytN4P7SHHEc0GqI+0sf0UqcTIf0=
+        integrity: sha256-gDo+FAPpGJr2OLm8Ci7y9fiMyfd/PMa82mr8ubI49lM=
   - name: epsilon-and-shenandoah-internals
     description: Epsilon as a measurement instrument (isolating allocation cost, failing fast against an allocation budget,
       sizing from time-to-OOM) and Shenandoah internals (the load reference barrier, the concurrent phase sequence,
@@ -1324,11 +1343,11 @@ skills:
       - garbage-collection
       - load-reference-barrier
       - allocation
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/epsilon-and-shenandoah-internals
-        integrity: sha256-TuqoRZTL65JJ8EW0zhI62nNkaGmsgOKn6MjHo+JwImw=
+        integrity: sha256-KPvfWICiM8A6yhyDc0R20jyVAPLLRo+Jm7KuaUOmyw0=
   - name: escape-analysis-internals
     description: "C2 escape-analysis internals: connection graphs, escape-state propagation, flow insensitivity, bytecode
       escape summaries, scalar replacement and allocation merges, lock elimination, macro expansion, and deoptimization
@@ -1345,11 +1364,11 @@ skills:
       - connection-graph
       - allocation
       - c2
-    latest: 2.0.2
+    latest: 2.0.3
     versions:
-      - version: 2.0.2
+      - version: 2.0.3
         path: skills/escape-analysis-internals
-        integrity: sha256-CN/gIBYr1ggir7oWoHWIUqh+Ef4HkxpvlkOvg2LGk8c=
+        integrity: sha256-JD6Xp7dOQlPneOWduInTp6s4DR7LFTa6fEfwGgHRfW8=
   - name: estimation-under-uncertainty
     description: "Producing a software estimate that carries its own uncertainty instead of hiding it: a range with explicit
       probability assumptions when supported, decomposition, PERT and the limits of summing task estimates, calibrating
@@ -1366,11 +1385,11 @@ skills:
       - commitments
       - planning
       - forecasting
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/estimation-under-uncertainty
-        integrity: sha256-X1PrmFpbFv+d/YyELTnP+pKMAveLOE/4sEnj0NsOqfc=
+        integrity: sha256-bJbHtY8CGdOYnEV8krTY3tjWE/BUUvnVfWizUSsFk7I=
   - name: event-driven-architecture
     description: Choosing facts, asynchronous commands or request/response across services; then designing
       choreography/orchestration, payload authority, evolution horizon and consumer runtime. Use when a broker masks
@@ -1385,11 +1404,11 @@ skills:
       - orchestration
       - serverless
       - architecture
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/event-driven-architecture
-        integrity: sha256-b7B+wxBRRtS+8hNoSwezD74431AI4/CQlukWl2I/2PY=
+        integrity: sha256-Y49xm7YkWD8rDx1LllLoSlLSka7qbOhxG2O6XN++gYY=
   - name: event-sourcing
     description: "Event streams as authoritative state: adoption criteria, stream boundaries, expected-version appends,
       command idempotency, snapshots, projection correctness/rebuild, temporal replay, schema evolution and erasure. Use
@@ -1404,11 +1423,11 @@ skills:
       - event-store
       - distributed-systems
       - eventual-consistency
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/event-sourcing
-        integrity: sha256-28L8Na0XD9yaNSMY4t6n2ubO3G0WPP41umnYFm2K4Pw=
+        integrity: sha256-S/unrwmIQGQUYmqoeObY8AiU4YCVItUW8btSy1wy+ks=
   - name: executors-and-task-lifecycle
     description: "Engineering the full lifecycle of tasks accepted by Java executors: ownership, admission, queue/grow
       behavior, execution context, result/failure observation, rejection, cancellation, scheduled/periodic semantics,
@@ -1423,11 +1442,11 @@ skills:
       - scheduled
       - shutdown
       - rejection
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/executors-and-task-lifecycle
-        integrity: sha256-cB+BIYDyJpHE4zqUxhuRd63+YNk4AgXL07wcFGkOwq0=
+        integrity: sha256-e42HyBaRLUfWYifIKjWz3Vl9GgR94aBFp3zdWn3PxyY=
   - name: failure-models
     description: "Stating a system's fault model before designing against it: crash-stop, crash-recovery, omission, timing
       and Byzantine faults; partial failure and the third outcome of every remote call (unknown); gray failure and the
@@ -1446,17 +1465,18 @@ skills:
       - availability
       - reliability
       - blast-radius
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/failure-models
-        integrity: sha256-VBSBgwleVnjBwi1O7GAXOd5ht7cou281jZOeMYN4eFQ=
+        integrity: sha256-dSI2WurO0k1wbnN6gCXgTTtvsGoPAH6/Yl5LnDW2+/I=
   - name: false-sharing-and-contended
     description: Proving and mitigating cache-line false sharing between independent locations with hot writes. Covers
       ownership and address/layout hypotheses, coherence/HITM evidence limits, JMH topology, arrays and object
       placement, `@Contended` module/restriction mechanics, grouping and padding, JOL/address validation, manual padding
-      fragility, striping, compact headers, memory cost and cross-socket/NUMA validation. Use after excluding logical
-      contention; cache fundamentals, lock contention and general object sizing have separate owners.
+      fragility, striping, compact headers, memory cost and cross-socket/NUMA validation. Use when updates to distinct
+      fields scale poorly, when padding is proposed, or when `@Contended` appears ignored. Cache fundamentals, logical
+      contention and general object sizing have separate owners.
     keywords:
       - java
       - false-sharing
@@ -1465,11 +1485,11 @@ skills:
       - longadder
       - jol
       - performance
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/false-sharing-and-contended
-        integrity: sha256-BUSMib8lu6P1mVjBSqfqE+PwRWs7+THcoet7L/BwFFo=
+        integrity: sha256-s8GxzvBo0asOpHN+H9KKSf9PwP1+NG0tLQ3+rwtlb3k=
   - name: feature-architecture-analysis
     description: "Enumerating what a feature actually touches, with paths: which modules, layers, contracts, schemas,
       message topics, configuration and cross-cutting concerns change, which of those changes are visible outside the
@@ -1485,11 +1505,11 @@ skills:
       - architecture
       - boundaries
       - compatibility
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-architecture-analysis
-        integrity: sha256-+Xy/6wjetSeJPFK0YTR9xqB3/V78WDk31YpDBIfMVoI=
+        integrity: sha256-qb/vLUMMXDKZjtCXbBAWcU3zyVtpeF5hCe+yjEtJS/M=
   - name: feature-context-analysis
     description: "Reading the repository for one specific feature: which technologies and patterns are actually present,
       which components the feature can reuse, which questions the code has already answered, and — stated as findings
@@ -1507,11 +1527,11 @@ skills:
       - patterns
       - reuse
       - context
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-context-analysis
-        integrity: sha256-GhzeHwCWKX6RbO3qSGJbhoXrQEl6ar5EbaGiTGFRBEY=
+        integrity: sha256-Z7B27B6G+nN7Wo+hXKSn1tpTiRGmi1+ISSgEAvlp70o=
   - name: feature-contract-definition
     description: Defining a versioned API, event, data, integration, security, or operational contract for a feature after
       its behavior is agreed and before implementation is planned. Use when callers, consumers, stored data, or
@@ -1525,11 +1545,11 @@ skills:
       - events
       - compatibility
       - schema
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/feature-contract-definition
-        integrity: sha256-d6RvbOgDQ/umez3NYl0YpYGYlnqtdZTtktvYpsvYSvg=
+        integrity: sha256-DCQkqHD4/NzHdKnZx6o8El2DwVv2ntR8pLYF2oWFZ24=
   - name: feature-decision-analysis
     description: "Keeping the decision log for a feature and, before each entry, answering the two questions that make it
       trustworthy: where the decision came from — the user, the repository, an organisational standard or the agent —
@@ -1546,11 +1566,11 @@ skills:
       - authority
       - technology-selection
       - adr
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/feature-decision-analysis
-        integrity: sha256-fYihMV+YIu8qwTzO3oAfGY/0bLBYh/5M0pdOhwjpQcg=
+        integrity: sha256-X7N7ucjSFdaiWeM3a7Zv7BFKSwbvVSU5sfB+zdFGnGk=
   - name: feature-decomposition
     description: Deciding whether a feature should split and, when useful, defining independently valuable Product or Tech
       child features. During definition, stays at outcomes, owners and acceptance; during engineering delivery
@@ -1565,11 +1585,11 @@ skills:
       - stories
       - resources
       - breakdown
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-decomposition
-        integrity: sha256-FJW713sKHpvf8J7s8jg+oqF+fg31r3lLzXyO/KrsH2s=
+        integrity: sha256-YOn7dQP+ptkgkUygk2gvV3lzF5m5YALXorFsyprp4n4=
   - name: feature-discovery
     description: "Separating what is actually established about a feature request from what has been filled in: a ledger in
       which every fact carries its source, every assumption carries what would falsify it, and every unknown carries the
@@ -1587,11 +1607,11 @@ skills:
       - unknowns
       - requirements
       - ledger
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-discovery
-        integrity: sha256-ap0Z+lTr1iEsZLsMyYy28JOECETosTmDBsVeQoAX84A=
+        integrity: sha256-lTLyrxCvbSY7Q0sFAa284RHIDVMKPFLc/96Wgq1JAME=
   - name: feature-engineering
     description: "Owning a Product Feature or Tech Feature from definition intake to completion review: selecting
       proportionate depth, routing iterative analysis and explicit returns, holding readiness gates, and keeping
@@ -1606,11 +1626,11 @@ skills:
       - process
       - delivery
       - routing
-    latest: 1.1.3
+    latest: 1.1.4
     versions:
-      - version: 1.1.3
+      - version: 1.1.4
         path: skills/feature-engineering
-        integrity: sha256-Iat0RciB5UoWZ1WnRfxJLrlc/f+ck/fbAF6hUGn/53w=
+        integrity: sha256-jlsTv1zkAd68bIgMA4c4z80VC1wOKfAdPvyxsxJmBBw=
   - name: feature-execution
     description: "Implementing an authorized plan through coherent, verifiable resources: selecting ready work, implementing
       within accepted scope, running relevant checks and reading their results, and reconciling deviations and blockers.
@@ -1624,11 +1644,11 @@ skills:
       - validation
       - blockers
       - resources
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-execution
-        integrity: sha256-Y6XjAdAWaHjLub23wqBuxtWDY9RWDyFct6UV9pZ98ME=
+        integrity: sha256-GsILik0ikAmujhrPbLMj7aCz1SLJ+WBfhFIe00OMFNs=
   - name: feature-feasibility-experiment
     description: Designing and evaluating the smallest PoC or experiment that resolves one decision-relevant uncertainty in
       a Product Feature or Tech Feature. Use when feasibility, compatibility, capacity, integration behavior, or a risky
@@ -1642,11 +1662,11 @@ skills:
       - experiment
       - evidence
       - hypothesis
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/feature-feasibility-experiment
-        integrity: sha256-2CgTqqTNkepIrR61/03/OiyEq+w/f8Q/OaLWk11KojQ=
+        integrity: sha256-21SzzdkFvs85UQE+JQw6l5tqNVFIxjiFlT6OVkhfeV4=
   - name: feature-implementation-plan
     description: "Assembling everything established about a feature into one document another engineer could execute without
       re-deriving the architecture: the resources in dependency order, the schema, contract, configuration and security
@@ -1663,11 +1683,11 @@ skills:
       - migration
       - rollback
       - acceptance-criteria
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-implementation-plan
-        integrity: sha256-afeiNZVgFw90NaVql3Q5Hqj+SsWIaerhjc3gfelaJVA=
+        integrity: sha256-YsLVnx+IcSRyOub6cqYIpjce0q4dG0T24dPTX3XFAww=
   - name: feature-progress-tracking
     description: "Keeping a feature's state true while it is being built: one status per resource with defined transitions,
       a validation line required before anything reaches done, and a persisted record current enough that another agent
@@ -1683,11 +1703,11 @@ skills:
       - status
       - resumption
       - execution-log
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/feature-progress-tracking
-        integrity: sha256-bMZOC9gYWQ/WezYKE9M5d53qxW98UxWkQ6D5R8uQDu4=
+        integrity: sha256-zx1tgWPvsADBGywUy2AFjJ44oAQzlro3wOw28ozelBE=
   - name: feature-readiness-review
     description: "The intake, pre-implementation, and completion gates for a feature: first validating the
       Product/Engineering or Tech Feature baseline, then checking that nothing implementation depends on is still
@@ -1705,11 +1725,11 @@ skills:
       - completion
       - gates
       - checklist
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/feature-readiness-review
-        integrity: sha256-ciw6+i0FOywe2/2+rbZfpDb07IET7OpksyhHhuWa3lE=
+        integrity: sha256-/3tKcv20p1V2iKKPVpWCzqWWtmVjnp0wfawcQE9SF1Y=
   - name: feature-requirement-clarification
     description: "Deciding what to ask the user about a feature, when to ask it, and what stops work until it is answered:
       reusing supplied answers and checking relevant evidence first, pricing each question by what changes if the answer
@@ -1727,11 +1747,11 @@ skills:
       - ambiguity
       - blocking
       - requirements
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-requirement-clarification
-        integrity: sha256-3HN8gy26HGQzzzdAb+tmaSlRmBHehfQspasmeLbUWBs=
+        integrity: sha256-Ixvct0V/Zgzlx3R2mbDAY8UEXOKXI+nmMPDUarpCej0=
   - name: feature-risk-analysis
     description: "Naming what could go wrong with a specific feature in a form that can be acted on: the failure stated as
       an event rather than a worry, how anyone would find out it happened, what reduces its probability or its cost, and
@@ -1748,32 +1768,32 @@ skills:
       - detection
       - mitigation
       - failure-modes
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/feature-risk-analysis
-        integrity: sha256-4BNp+cEkLDNt/1ghN0nT5ufd6rEtfKqC/l6c9iiUbZc=
+        integrity: sha256-ZseDX4b4JxDobUXmxuw32vg8zca7jh6CfLO93ZMQd1w=
   - name: feature-scope-analysis
     description: "Fixing what a feature includes and, more usefully, what it deliberately excludes: sorting every candidate
-      item into required, recommended, optional, out of scope or future work, tracing each included item back to a
-      requirement or a constraint, and catching the additions that arrived because they seemed like a good idea. Use
-      when a feature is being planned and its edges are undefined, when a plan has grown a dashboard, a refactor or an
-      abstraction nobody asked for, when \"while we are in there\" appears, when an estimate keeps moving without the
-      requirement changing, or when a reviewer cannot tell which parts of a change were requested. Does not keep an
-      already-written diff honest (coding-agent-discipline), does not decide whether a duplication justifies an
-      abstraction (java-dry-kiss-yagni), and does not decide whether a deliberate shortcut is acceptable
-      (technical-debt-decisions)."
+      item into required, recommended, optional, out of scope or future work, tracing required work to commitments and
+      constraints, recording the benefit and authority for selected additions, and catching changes that arrived only
+      because they seemed like a good idea. Use when a feature is being planned and its edges are undefined, when a plan
+      has grown a dashboard, a refactor or an abstraction nobody asked for, when \"while we are in there\" appears, when
+      an estimate keeps moving without the requirement changing, or when a reviewer cannot tell which parts of a change
+      were requested. Does not keep an already-written diff honest (coding-agent-discipline), does not decide whether a
+      duplication justifies an abstraction (java-dry-kiss-yagni), and does not decide whether a deliberate shortcut is
+      acceptable (technical-debt-decisions)."
     keywords:
       - feature
       - scope
       - scope-creep
       - boundaries
       - planning
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-scope-analysis
-        integrity: sha256-iAUpYImdX9fNLOTmO/gC6mD7VLWsLqVqtDwj5K56JWE=
+        integrity: sha256-o1ShDGt56/zcLSEmNb60ofwFDryAyGjG4CDMcdrPnQw=
   - name: feature-solution-analysis
     description: "Producing the option set for a feature-level choice and the block that recommends one: always considering
       the simplest feasible approach, comparing complete options for the same boundary, evaluating the axes this feature
@@ -1790,11 +1810,11 @@ skills:
       - trade-offs
       - design
       - recommendation
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/feature-solution-analysis
-        integrity: sha256-F10OG3W/LA/pY7M8HR0K6BNsWWw7IUpz3ItX7T4hKfQ=
+        integrity: sha256-zoHH5oxTFgI+Jy7WlS3lSbiinsSBgwvKPNo1cPA28Jc=
   - name: flame-graph-analysis
     description: "Interpreting flame graphs as weighted sampled call-path aggregates: identifying the selection event and
       denominator, separating inclusive from leaf/self attribution, recognizing truncation, inlining, symbol and
@@ -1811,11 +1831,11 @@ skills:
       - differential
       - async-profiler
       - analysis
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/flame-graph-analysis
-        integrity: sha256-jjIETCeXMV5ksK37TLjlvfP+HfiT6HcQoAdNaGPGd8g=
+        integrity: sha256-AZxpDx6CcrkvZZWO6qjEZ/JP5bu0DjNsfWY/fl/ptbw=
   - name: forkjoinpool-and-work-stealing
     description: Design and diagnose ForkJoinPool workloads using work-stealing topology, task graphs, granularity,
       common-pool interference, managed blocking, compensation limits and approximate pool telemetry. Use when parallel
@@ -1830,11 +1850,11 @@ skills:
       - parallel-streams
       - managedblocker
       - performance
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/forkjoinpool-and-work-stealing
-        integrity: sha256-OpYDzQvB4pTjF/OYUFCAgDxNurcEDRU8T4M6ygwn2Ek=
+        integrity: sha256-wxg/mAru/aQ7INY3cCSrifmQsJaJ2pJKjmIJqiCnsXA=
   - name: framework-coupling-and-independence
     description: "Deciding how much of a system may depend on its framework, and pricing that dependency honestly: which
       couplings are cheap and correct, which are expensive and reversible, which require staged redesign, and what
@@ -1843,9 +1863,9 @@ skills:
       proposes a framework-free domain and the price is not stated, when a base class from the framework appears in
       business code, or when a framework's programming model is spreading beyond the adapters. Does not cover which
       patterns a framework already implements (patterns-and-modern-frameworks), layer dependency direction
-      (layering-and-boundaries), the data-access pattern behind the one-model/two-model choice (data-source-patterns),
-      the mapping itself (orm-structural-mapping), releasable component boundaries (component-and-release-boundaries),
-      or testing strategy (architecture-testing)."
+      (layering-and-boundaries), data-access ownership patterns (data-source-patterns), the mapping itself
+      (orm-structural-mapping), releasable component boundaries (component-and-release-boundaries), or testing strategy
+      (architecture-testing)."
     keywords:
       - architecture
       - frameworks
@@ -1855,11 +1875,11 @@ skills:
       - upgrade
       - portability
       - jpa
-    latest: 1.2.3
+    latest: 1.2.4
     versions:
-      - version: 1.2.3
+      - version: 1.2.4
         path: skills/framework-coupling-and-independence
-        integrity: sha256-JcrqntkSE5s4zLF0GC7KN06Le43NpZgnFPVjTUlGCfs=
+        integrity: sha256-FHo5iX56sxmt7xLNN5uGCiPnSnnXHHQ+XXxn4X536QY=
   - name: g1-concurrent-marking
     description: "G1's concurrent marking cycle: SATB and the pre-write barrier, the cycle phases and the single mark bitmap
       with TAMS, adaptive IHOP triggering, mark stack overflow and its consequences, humongous allocation and eager
@@ -1877,11 +1897,11 @@ skills:
       - concurrent-marking
       - ihop
       - humongous
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/g1-concurrent-marking
-        integrity: sha256-ywANKRr/IXXg56YA4E02YGR4TkxzxZhVtLRpWv9MIU4=
+        integrity: sha256-vUwhJRMwGf0+WGzE/30t6US83UGk9gCdON7+dg71Kkk=
   - name: g1-internals
     description: "How G1 actually works: uniform regions and the ergonomic sizing formula, remembered sets and the card
       table with its write barrier, SATB and the pre-write barrier, the phases of an evacuation pause, humongous
@@ -1900,11 +1920,11 @@ skills:
       - remembered-set
       - humongous
       - satb
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/g1-internals
-        integrity: sha256-EY0OFd1sCvORDoywUzBhkWANIY11LcSAUPOZnOIWuK0=
+        integrity: sha256-VkguYMf2MqGogOeQzNBt5Pa2+bjh8oAGY3YG6DeI7K8=
   - name: g1-tuning-for-slo
     description: "Deriving G1 flag values from a latency SLO and proving they helped: what `MaxGCPauseMillis` actually
       controls, the young size bounds, IHOP and adaptive IHOP with an explicit safety margin, region size as the basis
@@ -1924,11 +1944,11 @@ skills:
       - slo
       - latency
       - ihop
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/g1-tuning-for-slo
-        integrity: sha256-jom8SYLBHVtKjT4fvGAvzHXaRgLB6u73sJiwIYQnF6M=
+        integrity: sha256-LYkwvANoBBPEN6qWzACOuKZJvmXZAg+5EveFOsAfh1c=
   - name: gc-fundamentals
     description: "How JVM garbage collectors work, as the mental model behind every GC diagnosis: the generational
       hypothesis and where it fails, mark-sweep versus mark-compact versus copying, how survivors, allocation and roots
@@ -1947,11 +1967,11 @@ skills:
       - safepoint
       - generational
       - barriers
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/gc-fundamentals
-        integrity: sha256-L8dMqE5UnE1dexYMQeoX6P3ev6Ujp3FymTdjvTkLD+4=
+        integrity: sha256-ZxKBxoQlCrxJiaaGKeOuW64AndGJSk3p57CLrfehC0c=
   - name: gc-log-analysis
     description: "Configuring and reading JVM unified GC logs: the -Xlog:gc* baseline with decorators and rotation, the
       cause field, the before->after->capacity triple and headroom, pause distribution, Eden-refill and
@@ -1970,11 +1990,11 @@ skills:
       - xlog
       - safepoint
       - diagnosis
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/gc-log-analysis
-        integrity: sha256-8drS2S6GnE6G4HuqSEKq2gNesUVaZbVgCOq4zHGltV8=
+        integrity: sha256-w/MGvbNcAjAlflkmeq4a3+wtljvo+COGVMIdMLd9dLU=
   - name: gof-abstract-factory
     description: "Abstract Factory in modern Java: the pattern exists to keep a _family_ of related objects mutually
       consistent when the family varies, not to centralise construction. Covers the family invariant that justifies it,
@@ -1993,11 +2013,11 @@ skills:
       - factory
       - java
       - dependency-injection
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-abstract-factory
-        integrity: sha256-8CDuRmHPXCrR4IlScayM2DYjRemdW3Hf95tKJAiIfpw=
+        integrity: sha256-8jtWLq+4U2VMYdbcPzD6oqX5ovgERANjwJ2+3/vtrLA=
   - name: gof-adapter
     description: "Adapter in modern Java: making an existing type usable through an interface it was not written for, and
       keeping a foreign model, vocabulary and failure mode from leaking inward. Covers object versus class adapters, why
@@ -2016,11 +2036,11 @@ skills:
       - adapter
       - integration
       - boundaries
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/gof-adapter
-        integrity: sha256-WmnoGptVwx/Dh+W3isjwZAizTPv8VCp3ORiJh+lBPvg=
+        integrity: sha256-kgZpwonaPl/yfbRVJgXklfrfrReyQMe0CJnf9H/Pnlo=
   - name: gof-bridge
     description: "Bridge in modern Java: separating an abstraction hierarchy from an implementation hierarchy so the two
       vary independently instead of multiplying into N×M classes. Covers the two-axis test that distinguishes it from
@@ -2039,11 +2059,11 @@ skills:
       - bridge
       - composition
       - backends
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-bridge
-        integrity: sha256-DWqOR280VfAH8rEfI+GnlGld2swV24gfQUTpfVR4bSQ=
+        integrity: sha256-YWKXCrQqHM04oD5IdOK/VrpzuFbiSDDsdjwJmIOoKH0=
   - name: gof-builder
     description: "Builder in modern Java: distinguish the original GoF separation of construction process from
       representation from the Effective Java fluent value builder. Covers selection signals rather than parameter-count
@@ -2059,11 +2079,11 @@ skills:
       - builder
       - records
       - immutability
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-builder
-        integrity: sha256-E9gotNR2qW/kiPi0XI9gfjSWceMJ/dU++By9w2prBIA=
+        integrity: sha256-RRuYvVmNygUdYVSHAEbh9W7Upa+ttlrbYJM4yz5h21A=
   - name: gof-chain-of-responsibility
     description: "Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the classical
       first-accepting form versus middleware where stages may all process and forward conditionally. Covers choosing
@@ -2081,11 +2101,11 @@ skills:
       - chain
       - pipeline
       - filters
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-chain-of-responsibility
-        integrity: sha256-QpaOfAmrStReOQLZeCyaAUez1st4mEelgkWXszQb0PY=
+        integrity: sha256-Pi7i7/5QBpBm8Qr9RLE3Hw0TXSZpKonmF/eiHiav1Nw=
   - name: gof-command
     description: "Command in modern Java: turning an invocation into an object so it can be queued, logged, scheduled,
       retried or undone — and the distinction from an event, which is a fact rather than a request. Covers when reifying
@@ -2104,11 +2124,11 @@ skills:
       - command
       - undo
       - messaging
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-command
-        integrity: sha256-HBE+ouQ4f4Q5ikPW6t6dPg2/UCEZpU44OVKxlkyO0Ng=
+        integrity: sha256-s1WX5hMWuAIEIWsk1vG928/psvZKhY8J0D5aYctHAEE=
   - name: gof-composite
     description: "Composite in modern Java: treating a leaf and a tree of leaves through one interface, and the hazards that
       come with a recursive structure. Covers the transparent-versus-safe trade-off and when a sealed interface with
@@ -2127,11 +2147,11 @@ skills:
       - composite
       - trees
       - recursion
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-composite
-        integrity: sha256-CIlwRtA+6YRBXd2WJtqNGkak3p2jWju40eb6yUrdWjk=
+        integrity: sha256-KvHUxLnZ1r7CO5v9SfC0G1AApjNT5x8VLNUMP2y02BM=
   - name: gof-decorator
     description: "Decorator in modern Java: wrapping an object in something of its own interface to add behaviour,
       stackably, at runtime — and the fact that the stacking order changes the semantics. Covers the ordering of retry,
@@ -2150,11 +2170,11 @@ skills:
       - decorator
       - resilience
       - ordering
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-decorator
-        integrity: sha256-1jA9rCGpdK64JRfAp+bAXwslY0PRfS11Uvlzrs4wjlo=
+        integrity: sha256-DoMO8mcjMOmAN9rDI/IhEQjTnhcvyCrWuj05zCxxsbI=
   - name: gof-facade
     description: "Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers depend on an
       intention rather than on a sequence. Covers the difference between a facade (simplifies, does not forbid) and a
@@ -2172,16 +2192,16 @@ skills:
       - facade
       - application-service
       - boundaries
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-facade
-        integrity: sha256-pIuZGRrqZof8T/p1Cgt1zoJVLiraz7deHjEM9L9dpz8=
+        integrity: sha256-ltxm+LoeUkbqLQ9PRtFiKU+OMopohjdt6YHxQMdLzek=
   - name: gof-factory-method
-    description: "Factory Method in modern Java, and the three different things that share its name: the GoF pattern (a
-      creation hook a subclass overrides inside an inherited algorithm), Effective Java's static factory method (a named
-      constructor, not this pattern), and any method someone called createX. Covers when the subclass hook is genuinely
-      right, when an injected Supplier or a keyed map is a simpler alternative, and the
+    description: "Factory Method in modern Java, and the three different things that share its name: the GoF pattern (an
+      overridable creation method that lets subclasses select the product), Effective Java's static factory method (a
+      named constructor, not this pattern), and any method someone called createX. Covers when the subclass hook is
+      genuinely right, when an injected Supplier or a keyed map is a simpler alternative, and the
       constructor-calls-an-overridable-method trap it invites. Use when a protected createX() hook is proposed, when a
       class is subclassed only to change which type it instantiates, when tests subclass production code to substitute
       an object, when a static factory is being called Factory Method in review, or when deciding between a subclass
@@ -2194,11 +2214,11 @@ skills:
       - factory-method
       - supplier
       - java
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-factory-method
-        integrity: sha256-Ai2lQkpkmohRuHr+0SAIQg7DXk4AYd6qU0DkK5bNtFo=
+        integrity: sha256-ilb4z1wUqiKu2P6JBbYDE0R0jSFWjZRQj9XUYmVnmY8=
   - name: gof-flyweight
     description: "Flyweight in modern Java: sharing one immutable instance across many logical occurrences to reduce
       retained memory, with benefits dependent on duplicate lifetimes and lookup cost. Covers the intrinsic/extrinsic
@@ -2216,11 +2236,11 @@ skills:
       - flyweight
       - memory
       - interning
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-flyweight
-        integrity: sha256-haFsKONRLOm0t1z+O8mSh+Z3s3+JMB27SyUP6b0jUeE=
+        integrity: sha256-VZw3U4al0NmZTzXEbyQ0nWyVIYEwJDGBQqTq3zyPMN8=
   - name: gof-interpreter
     description: "Interpreter in modern Java: representing a small language as a typed tree and evaluating it, using
       per-node interpretation or a sealed AST with an exhaustive switch according to the extension contract. Covers
@@ -2238,11 +2258,11 @@ skills:
       - interpreter
       - dsl
       - ast
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-interpreter
-        integrity: sha256-MlYFHqjTYB3k3Hq57vrlB3Ft+tp81cFR1MA6aQTYrp0=
+        integrity: sha256-auUFusN+Xf1aNXsTqSns0C7IadxfME9Xelx5g8Cn8OA=
   - name: gof-iterator
     description: "Iterator in modern Java: traversing an aggregate without exposing it, and choosing between Iterator,
       Stream and Spliterator — external pull versus internal lazy pipeline versus the parallel decomposition primitive.
@@ -2260,11 +2280,11 @@ skills:
       - iterator
       - stream
       - spliterator
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-iterator
-        integrity: sha256-w6C5T4QDkXa75bhVCBOMGP34SpEL4t4FZWyq4ArZIcM=
+        integrity: sha256-79V7UnS9CXs9HPpC79pitSw1PONunYAnF31b1qlUs5A=
   - name: gof-mediator
     description: "Mediator in modern Java, treated as high-risk: replacing many-to-many collaboration with a hub that owns
       the interaction protocol, and the god object that hub becomes when nothing bounds it. Covers the direction test
@@ -2282,11 +2302,11 @@ skills:
       - mediator
       - orchestration
       - coordination
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-mediator
-        integrity: sha256-sY+Oan3zjvwngOS3hzTF5RfvEDrvSFin7AtOhpuXk1k=
+        integrity: sha256-m1RuQULUo1veMuPjohfX6hsmvi1rcMsvMn74VQ6mBfs=
   - name: gof-memento
     description: "Memento in modern Java: capturing an object's state so it can be restored later, without exposing that
       state to whoever holds the capture. Covers the encapsulation techniques Java offers, why immutable state can be
@@ -2304,11 +2324,11 @@ skills:
       - memento
       - undo
       - snapshot
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-memento
-        integrity: sha256-GEBk9g0uMq2aHVcILpRFWPNdUuS6gS/i2Qjzi25Nuqo=
+        integrity: sha256-4nnp7b3s4HntOFiOWRrjT81Rmgjx7mfYACSWF09cBYE=
   - name: gof-observer
     description: "Observer in Java: choosing and reviewing in-process listener contracts for ordering, errors, threads,
       registration lifetime, reentrancy and notification outside locks. Use when adding listeners, investigating
@@ -2345,11 +2365,11 @@ skills:
       - refactoring
       - over-engineering
       - review
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-pattern-antipatterns
-        integrity: sha256-wy95ABu6zLKQDExwFendQGCNV/pAeq5gB+9YXp/PGEY=
+        integrity: sha256-eqbGP6e77DedTuKBZThkD14pQcFvWB2bXpeg9HtHtuM=
   - name: gof-pattern-confusion
     description: Telling apart the patterns that look alike, so a design is not chosen because a name sounded right. Covers
       the four wrappers (Adapter, Decorator, Proxy, Facade) and the two questions that separate them, Strategy against
@@ -2367,11 +2387,11 @@ skills:
       - classification
       - review
       - design
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-pattern-confusion
-        integrity: sha256-27gJhHJkib5XyiQviU7Ntta9W8/o4hbnc9OVcpo5TwA=
+        integrity: sha256-jeU6i55k/1/CGb7kOcS9WMiiB+3FdYExAi9wLNIbPRo=
   - name: gof-pattern-selection
     description: "Getting from a stated design problem to a candidate pattern, or to no pattern, without choosing by
       familiarity. The second of two stages: it assumes the forces are named and the alternatives ladder has already
@@ -2390,11 +2410,11 @@ skills:
       - decision-tree
       - trade-offs
       - design
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/gof-pattern-selection
-        integrity: sha256-KCXy68YH+pDzmH9smcEx96Fb+gL/GIoL3kX9nItq7Qs=
+        integrity: sha256-qvFmh7uq779hekaT8Y2YRDHqq6RC6vmGvl4/jd5A7yM=
   - name: gof-pattern-thinking
     description: "Reasoning from a design problem to a design, where a Gang-of-Four pattern is one possible outcome and \"no
       pattern\" is an equally valid one: naming the forces, identifying what varies and along how many axes, walking the
@@ -2413,11 +2433,11 @@ skills:
       - trade-offs
       - java
       - abstraction
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/gof-pattern-thinking
-        integrity: sha256-1MyltWr0lLTn0WAC90jDJAQnEPE045fNs8+Bx8FITag=
+        integrity: sha256-pEEf9v+w7sZ6P6GgRx/hSTpBUIT87j753VaP2JMoti4=
   - name: gof-patterns-and-distribution
     description: What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary, and which
       additional architectural contracts it may require. Covers process-local, boundary, interaction and algorithm
@@ -2436,11 +2456,11 @@ skills:
       - boundaries
       - architecture
       - messaging
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/gof-patterns-and-distribution
-        integrity: sha256-zTy0MGC61ecfXJpgC3XOmOWSJdWsFUdLRWXYLfhi/RA=
+        integrity: sha256-osmvLTGL81lIPeROKMDWQApu77rhyLUuk5QypG8nKsg=
   - name: gof-patterns-in-modern-java
     description: Which Gang-of-Four patterns modern Java and Spring already implement, which they only change the expression
       of, and which still need writing by hand. Covers records, sealed types and pattern matching against Visitor,
@@ -2459,11 +2479,11 @@ skills:
       - records
       - sealed-types
       - spring
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/gof-patterns-in-modern-java
-        integrity: sha256-OWEjfOB6Tt/6e0EwMVeZhRmS9rVWkg9m1Iq0/kfjns4=
+        integrity: sha256-YLsXF+qIfvfG7eamRMXhd1MYPAy+hehLnEJr8BFhLPw=
   - name: gof-prototype
     description: "Prototype in modern Java: producing a new object from an existing instance's state, when the configuration
       is expensive or the concrete type is unknown to the caller. Covers why Cloneable/clone() needs an explicit
@@ -2481,11 +2501,11 @@ skills:
       - clone
       - copying
       - immutability
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-prototype
-        integrity: sha256-UQ2rVEaLjxAE8S+w+IegcgSf9xxtknPbfiDjndrmKOI=
+        integrity: sha256-67gsgo0FUg/Y5f3U+zXU+5SGpaVk4Or62ijiChflTfI=
   - name: gof-proxy
     description: "Proxy in modern Java: a stand-in that controls access to another object behind that object's own interface
       — virtual (lazy), remote, protection and caching variants. Covers the central danger of making a network call look
@@ -2504,11 +2524,11 @@ skills:
       - proxy
       - lazy-loading
       - aop
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-proxy
-        integrity: sha256-BsqKNdHkcnha5bvxearEDxzpwD04GbKEmEkxggy4W1M=
+        integrity: sha256-Xr16EmhdzByWa/aleLBEox8mGwEfi71b6R24Y3t+Rw4=
   - name: gof-singleton
     description: "Singleton in modern Java, treated as a high-risk pattern: it conflates \"one instance\" with \"reachable
       from anywhere\", which must be justified separately. Covers why dependency injection gives uniqueness as a
@@ -2527,11 +2547,11 @@ skills:
       - singleton
       - global-state
       - concurrency
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-singleton
-        integrity: sha256-5qDiz5UYsuhFm00NyvvE0m0IASIpJ/nK8NIWmaWLaGE=
+        integrity: sha256-7vFe7Film5Jwm7YB3Pzs71BObNijvdVZh3213AUD0CU=
   - name: gof-state
     description: "State in modern Java: making an object's behaviour depend on an explicit state, with the transitions
       themselves modelled rather than implied by scattered flags. Covers the intent difference from Strategy, where
@@ -2550,11 +2570,11 @@ skills:
       - state
       - state-machine
       - transitions
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-state
-        integrity: sha256-uyi0CYb8mjH/OOE+m1lN4qHCOiI+gpcJofG+j70EQQY=
+        integrity: sha256-a2k0me4/+QdhSwx/Ru3ARt0+ttCOOLJ1vq9HopXbRuQ=
   - name: gof-strategy
     description: "Strategy in modern Java, separated into three things that are usually conflated: the design concept (an
       algorithm varies), the classical class hierarchy, and the lambda or functional interface that expresses it today.
@@ -2563,8 +2583,9 @@ skills:
       state changes concurrency obligations, and the contract test implementations can share. Use when an algorithm must
       vary at runtime, when a switch over a type code keeps growing, when a class hierarchy exists whose members are
       one-line methods, or when strategy classes differ only in a rate or a threshold. Does not cover lifecycle-governed
-      legal operations and transitions (gof-state), two independently varying hierarchies (gof-bridge), an algorithm
-      skeleton with varying steps (gof-template-method), or choosing which object to create (gof-factory-method)."
+      legal operations and transitions (gof-state), separating an abstraction from independently evolving
+      implementations (gof-bridge), an algorithm skeleton with varying steps (gof-template-method), or
+      subclass-controlled creation hooks (gof-factory-method)."
     keywords:
       - design-patterns
       - gof
@@ -2572,11 +2593,11 @@ skills:
       - strategy
       - lambda
       - selection
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-strategy
-        integrity: sha256-YOGlzos3E4Qe5hCo+CX+6OdGKXFyCClma/J56SyWoVY=
+        integrity: sha256-BM/nRacSSiCXTJyq17PELxKfyhL2Siwe2Y5fWS2NuzY=
   - name: gof-template-method
     description: "Template Method in modern Java: fixing an algorithm's skeleton while named steps vary, and the inheritance
       coupling that often makes composition preferable. Covers when final protects the sequence, controlled overriding,
@@ -2595,11 +2616,11 @@ skills:
       - template-method
       - inheritance
       - composition
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-template-method
-        integrity: sha256-k0cGccXdbeLFhjiHzdArT6rqLUyEMxGXvEelbl+RacU=
+        integrity: sha256-5EbskJUdXg7ZFc+SCrx6dN6e98RDmgeqN5kQbXiGFs8=
   - name: gof-visitor
     description: "Visitor in modern Java: adding operations over a stable set of element types without editing them, and how
       a sealed hierarchy with an exhaustive switch competes with the classical double-dispatch version. Covers the
@@ -2617,11 +2638,11 @@ skills:
       - visitor
       - pattern-matching
       - sealed
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/gof-visitor
-        integrity: sha256-mAOD45HyxsyYWgD0yWVte+mC9bTMH3yC+3cQ9x2p7Uo=
+        integrity: sha256-jOhHvWHlZsSiz0ydXyzoYkJSTRldXW+eC5iYJTx6Qp4=
   - name: graalvm-jit
     description: "Graal as a JIT compiler compared with C2: partial escape analysis, graph-size inlining and speculation,
       where Graal wins and where it loses, JVMCI and what JEP 410 removed, libgraal versus jargraal, and how to evaluate
@@ -2641,11 +2662,11 @@ skills:
       - jvmci
       - libgraal
       - escape-analysis
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/graalvm-jit
-        integrity: sha256-9XDGI4W3RRaGoPe9hoghv8aq6hYu9QRttlltMyXYnMc=
+        integrity: sha256-HvbxPVg7WGqIRgm3bBf1aDMQq4FaRA2TDJBGj2RtdT0=
   - name: graalvm-native-image
     description: "GraalVM Native Image: closed-world reachability, dynamic-feature metadata, class initialization and
       image-heap state, CPU targeting, GC and PGO choices, observability, and fair comparison with HotSpot. Use when
@@ -2661,11 +2682,11 @@ skills:
       - startup
       - reflection
       - pgo
-    latest: 2.0.2
+    latest: 2.0.3
     versions:
-      - version: 2.0.2
+      - version: 2.0.3
         path: skills/graalvm-native-image
-        integrity: sha256-tLWvkSop97/mRj4q6MHNYBiU1WKJi0lgKYLlll97Wa0=
+        integrity: sha256-ClOxMAYO9MohbQb56S0ugfEe3DBXgmhB+euNLhFBPLk=
   - name: grpc-http2-service-mesh-performance
     description: Diagnosing and designing the performance of gRPC and HTTP/2 communication paths, including channel,
       connection and stream topology, flow control, serialization, Netty event loops, TLS connection churn and
@@ -2680,11 +2701,11 @@ skills:
       - netty
       - tls
       - performance
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/grpc-http2-service-mesh-performance
-        integrity: sha256-V3wkIaCfGogzDB2ykXl4D+L7Dqv49NZb25V73tYaaoE=
+        integrity: sha256-lnNrckTpES9U4fBFzTksUZ49jVQIQ0/xrq4oqxjaEE4=
   - name: heap-dump-analysis
     description: "Taking and analysing a JVM heap dump: capturing without making the incident worse, dominator tree versus
       shallow and retained size, path to GC roots excluding weak references, Eclipse MAT and OQL, comparing two dumps,
@@ -2703,11 +2724,11 @@ skills:
       - oql
       - retained-heap
       - jvm
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/heap-dump-analysis
-        integrity: sha256-i+XXvc81D7q8PuaOgsNVbF6zhPf4TTfqi00y1VmyLWY=
+        integrity: sha256-DVpJM/neRxkKrcHnVTWYe6vl/aYNfsS0u+In5tAqIVk=
   - name: hot-partitions-and-rebalancing
     description: "Repairing a partitioned system whose distribution has failed in production: balanced key placement does
       not imply balanced traffic, so one celebrity key or one large tenant saturates a shard while the map is correct.
@@ -2726,11 +2747,11 @@ skills:
       - sharding
       - distributed-systems
       - observability
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/hot-partitions-and-rebalancing
-        integrity: sha256-G3D3CJLqMID+qnQrAbz5uJO8yXJkuzfM0gmrp0z1Lhc=
+        integrity: sha256-qPuhh2V0Dm9VJK/J1QCCZBQ0E8o02Q0/VMKRvP+KGVE=
   - name: humble-objects-and-functional-core
     description: Isolating decisions from hard-to-test effects with Humble Objects, or a pure functional core and imperative
       shell when explicit data inputs fit the contract. Use when a rule can only be exercised by standing up the
@@ -2770,11 +2791,11 @@ skills:
       - retries
       - messaging
       - reliability
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/idempotency
-        integrity: sha256-+MYjW8Xww6DPeE3bdjGijlCPXtoBR6lJTb8X/Vfl/jg=
+        integrity: sha256-CmDHEsw//ZrXXjNzVmmJ26He0EDsdKz1TtFB2LTYxDA=
   - name: incident-evidence-capture
     description: "Preserving decision-grade JVM incident evidence before remediation destroys it: setting an explicit
       recovery/evidence budget, selecting representative and control instances, copying existing telemetry first,
@@ -2791,11 +2812,11 @@ skills:
       - jfr
       - production
       - java
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/incident-evidence-capture
-        integrity: sha256-VhkMniuQcwfiKi+u4z6OlQEFl2twtiQw7jGJOueioPA=
+        integrity: sha256-as6AUI/P5wuZ/5Ef1VTaYyErO8oJnElNM1YcJWkGndM=
   - name: inheritance-mapping-strategies
     description: Mapping a subtype hierarchy onto tables — single table, class table (joined), concrete table per class —
       and deciding whether the hierarchy should exist at all. Use when an @Inheritance strategy is being chosen, when a
@@ -2813,11 +2834,11 @@ skills:
       - discriminator
       - jpa
       - schema-evolution
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/inheritance-mapping-strategies
-        integrity: sha256-bsoPR6I7eCo3558rLfP5COrvGbjJbFQKxAhKkcTyJko=
+        integrity: sha256-ulDn5QEvu/qxLRq/WO449oSl5H8dDAjxMn2Byru4WQ0=
   - name: io-uring-and-zero-copy
     description: "Reducing the cost of moving bytes through a JVM process: sendfile and FileChannel.transferTo, mmap and
       MappedByteBuffer, direct versus heap buffers at the syscall boundary, io_uring's submission and completion model
@@ -2835,11 +2856,11 @@ skills:
       - netty
       - nio
       - syscalls
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/io-uring-and-zero-copy
-        integrity: sha256-hx2gk07owfVFCl6aO9p+RkVqny1oRsv+VuVsBwIGTDY=
+        integrity: sha256-xMVAwYGU+qdgNeL3H3KJEqH86TevoN2E++e+9/4PKV0=
   - name: java-annotations
     description: "Annotations as metadata that only means something if code reads it: retention policies and what each one
       costs, targets and where an annotation on a record component actually lands, @Inherited and its limits, marker
@@ -2858,11 +2879,11 @@ skills:
       - annotation-processing
       - override
       - validation
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-annotations
-        integrity: sha256-GYupliuMKfXCSmv0MDHCsHODsNFVhddh6Zfo4aNHgc8=
+        integrity: sha256-mJyS3k0cidKXTPCUM5suCohOW7U1DydB3pkI3uybQ0c=
   - name: java-api-design
     description: "Java API design from ordinary, advanced and invalid consumer calls: names carrying domain vocabulary,
       method and boolean naming conventions, arity and parameter objects, overload hazards, discoverability, public
@@ -2879,11 +2900,11 @@ skills:
       - versioning
       - evolution
       - jpms
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-api-design
-        integrity: sha256-VgTRC4UMa4UDhZ2NoGDymBvbGIDJqcmt5j/ZHOaphcY=
+        integrity: sha256-xLGZ+O9+RaU6i9BU6Tstsj7l5scXF1kfYJVp+sBXVv8=
   - name: java-application-security-basics
     description: "Application-security judgement for Java 21+: password storage with current memory-hard KDF parameters,
       constant-time verification, secure randomness, authorisation inside the protected operation, adversarial
@@ -2903,11 +2924,29 @@ skills:
       - secrets
       - cryptography
       - owasp
-    latest: 1.3.2
+    latest: 1.3.4
     versions:
-      - version: 1.3.2
+      - version: 1.3.4
         path: skills/java-application-security-basics
-        integrity: sha256-HNgPXUzwha/6Y8bViGu8E6J4Dv7nDajhm5ZV9SQi27I=
+        integrity: sha256-0GwYqV5x6ftu1Gn8r3yPA+X9D60gdYui1NVAoEzeK/c=
+  - name: java-build-and-dependencies
+    description: Diagnose and repair Maven or Gradle builds when a managed dependency is missing, a transitive version wins
+      unexpectedly, compilation and runtime classpaths differ, or the launcher JDK, toolchain and release target
+      disagree. Use for dependency conflicts, missing runtime artifacts, plugin classpath failures and unreliable
+      dependency resolution. Covers focused build repairs and reproducibility checks; intentional JDK upgrades,
+      classloader internals and published-library governance belong to neighboring skills.
+    keywords:
+      - java
+      - maven
+      - gradle
+      - dependencies
+      - toolchains
+      - reproducibility
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/java-build-and-dependencies
+        integrity: sha256-ZGP8MOB7KsJ1Oa8vB024HMTSZ8Ev3YSXi5wrH8ZZSls=
   - name: java-clean-code
     description: "Readability and intention-revealing structure in Java: method and class sizing — including the point where
       splitting becomes harmful fragmentation — abstraction levels within a method, comments, hidden side effects,
@@ -2923,11 +2962,11 @@ skills:
       - abstraction-levels
       - temporal-coupling
       - side-effects
-    latest: 2.2.2
+    latest: 2.2.3
     versions:
-      - version: 2.2.2
+      - version: 2.2.3
         path: skills/java-clean-code
-        integrity: sha256-U0t/xwS0bAG1Az4XzX86RFnD7n0q33OnEdlsYAl6uX0=
+        integrity: sha256-ZI6YCpI5uJsHpvD9qKh71TFWc0eLOlnqr5y/QEVkb5Y=
   - name: java-code-smells
     description: "The detection catalogue for Java code smells: Long Method, God Object, Feature Envy, Primitive Obsession,
       Data Clumps, Shotgun Surgery, Divergent Change, Mysterious Name, Mutable and Global Data, Data Class, Loops, Lazy
@@ -2946,11 +2985,11 @@ skills:
       - god-object
       - feature-envy
       - primitive-obsession
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/java-code-smells
-        integrity: sha256-Y3IIRXgk/fLOc7wUzXWd2PDTdWC/k0aXT2dJgjdGKxY=
+        integrity: sha256-7sukKcVsDkiL4nT6pTDorgMLGETqYR3yYay6zxvpz08=
   - name: java-cohesion-coupling
     description: "Cohesion and coupling in Java at class, package and module level: cohesion types (functional,
       communicational, temporal, logical), coupling types in real code, afferent/efferent coupling and instability,
@@ -2966,11 +3005,11 @@ skills:
       - jpms
       - architecture
       - dependency-graph
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-cohesion-coupling
-        integrity: sha256-UqAUoX5OVc/I8p9BWNeyUYZwWcExZQg2I/aXhcaWsv4=
+        integrity: sha256-WTbUCsduXH+i8RnqgmuR1WOPJimtCMXic66c6Y1n/cg=
   - name: java-composition-over-inheritance
     description: "Choosing between inheritance, composition and sealed hierarchies in Java: fragile base classes, self-use
       of overridable methods, subclass explosion, the costs of delegation and decoration, sealed types with exhaustive
@@ -2986,11 +3025,11 @@ skills:
       - sealed
       - decorator
       - hierarchy
-    latest: 1.2.3
+    latest: 1.2.4
     versions:
-      - version: 1.2.3
+      - version: 1.2.4
         path: skills/java-composition-over-inheritance
-        integrity: sha256-C2fsRTkWOxYiZj0guZn4De+sLPmkiGVYCOigZcPWwxM=
+        integrity: sha256-3E8ebG/aaqK/8CCmjg1SlPSh3LMNWyCuHoBmQWSU6Cs=
   - name: java-concurrency
     description: Entry point for designing or triaging concurrency inside one JVM. Classifies work by lifecycle, blocking
       and CPU demand, state ownership, arrival shape, ordering, cancellation, failure, and scarce-resource bounds, then
@@ -3005,11 +3044,30 @@ skills:
       - virtual-threads
       - parallelism
       - design
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-concurrency
-        integrity: sha256-t6r/G4EwuvNfU7IRRvRLf/MwqX6R7J4IEBZtlYwqkSQ=
+        integrity: sha256-eDX6kWkYFTPfN1PxmdzDBv4+THaPT6KeiI/ngqrbky8=
+  - name: java-date-and-time
+    description: Model and validate Java date and time values when choosing between civil dates, local date-times and
+      instants, resolving DST gaps or overlaps, applying calendar arithmetic, testing time-dependent rules, or
+      preserving temporal meaning across parsing, JSON and JDBC. Covers java.time types, region versus offset, Duration
+      versus Period, Clock injection and precision contracts. Does not cover calendar job scheduling or operational
+      timeout budgets (timeouts-and-deadlines).
+    keywords:
+      - java
+      - java-time
+      - dates
+      - time-zones
+      - daylight-saving
+      - clock
+      - jdbc
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/java-date-and-time
+        integrity: sha256-Y32clb/ayS42+QSqivkhlETVtXp3GrXo1Lovx2HGiPE=
   - name: java-defensive-programming
     description: "Where to defend in Java and where defence becomes noise: trust boundaries as the organising idea,
       preconditions with Objects.requireNonNull and explicit range and state checks, fail-fast over limping on, input
@@ -3025,11 +3083,11 @@ skills:
       - fail-fast
       - trust-boundaries
       - assertions
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-defensive-programming
-        integrity: sha256-D7JyG+HsXbFZMOBvO3yd5kX1jhBtcFxtv5B1giG1/0U=
+        integrity: sha256-9H+QqrPhSw5+iS/TOa6BZNXxf56ZVpI9ln0KSMs30So=
   - name: java-dependency-inversion
     description: "Dependency direction in Java: policy versus mechanism, ports and adapters, constructor injection as plain
       Java, factories, composition roots, and JPMS module edges as physical enforcement. Use when deciding whether to
@@ -3045,11 +3103,11 @@ skills:
       - jpms
       - architecture
       - testability
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-dependency-inversion
-        integrity: sha256-Fqj7aFVjb/hppSTfj5GBdCJ+3ahM1Ln/GdinJM4rpIU=
+        integrity: sha256-Tfd+HEJfgYHm+h/Hzc72g+XUOX7n6Yu85BIh3bJ6Ot8=
   - name: java-design-by-contract
     description: "Contracts as the semantics of a Java API, without a contract framework: preconditions, postconditions and
       invariants defined precisely and mapped to Java 25 mechanisms — constructor and compact-constructor validation,
@@ -3067,11 +3125,11 @@ skills:
       - liskov
       - behavioural-subtyping
       - javadoc
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-design-by-contract
-        integrity: sha256-/o+ssxwr+P5cgLAQn2S2msvgXi3VgJamAURpejOce24=
+        integrity: sha256-cKTE343mHnEkXLrSzZ2O1SM9MmuhjL2v6UQJQkN3oBs=
   - name: java-dry-kiss-yagni
     description: "The economics of duplication and abstraction in Java: knowledge duplication versus incidental (textual)
       duplication, what a shared abstraction costs, the wrong-abstraction failure mode, premature abstraction and
@@ -3110,11 +3168,11 @@ skills:
       - switch-exhaustiveness
       - schema-evolution
       - jpa
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-enums
-        integrity: sha256-Q7wCEJZD4F1vTgyjjaROhRXOQbTRizoRvpByUvK7+ys=
+        integrity: sha256-C+ekb8NVkDNL01mQ+SfrizgvFQNncfanPk4eu/4V7/4=
   - name: java-exception-design
     description: "Exceptions as API design in Java: checked versus unchecked as a deliberate decision, hierarchy sizing,
       translation at layer boundaries with cause preservation, typed failure facts for retry policy, failure atomicity
@@ -3131,11 +3189,11 @@ skills:
       - checked-exceptions
       - result-types
       - retry
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/java-exception-design
-        integrity: sha256-gk3zbl4o0sMCLeAUDbvLbikOvMGD+yFqkeH1qZjOdUY=
+        integrity: sha256-nzfg9PZAuHin/bj0i//1vBltaRzH5z8kfcfH4KIIjGk=
   - name: java-fluent-apis
     description: "Fluent interfaces and builders as API decisions: when a builder pays for itself versus a record,
       constructor or static factory; staged builders and their compatibility cost; immutable wither-style APIs; and the
@@ -3152,11 +3210,11 @@ skills:
       - api-design
       - immutability
       - dsl
-    latest: 1.2.3
+    latest: 1.2.4
     versions:
-      - version: 1.2.3
+      - version: 1.2.4
         path: skills/java-fluent-apis
-        integrity: sha256-8jmZPpVkaB2awvoN5Hl5lHpQ7O3ejmLDHg7yUCFeKyM=
+        integrity: sha256-4/6J8stb82HH8M04OnOVguz3sKaUbf3s6EWPDOWcKIE=
   - name: java-generics
     description: "Generics as a compile-time contract over an erased runtime: raw types and what they disable, eliminating
       unchecked warnings rather than suppressing them, why arrays and generics do not mix, generic types and methods,
@@ -3175,11 +3233,11 @@ skills:
       - type-safety
       - unchecked-warnings
       - type-tokens
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-generics
-        integrity: sha256-mYY1FnjHGi7DDgk7vN4n3twWJlTX2L8nYgajOAfTjiQ=
+        integrity: sha256-4tgLnGhORk4V2VQ0wMV0LPSWbZC4U6T5SO1SnPBghu8=
   - name: java-immutability
     description: "Immutable objects in modern Java: records in depth, defensive copies, immutable collection factories
       versus unmodifiable views, deep versus shallow immutability, final-field semantics and safe publication (JMM), and
@@ -3195,11 +3253,11 @@ skills:
       - value-objects
       - safe-publication
       - jmm
-    latest: 1.2.3
+    latest: 1.2.4
     versions:
-      - version: 1.2.3
+      - version: 1.2.4
         path: skills/java-immutability
-        integrity: sha256-saoCQSCp9u6S7V32yJMpdKzfh6ZiIoaa84NW7UtsAEY=
+        integrity: sha256-ck0MVe+IphqckxOlNT6yROv/XshTKnZC025ionM8snc=
   - name: java-lambdas-and-functional-interfaces
     description: "Lambdas, method references and the functional interfaces they implement: what a lambda captures and what
       that costs, why its this differs from an anonymous class's, when a method reference is clearer, choosing among the
@@ -3217,11 +3275,11 @@ skills:
       - capture
       - invokedynamic
       - boxing
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/java-lambdas-and-functional-interfaces
-        integrity: sha256-RE8c/LjD74XbJxBpZTF3YPa6xH3lPud19hMr4I4+DOE=
+        integrity: sha256-xerq/nGT8n51OHMaHXOF6o6f+MWoSzcLjpkpLOT47Vs=
   - name: java-law-of-demeter
     description: "Navigation coupling: what the Law of Demeter actually constrains — structure exposure, not dot-counting —
       and how to tell a train wreck from a legitimate chain. Use when reviewing chains like
@@ -3236,11 +3294,11 @@ skills:
       - train-wreck
       - navigation
       - encapsulation
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-law-of-demeter
-        integrity: sha256-h88feurox39X3Xcu8kjN5PoItJHjb/SfqJ3Z6AN3xHc=
+        integrity: sha256-VatNlQLvmpVtdmlUeUJZ6O6bVglTl0QBHS+U4xwFWNw=
   - name: java-legacy-code-testing
     description: "Getting Java code under test before you change it, when you cannot construct the class or reach the method
       at all: seams and their enabling points, the dependency-breaking catalogue (Parameterize Constructor, Extract
@@ -3259,11 +3317,11 @@ skills:
       - dependency-breaking
       - feathers
       - testability
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/java-legacy-code-testing
-        integrity: sha256-fPvg2sq7WRGX0z2o6/USVNfj7QPrMooEprGEZVxjOhY=
+        integrity: sha256-l0aYxp0sCyY8E4dzUKTAQwUtYEWbZ7mzBeye5ErYNhY=
   - name: java-memory-model
     description: Proving inter-thread visibility, ordering and atomicity under the Java Memory Model. Covers
       actions/executions, synchronization order, synchronizes-with and happens-before, data races, sequential
@@ -3279,11 +3337,11 @@ skills:
       - volatile
       - memory-model
       - publication
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/java-memory-model
-        integrity: sha256-OyN4tDvF9NFNkIan2iN14w4kmbMiiLcSPpJcOwP5INo=
+        integrity: sha256-FsX60OWKWOa3Cj0RK04Cc50HcCbPd5/JE6ZEcX6X9HE=
   - name: java-null-safety
     description: "Null as a semantic problem, not a syntax problem: what each null means (absence, error, uninitialised),
       nullability as an API contract, JSpecify @NullMarked and @Nullable, where Objects.requireNonNull belongs, empty
@@ -3300,11 +3358,11 @@ skills:
       - nullmarked
       - npe
       - contracts
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-null-safety
-        integrity: sha256-uq8pDTleN6czk18lUCV7iuh84Yr03Odr8gCFF2tSen0=
+        integrity: sha256-5mprnsBVjJD6sznM3j5w3Vae5uRmWtm3VuBq9Anq/14=
   - name: java-numeric-types
     description: "Choosing and using Java's numeric types correctly: binary floating-point limits for exact decimal amounts,
       BigDecimal construction, scale, rounding and the equals/compareTo split, integer overflow and the exact-arithmetic
@@ -3323,11 +3381,11 @@ skills:
       - overflow
       - autoboxing
       - primitives
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-numeric-types
-        integrity: sha256-N1lAQhtuWOkFQdy3zl675qVvOLXskgb7TSDWXkXua3Y=
+        integrity: sha256-vtzmKEsO+vnEKtor7+z3qbOYu8Hr8RsFgN6BM1qnZuM=
   - name: java-object-construction
     description: "Choosing how an object comes into existence in Java: static factory versus public constructor, the
       of/from/valueOf/getInstance naming conventions, instance control (caching, canonicalisation, value-based classes),
@@ -3346,11 +3404,11 @@ skills:
       - instance-control
       - static-state
       - api-design
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/java-object-construction
-        integrity: sha256-qbyQSwfuE+UWnOGklSeyMzyY+NksTI7Rub0l5bq+yDM=
+        integrity: sha256-kuZ/Ym/qQYxZB+75Y3VfpVKorYpPk8SRj4hD1geCwGQ=
   - name: java-object-contracts
     description: The four contracts every Java object inherits or opts into — equals, hashCode, toString, Comparable — plus
       why clone is not one of them. The equals properties and how inheritance breaks symmetry, the hashCode obligation
@@ -3368,11 +3426,11 @@ skills:
       - comparator
       - tostring
       - clone
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-object-contracts
-        integrity: sha256-78Kt8P5S4d4gtURC+N1+dqb2i9uUrXvATIUuVruS1ZA=
+        integrity: sha256-0kUp5L/rJ3dRUsj1dBuGDwjXPT1IcxNfPCc1cV85dlk=
   - name: java-optional
     description: "Optional as designed: a return type for \"no result is a normal outcome\". Covers orElse versus orElseGet
       (eager versus lazy), orElseThrow over get, map/flatMap/filter chains versus a plain conditional, or(),
@@ -3389,11 +3447,11 @@ skills:
       - absence
       - return-types
       - streams
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-optional
-        integrity: sha256-bKrhtsMup0cfUHc7XBgtVtl1fjZaiuCRVLH1ZEljrLM=
+        integrity: sha256-G7SnyjlDBMfHpY0zafNLRNAqbEOC+fhaFzmsbEUmEGA=
   - name: java-performance
     description: "Evidence-first triage and routing for ambiguous Java/JVM performance symptoms: defining the affected
       population and work, separating latency/throughput/resource/error dimensions, checking measurement and
@@ -3408,11 +3466,11 @@ skills:
       - triage
       - diagnosis
       - routing
-    latest: 2.6.2
+    latest: 2.6.3
     versions:
-      - version: 2.6.2
+      - version: 2.6.3
         path: skills/java-performance
-        integrity: sha256-0/VPiH4yy7Jd3qRfOybKc7t/FYzSzmRtirX4nmpFVck=
+        integrity: sha256-9DEO3FHjYXDaBr23iTUuL3fNp8fI3ITZEvo8cFsBpJw=
   - name: java-refactoring
     description: "Refactoring mechanics for Java: characterisation tests, small reversible steps, what behaviour
       preservation actually covers, risk classification, and the catalogue — Extract/Inline, Split Phase, guard clauses,
@@ -3435,11 +3493,11 @@ skills:
       - binary-compatibility
       - sealed-types
       - records
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/java-refactoring
-        integrity: sha256-6h1yMsD0e71auaZ4Ob1A1qfDDiLjb20PaU7DwK9KbOc=
+        integrity: sha256-EeO6SVh3hgitH0XHLgC087fpQ9QTuF9DYFEBds3UwZo=
   - name: java-reference-types-and-leaks
     description: "Reachability-driven memory in Java: strong/soft/weak/phantom contracts and notification limits,
       WeakHashMap and its value-holds-key trap, explicit Cleaner cleanup versus automatic fallback, finalization
@@ -3459,11 +3517,11 @@ skills:
       - cleaner
       - threadlocal
       - classloader-leak
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/java-reference-types-and-leaks
-        integrity: sha256-YoUikCYaEE4XqVQVQc+rIqKRgwkCZIIMfGcqxrllPS0=
+        integrity: sha256-G8nfqcFr5P+aCLFABRhrpbJgj62DycaDmTpMaLewaXY=
   - name: java-reflection-and-method-handles
     description: "Runtime access to code through dynamic names: what reflection costs beyond speed — weaker ordinary
       compile-time/refactoring checks, module access requirements, and closed-world native-image constraints — the
@@ -3482,11 +3540,11 @@ skills:
       - jpms
       - serviceloader
       - native-image
-    latest: 1.4.3
+    latest: 1.4.4
     versions:
-      - version: 1.4.3
+      - version: 1.4.4
         path: skills/java-reflection-and-method-handles
-        integrity: sha256-AjNABJCGejbToMb8RVWXApWc5akbMmZ353lejrw8iL8=
+        integrity: sha256-Qv6V5JzZlhKNRxz846c2HzDEHIUWaNbMk9uY8wJ/0lc=
   - name: java-resource-management
     description: "Deterministic release of what a Java program holds open: try-with-resources and the exception semantics
       that make it non-optional, designing an AutoCloseable (ownership, idempotent close, close that fails), decorators
@@ -3506,11 +3564,11 @@ skills:
       - connection-pool
       - shutdown
       - virtual-threads
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-resource-management
-        integrity: sha256-izsBffpJU9GNwygvIajpVRIc6qdJBBO1GL8ZhKpqjTw=
+        integrity: sha256-mI32lLYM0Q0QXSfgSsgEVgGFmjznA41zZTVbAKEvQas=
   - name: java-serialization-hardening
     description: "Java built-in serialization as an attack surface and a permanent API commitment: why readObject is an
       extra constructor that accepts arbitrary bytes, gadget chains and what deserialization filters (JEP 290/415) can
@@ -3529,11 +3587,11 @@ skills:
       - objectinputfilter
       - serialization-proxy
       - records
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-serialization-hardening
-        integrity: sha256-4M2kJzYD23O8DW3CHaZGO3hCe0Ip2KR4r41Q1o3Hsp4=
+        integrity: sha256-kkRZ06TDNUUyMJaX4wWbPYJzpN+AD6+UVC+Iy4F3H4g=
   - name: java-solid
     description: The five SOLID principles as decision tools for evidence-based Java review, with depth on single
       responsibility, open-closed, Liskov substitution and interface segregation. Use when reviewing a design or pull
@@ -3549,11 +3607,11 @@ skills:
       - open-closed
       - liskov
       - interface-segregation
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-solid
-        integrity: sha256-H5Dc8P7uqYQchTU0tzZZ2+13GADHSAgK+iTPiX5W37k=
+        integrity: sha256-N3PG/jJKfCZEUKHKQ1Z3KaU5cGH6J93M0NMMa8P+cSs=
   - name: java-streams
     description: "Stream pipelines as a design decision: when a stream is clearer than a loop and when it is not,
       side-effect-free stages and mutable reduction with collectors, the toMap and groupingBy traps, Collection versus
@@ -3572,11 +3630,11 @@ skills:
       - gatherers
       - forkjoinpool
       - api-design
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-streams
-        integrity: sha256-+2mLLqmERtVHSrdcnamjk2ys163qmYmiNaL4dC2R0SU=
+        integrity: sha256-XZeqXrsdhN/+4mnoCuz66L/bmZ5cPwyYdUhs7+Tp19U=
   - name: java-strings-and-text
     description: "Text in Java as encoded data rather than a universal type: UTF-16 code units versus code points versus
       graphemes, charsets and why the platform default is not a policy, locale-sensitive case and formatting including
@@ -3595,11 +3653,11 @@ skills:
       - locale
       - regex
       - injection
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-strings-and-text
-        integrity: sha256-w18vmANKKgKdZcFcb5BOkWCvG9WVfqJDyzJRVyIk6HU=
+        integrity: sha256-Mfk2Lj+nUNhHYK7IEvNOexkhuPFSE1UhuN/59BCQbL4=
   - name: java-tell-dont-ask
     description: "Decision ownership: the type that owns an invariant or policy makes the decision. Use when a service reads
       state with getters, decides, and writes state back (if (acct.getBalance() > x) acct.setBalance(...)), when the
@@ -3614,11 +3672,11 @@ skills:
       - anemic-model
       - invariants
       - command-query-separation
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-tell-dont-ask
-        integrity: sha256-UETjxH7/1MpSKX6LGhUg0nMCAg6qOYWAjiDWWIyOD78=
+        integrity: sha256-wqxWRThfr3rnRJ7jgw4X7gn4wlFPz7PcSYnrYwUxQdg=
   - name: java-test-design
     description: "Writing a Java test that survives refactoring and says why it failed: naming the behaviour rather than the
       method, one reason to fail, test data builders over shared mutable setup, choosing the assertion that produces a
@@ -3635,11 +3693,11 @@ skills:
       - assertj
       - flaky-tests
       - determinism
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/java-test-design
-        integrity: sha256-1/OopLup/0YdSKf+kTiHT8FkahgHxOSitLscVfxEXU4=
+        integrity: sha256-GCJsV5PQ9h7NkB3t0zC9vbj/KCsjAAMPPiE0hUMmj34=
   - name: java-test-doubles
     description: "Choosing and using test doubles in Java: the stub/mock/fake distinction that actually changes what a test
       proves, selecting real collaborators, fakes or mocks for the needed evidence, verifying contractual interactions,
@@ -3657,11 +3715,11 @@ skills:
       - fakes
       - mocking
       - spring-boot
-    latest: 1.0.3
+    latest: 1.0.4
     versions:
-      - version: 1.0.3
+      - version: 1.0.4
         path: skills/java-test-doubles
-        integrity: sha256-EH9sNowmVAoqfVNEpu0YmQ00lYgj457w4bPVMt5TtWI=
+        integrity: sha256-GO3rkaKyAQEL+9NUcXZ/V3kDSxD/kvURvAmz94Zpyaw=
   - name: java-testing-strategy
     description: "Choosing which test level earns its cost for a given change: what a unit, integration, contract or
       end-to-end test can and cannot prove, pushing each test to the narrowest scope where the risk is actually real,
@@ -3679,11 +3737,11 @@ skills:
       - integration-testing
       - testcontainers
       - coverage
-    latest: 1.0.3
+    latest: 1.0.4
     versions:
-      - version: 1.0.3
+      - version: 1.0.4
         path: skills/java-testing-strategy
-        integrity: sha256-LU8CzlQj9DX0JiI641Pz/uvo7AzssfGNgl+muQ2b2JI=
+        integrity: sha256-u0rivb2Gvl+8H+hd86pL+M4QP1xrPftjqoybtOkVYiQ=
   - name: java-thread-safety-contracts
     description: "Specifying and reviewing thread-safety as a caller-visible behavioral contract: ownership and confinement,
       immutability, atomic operations and compound invariants, consistency/iteration, lock identity and scope,
@@ -3699,11 +3757,11 @@ skills:
       - guardedby
       - lazy-initialisation
       - concurrency
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/java-thread-safety-contracts
-        integrity: sha256-id3Qoxx1xNdSe2kOLP/ZZMt/T1l4KgsijC+81khOEpg=
+        integrity: sha256-wlAThoBNzGjGp0/hU2SZcKpwUO5yU+Vbs953Qj00db0=
   - name: jdk-upgrade-impact
     description: "Moving a service between JDKs: what breaks, in what order to find it, and what should get faster — running
       unchanged on the new runtime with warnings visible, classifying each failure as a retired flag, strong
@@ -3723,11 +3781,11 @@ skills:
       - compatibility
       - encapsulation
       - lts
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/jdk-upgrade-impact
-        integrity: sha256-LK2qmv8Kf/RC5QtcttPir2ezs9wrB1MwWtY4LpzQQxo=
+        integrity: sha256-S2G4Ob9LnDAP89yoyyN7Z0EjLu7YqwnBtaQMaNa1Cho=
   - name: jfr-advanced
     description: "Engineering JDK Flight Recorder evidence beyond stock settings: discovering event schemas and settings on
       the target build, designing threshold/period/throttle/stack trade-offs, composing and validating JFC
@@ -3744,11 +3802,11 @@ skills:
       - recordingstream
       - profiling
       - jvm
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/jfr-advanced
-        integrity: sha256-otU11egGn6jYyxIN2WlHIhLkEJBZ6R5lIpI3cwZ3Mgs=
+        integrity: sha256-QAvlBYgC9FKFoLtpBAKpUNCW+8HrYPNy2A0wb0TDx5k=
   - name: jfr-and-async-profiler
     description: "Selecting the least-perturbing JVM evidence source that matches the question: JFR events and timeline
       versus async-profiler sampling, CPU versus elapsed/off-CPU, allocation versus retention, lock versus queue/I/O,
@@ -3764,11 +3822,11 @@ skills:
       - async-profiler
       - sampling
       - observability
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/jfr-and-async-profiler
-        integrity: sha256-qaSpp7nBowiIFLX89BolX5h7ZzkEolSFgluH+GlUcsA=
+        integrity: sha256-670UYj3d6gVFPOZlgDmAFThi6ctlKOeYD5+I1TddlLk=
   - name: jhsdb-and-core-dumps
     description: "Post-mortem inspection of a dead or hung JVM: reading hs_err, producing a usable core dump, the jhsdb
       modes (jstack, jmap, jinfo, clhsdb, hsdb) against a core or a live process, and the build and symbol requirements
@@ -3785,11 +3843,11 @@ skills:
       - post-mortem
       - serviceability-agent
       - jvm
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/jhsdb-and-core-dumps
-        integrity: sha256-32DmGGoYjPfO00YVHr9oPe/s4TKTFfY0klSpbhOxN14=
+        integrity: sha256-hMwI4GNfauQ5/QpFOjYRq1RMZjVIFDpR0AlybgEVKG4=
   - name: jit-compilation
     description: "HotSpot JIT compilation and warm-up: tiered policy, C1/C2 queues and profiling, OSR, deoptimization,
       code-cache pressure, compiler resources in containers, and warm-up as a workload-dependent curve rather than a
@@ -3809,11 +3867,11 @@ skills:
       - c2
       - warmup
       - code-cache
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/jit-compilation
-        integrity: sha256-w887zxKbDjIRnukxY1s6OGsJZysQsnYvk65z2iuyiSs=
+        integrity: sha256-jSW6nIQ0wqL3D0EjV6fI89bGIjxYkk1PY1qQSM4ourA=
   - name: jit-inlining-and-escape-analysis
     description: "Inlining and escape analysis in C2: inlining as the multiplier, scalar replacement versus \"stack
       allocation\", flow-insensitivity, turning a PrintInlining verdict into a code change, and measuring with
@@ -3833,11 +3891,11 @@ skills:
       - escape-analysis
       - allocation
       - c2
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/jit-inlining-and-escape-analysis
-        integrity: sha256-Usi7Y47PXVI0dSd+rGw0ZLsneTE1bT3xNIbOehBLTIY=
+        integrity: sha256-CPAFTBg7tqB6gXoU2Zgnwsrm9KwpaSxCSKDHJDSLzhA=
   - name: jmh-advanced
     description: "Designing advanced JMH experiments: shared and asymmetric state topologies, groups, parameter matrices,
       auxiliary counters, fixture arbitration, fork/JVM controls, profilers, hardware counters, annotated assembly,
@@ -3853,11 +3911,11 @@ skills:
       - benchmark-variance
       - jvm
       - performance
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/jmh-advanced
-        integrity: sha256-w7YqnBN70BgN0V3F8X/48m6l78nNlD6crhMLkMymLW0=
+        integrity: sha256-piyhKQ8UJuC2eee9xG4h9cPM2Tiib5qId/M1u/UYHSI=
   - name: jmh-microbenchmarks
     description: Designing and auditing JVM microbenchmarks whose workload, observation boundary, compiler context, state
       topology, lifecycle, units, and statistical comparison match the engineering question. Covers dead-code
@@ -3873,11 +3931,11 @@ skills:
       - blackhole
       - measurement
       - ci-gate
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/jmh-microbenchmarks
-        integrity: sha256-LNoKXvJBDM1rFgBu/sMrCJH5KY9x0S6avSe1+nyz274=
+        integrity: sha256-VHxchysOB23EflDMGi/9irHQaCSewMhHIz0nWaxXZVQ=
   - name: jni-and-ffm
     description: "Crossing into native code: JNI call overhead, critical sections and what they block, the FFM downcall and
       upcall path, `Linker` and method handles, why a native frame pins a virtual thread, and measuring the boundary
@@ -3897,11 +3955,11 @@ skills:
       - ffm
       - downcall
       - pinning
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/jni-and-ffm
-        integrity: sha256-3/BONXbBYCMB2cWwrYulrlC1wZ3SLKRo6ek2amNYa2c=
+        integrity: sha256-H30aCl4H6Uk0FGQJmJtzFWbWtvOtLsL9xJ1eIlQe8mQ=
   - name: jvm-bytecode
     description: "Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the constant pool
       and resolution timing, descriptors versus Signature, the invoke* family with invokedynamic and inline caching,
@@ -3921,11 +3979,11 @@ skills:
       - invokedynamic
       - verifier
       - class-file
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/jvm-bytecode
-        integrity: sha256-pj+mAyDeiYNKmJ5m84lkcN8US9Oc61TdxJyLimmEwk4=
+        integrity: sha256-ACUd8AYEdGFFSuPhalkrf8gaGO5e3mGUE/zHnCpMxDI=
   - name: jvm-class-loading
     description: "Class loading, class identity and classloader leaks: parent-first delegation, {defining loader, binary
       name} identity, loading versus linking versus initialisation, Metaspace retention, and CDS/AOT cache for startup.
@@ -3944,11 +4002,11 @@ skills:
       - class-loading
       - cds
       - aot
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/jvm-class-loading
-        integrity: sha256-/F63XqTc6IgwXPIKqMbaIZEdKZiVfjhSS9dsk9jZYtw=
+        integrity: sha256-AxMc+MJ/IILiVjlm1hk415rsAZpbNTNaiIEfAaCuGgo=
   - name: jvm-gc-tuning
     description: Deciding whether GC is the actual bottleneck, then choosing a collector and sizing the heap. Use when GC
       pauses appear on the critical path of a latency profile, when full collections show up, when the heap grows toward
@@ -3965,11 +4023,11 @@ skills:
       - garbage-collection
       - tuning
       - heap-sizing
-    latest: 2.5.2
+    latest: 2.5.3
     versions:
-      - version: 2.5.2
+      - version: 2.5.3
         path: skills/jvm-gc-tuning
-        integrity: sha256-crj9pWaS7+CmexYoKUfuR+nRTK0forwltSgLJQW23mI=
+        integrity: sha256-Od6055YFFugrVmRt4xxkgiQq8D4jP3geHVRyTM08C+E=
   - name: jvm-memory-regions
     description: The major memory-accounting domains of a JVM process — heap, Metaspace/class space, code cache, thread
       stacks, direct/native/JVM-internal memory and mapped/file-backed pages — and how to budget them against a
@@ -3987,11 +4045,11 @@ skills:
       - code-cache
       - container
       - nmt
-    latest: 1.6.3
+    latest: 1.6.4
     versions:
-      - version: 1.6.3
+      - version: 1.6.4
         path: skills/jvm-memory-regions
-        integrity: sha256-nVWV/OYCza5sT3eIhJpTotl9EmXItWhVGIMMScqnKgM=
+        integrity: sha256-isZVuwIEvWBjKkamCILALOkNeJ2arEuHCjM9OaNIZ8k=
   - name: jvm-ml-inference
     description: "Engineering CPU and accelerator-backed ML inference from JVM applications: choosing in-process versus
       remote serving, bounding native sessions and predictors, coordinating engine and request parallelism, batching
@@ -4006,11 +4064,11 @@ skills:
       - onnx
       - djl
       - batching
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/jvm-ml-inference
-        integrity: sha256-xfEEfy6vSGeiF1ylFqDQFbJOpNKwLoWwPGF+cBeQRrQ=
+        integrity: sha256-CI+rChscigKb8NqkAga96WpbyCYwfvER4EebzJqojlM=
   - name: jvm-performance-review
     description: Auditing JVM configuration evidence across the supplied command, effective runtime flags, target JDK build,
       container/cgroup envelope, workload lifecycle, and stated SLO. Classifies flags by support and origin, detects
@@ -4026,11 +4084,11 @@ skills:
       - configuration-review
       - performance
       - container
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/jvm-performance-review
-        integrity: sha256-+NO5xmWqbk7DoVSNHfW8wOMPpMQMrNPhi5jSUVUhQq4=
+        integrity: sha256-AYdy+pj8cqYJJDuwBb0/UpzuuDfMDuIXULmnAN4dHOg=
   - name: kafka-consumers-in-java
     description: "Operating a Kafka consumer from Java: the log-not-a-queue model where consumption removes nothing and
       position is an offset; the rebalance as the central operational event, with assignment and membership choices that
@@ -4049,11 +4107,11 @@ skills:
       - rebalance
       - offsets
       - consumer-lag
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/kafka-consumers-in-java
-        integrity: sha256-GPYbq/n9wlnyr5ZjBc9DvAWa0+My0nv3m24BIllPxuE=
+        integrity: sha256-/GwH66dOwkJEIoKKzfttNXB/jxexFvRCOCVgqJ6sz1o=
   - name: kubernetes-service-lifecycle
     description: "A Java service at the edges of its life under Kubernetes: liveness, readiness and startup probes as three
       different questions, probe timing arithmetic, graceful shutdown as a sequence where endpoint removal races
@@ -4072,11 +4130,11 @@ skills:
       - rolling-update
       - spring-boot
       - availability
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/kubernetes-service-lifecycle
-        integrity: sha256-i1bdXSvneXCRCIIyYZPgeOa9yM1R26QL+C57ylkt4sE=
+        integrity: sha256-I1pndoEEjr92PAZpOmVVHMIkLKca97kkX2yJ/sqNa6g=
   - name: latency-statistics
     description: "The statistics of latency measurement: estimands, means and quantiles, histogram aggregation, uncertainty,
       censoring, dependence, and coordinated omission. Use when an SLO or dashboard reports mean latency, when p99
@@ -4093,11 +4151,11 @@ skills:
       - histogram
       - hdrhistogram
       - statistics
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/latency-statistics
-        integrity: sha256-E2Es5Q6KMgmQGaUiu02/T4gD1o6c5vWhbfjcUgdAKs0=
+        integrity: sha256-PzrCG5Xa1Nnnsit1kPOTWrWUHy0ok5svHD+i6tL7Bo8=
   - name: layering-and-boundaries
     description: "Deciding where an enterprise application's boundaries go and which direction dependencies cross them: the
       classical presentation / domain / data-source split, the styles that reorganise it (hexagonal, clean, modular
@@ -4114,11 +4172,11 @@ skills:
       - modular-monolith
       - archunit
       - boundaries
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/layering-and-boundaries
-        integrity: sha256-1P0enDpSFFaNtRB/xbzjFFHjnIThVDYi/Oux4to83yY=
+        integrity: sha256-ZlO+aET2RZnRVhfPxDPtVi/e4naAKkK22cy9kMLcZNQ=
   - name: leader-election
     description: "Electing one active instance for work that must not run concurrently: the lease renewal model and the rule
       that failed renewal never extends the leader's conservative deadline; split-brain and resource-side
@@ -4137,11 +4195,11 @@ skills:
       - failover
       - shedlock
       - scheduling
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/leader-election
-        integrity: sha256-JfthxgZwd8sC6qNj9zX2tHrjTZDBJkSRbggpiIBSMEY=
+        integrity: sha256-+GNtr3xddFun5vnZPOgtls74MqXW6uqCuC8FYEiCYEM=
   - name: legacy-enterprise-modernization
     description: "Modernising an enterprise application that is in production and cannot stop: understanding a system nobody
       fully knows, pinning behaviour before changing it, strangling functionality out incrementally, and defending a new
@@ -4159,11 +4217,11 @@ skills:
       - modernization
       - characterisation-tests
       - migration
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/legacy-enterprise-modernization
-        integrity: sha256-WnNHDdr9T8v+bmDTXpz4G1ckyh2zizTIOCXmN1sJdUI=
+        integrity: sha256-i1qKF729FGlw8kguQ1l+921/Ecgiws6Mb0OQzSzfhOQ=
   - name: linux-for-jvm
     description: "The Linux side of a JVM incident: RSS versus virtual memory, page faults and swap, AlwaysPreTouch,
       transparent huge pages, cgroup CPU throttling, the two OOM killers, file-descriptor and process limits, signals
@@ -4182,11 +4240,11 @@ skills:
       - oom-killer
       - kubernetes
       - throttling
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/linux-for-jvm
-        integrity: sha256-4Mf6NkOfD8JAJU5AxC9YGJ8qvBGxnbQGqFxogeqnSiI=
+        integrity: sha256-UXcSNul6Bawuz6m6rIOCAMyyVhA+GFW7WDlWoJ644Jg=
   - name: littles-law-and-queueing
     description: "Conservation checks from Little's Law (`L = λW`) and queueing decisions: measurement boundaries, service
       demand versus residence time, utilisation curves, thread pool and executor sizing, bounded queues and rejection
@@ -4204,11 +4262,11 @@ skills:
       - capacity
       - thread-pool
       - utilisation
-    latest: 1.5.2
+    latest: 1.5.3
     versions:
-      - version: 1.5.2
+      - version: 1.5.3
         path: skills/littles-law-and-queueing
-        integrity: sha256-ntJDGxZoCMOb8lLeaETPt7RO1cvUDCYEcbhPjzubkKg=
+        integrity: sha256-+01nsrhCw5VGuelnpBnclr4zyTIB/Z/nMM24aH6HYRo=
   - name: load-balancing-and-routing
     description: "Getting a request to a replica that can serve it: L4 versus L7 by capability rather than layer number, why
       an L4 balancer in front of long-lived HTTP/2 or gRPC connections balances connections instead of requests and pins
@@ -4227,11 +4285,11 @@ skills:
       - routing
       - kubernetes
       - health-checks
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/load-balancing-and-routing
-        integrity: sha256-8OnjVQKnooeUFS94SRCNJFdWnlMqApD04xBm/ZB/RoU=
+        integrity: sha256-MmKjfpIlpQmhEPtJ37IZPAa5HyrqDzo3gdxpktqfck4=
   - name: load-testing
     description: "Designing valid service load experiments: choosing open or closed workload models, defining offered,
       admitted and successful work, controlling generator and environment bias, representative workload and data,
@@ -4248,11 +4306,11 @@ skills:
       - open-loop
       - capacity
       - soak
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/load-testing
-        integrity: sha256-j/WIMIvonWZJlnEsmM/GyoCDMOehbS2UBOqoIr7Oqv4=
+        integrity: sha256-6gVb3+S4EJuLYb31SRUg104nD1Q6mRbsVEd1hjDMPu4=
   - name: load-testing-advanced
     description: Selecting and executing advanced load profiles—baseline, capacity-envelope, breakpoint, stress, spike,
       ramp, soak and recovery—using bracketed boundaries, scenario-specific validity, phase isolation and server-side
@@ -4288,11 +4346,11 @@ skills:
       - aba
       - longadder
       - disruptor
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/lock-free-patterns
-        integrity: sha256-wmh671DC/uBl+8km0zzB/rXvyqPmoYO2hfV3kBuBoO8=
+        integrity: sha256-tp54l2naNg9eEZrYD6VDcXprW+0vk2naIRriemkp3wI=
   - name: lock-inflation
     description: Diagnosing and engineering Java intrinsic-monitor contention across fast and inflated monitor states
       without freezing one HotSpot release's internals. Covers ownership, recursion, wait sets, entry queues,
@@ -4307,11 +4365,11 @@ skills:
       - contention
       - jfr
       - locking
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/lock-inflation
-        integrity: sha256-0TrhkyRXZPmLgfTa7eF++LewAUVmDqykPkQRKZajQDM=
+        integrity: sha256-EHqL9VfhOP0MNOkCjjACsug3hsGJh6gGducV9d4ucnU=
   - name: low-latency-jvm
     description: "Designing and validating JVM systems whose primary objective is bounded jitter rather than low average
       latency: latency-distribution budgets, allocation strategy, GC choice, warm-up and deoptimization, CPU/NUMA
@@ -4327,11 +4385,11 @@ skills:
       - trading
       - numa
       - kernel-bypass
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/low-latency-jvm
-        integrity: sha256-WNBakMprw404ghfee18myIIecyGfZqs/bp4JLKoBwAw=
+        integrity: sha256-kfH3Ks56fedp5CZN7D79/EHAKAw83wm3RPq8rqZ6Iaw=
   - name: message-ordering-and-partitioning
     description: "Ordering guarantees and their exact scope/stage: common logs order per partition while a global total
       order requires a serialized sequencer; per-key ordering depends on key-to-partition mapping remaining stable; why
@@ -4351,11 +4409,11 @@ skills:
       - kafka
       - idempotency
       - java
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/message-ordering-and-partitioning
-        integrity: sha256-APIv6P4jVc+ebUWPeQH8EebC6oq5gHUAedDrNu9OI/s=
+        integrity: sha256-VjEX6/nU1vLNeD5F3peAwyaYghNpKHDINOlj19g/d8g=
   - name: metadata-mapping
     description: "Expressing the object-to-schema mapping as metadata rather than hand-written code: where the mapping lives
       (annotations, external XML, programmatic), what reflection costs versus generated code, and how metadata drifts
@@ -4372,11 +4430,11 @@ skills:
       - code-generation
       - schema-drift
       - jpa
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/metadata-mapping
-        integrity: sha256-M01oDGqgCMt2Mb9O48aiziR+6TgCpFYKSrbWmcllW2g=
+        integrity: sha256-8Qfmote85LNSW+BCsaqnsJbtdRcgSzKpDA7rZEajLiA=
   - name: metaspace-internals
     description: "Metaspace internals on JDK 16+: chunk and arena allocation per ClassLoaderData, the compressed class space
       and its separately configured reservation/limit, chunk waste and fragmentation, when memory is actually returned
@@ -4395,11 +4453,11 @@ skills:
       - compressed-class-space
       - jcmd
       - classloader
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/metaspace-internals
-        integrity: sha256-Ur/YiwK2/8+gNoKp84fZZSLEdwmAlQWYs6ZJc0yiOH8=
+        integrity: sha256-1gRJXpUmGH0VLtdtHargeTiZIzLWRbq8pjFp0t3z2gw=
   - name: metrics-and-cardinality
     description: "Designing bounded, decision-oriented metrics for Java services: selecting counters, gauges and histogram
       forms; defining RED, USE and business outcomes; budgeting active series and ingestion/query cost; controlling
@@ -4416,11 +4474,11 @@ skills:
       - prometheus
       - red
       - use
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/metrics-and-cardinality
-        integrity: sha256-Lw/5Kc+mnG9Cz5GXBU3mjgcv6IXKjqbp2Gia5mRLtyo=
+        integrity: sha256-kUeJ3OLODIOosmVh9eE9d86tJUmKvyl6eZbZYpPWWn0=
   - name: mvc-and-request-handling
     description: "How a web request is routed and handled: MVC's actual division of responsibilities, Page Controller versus
       Front Controller, and Application Controller for flows whose next step is a decision. Use when controllers contain
@@ -4437,11 +4495,11 @@ skills:
       - application-controller
       - spring-mvc
       - filters
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/mvc-and-request-handling
-        integrity: sha256-02zCU+GwxPd2701rMZLfaONPV7Nlldn8Bjt1AAi+rvo=
+        integrity: sha256-OG3PmHw+rEPfTmcH6SSktPPXLEQRqVr/96KZbwKVZzE=
   - name: mysql-innodb-performance
     description: "Diagnosing and tuning MySQL 8.4+ InnoDB from engine evidence: clustered primary-key storage, buffer pool
       and redo/checkpoint pressure, undo/purge history, next-key/gap locks and deadlocks, optimizer statistics and
@@ -4456,11 +4514,11 @@ skills:
       - redo
       - gap-lock
       - database
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/mysql-innodb-performance
-        integrity: sha256-mK/0XF99H0k3eHTVimnMxJNJMo4hluEIcbRvixBX3Ng=
+        integrity: sha256-y4ZyW6tt12/UtaYtKXzfbbcS/7MSh/4eRZjYRVy5Ro4=
   - name: numa-and-cpu-affinity
     description: "Placing a JVM on real hardware topology: reading the NUMA topology, numactl and taskset pinning
       strategies, interpreting numastat, which collectors UseNUMA actually governs, how CPU sets interact with the JVM's
@@ -4479,18 +4537,18 @@ skills:
       - affinity
       - taskset
       - topology
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/numa-and-cpu-affinity
-        integrity: sha256-Jr1d6MThEAB2NcyEFkspxRj3Xj28Svp6htL7V1jNJl8=
+        integrity: sha256-pFt9MSYnRQ5xBINpZb+urWq1FGyp2KY4DxrAFgSNumU=
   - name: object-layout-and-footprint
     description: Sizing a data structure in bytes before it exists. Use when a shape is chosen for millions of instances —
       record, class, primitive array, parallel arrays or boxed collection; when an array is proposed to save the header;
       when HashMap<Integer,Integer> or List<Long> is on a bulk path; when -XX:+UseCompactObjectHeaders is evaluated for
       footprint; or when smaller objects are expected to buy shorter GC pauses without a collector-specific measurement.
       Answers in bytes per element; one record-versus-array comparison changes under the upstream JDK 27 default (JEP
-      534, not yet GA). Sizing a replacement belongs here; measuring what exists is heap-dump-analysis. Not flag
+      534, source-only). Sizing a replacement belongs here; measuring what exists is heap-dump-analysis. Not flag
       lifecycle (jvm-performance-review), @Contended padding (false-sharing-and-contended), cache hierarchy
       (cpu-cache-and-numa), allocation rate (allocation-profiling), container budget (jvm-memory-regions), compressed
       class space (metaspace-internals), off-heap memory (off-heap-memory), or sharing duplicates (gof-flyweight).
@@ -4503,11 +4561,11 @@ skills:
       - jol
       - compact-object-headers
       - data-structures
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/object-layout-and-footprint
-        integrity: sha256-/bY4DJ5k6N9rZd7NXEzraknGx1t0ZvbXEWpZY7QVJ24=
+        integrity: sha256-CtUz7U7fR0RP1BWIgJ6cFQoQfhQi/ivL9+7ix2K5hnU=
   - name: off-heap-memory
     description: "Memory outside the Java heap: direct `ByteBuffer` and its Cleaner-driven release, `MemorySegment` and
       `Arena` in the FFM API, lifetime and thread confinement, when off-heap actually pays, and diagnosing native growth
@@ -4547,11 +4605,28 @@ skills:
       - concurrency
       - lost-update
       - jpa
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/offline-concurrency-control
-        integrity: sha256-zJuhErzXMhJp1JAg0pW2zwqzz5H91/OmW13j6MdOBRo=
+        integrity: sha256-RZehUGBxbpntHWvD9HDy2Kza8UKMfwOKw+PwqCrdGaE=
+  - name: online-database-schema-migrations
+    description: Planning and reviewing same-engine relational schema rollouts while old and new application versions
+      coexist. Use for a hot-table column or constraint change, resumable backfill, migration-runner failure, read/write
+      cutover, or contraction with a defined rollback boundary. Covers DDL execution risk and data correctness; not
+      cross-engine migration, ingestion throughput tuning, or API/event schemas.
+    keywords:
+      - database
+      - schema-migration
+      - online-ddl
+      - backfill
+      - rollback
+      - expand-contract
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/online-database-schema-migrations
+        integrity: sha256-NnrgehREfFqhEePqfzKCpBePor3u84IRmGnqKg8Y/Bw=
   - name: opentelemetry-performance
     description: "Designing OpenTelemetry tracing that remains causally useful within an explicit overhead and data-risk
       budget: auditing automatic/manual coverage, preserving context across asynchronous boundaries, choosing head/tail
@@ -4568,11 +4643,11 @@ skills:
       - baggage
       - observability
       - java
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/opentelemetry-performance
-        integrity: sha256-SJ76pROjscpJS+8QiaaFvAtIxh4hc6ZYOaBFj+vL9sk=
+        integrity: sha256-yYL0nY7GShnQS8BSlUN2zt4O3xu28GXPfi/bsyR8KFU=
   - name: orm-behavioral-patterns
     description: "The three runtime behaviours that make object-relational mapping work and produce its most confusing
       failures: Unit of Work, Identity Map and Lazy Load. Use when an entity was modified but never saved and the change
@@ -4589,11 +4664,11 @@ skills:
       - hibernate
       - jpa
       - n-plus-one
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/orm-behavioral-patterns
-        integrity: sha256-UX8AflfElXYw9CkUVAt9KtRju7ZIaE4kBqP7fjd3PsQ=
+        integrity: sha256-z043mNC8sbEX0SvBqZiWOJhwGsh01k/VXsEvB2OoUK8=
   - name: orm-fetch-and-batching-performance
     description: "Making JPA and Hibernate stop issuing the statements you did not ask for, and making the ones they do
       issue cheap: statement amplification, N+1 from an association and from a collection, join fetch versus entity
@@ -4613,11 +4688,11 @@ skills:
       - batching
       - performance
       - java
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/orm-fetch-and-batching-performance
-        integrity: sha256-/nK5P0XK6JtKBZgIvxodQw9UGZ8tXtwwGXMd66Ovp3w=
+        integrity: sha256-IV31cppfmTUDZzfYrryT3Ev+AdhnU2sm9QY0SWAdFzc=
   - name: orm-structural-mapping
     description: "Mapping the structure of an object model onto tables: Identity Field, Foreign Key Mapping, Association
       Table Mapping, Dependent Mapping, Embedded Value and Serialized LOB. Use when choosing an identifier strategy or
@@ -4634,11 +4709,11 @@ skills:
       - embeddable
       - json-column
       - jpa
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/orm-structural-mapping
-        integrity: sha256-OtWYXr3/mvz2OAbscw2h8HkgswJ9IMbwMhsgnOfH1Fc=
+        integrity: sha256-jorXt3uwzLvCWGg7O6y/b8gtGBg3kpPiPTMz5aVLsGk=
   - name: pattern-selection-and-composition
     description: "Choosing enterprise patterns from forces rather than familiarity, and combining them into an architecture
       whose parts reinforce rather than fight each other: the selection criteria that discriminate, the compositions
@@ -4655,11 +4730,11 @@ skills:
       - trade-offs
       - enterprise
       - design
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/pattern-selection-and-composition
-        integrity: sha256-IURyNFgYA0oSx9KxCOGJKasJkwGFw5iq46obE3VC6J8=
+        integrity: sha256-HCsF6dNdHiaKNDUzobfheJJJbuzOGE5A/+VPVUnBO5U=
   - name: patterns-and-modern-frameworks
     description: Which classical enterprise patterns a modern Java and Spring stack already implements, which it only partly
       implements, and which it does not implement at all — plus the modern Java expression of each. Use when a
@@ -4676,11 +4751,11 @@ skills:
       - sealed-types
       - virtual-threads
       - patterns
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/patterns-and-modern-frameworks
-        integrity: sha256-YI4qK4z+c4Gln8HkCj0gv2gl8iSwPyxXV3r5ogjs9+M=
+        integrity: sha256-90u0stEo0ItBFyPfY4nlA0pq71wp/EBPTI6nU2QSb4I=
   - name: pause-attribution
     description: "Attributing an observed production pause to a layer: decomposing it across time-to-safepoint, safepoint
       operation, cleanup and host effects, correlating the GC log, the safepoint log, JFR and OS signals by timestamp,
@@ -4698,11 +4773,11 @@ skills:
       - latency
       - jfr
       - pause
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/pause-attribution
-        integrity: sha256-wejYHYpu6NiA+Uku/8PYkBdY4pXvNVLn6QvEHXHs66o=
+        integrity: sha256-TzX07p/207/SYMytZNIke+t6DL2kHbGsfCzdKLzoP5M=
   - name: performance-engineering-program
     description: Establishing an organization-wide performance engineering program through measurable maturity evidence,
       service ownership, SLO and baseline adoption, regression gates, incident learning and a rotating champion model.
@@ -4735,11 +4810,11 @@ skills:
       - mitigation
       - postmortem
       - root-cause
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/performance-incident-response
-        integrity: sha256-8GjsbMf2R7HN50WqJ1whmD69MAi1+SIawa2NdETcP+0=
+        integrity: sha256-9gKtTQfqMOO6VVDx932ypCFfdypLj9josIztE8F6X/Q=
   - name: performance-methodology
     description: "The investigation process for performance work: defining measurable goals, recording a baseline,
       characterising before diagnosing, falsifiability, fixed-work speedup bounds, experimental design, and validating
@@ -4756,11 +4831,11 @@ skills:
       - amdahl
       - slo
       - diagnosis
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/performance-methodology
-        integrity: sha256-T/ve9z5ZMUFRqAbsWF/gU9lcTOL69YHPU9IqWpH8DHg=
+        integrity: sha256-G63wUWVhU0PMdPAE0eR0hX+T/5+C7XfKlrrHG3512hg=
   - name: performance-regression-ci
     description: "Designing trustworthy performance-regression gates: defining the decision and smallest important
       regression, preserving independent experimental units, calibrating noise and power, comparing compatible JMH
@@ -4778,11 +4853,11 @@ skills:
       - jmh
       - benchmark
       - baseline
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/performance-regression-ci
-        integrity: sha256-2GfGlJQZr8MYb7D2IJE4KgH4GIbBE0rRs7vR8yTJN/0=
+        integrity: sha256-InbbczEUMPElhc7vRvdJHZWmKVZV1JN2NpCa31pFfsk=
   - name: poison-messages-and-dlq
     description: "What happens to a message that cannot succeed: separating the permanently poison message that fails on its
       own content from the transiently blocked one whose dependency is down, and why an attempt counter cannot tell them
@@ -4801,11 +4876,11 @@ skills:
       - poison-message
       - redrive
       - kafka
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/poison-messages-and-dlq
-        integrity: sha256-HR+qR7IEm1+OnfQltpCpCrddNGxtWpOGrkYRewqiHdE=
+        integrity: sha256-OhnAIv752fJjR1aeH31ReJbLYB1HEutENDb7kUofuPo=
   - name: postgresql-performance
     description: "Diagnosing and tuning PostgreSQL 17/18 from engine evidence: MVCC tuple versions, VACUUM/freeze and bloat,
       HOT updates and visibility maps, plans and cardinality, work memory/spills, WAL and checkpoints, locks/SSI,
@@ -4820,11 +4895,11 @@ skills:
       - pgjdbc
       - pgbouncer
       - database
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/postgresql-performance
-        integrity: sha256-IYvjHyNNAmEMqFOFpNfoV1aTN1g63NIlziRKKtHqht8=
+        integrity: sha256-H5i9r+BE4SDUqTZyn6790IZlhoXe78zjsBAhjaanjwg=
   - name: project-valhalla
     description: Evaluating Project Valhalla value-class proposals and Early-Access builds without presenting draft syntax
       or flattening heuristics as released Java behavior. Use when code or documentation claims value classes remove
@@ -4839,11 +4914,11 @@ skills:
       - value-classes
       - object-layout
       - early-access
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/project-valhalla
-        integrity: sha256-c9Zf14Rsgc7C0fF8vkr6x3NTyhpBJcYfufsa4uZYqY4=
+        integrity: sha256-dxVQXH/uentUQfhJxVY3c9BBQ17c43qAbv8hK4eyJ1c=
   - name: quality-gates
     description: "Choosing which automated checks a change must pass, and making them cheap enough that they stay switched
       on: matching the gate set to the change's risk rather than running everything on everything, where each gate
@@ -4861,11 +4936,11 @@ skills:
       - build
       - java
       - pipeline
-    latest: 1.0.3
+    latest: 1.0.4
     versions:
-      - version: 1.0.3
+      - version: 1.0.4
         path: skills/quality-gates
-        integrity: sha256-eAI4WU1CRReeDeXlORvXdXojS3VyGtQPXozXt9BQL0I=
+        integrity: sha256-Ok+eYvlMtZvHMSWwAjKgd370/XAt5tVG1QBYKxMEzGI=
   - name: query-objects-and-specifications
     description: Expressing queries as objects that can be composed, named and tested — Query Object, Specification,
       criteria builders, derived repository methods and explicit SQL — and choosing between them per query rather than
@@ -4884,11 +4959,11 @@ skills:
       - projections
       - pagination
       - jpa
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/query-objects-and-specifications
-        integrity: sha256-k3n+hK/CmtcYmAnw67s0xs94Z488TqVaTKSyw81/ICE=
+        integrity: sha256-zAamXk7JhSI4z6EfmgyIESrDUMparjQkFzKgXLOJWw0=
   - name: queueing-models
     description: "Choosing, parameterising and falsifying queueing models: M/M/1, M/M/c, M/G/1, finite/loss and closed
       networks; Erlang C/B, Pollaczek–Khinchine, Kingman/Allen–Cunneen, variability, queue topology and what model
@@ -4907,11 +4982,11 @@ skills:
       - latency
       - utilisation
       - modelling
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/queueing-models
-        integrity: sha256-Qv/byl8ca/EfWqwPmgNLsKpaWr+gj2drJA1tZ8Q30BU=
+        integrity: sha256-fEL8QofMCAJzLNVz6Z+WiOZqZQqHpcAWfV7d5D33spc=
   - name: rate-limiting-and-load-shedding
     description: "Choose policy quotas and saturation-based admission: limit identity, charged work, burst and window
       semantics, distributed budgets, early rejection, fairness, deadlines and recovery. Use when replica-local limits
@@ -4927,11 +5002,11 @@ skills:
       - overload
       - admission-control
       - resilience
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/rate-limiting-and-load-shedding
-        integrity: sha256-8LyFXTUFNkMWiWznEX3XSzHcj7nYbTwSLO+Hl+AUavg=
+        integrity: sha256-irE95g15wIkjZRk8+5barEeyWYg074Layzk95PUIB84=
   - name: reactive-and-virtual-thread-selection
     description: "Choosing between a reactive pipeline and thread-per-request on virtual threads, and deciding where they
       legitimately coexist: what each model actually gives you, where backpressure comes from in each, memory per
@@ -4950,11 +5025,11 @@ skills:
       - webflux
       - quarkus
       - architecture
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/reactive-and-virtual-thread-selection
-        integrity: sha256-Mq+864X40pTHwM573EXZSxp22JhZ/nLi90wuE1fopQ8=
+        integrity: sha256-sCxjLPg6v1JWurNNtzTJlarUwHliUxmInErTdgpBrCw=
   - name: reactive-backpressure
     description: "Backpressure in reactive and asynchronous pipelines: Reactive Streams request semantics, operators that
       reshape demand, bounded buffers and overflow strategies, blocking inside a non-blocking pipeline, and measuring
@@ -4973,11 +5048,11 @@ skills:
       - reactive-streams
       - flow-control
       - blockhound
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/reactive-backpressure
-        integrity: sha256-gmL+WU/xQs1IiOze7dKtTduCzMItVo+esUpYhiiH1Rs=
+        integrity: sha256-QIqVt0uJXSnKqD41XAW6KJWkuYR7AUKzwPNjnF2tqrM=
   - name: reading-jit-assembly
     description: "Reading the machine code HotSpot actually emitted: installing hsdis, driving -XX:+PrintAssembly and JMH
       perfasm, telling the verified entry point and prologue from the method body, and confirming or refuting a
@@ -4997,11 +5072,11 @@ skills:
       - assembly
       - perfasm
       - hotspot
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/reading-jit-assembly
-        integrity: sha256-sYy7H89mvu6+za8OalgZhg31GZNYGKpWvkk7dF0OBek=
+        integrity: sha256-pgk/F/w0SLdELGf4qgaU+ut8RfvlQ9WBxmK9Te3vSww=
   - name: refactoring-automation
     description: Applying repeatable Java changes with IDE refactoring, OpenRewrite, structural search, compiler tooling or
       hand edits; checking tool coverage and making large diffs reviewable, reproducible and reversible. Use when one
@@ -5017,11 +5092,11 @@ skills:
       - migration
       - error-prone
       - reproducibility
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/refactoring-automation
-        integrity: sha256-+5N/QbIHcA9jeVR2dBA6N8OA+NC1dpR0CHWjo5Hv7Xs=
+        integrity: sha256-m8ZWm0sEaOefL89XhEC7wHWZrUK6oNxveo7p9eXeun4=
   - name: remote-facade-and-dto
     description: "Designing what crosses a remote boundary: a Remote Facade providing coarse, business-shaped operations,
       and DTOs carrying the data in one round trip — plus when a DTO earns its mapping cost. Use when an API mirrors the
@@ -5038,11 +5113,11 @@ skills:
       - chatty-interface
       - projections
       - boundaries
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/remote-facade-and-dto
-        integrity: sha256-1kciWF+3TjwlmNHF78/D2vTf+0iRcKzuinNNeh9dSyQ=
+        integrity: sha256-1HXlWcdN9b4Sa6dtVA59N70acxUV6MYjfj3QRSmuL30=
   - name: repository-pattern
     description: "The repository as a collection-like boundary over domain objects, with aggregate-root write boundaries in
       DDD: what belongs behind it, where queries and read models fit, and when a redundant CRUD wrapper can be removed
@@ -5060,11 +5135,11 @@ skills:
       - dao
       - read-model
       - persistence
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/repository-pattern
-        integrity: sha256-dehTPETyKHLvtlvRXiANE1+xNhVHO56b4r7BPT/yzqM=
+        integrity: sha256-7tjiDxMnfM0m9qBazVXnr7kgoA7tlFLF/RGa+kF5a9s=
   - name: requirements-and-acceptance
     description: "Turning a request into something buildable and checkable before writing code: separating the requirement
       from the implementation someone already chose, finding the ambiguities that change the work, naming assumptions
@@ -5082,11 +5157,11 @@ skills:
       - assumptions
       - definition-of-done
       - scope
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/requirements-and-acceptance
-        integrity: sha256-+T1hJuzhfnja0aa0USC26w3vJ9g61pKJpbvnKpMaBgM=
+        integrity: sha256-7Y1WAS9ksg79DZS2Dpn7suBdiwTccGzbAyteHyR4iA4=
   - name: retries-and-backoff
     description: "Retry as a policy with a cost: classifying a failure as transient, permanent or ambiguous before retrying
       anything; why a timeout is ambiguous and safe to retry only under idempotency or reconciliation; capped jittered
@@ -5104,11 +5179,11 @@ skills:
       - backoff
       - jitter
       - resilience
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/retries-and-backoff
-        integrity: sha256-Pfu2mhVsqdHj5GNBmORxIuAGUhVtTOlcTDX7jFk0baE=
+        integrity: sha256-DS6Ji8Q9NQQnKTFJNvjywmyG1WvfscdM5cPVauJLwDc=
   - name: rpc-and-api-contracts
     description: "The contract between two services and how it changes without a coordinated deploy: partial failure as a
       first-class outcome, an error surface a machine caller can act on (stable extensible codes, outcome certainty,
@@ -5126,11 +5201,11 @@ skills:
       - grpc
       - schema-evolution
       - versioning
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/rpc-and-api-contracts
-        integrity: sha256-GEY9Xj8UuFmKjlKEcP1Y1wMjbNqNX6RFIaOFbkMMC/0=
+        integrity: sha256-c0s+9l4TDLr8xp3VWo9Y1Rzp9KvrFGd1oyRt5lTfv7U=
   - name: safepoints
     description: "The HotSpot safepoint mechanism on JDK 25: thread-local polling words and where the JIT emits polls, loop
       strip mining, global safepoints versus thread-local handshakes, the VM operations other than GC that stop the
@@ -5149,11 +5224,11 @@ skills:
       - latency
       - hotspot
       - jni
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/safepoints
-        integrity: sha256-7qN0uouNRFgm8VHpewJNmr+cIdTFjFoj+OEyo8zEF24=
+        integrity: sha256-Xm3JuE0eWqYwt5Ugu46CUFpXztSwZpnKiL6yrPpF4F0=
   - name: scatter-gather
     description: "Fanning one request out to N workers and combining answers: order-statistic latency, choosing N against
       tail exposure, all-of-N/first-of-N/k-of-N completion, safe hedging, partial-result completeness and watermarks,
@@ -5172,11 +5247,11 @@ skills:
       - partial-results
       - deadlines
       - java
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/scatter-gather
-        integrity: sha256-PJ4/EJipCoaFlV6KupjflILz7yBs9mE0KvrUxzySTS8=
+        integrity: sha256-hHxRGYxgk9gMEJ9ej2nvaezwCx/jxEZVACHfCBQnLlY=
   - name: schema-evolution-and-compatibility
     description: "Whether a given schema change is safe, in which deploy order, and what breaks when it is not: the
       writer/reader pair, the compatibility levels and who upgrades first, the per-format rules for Avro, Protobuf and
@@ -5196,11 +5271,11 @@ skills:
       - compatibility
       - kafka
       - versioning
-    latest: 1.2.3
+    latest: 1.2.4
     versions:
-      - version: 1.2.3
+      - version: 1.2.4
         path: skills/schema-evolution-and-compatibility
-        integrity: sha256-Ms6E15BtPvA6UiSwDAqZALrbo49v8YMXWKSxt0QUyHo=
+        integrity: sha256-8jmHC75FsTldfiBYQdHcZNOPhJpVNDmpHi3Ax4CF/8o=
   - name: scoped-values
     description: "ScopedValue as one-way, immutable, lexically bounded context: where/run/call, rebinding in a nested scope,
       inheritance by StructuredTaskScope subtasks and by nothing else, and the cases where ThreadLocal is still the
@@ -5219,11 +5294,11 @@ skills:
       - context-propagation
       - virtual-threads
       - jep-506
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/scoped-values
-        integrity: sha256-bzhu59o3grNLGG0WzmBXgDXhLYnTT+tHnFITBZOWrw4=
+        integrity: sha256-tW7ofK/5yW289K8dNuA+OAQwVfee8a0xMWqx2yIAxcI=
   - name: serialization-performance
     description: Engineering serialization cost as a system budget across encode/decode CPU, allocation and retention,
       wire/storage bytes, copies, buffers, compression, schema evolution, compatibility, security, and rollout. Covers
@@ -5240,11 +5315,11 @@ skills:
       - kryo
       - jmh
       - allocation
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/serialization-performance
-        integrity: sha256-rCv1pvTFNm6ugqeHA1HpWIOQge4EeneKeSMfsLqPpC0=
+        integrity: sha256-gaAkaLeY7bAuOGv4KjpdJcrj0CYP7lcOZeAHbeAZQLQ=
   - name: service-layer-design
     description: "Designing the layer that fronts business logic: what an application service owns (transaction boundary,
       authorisation, orchestration, translation) and what it must not absorb, the difference between application and
@@ -5261,11 +5336,11 @@ skills:
       - god-service
       - transactions
       - spring
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/service-layer-design
-        integrity: sha256-p7OcS5xUKh12Cq+R+X1gad763qsfqxUBTzxeIZ+1s08=
+        integrity: sha256-/CZkGisac3Qs5OT0etp4idi+oImjiuXHb8QGnqNiEFU=
   - name: session-state-strategies
     description: "Placing the state that spans several requests of one conversation: client session state, server session
       state and database session state, plus signed tokens and external stores. Use when a multi-step wizard loses its
@@ -5282,11 +5357,11 @@ skills:
       - redis
       - stateless
       - enterprise
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/session-state-strategies
-        integrity: sha256-BTXdt31JHOImnX5X2ByTRgYJGScimcaNQRiAqzxIiT4=
+        integrity: sha256-mkiFZ5LP9+hSYFFUah5Cf2oB6sk/eZ3VYMi4vYwPxfo=
   - name: sharding-and-partitioning
     description: "Whether to split data across owners at all, and on which key: what sharding buys — write capacity,
       locality, data volume and isolation — against distributed transactions/indexes, non-local query routing,
@@ -5305,11 +5380,11 @@ skills:
       - scalability
       - distributed-systems
       - migration
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/sharding-and-partitioning
-        integrity: sha256-ketGi4NDjaOsHnXXpZxre5MAgtz2o6IkJVed7srpCJs=
+        integrity: sha256-Nc9d4HmrMNh38dRBsA0b76jr2rBqPx9cLcmoMxcEASg=
   - name: sidecar-pattern
     description: "Composing a second container into the same pod to add a capability to a container you cannot or will not
       modify: the shared network namespace and volumes that make this different from a library, native sidecar
@@ -5327,11 +5402,11 @@ skills:
       - composition
       - containers
       - daemonset
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/sidecar-pattern
-        integrity: sha256-STukyqBeRDmbtviY1PSKtUWC/eQwqAYnYYWPGC74GGQ=
+        integrity: sha256-M6rHJCKCiKKnUuFOWyyxqPRpboL/3uFtv3DbVB+FkRo=
   - name: simd-and-vector-api
     description: "Vectorisation on the JVM: C2 SuperWord auto-vectorisation and the loop shapes that defeat it, the
       incubating Vector API (species, lanes, masks, loop bound and tail handling), proving that vector instructions were
@@ -5350,11 +5425,11 @@ skills:
       - vectorisation
       - avx
       - performance
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/simd-and-vector-api
-        integrity: sha256-lSy/0c97u/TQPmkFjfId5i2P3PJlYXh4iQPyF56hwbI=
+        integrity: sha256-Rg1en3WpV6d7oBgneAKtnn/+OiOZIGWNNduHQG0F6X4=
   - name: skill-engineering
     description: "Designing and reviewing agent skills: scope boundaries, the SKILL.md frontmatter contract, progressive
       disclosure across references and scripts, explicit decision rules, and quality gates. Use when creating a new
@@ -5387,11 +5462,31 @@ skills:
       - burn-rate
       - on-call
       - observability
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/slo-and-alerting
-        integrity: sha256-v26xMZ6abfRlLV5iu7jQFGr6WcoXt7tdJKBYgTISXbs=
+        integrity: sha256-wQFZ5Gz2tV2S5rdzHDbTIcBhxt9HL4MevTxt8yW3O0Y=
+  - name: spring-security-for-apis
+    description: Configure and review Spring Security Servlet APIs when filter-chain matchers leave routes uncovered, bearer
+      tokens need JWT or opaque-token validation, claim mapping produces unexpected authorities, method checks are
+      bypassed, or CSRF, CORS and 401/403 behavior are unclear. Covers resource-server wiring and adversarial security
+      tests; object ownership, tenant policy and transactional authorization belong to java-application-security-basics
+      and service-layer-design. Excludes WebFlux and implementing an identity provider.
+    keywords:
+      - java
+      - spring-security
+      - servlet
+      - oauth2
+      - jwt
+      - authorization
+      - csrf
+      - cors
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/spring-security-for-apis
+        integrity: sha256-z/1aAtQ4vNBDaEJzsb7OmKulR2g3OYDX+he//8Hhx64=
   - name: sql-query-performance
     description: "Making one SQL statement fast, from its execution plan rather than a guess: reading estimated against
       actual rows, finding the operation that actually costs, whether a scan is wrong at all, index selectivity and
@@ -5430,11 +5525,11 @@ skills:
       - tempdb
       - mssql-jdbc
       - database
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/sql-server-performance
-        integrity: sha256-EivUvpK8WzOE/Jek3rJCzdzysItBdM0GzZBwxi1Os5U=
+        integrity: sha256-WCJmdF4M2d8ACdAX7RkAB9SVGXhR9OXAZ+GxCr5XXsQ=
   - name: startup-cds-crac-leyden
     description: "Cutting JVM startup and warm-up while staying on the JVM: CDS and AppCDS, the Leyden AOT cache (JEP
       483/514/515), CRaC checkpoint and restore and its constraints, what each mechanism actually accelerates, verifying
@@ -5453,11 +5548,11 @@ skills:
       - crac
       - leyden
       - cold-start
-    latest: 2.1.2
+    latest: 2.1.3
     versions:
-      - version: 2.1.2
+      - version: 2.1.3
         path: skills/startup-cds-crac-leyden
-        integrity: sha256-rxs46rebyodNacA3l3RNRzHi3c22s2NR+wRM2YGJDA8=
+        integrity: sha256-GYnZ3q9JLnu7BjVsgT7Ly3xB7Y934sKd005fz9+IenY=
   - name: stateless-service-design
     description: "Making a service instance disposable so replicas are interchangeable: what stateless actually means — no
       correctness/routing dependency on one instance's volatile history; the in-process state inventory; and session
@@ -5476,11 +5571,11 @@ skills:
       - replicas
       - spring-session
       - distributed-systems
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/stateless-service-design
-        integrity: sha256-E/iQI1tGLuRBxW7ny+JXDj6aKk8dQCyOJHgo5wmgUSo=
+        integrity: sha256-PpdFxCmKrvs2UDB2tHv/Ch8zFT0oNmQ2GZo2n9JGlfE=
   - name: stream-processing-runtime-performance
     description: "Operating Kafka Streams and Apache Flink for predictable throughput, state and recovery: separating their
       execution models, sizing partitions or operator parallelism, diagnosing backpressure, bounding native state, and
@@ -5495,11 +5590,11 @@ skills:
       - rocksdb
       - checkpoints
       - backpressure
-    latest: 1.0.2
+    latest: 1.0.3
     versions:
-      - version: 1.0.2
+      - version: 1.0.3
         path: skills/stream-processing-runtime-performance
-        integrity: sha256-fDBmBo2IoZv8u9RiN9P/pe4f27VFVGzu9lxlvPkTU+4=
+        integrity: sha256-rBPGrpvON52TD6S+42XbaiA/ltRt8zc9nPPDg8dMJEw=
   - name: streaming-pipeline-topologies
     description: Composable stage shapes for event-driven pipelines — copier, filter, splitter, sharder, merger — with
       ordering, semantic parallelism, state, shuffle and recovery boundaries; exactly-once scope across source, state
@@ -5517,15 +5612,15 @@ skills:
       - watermarks
       - partitioning
       - event-driven
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/streaming-pipeline-topologies
-        integrity: sha256-f1AXwk38CSI2WaFR3Qgur9wyxbdn0TcOAAp42cQNS2o=
+        integrity: sha256-JAQQ3YkqwAaJouQAKwlkNvw6eP+Z2wY8sR/O7Mmtgdw=
   - name: structured-concurrency
     description: "StructuredTaskScope as a lifetime guarantee for a fan-out: fork, join, close, and the rule that no subtask
       thread outlives the block. Covers the API as it stands on each JDK — still a preview API on every released
-      version, renamed between 25 and 26 and changing again in 27 — the Joiner completion policies, scope timeouts,
+      version, renamed between 25 and 26 and changed again in 27 — the Joiner completion policies, scope timeouts,
       nesting, and what close actually waits for. Use when writing or reviewing a parallel fan-out inside one request,
       when a sibling task keeps running after another failed, when code copied from a blog uses ShutdownOnFailure or a
       StructuredTaskScope constructor, when preview class files fail to run on a different JDK, when a scope fails in
@@ -5540,11 +5635,11 @@ skills:
       - virtual-threads
       - preview
       - jep-505
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/structured-concurrency
-        integrity: sha256-ukADc08YEluVoNVGg70BjJpk6w20kjAbgB3BKpkBp5E=
+        integrity: sha256-YnBWfvjx7R/8ieQ3ZqaVSsd2t2s2OnD6NOmZSYi3CUY=
   - name: structured-logging
     description: "Designing application logs as governed event schemas: choosing events and fields, correlation and context
       lifecycle, exception and severity semantics, synchronous versus buffered delivery, overload/drop behavior,
@@ -5560,11 +5655,11 @@ skills:
       - mdc
       - correlation
       - java
-    latest: 1.4.2
+    latest: 1.4.3
     versions:
-      - version: 1.4.2
+      - version: 1.4.3
         path: skills/structured-logging
-        integrity: sha256-aSraA4VUObUqoFRYqOnwQc5FTjgaUpHpzm8Em3y8rfU=
+        integrity: sha256-DI4eB38Keg/GztnDJpg8MsfdIYrQ35xSRRlpehCkAT4=
   - name: tail-latency-analysis
     description: "Diagnosing and mitigating end-to-end latency tails: defining the latency population, decomposing stage and
       queue time with per-request evidence, quantifying fan-out under dependence, attributing correlated
@@ -5581,11 +5676,11 @@ skills:
       - hedging
       - fan-out
       - slo
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/tail-latency-analysis
-        integrity: sha256-wi0pbn1uennEXcanMIWYnwVk81YI16JgEvbAe4NSEPM=
+        integrity: sha256-M44WwQcJtTvuyNwrbwR2K4DtnAhXSaNnUSTMuKJIaUA=
   - name: task-queues-and-competing-consumers
     description: "Distributing work to a pool of interchangeable workers through a queue: the lease and visibility-timeout
       model, and why an expired lease can duplicate work instead of failing it; sizing the timeout from processing plus
@@ -5604,11 +5699,11 @@ skills:
       - visibility-timeout
       - backpressure
       - messaging
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/task-queues-and-competing-consumers
-        integrity: sha256-xovezQNvbRSxPsoi1Q3mrIcDixLgi09qJ8BnHLsA3og=
+        integrity: sha256-rh8VFzwt5qET6dNxGDKsMzesRx+zcQgnLliGv0uQ3WQ=
   - name: tcp-tuning
     description: "The network stack under a JVM service: listen backlog and accept queues, Nagle and delayed ACK, socket
       buffer sizing against bandwidth-delay product, congestion control choice, keepalive and timeout alignment along
@@ -5627,11 +5722,11 @@ skills:
       - latency
       - sockets
       - linux
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/tcp-tuning
-        integrity: sha256-xKVHLG1PVPZzJ/R7B0Y1Jv+V7zQlN31K70aOcoStVZ0=
+        integrity: sha256-S3xbl3e+/6jEaRHIq0uJgGs0+2m7dyI/+93tqSlgDTw=
   - name: tdd
     description: "Test-driven development as a judgement call rather than a doctrine: the red-green-refactor loop and what
       each step is actually for, the discipline of watching a test fail for the stated reason, step size, and an
@@ -5671,11 +5766,11 @@ skills:
       - incidents
       - refactoring
       - decision-records
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/technical-debt-decisions
-        integrity: sha256-Z+o/wVEWd16GXl344LUCVR/Yqjp2QsEe/X3NSA86KDc=
+        integrity: sha256-Z9GciJMrB3h3GbeOrMY4y9iMct1jIur+4bVw8BfsOvE=
   - name: thread-sizing-and-virtual-threads
     description: Choose and size platform-thread pools or virtual-thread-per-task execution from workload shape, capacity
       evidence and lifecycle constraints. Covers CPU versus waiting, queue/admission policy, resource limits exposed by
@@ -5690,11 +5785,11 @@ skills:
       - thread-pool
       - pinning
       - sizing
-    latest: 1.3.3
+    latest: 1.3.4
     versions:
-      - version: 1.3.3
+      - version: 1.3.4
         path: skills/thread-sizing-and-virtual-threads
-        integrity: sha256-jkJF+17IDbjGpuAv1yZ6Z0HKUtKOYgywNMPl/PlEzM8=
+        integrity: sha256-uUqCyVKW7al/pGp7rMmZ1vff9nPqut1Z0JJq0w7C0dM=
   - name: timeouts-and-deadlines
     description: "Bounding how long a call may take and propagating that bound: per-hop timeouts versus an absolute
       deadline, deadline propagation over HTTP and gRPC, remaining-budget arithmetic and refusing work that cannot
@@ -5713,11 +5808,11 @@ skills:
       - deadline
       - cancellation
       - resilience
-    latest: 1.1.2
+    latest: 1.1.3
     versions:
-      - version: 1.1.2
+      - version: 1.1.3
         path: skills/timeouts-and-deadlines
-        integrity: sha256-PGzyxK1g/xl6qUfw38J8IbLtHSrmEehbOwNpDtZW9tQ=
+        integrity: sha256-LXDiRQIpGnZoMMgXL65E0hW9YxTxpK1lDqKXXNpjEfQ=
   - name: unified-logging
     description: "Constructing, validating and operating HotSpot unified JVM logging: exact versus wildcard tag-set
       selection, levels, outputs, decorators, file rotation, asynchronous drop/stall modes, runtime VM.log changes,
@@ -5734,11 +5829,11 @@ skills:
       - jcmd
       - hotspot
       - diagnostics
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/unified-logging
-        integrity: sha256-QfOpr2xZ99wnvMOaUuARAFyD4V6tesyvIuSTHX+p3iY=
+        integrity: sha256-7eugUGApXDdX7qrivRRV1P/bnXE8m/q7pCDhNYTsQPU=
   - name: universal-scalability-law
     description: "Fitting and falsifying the Universal Scalability Law (USL): load/resource definition, the scale
       coefficient gamma, contention alpha, coherency/retrograde beta, peak conditions, identifiability, uncertainty and
@@ -5754,11 +5849,11 @@ skills:
       - contention
       - coherency
       - capacity
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/universal-scalability-law
-        integrity: sha256-OmTs2768+74fTnY3P/gNXBD+wrjUr3TTh/It4OXdjmI=
+        integrity: sha256-e9hPvFPGmaDa4Y0ik+PVPR1HDSbmRzX+YspnYq/pyJI=
   - name: varhandles-and-memory-ordering
     description: Designing and proving low-level Java variable access with VarHandle plain, opaque, acquire/release and
       volatile modes; compare-and-set/exchange, weak CAS, read-modify-write, fences, coordinates, signature-polymorphic
@@ -5774,11 +5869,11 @@ skills:
       - acquire-release
       - jcstress
       - aarch64
-    latest: 1.2.2
+    latest: 1.2.3
     versions:
-      - version: 1.2.2
+      - version: 1.2.3
         path: skills/varhandles-and-memory-ordering
-        integrity: sha256-RNSDFvaia3VqcQxAsDdb0XRXiPinDcK31lxgp+dBTl0=
+        integrity: sha256-sS0CWC94yI9XMbO0u4sYqXghu+2+vGlrvsd4IEjLQ4Y=
   - name: view-and-representation-patterns
     description: "Producing the response: Template View, Transform View and Two Step View as three ways to turn a model into
       output, and what each becomes in a JSON API, a server-rendered page or a hypermedia fragment. Use when logic is
@@ -5821,11 +5916,11 @@ skills:
       - thread-pool
       - capacity
       - rollout
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/virtual-thread-migration
-        integrity: sha256-Yn/+GFaSFo4GrhYVw/WQuRfXacpkZ883sWqs4Ujr7Zo=
+        integrity: sha256-7K+IuTAqSrkiDGh6Bb3FeuZfn/0WXCv5sfF1Bcap82A=
   - name: virtual-threads-internals
     description: Diagnose HotSpot virtual-thread mounting, heap stack chunks, FIFO work-stealing scheduling, carrier
       capture, residual native/VM-frame pinning after JEP 491, scheduler compensation boundaries and memory/GC effects
@@ -5863,11 +5958,11 @@ skills:
       - shenandoah
       - latency
       - concurrent-gc
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/zgc-and-shenandoah
-        integrity: sha256-DG1wORSHrh2ue5ovP+w/UEteNHiIc9e0XYr/0g9bV4c=
+        integrity: sha256-ew/Ocs3pxroE3ARh0UZVScZ+w+tk0w/2IXahoX+cnnI=
   - name: zgc-generational-internals
     description: "Generational ZGC internals: coloured pointers without multi-mapping, the load and store barriers, the
       young and old cycles and their STW phases, the remembered-set bitmap and its double buffering, relocation and page
@@ -5886,8 +5981,8 @@ skills:
       - coloured-pointers
       - load-barrier
       - allocation-stall
-    latest: 1.3.2
+    latest: 1.3.3
     versions:
-      - version: 1.3.2
+      - version: 1.3.3
         path: skills/zgc-generational-internals
-        integrity: sha256-ANQs9aRoW7JhYvDxkKYkF+uEFcOAkmtcsywceRXj+U0=
+        integrity: sha256-q6uzH37d9RN1eB0xKsx5O3Kps+1ZHhIJuhb1Go/sQh0=

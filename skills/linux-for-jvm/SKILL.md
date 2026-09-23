@@ -48,7 +48,8 @@ within the established containment and availability deadline.
 3. **Compare memory accounting under real load**: NMT for tracked HotSpot allocations,
    RSS/PSS for residency, and cgroup usage for charged memory. NMT committed is not RSS,
    does not cover every native allocation, and cannot be subtracted from RSS to quantify
-   unexplained native bytes.
+   unexplained native bytes. Check `memory.high` reclaim throttling at the relevant cgroup
+   and ancestors even below `memory.max`; zero OOM kills does not rule out memory pressure.
 4. **Correlate the logged GC pause with the observed pause** and attribute the difference
    to a layer only when evidence supports it — TTSP, throttling, swap, I/O or request queueing.
    Keep unresolved causes as hypotheses; do not subtract unrelated latency percentiles.
@@ -77,10 +78,12 @@ within the established containment and availability deadline.
 - A major fault's cost depends on page source, device, queueing, reclaim and filesystem. Use
   fault deltas correlated with wall-clock stalls or block-I/O evidence; hardware-class
   latency ranges are not a substitute for measurement.
-- THP is a policy matrix, not a binary slogan. `always` can invoke direct reclaim/compaction;
-  `madvise`, `defer`, `defer+madvise` and `never` make different latency/memory trade-offs,
-  and modern kernels can expose multiple THP sizes. Verify kernel and JDK behaviour, measure
-  `AnonHugePages`, TLB/CPU benefit and compaction stalls, then record the chosen policy.
+- THP separates allocation eligibility (`enabled`) from reclaim/compaction policy (`defrag`).
+  Defrag modes such as `always`, `madvise`, `defer`, `defer+madvise` and `never` have different
+  latency/memory trade-offs. On kernels with per-size controls, only `inherit` follows the
+  top-level `enabled` value; inspect explicit overrides before declaring THP disabled. Verify
+  kernel and JDK behaviour, measure `AnonHugePages`, TLB/CPU benefit and compaction stalls,
+  then record the chosen policy.
 - Distinguish global OOM from memory-cgroup OOM by evidence. Victim selection can incorporate
   `oom_score_adj` within applicable constraints; it is not a protection against exceeding a
   container's or ancestor's `memory.max`. Kubernetes QoS influences scores; correlate

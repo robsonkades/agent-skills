@@ -8,10 +8,12 @@ do not map a successful charge to an authorization without establishing those se
 ## The port the application wants
 
 ```java
+public enum UnavailabilityReason { THROTTLED, CONNECTION_FAILURE }
+
 public interface PaymentGateway {
     /**
      * @throws PaymentDeclined                  the instrument was refused; do not retry
-     * @throws PaymentTemporarilyUnavailable    unavailable/unknown outcome; see retry contract
+     * @throws PaymentTemporarilyUnavailable    typed reason; remote outcome may be unknown
      * @throws PaymentGatewayFailure            unclassified
      * @throws UnknownGatewayStatus             protocol/mapping failure; outcome may be unknown
      */
@@ -24,6 +26,11 @@ idempotency key because retries are expected, and no mention of HTTP, JSON or th
 Retry requires the same canonical request/key within provider scope and retention, an allowed error
 and remaining deadline. A timeout does not prove no authorization happened; reconcile ambiguous
 outcomes. Changed parameters with a reused key are a conflict, not a replay of the original request.
+
+The omitted `PaymentTemporarilyUnavailable` domain exception accepts `(paymentId, reason, cause)`
+and exposes `UnavailabilityReason reason()`. Its cause is diagnostic evidence, not the caller's
+policy interface. These reasons classify the observed failure, not whether an earlier attempt
+applied the effect; retain that uncertainty unless the actual provider/attempt contract resolves it.
 
 ## What the SDK offers
 
@@ -41,6 +48,10 @@ Four mismatches: money as a `long` plus a `String`, an untyped source token, a f
 hierarchy, and a status field that is an open string.
 
 ## The adapter
+
+For this fictional operation, request and response currency codes and integral amounts use the
+same representation as `Money`. A real integration must establish that equivalence or substitute
+an explicit provider-specific money mapper; see the representation checks below.
 
 ```java
 public final class StripePaymentGateway implements PaymentGateway {
@@ -67,8 +78,10 @@ public final class StripePaymentGateway implements PaymentGateway {
             return toAuthorisation(stripe.charges().create(request));
         } catch (StripeCardException e) {
             throw new PaymentDeclined(payment.id(), declineReason(e.getDeclineCode()), e);
-        } catch (StripeRateLimitException | StripeConnectionException e) {
-            throw new PaymentTemporarilyUnavailable(payment.id(), e);
+        } catch (StripeRateLimitException e) {
+            throw new PaymentTemporarilyUnavailable(payment.id(), UnavailabilityReason.THROTTLED, e);
+        } catch (StripeConnectionException e) {
+            throw new PaymentTemporarilyUnavailable(payment.id(), UnavailabilityReason.CONNECTION_FAILURE, e);
         } catch (StripeException e) {
             throw new PaymentGatewayFailure(payment.id(), e);
         }
@@ -100,18 +113,27 @@ Four things this adapter does that a naive wrapper does not.
 configure transport timeouts elsewhere. Bound the call by the caller's remaining deadline and
 account for client retries; one socket timeout is not necessarily a total-call bound.
 
-**It classifies failures.** `PaymentDeclined` and `PaymentTemporarilyUnavailable` differ in
-the available evidence, not unconditional retry permission. Apply the port's retry contract and
-preserve unknown outcome; mapping failure after remote success also requires reconciliation.
+**It classifies failures.** `PaymentTemporarilyUnavailable.reason()` distinguishes throttling from
+connection failure without requiring a vendor-specific catch or cause inspection. Neither reason
+grants unconditional retry permission. Apply the port's retry contract and preserve unknown
+outcome; mapping failure after remote success also requires reconciliation.
 
 **It refuses to guess.** An unrecognised status throws rather than defaulting to `PENDING`. A
 default invents state and may misdirect reconciliation. Keep safe diagnostic context and define
 how to reconcile null responses, missing identifiers, invalid currencies or timestamps too;
 those mapping failures do not undo a successful remote side effect.
 
-**It converts money once.** `Money.ofMinorUnits` is the only place minor-unit arithmetic happens;
-above the adapter, amounts are `Money` with a currency attached, and minor-unit arithmetic never
-appears again.
+**It makes monetary representation explicit.** Check the specific API operation's units, currency
+encoding, precision and range in both directions. Validate outgoing values before the remote call;
+reject unrepresentable values unless an accepted rounding rule applies, rather than rounding or
+overflowing silently. Above this boundary, callers use the domain's `Money` contract.
+
+[Java 17 Currency](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Currency.html)
+describes ISO currency metadata, not a provider's wire representation.
+[Stripe's currency rules](https://docs.stripe.com/currencies#special-cases) illustrate the distinction:
+a 5 ISK charge is encoded as 500, and some payout rules differ from charge rules. Do not derive
+every provider amount solely from `getDefaultFractionDigits()` or copy this fictional identity
+mapping into a real SDK integration.
 
 ## What must not be in it
 
@@ -174,6 +196,13 @@ A unit test that mocks `StripeClient` to throw `StripeCardException` proves only
 `StripeInvalidRequestException` for that case. The adapter's content is assumptions about a
 foreign system, so its test must involve that system: a sandbox, a recorded interaction, or a
 contract test the provider publishes.
+
+For recordings, retain the capture origin/date, operation, SDK/API versions and relevant
+configuration, plus any redaction or response transformations that limit fidelity. A handwritten
+HTTP fixture remains useful for mapping tests but does not establish provider behavior. Recheck
+recordings when supported versions or contracts change; offline replay does not prove the current
+service still behaves that way. Assert typed reasons and preserved causes locally, and report the
+separate provider evidence or gap.
 
 ## What the adapter bought
 

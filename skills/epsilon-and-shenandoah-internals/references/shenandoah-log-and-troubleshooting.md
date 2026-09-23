@@ -36,9 +36,15 @@ before writing a parser; Shenandoah renames phases between releases.
 [gc,init] Old Heuristics: Old                           # generational only
 ```
 
-`jcmd <pid> VM.flags -all | grep -E "ShenandoahGCMode|ShenandoahGCHeuristics"` gives the
-same answer on a running process; `jcmd <pid> VM.info` prints `shenandoah gc` in its first
-line and the full command line; `jcmd <pid> GC.heap_info` prints `Shenandoah Heap`, max /
+`jcmd <pid> VM.flags -all | grep -E "ShenandoahGCMode|ShenandoahGCHeuristics"` exposes
+configured values. These do not always identify the active heuristic: on 25.0.3,
+`ShenandoahGCMode=generational` with `ShenandoahGCHeuristics=compact` starts successfully,
+warns that the heuristic is ignored, and logs `Heuristics: Adaptive` while
+`PrintFlagsFinal` still shows `compact`. Generational mode supports only `adaptive`; use
+startup logs and warnings to resolve this discrepancy before attributing workload behavior.
+
+`jcmd <pid> VM.info` prints `shenandoah gc` in its first line and the full command line;
+`jcmd <pid> GC.heap_info` prints `Shenandoah Heap`, max /
 soft max / committed / used, the region count and size, `Status: not cancelled` (or the
 cancellation cause) and the current collection set.
 

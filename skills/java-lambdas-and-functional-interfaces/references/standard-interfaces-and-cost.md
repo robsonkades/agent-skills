@@ -72,11 +72,14 @@ consequences:
   (jit-inlining-and-escape-analysis). A flat profile alone does not establish the cause;
   correlate hot-site profiles with compiler/inlining evidence before
   restructuring code around it.
-- **Boxing can be the larger cost.** `Function<Integer, Integer>` requires reference boxing and
-  unboxing; caches and escape analysis mean this is not necessarily two allocations per element.
-  `IntUnaryOperator` keeps primitive semantics. When a measurement points
-  at allocation pressure in a functional pipeline, this is the first thing to check —
-  allocation-profiling shows it directly.
+- **Boxing can be the larger cost.** Trace where primitives cross reference boundaries:
+  passing an existing `Integer` through `Function.identity()` does not itself box or unbox it.
+  Primitive arithmetic and adapters can introduce conversions; caches and escape analysis mean
+  those conversions do not imply a fixed allocation count. `IntUnaryOperator` can avoid them on
+  a primitive path, but a primitive parameter or result cannot represent null. Unboxing null
+  throws `NullPointerException`; preserve the existing absence policy rather than inventing a
+  sentinel to enable specialisation. Use allocation-profiling when actual allocation pressure
+  makes these conversions relevant.
 
 ## Lambdas and threads
 
@@ -114,3 +117,6 @@ For target-type limits and inline execution, see
 [JLS functional interfaces and function types](https://docs.oracle.com/javase/specs/jls/se25/html/jls-9.html#jls-9.8),
 [lambda compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.27.3), and
 [Executor execution contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html).
+For primitive boundaries, see [JLS boxing](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.7),
+[unboxing and null](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.8) and
+[Function.identity](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html#identity()>).

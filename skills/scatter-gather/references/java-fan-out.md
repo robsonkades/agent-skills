@@ -55,6 +55,9 @@ snapshot/version watermarks when consistency matters.
 
 The executor below is owned by a lifecycle-managed component and closed during shutdown. `leafLimit` is a
 bulkhead next to the actual scarce dependency; the virtual-thread executor itself is unbounded.
+This variant keeps collecting available partial answers until k succeeds, outstanding work is
+exhausted or the cutoff arrives, even if k has already become unreachable. Use that behavior only
+when partial observations remain useful; the alternative requiring k successes is described below.
 
 ```java
 final class QuoteFanOut implements AutoCloseable {
@@ -184,6 +187,24 @@ This is a decision skeleton, not drop-in code:
   non-throwing; its snapshot is not proof of remote termination. The grace durations are
   lifecycle-policy examples, not per-request deadlines or guarantees that hostile tasks stop.
 
+## When the required outcome becomes impossible
+
+If k is required and further partial results or failure details are unnecessary, stop waiting when
+accepted distinct owners plus a conservative upper bound on remaining eligible owners is below k.
+In this sketch each owner has one attempt, so `values.size() + unfinished` supplies that bound;
+check it before another blocking poll, then cancel and report explicit insufficient-k failure. This avoids
+waiting for unrelated slow leaves after terminal failures have decided the outcome.
+
+For example, with four owners and k=3, one accepted answer, two terminal failures and one remaining
+owner can produce at most two successes. A strict threshold cannot succeed; a partial-results
+contract may still benefit from the last answer within the existing budget. Define which behavior
+the caller needs rather than making either policy universal.
+
+With retries, hedges or incremental dispatch, count logical owners that could still provide an
+eligible answer under the remaining policy, not attempt futures. One failed attempt does not
+eliminate an owner with another eligible attempt, and two hedge successes do not create two owners.
+Low estimated success probability alone is not proof that k is unreachable.
+
 ## Why per-call executor close is a trap
 
 ```java
@@ -203,6 +224,11 @@ Select checks for changed or unresolved claims and reuse adequate evidence. Thes
 options, not results already established by this partial sketch.
 
 - delay one leaf and assert k-of-N returns at k, not at all-N/deadline;
+- make k unreachable through terminal failures; when k is required, assert failure and
+  cancellation without waiting for a blocked irrelevant leaf. Change only the contract to useful
+  partial results and assert continued bounded collection with explicit incomplete status;
+- fail one hedge attempt while another for that owner remains eligible; assert the owner is still
+  counted as possible, but multiple successful attempts cannot satisfy multiple owner votes;
 - have a leaf ignore interruption and assert root response is bounded while residual-work
   metrics expose it and global admission limits prevent waiter/residual accumulation;
 - interrupt the root while waiting and assert cancellation is attempted on all outstanding

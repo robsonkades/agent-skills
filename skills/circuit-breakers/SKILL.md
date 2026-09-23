@@ -97,13 +97,17 @@ Prefer instead when:
   thresholds react faster and can fit rare calls or categorical failures, but are noise-sensitive
   and miss sustained intermittent failure. Choose from traffic and failure correlation; test
   false-open probability and detection time.
-- **State the minimum number of calls and derive it from the endpoint's rate.** Below it the
-  breaker stays closed whatever the rate, or one failure out of two evaluates to 50%. An
+- **State the effective minimum number of calls and derive it from the endpoint's rate.**
+  Resilience4j 2.3.0 caps the minimum at the count-window size, including the half-open
+  window; a configured minimum or probe allowance alone does not establish the recovery
+  sample (see `references/breaker-configuration.md`). Below the effective minimum, rate-based
+  evaluation is unavailable; with a minimum of two, one failure evaluates to 50%. An
   endpoint serving 2 requests a minute needs a longer/count-based window, a smaller justified
   sample, a categorical/consecutive signal, or no statistical breaker.
 - **Half-open should restrict new recovery traffic.** Choose enough recorded outcomes to inform
-  recovery without overwhelming it. A permit/sample setting is not a total-attempt or in-flight
-  cap: ignored calls and completions from earlier states affect some implementations.
+  recovery without overwhelming it. Check when the recovery decision actually occurs: it may
+  precede completion of all permitted probes. A permit/sample setting is not a total-attempt or
+  in-flight cap: ignored calls and completions from earlier states affect some implementations.
 - A breaker with no slow-call criterion misses the failure mode that matters most: a
   dependency answering 200 OK in 30 s exhausts the caller like an outage while the
   failure-rate breaker reads 0%. Set a slow-call duration and rate, or a tight enough timeout.

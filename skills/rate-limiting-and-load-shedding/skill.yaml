@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: rate-limiting-and-load-shedding
-version: 1.3.2
+version: 1.3.3
 description: >-
   Choose policy quotas and saturation-based admission: limit identity, charged work, burst
   and window semantics, distributed budgets, early rejection, fairness, deadlines and

@@ -39,10 +39,12 @@ public final class InstantSettlementAccount extends SettlementAccount {
 Every caller holding a `SettlementAccount` was promised that a covered, positive
 amount succeeds. Hand it the subtype and a legal call now throws. Detection: any
 argument check in an override that rejects an input the documented supertype contract accepts;
-a base class need not enforce every precondition itself. Fix: change the supertype
-operation to an honest outcome/capability contract every subtype honours, or stop pretending the
-subtype is substitutable and model it separately. A `maxWithdrawal()` query followed by
-`withdraw()` merely creates a check-then-act race unless the operation enforces the same rule.
+a base class need not enforce every precondition itself. A fix must preserve that success guarantee,
+or model the capped account separately. An outcome/capability contract may be a useful API redesign,
+but allowing rejection of formerly accepted calls weakens the existing promise and needs an explicit
+consumer transition. Adding `maxWithdrawal()` alone does not make the current subtype substitutable.
+When eligibility depends on mutable balance or limits, couple its check with the mutation; a separate
+observation can become stale. The fixed 1000 cap in this fixture does not itself create such a race.
 
 ### Violation 2: throwing from an override
 
@@ -91,18 +93,22 @@ public final class VersionedSku extends Sku {
 ```
 
 `new Sku("A1").equals(new VersionedSku("A1", 2))` is `true`; the reverse is
-`false`. Symmetry — part of the `Object.equals` contract — is broken, so
-collections behave differently depending on comparison order. Prefer a record/final value or
+`false`. Symmetry — part of the `Object.equals` contract — is broken. The shown objects also have
+different hash codes despite the base reporting equality, violating the equal-objects/equal-hashes
+requirement. Hash-based lookup can fail as well; do not explain all collection behavior solely by
+comparison order. Check both contracts: matching hashes alone does not repair asymmetric equality.
+Prefer a record/final value or
 composition (`VersionedSku` _has a_ `Sku`). Other coherent policies exist but change semantics:
 the base can use exact-class equality so cross-subtype values are always unequal, or final base
-equality can deliberately ignore subtype state when that state is not identity. Detection:
+`equals` and `hashCode` can deliberately ignore subtype state when that state is not identity. Detection:
 `instanceof` equality in an extensible value class plus a state-adding subtype, especially when
 the subtype overrides equality differently.
 
 ### LSP false positives
 
-- **Covariant return types** in overrides are legal and strengthen the
-  postcondition — the permitted direction.
+- **Covariant return types** legally narrow the declared reference return type. This alone is not
+  an LSP violation or proof of substitutability: nullness, effects and failure guarantees still
+  apply. An override returning `null` can compile while violating an inherited non-null promise.
 - **Immutable subtype of a mutable-looking supertype is not automatically safe**,
   but a subtype that narrows _its own new_ API while honouring the inherited one is
   fine. New methods must still preserve inherited invariants and history constraints:
@@ -157,5 +163,8 @@ behavioral compatibility.
 See [Collection optional operations](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html)
 and [JLS 21 interface evolution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.7)
 when deciding whether throwing or adding a default is actually a contract defect.
+For equality, check both [Object.equals and Object.hashCode contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html).
+For return-type rules, see [JLS §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3);
+covariant reference returns have been supported since Java 5, independently of behavioral contracts.
 For inherited history constraints, see [Liskov and Wing, behavioral subtyping](https://www.cs.cmu.edu/~wing/publications/LiskovWing94.pdf),
 especially the distinction between mutations visible and invisible to supertype clients.

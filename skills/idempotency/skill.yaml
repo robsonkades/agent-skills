@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: idempotency
-version: 1.2.2
+version: 1.2.3
 description: >-
   Making an operation safe to apply more than once: natural idempotency versus an
   idempotency key plus durable operation state; choosing and scoping the key, distinguishing

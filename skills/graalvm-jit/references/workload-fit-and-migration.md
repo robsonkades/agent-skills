@@ -113,6 +113,8 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
       use JMH for unresolved hot-path questions rather than requiring a new microbenchmark
 - [ ] Compiler-only comparison uses one compatible binary with `-XX:-UseJVMCICompiler` on
       the C2 side and the same GC; differing images are identified as a broader runtime comparison
+- [ ] For JMH, effective fork JVM/arguments and compilation evidence confirm each treatment;
+      launcher flags alone do not establish what the measured forks used
 - [ ] The supported selected mode (libgraal or jargraal) is confirmed before interpreting warm-up
 - [ ] Warm-up convergence was inspected across iterations and independent forks; raw results
       and uncertainty were retained for both compilers
@@ -139,8 +141,9 @@ Scalar Replacement for Java", CGO 2014, doi:10.1145/2544137.2544157; PDF at
 ### After migrating
 
 - [ ] Production monitoring confirms the laboratory gain under real load
-- [ ] JFR `jdk.Compilation` in production shows `compiler = "jvmci"` for tier 4 — the
-      deployment did not silently land on C2 through a flags-file or image mix-up
+- [ ] Production JFR confirms successful tier-4 JVMCI compilations of relevant hot methods
+      or their callers (`succeded = true`, `compileLevel = 4`, `compiler = "jvmci"`), paired
+      with Graal configuration evidence; recording coverage is adequate before judging absence
 - [ ] The chosen rollback is tested: C2 in the same GraalVM image where supported, or the
       previous production JDK image; benchmark and validate whichever route will be used
 

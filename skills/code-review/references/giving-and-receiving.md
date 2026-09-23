@@ -37,10 +37,12 @@ following is a fallback; choosing ordinary labels does not require another user 
 | **Suggestion** | I would do it differently; your call                                                                            | No            |
 | **Nit**        | Trivial and optional; ideally automated away                                                                    | No            |
 
-Two disciplines make the labels work. First: if more than a couple of comments on a review are
-**Nit**, the pipeline is missing a check — say that rather than repeating the nits next time.
-Second: a **Question** that turns out to reveal a defect is upgraded explicitly, so the author
-knows the status changed.
+Repeated mechanical **Nits** can reveal an automation gap; inspect whether a suitable rule
+exists and runs before proposing a pipeline change. Contextual naming or explanatory comments
+may need human judgment, and a count of nits alone does not establish a missing check. Keep
+preferences non-blocking unless an explicit repository requirement applies. A **Question**
+that turns out to reveal a supported defect is upgraded explicitly, so the author knows the
+status changed.
 
 ## Deadlock between reviewer and author
 

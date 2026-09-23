@@ -33,7 +33,8 @@ guidance.
 4. Separate guaranteed absence of identity from optional flattening or specialization. State what
    remains implementation-dependent.
 5. For a justified layout/performance experiment, measure the current supported baseline, then
-   ordinary-class and value-class variants on the same EA build and preview mode. The first
+   ordinary-class and value-class variants on the same EA build and preview mode. Compile and
+   check the unchanged EA control first: preview rules can affect existing code too. The first
    comparison includes JDK changes; the second better isolates the
    representation change. Primitive-array or Structure-of-Arrays alternatives must preserve the
    required semantics. Compare workload and layout evidence, not just allocation counts.
@@ -58,7 +59,8 @@ guidance.
   build implement it for that use.
 - Migration is not semantics-neutral. Audit identity-sensitive synchronization, identity hash,
   reference equality, identity collections, nullability/default values, serialization and native
-  boundaries.
+  boundaries. Resolve reachability and construction constraints before benchmarking; replacing
+  weak ownership with strong retention is a contract change, not a neutral way to run the test.
 - Identity-free does not mean primitive, deeply immutable, or universally interchangeable under
   domain equality. Inspect field-reference semantics, mutable referents and the proposal's
   distinction between `==` and `equals`; do not substitute operators mechanically.
@@ -74,4 +76,5 @@ control, raw evidence, uncertainty and what would falsify it. An unexecuted expe
 ## References
 
 - [Status and experiment protocol](references/status-and-experiments.md) — read whenever the request
-  asserts release availability, uses preview syntax or compares layout/performance.
+  asserts release availability, uses preview syntax, assesses migration compatibility or compares
+  layout/performance.

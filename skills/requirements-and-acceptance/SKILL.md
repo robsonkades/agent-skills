@@ -98,10 +98,10 @@ actual validation and disclose what remains unverified.
 
 - **The ambiguity checklist** — `references/ambiguity-checklist.md`. Categories of unstated
   requirement — quantity, boundary, concurrency, failure, authority, lifecycle, scope — each
-  with the question that exposes it, plus a worked example identifying eight inspection
+  with the question that exposes it, plus a worked example identifying nine inspection
   questions and three candidate defaults. Read before implementing anything whose
   edges are unstated.
 - **Writing acceptance criteria** — `references/acceptance-criteria.md`. Criteria at the right
   level of abstraction, the Given/When/Then form and where it misleads, deriving tests from
-  criteria, non-functional scenarios, and a definition of done that is a checklist rather than
-  a sentiment. Read when writing or reviewing criteria.
+  criteria, consumer-specific export contracts, non-functional scenarios, and a definition
+  of done that is a checklist rather than a sentiment. Read when writing or reviewing criteria.

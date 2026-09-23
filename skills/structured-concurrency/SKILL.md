@@ -3,7 +3,7 @@ name: structured-concurrency
 description: >
   StructuredTaskScope as a lifetime guarantee for a fan-out: fork, join, close, and the rule
   that no subtask thread outlives the block. Covers the API as it stands on each JDK — still
-  a preview API on every released version, renamed between 25 and 26 and changing again in
+  a preview API on every released version, renamed between 25 and 26 and changed again in
   27 — the Joiner completion policies, scope timeouts, nesting, and what close actually
   waits for. Use when writing or reviewing a parallel fan-out inside one request, when a
   sibling task keeps running after another failed, when code copied from a blog uses
@@ -37,7 +37,7 @@ that change required/optional results, lifetime or preview acceptability. Sequen
 an existing disciplined executor may already satisfy the task without a new preview dependency.
 
 1. **Confirm the JDK first, and the preview cost.** `StructuredTaskScope` is a preview API
-   on every released JDK through 26. It requires `--enable-preview` at
+   on every released JDK through 27. It requires `--enable-preview` at
    compile _and_ run time, and preview class files run only on the **exact** JDK version
    that compiled them (feature release, not identical patch build). Inspect project toolchains
    and images; do not upgrade or enable preview without task authorization. Decide whether the deployment can accept that before designing
@@ -63,8 +63,8 @@ an existing disciplined executor may already satisfy the task without a new prev
 ## Rules
 
 - **Preview status, precisely**: incubator in 19–20, preview from 21 (JEP 453) through 24
-  (JEP 499), reshaped in 25 (JEP 505), sixth preview in 26 (JEP 525), seventh delivered for
-  27 (JEP 533; checked September 2026). Integration is distinct from deployed GA.
+  (JEP 499), reshaped in 25 (JEP 505), sixth preview in 26 (JEP 525), seventh preview in
+  27 (JEP 533). JDK 27 reaching GA does not make this API final.
   It has never been final in a released JDK. Any claim that structured
   concurrency is "GA in 21" or "final in 25" is wrong.
 - The 25 reshape **removed** `StructuredTaskScope.ShutdownOnFailure`,
@@ -82,6 +82,9 @@ an existing disciplined executor may already satisfy the task without a new prev
 - In JDK 25, `fork`, `join` and `close` are owner-only (`WrongThreadException` otherwise).
   Join is single-use and no forks follow it. Storing/passing a scope reference does not itself
   throw; runtime checks do not replace guaranteed try-with-resources closure.
+- In JDK 25, `fork` on a cancelled scope returns an `UNAVAILABLE` subtask without starting
+  its thread. A `finally` inside that task cannot release a resource acquired before `fork`.
+  Acquire and release inside the task, or retain owner cleanup until after scope close.
 - Owner `Subtask.get()` before joining throws; reading a successful task inside a joiner
   callback is valid. It never waits and fails without a successful result. Joining with a
   partial-result policy does not make every subtask successful. In JDK 25, a timeout before
@@ -107,7 +110,7 @@ an existing disciplined executor may already satisfy the task without a new prev
   stops admission, cancels and waits for them. Detached jobs or independently scheduled work
   need separate explicit lifecycle ownership; do not smuggle them out of a request scope.
 - Structured concurrency does not bound concurrency. With the default configuration,
-  forking 10 000 subtasks creates 10 000 virtual threads against a downstream that may
+  forking 10 000 subtasks can create 10 000 virtual threads against a downstream that may
   allow 20. Put admission control next to the constrained resource; changing the scope's
   thread factory changes execution policy but does not infer a safe downstream limit.
 - `jcmd <pid> Thread.dump_to_file -format=json <output-file>` records scope containers and

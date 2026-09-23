@@ -43,11 +43,12 @@ its unresolved controls visible instead of discarding it as a worry.
 5. **Write mitigation and fallback.** Mitigation reduces probability or cost before the fact;
    fallback is what is done after. They are different fields and a register that merges them
    usually has only mitigation.
-6. **Convert what is actionable into work.** A mitigation that requires code is a resource in
-   the plan, not a paragraph in a document.
+6. **Convert what is actionable into work.** Track a mitigation that requires code in the
+   applicable plan or task list, with an owner or an explicit ownership gap and validation.
 7. **Revisit controls and residual exposure at completion.** Link relevant input revisions,
-   `IMP-*`/`ED-*`, mitigating `RES-*` and observed `EV-*`; acceptance is reconsidered when
-   premises, implementation, workload or controls change.
+   control work and observed evidence; use `IMP-*`/`ED-*`, `RES-*` and `EV-*` when the feature
+   workflow supplies those identifiers. Acceptance is reconsidered when premises,
+   implementation, workload or controls change.
 
 ## What to sweep
 
@@ -87,7 +88,8 @@ THEN identify the control/acceptance decision needed before the action that crea
      dependent exposure when required controls or authority remain unresolved.
 
 IF the mitigation is work
-THEN it is a RES-* with an identifier, and it appears in the execution order.
+THEN track the task and its execution order; use RES-* when working in that feature workflow.
+     A standalone review needs traceable actions and evidence, not an invented dossier.
 
 IF a risk exists only because an assumption is unconfirmed
 THEN seek repository/runtime evidence or a discriminating experiment first; ask only for

@@ -131,6 +131,21 @@ into a JDK 17 processor host. Check processor compatibility and generated-source
 separately. For repeatable annotations, a processor should support both the repeated annotation
 and its container; reflected `getAnnotationsByType` and processor discovery are different paths.
 
+Type-use occurrences are ignored when JSR 269 computes which annotation interfaces are present
+for processor selection. A processor supporting only `example.Checked` may therefore never have
+`process` called when the only occurrence is `List<@Checked String>`; naming that processor with
+`-processor` makes it a candidate, not an unconditional check. Changing retention does not fix
+this selection gap.
+
+Keep a working checker integration. For a custom processor, one deliberate option is supporting
+`"*"`, handling an empty annotation set and traversing the relevant type positions through
+`TypeMirror` or the compiler's syntax-tree API. Declaration queries such as
+`getElementsAnnotatedWith` do not enumerate every annotated type use; nested type arguments,
+array components and method-body positions need the appropriate traversal. A universal processor
+used only for additional checks should return `false` so it does not claim unrelated annotations
+and prevent other processors from running. Verify invocation, accepted/rejected source and
+coexistence with the other configured processors; invocation alone does not prove coverage.
+
 ## Making an annotation observable
 
 An annotation whose effect is invisible is a maintenance hazard: the reader of the call site
@@ -160,3 +175,7 @@ cannot tell that something happens. Two mitigations that cost little:
   documents scheduling infrastructure; check the project's Spring version when applying it.
 - [JDK 25 processor contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.compiler/javax/annotation/processing/Processor.html)
   distinguishes processor matching, repeatable containers and supported source versions.
+- [Java 17 processor contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/annotation/processing/Processor.html)
+  specifies type-use exclusion from matching, universal processors and annotation claiming.
+- [Java 17 TypeMirror](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/type/TypeMirror.html)
+  exposes annotations on represented types, separately from declaration elements.

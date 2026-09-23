@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: circuit-breakers
-version: 1.3.2
+version: 1.3.3
 description: >-
   The breaker as a state machine that stops calling a failing dependency: closed, open and
   half-open; choosing rate windows versus consecutive failures; recovery probe limits and

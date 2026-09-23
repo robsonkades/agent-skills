@@ -71,6 +71,9 @@ chains and code: `references/queues.md`.
 ## Selecting a coordinator
 
 Failure modes and worked code: `references/synchronizers-and-conditions.md`.
+Before choosing by party count, check that the tasks supplying arrivals/signals can execute
+while other tasks wait. Queued participants behind a saturated executor, or resources retained
+by waiters, can prevent progress even when every task was accepted.
 
 | Situation                                                    | Pick                  | Cost accepted                                                                                                                                      |
 | ------------------------------------------------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -124,6 +127,10 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
   coordination, but application correctness must not depend on its exact monitor layout. For a
   loader that can block, compare the failure-evicting memoiser in `references/collections.md`
   with an existing cache/load coordinator; make retry and overload policy explicit.
+- The atomic-callback guarantees above are `ConcurrentHashMap` guarantees. When choosing a
+  `ConcurrentSkipListMap` for ordering, recheck callback repetition: atomic mapping changes do
+  not imply one evaluation or one external effect. Read the [skip-list constraints](references/collections.md#skip-lists)
+  before changing the implementation behind a `ConcurrentMap` reference.
 - `IllegalStateException("Recursive update")` is only required for a _detectable_ recursive update
   that would otherwise not complete. It is not an enforcement boundary. Any map mutation from a
   remapping function violates the API constraint even when a particular build does not throw.

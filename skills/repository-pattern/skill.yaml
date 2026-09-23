@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: repository-pattern
-version: 1.3.2
+version: 1.3.3
 description: >-
   The repository as a collection-like boundary over domain objects, with aggregate-root
   write boundaries in DDD: what belongs behind it, where queries and read models fit,

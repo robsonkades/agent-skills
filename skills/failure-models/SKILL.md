@@ -25,9 +25,10 @@ answer to "which faults do we tolerate?", and a design that never asked the ques
 answered it by accident.
 
 The failure this prevents is the one-word fault model. "The service can go down" is not a
-model: it silently assumes crash-stop, which lets a developer write recovery code that is
-not idempotent, treat a timeout as a definite failure, and count three replicas on one host
-as three. Naming the class turns each of those into a visible, arguable claim.
+model: it leaves restart behavior, outstanding effects and shared failure domains unspecified.
+Even a crash-stop peer may have applied a write before its acknowledgement was lost; the
+fault class alone does not resolve that outcome. Naming the class and its assumptions makes
+recovery, retry and redundancy claims reviewable.
 
 ## Workflow
 

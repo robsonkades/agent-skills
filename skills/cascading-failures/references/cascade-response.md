@@ -2,22 +2,24 @@
 
 ## Is it a cascade?
 
-Three incidents look the same on a top-level error-rate graph. They need opposite responses,
-and the distinguishing evidence is cheap to collect.
+Dependency failure, insufficient capacity and a cascade can overlap on the same error-rate
+graph. Identify the feedback edge before choosing which work to reduce or capacity to restore.
 
-| Observation                                 | Dependency outage         | Under-provisioning       | Cascade                                   |
-| ------------------------------------------- | ------------------------- | ------------------------ | ----------------------------------------- |
-| Attempts at dependency vs logical calls     | may rise if clients retry | ~1 absent retry policy   | **ratio rises across one or more layers** |
-| Goodput as offered load rises               | flat                      | rises, then plateaus     | **falls**                                 |
-| Pool utilisation in services not calling it | normal                    | normal                   | **pinned at 100%**                        |
-| Queue depth / time-in-queue                 | normal                    | rising, bounded          | rising without bound                      |
-| Errors after the trigger is removed         | may decay with timeout    | persist while undersized | **continue from feedback/backlog**        |
-| Blast radius                                | matches the call graph    | matches the hot endpoint | **wider than the call graph**             |
+| Observation                                         | Candidate explanation                                          | Discriminating evidence                                                                                    |
+| --------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Attempts per logical call rise                      | retries, changed fan-out or routing                            | trace attempt ownership and compare the same operation mix and measurement boundary                        |
+| Goodput falls as offered load rises                 | wasted work, resource retention or lost capacity               | align useful completions with retry work, CPU/GC, occupancy and healthy capacity                           |
+| Unrelated endpoints wait on pools                   | shared executors, connections or infrastructure                | identify the shared resource and which operations hold it; utilisation alone does not identify the cause   |
+| Queue age rises or a bounded queue stays full       | input exceeds current drain capacity                           | compare arrivals, completions, expiry and rejection for the same queue                                     |
+| Errors persist after the trigger clears             | feedback/backlog, an unrepaired dependency or changed workload | verify external load and usable capacity against the healthy baseline; measure whether backlog is draining |
+| Ejections or crashes are followed by more ejections | remaining instances inherit enough load to fail too            | align routing changes, ready-instance count and per-instance demand over time                              |
+| Blast radius exceeds the apparent call graph        | shared dependency, common deploy or propagating failure        | reconstruct resource topology and failure order before attributing causality                               |
 
-Treat rows as correlated evidence, not signatures. Rising attempts with falling success can be
-retry amplification, traffic shift or health-based routing; a pinned pool on an apparently
-unrelated path may expose shared executors, connection pools or infrastructure. Use traces,
-attempt/logical-call identifiers and a timeline to distinguish them.
+These observations are not mandatory signatures. A cascade can have one attempt per logical
+call, bounded queues and a blast radius confined to one service: losing usable replicas can
+concentrate unchanged demand on the survivors. Conversely, a wide shared outage need not have
+feedback. If the necessary traces or counters are absent, keep the mechanism conditional and
+name the smallest observation that would distinguish it.
 
 Plot **goodput** — successful logical operations meeting the correctness/deadline contract —
 next to attempt throughput. Divergence shows wasted work, not its cause; correlate it with the
@@ -39,9 +41,10 @@ observe goodput and resource recovery, then retain guardrails until recovery is 
    expired disposable requests first. Age is not a substitute for remaining deadline or durable
    acceptance obligations; preserve required writes and ordered jobs. Mechanism and priority
    classes: `rate-limiting-and-load-shedding`.
-4. **Cap concurrency at the saturated resource.** A bound in front of the pool converts an
-   unbounded wait into a countable rejection. Mechanism:
-   `concurrency-limiting-and-bulkheads`.
+4. **Bound active work and waiting admission at the saturated resource.** A semaphore alone
+   can move the backlog into waiting callers. Reject immediately or bound both waiter count
+   and wait time, and count acquisition failures as rejections. Do not block an event-loop
+   caller while acquiring a permit. Mechanism: `concurrency-limiting-and-bulkheads`.
 5. **Reduce per-attempt timeouts on the failing dependency** so resources return sooner, while
    disabling or budgeting retries so faster failures do not increase attempt rate. This is
    useful only when abandonment actually reduces held resources or downstream work. A shorter

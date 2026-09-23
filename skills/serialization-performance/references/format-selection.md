@@ -133,6 +133,9 @@ For retained legacy paths:
 - when migration is justified, test the required dual-read/version envelope and rollback paths.
 
 Follow `java-serialization-hardening` for the security design.
+When measuring a retained object-stream path, use
+[the benchmark reference](benchmarking-serialisers.md) to distinguish independent snapshots from
+session identity and account for stream headers/reset behavior.
 
 ## Selection result
 

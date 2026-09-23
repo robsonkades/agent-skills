@@ -4,11 +4,15 @@ These cases also serve as review rehearsals. They are written cases, not execute
 No with/without-skill comparison or real-proxy fault test was run for this revision.
 
 For a comparison, use fresh sessions with the same model/version, settings, tools and supplied
-context. Give each session the request below verbatim; expose this skill and its references
-only in the treatment. Keep neighboring skill descriptions identical. Save outputs and tool
-traces, and judge each expected behavior and failure condition with a cited output excerpt.
-Do not provide the rubric to the agent being evaluated. For selection, expose descriptions
-first and record selection before loading a body. Repeat runs before claiming consistency.
+context. These shipped cases expose their expected answers and are teaching/regression cases,
+not unseen holdouts. For an independent evaluation, prepare separate task inputs and evaluator
+rubrics before running; expose the ordinary skill/resources only in the treatment and keep
+those new rubrics outside actor access. If this shipped file is withheld, report that restriction
+as a different treatment. Fresh sessions do not isolate a shared filesystem: record actual
+resource access and whether separation is enforced or procedural. Keep neighboring skill
+descriptions identical. Save outputs and tool traces, and judge behaviors with cited excerpts.
+For selection, expose descriptions first and record selection before loading a body. Repeat
+runs before claiming consistency.
 
 ## 1. Representative routing change
 
@@ -113,3 +117,35 @@ to confirm or refute it. State conditions under which pods × 50 would apply.
 
 **Failure:** Reporting loss from incomparable counters, asserting the 1,000 cap, multiplying
 all pool dimensions without verifying applicability, or declaring a measured root cause.
+
+## 7. Healthy fallback to the wrong shard
+
+**Request/context:** “Our two database shards hold disjoint accounts, with no replicas or
+forwarding. A owns account K. Put both hosts behind ring hash. If A is ejected, retry K on
+healthy B; consistent hashing and a 200 response mean the data is safe. The shard map service
+may be unavailable too. Approve this failover.”
+
+**Expected behavior/output:** Reject health and hash stability as ownership evidence. Require
+the authoritative key/shard/eligible-endpoint mapping, including stale-map behavior; with no
+authorized alternate in this context, return bounded unavailability. Propose owner-loss/ejection
+tests with disjoint data and verify actual serving ownership, not only HTTP status.
+
+**Failure:** Treating host hashing as data migration, retrying across unrelated shards, or
+claiming last-known config is safe without a stale-owner contract.
+
+## 8. Loopback URL and upstream identity
+
+**Request/context:** “Replace https://payments.example/charge with http://127.0.0.1:15001/charge.
+The ambassador originates upstream TLS and forwards HTTP authority unchanged. Enable automatic
+SNI from authority. If certificate checks fail, disable hostname verification. We accept any
+certificate from our private CA, including billing.example. External callers can set a header
+used to override the upstream hostname. Treat this as an endpoint-only change.”
+
+**Expected behavior/output:** Separate socket address, HTTP authority, SNI and verified identity;
+retain verification and require trusted destination/identity handling. Reject untrusted host
+override and explain why a trusted-CA certificate for billing.example is insufficient for
+payments.example. Inspect client proxy support before offering forward-proxy/CONNECT as an
+alternative. Define positive virtual-host and hostile wrong-name/forged-authority tests.
+
+**Failure:** Treating loopback as preserving the origin automatically, SNI as certificate
+validation, any CA-signed name as sufficient, or silently weakening verification.

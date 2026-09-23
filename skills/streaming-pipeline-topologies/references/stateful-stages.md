@@ -6,20 +6,32 @@ Windows define grouping and completion/retention rules over a stream. The type a
 aggregation/join implementation determine state cost; a window alone does not guarantee finite
 physical state or eventual completion.
 
-| Type         | Definition                                | State per key                                                      | Bounded by                                     |
-| ------------ | ----------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
-| **Tumbling** | Fixed, non-overlapping intervals          | Aggregate or raw records per open interval                         | The interval, plus grace                       |
-| **Sliding**  | Fixed size, advancing by a smaller step   | Naive copies overlap; panes/incremental aggregates may share state | Window, step, algorithm and allowed lateness   |
-| **Session**  | Activity separated by a gap of inactivity | Accumulator or raw events for each active session                  | Gap, lateness, merge behavior and key activity |
+| Type                             | Definition                                            | State per key                                                      | Bounded by                                          |
+| -------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------- |
+| **Tumbling**                     | Fixed, non-overlapping intervals                      | Aggregate or raw records per open interval                         | The interval, plus grace                            |
+| **Hopping / fixed-grid sliding** | Fixed size with regularly spaced starts               | Naive copies overlap; panes/incremental aggregates may share state | Size, step, algorithm and allowed lateness          |
+| **Kafka Streams sliding**        | Fixed maximum timestamp difference, aligned to events | Window snapshots depend on event timestamps                        | Time difference, grace and timestamp/key population |
+| **Session**                      | Activity separated by a gap of inactivity             | Accumulator or raw events for each active session                  | Gap, lateness, merge behavior and key activity      |
 
-Naively materializing a 1-hour window every minute associates each record with sixty windows.
+For fixed-grid, half-open intervals, naively materializing a 1-hour window every minute
+associates each record with sixty windows. A non-integral `size/step` is not an exact count:
+with size 5 ms, step 2 ms and offset zero, timestamp 10 ms belongs to three intervals
+(`[6,11)`, `[8,13)`, `[10,15)`), while 11 ms belongs to two. The upper bound is `ceil(size/step)`.
 Pane decomposition or algebraic/incremental aggregation can reduce storage and CPU, but does not
 work uniformly for non-associative functions or joins that need raw matches. A session without a
 gap may never finalize; a fixed-size accumulator can remain bounded per key while raw events or
 merge metadata continue to grow. Price the actual engine representation.
 
-These are semantic bounds, not guaranteed memory ceilings. Event-time cleanup needs watermark
-progress; a stalled input can retain windows while faster inputs add records. Bound key/event
+Names do not establish equivalent semantics across engines. Flink 1.20 `SlidingEventTimeWindows`
+uses a fixed grid and half-open intervals. Kafka 4.1 `SlidingWindows` uses event-aligned snapshots
+with inclusive endpoints, not a fixed advance step. Same-key events at 10 and 15 ms can share
+Kafka's `[10,15]` window for a 5 ms time difference, whereas Flink size 5 ms/step 5 ms/offset zero
+assigns them to separate intervals. Grace controls late admission, not this alignment difference.
+Assert memberships and endpoint behavior before replacing one API with the other.
+
+These are semantic bounds, not guaranteed memory ceilings. Event-time cleanup needs the engine's
+progress clock (for example, watermarks or stream time); a stalled input can retain windows while
+faster inputs add records. Bound key/event
 cardinality, payload bytes and progress skew; consider alignment/admission limits. Processing-time
 TTL may cap retention but can discard valid late matches, so it is a correctness policy too.
 
@@ -165,4 +177,6 @@ audit replay/correction operations.
 - [Flink 1.20 state and fault tolerance](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/concepts/stateful-stream-processing/)
 - [Kafka 4.1 Streams state stores](https://kafka.apache.org/41/streams/developer-guide/processor-api/#state-stores) and [table semantics](https://kafka.apache.org/41/streams/developer-guide/dsl-api/#ktable)
 - [Flink 1.20 windows](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/operators/windows/) — assignment, firing, allowed lateness and cleanup.
+- [Kafka 4.1 window semantics](https://kafka.apache.org/41/streams/developer-guide/dsl-api/#windowing) and [Kafka 4.1.0 SlidingWindows](https://github.com/apache/kafka/blob/4.1.0/streams/src/main/java/org/apache/kafka/streams/kstream/SlidingWindows.java) — event alignment and inclusive time difference.
+- [Flink 1.20.3 SlidingEventTimeWindows](https://github.com/apache/flink/blob/release-1.20.3/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/windowing/assigners/SlidingEventTimeWindows.java) — exact assignment to fixed-grid intervals.
 - [Flink 1.20 watermark generation](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/event-time/generating_watermarks/) — idleness and alignment for skewed progress. Verify deployed engine/connector support rather than assuming these source versions match it.

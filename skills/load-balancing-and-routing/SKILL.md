@@ -144,6 +144,9 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   expresses lifecycle and ability to serve the declared contract, which can deliberately
   fail closed on a required shared dependency; passive ejection sees path- and request-specific
   failures. Document all-unready behavior, precedence and recovery so disagreement is diagnosable.
+  Distinguish detected outliers from enforced removal, and check whether an active probe's
+  success can clear passive ejection early. A probe that does not exercise the failing path
+  cannot establish that path's recovery; inspect the deployed implementation before changing policy.
 - Draining is a sequence with overlapping control/data planes: stop advertising, wait for
   bounded propagation, reject/redirect new work, finish or terminate in-flight work, then
   close. A fixed `preStop` sleep may cover propagation but does not prove it; measure new
@@ -178,4 +181,5 @@ Prefer routing by key (sharding-and-partitioning) instead when:
 - [Routing modes](references/routing-modes.md) — the algorithms compared by the property each
   optimises, health-check and outlier-ejection settings with the fleet-ejection hazard, the
   drain sequence, and a decision table across L4, L7 and client-side. Read when configuring a
-  balancer or a mesh, or when a dependency blip ejected more hosts than it should have.
+  balancer or a mesh, when a dependency blip ejected more hosts than it should have, or when
+  detected outliers remain in rotation or return before their ejection duration expires.

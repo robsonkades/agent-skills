@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: framework-coupling-and-independence
-version: 1.2.3
+version: 1.2.4
 description: >-
   Deciding how much of a system may depend on its framework, and pricing that dependency
   honestly: which couplings are cheap and correct, which are expensive and reversible, which
@@ -11,8 +11,8 @@ description: >-
   domain and the price is not stated, when a base class from the framework appears in business
   code, or when a framework's programming model is spreading beyond the adapters. Does not cover
   which patterns a framework already implements (patterns-and-modern-frameworks), layer
-  dependency direction (layering-and-boundaries), the data-access pattern behind the
-  one-model/two-model choice (data-source-patterns), the mapping itself
+  dependency direction (layering-and-boundaries), data-access ownership patterns
+  (data-source-patterns), the mapping itself
   (orm-structural-mapping), releasable component boundaries (component-and-release-boundaries),
   or testing strategy (architecture-testing).
 

@@ -21,6 +21,10 @@ RSS/PSS and cgroup v2 `memory.stat` under representative load, then select expli
 percentage ergonomics with measured headroom. These counters have different scopes: NMT
 committed is not resident memory, and RSS minus NMT is not untracked native allocation.
 
+- Check a finite `memory.high` and ancestor boundaries separately from `memory.max`.
+  Reclaim throttling may violate latency goals before a hard limit is reached. Validate the
+  intended working set against `high` event deltas and scoped memory PSI under load; do not
+  equate absence of OOM kills with sufficient memory headroom.
 - Swap policy chosen at node/cgroup level from latency-versus-survival goals; monitor
   `memory.swap.current`, swap-in/out, faults and PSI where enabled.
 - Evaluate `-XX:+AlwaysPreTouch` against the workload's first-touch and startup requirements. Verify the
@@ -35,20 +39,32 @@ committed is not resident memory, and RSS minus NMT is not untracked native allo
 
 ## Transparent huge pages
 
-| `enabled` | `defrag`  | Effect                                                                  |
-| --------- | --------- | ----------------------------------------------------------------------- |
-| `always`  | `always`  | may enter direct reclaim/compaction on allocation failure               |
-| `always`  | `madvise` | broad THP eligibility; direct work focused on advised regions           |
-| `madvise` | `madvise` | only advised regions eligible; still measure reclaim/compaction cost    |
-| `never`   | any       | disables ordinary allocation/collapse paths, with documented exceptions |
+The table describes anonymous THP using the **effective** `enabled` policy for the relevant
+size and the separate `defrag` policy. Where per-size controls exist, `inherit` uses the
+top-level `enabled` value; explicit `always`, `madvise` or `never` does not. A top-level
+`never` therefore does not disable sizes explicitly enabled elsewhere.
+
+| Effective `enabled` | `defrag`  | Effect                                                                  |
+| ------------------- | --------- | ----------------------------------------------------------------------- |
+| `always`            | `always`  | may enter direct reclaim/compaction on allocation failure               |
+| `always`            | `madvise` | broad THP eligibility; direct work focused on advised regions           |
+| `madvise`           | `madvise` | only advised regions eligible; still measure reclaim/compaction cost    |
+| `never`             | any       | disables ordinary allocation/collapse paths, with documented exceptions |
 
 ```bash
 cat /sys/kernel/mm/transparent_hugepage/enabled
 cat /sys/kernel/mm/transparent_hugepage/defrag
+# On kernels exposing per-size policy, inspect every reported size without changing it.
+grep -H . /sys/kernel/mm/transparent_hugepage/hugepages-*kB/enabled
 ```
 
 Verify the current mode before changing it. "Disable THP" copied from a 2014 checklist
 can discard a TLB benefit to fix a problem the host may not have; measure both effects.
+An unmatched glob or denied read is unavailable evidence; inspect diagnostics and status.
+If no per-size files are visible, check kernel/mount support rather than concluding all sizes
+are disabled. Eligibility changes do not prove existing huge mappings were split; verify
+residency separately. Check the target kernel's exceptions and separate tmpfs/shmem policy
+when those mappings matter.
 
 ## CPU
 
@@ -108,7 +124,8 @@ Record reused evidence and unresolved gaps; retain adequate settings rather than
 
 - [ ] NMT-tracked memory, process residency and cgroup charges compared under real load,
       with untracked coverage and scope differences recorded
-- [ ] `-Xmx` or `MaxRAMPercentage` leaves that measured headroom inside `memory.max`
+- [ ] `-Xmx` or `MaxRAMPercentage` leaves that measured headroom inside `memory.max`, with
+      any finite `memory.high` and ancestor pressure checked against latency goals
 - [ ] OOME exit/capture policy and protected dump storage verified for relevant failure paths
 - [ ] Swap policy and failure trade-off recorded; swap/fault/PSI evidence observable
 - [ ] THP mode and sizes **verified**; JDK flag support and measured outcome recorded
@@ -125,6 +142,7 @@ Record reused evidence and unresolved gaps; retain adequate settings rather than
 - [JDK 25 Java launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html): AlwaysPreTouch requests heap-page touching before application use.
 - [OpenJDK 25 G1 region commitment](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RegionToSpaceMapper.cpp): pre-touch on committed ranges; not a guarantee that all process faults disappear.
 - [Linux 6.12 THP](https://www.kernel.org/doc/html/v6.12/admin-guide/mm/transhuge.html): allocation, defrag modes and multiple page sizes; check the deployed kernel.
+- [Linux 6.12 cgroup v2](https://www.kernel.org/doc/html/v6.12/admin-guide/cgroup-v2.html): memory.high reclaim throttling versus the memory.max hard boundary.
 - [Linux 6.12 OOM accounting](https://github.com/torvalds/linux/blob/v6.12/mm/oom_kill.c): `__oom_kill_process` records both VM and memcg kill events.
 - [systemd v257 limits](https://github.com/systemd/systemd/blob/v257/man/systemd.exec.xml): LimitNPROC scope and TasksMax preference.
 - [JDK 25 Linux ZGC NUMA](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/os/linux/gc/z/zNUMA_linux.cpp): actual UseNUMA consumption.

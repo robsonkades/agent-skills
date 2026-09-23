@@ -45,7 +45,17 @@ Forbid (boundary)
 Public subsystem APIs plus a convenience facade can be intentional. If access restriction is
 required, distinguish documentation, static architecture checks and runtime/module enforcement;
 inspect existing callers before closing access. Package-private types are visible within their
-package; JPMS exports constrain other named modules, not all access inside one module.
+package. JPMS exports constrain access from other modules, including unnamed clients reading a
+named module; they do not isolate packages inside the same module. Verify the actual launch:
+a modular JAR placed on the classpath behaves as a non-modular JAR, so its descriptor does not
+hide public subsystem types. Package names alone do not restrict access.
+
+Check `exports` and `--add-exports` for ordinary cross-module access, and `opens`/`--add-opens`
+when reflective access matters. An architecture test checks its configured code scope; it does
+not create a runtime access restriction.
+Sources: [Java 17 JAR specification](https://docs.oracle.com/en/java/javase/17/docs/specs/jar/jar.html#modular-jar-files),
+[JLS 17 module directives and unnamed modules](https://docs.oracle.com/javase/specs/jls/se17/html/jls-7.html#jls-7.7),
+and [Java 17 launcher options](https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html).
 
 ## God-facade drift
 

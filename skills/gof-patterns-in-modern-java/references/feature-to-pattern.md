@@ -24,6 +24,13 @@ The caveat that survives: a record component holding a mutable `List` is not imm
 in the compact constructor snapshots list structure, not mutable elements. Deep immutability,
 sharing, record rendering and ownership still need review (`java-immutability`, `gof-memento`).
 
+Generated equality compares reference components with `Objects.equals`: arrays therefore use
+identity, not content. Cloning a `byte[]` in the constructor/accessor protects ownership but does
+not make generated equality deep; two equal-content captures may cease to be equal map keys.
+If the existing contract requires content equality, preserve matching `equals` and `hashCode`
+and verify reconstruction from accessors remains equal to the original (`java-object-contracts`).
+See the [Java 17 Record contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html).
+
 ## Sealed types
 
 **Changes:** Visitor, State, Composite, Interpreter, Strategy, Chain of Responsibility.
@@ -37,6 +44,13 @@ more function) and **new variants loud** (affected exhaustive switches without c
 must be revisited on recompilation). A non-sealed branch remains open; existing binaries are not
 magically recompiled. Classic Visitor also favors adding operations over a known element family.
 Choose by which change and compatibility boundary the domain actually produces.
+
+Adding a permitted subtype can be binary compatible while an old exhaustive pattern switch throws
+`MatchException` when it receives the new variant: successful linkage is not behavioral compatibility
+([JLS 21 §13.5.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.2)).
+Inspect which library and consumer versions can coexist. Test an old consumer against the expanded
+hierarchy and recompile affected switches; choose coordinated updates or an explicit unknown-variant
+policy only when it fits the existing contract. Do not add a catch-all just to conceal missing cases.
 
 ## Pattern matching for `switch`, with deconstruction
 

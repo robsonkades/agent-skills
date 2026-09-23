@@ -25,11 +25,28 @@ Construct a timeline or dependency graph from traces and local timings. Include 
 framework/authentication, pool acquisition, database/client calls, hydration/domain work,
 mapping/serialization and response transfer. Locate the critical path and unexplained gaps.
 
-Nested spans include children; overlapping calls consume time simultaneously. Sum only
-non-overlapping intervals on the path being explained. Do not subtract a sum of inclusive SQL
-or service spans from request time, or add component p99 values to obtain endpoint p99.
+Child time inside a parent interval is already included; overlapping calls consume time
+simultaneously. Sum only non-overlapping intervals on the path being explained. Do not subtract
+a sum of inclusive SQL or service spans from request time, or add component p99 values to obtain
+endpoint p99.
 A database client span may include network, server waits and result transfer; server execution
 requires server-side evidence.
+
+Check three limits before using a trace as a performance budget:
+
+- **Dependency:** parentage or a link establishes related work, not that response completion
+  waited for it. Inspect await/join, callbacks and the operation's completion contract.
+  Background work outside that contract still consumes capacity but is not added to response
+  latency. OpenTelemetry permits [child spans to outlive their parent](https://opentelemetry.io/docs/specs/otel/trace/api/#end).
+- **Clock:** do not derive one-way network time or exact gaps by subtracting timestamps from
+  different hosts without clock evidence. Prefer measured local client duration for the call's
+  elapsed budget. Inspect raw timestamps and any display adjustment; an adjusted timeline is
+  not a measured decomposition. See [Jaeger 2.6 clock-skew adjustment](https://www.jaegertracing.io/docs/2.6/deployment/configuration/#clock-skew-adjustment).
+- **Selection:** record sampling, retention and dropped-span behavior. Traces selected for
+  latency or errors can explain those requests but their unweighted distribution does not
+  establish the population's p99, error rate or traffic mix. Use request metrics covering the
+  population or a validated representative sample for those claims. See
+  [OpenTelemetry sampling criteria](https://opentelemetry.io/docs/concepts/sampling/#tail-sampling).
 
 | Evidence                                          | Architectural question                                    | Limit                                                                          |
 | ------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------ |
@@ -117,6 +134,13 @@ before changing boundaries. Moving a call outside a transaction may change atomi
 a race; specify the consistency mechanism and failure handling first. Shorter holds may help,
 but burstiness, database capacity and admission limits still constrain safe concurrency.
 Use `connection-pool-sizing` for configuration and `littles-law-and-queueing` for fuller models.
+
+Count CPU work inside the hold interval too. At a stable 100 checkouts/s, reducing mapping
+from 40 to 10 ms while keeping the connection checked out throughout predicts 3 fewer occupied
+connections on average, if the rest of the hold interval is unchanged. The same mapping change
+after connection return has no direct hold-time saving. In either case, CPU relief may change
+other queues: check borrow/return events, acquisition waits, CPU and offered work rather than
+inferring database execution improvement or a fixed p99 gain from the 30 ms local saving.
 
 ## Transfer the comparison, not just the test result
 

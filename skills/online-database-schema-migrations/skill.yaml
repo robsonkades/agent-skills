@@ -1,0 +1,57 @@
+schemaVersion: 1
+
+name: online-database-schema-migrations
+version: 1.0.0
+description: >-
+  Planning and reviewing same-engine relational schema rollouts while old and new
+  application versions coexist. Use for a hot-table column or constraint change,
+  resumable backfill, migration-runner failure, read/write cutover, or contraction
+  with a defined rollback boundary. Covers DDL execution risk and data correctness;
+  not cross-engine migration, ingestion throughput tuning, or API/event schemas.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/online-database-schema-migrations
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/online-database-schema-migrations
+
+keywords:
+  - database
+  - schema-migration
+  - online-ddl
+  - backfill
+  - rollback
+  - expand-contract
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - architecture-refactoring-paths
+  - database-bulk-loading
+  - database-engine-selection-and-migration
+  - database-index-design
+  - mysql-innodb-performance
+  - postgresql-performance
+  - schema-evolution-and-compatibility
+  - sql-server-performance
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Online Database Schema Migrations
+      short_description: Safe DDL, backfills, coexistence, and recovery
+      default_prompt: Use Online Database Schema Migrations to plan or review this relational schema rollout.

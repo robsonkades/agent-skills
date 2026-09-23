@@ -108,9 +108,13 @@ additional participant handshake, not merely this flag.
 
 ## The reentrancy bug found in review
 
-The first version called participants inside the map's atomic computation:
+An earlier shared-map attempt used `ConcurrentHashMap` and called participants inside its
+atomic computation. This is a different threading model from the event-loop-confined `HashMap`
+above; the following partial snippet illustrates the rejected design:
 
 ```java
+private final ConcurrentHashMap<OrderId, FulfilmentState> states = new ConcurrentHashMap<>();
+
 private void advance(OrderId id, UnaryOperator<FulfilmentState> transition) {
     states.compute(id, (k, current) -> {
         var next = transition.apply(current);
@@ -120,11 +124,15 @@ private void advance(OrderId id, UnaryOperator<FulfilmentState> transition) {
 }
 ```
 
-Two defects. `ConcurrentHashMap.compute` requires the remapping function to be short and says
-recursive updates must not modify the map; re-entering the same-key computation can be detected
-as an illegal recursive update or otherwise violate progress assumptions depending on the path/JDK.
-Even without reentrancy, placing an outbound call inside atomic map computation can block updates
-that contend for the same internal coordination scope.
+Two defects. `ConcurrentHashMap.compute` requires a short, simple remapping function that does
+not modify this map, including indirectly through participant callbacks. Some recursive updates
+are detected as illegal, but absence of an exception does not establish a valid update protocol.
+Even without reentrancy, an outbound call inside atomic map computation can block contending
+updates. Atomicity of one mapping does not make participant effects part of that atomic operation.
+
+The confined `HashMap` is not an atomic concurrent alternative: its remapping contract also warns
+against modifying the map during computation. The recommended coordinator obtains serialization
+from its event loop and callback policy, not from `HashMap.compute`.
 
 Moving effects outside atomic computation avoids that callback hazard, but is not a complete fix:
 
@@ -171,8 +179,10 @@ Relay retries use the stored identity, never a fresh identity per delivery.
 The packing consumer atomically deduplicates that identity with its local effect.
 ```
 
-- **State is persisted.** An in-memory map loses every in-flight order on a deploy. The
-  orchestrator is a process that outlives the JVM.
+- **State is persisted and resumed.** A JVM restart discards this in-memory map. The logical flow
+  can span worker restarts only when durable progress has a recovery owner that resumes pending
+  steps and deadlines. The outbox relay recovers stored command delivery; it does not by itself
+  resume every workflow decision.
 - **Every remote step has a deadline and outcome policy.** Compensation applies only to effects
   that require semantic undo. "Packing did not respond within 30 minutes" is
   a state the protocol must have, with a defined action. Missing response leaves packing unknown:
@@ -207,5 +217,6 @@ For a fan-out with neither requirement — notify analytics, warm a cache, updat
 choreography is a candidate; require a concrete coordination need before adding an orchestrator
 (`event-driven-architecture`).
 
-Sources: [ConcurrentHashMap computation contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
+Sources: [HashMap contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/HashMap.html),
+[ConcurrentHashMap computation contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
 and [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html).

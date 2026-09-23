@@ -105,8 +105,11 @@ by accident:
 4. **`AopContext.currentProxy()`.** Requires `exposeProxy = true` and couples the code to Spring
    AOP. Last resort.
 
-Detection: any annotated method invoked without a receiver from within its own class. Worth an
-architecture test in codebases where this has happened once (`architecture-testing`).
+Detection: for methods whose configured advice is required, trace the actual receiver. Both
+implicit and explicit `this` calls, and calls through aliases of the raw target, bypass the proxy.
+A self-injected reference must actually point to the proxy to cross that boundary. An architecture
+test can flag candidate paths (`architecture-testing`); verify wiring, advice mode and the required
+unit of work before treating a syntactic match as a defect or a refactoring as a fix.
 
 ## JPA lazy proxies
 

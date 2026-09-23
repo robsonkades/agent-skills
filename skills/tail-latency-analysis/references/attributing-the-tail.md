@@ -15,6 +15,12 @@ where possible; adequate existing evidence need not trigger every source below:
 Record clock offset and collection windows. An event that merely occurs somewhere in a
 dashboard window is not attributable to a request.
 
+Direct effects require overlap with affected work, but an earlier trigger can have a later
+effect through persistent queue or application state. For a backlog hypothesis, extend the
+timeline to its buildup and recovery: align capacity loss, arrivals, service completions and
+queue age/depth on the affected resource. Without that connecting evidence, retain a hypothesis;
+neither proximity to an earlier pause nor lack of direct overlap settles attribution.
+
 Preserve each source's measurement scope: cgroup throttled time is not directly lost CPU
 capacity, aggregate waits are not one request's elapsed time, and process-wide events do not
 identify which request was runnable. Collect the discriminator before assigning those durations
@@ -22,20 +28,20 @@ to a critical path.
 
 ## Cause matrix
 
-| Candidate                  | Signature                                 | Discriminator                                     | Owner                          |
-| -------------------------- | ----------------------------------------- | ------------------------------------------------- | ------------------------------ |
-| queue/admission            | age/depth rises before latency            | admitted load and service completions             | queueing-models                |
-| GC pause/allocation stall  | overlapping JVM event on affected process | pause/allocation chronology, unaffected controls  | pause-attribution / GC skills  |
-| time to safepoint          | total pause exceeds collector work        | unified safepoint logs/JFR metadata for exact JDK | safepoints                     |
-| deoptimization/compilation | recurring compilation state transitions   | code-cache/compiler events, traffic/class change  | deoptimization                 |
-| lock convoy                | waits concentrate on lock/site            | monitor/park profiles and owner progress          | concurrency-diagnostics        |
-| CPU scheduling/throttle    | runnable but not scheduled/progressing    | run-queue delay, pressure, cgroup counters        | linux-for-jvm                  |
-| memory pressure/faults     | process pause without JVM pause           | faults, reclaim/swap/PSI and RSS                  | linux-for-jvm                  |
-| network loss/retransmit    | connection-specific delay/loss            | socket/TCP events and path controls               | tcp-tuning                     |
-| dependency tail            | slow spans/attempts on one dependency     | callee/server-side queue and cohort               | distributed tracing            |
-| pool exhaustion            | acquisition wait and occupancy saturate   | hold-time, leaks, downstream latency              | connection-pool-sizing         |
-| key/partition skew         | affected keys/owners only                 | per-partition load and queue                      | hot-partitions-and-rebalancing |
-| cold rollout               | latency depends on instance age           | compilation/cache/connection/routing timeline     | startup/JIT skills             |
+| Candidate                  | Signature                               | Discriminator                                     | Owner                          |
+| -------------------------- | --------------------------------------- | ------------------------------------------------- | ------------------------------ |
+| queue/admission            | age/depth rises before latency          | admitted load and service completions             | queueing-models                |
+| GC pause/allocation stall  | direct overlap or residual backlog      | pause/stall, queue recovery, unaffected controls  | pause-attribution / GC skills  |
+| time to safepoint          | total pause exceeds collector work      | unified safepoint logs/JFR metadata for exact JDK | safepoints                     |
+| deoptimization/compilation | recurring compilation state transitions | code-cache/compiler events, traffic/class change  | deoptimization                 |
+| lock convoy                | waits concentrate on lock/site          | monitor/park profiles and owner progress          | concurrency-diagnostics        |
+| CPU scheduling/throttle    | runnable but not scheduled/progressing  | run-queue delay, pressure, cgroup counters        | linux-for-jvm                  |
+| memory pressure/faults     | process pause without JVM pause         | faults, reclaim/swap/PSI and RSS                  | linux-for-jvm                  |
+| network loss/retransmit    | connection-specific delay/loss          | socket/TCP events and path controls               | tcp-tuning                     |
+| dependency tail            | slow spans/attempts on one dependency   | callee/server-side queue and cohort               | distributed tracing            |
+| pool exhaustion            | acquisition wait and occupancy saturate | hold-time, leaks, downstream latency              | connection-pool-sizing         |
+| key/partition skew         | affected keys/owners only               | per-partition load and queue                      | hot-partitions-and-rebalancing |
+| cold rollout               | latency depends on instance age         | compilation/cache/connection/routing timeline     | startup/JIT skills             |
 
 Durations are clues, not identifiers. Timer values, cgroup periods, collectors, kernels and
 networks differ by configuration/version.
@@ -63,7 +69,7 @@ and recording; these source examples neither prove enablement nor require a JDK 
 
 Strengthen attribution by:
 
-1. temporal precedence and overlap;
+1. temporal precedence with direct overlap or an evidenced lagged mechanism;
 2. specificity to affected requests/instances;
 3. dose-response across load/event magnitude;
 4. negative controls (unaffected cohorts/nodes);
@@ -72,6 +78,21 @@ Strengthen attribution by:
 
 Do not tune GC, enlarge pools, add replicas or change kernel parameters from correlation
 alone.
+
+### A pause can leave a queue behind
+
+Consider an illustrative single FIFO server taking 10 ms per request. Requests arrive at
+10, 30, 50, 70, 90 and 110 ms. Without a pause, each finishes 10 ms after arrival. If the
+server cannot work from 0 to 100 ms while arrivals continue queueing, completion times become
+110, 120, 130, 140, 150 and 160 ms. The request arriving at 110 ms has 50 ms latency despite
+never overlapping the pause: 40 ms waiting plus 10 ms service. Its elapsed time does not
+include the earlier 100 ms pause, so do not subtract that pause from its latency.
+
+Change one condition: if no earlier requests queued, the same 110 ms arrival finishes at
+120 ms despite the earlier pause. The trigger alone cannot explain a later tail. This is a
+queue model, not operational proof; confirm the actual admission, scheduling, cancellations
+and service rates before applying it. [Google SRE's queue management discussion](https://sre.google/sre-book/addressing-cascading-failures/#xref_cascading-failure_queue-management)
+explains how queued work increases latency; the timings above are a constructed example.
 
 ## Troubleshooting path
 

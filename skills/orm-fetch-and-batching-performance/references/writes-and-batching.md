@@ -42,6 +42,28 @@ sizes, generated-ID queries and database/driver round trips using suitable instr
 SQL log lines and logical DML/entity-insert counts may still be 1,000 with working batching;
 prepared-statement counts are not batch counts either. Check driver rewrite behavior separately.
 
+### Versioned batches must preserve conflict detection
+
+For entities with `@Version`, inspect the target driver's per-statement batch update counts.
+Hibernate uses those counts for optimistic-lock checks. A driver returning incorrect counts,
+or only `Statement.SUCCESS_NO_INFO`, does not provide the same evidence as an exact zero/one
+row count. In Hibernate 6.6.33, the batch row-count checker accepts `SUCCESS_NO_INFO` without
+verifying the expected count; a successful call therefore does not prove a stale update
+would be detected.
+
+Check the effective `hibernate.jdbc.batch_versioned_data` setting rather than assuming a
+universal default; Hibernate 6.6 defaults can depend on the dialect. Keep versioned batching
+when the driver and conflict test support it. If batch counts cannot support the required
+check, evaluate disabling batching for versioned DML with that setting set to `false`, or a
+driver/configuration correction. Do not remove `@Version` or globally disable unrelated
+batching merely to make the job succeed.
+
+Use two independent contexts loading the same version: commit a change in one, then flush
+the stale change from the other through the actual batched path. Assert a conflict, rollback
+of the losing transaction and preservation of the winner's data. Pair this with a successful
+nonconflicting batch and observed batch executions; a test that never enters batching does
+not validate batch counts. Repeat for affected driver rewrite/configuration changes.
+
 ## Flush cost scales with the context
 
 Large contexts can increase flush traversal and snapshot/collection costs. Enhancement,
@@ -145,3 +167,6 @@ Sources: [Hibernate 6.6 batching](https://docs.hibernate.org/orm/6.6/userguide/h
 [identifier optimizers](https://docs.hibernate.org/orm/6.6/userguide/html_single/#identifiers-optimizers),
 [6.6.33 bulk cache cleanup](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/action/internal/BulkOperationCleanupAction.java)
 and [Jakarta Persistence 3.1 bulk update/delete and context contracts](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).
+For versioned batches, see the [6.6.33 batching contract](https://github.com/hibernate/hibernate-orm/blob/6.6.33/documentation/src/main/asciidoc/userguide/chapters/batch/Batching.adoc),
+[batch-setting defaults](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/cfg/BatchSettings.java)
+and [row-count checking](https://github.com/hibernate/hibernate-orm/blob/6.6.33/hibernate-core/src/main/java/org/hibernate/jdbc/Expectations.java).

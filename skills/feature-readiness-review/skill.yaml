@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-readiness-review
-version: 1.2.2
+version: 1.2.3
 description: >-
   The intake, pre-implementation, and completion gates for a feature: first validating the
   Product/Engineering or Tech Feature baseline, then checking that nothing implementation

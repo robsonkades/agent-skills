@@ -7,7 +7,7 @@ print when unlocked, so unlock for the listing as well:
 
 ```bash
 java -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:+PrintFlagsFinal -version | grep -E \
-  "MaxGCPauseMillis|GCPauseIntervalMillis|G1NewSizePercent|G1MaxNewSizePercent|InitiatingHeapOccupancyPercent|G1UseAdaptiveIHOP|G1AdaptiveIHOPNumInitialSamples|G1MixedGCCountTarget|G1OldCSetRegionThresholdPercent|G1MixedGCLiveThresholdPercent|G1HeapWastePercent|G1ReservePercent|MaxTenuringThreshold|G1HeapRegionSize|GCTimeRatio|G1PeriodicGCInterval|AlwaysPreTouch"
+  "MaxGCPauseMillis|GCPauseIntervalMillis|G1NewSizePercent|G1MaxNewSizePercent|InitiatingHeapOccupancyPercent|G1IHOP|G1UseAdaptiveIHOP|G1AdaptiveIHOPNumInitialSamples|G1MixedGCCountTarget|G1OldCSetRegionThresholdPercent|G1MixedGCLiveThresholdPercent|G1HeapWastePercent|G1ReservePercent|MaxTenuringThreshold|G1HeapRegionSize|GCTimeRatio|G1PeriodicGCInterval|AlwaysPreTouch"
 
 # The region size actually chosen for your -Xmx (0 on the command line means computed):
 java -XX:+UseG1GC -Xmx4g -XX:+PrintFlagsFinal -version | grep G1HeapRegionSize
@@ -37,7 +37,7 @@ Defaults read from `PrintFlagsFinal` on Temurin 25.0.3.
 
 | Flag                                  | Default (JDK 25)                                     | Controls                                                                                                                                                                                   | Trade-off                                                                                                                                                                                                                                     |
 | ------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-XX:+UseG1GC`                        | server-class ergonomic default since JDK 9 (JEP 248) | Selects G1                                                                                                                                                                                 | Explicit selection makes intent independent of ergonomics. JEP 523 broadens the default for release 27 (Closed/Delivered); this is upcoming-release integration status. Verify the deployed vendor/build — `jvm-gc-tuning`                    |
+| `-XX:+UseG1GC`                        | server-class ergonomic default since JDK 9 (JEP 248) | Selects G1                                                                                                                                                                                 | Explicit selection makes intent independent of ergonomics. JDK 27 GA makes G1 the default in all environments (JEP 523). Verify the deployed vendor/build — `jvm-gc-tuning`                                                                   |
 | `-XX:MaxGCPauseMillis`                | 200, product                                         | Pause goal used by the policy to size young and to bound the collection set                                                                                                                | Lower means smaller young, more frequent GCs, overhead percentage tends to rise; higher means rarer but potentially larger pauses                                                                                                             |
 | `-XX:GCPauseIntervalMillis`           | `MaxGCPauseMillis + 1`, product                      | With the pause goal, influences the MMU window used by policy                                                                                                                              | Usually leave ergonomic unless policy logs and an explicit utilization objective justify coupling two controls; validate accepted combinations on the target JVM                                                                              |
 | `-XX:G1NewSizePercent`                | 5, **experimental**                                  | Young generation floor, percent of the **committed** heap                                                                                                                                  | A low floor lets G1 shrink aggressively under promotion spikes (more young GCs); a high floor removes that flexibility                                                                                                                        |
@@ -64,12 +64,14 @@ the remembered-set flags in `g1-internals`, `ConcGCThreads` and `MarkStackSize` 
 executed on 25.0.3) but G1 did not act on it up to JDK 25 — it drives ZGC and Shenandoah
 (not verified here beyond the flag listing).
 
-The [JDK 27 development source](https://github.com/openjdk/jdk/blob/jdk27/src/hotspot/share/runtime/arguments.cpp)
-declares `InitiatingHeapOccupancyPercent` as an alias for **`G1IHOP`**. This is source
-evidence for an upcoming release, not a deployed-runtime contract. On 25.0.3 `-XX:G1IHOP` is `Unrecognized VM option`
-(executed). Do not infer deployed alias or warning behavior from source/documentation alone: exercise both
-spellings against each target vendor/build and keep release-specific command lines when
-necessary. The tuning reasoning is unaffected; compatibility is not.
+[JDK 27 GA release notes](https://www.oracle.com/java/technologies/javase/27all-relnotes.html),
+published 2026-09-15, document the name **`G1IHOP`** and the deprecated compatibility alias
+`InitiatingHeapOccupancyPercent`; the
+[27+35 source](https://github.com/openjdk/jdk/blob/jdk-27%2B35/src/hotspot/share/runtime/arguments.cpp)
+records that mapping. On 25.0.3 `-XX:G1IHOP=35` is `Unrecognized VM option` (executed).
+Keep the JDK 25 spelling in the configurations below; verify startup and effective values
+on each target vendor/build rather than transplanting a renamed flag. The JDK 27 statements
+here are documentation/source checks, not execution results on that runtime.
 
 ## The logging trap that applies to every configuration below
 
@@ -163,16 +165,21 @@ java -XX:+UseG1GC \
 | `InitiatingHeapOccupancyPercent=45` | The JDK default: no measurement justifies deviating, so it stays as a neutral starting point                                              |
 | `G1HeapWastePercent=10`             | More waste allowance can prune low-benefit marking candidates before grouping; measure whether less cleanup work leaves adequate headroom |
 
-Note that `-Xmx6g` gives a 4 MB region (6144 / 2048 = 3 MB, rounded up to a power of
-two), the same as `-Xmx8g`, while `-Xmx4g` gives 2 MB — a 1.5 MB cache entry is humongous
-at 4 GB and an ordinary young allocation at 6 GB. Region size changes with the heap size
-in steps, not continuously, and a derivation must be redone when it crosses a step.
+Note that `-Xmx6g` gives a 4 MiB region (6144 / 2048 = 3 MiB, rounded up to a power of
+two), the same as `-Xmx8g`, while `-Xmx4g` gives 2 MiB. A **single object** whose aligned
+total size is 1.5 MiB is humongous with the 2 MiB regions and eligible for ordinary young
+allocation with the 4 MiB regions. A cache entry retaining 1.5 MiB across many small objects
+does not meet that test just because their sizes sum to 1.5 MiB. Include headers and alignment
+when checking individual allocations. Region size changes with heap size in steps, so redo
+the derivation when it crosses a step.
 
 Treat all three as starting points for measurement. Two services with the same SLO need
 different values when allocation rate, promotion rate or average object size differ.
 
 ## Source checks
 
+- [HotSpot 25.0.3 humongous predicate](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1CollectedHeap.hpp):
+  `is_humongous` compares an individual allocation's word size with half a region, strictly greater.
 - [HotSpot 25.0.3 young sizing](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1YoungGenSizer.cpp)
   and [JDK 25 tuning guidance](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html):
   distinguish the binding minimum, maximum and explicit-size paths before changing a bound.

@@ -58,9 +58,16 @@ not prove that recognized flags were ignored, and it does not resolve semantic c
 that still exists. Findings should say which token was tested without masking.
 
 Duplicate options often result from image defaults, `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS`,
-launcher variables, and application arguments. “Last value wins” is not a safe universal review
-rule: parsing order, aliases, unlock options, additive logging/agent options, constraints, and
-ergonomics can interact. Capture the received command and effective flag origin.
+HotSpot's undocumented `_JAVA_OPTIONS`, and wrapper-injected JVM arguments. “Last value wins” is
+not a safe universal review rule: parsing order, aliases, unlock options, additive logging/agent
+options, constraints, and ergonomics can interact. Capture the received command and effective
+flag origin.
+
+Locate the launcher boundary before classifying a token as a JVM option. For example,
+`java -jar service.jar -Xmx2g` passes `-Xmx2g` to application `main`; it does not set the JVM heap.
+The JVM form is `java -Xmx2g -jar service.jar`. These are launch-shape examples requiring an
+application JAR, not commands to run against an unknown service. Inspect wrappers that transform
+arguments, then verify the actual received command and effective heap.
 
 ## Upgrade matrix
 

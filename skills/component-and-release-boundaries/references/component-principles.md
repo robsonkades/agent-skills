@@ -241,6 +241,32 @@ void noPackageCycles() {
 }
 ```
 
+### Check the published consumer boundary
+
+Inspect the candidate artifact and its published POM or Gradle module metadata, not only
+the producer's build. Compile a separate consumer against that publication in an isolated
+repository; avoid workspace substitutions that silently supply project outputs or extra
+dependencies. Test the actual consumer compile and runtime configurations.
+
+With Gradle's Java Library plugin, `api` exposes dependencies on the consumer compile
+classpath; `implementation` hides them there but still supplies them at runtime. A type in
+a public signature can therefore require an API dependency even if the producer compiles
+successfully. Maven scopes differ; inspect the published POM rather than translating labels
+literally. Reconsider an unnecessarily exposed third-party type with `java-api-design`.
+
+Consumer resolution can also select a different transitive version from the one used by
+the library's CI. Inspect Maven mediation/dependency management or the target Gradle
+configuration's constraints and selection reasons. For example, a library compiled against
+a newly added method can fail with `NoSuchMethodError` if the consumer selects an older
+dependency. Compile the consumer and exercise the affected paths with the resolved runtime
+set; successful compilation alone misses that case.
+
+A BOM or lockfile can constrain selection; a dependency-convergence rule checks version
+agreement. Neither proves the selected version works for every dependent. Verify a compatible
+combination before forcing a version or excluding a dependency. Record supported dependency
+versions and tested combinations in the support policy rather than assuming independent library
+releases imply arbitrary mixing.
+
 ## What these principles do not decide
 
 - **Whether a component should be a separate process.** Nothing here implies distribution;
@@ -254,6 +280,13 @@ void noPackageCycles() {
 
 - [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html):
   scopes, mediation, optional dependencies and exclusions.
+- [Gradle Java Library plugin](https://docs.gradle.org/current/userguide/java_library_plugin.html):
+  API/implementation separation and consumer compile/runtime configurations. The reference
+  served version 9.7.1 when checked on 2026-09-19; verify behavior against the target wrapper.
+- [Maven dependency convergence](https://maven.apache.org/enforcer/enforcer-rules/dependencyConvergence.html):
+  version agreement within the checked graph, not proof of binary or behavioral compatibility.
+- [JLS 21 binary compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html):
+  linking pre-existing binaries against changed types and members.
 - [JLS 21 modules](https://docs.oracle.com/javase/specs/jls/se21/html/jls-7.html#jls-7.7):
   requires/exports/opens and module rules.
 - [JLS 21 permitted subclasses](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6):

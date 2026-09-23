@@ -154,6 +154,12 @@ a model that represents the blocking structure. `max/min` over ten runs is an un
 not a reusable noise estimate. “Two times the noise” and “four times the noise” do not define
 a false-positive rate or power.
 
+Report calibration trial counts and uncertainty around estimated decision rates, not only
+point estimates. Zero observed false blocks does not establish a zero or sufficiently small
+false-block probability. Separate pilot tuning from confirmation of the frozen rule, and do
+not count bootstrap draws as new empirical gate trials. See `references/calibrating-the-gate.md`
+when assessing whether the evidence supports an error-rate or power claim.
+
 ## Environment compatibility
 
 Capture the environment/configuration fields needed by the declared comparison with every

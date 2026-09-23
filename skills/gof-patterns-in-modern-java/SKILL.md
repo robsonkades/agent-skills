@@ -81,7 +81,8 @@ an exhaustive `switch` can express external operations and state dispatch. Addin
 often one new function; adding a variant requires updating affected exhaustive switches on
 recompilation. Catch-all cases and non-sealed branches limit that check. Sealing does not define
 valid state transitions or decide which Composite types expose child mutation. Where you own
-the relevant variants and compatibility boundary, consider it
+the relevant variants and compatibility boundary, consider it; check separately deployed consumers,
+since a new permitted variant can reach an old switch and cause `MatchException` on Java 21+
 (`java-composition-over-inheritance`).
 
 **The container.** DI can own instance lifetimes and assemble a family, but singleton scope is
@@ -90,7 +91,9 @@ or validation. Supplier injection can replace application-controlled creation ho
 extension and lifecycle contracts permit it.
 
 Two smaller but real ones: **records** remove the boilerplate that made Builder, Memento and
-Prototype heavy, but records are only shallowly immutable. **Virtual threads** can simplify
+Prototype heavy, but records are only shallowly immutable. Preserve equality, hashing and rendering
+contracts when replacing classes; array components use identity in generated equality, even with
+defensive copies (`java-object-contracts`). **Virtual threads** can simplify
 blocking I/O orchestration; they do not remove requests represented as Commands, durable work,
 admission control, cancellation or downstream capacity limits (`thread-sizing-and-virtual-threads`).
 

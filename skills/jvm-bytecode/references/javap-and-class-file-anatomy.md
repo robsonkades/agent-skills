@@ -24,6 +24,27 @@ javap -c --module java.base java.lang.String
 `-v` implies `-c`, `-l` and `-s` but not `-p`: private members still need `-p`.
 `javap -c -p -v` is the one invocation that shows everything.
 
+### Multi-release JARs: select the entry explicitly
+
+On the tested JDK 25, plain `-classpath myapp.jar` reads the base entry even when the runtime
+loads a versioned one. Inspect `META-INF/MANIFEST.MF` for `Multi-Release: true`, list the
+entries with `jar tf`, and select the **target runtime's** feature release, not automatically
+the JDK running `javap`:
+
+```bash
+javap -sysinfo -c -p -v --multi-release 25 -classpath myapp.jar com.example.MyClass
+# Or pin one known entry; replace the absolute file URI with the artifact's location.
+javap -sysinfo -c -p -v 'jar:file:///path/to/myapp.jar!/META-INF/versions/25/com/example/MyClass.class'
+```
+
+Normal multi-release lookup chooses the highest available version no greater than the target,
+then the base entry; a directory named `25` is not required for target 25. A direct entry URL
+inspects exactly those bytes and does not prove runtime selection. Confirm the loader and
+launch settings: a custom loader can differ, and boot-class-path append treats these JARs as
+ordinary JARs. Retain the `-sysinfo` entry and digest with the diagnosis. See the
+[javap options](https://docs.oracle.com/en/java/javase/25/docs/specs/man/javap.html) and
+[multi-release JAR contract](https://docs.oracle.com/en/java/javase/25/docs/specs/jar/jar.html#multi-release-jar-files).
+
 ## An annotated JDK 25 disassembly
 
 ```
@@ -199,6 +220,26 @@ in `Signature`. Overloads such as `m(List<String>)` and `m(List<Integer>)` have 
 erasure and descriptor, so javac rejects the name clash. Different erased parameter types
 can still distinguish generic overloads.
 
+Within one class file, a method's identity is its name plus **full descriptor**, including the
+return type (JVMS 4.6). Java source cannot overload solely by return type, but class files can
+contain such pairs. For example, a class implementing `Value<String>` with `String get()`
+has this shape on javac 25 when the interface declares `T get()`:
+
+```text
+get:()Ljava/lang/String;   ACC_PUBLIC
+get:()Ljava/lang/Object;   ACC_PUBLIC, ACC_BRIDGE, ACC_SYNTHETIC
+```
+
+The bridge delegates to the `String`-returning implementation so callers compiled against
+the erased interface descriptor still dispatch correctly. Bridges also support covariant
+returns. Inspect flags, descriptors and delegation with `javap -p -v`; do not remove a method
+just because it is synthetic or appears to duplicate another source-level signature. In a
+local fixture, removing only the erased bridge passed Class-File API verification but an
+interface invocation failed with `AbstractMethodError`. For transformers, match owner, name and
+descriptor and decide deliberately whether instrumentation belongs on the bridge, its target
+or both; instrumenting both may count one logical invocation twice. Verify calls through the
+interface/superclass as well as the concrete type.
+
 ## What the verifier checks
 
 Verification is the first linking phase (JVMS 5.4) and checks structural/type constraints
@@ -268,7 +309,7 @@ verification off is not a fix, are in `limits-and-failure-catalogue.md`.
 
 ## Diagnosing a VerifyError after instrumentation
 
-1. Run `javap -v` on the **rejected transformed class** and inspect final instructions,
+1. Run `javap -p -v` on the **rejected transformed class** and inspect final instructions,
    exception ranges, `max_stack`, `max_locals` and explicit/implicit frames at the
    verifier-reported BCI.
 2. If the class was generated at runtime, dump it (below) before you can disassemble it.
@@ -381,6 +422,8 @@ and loaders. A successful parse or frame computation does not prove linkage or b
 ## Transformer production invariants
 
 - Never mutate the input buffer; return a new array or `null`.
+- Preserve required bridge methods and descriptor identity; successful frame verification
+  does not prove calls through an erased interface or superclass still work.
 - Preserve attributes only when their invariants survive the edit. Unknown attributes may
   contain constant-pool indices or code offsets: use a supported mapper/remapper, retain
   them when independent of the change, or reject a transformation that cannot preserve a

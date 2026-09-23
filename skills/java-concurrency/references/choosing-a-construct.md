@@ -12,7 +12,7 @@
 | ForkJoin/parallel stream          | fine-grained CPU-decomposable work                               | blocking, unmanaged common-pool interference, poor granularity                           |
 | Reactive Streams                  | continuing stream needs demand propagation/operators             | finite request/value flow without stream semantics                                       |
 | bounded queue/channel             | explicit producer-consumer handoff                               | queue hides overload or ordering/ownership is undefined                                  |
-| semaphore/limiter                 | cap concurrent use of one scarce resource                        | rate/window/fairness/distributed limit is required                                       |
+| semaphore/limiter                 | cap concurrent use of one scarce resource                        | rate/window, per-tenant share or distributed quota is required                           |
 | lock/atomic/concurrent collection | shared invariant genuinely needs it                              | immutable snapshot/confinement is simpler                                                |
 
 ## Questions that disqualify a design
@@ -43,6 +43,12 @@ Boundaries must preserve deadline, cancellation, context and error semantics. A 
 a virtual-thread task does not automatically propagate cancellation to that task; a reactive
 wrapper around blocking I/O does not make the I/O nonblocking.
 
+Reactive demand limits item delivery per subscription, not total retained bytes or completion of
+work dispatched by `onNext`. Requesting another item immediately after submitting a task can leave
+unbounded tasks in flight while respecting the demand protocol. Inspect prefetch, buffers, item
+sizes, fan-out and the point where demand is replenished; require separate bounds where needed.
+Route operator and blocking-bridge details to `reactive-backpressure`.
+
 The base `CompletableFuture.cancel(true)` completes the value exceptionally without interrupting
 its supplier. Provider-returned futures can differ: Java 25's default `HttpClient.sendAsync`
 returns futures whose `cancel(true)` attempts to cancel the exchange, with no immediate-release
@@ -62,6 +68,12 @@ For virtual threads plus a semaphore, identify both the permit bound and the wai
 Release permits only after successful acquisition and hold them until the protected work really
 ends, even if the caller's result handle has already timed out.
 
+Fair acquisition alone does not disqualify a semaphore. `Semaphore(n, true)` orders waiting
+acquisitions at internal FIFO points; untimed `tryAcquire` can still barge. This does not promise
+completion order or a fair share per tenant. Inspect the acquisition method and required fairness
+unit; route primitive details to `concurrent-collections-and-synchronizers` and tenant/admission
+policy to `concurrency-limiting-and-bulkheads`.
+
 ## Decision record
 
 ```text
@@ -80,6 +92,8 @@ tests and observability:
 
 - [Java `java.util.concurrent`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [Flow API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Flow.html)
+- [Flow subscription demand](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Flow.Subscription.html)
+- [Semaphore fairness and acquisition](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [CompletableFuture cancellation and timeouts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 - [Java 25 HttpClient exchange cancellation](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)
 - [ExecutorService lifecycle](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)

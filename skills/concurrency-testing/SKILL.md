@@ -52,6 +52,8 @@ do not upgrade Java or enable preview merely to use this skill.
    retained-heap trends require warmed baselines and allowances for caches/runtime growth.
 7. **Bound waits and teardown.** A test timeout does not forcibly terminate stuck Java work;
    isolate intentional uncooperative deadlocks in a child process with an external deadline.
+   Preserve worker failures alongside teardown failures; a cleanup assertion in `finally`
+   can replace the failure that caused cleanup.
 
 ## Rules
 
@@ -97,8 +99,9 @@ do not upgrade Java or enable preview merely to use this skill.
   and flags when configuring the project's compiler and test runner.
 - When carrier capture is a material risk, give an isolated test JVM a deliberately small scheduler
   (`-Djdk.virtualThreadScheduler.parallelism=1 -Djdk.virtualThreadScheduler.maxPoolSize=1`) in
-  one dedicated test to expose work that captures or pins a carrier: with no compensation
-  available, it serialises visibly.
+  one dedicated test to screen for work that retains a carrier. Compare a known unmounting
+  control, account for CPU and connection limits, and corroborate with JFR/stacks before
+  attributing slow completion to carrier capture.
 
 Report the defect/invariant, controlled ordering, observed worker outcomes, cleanup bounds and
 commands actually run. State remaining untested schedules/providers rather than claiming proof.

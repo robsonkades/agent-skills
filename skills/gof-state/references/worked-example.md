@@ -232,3 +232,8 @@ full Cartesian coverage explicitly, including payload guards and the preserved r
 Test stale versions and concurrent ship/cancel against the actual database, rollback after outbox
 enqueue, missing/corrupt row data, repeated commands and timeout catch-up. These checks complement
 sequence tests; compiler exhaustiveness alone does not prove business correctness.
+
+Persistence fixtures must exercise all five storage codes and their required payloads, including
+the refund reference and stable reason code. Test latest-state commands separately from commands
+bound to a caller revision: force payment to commit before a draft cancellation and assert that
+only the explicitly allowed policy can turn that cancellation into a refund request.

@@ -2,13 +2,13 @@
 
 ## Admission design
 
-| Decision         | Questions                                                                         |
-| ---------------- | --------------------------------------------------------------------------------- |
-| core/max workers | CPU/blocking demand, quota, latency, thread/resource footprint                    |
-| queue            | capacity, FIFO/priority/fairness, memory/item, wait-age SLO, cancellation removal |
-| handoff          | can producer block/run/reject, and on which thread/lock?                          |
-| rejection        | caller result, retry/idempotency, drop/durable fallback, telemetry                |
-| worker factory   | names, daemon policy, priority, context, uncaught handler                         |
+| Decision         | Questions                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| core/max workers | CPU/blocking demand, quota, latency, thread/resource footprint                           |
+| queue            | capacity, FIFO/priority/fairness, memory/item, wait-age SLO, cancellation removal        |
+| handoff          | can producer block/run/reject, and on which thread/lock?                                 |
+| rejection        | caller result, retry/idempotency, drop/durable fallback, telemetry                       |
+| worker factory   | names, daemon policy, priority, context, uncaught handler, creation failure and recovery |
 
 Priority queues can starve old work; delayed queues are often unbounded; bounded queues can retain
 cancelled tasks depending executor/policy. Inspect exact implementation and purge/removal behavior.
@@ -31,6 +31,24 @@ A saturated `SynchronousQueue` has no buffered head to free, so unchanged satura
 recursive rejection and stack overflow (reproduced on JDK 25.0.3). Prefer visible refusal or a
 bounded replacement/coalescing policy whose queue contract, race handling and result settlement
 are explicit; an unbounded resubmission loop is not recovery.
+
+## Failures before the task body
+
+A `ThreadFactory` may refuse creation by returning `null`. `ThreadPoolExecutor` can then queue a
+submitted task and return its Future even though it has no worker to run it. Distinguish worker
+creation failure from ordinary saturation using queue age, pool state and factory evidence.
+Orderly shutdown alone may never drain that queue. Restore worker creation and verify queued work
+starts, or use the owner's bounded drain protocol, settling results for work that will not run;
+do not merely enlarge the pool.
+
+If `beforeExecute` throws, the worker can exit before invoking the task, so `afterExecute` does not
+observe that failure. In the JDK 25 implementation, the task is already outside the queue, its
+submitted Future can remain pending, and the completed-task counter still advances. Neither worker
+replacement, queue draining nor that counter proves body execution or result settlement. Retain
+logical-task/result ownership and observe setup failures independently. Put fallible context setup
+inside the submitted task wrapper where its Future can capture failure, with rollback of partial
+installation. Never suppress a required security/context setup failure and run the body anyway.
+If setup must remain in a hook, explicitly settle never-started results and report the failure.
 
 ## Failure-supervising wrapper
 
@@ -125,6 +143,8 @@ that fails during drain can trigger premature kill; readiness and liveness have 
 ## Authoritative references
 
 - [`ThreadPoolExecutor` queue/rejection hooks](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Java 17 worker-creation contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html) — a factory may return `null` without ensuring queued tasks execute.
+- [JDK 25.0.3 task execution](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/ThreadPoolExecutor.java) — `execute` and `runWorker` distinguish enqueueing, hooks, body execution and counters.
 - [`ExecutorService` shutdown](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
 - [JDK 25.0.3 default close implementation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/java/util/concurrent/ExecutorService.java)
 - [`DiscardOldestPolicy` retry contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.DiscardOldestPolicy.html)

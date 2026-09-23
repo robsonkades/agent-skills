@@ -138,7 +138,8 @@ final class RecordingSender implements ConfirmationSender {
 ```
 
 The test constructs `new OrderConfirmer(new RecordingSender())` and asserts on
-`sent` — outcomes, not interaction scripts. No framework, no network.
+`sent` — outcomes, not interaction scripts. No framework, no network. This `ArrayList` double
+is for sequential tests; it establishes no concurrent-use guarantee for the production adapter.
 
 For this sketch, `send` is synchronous and `OrderConfirmer` does not catch failures. A
 throwing double should demonstrate propagation with no policy retry or success signal.
@@ -147,6 +148,9 @@ exceptions there; neither this placeholder adapter nor the double verifies that 
 Returning normally is evidence of the adapter's configured handoff, not proof that a customer
 received mail. The composition root owns the shared client's shutdown if that API requires
 closing; a borrowed client must not be closed after each call by policy code.
+If the application calls `confirm` concurrently, verify that the adapter and client support
+sharing or preserve their required confinement. Moving construction to the root does not grant
+thread safety, and a synchronous `send` call does not serialize calls from different threads.
 
 ## Trade-offs
 
@@ -166,8 +170,10 @@ closing; a borrowed client must not be closed after each call by policy code.
 
 ## Verification
 
-- `shop.orders` compiles with `shop.smtp` absent from the classpath/module path;
-  `jdeps` shows no static edge. Under JPMS it reads only `java.base` in this sketch.
+- `shop.orders` compiles from source into fresh output with `shop.smtp` absent from the
+  classpath/module path; `jdeps` separately confirms no class-file edge. Under JPMS it reads
+  only `java.base` in this sketch. Do not reuse stale generated sources or compiled classes
+  as proof that the policy can be built independently.
 - The policy test suite runs with the recording double only.
 - A throwing double checks the declared failure behavior. Adapter tests separately check
   recipient/subject/body translation and vendor-failure mapping; run a wiring/integration

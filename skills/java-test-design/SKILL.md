@@ -71,9 +71,11 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
   collaborator was called is a claim about implementation, and is only justified when the
   call _is_ the outcome (java-test-doubles).
 - Assert the exception type always, and its message only when the message is part of the
-  contract callers rely on. Prefer an assertion such as `assertThrows` or
-  `assertThatThrownBy(...).isInstanceOf(...)` when it clarifies the failure. A manual
-  `try/fail/catch` must also fail on no-throw and wrong-type paths.
+  contract callers rely on. Put only the intended operation inside the exception assertion;
+  fallible arrangement there can satisfy it before the operation runs. `assertThrows`
+  accepts subtypes; require an exact class only when the contract does, using an API available
+  in the project (see `references/junit5-patterns.md`). A manual `try/fail/catch` must also fail
+  on no-throw and wrong-type paths.
 - Parameterise cases sharing an arrangement and assertion contract. A conditional in an
   independent oracle does not by itself require separate tests; split materially different
   behaviors when grouping obscures the scenario or failure.

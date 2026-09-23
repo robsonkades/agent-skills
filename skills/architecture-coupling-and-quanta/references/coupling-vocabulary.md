@@ -31,7 +31,8 @@ claim that the book prescribes a connected-component algorithm:
 2. Describe the business responsibility of each candidate group. Strong coupling is not evidence
    of good cohesion: an accidentally entangled group may span unrelated responsibilities.
 3. Overlay the runtime dependency paths for each relevant workflow and failure condition.
-   Dependencies can overlap across workflows; do not force all paths into one estate partition.
+   Preserve alternative and quorum groups rather than treating every drawn edge as individually
+   mandatory. Dependencies can overlap across workflows; do not force all paths into one estate partition.
 4. If a single quantum count is requested, first agree the boundary convention. Report candidate
    groups with assumptions; distinguish a conservative union of coupling edges from independently
    releasable groups. Keep both views when they answer different questions.

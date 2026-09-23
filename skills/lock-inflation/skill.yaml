@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: lock-inflation
-version: 1.2.2
+version: 1.2.3
 description: >-
   Diagnosing and engineering Java intrinsic-monitor contention across fast and inflated monitor
   states without freezing one HotSpot release's internals. Covers ownership, recursion, wait sets,

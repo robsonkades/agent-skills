@@ -45,7 +45,8 @@ Then:
 2. diff against framework/library and hand-owned metadata; remove test noise only after checking
    that it is not an intentional runtime contract (an unobserved path is not obsolete);
 3. replace broad member access with the intended minimum;
-4. add conditions for optional types;
+4. add conditions for optional types; verify that each `typeReached` trigger precedes the first
+   dependent access (see [conditional activation](closed-world-and-metadata.md#conditional-inclusion-and-runtime-activation));
 5. validate the JSON against the release's shipped schema;
 6. merge reviewed entries into the correct application metadata location, preserving intentional
    conditions and hand-owned entries; build exact mode and execute the native integration suite.

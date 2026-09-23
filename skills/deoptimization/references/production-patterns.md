@@ -62,16 +62,28 @@ path to inspect, not proof that all generation must be removed or all generated 
 Two different mechanisms hide behind "the APM agent causes deoptimisation":
 
 - **Retransformation.** An agent that instruments through `retransformClasses` /
-  `redefineClasses` invalidates every nmethod with an `evol_method` dependency on the class
-  — every caller and every method that inlined it — inside a global safepoint named
-  `RedefineClasses`. Attaching an agent late, or an agent that re-instruments on
-  configuration change, produces a process-wide burst that `-Xlog:safepoint` names.
+  `redefineClasses` triggers a global safepoint named `RedefineClasses`. With complete
+  dependency recording, the baseline scans nmethod metadata for references to old methods,
+  including inline-cache references, and invalidates affected versions. These can include
+  callers and inliners; source-level call relationships alone do not determine the exact set.
 - **Class loading.** An agent that loads helper or proxy classes into application
   hierarchies produces ordinary CHA invalidations at call sites unrelated to what it
   observes. The `dependee` in `-Xlog:dependencies=debug` names the agent's class.
 
 Neither path produces the baseline `jdk.Deoptimization` trap event. Other JFR events may
 provide context; compilation and dependency logs distinguish the actual invalidation.
+
+If dependency recording is incomplete, the first redefinition instead marks all eligible
+nmethods for deoptimisation. The baseline's experimental `AlwaysRecordEvolDependencies` defaults
+to `true`, so late attachment alone does not imply that broad flush. With it disabled, acquiring
+the capability after startup can leave earlier compilations without complete recording.
+Inspect the target's effective settings and capability history. Within a bounded capture,
+`-Xlog:redefine+class+nmethod=debug` distinguishes `Marked dependent nmethods for deopt` from
+`Marked all nmethods for deopt` and can identify old-method references. Correlate that evidence
+with compilation IDs and the safepoint; do not infer the affected set from JFR trap counts.
+The first broad invalidation establishes complete recording for subsequent redefinitions;
+the setting alone does not reconstruct that history. Do not change the experimental flag
+merely to reproduce a production symptom; use a disposable JVM for that comparison.
 
 ## Feature flags and configuration in the hot path
 
@@ -119,6 +131,8 @@ keeping such a change; preserve required runtime switching and API contracts.
 
 - [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
 - [JDK 25 HotSpot `dependencies.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/dependencies.cpp)
+- [JDK 25.0.3 redefinition invalidation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/prims/jvmtiRedefineClasses.cpp) — `flush_dependent_code` selects scoped or broad invalidation.
+- [JDK 25.0.3 compiled-code scan](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp) and [nmethod metadata](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/nmethod.cpp) — the old-method references that determine the affected set.
 - [JDK 25 Instrumentation API](https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html)
 - [JDK 25 JVM TI specification](https://docs.oracle.com/en/java/javase/25/docs/specs/jvmti.html)
 - [JDK 25 release notes: Ahead-of-Time Method Profiling](https://www.oracle.com/java/technologies/javase/25-relnote-issues.html) — training profiles can be available at startup; no claim here about retention of specific trap state.

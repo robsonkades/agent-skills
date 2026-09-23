@@ -13,9 +13,21 @@ buffer's allocation. A non-direct input can cause a direct copy. Retain a bounde
 lease until the native operation and all consumers finish, even if the caller times out.
 Mutating a buffer shared by overlapping calls can corrupt inputs without any heap leak.
 For a buffer-backed tensor in ONNX Runtime Java 1.22.0, `getBufferRef()` contains a view
-sharing the backing storage, not a data copy; tensors backed by ORT-allocated memory
-return an empty optional. Reusing a buffer-backed tensor requires the same size and shape
+sharing the backing storage, not a data copy. Do not use it as an ownership probe: although
+its Javadoc promises an empty optional for ORT-allocated storage, the 1.22.0 implementation
+passes a null buffer to `duplicate`, whose fallback dereferences it and throws
+`NullPointerException`. Confirm behavior in the resolved release and track storage ownership
+at construction. Reusing a buffer-backed tensor requires the same size and shape
 and respecting the buffer range; independent view positions do not make concurrent mutation safe.
+
+Include returned values in the ledger. In ONNX Runtime Java 1.22.0, closing
+`OrtSession.Result` closes its owned output values; retaining a Java reference to one does
+not extend its native lifetime. Consume or copy needed data before closing the result, or
+keep the result owned until asynchronous consumers finish. Caller-supplied pinned outputs
+are excluded from this cleanup (`isResultOwner(index)` reports ownership): their owner
+must close them after their last use. Here "pinned output" means a caller-supplied output
+value, not a guarantee of page-locked host memory. Test postprocessing failure and late
+completion after timeout for both ownership modes.
 
 DJL documents `Predictor` as not thread-safe; lease one per active use or apply the
 documented serving manager. `NDManager` ownership determines tensor lifetime: request
@@ -71,7 +83,8 @@ generalize one wrapper's behavior.
 
 ## Primary references
 
-- [ONNX Runtime 1.22.0 OnnxTensor source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OnnxTensor.java) — `getBufferRef`, `close` and direct-buffer construction contracts.
+- [ONNX Runtime 1.22.0 OnnxTensor source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OnnxTensor.java) — buffer construction/close behavior and the `getBufferRef` null-buffer discrepancy between Javadoc and implementation.
+- [ONNX Runtime 1.22.0 OrtSession source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OrtSession.java) — `Result.close`, `isResultOwner` and caller-supplied pinned-output ownership.
 - [DJL 0.33.0 inference performance](https://github.com/deepjavalibrary/djl/blob/v0.33.0/docs/development/inference_performance_optimization.md) — predictor concurrency; engine tuning details require their own version checks.
 - [DJL 0.33.0 memory management](https://github.com/deepjavalibrary/djl/blob/v0.33.0/docs/development/memory_management.md) — manager ownership, `PredictorContext` and resource outputs.
 - [HotSpot JDK 25 NMT](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html) — tracking scope excludes third-party native allocations; it is not a process RSS ledger.

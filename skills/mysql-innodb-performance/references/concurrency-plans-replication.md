@@ -6,6 +6,18 @@ Differentiate consistent reads from locking reads and DML. Identify the index an
 record, gap, and next-key locks follow access paths, not only returned rows. `SHOW ENGINE INNODB
 STATUS` and Performance Schema lock/wait tables should be tied back to the query plan.
 
+Under REPEATABLE READ, a lookup that finds a row through a complete unique-key equality search
+with non-NULL values locks that index record without the preceding gap. A range or partial
+composite-key search does not qualify; neither can a missing-row lookup use this found-record
+exception. Inspect the actual access path and any additional locks from secondary-index maintenance
+or constraint checks before generalizing to the whole statement.
+
+READ COMMITTED removes gap locking for ordinary searches/scans but retains it for foreign-key
+and duplicate-key checks. It also changes snapshot semantics; when binary logging is enabled,
+only row-based logging is supported (MIXED selects it automatically). Check those contracts before
+using an isolation change as a contention fix; a narrower access path or shorter transaction may
+preserve the existing contract.
+
 Deadlocks are expected conflict detection, not proof the detector failed. Inspect the complete cycle,
 access order, rows/ranges locked, transaction size, and missing indexes. The chosen victim is often
 the smaller online transaction; make retries bounded, jittered where collisions synchronize, and
@@ -58,5 +70,7 @@ and the metric that proves replicas caught up.
 Sources: [InnoDB error handling](https://dev.mysql.com/doc/refman/8.4/en/innodb-error-handling.html),
 [EXPLAIN](https://dev.mysql.com/doc/refman/8.4/en/explain.html), and
 [semisynchronous replication](https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html).
+For lock scope and isolation changes, see [locks set by statements](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)
+and [MySQL 8.4 isolation levels](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html).
 For history retention, see [InnoDB multi-versioning](https://dev.mysql.com/doc/refman/8.4/en/innodb-multi-versioning.html)
 and [consistent reads](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html).

@@ -60,10 +60,17 @@ answer — approve, decline, degrade on timeout. (b) That we speak the provider'
 high score, a low score, a timeout, a 500. Assert the decision each time.
 
 **Narrowest real scope for (b):** an adapter test against a stub server (WireMock) using a
-response body captured from the real provider, plus a contract test if the provider
-publishes one.
+sanitized provider response fixture and checking the outbound request against the provider's
+contract. Match or verify the required method, path, query parameters, headers and body fields;
+a canned success response alone can hide an incorrect request. Use semantic matching where
+field order or extra fields are not contractual. Reuse sufficient existing checks rather than
+duplicating every matcher with a verification. If missing calls or duplicate attempts are the
+risk, verify receipt or count explicitly. For WireMock verification, the request journal must
+be enabled and isolated or reset between tests. Add provider-verified contract coverage when
+available; the local stub establishes only the assumptions encoded in it.
 
-**Chosen:** both. They are cheap and they fail for different reasons.
+**Chosen:** unit and adapter coverage for the two distinct risks, reusing existing evidence
+where adequate. Measure their feedback and maintenance cost rather than assuming both are cheap.
 
 **Not written:** any test that calls the real provider in CI. It makes the build depend on
 someone else's uptime and rate limit, and it cannot produce the timeout case on demand.
@@ -72,6 +79,10 @@ someone else's uptime and rate limit, and it cannot produce the timeout case on 
 available, or consider a scheduled sandbox compatibility check outside the fast CI gate.
 Record its freshness and limitations; without either, accept the gap explicitly and monitor
 production failures (slo-and-alerting). Sanitize captured customer data and credentials.
+
+WireMock's [request matching](https://wiremock.org/docs/request-matching/) and
+[verification](https://wiremock.org/docs/verifying/) describe these distinct checks. Use the
+API supported by the project's resolved version; this scenario does not require an upgrade.
 
 ## 4. A schema migration
 

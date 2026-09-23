@@ -68,6 +68,11 @@ target JDK/architecture/topology evidence:
 GC pauses, OS descheduling, blocking callbacks and resource waits affect observed progress even if
 the in-memory algorithm is lock-free. Do not extend the claim across the whole service.
 
+State the progress assumptions of the atomic primitives as well as the algorithm. In particular,
+the [Java 8 atomic API contract](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/atomic/package-summary.html)
+permits internal locking on some platforms. For a hard nonblocking requirement, verify the target
+runtime/architecture instead of inferring primitive progress from atomicity or memory ordering.
+
 ## CAS loop
 
 ```java
@@ -125,6 +130,11 @@ Stamped/tagged references only enlarge the state space; finite stamps can wrap. 
 lag or use a reclamation/version design that remains safe. GC keeps reachable Java objects alive,
 which simplifies memory reclamation compared with manual memory, but off-heap/native structures and
 explicit pools restore use-after-free/reuse hazards.
+
+When using stamps, capture the reference and stamp together and define which transitions must
+change the stamp. Stamping does not make mutable node fields safe to reuse. Read
+[the stamped-reference protocol](references/lock-free-structures.md#stamped-reference-protocol)
+when reviewing coherent snapshots, version updates or pooled nodes.
 
 ## Structures and trade-offs
 

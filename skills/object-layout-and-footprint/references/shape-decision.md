@@ -82,10 +82,15 @@ a 4-byte reference in the backing array. Compact headers remove the header hole 
 to 36 — a genuine 18% cut, and one of the cases where the flag really does pay, because this
 payload's `p mod 8 = 0` (see `compact-object-headers.md` §1).
 
-**`ArrayList<Rec>` is `Rec[]` plus 24 bytes.** Presized, it is the array. Not presized, its
-backing array grows by 1.5× and can be up to 50% larger than needed — measure
-`GraphLayout.totalSize()` on the real thing, not on a presized model, if capacity is not
-controlled.
+**In the presized, compressed-oop table, `ArrayList<Rec>` is `Rec[]` plus 24 bytes.**
+Outside that fixture, count backing-array capacity separately from logical size. The pinned
+JDK 25 implementation prefers about 1.5× growth; this is neither an API guarantee nor a bound
+of 50% spare capacity. Initial capacity, explicit reservation and removals can leave much more.
+`clear()` nulls the elements but retains the array: its slots still cost bytes, while removed
+objects need another reference to remain reachable. Measure `GraphLayout.totalSize()` over
+the actual list, including its sharing and capacity history. For a long-lived sparse list,
+consider `trimToSize()` or rebuilding; if it will refill soon, weigh reallocation and copying
+before discarding useful capacity. Do not prescribe trimming after every batch.
 
 **The map rows pay for nodes, spare table capacity and boxes as well as payload.**
 `HashMap<Integer,Integer>` is **9.0×** two `int[]` under classic headers and **8.0×** under
@@ -162,6 +167,11 @@ a recommendation that ignores the following is not a recommendation:
   preserve every public read site; exposed arrays or object identity can make it much broader. The 20 bytes
   per element it saves are worth 800 MB at 40 M elements and 0.8 MB at 40 K; whether the
   latter matters depends on the actual budget.
+- **The final footprint does not bound the transition peak.** Array growth or nonempty
+  trimming allocates a replacement before discarding the old backing array; representation
+  conversion can keep both shapes alive. For a tight heap budget, account for overlapping
+  storage and temporary work, and consider bounded conversion rather than assuming the
+  smaller result fits during construction. Reclaimed bytes also depend on GC timing.
 - **`ClassLayout` is shallow.** Every deep number on this page came from
   `GraphLayout.totalSize()`. A shape holding `String` fields will have a deep footprint
   several times its shallow one — `new String("EUR")` is 24 shallow and 48 deep `[executed]`.
@@ -195,3 +205,7 @@ limits; do not manufacture a migration, a population, or a full comparison matri
    `jvm-performance-review`'s questions respectively.
 6. **Evidence that supports or could refute the estimate**: for example a bounded
    `GraphLayout.totalSize()` check under the target conditions when its uncertainty matters.
+
+Source for collection capacity behavior:
+[OpenJDK 25.0.3+9 ArrayList](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/ArrayList.java)
+— API growth-policy limits and the `grow`, `clear` and `trimToSize` implementations.

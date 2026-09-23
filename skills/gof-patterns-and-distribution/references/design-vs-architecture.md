@@ -28,8 +28,11 @@ service's availability, while distributed contracts need deployment and recovery
 | Singleton      | Leader election           | Grant and effect-authority contracts, failover and stale-owner handling      |
 
 The pattern in every row is a legitimate way to _implement part of_ the architectural thing. The
-error is treating them as the same decision, because the pattern's cost is a class and the
-architecture's cost is an operational commitment.
+error is treating them as the same decision: object collaboration does not establish the broader
+data, interaction or deployment contracts. Separate services are optional, not intrinsic to
+[CQRS](https://martinfowler.com/bliki/CQRS.html) or
+[event sourcing](https://martinfowler.com/eaaDev/EventSourcing.html); both can live within one
+application. Review the topology that actually exists or is proposed.
 
 ## Two worked distinctions
 
@@ -110,8 +113,14 @@ constraint enforced by module structure and an architecture test, not by a class
       Across replicas, define configuration version, rollout and consistency requirements.
 
 "We'll add a Proxy so the service call is transparent"
-    → transparency is the failure mode, not the feature.
+    → distinguish uniform invocation syntax from pretending remote effects are local.
+      Preserve a suitable interface when latency, deadlines, failure/unknown outcomes and
+      operation granularity are already explicit; adjust the missing contracts otherwise.
 ```
+
+The [Java 17 RMI object model](https://docs.oracle.com/en/java/javase/17/docs/specs/rmi/objmodel.html)
+retains ordinary method-call syntax while specifying remote argument and failure semantics.
+Uniform syntax alone neither proves nor breaks a distributed contract.
 
 Ask which operational guarantees the proposal needs. Add the distributed review when appropriate;
 keep relevant object-level correctness checks instead of replacing one vocabulary wholesale.

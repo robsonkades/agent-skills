@@ -77,6 +77,10 @@ headroom factor.
 - After reaching `corePoolSize`, `ThreadPoolExecutor` offers to its queue before growing toward
   `maximumPoolSize`. With an unbounded queue, normal submission therefore does not trigger
   non-core growth and the maximum is ineffective.
+- Before increasing a pool for low-CPU stalls, check whether all workers synchronously await
+  children queued to that same executor. A larger queue cannot release those worker slots;
+  treat dependency starvation as a liveness constraint, not a Little's Law sizing result.
+  See the worksheet for alternatives and `executors-and-task-lifecycle` for implementation.
 - `CallerRunsPolicy` creates synchronous feedback by executing on the submitter; it does not wait
   for queue capacity. Test submitter-role safety, reentrancy, ordering relative to queued work and
   event-loop/acceptor blockage. Inline tasks run outside the executor's worker-count bound;

@@ -64,7 +64,9 @@ headroom and latency goals may need no change.
    GC, so validate both rather than calling it intrinsically wrong.
 6. **For latency spikes with no matching GC pause, measure throttling**: `nr_throttled`
    over `nr_periods` from `cpu.stat`, at peak load, timestamp-correlated with the
-   client-side spikes.
+   client-side spikes. When memory pressure is plausible on cgroup v2, also inspect
+   `memory.high` and `high` event deltas: memory reclaim/throttling can occur without an OOM
+   or CPU-bandwidth throttling. See `references/reading-the-container.md`.
 7. **Re-measure the metric that motivated the change, under the same load.** A container
    change is not validated by the absence of the old symptom in a different run.
 
@@ -98,8 +100,9 @@ headroom and latency goals may need no change.
 - Require an explicit memory capacity policy. If the container has no memory limit, inspect
   inherited cgroup constraints and live heap sizing; host memory may drive ergonomics. Do
   not infer an exact 25% heap or absent effective limits from a missing manifest block alone.
-- Never set `-Xmx` numerically equal to `limits.memory`. That leaves zero headroom for
-  everything that is not heap.
+- Compare resolved heap and container capacity in bytes: HotSpot and Kubernetes suffixes
+  differ. Never assign the entire memory limit to `-Xmx`; equal byte values leave zero
+  budget for everything that is not heap. See the unit example in `references/sizing-heap-and-cpu.md`.
 - Reject any fixed multiplier over `Xmx` as a universal memory-limit rule. Native footprint
   is workload-dependent. Size from correlated heap, NMT, process RSS/PSS and cgroup charges
   at representative peaks, with restart/dump/traffic transients included.

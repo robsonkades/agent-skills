@@ -102,6 +102,10 @@ Prefer a startup probe instead when:
 - The probe endpoint must do no business work and have **no side effect**. It runs on every
   pod every `periodSeconds` forever: a query inside it is permanent background load, and a
   write inside it is a bug the kubelet triggers on a schedule.
+- HTTP probes interpret the response status, not the health JSON. A login page or a failed
+  health state mapped to HTTP 200 can falsely pass. When changing a probe, verify that the
+  intended unhealthy state fails through its actual path, port and security configuration;
+  see the status-mapping checks in `references/probe-and-shutdown-configuration.md`.
 - `timeoutSeconds` is part of the failure-detection budget. Derive it from the chosen
   bounded check's measured tail plus jitter, then decide how many consecutive misses justify
   action; "greater than worst case" is unusable when the worst case is unbounded.

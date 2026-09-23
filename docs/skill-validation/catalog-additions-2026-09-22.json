@@ -1,0 +1,322 @@
+{
+  "date": "2026-09-22",
+  "status": "complete",
+  "request": "Create the five previously proposed skills using subagents.",
+  "baselineCommit": "37b054b935ef9a38c317b05d2bb09b9bbfb9dba6",
+  "scope": {
+    "newPackages": 5,
+    "newPackageFiles": 25,
+    "initialVersion": "1.0.0",
+    "catalogBefore": 275,
+    "catalogAfter": 280,
+    "existingContentPreservation": {
+      "unchangedFiles": 1234,
+      "exactlyCheckedIntegrationFiles": 4,
+      "unrelatedChangesDiscarded": false
+    }
+  },
+  "integration": [
+    {
+      "skill": "java-application-security-basics",
+      "from": "1.3.3",
+      "to": "1.3.4",
+      "files": ["SKILL.md", "skill.yaml"],
+      "change": "Replace the external-only Spring skill statement with a catalog handoff and declare its suggestion."
+    },
+    {
+      "skill": "database-performance",
+      "from": "1.0.3",
+      "to": "1.0.4",
+      "files": ["SKILL.md", "skill.yaml"],
+      "change": "Replace the missing schema-rollout owner statement with a handoff and suggestion."
+    }
+  ],
+  "skills": [
+    {
+      "name": "java-date-and-time",
+      "owner": "/root/create_date_time",
+      "files": {
+        "SKILL.md": "Temporal meanings, type selection and routing",
+        "skill.yaml": "Package metadata",
+        "references/zones-and-calendar.md": "Zone ambiguity, calendar arithmetic and half-open date windows",
+        "references/parsing-and-persistence.md": "Parsing, serialization, JDBC and precision contracts",
+        "references/clocks-and-tests.md": "Clock injection and executable temporal checks"
+      },
+      "local": "Strict repository validation with Claude/Codex adapters, description and local-link checks, scoped Prettier; javac --release 17 and 18 temporal checks on Temurin 25.0.3 under default and Honolulu zones.",
+      "limitations": [
+        "Java17 runtime was not exercised.",
+        "Real serializer/driver/database integration was not executed."
+      ],
+      "version": "1.0.0",
+      "status": "validated",
+      "writesStopped": true
+    },
+    {
+      "name": "online-database-schema-migrations",
+      "owner": "/root/create_schema_migrations",
+      "files": {
+        "SKILL.md": "Coexistence, rollout gates and recovery decisions",
+        "skill.yaml": "Package metadata",
+        "references/ddl-and-runner-control.md": "Version-scoped DDL and migration-runner failure semantics",
+        "references/worked-rollout.md": "Race-safe PostgreSQL backfill, checkpoints and authority transfer"
+      },
+      "local": "Strict repository validation with both adapters, descriptions, links, suggestions and scoped Prettier; in-memory protocol model exercised row-lock orderings, uncertain commits and stale-copy/cursor/checkpoint counterexamples.",
+      "limitations": [
+        "The model does not validate SQL syntax, database concurrency or performance.",
+        "No database, application or Flyway/Liquibase runtime rehearsal was executed."
+      ],
+      "version": "1.0.0",
+      "status": "validated",
+      "writesStopped": true
+    },
+    {
+      "name": "spring-security-for-apis",
+      "owner": "/root/create_spring_security",
+      "files": {
+        "SKILL.md": "Servlet security workflow and scope",
+        "skill.yaml": "Package metadata",
+        "references/chains-and-browser.md": "Chain selection, method interception, CSRF and CORS",
+        "references/token-validation.md": "JWT/introspection trust and authority mapping",
+        "references/verification.md": "Test boundaries, fixture prerequisites and provenance",
+        "assets/SecurityContractCheck.java": "27 executable cases including real signed hostile JWTs"
+      },
+      "local": "Strict repository validation with both adapters, descriptions, links/anchors, suggestions and scoped Prettier; fixture compiled with javac --release 17 and passed 27 cases on Temurin25.0.3, Spring Security7.1.0 and Framework7.0.8 using cached dependencies.",
+      "limitations": [
+        "Java17 runtime, remote JWKS rotation/introspection, real browser and production ingress were not exercised.",
+        "The prior local java-skills package informed scope; no prose or code was copied because its redistribution license was not established."
+      ],
+      "version": "1.0.0",
+      "status": "validated",
+      "writesStopped": true
+    },
+    {
+      "name": "change-data-capture-operations",
+      "owner": "/root/create_cdc_operations",
+      "files": {
+        "SKILL.md": "Source CDC continuity, lag and recovery decision workflow",
+        "skill.yaml": "Package metadata",
+        "references/postgresql-continuity.md": "Slots, WAL retention and PostgreSQL failover",
+        "references/mysql-continuity.md": "Binlogs, GTID coverage and connector schema history",
+        "references/snapshots-and-resynchronization.md": "Snapshot restart and stale-key reconciliation"
+      },
+      "local": "Strict package validation, descriptions, local links/suggestions, scoped Prettier, JSON signal and positive/negative selector checks, and a stale-key reconciliation counterexample.",
+      "limitations": [
+        "Docker daemon was unavailable.",
+        "No live database SQL, Kafka or connector recovery was executed."
+      ],
+      "version": "1.0.0",
+      "status": "validated",
+      "writesStopped": true
+    },
+    {
+      "name": "java-build-and-dependencies",
+      "owner": "/root/create_java_build",
+      "files": {
+        "SKILL.md": "Scoped Maven/Gradle diagnosis and repairs",
+        "skill.yaml": "Package metadata",
+        "references/maven.md": "Effective models, mediation, scopes, plugins and reactor",
+        "references/gradle.md": "Configurations, selection and lock coverage",
+        "references/toolchains-and-reproducibility.md": "Launcher/compiler/runtime, wrapper trust and reproducibility"
+      },
+      "local": "Strict repository validation, descriptions, links/suggestions and scoped Prettier; isolated offline Maven3.9.15 reactor fixture verified management versus actual dependency ordering; JDK25 compiler probe rejected List.getFirst with --release17 while source/target17 accepted it.",
+      "limitations": [
+        "Gradle was unavailable; Gradle recipes were not executed.",
+        "Java17 runtime was not exercised."
+      ],
+      "version": "1.0.0",
+      "status": "validated",
+      "writesStopped": true
+    }
+  ],
+  "behavioralEvaluation": {
+    "type": "Independent output-only cases with explicitly loaded skills",
+    "caseCount": 5,
+    "passed": 5,
+    "comparison": "No no-skill comparison; no claim of measured improvement or automatic selection.",
+    "separation": "Fresh subagent conversations received only actor input and allowed skill resources. Criteria were fixed before execution and kept outside actor input. Filesystem separation was procedural in a shared workspace, not an enforced sandbox.",
+    "cases": [
+      {
+        "skill": "java-date-and-time",
+        "input": "Use java-date-and-time to review this design; return the concrete correction and decisive tests, without editing files. An export for a Berlin customer's local date 2024-10-27 reads rows stored as PostgreSQL timestamptz instants using start=day.atStartOfDay(zone).toInstant(), end=start.plus(Duration.ofHours(24)), and BETWEEN start AND end. A separate one-off appointment accepts 2024-10-27T02:30 with Europe/Berlin and persists input.atZone(zone).toInstant(); the UI asks for no offset. Tests change the machine's default time zone and sleep until midnight. Explain which choices are incomplete and what user intent cannot be inferred.",
+        "criteria": [
+          "Compute exclusive next local day's start in same region rather than 24h; interval is 25h for date.",
+          "Half-open filter avoids including next day's boundary.",
+          "Overlap is ambiguous; obtain defined earlier/later offset/user choice rather than silently pick. Preserve temporal intent.",
+          "Use injected Clock/fixed instants and explicit zone; tests for DST and exact boundaries without sleeps."
+        ],
+        "version": "1.0.0",
+        "result": {
+          "skill": "java-date-and-time",
+          "status": "passed",
+          "agent": "/root/evaluate_new_date",
+          "resources": [
+            "SKILL.md",
+            "references/zones-and-calendar.md",
+            "references/clocks-and-tests.md",
+            "references/parsing-and-persistence.md"
+          ],
+          "observations": [
+            "Computed [2024-10-26T22:00:00Z, 2024-10-27T23:00:00Z), a 25-hour Berlin day, from successive local dates.",
+            "Replaced BETWEEN with >= start AND < end and covered adjacent-export boundary duplication.",
+            "Identified both overlap instants, left the missing occurrence choice unresolved, and proposed explicit gap/overlap policy instead of assuming intent.",
+            "Proposed injected Clock and fixed inputs, separate-process zone checks, and real driver tests; explicitly reported no tests executed."
+          ],
+          "limits": "One output-only case with explicit skill loading; no application edits, automatic selection test, or no-skill comparison."
+        }
+      },
+      {
+        "skill": "online-database-schema-migrations",
+        "input": "Use online-database-schema-migrations to review this PostgreSQL17 rollout; return a staged plan without executing it. Orders have state_text NOT NULL. Add nullable state_code; mapping is NEW=10, PAID=20, VOID=30. V1 writes only state_text and runs for another week; V2 initially reads state_code with fallback to state_text. Proposed backfill copies mapped rows where state_code IS NULL in 1000-id chunks, then enables code-only reads once that count is zero. V1 updates and inserts continue throughout. The team wants to drop state_text next day but retain one-click rollback to V1. What must the migration establish before these switches, and how should a crash or unmapped old state be handled?",
+        "criteria": [
+          "Detect non-null backfill does not prevent stale destination when V1 changes existing row; define authoritative writer and compatible synchronization with races covered.",
+          "Check mappings, inserts, updates, null/unmapped/error paths and checkpoints with committed progress; reconciliation beyond count zero.",
+          "Require compatibility/version matrix and gates before cutover/drop; drop breaks promised V1 rollback.",
+          "Bounded transactions/lock budget and rehearsal; distinguish abort/retry, rollforward and restore without universal online claim."
+        ],
+        "version": "1.0.0",
+        "result": {
+          "skill": "online-database-schema-migrations",
+          "status": "passed",
+          "agent": "/root/evaluate_new_migrations",
+          "resources": [
+            "SKILL.md",
+            "references/ddl-and-runner-control.md",
+            "references/worked-rollout.md"
+          ],
+          "observations": [
+            "Exposed non-null but stale state_code after a V1 update and required an atomic old-authority bridge before backfill.",
+            "Required complete key coverage, same-transaction row/checkpoint commits, unknown-commit reconciliation, and a blocking exception policy for unmapped states.",
+            "Required exact mapping/non-null reconciliation and future-write enforcement; explicitly identified PostgreSQL CHECK null acceptance as an additional mapping hazard.",
+            "Separated read cutover, fenced writer transfer and contraction; rejected dropping state_text while promising unchanged V1 rollback, with bounded DDL/rehearsal gates."
+          ],
+          "limits": "One output-only rollout review; no SQL, migration runner or database rehearsal executed by the actor."
+        }
+      },
+      {
+        "skill": "spring-security-for-apis",
+        "input": "Use spring-security-for-apis to review this Spring Boot Servlet API design and propose a minimal correction plus tests; do not execute network or file mutations. The sole SecurityFilterChain is securityMatcher('/api/**'), csrf(disable), sessionCreationPolicy(STATELESS), anyRequest().authenticated(), oauth2ResourceServer(jwt(defaults)); issuer-uri is configured but no audience validator. Business controllers include /api/orders, /internal/reconcile and /actuator/health. The browser also supplies authentication through a cookie in this application's deployment. Tests for wrong audience and invalid signature use MockMvc jwt().jwt(j -> j.claim('aud','other-service')); all return 200. The team calls these JWT verification tests and says anyRequest secures every controller. Assess that conclusion and specify what evidence is still needed.",
+        "criteria": [
+          "anyRequest scoped to selected chain; uncovered routes require explicit policy and fallback/deny while health deliberate.",
+          "jwt() mock bypasses decoder so invalid signature/audience not tested; require real bearer-token path/decoder tests with signed invalid fixtures.",
+          "Issuer insufficient for intended audience; configure justified audience validator without blanket permit bypass.",
+          "Stateless doesn't eliminate cookie/browser CSRF risk; inspect actual auth chain/transport and CSRF/CORS contract; distinguish statuses from decoder coverage."
+        ],
+        "version": "1.0.0",
+        "result": {
+          "skill": "spring-security-for-apis",
+          "status": "passed",
+          "agent": "/root/evaluate_new_security",
+          "resources": [
+            "SKILL.md",
+            "references/chains-and-browser.md",
+            "references/token-validation.md",
+            "references/verification.md"
+          ],
+          "observations": [
+            "Identified chain-scoped anyRequest and uncovered controllers, proposing explicit route policy and deny fallback with management-context qualification.",
+            "Explained jwt() injection bypasses decoder/signature validation, retained authorization tests, and proposed real signed hostile bearer-token tests.",
+            "Required intended audience while preserving issuer/time/signature/profile validators and checking effective Boot/custom-decoder wiring.",
+            "Recognized cookie-based CSRF risk despite STATELESS, required actual cookie-path tests and no forbidden side effects, and qualified 401/403 behavior."
+          ],
+          "limits": "One output-only security review; no application mutations, real provider, browser or production ingress exercised."
+        }
+      },
+      {
+        "skill": "change-data-capture-operations",
+        "input": "Use change-data-capture-operations to plan recovery, without running commands. A PostgreSQL17 primary lost a logical slot after failover; the Debezium connector version and failover-slot setup have not yet been retrieved. Kafka Connect stored an old source offset whose WAL no longer exists. A materialized search index keeps previously observed row IDs. During the outage rows were updated and some deleted. A proposal deletes the Connect offsets, resets the downstream Kafka consumer to earliest, starts an initial snapshot into the existing sink, and declares the connector's MySQL-style schema-history topic sufficient to make recovery exactly once. What should be investigated and which recovery contract is needed?",
+        "criteria": [
+          "Treat missing WAL as continuity loss; preserve source/offset/failover evidence, do not silently delete offsets/slots.",
+          "Connector offsets separate from Kafka consumer offsets; schema history connector-specific and PG not assumed MySQL topic.",
+          "Snapshot current rows doesn't convey offline deletes; rebuild isolated generation/compare reconcile or proven alternate log path before cutover.",
+          "Duplicates/sink replay effects/idempotence/validation required; no unproven exactly once; version-specific failover and retention observability."
+        ],
+        "version": "1.0.0",
+        "result": {
+          "skill": "change-data-capture-operations",
+          "status": "passed",
+          "agent": "/root/evaluate_new_cdc",
+          "resources": [
+            "SKILL.md",
+            "references/postgresql-continuity.md",
+            "references/snapshots-and-resynchronization.md"
+          ],
+          "observations": [
+            "Classified expired WAL as a source-continuity gap, preserved evidence, and required actual connector/failover configuration rather than assuming PostgreSQL17 was sufficient.",
+            "Separated Connect source offsets from downstream consumer positions and rejected MySQL-style schema-history repair for PostgreSQL.",
+            "Proposed a fresh index generation or explicit stale-key reconciliation, snapshot-to-stream continuity, writer fencing and validation at a common logical boundary.",
+            "Separated current-state rebuild from complete event history and required a sink effects contract before any exactly-once claim."
+          ],
+          "limits": "One output-only case; no live connector, database, Kafka or search-index operation."
+        }
+      },
+      {
+        "skill": "java-build-and-dependencies",
+        "input": "Use java-build-and-dependencies to diagnose this release review and give targeted evidence commands with the smallest justified changes, without executing a build. A Maven service imports a BOM managing acme-codec2.4, but dependency:tree shows acme-codec1.9 directly declared in a child POM. A Maven code-generation plugin also embeds acme-codec1.6. The service sets source=17,target=17, runs Maven/tests on JDK25, and produces a class-file-version61 artifact which fails on JDK17 after calling a newer JDK API. A sibling Gradle build uses lockAllConfigurations() and a fixed 1.0-SNAPSHOT coordinate; its authors claim this also locks buildscript dependencies and proves identical artifact bytes. Explain which proposed guarantees hold and how to verify the fixes.",
+        "criteria": [
+          "Directexplicit Maven version not overridden by imported managed version; inspect effectivePOM/graph origin; BOM doesn'tadddependency.",
+          "Plugin dependencyclassloader separate; application dependencyManagement not generic pluginclasspath fix.",
+          "source/target/classmajor don't restrict available APIs; release17 plus supportedruntime/toolchain tests, separate launcher/testruntime.",
+          "Gradle lock activation/configuration and buildscript distinct; SNAPSHOT changingbytes not fixed by versionlock; checksums/provenance/reproducibility separate."
+        ],
+        "version": "1.0.0",
+        "result": {
+          "skill": "java-build-and-dependencies",
+          "status": "passed",
+          "agent": "/root/evaluate_new_build",
+          "resources": [
+            "SKILL.md",
+            "references/maven.md",
+            "references/gradle.md",
+            "references/toolchains-and-reproducibility.md"
+          ],
+          "observations": [
+            "Identified explicit child version overriding the BOM default, retained dependency inclusion, and proposed effective-model/graph evidence before a targeted compatible change.",
+            "Separated application and plugin dependency graphs, and distinguished ordinary plugin dependencies from bundled/shaded codec classes.",
+            "Explained why class major61 plus source/target17 still permits newer JDK APIs, and required release17 plus actual target-runtime verification.",
+            "Rejected whole-build/byte reproducibility claims from locks, distinguished project/buildscript coverage and mutable SNAPSHOT bytes, and proposed separate integrity/output checks."
+          ],
+          "limits": "One output-only diagnosis; no commands executed. Versioned Gradle web pages failed for the actor, which used current official equivalents and explicitly required matching the actual wrapper."
+        }
+      }
+    ]
+  },
+  "validation": {
+    "packageValidation": {
+      "newPackages": 5,
+      "issues": 0,
+      "adapters": ["codex", "claude-code"],
+      "allShippedFilesInspected": true
+    },
+    "registryBuild": {
+      "command": "npm run registry:build",
+      "exitCode": 0,
+      "skills": 280
+    },
+    "verify": {
+      "command": "npm run verify",
+      "exitCode": 0,
+      "tests": 355,
+      "suites": 67,
+      "passed": 355,
+      "failed": 0,
+      "skipped": 0,
+      "checks": [
+        "build",
+        "architecture boundaries",
+        "lint",
+        "format",
+        "registry consistency",
+        "version bumps",
+        "tests"
+      ]
+    },
+    "preservation": {
+      "command": "node .codex/create-five-validate.mjs --index",
+      "exitCode": 0,
+      "unchangedPreviousIndexEntries": 273,
+      "intentionalUpdatedPreviousIndexEntries": 2,
+      "newIndexEntries": 5
+    },
+    "alternateValidator": "Python quick_validate.py was unavailable; strict repository loader/validator and metadata/link checks ran instead."
+  }
+}

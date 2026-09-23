@@ -23,9 +23,12 @@ UPDATE customer
 ```
 
 - An update count of 0 is not automatically success: distinguish stale/duplicate from missing
-  target, equal-version conflict and a future gap by reading authoritative state or using a
-  richer conditional statement/result. A stale snapshot may be acknowledged; a missing
-  required transition may need repair.
+  target or equal-version conflict by reading authoritative state or using a richer conditional
+  statement/result. A stale snapshot may be acknowledged; a missing target needs the defined
+  insertion/recovery path.
+- This newer-than predicate accepts jumps, such as v3 replacing v1; it does not detect a missing
+  v2. That is intentional for complete snapshots with skippable intermediate effects. It is
+  not a substitute for a contiguous-sequence guard when every transition must be applied.
 - The comparison must be in the same statement as the write. Read-then-compare-then-write
   reintroduces the race between concurrent consumers that the guard exists to remove.
 - This is not JPA's `@Version` optimistic locking, which _rejects the stale writer_ so it can
@@ -85,28 +88,39 @@ The table is illustrative Java 9+ initialization, not a complete transition hand
 state/version checks atomically with writes. A retained terminal state or versioned tombstone
 can reject a late create; physical deletion of both state and watermark loses that protection.
 Retain recovery metadata for the replay horizon and define legitimate recreation by epoch.
-**Distinguish stale from early** — they need opposite responses:
+**Classify sequence position before transition legality.** The table below assumes contiguous
+per-key event versions and a checkpoint for a fully applied prefix in the same source epoch.
+If versions are merely monotonic or the consumer filters events, obtain predecessor/gap
+semantics from the authority; `current + 1` alone cannot distinguish a lost event from an
+intentional numeric gap.
 
-| Situation                                  | Test                                                           | Response                                                |
-| ------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- |
-| Stale — its effect is already applied      | `version < current`, or equal with verified same event/payload | Drop and acknowledge                                    |
-| Early — its predecessor has not arrived    | `version > current + 1`, or gap                                | Park briefly and re-check, or resync from the authority |
-| Illegal — no such transition exists at all | Not in `LEGAL`                                                 | Park and alert; this is a bug or a corrupt producer     |
+| Situation                                | Test                                                                    | Response                                                         |
+| ---------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Stale — covered by the applied prefix    | `version < current`; equal version requires matching event/payload      | Acknowledge covered replay; quarantine conflicts                 |
+| Early — its predecessor has not arrived  | `version > current + 1`                                                 | Park boundedly; recover predecessors, then reassess              |
+| Next — valid transition                  | `version == current + 1` and transition is in `LEGAL` for current state | Apply with atomic state/version guard; honor the effect contract |
+| Illegal — invalid after its predecessors | `version == current + 1` but transition is not in `LEGAL`               | Park and investigate the producer or contract mismatch           |
 
-Rejecting an _early_ record as if it were stale loses it permanently, which is the usual way
-this technique is implemented wrongly.
+For example, `NEW@1` receiving `SHIPPED@3` before `PAID@2` is an early record, even though
+`NEW -> SHIPPED` is absent from `LEGAL`. Recover and apply v2, then reassess v3 against `PAID`.
+Receiving `SHIPPED@2` at the same `NEW@1` checkpoint is a different case: no predecessor is
+missing under this sequence contract, so the transition itself is invalid. Without trustworthy
+sequence evidence, current-state rejection alone cannot prove the producer is corrupt.
+Dropping an early record as stale loses it; replacing state from a snapshot also does not
+replay missing required effects.
 
 ## Choosing between them
 
 | Technique           | Requires                                                   | Gives up                                           |
 | ------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
-| Version guard       | Complete snapshots plus atomic authoritative version guard | Intermediate states — only the newest is observed  |
+| Version guard       | Complete snapshots plus atomic authoritative version guard | Some intermediate states may be skipped            |
 | Commutative handler | Commutative merge plus duplicate-safe application          | Required merge/dedup metadata; domain constraints  |
 | LWW                 | A comparable version or a trusted clock, plus a tie-break  | Concurrent updates, silently                       |
 | State machine       | A closed status set and a transition table                 | Freedom to add states without revisiting the table |
 
 These techniques relax different requirements. Version guard/LWW can preserve newest final
-state while discarding intermediates; a state machine detects gaps but may need ordered repair;
+state while discarding intermediates; ascending deliveries can still expose every intermediate
+snapshot. A state machine with sequence evidence detects gaps but may need ordered repair;
 only a genuinely commutative, associative and duplicate-safe merge is independent of order for
 its declared outcome. Key choice can change only after checking every required effect and
 recovery path.

@@ -62,7 +62,7 @@ omits and code cannot omit — the compiler will make you choose, so choose deli
 
 > **Ticket:** "Users should be able to export their orders to CSV. Should be fast."
 
-Eight questions where the answers change the work:
+Nine questions where the answers change the work:
 
 1. **Which orders** — all of them, or a date range? This defines selection and helps estimate
    work; the range alone does not decide the architecture. _(scope, quantity)_
@@ -79,9 +79,14 @@ Eight questions where the answers change the work:
 6. **Decimal and delimiter conventions** — `1,234.56` needs quoting in comma-delimited CSV;
    correctly quoted commas do not break the format. Is the audience one locale or several,
    and how are quotes/newlines handled? _(boundary)_
-7. **May a user export another user's orders?** Presumably not — but is there an admin who
+7. **Which consumers, and which fields are untrusted?** A spreadsheet may interpret a
+   customer-supplied value such as `=1+1` as a formula even when correctly CSV-quoted.
+   Identify supported applications/import flows and the required treatment of such values.
+   Prefixing or changing text for a spreadsheet can break lossless machine imports; do not
+   silently choose one contract for both. _(boundary, authority)_
+8. **May a user export another user's orders?** Presumably not — but is there an admin who
    can, and is the export audited? _(authority)_
-8. **What happens if the export fails halfway** — partial file, error, retry? _(failure)_
+9. **What happens if the export fails halfway** — partial file, error, retry? _(failure)_
 
 Inspect existing exports and supported consumers before choosing these defaults:
 
@@ -91,12 +96,16 @@ Inspect existing exports and supported consumers before choosing these defaults:
 
 These choices change bytes or code. They may still be reasonable reversible assumptions
 when evidence and delegated scope support them; document the basis, and ask if consumer
-compatibility materially depends on an unresolved answer. The eight questions are an
-inspection guide, not eight questions automatically sent to the user.
+compatibility materially depends on an unresolved answer. The nine questions are an
+inspection guide, not nine questions automatically sent to the user.
 
 [CSV format reference: RFC 4180](https://www.rfc-editor.org/rfc/rfc4180.html#section-2)
 documents quoting and headers; consumer encoding and spreadsheet behavior require their own
 compatibility checks.
+[OWASP CSV Injection](https://community.owasp.org/attacks/CSV_Injection) explains why CSV
+quoting and spreadsheet formula handling are separate concerns. No single sanitization rule
+fits every consumer; confirm any transformation against the agreed data-fidelity contract
+and supported opening, import and save/reopen workflows.
 
 ## When to ask and when to proceed
 

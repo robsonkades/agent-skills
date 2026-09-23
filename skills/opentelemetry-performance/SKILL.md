@@ -96,6 +96,9 @@ Tail policy cannot recover spans dropped or not exported upstream. Retaining all
 requires those candidate traces to reach it; combining low-rate head sampling with tail
 error rules only retains errors in the surviving population.
 
+Before changing tail strategy or processor order, verify that policy evidence and
+receiver-dependent enrichment survive; see `references/sampling-and-config.md`.
+
 Sampling policies change the dataset. Preserve decision metadata and use unbiased
 probabilistic coverage when population estimation matters.
 

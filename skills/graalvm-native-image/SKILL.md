@@ -103,7 +103,8 @@ new binary, capture or canary. Test and rollout gates apply when producing or pr
 - **Reachable is not the same as dynamically accessible.** Static analysis can include a class
   while omitting reflective members, JNI access, serialization constructors, proxies, foreign
   access, or resources. Prefer narrow conditional metadata and validate against the schema shipped
-  with the target release. Broad `allDeclared*` entries can hide gaps and inflate the image.
+  with the target release. For `typeReached`, verify activation before the first dynamic access;
+  inclusion alone is insufficient. Broad `allDeclared*` entries can hide gaps and inflate the image.
 - **Treat agent output as evidence, not specification.** Merge runs from representative tests;
   review diffs; remove caller noise; retain deterministic hand-authored entries for intentional
   contracts. A health-check-only trace is not coverage.
@@ -153,7 +154,7 @@ Build fails or is OOM-killed
 
 Binary fails only on one path
   -> enable exact metadata handling and missing-registration reporting
-  -> distinguish absent metadata from genuinely absent class/resource/native library
+  -> distinguish absent metadata, inactive condition, and absent class/resource/native library
 
 Binary starts on CI but not production
   -> compare target CPU, OS/libc, linked libraries, class-initialized state and secrets/config

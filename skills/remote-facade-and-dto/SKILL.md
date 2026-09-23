@@ -138,6 +138,10 @@ One client needs a screen-shaped payload and others do not
 - The facade is also the natural place for boundary-only concerns: coarse authorisation for
   the operation, request validation, translation of domain failures into the protocol's
   error shape, and idempotency-key handling (`idempotency`).
+- Verify validation through the actual binding path. For batches, distinguish invalid request
+  envelopes from invalid individual items; request-level cascading must not accidentally
+  replace a per-item outcome contract. An annotation on a root collection alone is not proof
+  that its elements are validated; see the Remote Facade reference for Spring MVC examples.
 - **Make the serialized representation explicit.** With persistence-backed sources, test
   schema/contract independence, lazy access and sensitive/nested field exposure separately.
   A dedicated response type makes these controls visible; a tested serializer allowlist or

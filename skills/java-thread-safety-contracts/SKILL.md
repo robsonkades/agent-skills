@@ -88,6 +88,17 @@ For multi-field state, choose and document one consistency model:
 - versioned optimistic read with validation/retry;
 - deliberately weak/approximate observation with acceptable outcomes.
 
+With immutable aggregates, each logical reader captures the reference once and reads related fields
+from that object; repeated volatile reads or `get()` calls can mix versions. Publication does not
+coordinate a read-modify-write sequence: volatile assignment or `AtomicReference.get()` followed by
+`set()` can overwrite another writer's derived change. Use one serialized writer, a lock covering
+the whole transition, or an atomic CAS/update operation. Independent replacements may use
+last-writer-wins only when the contract permits it; they do not merge concurrent changes.
+
+Keep retrying atomic updater functions side-effect-free: contention may invoke them again. Never
+mutate the previously published aggregate. If an external effect must agree with the state change,
+define its commit/failure protocol; moving it after CAS alone does not make the two atomic.
+
 ## Lock identity and scope
 
 Private locks protect encapsulation and allow implementation change, but public/intrinsic locks can
@@ -195,5 +206,6 @@ Apply these checks to the supported operations and lifecycle, not hypothetical f
 - [Lock scope, callbacks and deadlock](references/lock-scope-and-alien-calls.md) — when moving work across a lock or reviewing a wait-for graph.
 - [Lazy initialization state machines](references/lazy-initialisation.md) — when choosing initialization, retry or close-race semantics.
 - [Java concurrency API memory effects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html#MemoryVisibility)
+- [AtomicReference update contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html) — when choosing atomic aggregate updates or reviewing retrying functions.
 - [JLS 17](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [JEP 491](https://openjdk.org/jeps/491)

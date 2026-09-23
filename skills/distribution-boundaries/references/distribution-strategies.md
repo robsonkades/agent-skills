@@ -81,8 +81,13 @@ an explicitly supported distributed transaction; these mechanisms offer differen
 
 ### Outbox — makes the local write and publication intent atomic
 
-Partial Spring-style Java snippet: both repositories must enlist in the same database
-transaction, and invocation must actually pass through the configured transaction boundary.
+Partial imperative Spring-style Java snippet; domain types and framework setup are omitted.
+Both repositories must enlist in the same database transaction, and invocation must actually
+pass through the configured transaction boundary. Failures that prevent recording the outbox
+entry must roll back the order write. Spring's default rules cover `RuntimeException`/`Error`,
+not checked exceptions; inspect applicable rollback rules when adapting the example. Do not
+swallow a failure and commit an incomplete unit: propagate it under a matching rollback rule
+or mark the transaction rollback-only (`enterprise-transactions`).
 
 ```java
 @Transactional
@@ -95,8 +100,10 @@ public OrderId place(PlaceOrderCommand command) {
 }
 ```
 
-Both rows commit together; this records a recoverable publication intent, not atomic broker
-delivery. A relay that retries committed rows can publish at least once subject to durable
+Under those conditions, both rows commit together; this records a recoverable publication
+intent, not atomic broker delivery. Verify with the actual transaction manager and database:
+inject serialisation or outbox-persistence failure after saving the order and confirm neither
+row commits. A relay that retries committed rows can publish at least once subject to durable
 storage and eventual recovery. Even one relay can crash after publishing but before marking
 the row sent, then publish again. Coordinate competing relays and tolerate duplicates at the
 business effect (`idempotency`, `delivery-semantics`). Monitor backlog and retention.
@@ -161,6 +168,7 @@ One request producing N downstream calls is where remote latency becomes visible
 
 ## Sources
 
+- [Spring 6.2 declarative rollback rules](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/rolling-back.html): default exception handling and explicit rollback rules; verify the target project's configuration.
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html): dual-write gap and duplicate publication.
 - [Azure saga pattern](https://learn.microsoft.com/en-us/azure/architecture/patterns/saga): compensable, pivot and retryable transactions; lack of global isolation.
 - [Fowler on event-driven patterns](https://martinfowler.com/articles/201701-event-driven.html): notification, hidden workflow coupling and state transfer.

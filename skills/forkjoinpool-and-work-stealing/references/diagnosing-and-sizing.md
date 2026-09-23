@@ -81,9 +81,15 @@ overloaded dependency.
 ## Failure and shutdown tests
 
 - Throw from one child before/after its sibling and assert who observes it.
-- Interrupt/cancel a long leaf and measure residual work; do not assume interruption.
-- Inject worker-factory failure or compensation saturation in a dedicated test pool.
-- Close a dedicated pool with queued/running work and verify task ownership.
+- Cancel tasks created by the actual submission path after observing body entry. Compare plain
+  `submit`, a supplied `ForkJoinTask`, and explicit interruptible adapters where supported; record
+  the submitting context, interruption and a separate body-exit signal, not just `isCancelled()`.
+- Inject worker-factory failure or compensation saturation in a dedicated test pool. For a pool
+  with parallelism, maximum size and minimum runnable all set to 1, check that a managed wait can
+  fail in the accepted task before `block()` runs. Ensure test cleanup has an independent releaser.
+- Close a dedicated pool with queued/running work. Interrupt the closing owner and verify queued
+  cancellation, continued waiting for active bodies, and restored interrupt status after exit.
+  Use a bounded independent releaser so the test itself cannot wait forever.
 - Exercise helping from an external caller with owned tasks and a bounded independent releaser;
   observe the executing thread and body exit rather than inferring preemption from a wait timeout.
 - Demonstrate that common-pool `shutdown()` has no effect and that process exit can end daemon work.

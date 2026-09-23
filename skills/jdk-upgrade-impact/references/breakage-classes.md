@@ -69,8 +69,15 @@ The judgement:
 - **Adding one is legitimate as a bridge.** Something you do not control has not caught up.
 - **Each needs a recorded owner and reason**, because the set only grows otherwise. A dozen of
   them is not a configuration, it is an unaddressed upgrade.
-- **The real fix is upstream**, or a supported replacement API — `VarHandle` for the access modes,
-  the FFM API for native memory, `MethodHandles.Lookup` for the reflective cases.
+- **Prefer an upstream correction or a supported API for the actual operation.** `VarHandle`
+  covers supported field/array access modes; FFM covers native memory (the final API requires
+  JDK 22+); `MethodHandles.Lookup` covers access its caller is entitled to perform. Check the
+  project's minimum JDK and required semantics before choosing a replacement.
+- **Lookup does not bypass encapsulation.** Across modules, `privateLookupIn` requires a caller
+  lookup with `PRIVATE` and `MODULE` access, a caller module that reads the target module, and
+  the target package opened to the caller. An export alone is insufficient. Within one module
+  no cross-module opening is needed, but the lookup privileges still matter. A switch from
+  reflection to method handles cannot by itself remove an existing need for package opens.
 - Where the dependency is dead and unreplaceable, that is an architectural decision, not a flag
   decision, and belongs in an ADR.
 
@@ -129,3 +136,8 @@ Consequences:
 - Their support for a new release frequently arrives after the release does. That constraint sets
   the upgrade date, and finding it early is worth more than any other item on this list.
 - An APM or instrumentation agent is in this class and is usually operated by a different team.
+
+## Primary references
+
+- [JDK 25 MethodHandles.privateLookupIn](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.html#privateLookupIn(java.lang.Class,java.lang.invoke.MethodHandles.Lookup)>) — lookup privileges, readability and package openness.
+- [JDK 22 Foreign Function and Memory API](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/package-summary.html) — standard API baseline and supported operations.

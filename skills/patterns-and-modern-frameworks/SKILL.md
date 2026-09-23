@@ -75,7 +75,8 @@ Not provided — you must design it
    value objects and DTOs, sealed interfaces for closed hierarchies, exhaustive switch for
    dispatch.
 5. **Do not force a modern idiom where it changes the pattern's intent.** A record cannot be
-   a mutable aggregate root; a sealed hierarchy is not a plugin point.
+   a mutable aggregate root; sealing must preserve required plugin extension points, possibly
+   through an intentional `non-sealed` branch.
 6. **When a pattern looks obsolete, separate the idea from its implementation.** Most
    classical patterns have been absorbed, not refuted — the idea still explains the
    framework's behaviour.
@@ -140,9 +141,10 @@ A pattern appears obsolete
 - Records are often effective for immutable values, DTOs, commands and events. They are not JPA
   entities and do not fit aggregates that require in-place mutation/proxying, but aggregate state is
   not mutable “by definition”; immutable replacement/event-sourced models exist.
-- Sealed interfaces plus exhaustive `switch` give a closed hierarchy with compile-checked
-  handling. That is better than a Special Case subclass where callers must distinguish, and
-  worse where they must not (`enterprise-base-patterns`).
+- Sealed interfaces plus exhaustive `switch` can give compile-checked handling of known
+  alternatives. An open `non-sealed` branch is handled collectively; the compiler does not
+  require a case for every plugin implementation. Distinguish variants when callers need it; preserve
+  uniform Special Case behavior when they do not (`enterprise-base-patterns`).
 - Virtual threads make thread-per-task blocking designs competitive for I/O-heavy Java services;
   they do not make them a universal default. Pinning, native calls, downstream capacity, memory and
   framework support still decide. They change none of

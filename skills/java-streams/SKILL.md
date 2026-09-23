@@ -69,7 +69,8 @@ pipeline cleanup. Examples are partial snippets with application types and impor
   null/mutability contract rather than mechanically replacing it with `toList()`.
 - `Collectors.toMap` without a merge function deliberately rejects duplicate keys; use it when
   uniqueness is an invariant and test the failure. Supply a keep/merge policy only when duplicates
-  are valid. Current JDK implementations also reject null mapped values through merge mechanics;
+  are valid. A merge function returning null removes the mapping; it does not simply skip the
+  incoming value. Current JDK implementations reject null mapped values;
   do not depend on implementation-specific null tolerance—normalize, use a suitable custom
   collector/map, or write an explicit loop.
 - Give `groupingBy` an explicit downstream collector whenever the group is not a plain list —
@@ -85,10 +86,14 @@ pipeline cleanup. Examples are partial snippets with application types and impor
   adequate existing `Stream` contract; changing a public return type is not a syntax cleanup.
 - A stream backed by a resource is a resource. `Files.lines`, `Files.walk`, `Files.list`,
   `Files.find` hold open resources; JDBC/JPA result streams may hold a cursor/connection depending
-  on driver/provider and execution mode. Resource-backed streams
-  belong in `try`-with-resources and their Javadoc must say so — see java-resource-management.
+  on driver/provider and execution mode. Resource-backed streams need an explicit closing owner,
+  usually `try`-with-resources, documented in their Javadoc — see java-resource-management.
   Terminal traversal does not itself close the stream. When ownership transfers to a caller,
   keep the resource alive through consumption and let that owner close it, including on failure.
+  `flatMap` closes each mapped stream it consumes; create those streams lazily in the mapper and
+  return them open, rather than returning from inside a try-with-resources that already closes them.
+  This does not close an independently resource-backed outer source. Pre-opened inner streams
+  never reached by traversal still need an owner; `map` alone does not transfer closing ownership.
   If a repository stream depends on a transaction-bound cursor, consumption must finish inside
   that transaction; verify the provider contract rather than assuming every repository stream does.
 - Streams are lazy: traversal work starts at a terminal operation, and short-circuiting operations

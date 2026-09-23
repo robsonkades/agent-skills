@@ -100,6 +100,10 @@ Blocks       <phases/resources, or none with reason>
 
 Unknown authority, contract ownership, or mandatory security/compliance obligations cannot be waived by
 an unrelated role. A readiness gate may still reject an otherwise valid gap.
+Until acceptance is established, track the unresolved matter as `U-*` or `Q-*`, rather than an accepted
+`GAP-*`. Acceptance preserves the missing evidence or residual consequence; it cannot satisfy an unmet
+Required criterion, turn a failed check into a pass, or make a resource DONE. A change to delivery
+scope requires an authorized baseline revision.
 
 ## Revision and invalidation
 
@@ -134,3 +138,8 @@ Every independent readiness pass returns one status, reasons, affected IDs, and 
 Only the first two advance. A return status reopens a focused phase and produces a new snapshot when
 resolved. State the scope of each gate: a blocked resource does not block an unrelated ready resource,
 and a partial pass is not a pass for the entire feature.
+
+These are readiness outcomes, not completion or deployment authorization. At completion, use
+feature-readiness-review to report Complete: yes/no for the accepted baseline, trace Required
+criteria to observed passing `EV-*`, and identify remaining work or unverified criteria. A readiness
+PASS WITH ACCEPTED GAPS does not carry forward as proof that the feature is complete.

@@ -179,6 +179,50 @@ in an isolated environment. Check accepted versus completed work, valid degraded
 freshness, backlog limits and recovery. A happy-path trace shows an invocation, not its
 necessity; an error response after timeout is not proof of independence.
 
+### Preserve the completion condition
+
+Annotate required groups as **all-of**, **any-of** or **k-of-n**, with the operation and
+eligible participants. Keep replica detail below the logical service when that is the chosen
+map granularity; three replicas do not automatically mean three application release units.
+An alternative dependency is not absent merely because one peer can be removed successfully.
+
+For example, a quote may require `Inventory AND (Pricing-A OR Pricing-B)`. Under that stated
+contract, losing Inventory alone or losing both pricing providers prevents completion;
+losing just Pricing-A need not. Replacing OR with AND overstates the dependency, while removing
+both pricing edges after separate successful outage tests understates it. This expression is
+an illustrative success condition, not executable code or a quantum-count formula.
+
+Check that the alternatives actually satisfy the same outcome and can be selected within the
+deadline. Failover capacity, data freshness, credentials and a shared discovery/database failure
+can make an apparent OR ineffective. “Healthy process” is not equivalent to a valid result.
+For quorum groups, record membership, required acknowledgments and the operation's consistency
+contract; enough live processes alone does not establish connectivity, leadership or progress.
+An optional call may still cause resource contention, so record shared-capacity exposure even
+when its response is not required for the business outcome.
+
+Validate the discriminating failure combinations in isolation: one alternative absent, all
+eligible alternatives absent, and the relevant quorum-loss case. Record the combinations
+actually covered; do not require exhaustive outage testing or infer an estate availability
+number from a Boolean diagram. Common failures and capacity limits need their own evidence.
+
+### Qualify the operating phase and horizon
+
+Record whether each finding covers steady-state serving, cold start, scaling or recovery.
+A running service may use cached routes while a replacement must reach discovery to start.
+Credential expiry, cache freshness or backlog capacity can also end a temporary tolerance
+window. Test a representative restart/recovery path during the dependency outage, and the
+limiting expiry/exhaustion condition where applicable. A successful five-minute warm test
+supports only that population, phase and horizon; it does not prove independent recovery.
+Keep startup prerequisites on the structural view even if warm request traces omit them.
+
+Sources checked 2026-09-19: [etcd v3.6 FAQ](https://etcd.io/docs/v3.6/faq/#what-is-failure-tolerance)
+documents majority requirements for cluster progress; apply the actual operation/membership
+contract rather than transferring one quorum rule to every read or datastore.
+[AWS's static-stability account](https://aws.amazon.com/builders-library/static-stability-using-availability-zones/)
+distinguishes running data-plane behavior from control-plane needs when launching replacements.
+The completion notation and proposed fault cases above are analytical conventions, not a
+measured availability model or a claim about a system whose behavior has not been inspected.
+
 Historical metrics usually suit periodic review. Runtime monitors, pre-deployment checks and
 CI contract tests can each enforce a defined property; there is no universal “never a gate”
 rule. Choose freshness, failure policy and ownership with `architecture-fitness-functions`.

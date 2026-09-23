@@ -51,7 +51,9 @@ enum, lookup, switch or external encoding rather than turning every review into 
    masks/encodings through explicit conversion, including any unknown-bit forwarding policy.
 5. **Decide the external representation explicitly** before the first release: an explicit
    code field for storage and wire, `name()` only when you accept that renaming a constant is
-   a breaking change.
+   a breaking change. Verify accepted token types and coercions as well as code values: a
+   textual JSON representation does not by itself disable ordinal-number decoding. See
+   `references/enums-across-boundaries.md` for mapper-specific checks.
 6. **Plan for a consumer that does not know a constant yet.** Independently deployed producers
    and consumers can know different values; decide whether that is an error, a
    fallback, or a rejected message.

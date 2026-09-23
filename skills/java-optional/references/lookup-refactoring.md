@@ -60,16 +60,22 @@ public BigDecimal effectivePrice(String customerId, String sku) {
 
 `or` keeps the fallbacks lazy — the contract lookup (a repository call) happens only when
 no promotion exists. `orElse`-style eager evaluation here would query all three sources
-on every call. The return type is now `BigDecimal`, never null: callers lose the
+on every call. The return contract is now a non-null `BigDecimal`: callers lose the
 possibility of handling absence, which is the point — absence was never theirs to handle.
 
 ## Where null stays
 
 Inside the catalogue adapter, the per-request path hits an in-memory index thousands of
-times per pricing batch:
+times per pricing batch. This fixture loads the index once and accepts non-null SKU inputs.
+Its `CatalogueAdapter` constructor rejects null keys and prices, so `lookup` returns null
+only for an absent SKU:
 
 ```java
-private final Map<String, Price> index;         // built at load time
+private final Map<String, Price> index;
+
+CatalogueAdapter(Map<String, Price> loadedIndex) {
+    this.index = Map.copyOf(loadedIndex);       // reject invalid entries at load time
+}
 
 @Nullable
 private Price lookup(String sku) {              // private, hot, locally checked
@@ -80,6 +86,10 @@ public Optional<Price> listPrice(String sku) {  // Optional at the boundary only
     return Optional.ofNullable(lookup(sku));
 }
 ```
+
+`Map.copyOf` (Java 10+) also fixes the mappings at construction; later changes to the input map
+are not reflected. Use that choice only for a snapshot contract, not for an index required to
+reflect live updates. It does not copy the `Price` objects or establish their amount invariant.
 
 Wrapping a present private lookup adds an allocation candidate; empty-instance reuse, call paths
 and JIT elimination determine actual allocation. No allocation profile is supplied here. When cost
@@ -113,5 +123,11 @@ or a benchmark prerequisite for the missing-price correction.
   divergent caller behaviours.
 - Propagated lookup failures and invalid null Optional/Price results must remain distinct from
   normal absence; do not catch and flatten them merely to try the next source.
+- Index loading rejects null keys/values; a valid unknown SKU still returns empty. Verify the
+  snapshot behavior if adopting this constructor rather than silently freezing a live index.
 - If performance motivates the change, profile the representative batch before and after and
   retain the measured scope. No performance result is implied by these illustrative tests.
+
+## Source
+
+- [Java 21 Map API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html) — `get` absence semantics and `copyOf` null rejection and snapshot behavior.

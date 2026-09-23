@@ -4,7 +4,9 @@
 a per-attempt timeout and a short cache. Every one of those is a separate concern, several are
 optional per environment, and their order determines behaviour.
 Java 17 partial teaching example: domain, deadline, policy and wrapper types are illustrative;
-Spring/JUnit snippets require the project's actual dependencies. `Deadline` uses a monotonic clock.
+Spring/JUnit/AssertJ snippets require the project's actual dependencies. The `RestClient` wiring requires
+Spring Framework 6.1+; on older stacks, retain a supported client behind `PriceLookup` instead of
+upgrading to copy this example. `Deadline` uses a monotonic clock.
 `sleepBefore` must cap waiting to the remaining budget and propagate interruption as cancellation,
 not as `PricingUnavailable`. The transport must enforce remaining time for each attempt.
 This sample assumes an eligible cached price in one supplier/currency/access scope; a broader
@@ -102,7 +104,7 @@ observed completion and remaining work; the pre-attempt test alone cannot prove 
 
 ```java
 @Test
-void retries_transient_failures_and_stops_at_the_policy_limit() {
+void retries_transient_failures_until_success() {
     var attempts = new AtomicInteger();
     PriceLookup flaky = (sku, deadline) -> {
         if (attempts.incrementAndGet() < 3) throw new PricingUnavailable(sku);
@@ -111,6 +113,21 @@ void retries_transient_failures_and_stops_at_the_policy_limit() {
     var lookup = new RetryingPriceLookup(flaky, RetryPolicy.fixed(3));
 
     assertThat(lookup.of(SKU, Deadline.in(ofSeconds(5)))).isEqualTo(Price.of("9.99", EUR));
+    assertThat(attempts).hasValue(3);
+}
+
+@Test
+void persistent_transient_failure_stops_at_the_policy_limit() {
+    var attempts = new AtomicInteger();
+    var failure = new PricingUnavailable(SKU);
+    PriceLookup unavailable = (sku, deadline) -> {
+        attempts.incrementAndGet();
+        throw failure;
+    };
+
+    assertThatThrownBy(() -> new RetryingPriceLookup(unavailable, RetryPolicy.fixed(3))
+            .of(SKU, Deadline.in(ofSeconds(5))))
+        .isSameAs(failure);
     assertThat(attempts).hasValue(3);
 }
 
@@ -128,16 +145,21 @@ void does_not_retry_a_permanent_rejection() {
 }
 ```
 
-Each layer is tested against a lambda delegate. No mocking framework, no HTTP, and the test says
-exactly what the layer promises.
+These partial tests use lambda delegates. Success on attempt three does not test exhaustion;
+the always-failing delegate distinguishes that property. Use a recording, non-sleeping backoff
+fixture to also assert two waits for three failed attempts and no wait after the final failure.
 Also exercise expiry during backoff, interruption and a throwing metrics recorder. Best-effort
 metrics must not turn a completed price lookup into a retryable failure or mask the original failure.
 
 ## Testing the order
 
+Start each test with a fresh empty cache and known breaker state. The factory must use the same
+breaker and cache instances controlled by the fixture; a hit would otherwise hide breaker rejection.
+The first two tests check transport reachability, not the relative order of every layer.
+
 ```java
 @Test
-void a_cache_hit_performs_no_downstream_call_and_no_retries() {
+void a_second_lookup_uses_the_cache_without_calling_transport() {
     var calls = new AtomicInteger();
     PriceLookup counting = (sku, d) -> { calls.incrementAndGet(); return Price.of("9.99", EUR); };
     var stack = productionStack(counting);          // same composition as the @Bean
@@ -149,13 +171,13 @@ void a_cache_hit_performs_no_downstream_call_and_no_retries() {
 }
 
 @Test
-void an_open_breaker_prevents_retries_entirely() {
+void an_open_breaker_rejects_without_calling_transport() {
     breaker.transitionToOpenState();
     var calls = new AtomicInteger();
     var stack = productionStack((sku, d) -> { calls.incrementAndGet(); return price(); });
 
     assertThatThrownBy(() -> stack.of(SKU, deadline())).isInstanceOf(CallNotPermitted.class);
-    assertThat(calls).hasValue(0);                  // breaker is ABOVE retry
+    assertThat(calls).hasValue(0);                  // proves no transport call, not nesting
 }
 ```
 
@@ -187,3 +209,6 @@ Tracing and connection pooling were not written as decorators. The `RestClient` 
 integration hooks; actual pooling depends on the HTTP request factory, and observations/tracing
 need configured registries/instrumentation. Verify them in the target project rather than inferring
 automatic propagation from the builder name (`rpc-and-api-contracts`, `distributed-tracing-design`).
+
+Source: [Spring RestClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestClient.html)
+identifies its introduction in Spring Framework 6.1; inspect the deployed version for available hooks.

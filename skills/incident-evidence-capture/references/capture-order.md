@@ -11,7 +11,7 @@ evidence and a timeline in every case.
 | CPU saturated, GC not dominant | process/thread CPU deltas + CPU profile/JFR + cgroup/host CPU            | native/kernel profile, compiler/deopt evidence                         | class histogram                                 |
 | GC pauses/frequency rising     | GC logs/JFR, heap/config, allocation rate/live-set trend                 | allocation profile; histogram/dump if retention suspected              | thread fleet dump as substitute for GC evidence |
 | Heap near OOM                  | GC/JFR/heap info, OOM/cgroup events, existing allocation/continuous data | histogram or heap dump on approved target; automatic OOM dump          | repeated expensive actions on all replicas      |
-| RSS/native growth              | cgroup/proc maps, NMT if enabled, direct-buffer/native/library evidence  | NMT detail/baseline diff, native allocation profile, core              | assume `-Xmx` explains RSS                      |
+| RSS/native growth              | cgroup/proc maps, NMT if enabled, direct-buffer/native/library evidence  | NMT detail/existing-baseline diff, native allocation profile, core     | assume `-Xmx` explains RSS                      |
 | Container OOMKilled            | cgroup/Kubernetes/node events, prior logs/JFR/dumps, limits/RSS history  | reproduce with pre-enabled evidence                                    | live heap dump—the process is gone              |
 | Tail latency, CPU/GC normal    | JFR I/O/locks/safepoints, wall/off-CPU profile, queues/network/cgroup    | eBPF/kernel capture aligned to workload                                | CPU-only graph treated as negative proof        |
 | Crash                          | `hs_err`, core/minidump, container/node logs, exit status/signal         | matching binaries/symbols; safe reproduction                           | restart before copying local artifacts          |
@@ -121,6 +121,20 @@ If starting a new recording:
 `settings=profile` is not a universal incident default. It collects more than `default` and can
 cost more; a custom JFC may be safer and more discriminating.
 
+## NMT protocol
+
+When NMT is enabled, preserve current summary (or approved detail) and `summary.diff` or
+`detail.diff` against any existing baseline before issuing `VM.native_memory baseline`.
+On OpenJDK 25 that command replaces the saved baseline; starting capture with it loses the
+earlier comparison. Use only the enabled tracking level and supported commands. Record the
+baseline time from existing evidence, or mark it unknown; capture time is not baseline time.
+
+Treat `No baseline for comparison` or unavailable detail as a coverage gap, not zero growth.
+Take a new baseline only for a justified future observation window within the recovery budget,
+after preserving any available comparison, and record its time and process identity. It cannot
+reconstruct earlier growth. Do not restart merely to obtain detail that was not recorded.
+Route interpretation to `jvm-memory-regions`; this protocol preserves the evidence and its window.
+
 ## Heap protocol
 
 Before histogram/dump:
@@ -194,6 +208,8 @@ timeline.
 ## Authoritative references
 
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [OpenJDK 25.0.3 NMT commands](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/nmt/nmtDCmd.cpp)
+  and [baseline replacement](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/nmt/memBaseline.cpp) — existing comparisons must be preserved before a new baseline resets the saved state.
 - [OpenJDK 25 heap dumper source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/heapDumper.cpp) — the safepoint walk and subsequent merge phases.
 - [JDK 25 troubleshooting guide](https://docs.oracle.com/en/java/javase/25/troubleshoot/)
 - [Kubernetes debug running pods](https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/)

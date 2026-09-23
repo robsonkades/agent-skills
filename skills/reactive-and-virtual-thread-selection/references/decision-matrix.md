@@ -4,7 +4,7 @@
 | ------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Programming model              | sequential statements; ordinary control flow                                     | operator pipeline; control flow is data flow                                 |
 | Blocking I/O                   | intended for supported blocking operations; carrier usually unmounts             | isolate from event loops; arbitrary blocking can stall one                   |
-| Non-blocking I/O               | used underneath, invisible to the code                                           | used directly and visibly                                                    |
+| I/O implementation             | depends on operation and runtime; blocking style can use non-blocking machinery  | depends on client/driver; a publisher can wrap blocking I/O                  |
 | Backpressure                   | only where a bounded resource is declared                                        | demand protocol; separate bounds needed for buffers and admission            |
 | Cancellation                   | interruption when wired to task ownership; cooperative                           | `Subscription.cancel()`; cleanup/underlying work cancellation must cooperate |
 | Error propagation              | `try`/`catch`, with a stack trace that names the request                         | `onError` signals; stack traces need `onOperatorDebug`/checkpoints           |
@@ -105,4 +105,5 @@ from a demonstrated reason to change.
 
 - [Reactive Streams specification](https://www.reactive-streams.org/) — demand and asynchronous boundaries; boundedness must be designed across the pipeline.
 - [Reactor 3.7.2 Schedulers API](https://projectreactor.io/docs/core/3.7.2/api/reactor/core/scheduler/Schedulers.html) — virtual boundedElastic is available from Reactor 3.6.0 on Java 21+, retaining caps.
+- [Reactor 3.7.2 blocking-call FAQ](https://projectreactor.io/docs/core/3.7.2/reference/faq.html#faq.wrap-blocking) — a reactive wrapper does not make its source non-blocking; schedule blocking work away from event loops.
 - [JEP 444](https://openjdk.org/jeps/444) — heap stack chunks, observability limits and workload-dependent memory comparison; not a measured per-thread sizing constant.

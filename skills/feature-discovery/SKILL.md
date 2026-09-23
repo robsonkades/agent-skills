@@ -29,15 +29,18 @@ guessing visible, so that later phases can be trusted to know which is which.
 
 1. **Read the request literally.** Write down what it says, in its own words, before
    interpreting it. Quote only the material phrases; interpretation is a separate line.
-2. **Split every statement into one of four classes.** Facts, assumptions, unknowns, decisions
-   — the classification rules are below and the entry format is in
+2. **Classify material statements into four classes.** Facts, assumptions, unknowns, decisions
+   — split compound claims that affect the feature; omit unrelated detail. The classification
+   rules are below and the entry format is in
    `references/ledger-format.md`.
 3. **Give every fact a source.** A file path with a line, a command and its output, or the
    message the user actually sent. A claim with no supporting evidence stays unresolved;
    classify it as an assumption only if provisionally adopted. Record relevant revision/environment/time and the scope the source
    supports; code or a comment is not proof of current production behaviour.
-4. **Give every assumption a falsifier.** What observation would show this is wrong? An
-   assumption nobody can contradict is not an assumption, it is a hidden requirement.
+4. **Give every assumption a falsifier.** What observation would show this is wrong? If none
+   can be stated, narrow the claim or record the missing meaning/evidence as an unknown.
+   An unsupported premise does not become a requirement; that needs sourced intent or an
+   applicable constraint.
 5. **Give every unknown an impact.** HIGH, MEDIUM or LOW, defined by what changes if the answer
    turns out to be the other one — not by how interesting the question is.
 6. **Name the ambiguities separately.** An ambiguity is a phrase with two readings that lead to
@@ -45,8 +48,9 @@ guessing visible, so that later phases can be trusted to know which is which.
    Check for consequential omissions in who can trigger or observe the outcome, effects on
    existing data, and repeated or partly failed operations. Record only plausible in-scope gaps
    and their consequences; an omitted answer does not authorize adding a requirement.
-7. **State the expected outcome** in observable terms: what a user, an operator or a caller can
-   do after this feature exists that they cannot do now. Trace it to stated intent; if missing,
+7. **State the expected outcome** as an observable change in capability, behaviour or quality.
+   A Tech Feature may preserve behaviour under a changed operating constraint rather than
+   add a user capability. Trace the outcome and any targets to stated intent; if missing,
    record the gap rather than inventing a goal or acceptance criterion.
 8. **Preserve input identity and authority.** Name the Product/Engineering or Tech Feature revision
    being examined. A decision records its accountable role; the current participant is not
@@ -84,6 +88,11 @@ IF a supplied policy, contract or decision establishes a constraint
 THEN cite its authority, applicable scope and revision. An accepted repository artefact can
      establish a requirement; its storage location alone does not make it authoritative.
 
+IF supplied sources conflict about the same proposition and scope
+THEN preserve what each source states, but keep the disputed proposition unresolved unless
+     supplied evidence establishes the resolution. Flag downstream reliance on it; source
+     count or conversational recency alone does not settle truth or authority.
+
 IF the request uses "should", "probably", "I think" or "we usually"
 THEN interpret its role: "the API should reject duplicates" can state desired behaviour;
      "it probably already rejects them" is an unverified system claim. Preserve the wording
@@ -113,10 +122,15 @@ THEN it is an ambiguity: record both readings and stop resolving it here.
 
 ## Output
 
+Reuse the existing ledger. For a small request, a few sourced entries and the evidenced
+outcome can suffice; omit empty or irrelevant rows from the shape below. Follow supplied
+persistence and identifier conventions; this template alone does not require a new dossier
+or lifecycle IDs. Do not manufacture unknowns or omit material uncertainty to fit a format.
+
 ```text
 Feature            <name, in the domain's words>
 Problem            <what is wrong or absent today>
-Goal               <what becomes possible>
+Goal               <desired capability, behaviour or quality change>
 Facts              <each with source>
 Assumptions        <each with falsifier>
 Unknowns           <each with impact HIGH | MEDIUM | LOW>

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: structured-logging
-version: 1.4.2
+version: 1.4.3
 description: >-
   Designing application logs as governed event schemas: choosing events and fields,
   correlation and context lifecycle, exception and severity semantics, synchronous versus

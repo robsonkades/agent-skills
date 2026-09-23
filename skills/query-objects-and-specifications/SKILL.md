@@ -152,7 +152,9 @@ The query returns entities that are only read
 Mandatory tenant/authorization predicates are not optional user filters. Obtain their scope
 from trusted context and AND it outside any user-controlled OR/NOT expression; apply the same
 scope to content, count, existence, export and subsequent fetch phases. An empty allowed scope
-must deny results, not omit the restriction. Bound page size and query complexity.
+must deny results, not omit the restriction. Do not implement denial as an absent predicate or
+assume an empty framework combinator is false; verify its semantics on the resolved release.
+Bound page size and query complexity.
 
 Inspect the Java toolchain, Spring/Data/provider versions, generated metamodel and schema
 before choosing APIs. Return the supported representation or keep-current decision and its

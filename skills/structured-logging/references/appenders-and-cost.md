@@ -17,10 +17,19 @@ deep-copy key-value objects. Test delayed encoding after the caller mutates an i
 
 ## Synchronous versus buffered
 
-Synchronous output offers simpler ordering and failure visibility but can place I/O and
-sink backpressure on application threads. Async output moves work and absorbs bursts but
+Synchronous output removes an async handoff from that path but can place I/O and sink
+backpressure on application threads. Async output moves work and absorbs bursts but
 uses memory, can reorder across appenders, and must choose block/drop at capacity and flush
 at shutdown.
+
+Failure propagation is a separate contract. In Logback 1.4.11, `AppenderBase` catches appender
+exceptions and records internal status; `OutputStreamAppender` catches an I/O failure,
+records an error status and stops the appender. A synchronous logging call can therefore
+return normally without delivering the event. Observe runtime status through a suitable
+`StatusListener` or independent health path; reporting through the same failed sink is not
+reliable. Repeated status messages may be suppressed, so their count is not an event-loss
+counter. Inject a sink failure and verify caller behavior, appender state and independent
+failure evidence. Use separate attempted/delivered/dropped evidence for a loss claim.
 
 Logback AsyncAppender has a bounded queue and can discard TRACE/DEBUG/INFO near capacity
 under its default policy. Other libraries/versions differ. Inspect
@@ -99,6 +108,9 @@ needs volume, rotation, ownership and crash/restart semantics.
 
 - [Logback AsyncAppender](https://logback.qos.ch/manual/appenders-async-sift.html)
 - [Logback 1.4.11 event preparation](https://github.com/qos-ch/logback/blob/v_1.4.11/logback-classic/src/main/java/ch/qos/logback/classic/spi/LoggingEvent.java)
+- [Logback 1.4.11 appender exception handling and repeated-status limits](https://github.com/qos-ch/logback/blob/v_1.4.11/logback-core/src/main/java/ch/qos/logback/core/AppenderBase.java)
+- [Logback 1.4.11 output-stream failure handling](https://github.com/qos-ch/logback/blob/v_1.4.11/logback-core/src/main/java/ch/qos/logback/core/OutputStreamAppender.java)
+- [Logback runtime status listeners](https://logback.qos.ch/manual/configuration.html#statusListener)
 - [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html) for atomic business-state/event intent; delivery can still repeat.
 - [Log4j asynchronous loggers](https://logging.apache.org/log4j/2.x/manual/async.html)
 - [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)

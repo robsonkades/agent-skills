@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: stateless-service-design
-version: 1.2.2
+version: 1.2.3
 description: >-
   Making a service instance disposable so replicas are interchangeable: what stateless
   actually means — no correctness/routing dependency on one instance's volatile history; the in-process state

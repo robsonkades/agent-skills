@@ -52,7 +52,8 @@ Business complexity   7 pricing rules, 4 conditional; status transitions
 Data complexity       order spans 3 tables; we own the schema
 Work shape            per instance for writes; set-shaped for the nightly re-rate
 Concurrency           users edit an order over minutes
-Transaction scope     order + lines + an event
+Transaction scope     order + lines + intent to publish OrderPlaced
+                      publication must survive a crash after commit
 Distribution          none today; inventory may be extracted later
 Performance           list screen shows 25 orders, 6 columns; budget 200 ms
 Team                  two teams, long-lived
@@ -64,7 +65,7 @@ Team                  two teams, long-lived
 → Optimistic Offline Lock, coarse-grained on the Order root
 → READ MODEL: projections for the list and detail screens
 → Table Module / SQL gateway for the nightly re-rate
-→ Outbox for the OrderPlaced event
+→ Outbox for durable OrderPlaced publication; repeat-safe consumer effects
 → Module boundary around inventory; no service yet
 ```
 

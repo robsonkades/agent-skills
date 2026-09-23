@@ -50,13 +50,21 @@
 ## Renaming a published name
 
 A rename in a published API is a removal plus an addition — a breaking change (see
-compatibility.md). The non-breaking route: add the well-named method, implement the old
-as a delegating deprecated wrapper naming the replacement. Set `forRemoval = true` only
-when removal is intended, and remove after the published compatibility window, no earlier
-than the next major under stable SemVer. Budget for the old name living for years; that price is
-why names deserve review before first publication, not after.
+[compatibility.md](compatibility.md)). A compatible migration retains the old entry point while
+adding the new name. The old method can delegate to the new implementation only when that preserves
+the extension contract: moving calls to the new name can otherwise bypass existing overrides of
+the old method. To retain that override hook, the new base implementation may need to delegate to
+the old virtual method while its implementation remains in place. Never make both methods delegate
+to each other. Check name clashes and exercise old and new call sites with supported precompiled
+subclasses; retaining two signatures alone does not establish compatibility.
+
+Deprecate the old name with a documented migration. Set `forRemoval = true` only when removal is
+intended, and remove after the published compatibility window, no earlier than the next major
+under stable SemVer. Budget for the old name living for years; that price is why names deserve
+review before first publication, not after.
 
 ## Authoritative references
 
 - [JavaBeans Introspector API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/beans/Introspector.html)
 - [Java API design guidelines](https://www.oracle.com/java/technologies/javase/codeconventions-namingconventions.html)
+- [JLS 25 method invocation and runtime dispatch](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.4.4)

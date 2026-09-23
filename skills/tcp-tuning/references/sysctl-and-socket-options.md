@@ -2,19 +2,27 @@
 
 ## Parameters, real defaults, and what each one governs
 
-| Parameter                         | Default (recent kernel)                | Governs                                                                         |
-| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
-| `TCP_TIMEWAIT_LEN`                | Mainline 60 s implementation constant  | TIME_WAIT duration; check vendor implementation/reuse, no dedicated sysctl      |
-| `net.ipv4.tcp_fin_timeout`        | 60 s                                   | Orphaned FIN_WAIT_2 lifetime; per-socket overrides exist. **Not TIME_WAIT.**    |
-| `net.ipv4.tcp_tw_reuse`           | 0 or 2, varies by distribution         | Reusing a TIME_WAIT port for a new **outbound** connection, timestamp-protected |
-| `net.ipv4.ip_local_port_range`    | `32768 60999` (28,232 ports)           | Ephemeral port range for outbound connections                                   |
-| `net.core.somaxconn`              | 128 below kernel 5.4, 4096 from 5.4    | Accept backlog ceiling; raising it above the listener request adds no capacity  |
-| `net.ipv4.tcp_max_syn_backlog`    | Scales with available memory           | Half-open queue (SYN received, final ACK pending)                               |
-| `net.core.rmem_max` / `wmem_max`  | Varies by distribution                 | Ceiling on unprivileged application-requested `SO_RCVBUF`/`SO_SNDBUF`           |
-| `net.ipv4.tcp_rmem` / `tcp_wmem`  | `min default max`; read each on target | TCP automatic buffer sizing bounds; explicit socket settings change this path   |
-| `net.ipv4.tcp_moderate_rcvbuf`    | Mainline default 1                     | Receive autotuning; verify it is enabled on the target                          |
-| `net.ipv4.tcp_congestion_control` | Kernel/config dependent, often `cubic` | Default for new connections; listener inheritance/socket overrides can differ   |
-| `net.ipv4.tcp_keepalive_time`     | 7200 s (2 h)                           | Idle time before the first keepalive probe                                      |
+| Parameter                         | Default (recent kernel)                | Governs                                                                        |
+| --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
+| `TCP_TIMEWAIT_LEN`                | Mainline 60 s implementation constant  | TIME_WAIT duration; check vendor implementation/reuse, no dedicated sysctl     |
+| `net.ipv4.tcp_fin_timeout`        | 60 s                                   | Orphaned FIN_WAIT_2 lifetime; per-socket overrides exist. **Not TIME_WAIT.**   |
+| `net.ipv4.tcp_tw_reuse`           | Mainline 6.12: 2; read target value    | TIME_WAIT reuse for **outbound** connections; mode and safety checks apply     |
+| `net.ipv4.ip_local_port_range`    | `32768 60999` (28,232 ports)           | Ephemeral port range for outbound connections                                  |
+| `net.core.somaxconn`              | 128 below kernel 5.4, 4096 from 5.4    | Accept backlog ceiling; raising it above the listener request adds no capacity |
+| `net.ipv4.tcp_max_syn_backlog`    | Scales with available memory           | Half-open queue (SYN received, final ACK pending)                              |
+| `net.core.rmem_max` / `wmem_max`  | Varies by distribution                 | Ceiling on unprivileged application-requested `SO_RCVBUF`/`SO_SNDBUF`          |
+| `net.ipv4.tcp_rmem` / `tcp_wmem`  | `min default max`; read each on target | TCP automatic buffer sizing bounds; explicit socket settings change this path  |
+| `net.ipv4.tcp_moderate_rcvbuf`    | Mainline default 1                     | Receive autotuning; verify it is enabled on the target                         |
+| `net.ipv4.tcp_congestion_control` | Kernel/config dependent, often `cubic` | Default for new connections; listener inheritance/socket overrides can differ  |
+| `net.ipv4.tcp_keepalive_time`     | 7200 s (2 h)                           | Idle time before the first keepalive probe                                     |
+
+In Linux 6.12, `tcp_tw_reuse` is a mode: `0` disables this reuse, `1` enables it generally,
+and `2` enables it only for loopback traffic. Thus a value of `2` does not enable this reuse
+for a connection to a remote host. Eligibility still depends on the kernel's protocol-safety
+checks; an enabled mode does not guarantee an available tuple or successful connect.
+Check the deployed kernel and namespace before interpreting the value. This distinction is
+not a reason by itself to switch to `1`; establish the limiting tuples and compare connection
+reuse before proposing a scoped change.
 
 ## Worked example: the buffer ceiling against BDP
 
@@ -32,9 +40,17 @@ Do not substitute `tcp_rmem[2]` directly for that advertised window: socket memo
 accounting overhead and is shared between buffering and flow control. Check actual scaled
 windows, cwnd (usually in segments, multiply by MSS), application drain rate and loss.
 6 MiB is 6,291,456 bytes, not 6,000,000. Explicit SO_RCVBUF disables Linux receive autotuning
-for that socket; a fixed override can reduce throughput. Linux also doubles requested socket
-buffer sizes for accounting. Larger ceilings are hypotheses, with a concurrent-socket memory
-budget and before/after measurements, not guaranteed link utilization.
+for that socket; a fixed override can reduce throughput. Larger ceilings are hypotheses, with
+a concurrent-socket memory budget and before/after measurements, not guaranteed link utilization.
+
+Keep the measurement layer explicit. Linux doubles `SO_RCVBUF`/`SO_SNDBUF` requests for
+accounting, and raw `getsockopt` returns that doubled value. OpenJDK 17.0.16's Linux
+`NET_GetSockOpt` wrapper divides those values by two for Java buffer-option reads. For example,
+a Java receive-buffer readback of 262,144 bytes and a raw value of 524,288 on the same socket
+can be consistent; the factor of two alone does not show a failed setting. Do not halve that
+Java readback again or equate either value with the advertised TCP window. Check the actual
+JDK/native transport and any clamping before comparing tools; this is implementation behavior,
+not a portable Java guarantee.
 
 Ephemeral port exhaustion follows from the same style of arithmetic:
 
@@ -145,5 +161,8 @@ The Java baseline contracts are also documented by [Java 17 Socket](https://docs
 and [ServerSocketChannel](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/channels/ServerSocketChannel.html).
 For the implementation distinctions above, see [Linux 6.12 BBR build options](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/Kconfig)
 and [TCP send/Nagle decisions](https://github.com/torvalds/linux/blob/v6.12/net/ipv4/tcp_output.c).
+The reuse modes are documented in [Linux 6.12 IP sysctls](https://github.com/torvalds/linux/blob/v6.12/Documentation/networking/ip-sysctl.rst).
+Buffer readback normalization is in [OpenJDK 17.0.16 NET_GetSockOpt](https://github.com/openjdk/jdk17u/blob/jdk-17.0.16-ga/src/java.base/unix/native/libnet/net_util_md.c)
+and the [NIO option bridge](https://github.com/openjdk/jdk17u/blob/jdk-17.0.16-ga/src/java.base/unix/native/libnio/ch/Net.c).
 Unversioned Linux documentation tracks a moving kernel; these versioned examples do not replace
 checking defaults and support on the deployed build or authorize an upgrade.

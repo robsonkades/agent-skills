@@ -20,11 +20,18 @@ before the second. The columns suggest candidates, not measured win rates or aut
 | ---------------------------------------------------------------- | ---------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | An existing type has the wrong interface                         | Adapter    | Change one side, if compatible             | Ownership plus external compatibility and migration cost                                 |
 | A subsystem of collaborators is used in one standard sequence    | Facade     | Direct composition                         | Useful boundary/policy or repeated orchestration, not caller count                       |
-| Cross-cutting behaviour must be added, stackably, at runtime     | Decorator  | The framework's filter/interceptor         | Is the concern transport-shaped or domain-shaped?                                        |
+| Cross-cutting behaviour must be added, stackably, at runtime     | Decorator  | The framework's filter/interceptor         | Actual interception coverage, ordering and lifecycle fit the required contract           |
 | Access to an object must be controlled or deferred               | Proxy      | An explicit lazy accessor or `Supplier`    | Required consumer transparency, access and lifecycle contracts; preserve adequate APIs   |
 | Two things vary independently and the class count is multiplying | Bridge     | Composition (a field)                      | Independent evolution/ownership and implementor contract; current class counts are clues |
 | A part and a whole must be treated identically, recursively      | Composite  | A collection field                         | Uniform recursive operations; finite depth is valid and should be bounded                |
 | Many long-lived duplicate objects dominate the heap              | Flyweight  | String deduplication; a smaller field type | occurrences ÷ distinct values; measure first                                             |
+
+Framework hooks can host domain-specific behaviour; the concern's label does not decide whether
+custom decorators are needed. Inspect the existing mechanism and exercise representative call paths.
+For example, [Spring 6.2 proxy-based AOP](https://docs.spring.io/spring-framework/reference/6.2/core/aop/proxying.html)
+can advise service methods, but self-invocation bypasses the proxy's advice. Retain a hook that
+meets the coverage, ordering and lifecycle contract; choose explicit composition when those
+requirements cannot be met clearly (`gof-decorator`).
 
 ## Behaviour and interaction
 

@@ -39,12 +39,14 @@ durability/failover policy. Product references here cover etcd 3.6 and ZooKeeper
 verify Consul modes against the deployed version. Do not upgrade Java or the store to match
 a reference. Missing membership, durability or read-contract evidence prevents a safety claim.
 
-1. **Ask whether anything must be agreed at all.** Most designs that reach for consensus need a
-   _single-key conditional write_, which the database already provides. Consensus is for
-   decisions that must be single-valued fleet-wide and survive their author's death.
+1. **Ask whether anything must be agreed at all.** If a _single-key conditional write_ in the
+   existing database meets the required atomicity, durability and failover contract, reuse it.
+   Consensus is for decisions that must be single-valued fleet-wide and survive their author's
+   death; the existing database may already implement the necessary agreement.
 2. **Size the cluster from `f`, the number of simultaneous failures you tolerate.** `2f+1`
    voting members with majority quorums tolerate `f`, assuming the survivors can communicate
-   and retain required durable state. Exclude learners/observers from the voter count.
+   and retain required durable state. Exclude learners/observers from the voter count. For a
+   membership change, check the intermediate quorum and catch-up states as well as the final size.
 3. **Place voters and price the commit path.** Account for leader routing, network RTT,
    replication, durable-log latency, batching and the fastest quorum. Placement sets correlated
    failure tolerance and latency (`references/quorum-arithmetic.md`).
@@ -57,11 +59,12 @@ a reference. Missing membership, durability or read-contract evidence prevents a
    needs a measured rate/retention/latency case and accepted outage behaviour. Cache a decision
    only when its freshness and authority contract permits it; some decisions must fail closed
    instead (`references/coordination-stores.md`).
-7. **Exercise failure behaviour in an isolated cluster.** With `2f+1` voters, remove `f` and
-   assert eventual write progress within the recovery budget. Remove `f+1` and verify newly
-   initiated writes cannot be acknowledged as committed without a quorum. In-flight writes
-   may have committed before disruption; timeouts retain unknown outcomes. Test each minority
-   read/fail-fast policy and restore the fixture afterward.
+7. **Exercise failure behaviour in an isolated cluster with fixed voting membership.** With
+   `2f+1` configured voters, stop or isolate `f` and assert eventual write progress within the
+   recovery budget. Stop or isolate `f+1` in total and verify newly initiated writes cannot be acknowledged
+   as committed without a quorum. Do not remove members through the membership API for this
+   test: that changes the required quorum. In-flight writes may have committed before disruption;
+   timeouts retain unknown outcomes. Test each minority read/fail-fast policy and restore the fixture.
 
 ## Decision block
 
@@ -124,8 +127,9 @@ Prefer instead when:
   resume within retained history, but watches are not linearizable and compaction forces resync.
   ZooKeeper standard watches are one-shot and can miss intermediate changes between re-registration;
   its persistent watch modes have a different lifecycle, not durable broker semantics.
-  Consumers checkpoint versions and rebuild state on gaps/compaction instead of assuming a
-  generic notification contract.
+  In etcd, join the initial snapshot to the stream without a revision gap; checkpoint fully applied
+  revisions and rebuild state on gaps/compaction. The coordination-store reference gives the
+  etcd bootstrap and fragmented-response rules; stream uniqueness is not exactly-once side effects.
 - Lease/session authority follows the store's expiry protocol, not the holder's belief:
   the holder can believe it holds a grant the cluster has already regranted. Do not assume a
   synchronized ensemble clock. That gap is `distributed-locks-and-leases`.
@@ -146,9 +150,9 @@ not proof of consensus correctness or external fencing.
   when choosing a cluster size, adding a node, or spreading voters across failure domains.
 - [Coordination stores in practice](references/coordination-stores.md) — the primitives
   (compare-and-swap, leases with TTL, watches), the operations these stores are wrong for,
-  their throughput and failure characteristics, watch semantics, and a decision table for
+  their throughput and failure characteristics, snapshot/watch continuity, and the policy for
   behaviour when the store is unreachable. Read before putting anything into etcd, ZooKeeper or
-  Consul, or when a coordination store appears on a request path.
+  Consul, when building a watch consumer, or when a coordination store appears on a request path.
 
 ## Primary sources
 

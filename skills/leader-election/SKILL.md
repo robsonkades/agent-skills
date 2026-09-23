@@ -76,7 +76,7 @@ without a new mechanism comparison or full fault-injection campaign.
 
 ```text
 Elect a leader when:
-- the work must happen once per interval across the fleet and cannot be partitioned — a
+- the fleet needs one coordinator or active worker and the role cannot be partitioned — a
   reconciliation sweep, a global aggregate, a single outbound connection to a peer that admits
   only one client
 - a duplicate run is expensive and the work can be fenced or made idempotent
@@ -96,6 +96,11 @@ Prefer instead when:
 
 ## Rules
 
+- **One leader does not guarantee one execution per work item or schedule interval.** A successor
+  with a valid new term can replay an already committed effect after a crash before checkpointing.
+  When replay needs deduplication, keep work identity stable across terms. Define replay and
+  missed-interval recovery separately from election; see `references/election-mechanisms.md`
+  when every interval or effect matters.
 - **A leader stops before it can no longer prove its grant valid, not on the first failed
   renewal and not when another actor reports winning.** Convert a successful grant response
   into a conservative monotonic deadline accounting for request/response uncertainty, clock-
@@ -167,4 +172,5 @@ no-change conclusion is sufficient when the current design meets its contract.
 - [Mechanisms and alternatives](references/election-mechanisms.md) — the ways to avoid electing
   at all, then coordination-store lease, Kubernetes Lease and ShedLock-style database rows
   compared on fencing, failover time, dependencies and what each is adequate for, with a
-  decision block. Read when choosing a mechanism or reviewing one already in place.
+  decision block and work recovery across handover. Read when choosing a mechanism, reviewing
+  one already in place, or checking whether scheduled work may be replayed or missed.

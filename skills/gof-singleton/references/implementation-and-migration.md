@@ -24,7 +24,7 @@ Enum instance fields are not persisted by [standard enum serialization](https://
 canonical identity is not state capture or restoration.
 
 ```java
-// 2. Holder idiom (initialisation-on-demand) — the best plain-class option
+// 2. Holder idiom — lazy creation governed by class initialization
 public final class Registry {
     private Registry() {}
     private static final class Holder { static final Registry INSTANCE = new Registry(); }
@@ -69,8 +69,12 @@ public final class Registry {
 }
 ```
 
-Guarantees: safe publication, no lazy-init question. Costs: runs at class initialisation, which
-is the trigger for the deadlock below.
+Guarantees: safe publication when `Registry` is initialized. "Eager" is relative to that class's
+initialization, not JVM startup: merely loading the class does not create the instance. Another
+static method declared by `Registry` can trigger initialization even without reading `INSTANCE`;
+the holder idiom instead defers creation until `Holder` is actively used. Inspect the actual
+[initialization triggers](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4.1)
+before changing timing. Both idioms remain subject to the initialization dependencies below.
 
 ## The class-initialisation deadlock
 

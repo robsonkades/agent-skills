@@ -109,7 +109,8 @@ Prefer changing the application instead when:
 - A supported native sidecar on Kubernetes 1.29+ provides **ordering relative to the app containers**: started first,
   stopped after app containers during graceful termination, and restarted independently even when the pod's `restartPolicy` is `Never`
   or `OnFailure`. Without a startupProbe, started means its process is running, not that it
-  can serve. Readiness affects Pod readiness, not initial startup ordering. Termination shares
+  can serve. Its startupProbe must not depend on the app or a later init container: neither
+  can start until that gate passes. Readiness affects Pod readiness, not initial startup ordering. Termination shares
   the Pod grace budget; node failure or force-kill cannot guarantee an ordered graceful drain.
 - In a `Job`, a running ordinary helper can prevent successful completion after the main
   containers finish. A native sidecar does not block
@@ -143,7 +144,7 @@ Prefer changing the application instead when:
 
 - [Lifecycle and composition mechanics](references/lifecycle-and-composition.md) — native
   versus ordinary sidecar with a manifest fragment, startup and shutdown ordering, the Job
-  case, the shared-volume and localhost contract, requests against pod QoS, and the failure
+  case, shared-volume lifetime and localhost contracts, init-phase resource accounting, pod QoS, and the failure
   matrix. Read when writing or reviewing a two-container pod.
 - [Sidecar, library, node agent or nothing](references/sidecar-or-node-agent.md) — the four
   options with the observable condition that selects each, and what each really costs in

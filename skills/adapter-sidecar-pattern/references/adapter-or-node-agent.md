@@ -39,10 +39,13 @@ Verify the actual endpoint and content negotiation before proposing a sidecar. S
 [Micrometer's endpoint prerequisites](https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html).
 
 An exporter can instead translate a vendor's status API, even when the binary cannot be changed.
-Determine whether it collects on each scrape or polls into a cache. Prefer collection on scrape
-for Prometheus; justify caching expensive sources and document it in HELP. Specify source failure
-behavior (failed scrape or a separate source-success signal). A successful HTTP scrape does not
-prove successful source collection. See
+Determine whether reads are observational or consume/reset source state, and whether collection
+fits within the scrape deadline. Prefer collection on scrape for read-only sources; include
+concurrent scrapers and diagnostic requests in the source load budget. A destructive read needs
+the accumulation contract in [coupling-and-failure.md](coupling-and-failure.md), not one reset
+per HTTP request. Justify caching expensive sources and document it in HELP. Specify source
+failure behavior (failed scrape or a separate source-success signal). A successful HTTP scrape
+does not prove successful source collection. See
 [Prometheus exporter guidance](https://prometheus.io/docs/instrumenting/writing_exporters/).
 
 For caching, set a freshness budget and expiry policy; expose last successful collection time

@@ -71,7 +71,7 @@ implementation; inspect the project's toolchain and APIs without assuming upgrad
 ## Decision block
 
 ```text
-Salt (split) the key across S sub-partitions when:
+Salt (split) the key across S buckets when:
 - one write-hot key exceeds a single shard's write capacity, and reads for that key are rare
   enough, or aggregate in nature, that fanning them out to S is acceptable; operations can
   be partitioned with a valid merge without violating required atomicity or ordering
@@ -117,10 +117,14 @@ Change the shard key when:
 - Salting is `key#i` for `i` in `[0, S)`: writers route by a deliberate sub-key (random,
   round-robin or an entity identifier), readers query the required buckets and merge. The
   cost includes read fan-out, loss of single-key atomicity/global order, retries and future
-  resharding. Choose S from measured per-partition capacity with headroom; random assignment
-  can still burst and a deterministic secondary key is preferable when semantics allow it.
-- Do not salt every key. Salt the identified hot keys from a list you can update without a
-  deploy; otherwise every read in the system pays the fan-out to fix one key.
+  resharding. S logical buckets do not guarantee S physical partitions: verify that the
+  store's routing spreads their work onto sufficient capacity. Choose S from measured
+  per-partition capacity with headroom; random assignment can still burst and a deterministic
+  secondary key is preferable when semantics allow it.
+- Salt selectively so other keys avoid unnecessary read fan-out. Adding or removing a key
+  from the hot-key configuration changes its layout, just as changing S does; it is not a
+  plain routing toggle. Preserve existing data visibility and retry semantics through the
+  transition described in `references/repairs-and-rebalancing.md`.
 - **A move creates overlapping copies, not two unconstrained authorities.** Name the sole
   write authority for every phase. Publish a monotonic ownership epoch, require it on every
   mutation, and enforce it at the state transition that commits the write. Rejecting stale

@@ -20,6 +20,14 @@ record embeddables require provider support (Hibernate 6.2+, standardized by Per
 | JPA `@Entity`                  | **No**      | Records do not satisfy entity class requirements                             |
 | Identity-bearing state         | **Depends** | Distinguish identity from record state equality and replacement semantics    |
 
+Record support for an ordinary embedded value does not establish support for `@EmbeddedId`
+or `@IdClass`. The [Hibernate 6.2 introduction](https://docs.hibernate.org/orm/6.2/introduction/html_single/#embeddable-objects)
+documents record embeddables alongside an `@EmbeddedId` restriction dated May 2023;
+[Persistence 3.2, section 2.4.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#composite-primary-keys)
+explicitly permits record primary-key classes. Inspect the exact provider/update and mapping
+role instead of extending either statement to every version. Before converting a key, verify
+persist/reload and lookup by key, including equality consistent with the mapped database types.
+
 ```java
 public record Money(BigDecimal amount, Currency currency) {
 
@@ -91,10 +99,25 @@ String describe(SettlementResult result) {
   is in the signature; callers can still ignore returned values, so API usage needs review.
 - **State machines** in the domain, with transitions as methods returning the next state.
 
-**Where it does not replace a pattern:** Plugin. A sealed hierarchy is closed by definition;
-a plugin point must be open to implementations the compiler has not seen. Do not seal
-something you intend to extend at configuration time
-(`enterprise-base-patterns`).
+**Where it does not replace a pattern:** Plugin discovery and lifecycle still need a mechanism.
+A sealed root prevents arbitrary new direct implementations, but it can deliberately permit
+an open extension branch. For example, this Java 17+ API keeps the built-in case closed while
+allowing third-party implementations of `Handler.Extension`:
+
+```java
+public sealed interface Handler permits Handler.BuiltIn, Handler.Extension {
+    record BuiltIn() implements Handler { }
+    non-sealed interface Extension extends Handler { }
+}
+```
+
+Keep that branch accessible to plugin code (and export its package when using named modules).
+A Java 21 switch covering `BuiltIn` and `Extension` is exhaustive for these branches, even
+when another plugin later implements `Extension`. It does not force a separate case for every
+plugin class. Choose an open root when arbitrary direct implementations are required; retain
+a sealed root with an open branch when that is the intended contract (`enterprise-base-patterns`).
+The [Java 21 sealed-type rules](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.1.1.4)
+distinguish a closed set of direct subtypes from a freely extensible `non-sealed` subinterface.
 
 Omit `default` when requiring each variant to be handled after recompilation. A deliberate
 fallback can be appropriate for compatibility, but loses that diagnostic. Separately compiled
@@ -218,7 +241,8 @@ support this API illustration; they are source-review baselines, not a target up
 
 - **Do not convert an aggregate to a record merely for syntax.** Preserve identity, mutation
   or immutable replacement semantics, and the persistence contract.
-- **Do not seal a hierarchy that is a plugin point.**
+- **Do not close a required plugin extension point.** An open interface or a deliberate
+  `non-sealed` branch can preserve it; sealing alone supplies neither discovery nor lifecycle.
 - **Do not replace a Domain Model with functions merely for fashion.** Pure functions over
   immutable state can enforce invariants; define the authoritative state and commit boundary.
 - **Do not convert a working Transaction Script into a Domain Model** because records and

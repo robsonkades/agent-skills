@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-pattern-antipatterns
-version: 1.2.2
+version: 1.2.3
 description: >-
   Detecting and removing design-pattern misuse: abstractions that trace to no requirement,
   patterns chosen because a name sounded right, and the specific failure each overused pattern
@@ -65,6 +65,7 @@ suggests:
   - gof-visitor
   - java-code-smells
   - java-dry-kiss-yagni
+  - java-object-construction
   - java-test-doubles
   - rpc-and-api-contracts
 

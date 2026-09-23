@@ -14,9 +14,14 @@ invokeinterface #10  // dispatch through an interface type
 invokedynamic   #11  // lambda, method reference, string concat, pattern switch, record methods
 ```
 
-`invokestatic` and `invokespecial` resolve to a single concrete method — a direct call.
-`invokevirtual` and `invokeinterface` resolve to an entry point that depends on the receiver's
-runtime type, which is where inline caching applies.
+Resolution identifies a method from the symbolic owner, name and descriptor; it does not
+choose a new resolved method for each receiver. `invokevirtual` and `invokeinterface` then
+select the target using the receiver's runtime type and that resolved method (JVMS 5.4.6),
+except that a resolved private method selects itself. `invokestatic` has no receiver dispatch;
+`invokespecial` follows its special constructor/super/private-call rules. Resolution can
+succeed while invocation still fails, for example with `AbstractMethodError` when no concrete
+implementation is selected. Inline caching optimizes receiver-dependent selection, not the
+meaning of the symbolic reference.
 
 Since class file 55 (JDK 11, JEP 181 nestmates) javac emits `invokevirtual` for a private
 instance method of a class and `invokeinterface` for a private interface method; verified:

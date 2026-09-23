@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: grpc-http2-service-mesh-performance
-version: 1.0.2
+version: 1.0.3
 description: >-
   Diagnosing and designing the performance of gRPC and HTTP/2 communication paths, including
   channel, connection and stream topology, flow control, serialization, Netty event loops, TLS

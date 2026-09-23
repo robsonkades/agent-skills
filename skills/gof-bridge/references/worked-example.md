@@ -27,7 +27,13 @@ Nine classes for six concepts, and the composition logic for a digest is duplica
 — so a fix to digest windowing is three edits, and the SMS one will be forgotten. Adding
 WhatsApp is three new classes; adding a fourth notification kind is another four.
 
-## After — the bridge
+## After — independent roles through composition
+
+`Notifier` is the sending abstraction and `Channel` supplies its implementation mechanism.
+`Notification` is a separate content hierarchy: `Alert`, `Digest` and `Receipt` render messages;
+they are not refined subclasses of `Notifier` and do not hold its channel. This design illustrates
+the independent roles with composition instead of copying the classical Bridge hierarchy. A codebase
+that already uses this shape need not add subclasses to fit a pattern diagram.
 
 ```java
 public interface Channel {
@@ -79,10 +85,12 @@ exists once. Total type count alone is not the benefit.
 
 ## What the remote channel forced into the interface
 
-Email and SMS were both HTTP-backed from the start, which is why `deliver` already carries a
+In this illustrative scenario, email and SMS were HTTP-backed from the start, so `deliver` carries a
 `Deadline` and a documented transient/permanent split. Push was added later and delivers in
 batches of up to 500 — which is why `deliverAll` exists rather than being discovered when a
-digest run issued 40 000 individual calls.
+digest run issued 40 000 individual calls. These limits and volumes are scenario assumptions,
+not claims about every push provider. The single-message `Notifier.send` path below does not use
+the batch API; a bulk caller must select `deliverAll` and preserve its per-input outcomes.
 
 Two lessons that generalise:
 
@@ -122,8 +130,9 @@ interface AttachmentChannel extends Channel { }          // email, push — not 
 record ReceiptNotifier(AttachmentChannel channel) { }    // SmsChannel does not fit
 ```
 
-The type excludes channels without attachment support; it does not prove that a particular
-payload fits current size/configuration limits or reserve capacity for a later call.
+The parameter type rejects non-attachment channel types at compilation. This partial record only
+illustrates the capability boundary; a real constructor must also reject null. It does not prove
+that a particular payload fits current size/configuration limits or reserve capacity for a later call.
 
 ## The contract test
 
@@ -161,8 +170,8 @@ channel choice via type    channel injected; configurable per user
 "SMS cannot do receipts"   advertised capability prefilter plus
                             authoritative delivery validation
   handled nowhere
-adding a channel: 3 files  adding a channel: 1 file + it inherits
-                             the contract test
+adding a channel: 3 types  adding a channel: provider implementation,
+                             wiring and shared contract checks
 ```
 
 The one thing that got worse: reading `Notifier.send` no longer tells you what happens on the

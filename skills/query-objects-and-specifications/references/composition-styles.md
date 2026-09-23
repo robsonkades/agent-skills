@@ -149,13 +149,20 @@ public final class OrderSpecs {
 var overduePremium = OrderSpecs.overdue(asOf).and(OrderSpecs.premiumCustomer());
 ```
 
-### The three composition traps
+### Composition traps
 
 **Join semantics.** Repeated to-one joins may be redundant without multiplying rows;
 to-many joins can multiply rows. Reusing a join by attribute name alone is unsafe when join
 type, ON predicates or quantifiers differ. "A red line AND a large line" may allow two
 different children; "one line that is red AND large" requires one shared match. Choose aliases
 or correlated EXISTS from that meaning, then verify both data and count queries.
+
+An INNER join introduced inside one specification still affects the whole FROM clause.
+For "urgent order OR has a red line", joining lines can discard urgent orders with no lines
+before the OR is evaluated. Use a correlated EXISTS or deliberately designed LEFT join when
+the root-only branch must survive; check ON versus WHERE placement. For "has no red lines",
+NOT EXISTS a matching line preserves the intended negation; negating a joined line predicate
+instead can admit an order with both red and blue lines and exclude an order with no lines.
 
 **Fetches and paging.** A specification may be invoked for data and count; fetch joins usually
 do not belong in the count query. A result-type guard alone does not make a to-many fetch
@@ -170,6 +177,19 @@ when only existence matters. SQL `NOT (status = 'SETTLED')` does not include NUL
 `notEqual` has the same three-valued-logic issue. Require non-null status or explicitly
 define the null branch. Capture `asOf = LocalDate.now(clock)` once for data and count so a
 midnight boundary cannot change the criterion between invocations.
+
+**Absent filters versus Boolean predicates.** A Spring Data specification that returns no
+predicate is not a SQL NULL value or an explicit true/false predicate. In Spring Data JPA 4.0.0,
+such specifications are elided by AND/OR; `anyOf` with an empty list contributes no restriction,
+and `not(unrestricted())` remains unrestricted. By contrast, JPA `CriteriaBuilder.disjunction()`
+is an explicit false predicate. Define whether an empty user filter means omit or match nothing;
+an empty mandatory authorization scope must return no results or contribute explicit false.
+Never use empty `anyOf` or negated absence as its denial implementation.
+
+Inspect the resolved release rather than copying that API behavior to older stacks. For example,
+Spring Data JPA 3.5.2 negates a specification returning null to a disjunction, unlike 4.0.0.
+A null specification object and a specification returning a null predicate are also distinct
+contracts. These examples explain compatibility risk; they do not require adopting a newer API.
 
 ### The naming discipline
 
@@ -226,3 +246,6 @@ types catch some structural mistakes, but not every semantic change becomes a co
 Sources: [Spring Data JPA Specifications](https://docs.spring.io/spring-data/jpa/reference/jpa/specifications.html)
 and [Jakarta Persistence query semantics](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).
 The rolling Spring documentation must be matched to the project's release.
+For absent-predicate behavior, compare the tagged [Spring Data JPA 3.5.2 Specification](https://github.com/spring-projects/spring-data-jpa/blob/3.5.2/spring-data-jpa/src/main/java/org/springframework/data/jpa/domain/Specification.java)
+and [4.0.0 Specification](https://github.com/spring-projects/spring-data-jpa/blob/4.0.0/spring-data-jpa/src/main/java/org/springframework/data/jpa/domain/Specification.java)
+implementations; JPA Boolean identities are specified by `CriteriaBuilder` in the Persistence specification.

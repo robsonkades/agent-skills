@@ -59,9 +59,11 @@ Latency is a distribution. Every rule here follows from that one fact.
 - The statistical rules have no Java baseline. Before implementing the partial instrumentation
   examples, inspect the project's JDK, resolved HdrHistogram/Micrometer versions and registry/
   backend support; adopting this skill does not authorize upgrades.
-- A sample quantile exists even for small `n`, but may be almost entirely determined by the
+- A sample quantile exists for any nonempty sample, but may be almost entirely determined by the
   largest observations and have wide population-quantile uncertainty. Record `n`, the
-  estimator/interpolation rule, and an interval or rank bounds; never relabel it “undefined”.
+  estimator/interpolation rule, and an interval or rank bounds; small `n` alone does not make it
+  undefined. With zero observations, report no estimated quantile. Distinguish an empty population
+  from missing or invalid telemetry; do not replace either with zero latency or an SLO pass.
 - `n(1−p)` is a useful tail-resolution diagnostic, not a universal minimum. Required sample
   size depends on desired value/rank precision, local density, dependence, censoring and the
   decision's error costs.

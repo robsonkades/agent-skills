@@ -140,6 +140,7 @@ belongs to `g1-tuning-for-slo`.
 | Frequent young collections, heavy old pressure   | lifetime/in-flight/cache/survivor policy; identify allocation/owners    |
 | Rising comparable post-reclamation floor         | retention/capacity hypothesis; distinguish workload, cache and defect   |
 | Full GCs after evacuation failure                | usable to-space, live set, promotion spike, pinning, humongous topology |
+| Full GC with `System.gc()` or a diagnostic cause | identify the application/library/tool request before changing capacity  |
 | `Metadata GC Threshold`                          | Metadata high-water mark and class unloading — see `jvm-class-loading`  |
 | Logged pause much smaller than client-felt pause | correlate TTSP, queue amplification, host and other request work        |
 
@@ -149,6 +150,19 @@ alter the memory available for native consumers. Likewise, a client/logged-pause
 include queue amplification or host pressure that heap policy affects indirectly. Establish
 that mechanism before proposing a heap change, account for its capacity cost, and distinguish
 symptom mitigation from fixing the initiating cause.
+
+**Explicit GC is a separate decision.** A `System.gc()` cause identifies a request, not its
+caller or a heap shortage. Trace application/library calls, RMI activity and diagnostic
+commands; remove an unnecessary request at its source where possible. For G1, when the
+caller cannot be changed, compare `-XX:+ExplicitGCInvokesConcurrent` with
+`-XX:+DisableExplicitGC` on the exact target build. The former requests concurrent work
+with coordination pauses; the latter ignores `System.gc()` requests, not every collection
+a diagnostic tool can force. Neither is a blanket cure for Full GC. Before suppressing
+requests, check why they occur: OpenJDK 25's direct-buffer reservation path invokes
+`System.gc()` after allocation retries to encourage reference processing. Suppression can
+remove that recovery opportunity; validate direct-buffer usage/allocation failures and
+resource reclamation as well as request latency. Route native-memory pressure to
+`jvm-memory-regions`; it is not proof that the Java heap needs to grow.
 
 ## Validating a change
 
@@ -168,8 +182,11 @@ symptom mitigation from fixing the initiating cause.
 
 - [Java 25 G1 tuning](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-garbage-collector-tuning.html)
   — causal alternatives for Full GC, heap headroom, adaptive young sizing and objective trade-offs.
-- [Java 25 metadata considerations](https://docs.oracle.com/en/java/javase/25/gctuning/other-considerations.html)
-  — metadata allocation outside the heap and the class-unloading high-water trigger.
+- [Java 25 other GC considerations](https://docs.oracle.com/en/java/javase/25/gctuning/other-considerations.html)
+  — metadata allocation/high-water triggers and explicit collection, including RMI.
+- [OpenJDK 25 direct-buffer reservation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/nio/Bits.java)
+  — `reserveMemory` retries allocation, requests GC/reference processing, then can fail
+  with a direct-buffer `OutOfMemoryError`; relevant before suppressing explicit GC.
 - [JEP 376: ZGC concurrent thread-stack processing](https://openjdk.org/jeps/376)
   — thread-stack work moved out of GC safepoints in JDK 16.
 - [OpenJDK 25 ZGC worker heuristics](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zHeuristics.cpp)

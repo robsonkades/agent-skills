@@ -1,5 +1,11 @@
 # Command against event, and what a bus must get right
 
+The Java fragments are partial sketches: domain types, imports and collaborating implementations
+are omitted, and alternate declarations are not one compilable file. Records/sealed types use
+Java 17; the type-pattern switch requires Java 21 without preview. `@JsonProperty` illustrates
+Jackson mapping and `@Transactional` the project's existing transaction framework; inspect its
+actual library/version and configuration rather than adding dependencies to reproduce the notation.
+
 ## The contrast, in full
 
 | Dimension           | Command                                       | Event                                                          |
@@ -157,6 +163,15 @@ record CancelOrder(Order order) implements Command { }
 record CancelOrder(CommandId id, OrderId orderId, Reason reason, Instant issuedAt)
         implements Command { }
 ```
+
+A [record is only shallowly immutable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html).
+For creation-time intent, arrays, collections and mutable elements must not remain writable through
+aliases. A collection copy alone does not copy its mutable elements; use immutable component
+values or defensive copies, including accessor protection where needed. Capture while the source
+is confined, under the lock used by its mutators, or from an immutable state value; copying while
+another thread mutates does not establish a consistent snapshot. Test mutation of the original
+inputs and exposed components after creation, then verify the queued/audited command still carries
+the issued values. An explicitly confined live receiver has a different contract.
 
 For that durable/deferred form, the handler re-loads inside its own transaction and re-checks preconditions.
 That re-check is not redundant: between issuing and executing, the order may have shipped, and the

@@ -85,6 +85,39 @@ on compaction/gap and consider periodic reconciliation. Event-history consumers 
 etcd's revision stream within its retention contract, but a coordination watch is not a durable
 message broker.
 
+### Joining an etcd snapshot to its watch
+
+For an etcd 3.6 prefix cache, use this sequence rather than reading and then watching "now":
+
+1. Read the prefix with a linearizable `Range` and retain its header revision `r`. If paginating,
+   request every remaining page at revision `r`; mixing current revisions is not one snapshot.
+   Keep that original `r`: a later historical page's header can report a newer current revision.
+2. Watch the same prefix from `r + 1` (the start revision is inclusive). If bootstrap or resume
+   encounters compaction, discard the incomplete reconstruction and start a fresh snapshot.
+   This repairs current state; it cannot recover every discarded historical transition.
+3. Apply all matching events of a revision before publishing that version or checkpointing it.
+   Several keys can share a revision. With wire fragmentation enabled, assemble through the final
+   `fragment=false` response before treating the batch as complete; check whether the SDK already
+   does this. Bound buffering and rebuild the snapshot if the consumer cannot keep up.
+4. Resume after the last fully applied revision, with its corresponding cached state. If that
+   state was lost, rebuild it instead of loading only the checkpoint. A crash between applying
+   data and saving a checkpoint can replay events: publish state/checkpoint together or make
+   replay harmless. Ordinary response headers are not consumption checkpoints; a watch progress
+   notification can advance the position only after earlier events have been applied. An empty
+   watch-creation response is not such a progress notification.
+
+Bind cached state and checkpoints to the cluster identity and watched scope, and invalidate
+them when the history is replaced, including snapshot restoration. Restoring an older snapshot
+can move revisions backward without producing a compaction error for the old checkpoint;
+revision numbers alone do not identify one continuous history. Rebuild before serving that
+cache again and follow the deployed version's recovery procedure, including its revision-bump
+and compaction controls where applicable. See [etcd 3.6 revision recovery](https://etcd.io/docs/v3.6/op-guide/recovery/#revision-difference).
+
+For example, if one transaction changes keys A and B at revision 42, saving 42 after only A and
+restarting at 43 loses B. Uniqueness within a watch does not make external effects exactly once;
+their retry/reconciliation contract belongs to `idempotency`. ZooKeeper standard watches need
+its read-with-watch/re-registration protocol, not this etcd revision-resume algorithm.
+
 ## Compare-and-set has three outcomes, not two
 
 ```text
@@ -136,7 +169,8 @@ effects; conversely, a still-valid authorized operation need not stop solely bec
 - [ ] Voter count/placement survives each stated failure domain; asymmetric two-domain outcomes are explicit.
 - [ ] Backend size and lease/session counts are monitored, with an alert well below the quota.
 - [ ] Every read call site has declared linearizable or stale.
-- [ ] Every watch consumer checkpoints versions and has a tested gap/compaction resync path.
+- [ ] Watch consumers test snapshot/stream continuity, fully applied checkpoints where supported,
+      and recovery after disconnection, compaction or lost local state.
 - [ ] Every CAS call site distinguishes rejection from timeout.
 - [ ] Every consumer has a documented behaviour for "store unreachable", tested by blocking the
       client's network path rather than by mocking the client.
@@ -148,3 +182,5 @@ effects; conversely, a still-valid authorized operation need not stop solely bec
 - [Consul consistency modes](https://developer.hashicorp.com/consul/api-docs/features/consistency)
 - [etcd 3.6 space-quota recovery](https://etcd.io/docs/v3.6/op-guide/maintenance/)
 - [etcd 3.6 lease grant/revoke and operation guarantees](https://etcd.io/docs/v3.6/learning/api_guarantees/)
+- [etcd 3.6 Range, Watch and progress fields](https://etcd.io/docs/v3.6/dev-guide/api_reference_v3/)
+- [etcd v3.6.0 watch fragmentation contract](https://github.com/etcd-io/etcd/blob/v3.6.0/api/etcdserverpb/rpc.proto)

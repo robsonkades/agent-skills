@@ -22,15 +22,20 @@ keep dependent work conditional while continuing independent work.
 
 A question is BLOCKING for identified work when its missing answer is necessary before that work:
 
-- The next resource to be implemented depends on the answer.
+- The next resource requires unresolved material intent, evidence or authority; the authorized
+  task and available context do not already settle it or delegate the choice.
 - Proceeding would make a consequential commitment that cannot be cheaply reversed within existing
   authority; ordinary delegated choices do not become blockers merely because code could differ.
 - The answer decides a contract that other people or systems will start depending on.
 - The work would commit to an unresolved security, privacy, compliance or data-retention obligation.
-- Proceeding on the wrong answer would write or migrate data.
+- Proceeding would collect, alter or migrate real data under unresolved semantics or authority.
+  Isolated synthetic fixtures or analysis may proceed when they preserve the unresolved options
+  and do not commit the missing contract.
 
 A question is NOT blocking when the work it affects is later in the execution order and the
 answer can arrive before that point. Say so explicitly: "non-blocking until RES-07".
+Recheck that dependency before starting the affected work or after the execution order changes;
+the earlier non-blocking label does not authorize crossing it without an answer.
 
 ## Worked examples
 
@@ -76,8 +81,11 @@ an answer. Record it as still blocking, with the owner named.
 Sometimes nobody knows. Then:
 
 - Identify the accountable role and the phase/resource that cannot proceed.
-- Prefer the reversible option only for work inside explicitly delegated authority.
+- Prefer the reversible option only within existing authorization, including routine choices
+  implied by the authorized task. Reversibility alone does not authorize a new contract or scope.
 - Otherwise keep it blocked. An explicitly accepted `GAP-*` may permit only the work covered by
   its authority, consequence, owner, expiry and reopening trigger; recording a gap alone clears nothing.
-- Record any temporary choice as an assumption with a falsifier and an `ED-*` with provenance; contain
-  it so reversal touches one place.
+- Record any temporary choice as an assumption with its basis, scope and falsifier; contain it so
+  reversal is bounded. Link an `ED-*` when an engineering decision is being tracked in the existing
+  lifecycle record. A simple Inline clarification can use a concise sourced note without creating
+  a dossier or a new identifier scheme.

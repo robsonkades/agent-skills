@@ -120,6 +120,11 @@ THEN inspect cardinality and lifetime: long-lived retention of arbitrary keys ca
      limit. Bound admission/bytes, use eviction where appropriate, or validate a closed domain;
      even operation-scoped pools need a peak-memory budget.
 
+IF weak keys are proposed to fix a canonical pool's retention
+THEN inspect the value-to-key graph: storing the same instance as key and value in WeakHashMap
+     still strongly retains that key. Weak references alone provide neither a byte bound nor prompt cleanup;
+     use java-reference-types-and-leaks for reference-lifecycle design.
+
 IF the pool is on a hot path shared by many threads
 THEN test contention and mapping-function cost. `ConcurrentHashMap.computeIfAbsent`
      provides atomic per-key installation but its blocking/coordination details are

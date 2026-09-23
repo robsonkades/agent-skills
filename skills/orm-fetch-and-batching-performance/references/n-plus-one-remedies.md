@@ -74,6 +74,24 @@ Both allow a use-case fetch plan without a global mapping change. Conservative l
 often help, but retain an intentional eager obligation when it meets the actual loading and
 cost contract; graph semantics and provider capabilities still apply.
 
+### Filtering roots versus filtering their fetched collection
+
+In Hibernate HQL, a restriction such as `join fetch o.items i where i.status = :status` can
+leave `o.items` initialized with only matching children. A low query count or an initialized
+collection does not establish that it contains the complete mapped association.
+
+For "orders having an ACTIVE item, with all their items", select qualifying roots using an
+`exists` predicate or a bounded ID query, then fetch the collection without the child-status
+restriction. Preserve tenant/root predicates and the pagination/child-row budget. If the
+actual contract is "only ACTIVE item rows", use an explicit filtered scalar projection or
+read model; do not present that subset as the complete managed collection.
+
+Check root IDs and child IDs with a fixture containing both matching and nonmatching children,
+using a fresh persistence context so an earlier initialization cannot mask the defect. Test
+reuse separately if the application keeps a context across queries; another fetch query is
+not a guaranteed repair of an already initialized partial collection. Preserve pending writes
+when choosing reload/refresh or a new unit of work rather than clearing a shared context.
+
 ### The cartesian product
 
 Join-fetching independent sibling to-many associations can return the product of their sizes:

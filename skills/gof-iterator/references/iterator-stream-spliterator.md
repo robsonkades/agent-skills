@@ -51,8 +51,11 @@ still need sorting for natural-order `sorted()`.
 Declare only what is true. SORTED also requires ORDERED and a compatible getComparator();
 IMMUTABLE describes structural interference, not deep immutability of element objects.
 
-`estimateSize()` returning `Long.MAX_VALUE` is the honest answer for an unknown-length source;
-it disables sizing optimisations and nothing breaks.
+`estimateSize()` can return `Long.MAX_VALUE` for an unknown-length source; do not declare
+`SIZED` when the count is unknown. Sizing optimisations follow characteristics. If `SIZED`
+is still set, `getExactSizeIfKnown()` returns the estimate, including `Long.MAX_VALUE`, and
+`count()` may trust that false size without traversing. The sentinel alone does not remove
+a sizing claim; see the [Java 17 Spliterator contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Spliterator.html).
 
 ## trySplit
 

@@ -87,6 +87,22 @@ threads or pages. Verify OS placement separately from JVM worker sizing.
 See the [JDK 25 java launcher specification](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-runtime-options)
 for the processor-count override; confirm behavior on the deployed build.
 
+## Launch placement versus live changes
+
+For an existing JVM, `taskset -p <mask> <pid>` changes the named task's affinity, not every
+thread's mask. Use `-a` when all current threads are intended targets, then verify per-thread
+masks, including threads created during the change. A successful affinity update does not
+establish memory placement. See the [taskset options](https://github.com/util-linux/util-linux/blob/v2.40.2/schedutils/taskset.1.adoc).
+
+A task memory-policy change applies to later allocations lacking a more-specific policy, for
+the calling thread and threads it subsequently creates; existing siblings retain their task
+policies. Neither that change nor CPU affinity directly migrates already faulted pages.
+A launch policy set before pages
+are faulted therefore differs from retargeting a JVM with a resident heap. If existing pages
+must move, evaluate a restart under the chosen policy or an explicit supported page-migration
+mechanism separately, accounting for disruption and rechecking residence and outcomes. Do not
+infer migration from the requested policy alone; see [Linux memory-policy scope](https://github.com/torvalds/linux/blob/v6.10/Documentation/admin-guide/mm/numa_memory_policy.rst).
+
 ## Validation checklist
 
 Select checks that can resolve the requested claim and reuse matching evidence. A narrow

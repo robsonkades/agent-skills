@@ -76,7 +76,8 @@ where supported. They are different controls.
 
 Do not assert that a requested event ran. Inspect start diagnostics, available `status`/`metrics`,
 output event types, weights, and kernel/native frame presence. Status and JFR event class alone
-may not identify the CPU engine. Mark unavailable loss counters or engine evidence as unknown. Current
+may not identify the CPU engine; v4.5 JFR settings record the primary engine explicitly (see
+the engine reference). Mark unavailable loss counters or engine evidence as unknown. Current
 versions may choose a fallback for a generic CPU request; explicit event requests, platforms,
 and releases differ.
 
@@ -198,8 +199,9 @@ and any revisit condition; do not invent a configuration change or another captu
 Read [Session, output, and conversion protocol](references/output-and-conversion.md) before
 providing capture/lifecycle commands, multi-event settings, native/trace instrumentation,
 conversion, or a differential comparison. Read
-[Validation cases](references/validation-cases.md) when evaluating changes to this skill;
-these cases are not a required incident report.
+[Decision checks](references/validation-cases.md) when checking a proposed command or
+conclusion against common failure cases, or designing regression evaluations. These shipped
+examples are teaching material, not unseen tests or a required incident report.
 
 ## References
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: g1-internals
-version: 1.3.2
+version: 1.3.3
 description: >-
   How G1 actually works: uniform regions and the ergonomic sizing formula, remembered sets
   and the card table with its write barrier, SATB and the pre-write barrier, the phases of

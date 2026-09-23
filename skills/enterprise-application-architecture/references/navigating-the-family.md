@@ -37,7 +37,7 @@
 | Question                                             | Skill                          |
 | ---------------------------------------------------- | ------------------------------ |
 | Where does the transaction start and end?            | `enterprise-transactions`      |
-| Two users overwrote each other                       | `offline-concurrency-control`  |
+| Does stale state cross a transaction boundary?       | `offline-concurrency-control`  |
 | Which architectural choice causes the measured cost? | `architecture-and-performance` |
 | What explains an unlocalized performance problem?    | `performance-methodology`      |
 
@@ -70,7 +70,7 @@ question is resolved rather than reading the entire family.
 | ----------------------------------------------- | ----------------------------------------------------------------------- |
 | A list screen slows as query/call work grows    | `architecture-and-performance`, then `query-objects-and-specifications` |
 | `LazyInitializationException`                   | `orm-behavioral-patterns`                                               |
-| Two users overwrote each other                  | `offline-concurrency-control`                                           |
+| A client saves state read before another commit | `offline-concurrency-control`                                           |
 | A use case half-committed                       | `enterprise-transactions`                                               |
 | Adding a field touches seven files              | `enterprise-architecture-smells`                                        |
 | A service class has 3 000 lines                 | `service-layer-design`                                                  |
@@ -92,7 +92,7 @@ These pairs are easy to confuse; the distinction decides which skill applies.
 
 | Pair                                                                  | The distinction                                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `enterprise-transactions` vs `offline-concurrency-control`            | Inside one transaction, or across a user's thinking time                       |
+| `enterprise-transactions` vs `offline-concurrency-control`            | Reads/writes within each transaction, or stale state across transactions       |
 | `layering-and-boundaries` vs `distribution-boundaries`                | Source-code dependency direction, or a process boundary                        |
 | `domain-logic-organization` vs `service-layer-design`                 | Where the rules live, or what wraps them                                       |
 | `data-source-patterns` vs `repository-pattern`                        | How code reaches the database, or the collection abstraction over aggregates   |
@@ -107,6 +107,8 @@ These pairs are easy to confuse; the distinction decides which skill applies.
 
 This family stops where these begin:
 
+- `java-concurrency` — shared-memory races and task lifecycles inside one JVM. Trace the
+  state owner before treating a concurrency symptom as a database problem.
 - `performance-methodology`, `latency-statistics`, `java-performance`, `jvm-gc-tuning` —
   performance investigation, statistics and runtime behaviour.
 - `littles-law-and-queueing`, `connection-pool-sizing`, `universal-scalability-law` — the
@@ -132,3 +134,8 @@ This family stops where these begin:
 6. `enterprise-architecture-smells` — recognising when they have been put together badly.
 
 The rest are consulted by question, not read in sequence.
+
+## Sources for concurrency routing
+
+- [JLS 17, happens-before order](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.4.5) defines ordering and visibility for shared-memory actions; this is a different contract from database isolation.
+- [RFC 9110, If-Match](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1) describes client preconditions against overwriting changed state; the stale-client problem is not limited to human editing.

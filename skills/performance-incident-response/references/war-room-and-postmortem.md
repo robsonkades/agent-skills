@@ -37,6 +37,20 @@ SLI population; lower latency after shedding most traffic does not establish rec
 Cancellation is not proof that in-flight work stopped or resources were released. Separate restored
 interactive service from residual replay/backlog recovery, and retain an owner for each.
 
+## Command handoff and temporary controls
+
+Distinguish a prepared handoff from an accepted transfer. Identify the incoming commander,
+confirm their acceptance using the incident's existing process, and record the effective time
+and new owner where responders track command. Reuse an acceptance already recorded. If nobody
+has accepted, retain explicit ownership or use the established escalation path; do not infer
+acceptance from silence. Already authorized urgent mitigations continue under their named owners.
+
+Include changes still in flight, their abort/rollback responsibility and next observation time.
+Track temporary routing, shedding, retry or configuration overrides with an owner, reason,
+removal criteria and review time. Incident closure does not automatically make it safe to undo
+them: check affected load, dependency capacity and backlog before restoration. If a temporary
+change remains after recovery, preserve its follow-up ownership rather than losing it at shift change.
+
 ## Postmortem
 
 Include relevant impact, sourced timeline, detection and response clocks, technical and organizational

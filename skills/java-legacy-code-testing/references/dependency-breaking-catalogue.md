@@ -46,12 +46,22 @@ binary, reflective and framework compatibility review, not just a search for `ne
 
 | Technique                                | p.  | What it does                                                                                    | Cost / caveat                                                                                                                       |
 | ---------------------------------------- | --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **Expose Static Method**                 | 345 | Logic touching no instance state becomes `static`, testable without constructing the class      | The cheapest entry in the catalogue when it applies, and it applies more often than people expect                                   |
+| **Expose Static Method**                 | 345 | Expose state-independent logic through a static helper; retain the instance entry when needed   | Check class initialization, dispatch and binary compatibility; see below                                                            |
 | **Introduce Instance Delegator**         | 369 | Add an instance method forwarding to the static, so callers can be given a substitutable object | One extra type; the static remains for every other caller                                                                           |
 | **Encapsulate Global References**        | 339 | Wrap a global or static in a class, so references go through one replaceable object             | Every reference site changes                                                                                                        |
 | **Replace Global Reference with Getter** | 399 | Every read of a global becomes a `protected` getter call, overridable in a test subclass        | Another test-only `protected` member                                                                                                |
 | **Introduce Static Setter**              | 372 | `static void setInstanceForTesting(...)` on a singleton                                         | **Feathers presents this as a last resort, not a pattern.** It creates a mutable global. Ticket it or do not do it                  |
 | **Supersede Instance Variable**          | 404 | A setter replacing an already-constructed collaborator                                          | Mutable replacement needs controlled initialization, use and ownership; prefer constructor injection where the lifecycle permits it |
+
+For Expose Static Method, keep an existing instance method delegating to a differently named
+static helper when caller or override contracts require it. Ignoring instance fields does not
+make the existing method's dispatch contract static. Changing a non-private method between
+instance and static can break precompiled callers; preserve required synchronization too.
+
+Calling a static helper still initializes its declaring class and required superclasses. If
+the obstacle is a static field initializer or static block doing I/O, making a method static
+in that class does not bypass it. Compare a separately initialized helper or an earlier seam,
+and inspect the production initialization effects before claiming the test point is reachable.
 
 ## Method-body techniques
 
@@ -77,7 +87,7 @@ answer.
 | **Sprout Method** | 59  | Write the new behaviour as a new, fully tested method; call it from one line inside the untested body         | The new behaviour fits inside the existing flow |
 | **Sprout Class**  | 63  | Same, when the new behaviour needs state, or the host class cannot be instantiated at all                     | The host is beyond reach today                  |
 | **Wrap Method**   | 67  | Rename the original; the new method takes the old name and calls both the original and your new tested method | The new behaviour must happen _around_ the old  |
-| **Wrap Class**    | 71  | A decorator implementing the same interface, holding the legacy object, adding behaviour before or after      | The new behaviour applies to every caller       |
+| **Wrap Class**    | 71  | A decorator implementing the same interface, holding the legacy object, adding behaviour before or after      | Required callers must go through the wrapper    |
 
 Feathers's own caveat on all four (ch. 6 summary, p. 76): they leave the legacy body untested and
 the class slightly worse-shaped. They buy safety for the **new** code, not improvement of the old.
@@ -88,3 +98,10 @@ Technique names and page numbers: Michael Feathers, _Working Effectively with Le
 (Prentice Hall, 2004, ISBN 0-13-117705-2), chapters 6 and 25, pages read from the publisher's
 sample front matter. The one-line descriptions, cost columns and Java verdicts are this skill's,
 not the book's.
+
+- [JLS 21, class initialization](https://docs.oracle.com/javase/specs/jls/se21/html/jls-12.html#jls-12.4.1):
+  invoking a static method still initializes its declaring class.
+- [JLS 21, static-method binary compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.19):
+  changing instance/static status can break existing binaries.
+- [Martin Fowler, Legacy Seam](https://martinfowler.com/bliki/LegacySeam.html):
+  an enabling point must actually select the alternate behaviour for the consumer.

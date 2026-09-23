@@ -42,9 +42,13 @@ public record PaymentInstruction(Money amount, AccountId debtor, Beneficiary ben
 2. **`build()`** — may add checks that need the builder's own state (for example "you called
    `iban()` and `accountId()`; choose one"), which the record cannot see because only one field
    survives. Everything else it checks should be delegated.
-3. **Individual setters** — appropriate only for per-argument checks (`Objects.requireNonNull`),
-   because a cross-field rule cannot be evaluated before the other field is set. Setters that
-   throw on cross-field rules make the builder order-dependent, which defeats its purpose.
+3. **Individual setters** — can check their arguments (`Objects.requireNonNull`) and reject
+   transitions forbidden by an explicit builder protocol. For example, a choose-once recipient
+   API can reject selecting the other recipient kind in either order; reject before mutation
+   if failure promises to preserve the previous state. Defer checks that would reject legal
+   intermediate states: moving a range from `[0, 10]` to `[20, 30]` requires temporarily
+   inconsistent bounds when `min(20)` precedes `max(30)`. If arbitrary setter order is promised,
+   validate that combined result at construction. Early checks do not replace product invariants.
 
 The failure to avoid: all validation in `build()`, none in the record. The type then has a
 public constructor that accepts invalid values, and the invariant holds only for callers who
@@ -127,11 +131,16 @@ LineItem must be immutable or independently copied. List.copyOf also rejects nul
   produces a near-duplicate that differs only where the caller overwrote fields. Choose and test
   documented snapshot reuse or enforced single-use; do not silently reset unless that is the API
   contract. Define whether failed builds preserve state and ensure later builds cannot mutate earlier products.
-- A builder held in a field of a singleton is shared mutable state under concurrency, and the
-  symptom is a value from one request appearing in another's object — rare, non-reproducible,
-  and expensive to diagnose.
-- A builder captured by a lambda that escapes the constructing method has the same problem with
-  a longer fuse.
+- A singleton's builder can mix values across requests when callers share it without ownership
+  of a complete construction session. Individually synchronized setters and `build()` still
+  allow `A.setDebtor(a)`, `B.setDebtor(b)`, `A.setRecipient(x)`, `A.build()` to produce `(b, x)`.
+  If sharing is necessary, isolate the whole populate/build/reuse sequence, including optional
+  state and failure cleanup; method-level locking alone does not provide that contract.
+- Capturing a builder in an escaping lambda is hazardous when the original caller or another
+  task can keep using it. Exclusive transfer can be valid: actions before `ExecutorService`
+  submission happen-before the task's actions. The original owner must stop using the builder
+  and any shared mutable inputs for the duration of the transfer. Submission does not order
+  mutations made by the caller afterward; `Future.get()` provides the result handoff.
 
 The safe default: create the builder, build, discard, within one method.
 
@@ -145,3 +154,7 @@ The safe default: create the builder, build, discard, within one method.
   unmodifiable snapshot semantics, null rejection and mutable-element limitations.
 - [Lombok Builder](https://projectlombok.org/features/Builder): constructor/method targets,
   defaults, toBuilder and Singular behavior; verify the project's actual Lombok version.
+- [JLS 17 synchronization](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.1):
+  a synchronized method holds its monitor for that invocation, not a caller's sequence of calls.
+- [ExecutorService, Java 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html):
+  submission and result-retrieval happens-before edges; exclusive builder ownership is a separate requirement.

@@ -61,13 +61,17 @@ At cycle start:
 During the cycle:
 [ already allocated ][ TAMS ][ allocated DURING the cycle ][ free ]
   must be reached by            address >= TAMS -> implicitly live,
-  marking to count live         never visited by the marker
+  marking to count live         skipped by normal bitmap marking
 ```
 
 This is what lets G1 keep promoting into old **during** a cycle without each promotion forcing
-re-marking. TAMS is an allocation boundary, not a replacement version tag for two concurrent
-bitmap generations. JDK 20's single-bitmap change also coordinates rebuild/scrubbing and bitmap
-reuse; do not attribute its correctness to TAMS alone.
+re-marking. Implicit liveness does not mean that no collector path scans the object's fields:
+JDK 25 root-region scanning walks recorded ranges from TAMS to their recorded end, including
+survivor and old regions, to discover outgoing references. Evacuation-failure recovery also
+uses raw bitmap marking for retained objects rather than the normal TAMS-filtered marking path.
+TAMS is an allocation boundary, not a replacement version tag for two concurrent bitmap
+generations. JDK 20's single-bitmap change also coordinates rebuild/scrubbing and bitmap reuse;
+do not attribute its correctness to TAMS alone.
 
 ## Mark stack overflow
 
@@ -91,25 +95,28 @@ line's identity. Diagnose mark-stack overflow from stack expansion/limit and obj
 diagnose SATB contribution from remark/SATB processing, eligible store rate and cycle CPU. Never
 change the SATB buffer flags solely because the message contains “Mark Stack”.
 
-## Evacuation failure and why it takes the snapshot with it
+## Evacuation failure: reason before marking consequences
 
-```
-1. A young or mixed GC tries to evacuate a surviving object to a destination region
-2. There is not enough free space to complete the copy
-3. G1 falls back to in-place promotion: the object is not copied, stays where it is,
-   and is treated as promoted at its existing address
-4. References to it must stay valid — G1 preserves the object's original mark word
-   (lock/hash/GC bits) in an auxiliary structure before overwriting it with temporary
-   evacuation metadata, and restores it afterwards
-5. If a marking cycle was in progress, the bitmap and the affected region's TAMS may need
-   correcting: the premise that "below TAMS means existed since cycle start, at a stable
-   address" was violated by an evacuation that partially failed midway
-```
+On JDK 25, the pause summary distinguishes `Evacuation Failure: Allocation`,
+`Evacuation Failure: Pinned`, or both reasons:
 
-Evacuation failure can require marking metadata reconciliation and is a strong capacity signal,
-but it does not establish a universal `evacuation failure → mark-stack overflow → full GC`
-sequence. Reconstruct the actual GC-id chronology. Treat step 5 as a conceptual risk; the exact
-reconciliation/restart mechanism changes between releases.
+- **Allocation:** destination allocation could not complete. Correlate free regions,
+  promotion/retention, evacuation reserve and reclamation timing before blaming late marking.
+- **Pinned:** JNI critical access prevents movement of an object. This can happen with free
+  capacity available; inspect critical-section lifetime and the affected regions rather than
+  treating the suffix as evidence for a larger heap or lower IHOP.
+- **Both:** investigate both constraints; fixing one does not establish that the other is gone.
+
+In the pinned JDK 25 implementation, an object that cannot move is forwarded to itself and
+retained in place. The collector records the failed region, marks the retained object in the
+bitmap for recovery, preserves mark-word information needed for restoration and scans its
+references. Cleanup reconciles the affected metadata so references remain valid. This special
+bitmap use is distinct from normal concurrent-mark liveness accounting above TAMS.
+
+Neither reason establishes a universal `evacuation failure → mark-stack overflow → full GC`
+sequence or proves that the marking snapshot was aborted. Reconstruct the actual GC-id
+chronology and use the target release's reconciliation mechanism. `g1-internals` owns the
+evacuation mechanics; this skill determines what the observed failure says about marking.
 
 ## Humongous: the strict threshold
 
@@ -162,4 +169,6 @@ several competing costs and need workload validation, not a monotonic fan-in ass
 - [SATB filtering](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1SATBMarkQueueSet.cpp)
 - [Object scanning and TAMS](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.inline.hpp)
 - [Humongous candidate preparation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1YoungCollector.cpp)
-- [Mark-stack allocation and restart](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.cpp)
+- [Root-region scanning, mark-stack allocation and restart](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMark.cpp)
+- [Evacuation failure reasons and retained-object processing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ParScanThreadState.cpp)
+- [Root-region registration and evacuation-failure bitmap marking](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectedHeap.cpp)

@@ -1,7 +1,8 @@
 # Behavioral validation cases
 
-These prompts test agent decisions, not application correctness. They are written cases;
-no with/without-skill behavioral runs have been executed for this revision.
+These teaching cases expose review mistakes and can serve as known-example regression prompts.
+They test agent decisions, not application correctness. No with/without-skill behavioral runs
+have been executed for this revision.
 
 Separate example verification executed on 2026-09-05: the Java block in
 `boundary-and-contract-tests.md` was extracted into a temporary Maven project using ArchUnit
@@ -19,13 +20,19 @@ the dependencies and test runner execute on a Java 17 runtime.
 
 Run each request verbatim in fresh baseline and treatment sessions with the same model/version,
 settings, tools and repository fixture. Supply the skill/references only to treatment; keep
-neighboring descriptions identical. In the isolated evaluation copy, remove this reference's
-`## Reproduction protocol` heading and everything after it from agent-accessible resources;
-retain the preceding example-verification record. Keep the full cases and other evaluation
-artifacts private to the evaluator in both arms, supplying only the selected request/context
-to the agent. Save outputs and tool traces; judge each requirement with an excerpt, not exact
-wording. For selection, provide descriptions first. Repeat runs before claiming consistency
-or improvement.
+neighboring descriptions identical. Preserve this routed reference in a full-package treatment:
+its teaching answers are ordinary shipped content, so these cases are known examples, not
+unseen holdouts. For generalization checks, freeze new prompts and evaluator-only expectations
+before running them, keep those expectations outside actor access, and supply only the selected
+request/context. If a run deliberately withholds shipped resources, record exactly what was
+withheld and limit conclusions to that configuration.
+
+Use controlled fixture snapshots and access boundaries so a baseline cannot read the treatment
+skill, prior answers or another run's modified files. Fresh sessions alone do not isolate a
+shared filesystem; report procedural separation as a limitation when enforcement is unavailable.
+Save exact inputs, skill versions, accessible resources, outputs and tool traces; judge each
+requirement with an excerpt, not exact wording. For selection, provide descriptions first.
+Repeat runs before claiming consistency or improvement.
 
 ## 1. A structural rule that cannot prove its name
 
@@ -40,6 +47,12 @@ check and a restored passing run.
 
 **Failure:** Treating names as aggregate ownership, a zero-class pass as coverage, or a compilation
 failure as proof the architecture rule works.
+
+**Partial-classpath variant:** Add “Orders domain classes remain imported, but the billing
+module's production output is missing; our nonempty-domain assertion passes.” Require an
+expected-module inventory from build evidence, a presence check for each required module and
+a missing-one-module negative control. Fail if any nonempty import is treated as complete
+coverage or if a compile error is presented as the intended coverage assertion.
 
 ## 2. Rollback hidden by the test
 

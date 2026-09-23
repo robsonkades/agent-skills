@@ -65,13 +65,14 @@ supported by the available evidence.
    Check result set, order, JDBC types, errors, plans, and work.
 4. Force concurrent interleavings for critical invariants and failure cases for DDL, partial loads,
    restart, failover, lag, timeout, and generated keys.
-5. Shadow side-effect-free reads at comparable data boundaries and reconcile without erasing
+5. Shadow side-effect-free reads at a demonstrated common data boundary and reconcile without erasing
    duplicates or other contract differences. Dual-write only with explicit idempotency, ordering, failure handling,
    and reconciliation; otherwise it creates two sources of truth.
 6. Cut over with measurable abort criteria, a bounded reconciliation window, rehearsed rollback, and
    one owner authorized to decide. Fence old writers and verify destination application through
-   the final source commit boundary before admitting destination writes. Reversibility after
-   that point requires a proven path for every accepted destination write.
+   the final source commit boundary. Validate destination ID generators before admitting writes.
+   Reversibility after that point requires a proven path for every accepted destination write
+   and a safe source allocator state.
 
 ## Non-portability rules
 

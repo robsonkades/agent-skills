@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: littles-law-and-queueing
-version: 1.5.2
+version: 1.5.3
 description: >-
   Conservation checks from Little's Law (`L = λW`) and queueing decisions: measurement
   boundaries, service demand versus residence time, utilisation curves, thread pool and
@@ -45,6 +45,8 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - executors-and-task-lifecycle
+  - completablefuture-composition
   - cpu-cache-and-numa
   - queueing-models
   - thread-sizing-and-virtual-threads

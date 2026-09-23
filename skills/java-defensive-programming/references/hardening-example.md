@@ -94,9 +94,11 @@ lengths and the ISO 7064 mod-97 check digits. The point here is where the check 
 not its completeness.
 
 The example explicitly assumes account IDs accept outer whitespace and case normalization,
-and refund reasons accept outer whitespace removal. Verify this policy against the actual
-contract before copying it; `Locale.ROOT` uppercasing is not an ASCII-only validation step.
-Do not apply these transformations to opaque or signed identifiers.
+while refund reasons reject ISO control characters anywhere in the raw text and permit removing
+other outer Java whitespace. The reason bound is 1,000 UTF-16 code units before normalization.
+Check controls before `strip()`: tabs and line breaks at the edges would otherwise disappear.
+Verify these policies against the actual contract before copying them; `Locale.ROOT` uppercasing
+is not an ASCII-only validation step. Do not transform opaque or signed identifiers this way.
 
 ```java
 
@@ -116,12 +118,12 @@ public record RefundRequest(AccountId account, Money amount, String reason) {
         if (amount == null) throw new RefundInputException("amount", "required");
         if (reason == null) throw new RefundInputException("reason", "required");
         if (reason.length() > 1_000) throw new RefundInputException("reason", "too_long");
+        if (reason.codePoints().anyMatch(Character::isISOControl)) {
+            throw new RefundInputException("reason", "contains_control_character");
+        }
         reason = reason.strip();
         if (reason.isEmpty()) {
             throw new RefundInputException("reason", "must_not_be_blank");
-        }
-        if (reason.codePoints().anyMatch(Character::isISOControl)) {
-            throw new RefundInputException("reason", "contains_control_character");
         }
     }
 }
@@ -189,6 +191,10 @@ charge-limit check atomically with posting under the ledger's concurrency protoc
   passes; `"###"`, missing/zero/negative amount, blank/oversized/control-bearing reason each yield
   the documented field/code without echoing input—and _no_ ledger write. The negative-amount test asserts rejection, where
   the old suite asserted the sign-flip.
+- Exercise leading, embedded and trailing reason controls (`\t`, `\n`, `\r`) and control-only
+  input: all fail with `reason` / `contains_control_character` within the size bound. A reason
+  surrounded by ordinary spaces still normalizes successfully; oversized raw input fails before
+  normalization. Run required rejection checks with assertions disabled as well as enabled.
 - Construct domain records directly to verify constructor invariants, and keep public
   null-entry tests or move equivalent coverage to the owning boundary. Delete a duplicate
   test only after tracing the same invariant and failure contract to retained coverage.
@@ -196,6 +202,9 @@ charge-limit check atomically with posting under the ledger's concurrency protoc
 These are acceptance checks to execute on the concrete endpoint, not recorded HTTP or
 ledger test results from the sketches.
 
+For normalization order, see [String.strip](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#strip()>),
+[Java whitespace](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Character.html#isWhitespace(int)>)
+and [ISO control characters](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Character.html#isISOControl(int)>).
 For reconstruction semantics, see [Java SE 25 serialization input](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html).
 For validator activation and groups, see [Jakarta Validation 3.1](https://jakarta.ee/specifications/bean-validation/3.1/jakarta-validation-spec-3.1);
 use the project's actual framework and version when verifying the HTTP path.

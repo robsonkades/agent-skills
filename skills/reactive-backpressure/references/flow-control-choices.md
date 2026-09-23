@@ -72,6 +72,13 @@ proof that an HTTP driver's flow control reaches the database cursor.
 
 ## Prefetch and concurrency limits
 
+Count demand in the element type at each boundary. With exact `buffer(100)`, a downstream
+`request(2)` requests two lists and is reshaped into a request for 200 source elements,
+before accounting for other operators. A queue of lists must be budgeted in retained
+records and bytes, not just list count. Overlapping, timed or boundary-driven buffers have
+different retention/request behavior; inspect the actual overload rather than extending
+this exact-size calculation to all batching operators.
+
 ```java
 // publishOn takes a prefetch — default Queues.SMALL_BUFFER_SIZE (256)
 Flux.range(1, 1_000_000)
@@ -91,6 +98,21 @@ An already-running future, eager call or detached task can escape this bound. Tw
 subscriptions each allow 16 inners; a shared dependency may require a separate global bulkhead.
 Budget outer requests, per-inner prefetch, publishOn queues, payload bytes, client buffers and
 scheduler queues separately. Replacing `flatMap` must preserve the required admission scope.
+
+`groupBy` adds another progress constraint: groups are live publishers and must be consumed.
+When more groups exist than the consuming `flatMap` can subscribe to, unconsumed groups can
+fill the upstream prefetch budget while active groups wait for source completion. Neither
+side can advance; this can happen even with a finite source. Inspect key cardinality, group
+lifetime, prefetch and consumption order together; low concurrency is not automatically a
+safe bound at this level.
+
+If the finite group count fits the resource budget, subscribing to all groups concurrently
+is one option; bound expensive per-item operations separately. For an unbounded key space,
+consider bounded partitions or another topology only if it preserves required per-key
+ordering and aggregation semantics. Raising concurrency or adding an unbounded buffer does
+not establish a resource bound. Test more interleaved keys than active group subscriptions,
+not only a small or conveniently ordered fixture; use a deadline and cancellation so a
+progress failure cannot hang the test suite.
 
 For a blocking operation, defer invocation itself:
 
@@ -152,6 +174,13 @@ For a changed demand/ownership boundary, select checks with zero/one-item demand
 two simultaneous subscriptions and work that ignores interruption. Assert counts/bytes and
 exactly the intended release ownership, not merely eventual reactive completion.
 
+For batching changes, start with controlled downstream demand and observe requests before
+and after the operator: exact `buffer(100)` with a total request of two lists should request
+200 source elements when no other operator reshapes demand. Repeat with `buffer(1)` to
+distinguish list count from record count. For grouping, compare a finite many-key source
+whose groups await completion with a known two-key source consumed concurrently; retain the
+ordering/loss contract while testing any proposed fix. These are test recipes, not recorded runs.
+
 ## When retained input outpaces departures
 
 If admitted arrivals remain above actual departures for long enough, a finite buffer fills.
@@ -179,3 +208,5 @@ itself needs bounded waiters/deadlines, not an unbounded queue of waiting produc
 - [Reactive Streams JVM 1.0.4 rules](https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.4/README.md)
 - [Reactor 3.7.5 Flux API](https://projectreactor.io/docs/core/3.7.5/api/reactor/core/publisher/Flux.html) — demand, prefetch and discard support.
 - [Reactor 3.7.5 bounded-buffer implementation](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/FluxOnBackpressureBuffer.java)
+- [Reactor 3.7.5 demand reshaping](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/subscribe-backpressure.adoc) — exact buffers change the unit of requested demand.
+- [Reactor 3.7.5 batching and grouping](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/advancedFeatures/advanced-three-sorts-batching.adoc) — group consumption, key cardinality and prefetch can form a progress cycle.

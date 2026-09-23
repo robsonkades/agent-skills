@@ -58,10 +58,19 @@ does not by itself require an upgrade. See the [version-specific adoption guidan
 | `Job` completion | A helper that never exits blocks successful completion; an explicit exit protocol can avoid this | Sidecar does not block completion after app containers finish; Job success still depends on their outcome |
 
 StartupProbe success must represent the dependency the app needs; a readinessProbe alone
-is not a startup gate. Sidecar readiness contributes to the whole Pod: for an optional log
-shipper, making all app traffic unready may be the wrong policy. Native sidecars stop in
-reverse specification order; if apps consume the grace period, sidecars may have almost no
-time to flush before SIGKILL. Ordering does not guarantee durable log delivery.
+is not a startup gate. The next init container waits for the native sidecar's started state,
+so the startup check cannot require the app or a later init container to run first. For
+example, a proxy's startup check that calls the app's health endpoint creates a dependency
+cycle: raising its failure threshold only prolongs the wait. Check the proxy's own ability
+to serve before admitting its consumers; assess application availability separately. Inspect
+init order, probe targets and container states to confirm this cycle rather than assuming
+every stuck `Init` Pod has it. A later sidecar restart does not stop an already-running app;
+startup ordering does not replace runtime dependency failure handling.
+
+Sidecar readiness contributes to the whole Pod: for an optional log shipper, making all app
+traffic unready may be the wrong policy. Native sidecars stop in reverse specification order;
+if apps consume the grace period, sidecars may have almost no time to flush before SIGKILL.
+Ordering does not guarantee durable log delivery.
 
 Native sidecars supply kubelet lifecycle ordering when supported; ordinary containers can instead
 use an explicit bounded application admission/retry and termination protocol. Validate that
@@ -103,6 +112,15 @@ permissions for the actual operations. Protect administrative listeners and moun
 do not infer authorization from `localhost` or shared placement.
 JVMTI itself is an in-process native agent interface; a separate controller can communicate
 with that agent. Sharing a PID namespace does not itself install or enable the agent.
+
+For a shared `emptyDir`, distinguish a container restart from Pod replacement: files survive
+the former, but are deleted when the Pod is removed from its node. A log buffer in that volume
+cannot by itself satisfy retention across Pod loss; choose a durable handoff or explicitly
+accept the loss window. With `medium: Memory`, writes consume the writer's memory budget,
+even when a different container reads and ships those files. Bound buffer growth alongside
+process memory. A disk-backed `emptyDir` uses node ephemeral storage; its size limit does not
+reserve free space, so other node usage can exhaust capacity sooner. Verify restart recovery,
+replacement loss and full-buffer behavior against the actual delivery contract.
 
 An application talking to a sidecar must configure the call as a network call:
 
@@ -153,6 +171,23 @@ owns JDBC/HikariCP sizing, not generic HTTP pool configuration.
 - Sidecar memory is paid per replica. For a resource/placement change, use peak replica and
   rollout populations, distinguish requests/limits/working set, and check Pod and node headroom.
 
+For initial scheduling with container-level requests, calculate CPU and memory separately
+from the admitted Pod (including injected containers and defaults). For each resource, compare:
+
+- Steady state: all regular app containers plus all restartable init containers.
+- Each init phase: that init container plus every earlier restartable init container, since
+  those sidecars remain running. Earlier one-shot init containers have finished.
+
+Take the largest phase total, then add applicable Pod overhead. Do not sum all one-shot init
+requests, or take only the largest individual init request. As a worked memory example, a
+`256Mi` native sidecar followed by a `1Gi` one-shot initializer with a `768Mi` app requires
+`max(256 + 1024, 256 + 768) = 1280Mi` before overhead. Putting the one-shot initializer first
+changes that to `max(1024, 256 + 768) = 1024Mi`, but is valid only if startup dependencies allow
+that order. These are scheduling requests, not measured working sets or memory limits.
+This calculation matches Kubernetes 1.34's container aggregation. Enabled Pod-level requests
+can replace the corresponding aggregate; in-place resize also needs status/allocation evidence.
+Inspect the deployed resource model before applying the example to either case.
+
 ## Failure matrix
 
 | Event                        | Kubernetes sees                     | The application sees                          | What to do about it                                                                                                                      |
@@ -177,6 +212,8 @@ faults; a narrow explanation does not require an unrelated full cluster campaign
 
 - [Kubernetes 1.34 sidecar containers](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/) — started/probe semantics, readiness, shutdown and restart.
 - [Kubernetes 1.34 Pod QoS](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-qos/) — effective resource model.
+- [Kubernetes v1.34.0 resource helpers](https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/component-helpers/resource/helpers.go) — `AggregateContainerRequests` accounts for overlapping init phases; `PodRequests` applies Pod-level overrides and overhead.
+- [Kubernetes 1.34 emptyDir volumes](https://v1-34.docs.kubernetes.io/docs/concepts/storage/volumes/#emptydir) — Pod lifetime, memory accounting and shared node capacity.
 - [Kubernetes 1.34 Pod lifecycle](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) — grace and failure conditions.
 - [Kubernetes 1.34 process namespace sharing](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) — process and filesystem visibility with permissions.
 - [Kubernetes 1.34 node-pressure eviction](https://v1-34.docs.kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/) — actual ranking inputs and QoS limits.

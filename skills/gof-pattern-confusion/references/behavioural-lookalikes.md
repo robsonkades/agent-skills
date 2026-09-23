@@ -1,4 +1,4 @@
-# Behavioural lookalikes
+# Behavioural and creational lookalikes
 
 Each section: the discriminating question, a misclassification that happens, and what it costs.
 
@@ -167,11 +167,17 @@ count or changes are coupling independent axes. A sparse current matrix can stil
 
 | What you have                                        | It is                                                   |
 | ---------------------------------------------------- | ------------------------------------------------------- |
-| A subclass hook, called from inherited code          | Factory Method (GoF)                                    |
+| Product creation deferred to subtype overrides       | Factory Method (GoF)                                    |
 | `static X of(...)` on the product type               | A static factory — not this pattern                     |
 | Several products that must come from the same family | Abstract Factory                                        |
 | Staged construction with intermediate choices        | Builder                                                 |
 | A `Supplier` field                                   | A function; inspect its role before assigning a pattern |
+
+Factory Method does not require an inherited algorithm: a Template Method can call it, but a
+separate client can also use the creation operation directly. Abstract Factory and Factory Method
+can coexist: the original GoF [Abstract Factory example](https://www.informit.com/articles/article.aspx?p=1398599)
+uses overridable creation operations for a product family, called by a separate maze-building client.
+Inspect each role without adding an inherited workflow or breaking an extension contract to fit a label.
 
 **The misclassification:** calling `Money.of(...)` a Factory Method.
 

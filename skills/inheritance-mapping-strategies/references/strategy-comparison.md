@@ -1,6 +1,7 @@
 # Strategy Comparison
 
-The running example: `Payment` with `CardPayment`, `BankTransfer` and `VoucherPayment`.
+The running example: abstract `Payment` with concrete leaf types `CardPayment`, `BankTransfer`
+and `VoucherPayment`.
 SQL is PostgreSQL-style illustrative DDL; snippets omit associations, identifiers or subtype
 tables where marked. Java snippets require the project's persistence API imports and mappings,
 not just the shown annotations. SQL shapes below are typical, not provider guarantees.
@@ -115,11 +116,16 @@ CREATE TABLE bank_transfer  (id BIGINT PRIMARY KEY, amount ..., currency ..., ib
 | ----------------- | ---------------------------------------------------------------------- |
 | Load one by id    | Which table? A `UNION ALL` over all of them, or the type must be known |
 | Polymorphic list  | `UNION ALL` over every subtype table                                   |
-| All card payments | one table, no join — the one thing this strategy is good at            |
+| All card payments | one table, no inheritance join for this leaf type                      |
 
-Without a base table an ordinary FK cannot reference all subtype tables. Separate subtype
-FKs or a shared identity registry can provide alternatives, with extra schema and integrity
-costs. A type-and-ID pair alone is not an ordinary cross-table FK.
+A concrete root or intermediate entity also has its own table, containing instances of that
+exact class, not rows for its descendants. Querying a non-leaf entity type remains polymorphic
+and can require UNIONs over descendant tables; naming a subtype in JPQL does not make it a
+single-table query. Inspect the actual SQL.
+
+No table contains all hierarchy IDs, so an ordinary FK to a concrete root's table does not
+cover its descendants. Separate subtype FKs or a shared identity registry can provide alternatives,
+with extra schema and integrity costs. A type-and-ID pair alone is not an ordinary cross-table FK.
 
 Identifiers must be unique within an entity hierarchy. Use a provider-supported allocation
 scheme such as a shared sequence; independent per-table generators can collide. Check
@@ -129,7 +135,7 @@ TABLE_PER_CLASS support and generator restrictions in the actual provider.
 
 | Dimension                     | Single table                         | Joined                       | Concrete table                     |
 | ----------------------------- | ------------------------------------ | ---------------------------- | ---------------------------------- |
-| Read one, type known          | 1 table                              | mapped ancestor joins        | 1 table                            |
+| Read one, leaf type known     | 1 table                              | mapped ancestor joins        | 1 table                            |
 | Read polymorphic              | 1 table                              | often subtype joins          | UNION over every subtype           |
 | Insert                        | 1 statement                          | 1 per level                  | 1 statement                        |
 | `NOT NULL` on subtype fields  | no (check constraint)                | yes                          | yes                                |
@@ -189,6 +195,8 @@ an arbitrary multi-column hierarchy. The storage can stay flat
 
 - [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
   sections 2.4, 2.13–2.14 and discriminator mappings: identity, inheritance and portability.
+- [Hibernate ORM 6.6 inheritance](https://docs.hibernate.org/orm/6.6/userguide/html_single/#entity-inheritance-table-per-class):
+  concrete root tables and polymorphic UNIONs under TABLE_PER_CLASS.
 - [PostgreSQL 18 partial indexes](https://www.postgresql.org/docs/18/indexes-partial.html):
   predicate implication and query-plan limitations.
 - [Spring Data JPA auditing](https://docs.spring.io/spring-data/jpa/reference/auditing.html):

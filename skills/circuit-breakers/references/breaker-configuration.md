@@ -21,6 +21,19 @@ Behaviours that affect diagnosis:
 
 - The window size is **a count of calls** under `COUNT_BASED` and **a number of seconds**
   under `TIME_BASED`. The same integer means two different things.
+- In Resilience4j 2.3.0, the effective closed-state minimum is
+  `min(minimumNumberOfCalls, slidingWindowSize)` for `COUNT_BASED`; `TIME_BASED` uses
+  `minimumNumberOfCalls` without that cap. A count window of 4 with a configured minimum of
+  10 evaluates after 4 recorded outcomes, not 10. Check observed metrics and threshold
+  transitions rather than reading the configured minimum as the effective value.
+- Half-open uses a count window sized by `permittedNumberOfCallsInHalfOpenState`, so its
+  effective minimum is `min(minimumNumberOfCalls, permittedNumberOfCallsInHalfOpenState)`.
+  With minimum 1 and 10 permits, the first recorded fast success can close the breaker while
+  other probes remain pending. To require P recorded outcomes, use P half-open permits and a
+  configured minimum of at least P, while checking the resulting closed-state behavior too.
+  This still does not eliminate ignored replacements or late completions from earlier states.
+  See the tagged [metrics implementation](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerMetrics.java)
+  and [half-open transitions](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java).
 - Without `automaticTransitionFromOpenToHalfOpenEnabled`, the open→half-open move happens on
   the **next call after the wait duration**, not on a timer. On a low-traffic path the breaker
   therefore reports open long after it would have closed, and the first caller after the quiet
@@ -85,10 +98,16 @@ into a total local outage. Not counting it leaves backoff to the retry policy ho
 once, per dependency, and record the reason.
 
 In Resilience4j distinguish three treatments: **failure**, **success**, and **ignored**.
-An exception rejected by the recording predicate counts as success unless explicitly ignored;
+An exception rejected by the effective recording predicate counts as success unless explicitly ignored;
 ignored exceptions contribute to neither count and therefore change the sample denominator.
 Use `ignoreExceptions`/an ignore predicate when that outcome should not describe dependency
 health, and test the recorded call count as well as the failure rate.
+
+In 2.3.0, `recordExceptions` and `recordException` combine with **OR**, not AND. Listing a
+shared HTTP exception class records every instance of that class even if a custom predicate
+rejects its 422 status. Remove the broad class entry when the predicate must decide by status,
+or explicitly ignore the intended outcomes; ignoring takes precedence over recording.
+See [predicate composition](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-core/src/main/java/io/github/resilience4j/core/predicate/PredicateCreator.java).
 
 `recordExceptions` and the exception predicate (`recordException` in the Java builder;
 `recordFailurePredicate` in supported configuration bindings) inspect a Throwable. They do not
@@ -97,6 +116,13 @@ predicate (`recordResult` in the 2.3.0 Java builder) or map outcomes to typed ex
 recording. One shared exception class can still expose a status field: inspect that field or
 its cause instead of declaring classification impossible or parsing message text. A slow
 successful call remains a success for failure rate and separately contributes to slow-call rate.
+
+`recordResult` changes health accounting, not the caller's result. In 2.3.0 the standard
+Supplier and CompletionStage decorators return/complete with the original response even when
+the predicate records it as a failure. An exception-only retry or fallback will not run just
+because that result increased the failure rate. Define result-aware handling after recording,
+or a deliberate typed-exception mapping before recording, and test the caller-visible contract
+separately. See the tagged [decorators](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java).
 
 Source for these API distinctions: [Resilience4j 2.3.0 CircuitBreakerConfig](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreakerConfig.java).
 
@@ -128,7 +154,7 @@ publisher assembly can miss the eventual failure and record an artificially shor
 
 A breaker's window lives in the JVM that owns it. Consequences worth stating explicitly:
 
-- Each instance needs `minimumNumberOfCalls` of **its own recorded** traffic before a rate
+- Each instance needs its effective minimum of **its own recorded** traffic before a rate
   can trip it. Measure routing skew: fleet traffic divided by replica count is only a balanced
   approximation. A fleet-sized minimum may never fit a time window, or take too long to fill
   a count window; ignored outcomes reduce the sample further.

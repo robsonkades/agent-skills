@@ -117,6 +117,8 @@ correlate it with the initiating failure.
 `ThreadMXBean.findDeadlockedThreads()` explicitly excludes cycles containing virtual threads. A Java
 25.0.3 JSON/simple dump can expose monitor edges through `blockedOn` and `monitorsOwned`, but its
 per-thread collection and incomplete synchronizer ownership do not prove every simultaneous cycle.
+Its JSON object tokens contain class names and identity hashes, so equal tokens do not prove the
+same lock: distinct live objects can collide. Do not infer a unique owner from a token alone.
 Corroborate identities and timing with application lock/resource identifiers, owner instrumentation,
 JFR events, platform-thread information and reproducible wait-for edges. “No detector result” means
 only “no supported platform-thread cycle found.”

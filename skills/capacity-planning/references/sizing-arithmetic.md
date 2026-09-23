@@ -51,8 +51,11 @@ K_{s,c} \in [\lambda_k,\lambda_{k+1})
 provided feasibility is locally monotone in load for the same scenario/configuration and
 the failure is reproducible. Increasing the test load monotonically alone does not prove
 this: cache transitions, batching and controller state can create multiple regimes.
-Otherwise report the observed points without inventing an interval. Repeat near the
-boundary and attach a confidence interval or run-level distribution to the pass rate.
+The failing point must establish a scenario guardrail violation by the system under test;
+a generator or measurement limit alone cannot supply this upper boundary. Otherwise report
+the valid observed points at their actual delivered load without inventing an interval.
+Repeat near the boundary and attach a confidence interval or run-level distribution to
+the pass rate.
 
 The configuration is feasible for target demand path \(D_s(t)\) only when its measured
 envelope and transition behavior cover that path. A steady-state QPS comparison cannot

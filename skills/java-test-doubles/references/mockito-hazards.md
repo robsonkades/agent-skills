@@ -96,13 +96,13 @@ Preserve the required time-zone and clock semantics (java-test-design).
 
 ## `verify` patterns that become change detectors
 
-| Pattern                                  | Problem                                                                   |
-| ---------------------------------------- | ------------------------------------------------------------------------- |
-| `verify(repo).findById(id)`              | Usually duplicates result evidence; check for a call-count contract.      |
-| `verifyNoMoreInteractions(everything)`   | Fails when an unrelated, harmless call is added. Pins the implementation. |
-| `verify(x, times(1))` everywhere         | `times(1)` is the default; stating it adds noise, not strength.           |
-| `verify(x).method(any(), any(), any())`  | Asserts "something was called". Use real values, or drop the verify.      |
-| `InOrder` across unrelated collaborators | Pins an ordering that is not part of any requirement.                     |
+| Pattern                                  | Problem                                                                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `verify(repo).findById(id)`              | Usually duplicates result evidence; check for a call-count contract.                                           |
+| `verifyNoMoreInteractions(everything)`   | Fails when an unrelated, harmless call is added. Pins the implementation.                                      |
+| `verify(x, times(1))` everywhere         | `times(1)` is the default; stating it adds noise, not strength.                                                |
+| `verify(x).method(any(), any(), any())`  | Ignores argument values. Valid for an argument-independent call contract; insufficient for a payload contract. |
+| `InOrder` across unrelated collaborators | Pins an ordering that is not part of any requirement.                                                          |
 
 `InOrder` is justified when the order _is_ the requirement — write to the outbox before
 publishing, release the lock after the commit. Then say so in the test name.
@@ -117,17 +117,30 @@ verify(repository).save(captor.capture());
 assertThat(captor.getValue().total()).isEqualTo(new BigDecimal("42.00"));
 ```
 
-This works, and with a fake repository the same assertion reads:
+For an immutable `Order` (or one unchanged since the call), this checks the supplied total.
+With a fake repository, the corresponding state assertion reads:
 
 ```java
 assertThat(orders.findById("ord-1")).get().extracting(Order::total)
         .isEqualTo(new BigDecimal("42.00"));
 ```
 
-The second asserts the outcome; the first asserts the mechanism by which the outcome was
-requested. Reach for a captor when there is no fake — typically for a message published to an
-external broker — and assert on the captured payload's fields, not on the whole object with
-`equals`, which drags in every unrelated field.
+The second checks the fake's stored state; the first checks what was supplied to `save`.
+Neither establishes real persistence. Use a captor when the outgoing payload is the contract
+and inspecting it helps — for example, a message sent through a broker port. Assert only the
+contractual fields when other fields are incidental. Whole-object equality is appropriate
+when `equals` represents exactly the required value contract; a captor may then be unnecessary
+because `verify(repository).save(expectedOrder)` already compares using `equals`.
+
+Mockito 5.23 captors retain argument references, not snapshots. If the same mutable object is
+changed after `save`, `getValue()` observes that changed state; repeated calls with the same
+instance can make `getAllValues()` appear to contain identical final states. For call-time
+evidence, use immutable payloads or record the required values in a `doAnswer` callback or
+recording fake **during the invocation**, then assert those recorded values after execution.
+Copy the mutable parts that the assertion depends on: `List.copyOf` fixes list membership but
+does not copy mutable elements. Keep this recorder small; it does not simulate persistence.
+Check it with a case that sends an incorrect value and then mutates the original to the
+expected value — the call-time assertion must still fail.
 
 ## Spring Boot
 
@@ -150,5 +163,7 @@ external broker — and assert on the captured payload's fields, not on the whol
 
 - [Mockito 5.23 API and agent setup](https://www.javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/Mockito.html) — verify the corresponding section for the installed version.
 - [Mockito 5.23 argument-mismatch diagnostics](https://www.javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/exceptions/misusing/PotentialStubbingProblem.html) — intentional varying arguments and stubbing API trade-offs.
+- [Mockito 5.23 ArgumentCaptor](https://github.com/mockito/mockito/blob/v5.23.0/mockito-core/src/main/java/org/mockito/ArgumentCaptor.java) and [CapturingMatcher implementation](https://github.com/mockito/mockito/blob/v5.23.0/mockito-core/src/main/java/org/mockito/internal/matchers/CapturingMatcher.java) — equality matching, last/all captured values and reference retention.
+- [JDK 25 List.copyOf](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>) — unmodifiable lists can still contain mutable elements.
 - [Spring bean overrides and context reuse](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html)
 - [Spring context-cache key and lifecycle](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/ctx-management/caching.html)

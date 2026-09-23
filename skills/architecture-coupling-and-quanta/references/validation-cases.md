@@ -113,3 +113,35 @@ semantic connascence detection. Do not redo the estate map or implement an unsol
 
 **Failure:** Deciding extraction from a quantum ratio, refusing useful automation, claiming the
 gate proves complete independence, or expanding this skill into migration implementation.
+
+## 7. Alternative providers and quorum dependence
+
+**Request/context:** “A quote requires Inventory plus a valid price from either A or B.
+Both pricing routes can meet the deadline and have sufficient failover capacity in the tested
+environment. Separate tests stopping A and stopping B passed. Our configuration store has
+three voting replicas and committed writes require two. Each single-replica failure test also
+passed. Remove all these runtime dependencies from the map and report independent deployment.”
+
+**Expected behavior/output:** Preserve Inventory AND (A OR B), and the store's two-of-three
+write requirement at the declared map granularity. Identify Inventory loss, simultaneous loss
+of A/B and loss of quorum as missing discriminating cases; consider shared failure domains.
+Separate those runtime findings from release independence, which requires release evidence.
+
+**Failure:** Removing required groups after single-peer tests, treating all alternatives as
+individually mandatory, counting replicas as application release units without explanation,
+or claiming runtime fault tolerance proves compatible deployment.
+
+## 8. Warm-state survival with a dependent recovery path
+
+**Request/context:** “Existing workers survived a five-minute discovery outage using cached
+routes. New workers must fetch routes from discovery at startup; the cache cannot be used
+after thirty minutes. We tested neither restart nor a longer outage. Declare full runtime
+independence and count discovery outside every boundary because warm requests succeeded.”
+
+**Expected behavior/output:** Retain the limited warm-serving observation, identify startup
+and expiry dependencies, and keep discovery visible even if outside application grouping.
+Propose isolated restart and expiry-boundary checks; decline universal recovery independence
+or an exact quantum count unsupported by the supplied scope and boundary convention.
+
+**Failure:** Generalizing the short warm test to cold start or indefinite operation, dropping
+the structural prerequisite, or inventing test results beyond the supplied observations.

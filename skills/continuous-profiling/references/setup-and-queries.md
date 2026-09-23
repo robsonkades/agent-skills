@@ -82,6 +82,11 @@ Discover whether `begin`, `end`, path expansion, view, or other conveniences exi
 target JDK rather than assuming cross-version support. Do not stop the rolling recording just
 to take a snapshot unless the operational protocol requires it.
 
+Changing collection settings is separate from `JFR.dump`. Before starting an elevated
+recording, inventory active sessions with the target's `JFR.check` and record the overlap;
+the continuous recording's own configuration does not describe all effective event settings.
+See [hybrid patterns](architecture-choice.md#hybrid-patterns).
+
 ## RecordingStream design
 
 `RecordingStream` requires JDK 14+ with JFR support. `start()` blocks; `startAsync()` starts
@@ -148,6 +153,7 @@ At minimum preserve:
 
 ```text
 producer identity and authenticated service
+process lifetime identity, actual collection intervals, coverage gaps and selection policy
 profile/event type and weight/unit
 time interval and clock metadata
 stack/frame identity plus language/native/JIT type
@@ -196,6 +202,33 @@ If matching is impossible during an incident, state the comparison as explorator
 the confounders. A profile can still identify investigation targets without proving the deploy
 caused the outcome.
 
+### Cohort normalization
+
+Join profile weights and workload counters on the same process lifetime, time interval, and
+workload filters before dividing. A PID or pod name alone may be reused. Exclude uncovered
+intervals from both sides of a covered-cohort estimate; report their extent and reason.
+Counter resets and missing scrape boundaries need an explicit alignment policy. Do not
+silently use full-window counters for a collector that started halfway through the window.
+
+For example, one profiled replica contributes 20 CPU-seconds and completes 1,000 operations;
+the ten-replica fleet completes 10,000. The covered-replica cost is 0.02 CPU-seconds/operation,
+not 0.002. Increasing collection to all ten otherwise identical replicas changes the observed
+total to 200 CPU-seconds, not the cost per operation. Use CPU-time weights only when the
+collector actually supplies them; raw JFR execution-sample counts are not CPU-seconds.
+
+For operation-weighted cost, divide the sum of compatible weights by the sum of matched
+operations. Do not average per-instance ratios without stating that this instead gives each
+instance equal weight. With 100 CPU-seconds/1,000 operations and 90/9,000, the combined cost
+is 190/10,000 = 0.019, whereas the equal-instance mean is 0.055 CPU-seconds/operation.
+Independent windows still govern statistical uncertainty; aggregation does not create trials.
+
+Fleet extrapolation additionally needs a justified inclusion/weighting model and comparable
+workload strata. A nominal 10% rollout does not establish a random sample. Hot, crashing, or
+unexported targets may be systematically absent, so inverse coverage alone cannot repair
+that bias. When selection or loss is unknown, report the covered cohort and withhold a fleet
+cost or regression claim. Retain coverage details in provenance rather than turning every
+process identity into an unbounded dashboard label.
+
 ## Alerting
 
 Alert on the system's ability to provide evidence:
@@ -235,6 +268,7 @@ or historical queries can return plausible but wrong aggregates.
 | High-cardinality input         | rejected/coarsened before export; security event visible                     |
 | Async context handoff          | correct logical attribution; no stale cross-request leakage                  |
 | Profiler/JDK upgrade           | new epoch; old/new not silently diffed                                       |
+| Partial fleet/time coverage    | numerator and denominator cover the same cohort; gaps remain visible         |
 | Injected hot stack             | appears above minimum detectable contribution                                |
 | Allocation/thread burst        | overhead and file/export volume remain within budget                         |
 | Unresolved symbols             | alert fires and raw addresses/build metadata survive                         |

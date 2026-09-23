@@ -47,15 +47,16 @@ drivers, transports, backends contributed by others
           illustrate API/provider boundaries; a Bridge classification still
           depends on the independent roles in the design under review.
 
-The abstraction has its own hierarchy — refined abstractions with
-extra operations — not just one class
-        → Bridge proper, as opposed to Strategy.
+The abstraction has refinements that evolve independently of its
+implementation mechanisms
+        → This makes the Bridge roles visible. Class count alone does
+          not distinguish it from Strategy; compare the design intent.
 ```
 
 ## When it is not
 
-- **One axis varies.** That is Strategy or plain composition; Bridge's second hierarchy would be
-  empty (`gof-strategy`).
+- **Only an algorithm varies, with no independently evolving abstraction/provider boundary.**
+  Compare Strategy or plain composition; do not invent another hierarchy (`gof-strategy`).
 - **The abstraction is a single stable class and no refined abstraction is expected.** Plain
   composition may describe it better, although the same separation can still protect a public
   API from independently evolving providers.
@@ -78,13 +79,12 @@ release and dependencies; ordinary interfaces/classes can express Bridge on olde
 ```text
 Classical                            Modern
 ───────────────────────────────────  ───────────────────────────────────
-abstract class Abstraction {         final class Notification {
+abstract class Abstraction {         final class Notifier {
   protected Implementor impl;          private final Channel channel;
 }                                    }
-class RefinedAbstraction extends     sealed interface Notification
-                                       permits Alert, Digest, Receipt
-                                     — refinement as a closed set, with
-                                       the channel composed in
+class RefinedAbstraction extends     optional refinements of the sending API;
+    Abstraction                      content variants may instead be inputs
+                                     composed with that API
 
 interface Implementor                interface Channel — one method
   primitiveOperation()               often means Channel is a functional
@@ -94,10 +94,14 @@ new RefinedAbstraction(              constructor injection; the container
     new ConcreteImplementorA())      picks the backend per environment
 ```
 
-Two consequences worth stating. If the implementor is a functional interface, backends can be
-lambdas and the "hierarchy" is a set of functions — still a bridge in intent, with no
-classes on that side. And if the abstraction side is a closed set you own, a sealed interface
-gives exhaustiveness the classical version does not. Functional-interface eligibility follows
+In the worked example, `Notifier` owns the `Channel`; the sealed `Notification` hierarchy supplies
+rendered content, not subclasses of `Notifier`. This composition separates the required roles
+without recreating the classical diagram. Keep it when adequate; adding subclasses merely to name
+the pattern is not an improvement.
+
+If the implementor is a functional interface, backends can be lambdas without separately declared
+implementation classes. A sealed abstraction or content set can support exhaustive handling on a
+compatible Java release. Functional-interface eligibility follows
 the inherited abstract-method rules; default/static methods do not count, and a sealed interface
 is not a lambda target ([JLS 17 section 9.8](https://docs.oracle.com/javase/specs/jls/se17/html/jls-9.html#jls-9.8)).
 

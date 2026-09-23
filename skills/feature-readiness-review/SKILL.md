@@ -17,9 +17,9 @@ description: >
 
 ## Purpose
 
-Three transitions account for most expensive feature mistakes: accepting an undefined or
-unauthorized baseline, starting implementation with a blocking gap, and declaring completion without
-evidence.
+This skill checks three transitions: accepting the feature baseline, starting dependent
+implementation, and declaring completion. It looks for missing authority, unresolved prerequisites,
+and unsupported completion claims at those transitions.
 
 Starting implementation with an unresolved blocking question produces work that has to be
 undone, and the cost is not the code — it is the decisions that were quietly made to fill the
@@ -37,6 +37,10 @@ authority already established in the session; inline evidence is sufficient for 
 small feature. Missing dossier files or formal IDs alone do not require renewed approval or block
 discovery. A raw idea returns to
 `collaborative-feature-definition`.
+
+Check that accepted gaps remain valid for the reviewed revision, stage and resource set.
+Reassess affected scope when an expiry or reopen condition is met; prior acceptance does not
+erase declared blockers or establish current readiness.
 
 Return `RETURN TO PRODUCT`, `RETURN TO ENGINEERING`, or `DECOMPOSE BEFORE PROCEEDING` with affected IDs;
 do not flatten every intake failure into “not ready”.
@@ -68,8 +72,8 @@ Run the review in `references/completion-review.md`. It answers one question in 
 **is this the feature that was agreed, and is the claim that it is done supported by something
 that was observed?**
 
-The two findings that matter most are the ones a code review will not produce, because they
-need the analysis to detect:
+Two important findings require the accepted baseline and traceability evidence alongside the diff;
+reuse a code review that already established them:
 
 - **Something in the diff that no resource names** — scope that entered without a decision.
 - **Something in Required scope that no resource covers** — the feature is incomplete, and the

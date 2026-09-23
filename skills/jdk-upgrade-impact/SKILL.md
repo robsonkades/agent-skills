@@ -71,6 +71,9 @@ the measured result or the explicit absence of a performance baseline.
   `UnsupportedOperationException` when reached (for `Subject.getSubject`, JDK 23's default
   disallows the Security Manager; JDK 24 disables it permanently). Exercise those paths. The
   release-by-release list is in `references/removed-and-degraded-apis.md`.
+- **An old `--release` also limits deprecation lint to that older API.** Keep the published
+  compatibility target; audit compiled code separately against the destination release with
+  `jdeprscan`, with its coverage limits in `references/verification-and-rollout.md`.
 - **A JVM that refuses to start is the good case.** It is loud, immediate and unambiguous. The
   expensive failures are the ones that start: an ignored flag whose value silently no longer
   applies, and a changed default that only shows under load. Two changed defaults produce no

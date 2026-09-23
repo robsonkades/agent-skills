@@ -56,6 +56,16 @@ required; the API does not promise an aggregate of all exceptions.
 inputs running. A hedge must specify first completion versus first success, loser cancellation,
 late-response resource release and side-effect safety.
 
+`applyToEither` is typed, but does not repair the first-success policy. The
+[Java 17 CompletionStage contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html)
+does not guarantee normal completion when one either-input fails and the other succeeds.
+An early failure can therefore finish the dependent stage before the other input succeeds.
+For first success, explicitly coordinate outcomes: preserve a success even after another
+branch failed, finish exceptionally only when every candidate has failed, and define the
+empty-input, deadline, losing-result cleanup and cancellation policies. Test failure-then-success,
+success-then-failure, all-failed and already-completed inputs; do not infer the policy from a
+method's name or from only the all-success case.
+
 Java 25 preview `StructuredTaskScope.Joiner.anySuccessfulResultOrThrow()` provides first-success
 scope policy and cancels the scope when a result is available. Cancellation interrupts unfinished
 subtask threads but remains cooperative; it is still not proof that remote work stopped.

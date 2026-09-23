@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-patterns-and-distribution
-version: 1.3.2
+version: 1.3.3
 description: >-
   What happens to a Gang-of-Four pattern when the collaboration crosses a process boundary,
   and which additional architectural contracts it may require. Covers process-local,
@@ -73,6 +73,7 @@ suggests:
   - rpc-and-api-contracts
   - scatter-gather
   - structured-concurrency
+  - timeouts-and-deadlines
 
 capabilities:
   - reads-source

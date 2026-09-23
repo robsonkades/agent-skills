@@ -107,6 +107,7 @@ IF nodes hold parent pointers
 THEN bidirectional traversal has cycles. Ensure equals, hashCode, toString,
      serializers and walkers do not recursively follow both directions—use identity,
      exclude back-references, or track visited nodes.
+     Identity-based traversal state need not change the nodes' public equality contract.
 
 IF the tree is mutable and may be traversed concurrently
 THEN a walk can see a half-applied change or throw
@@ -121,6 +122,10 @@ THEN it is shared structure; check acyclicity separately before calling it a DAG
      Decide whether aggregation is per edge/path or per node identity;
      neither is universally correct. Forbid sharing or track visited identity when
      the chosen semantics require it.
+
+IF a numeric aggregate can exceed its representation
+THEN define and test the overflow policy as part of the operation contract.
+     Exact byte totals must reject overflow or use a wider representation, not wrap silently.
 
 IF an operation over the tree needs to know each node's concrete type
 THEN it is a Visitor or a pattern-matched fold, not a method on
@@ -163,9 +168,10 @@ THEN inspect query counts and required subtree size. Batch, prefetch, page or qu
 - [ ] Required leaf operations are meaningful; optional refusal and empty-child semantics are explicit
 - [ ] Depth from external input is bounded at the boundary
 - [ ] Traversal is iterative where depth is unbounded, or depth is provably small
-- [ ] `equals`, `hashCode` and `toString` terminate in the presence of parent pointers
+- [ ] Structural methods terminate within the supported depth/work limits and preserve required equality semantics
 - [ ] Traversal preserves the promised consistency through snapshots, synchronization or an explicit weak view
 - [ ] Node sharing is either forbidden or accounted for in every aggregation
+- [ ] Numeric aggregates follow the declared range and overflow contract
 - [ ] Query count and loaded subtree volume fit the operation and budget
 
 Report the consumer operation, structure/identity/visit and consistency contracts, the justified

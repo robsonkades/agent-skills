@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-numeric-types
-version: 1.2.2
+version: 1.2.3
 description: >-
   Choosing and using Java's numeric types correctly: binary floating-point limits for exact
   decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,

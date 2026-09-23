@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: scatter-gather
-version: 1.3.2
+version: 1.3.3
 description: >-
   Fanning one request out to N workers and combining answers: order-statistic latency,
   choosing N against tail exposure, all-of-N/first-of-N/k-of-N completion, safe hedging,

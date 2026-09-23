@@ -27,6 +27,15 @@ An ordering inconsistent with equality violates the general `Set`/`Map` contract
 ordered-key behavior is defined. Swapping a `HashSet` for a `TreeSet` can therefore change
 semantics. Document any intentional inconsistency and check the operations consumers use.
 
+Keep ordering inputs stable for the whole membership lifetime, not just during a sort. Mutating
+a key field or state captured by the comparator can leave a `TreeSet`/`TreeMap` indexed under its
+old order; stable `equals`/`hashCode` does not repair lookup or ordered iteration. Remove a key
+under the old order before changing it, then reinsert and check whether the new comparison ties
+an existing key. Define rejection, coalescing or replacement rather than silently losing an entry.
+If the ordering policy changes, rebuild by inserting entries under the new stable comparator;
+do not rely on a bulk copy treating an already-invalid sorted source as sorted. Verify lookup,
+iteration order and retained entries after the supported update, under the actual ownership protocol.
+
 ## Writing it
 
 Prefer building the comparator over hand-writing the arithmetic:
@@ -85,7 +94,7 @@ properties of this failure make it expensive:
   Switching algorithms or implementation properties can hide detection while leaving semantics
   invalid; repair and property-test the comparison relation.
 
-The usual causes, in order of frequency:
+Causes to investigate:
 
 1. Subtraction overflow (above).
 2. A comparator that reads mutable state, so the answer changes mid-sort — a
@@ -142,16 +151,23 @@ single composed comparator expresses more clearly anyway.
 
 `String.compareTo` compares UTF-16 code units. It is a reproducible total order, and it is
 not a locale-sensitive alphabetical order: for example, it places `Z` before `a`. For
-human-language sorting, consider `Collator.getInstance(locale)` and specify strength/rules; for
-anything a machine reads (keys, ids, canonical forms) keep the code-unit order precisely
-because it is locale-independent and reproducible. Mixing the two — sorting in the database
-under one collation and in Java under another — produces pages that disagree with themselves;
-pick the layer that owns the order and let the other one preserve it.
+human-language sorting, consider `Collator.getInstance(locale)` and specify strength/rules.
+For machine keys and canonical forms, follow the protocol's exact ordering; reproducibility alone
+does not establish compatibility. [JCS (RFC 8785 §3.2.3)](https://www.rfc-editor.org/rfc/rfc8785.html#section-3.2.3)
+orders property names by UTF-16 code units, while
+[CBOR core deterministic encoding (RFC 8949 §4.2.1)](https://www.rfc-editor.org/rfc/rfc8949.html#section-4.2.1)
+orders map keys by their encoded bytes: `"z"` (`61 7a`) precedes `"aa"` (`62 61 61`), unlike
+`String.compareTo`. Preserve the selected encoding profile and verify its test vectors; do not
+replace it with Java's natural order or a locale collation. Sorting in the database under one
+collation and in Java under another can likewise break paging; pick the layer that owns the
+order and let the other preserve it.
 
 ## Authoritative references
 
 - [Comparable contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Comparable.html)
 - [Comparator contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Comparator.html)
+- [TreeSet ordering and lookup, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/TreeSet.html)
+- [String.compareTo, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#compareTo(java.lang.String)>)
 - [List.sort stability contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#sort(java.util.Comparator)>)
 - [SortedMap equality caveat, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/SortedMap.html)
 - [TreeMap key lookup and value equality, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/TreeMap.html)

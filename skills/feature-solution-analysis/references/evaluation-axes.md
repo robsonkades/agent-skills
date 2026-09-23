@@ -31,7 +31,12 @@ An axis qualifies when both are true:
 | Migration cost   | What must happen to existing data or in-flight work                                              |
 | Reversibility    | What undoing it costs once it is in production with data behind it                               |
 | Extensibility    | Only when a specific expected extension is named, with who expects it                            |
-| Money            | Only when the difference is material and someone owns the budget                                 |
+| Money            | What material spending difference follows, under which workload and pricing assumptions?         |
+
+Evaluate material spending even when its budget or accountable owner is unresolved. Record
+those gaps separately from the cost estimate and technical feasibility; missing authority is
+neither zero cost nor evidence that the option cannot work. Reuse existing spending delegation,
+and keep any commitment outside it conditional on the specific missing authorization.
 
 ## Two axes that are usually decisive and usually skipped
 

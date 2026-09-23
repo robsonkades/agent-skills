@@ -123,6 +123,9 @@ change alone does not establish service benefit.
   stop new callbacks and establish completion of in-flight callbacks under the library's
   unregister/quiescence contract; closing the arena does not unregister a native pointer.
   JNI critical/element APIs must be released on every path.
+- A JNI `JNIEnv*` and local references belong to their thread/invocation. Moving work to
+  a pool or native worker requires its own environment and an explicit retained-reference
+  lifecycle; see `references/arenas-upcalls-and-gc.md` before crossing that boundary.
 - Do not assume FFM is faster than JNI. Descriptor shape, checks, marshaling, JIT compilation,
   native work and copies dominate differently. Benchmark the same ABI/function/data path and
   retain safety and maintainability in the decision.
@@ -143,10 +146,11 @@ change alone does not establish service benefit.
   before choosing an interop API or approving a `critical()` call.
 - [Arenas, upcalls and the collector](references/arenas-upcalls-and-gc.md) — arena kinds at
   the interop boundary (confined handoff, shared close, stub lifetime, automatic arenas),
-  the upcall contracts and cost order, `captureCallState` for `errno` and
-  `firstVariadicArg`, what a critical region does to each collector, and the testing
+  JNI thread/reference ownership, the upcall contracts, `captureCallState` for `errno` and
+  variadic promotions, what a critical region does to each collector, and the testing
   levers. Read when a downcall fails with `WrongThreadException` or `Already closed`,
-  when designing a callback API, when a native function sets `errno` or is variadic, or
+  when moving JNI work between threads or designing a callback API,
+  when a native function sets `errno` or is variadic, or
   when `GCLocker Initiated GC` appears in a GC log.
 - [Detecting and mitigating native pinning](references/pinning-and-native-access.md) — the JFR
   and async-profiler recipes for pinning of native origin, the dedicated-pool mitigation

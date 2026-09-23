@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: ambassador-pattern
-version: 1.3.2
+version: 1.3.3
 description: >-
   Choose or review a local outbound proxy when discovery or routing changes require client
   releases, a canary or shadow needs routing outside the app, or retries overlap across app,

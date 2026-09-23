@@ -8,6 +8,10 @@ boundary on older Java; [records became a standard feature in Java 16](https://o
 
 ## Composition 1 — rich domain, one process
 
+This variant includes an outbox because asynchronous publication must survive a process
+failure after commit. Omit that machinery when the required contract is already met or
+events are only local synchronous calls whose effects share the transaction.
+
 ```text
 HTTP request
   └── Controller                     bind, validate syntax, map
@@ -17,7 +21,8 @@ HTTP request
           ├── Domain Model             rules and invariants; state transition
           ├── Repository.save          (usually implicit: dirty checking)
           └── Outbox row               written with business state in SAME transaction
-                └── Relay             publishes committed rows; retries/deduplication
+                └── Relay             publishes committed rows; may publish again after failure
+                      └── Consumer    repeat-safe effects or authoritative deduplication
       └── Response record            projection or mapped from the aggregate
 ```
 
@@ -26,6 +31,15 @@ alone does not enforce rules: mutation paths must invoke domain behavior and coo
 concurrent changes. Bulk work must preserve required invariants and versions. Reuse this
 read path when its graph/cost fits; use projections when it loads unnecessary state.
 An after-commit callback alone is not a durable outbox: a crash before publish can lose the event.
+
+The outbox transaction covers business state and publication intent, not broker acceptance
+and consumer effects. If the relay crashes after the broker accepts a message but before
+recording success, recovery can publish it again. Preserve stable message identity and make
+consumer effects repeat-safe; when deduplication is needed, coordinate its record atomically
+with the effects it protects. A consumer's local database record does not atomically cover
+an external payment or other remote effect; use that system's retry/reconciliation contract
+(`idempotency`). Verify both the lost-publication window and duplicate-delivery window;
+the relay's retry loop alone does not close the latter.
 
 **Where it fails:** unbounded aggregates; rules that leaked into the service; reads forced
 through the write model.
@@ -43,6 +57,9 @@ HTTP request
 **Consequences:** fewest moving parts; the SQL is visible and tunable; no ORM behaviour to
 reason about; and duplication is the failure mode — the same rule in several scripts,
 diverging.
+
+Durable event publication can add the same outbox/relay/consumer composition described above
+without changing the logic organisation into a Domain Model.
 
 **Where it fails:** when interacting rules become hard to maintain. The signal is semantic:
 the same decision duplicated with divergent behavior or costly coordinated edits,
@@ -200,7 +217,9 @@ Primary definitions: [Remote Facade](https://martinfowler.com/eaaCatalog/remoteF
 [Service Layer](https://martinfowler.com/eaaCatalog/serviceLayer.html),
 [Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html), and
 [Repository](https://martinfowler.com/eaaCatalog/repository.html), plus
-[Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html).
+[Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html) and
+[Idempotent Consumer](https://microservices.io/patterns/communication-style/idempotent-consumer.html)
+for publication retries and consumer effect responsibility.
 The [optimistic](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html) and
 [pessimistic](https://martinfowler.com/eaaCatalog/pessimisticOfflineLock.html) offline-lock
 definitions describe coordination responsibilities; expiry and a version column are

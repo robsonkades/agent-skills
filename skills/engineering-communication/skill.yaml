@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: engineering-communication
-version: 1.1.2
+version: 1.1.3
 description: >-
   Communicating engineering facts to people who will act on them: stating what is true, what
   follows from it, what is still uncertain, and the options and recommendation when needed.

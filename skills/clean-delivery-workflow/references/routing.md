@@ -14,14 +14,15 @@ questions only when the specialist exposes a material gap.
 
 ## Before writing code
 
-| Situation                                               | Skill                        |
-| ------------------------------------------------------- | ---------------------------- |
-| The ticket's edge cases are unstated                    | requirements-and-acceptance  |
-| The request names a solution rather than a need         | requirements-and-acceptance  |
-| Someone wants a date                                    | estimation-under-uncertainty |
-| A structural choice needs to be made and recorded       | architecture-decision-making |
-| The boundary or package structure is being argued about | layering-and-boundaries      |
-| Which layer the business rules belong in                | domain-logic-organization    |
+| Situation                                                     | Skill                           |
+| ------------------------------------------------------------- | ------------------------------- |
+| The ticket's edge cases are unstated                          | requirements-and-acceptance     |
+| The request names a solution rather than a need               | requirements-and-acceptance     |
+| Someone wants a date                                          | estimation-under-uncertainty    |
+| Comparing architectural options with conflicting goals        | architecture-trade-off-analysis |
+| Recording, reviewing or superseding an architectural decision | architecture-decision-making    |
+| The boundary or package structure is being argued about       | layering-and-boundaries         |
+| Which layer the business rules belong in                      | domain-logic-organization       |
 
 ## While writing code
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-singleton
-version: 1.2.2
+version: 1.2.3
 description: >-
   Singleton in modern Java, treated as a high-risk pattern: it conflates "one instance" with
   "reachable from anywhere", which must be justified separately. Covers why dependency

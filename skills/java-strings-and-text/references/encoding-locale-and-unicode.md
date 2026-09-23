@@ -75,8 +75,8 @@ Every conversion between `String` and bytes uses a charset, but an omitted chars
 API-specific contract. For APIs that use `Charset.defaultCharset()`, that default:
 
 - was the OS/locale default before Java 18 and is UTF-8 from Java 18 onwards (JEP 400);
-- may select the native encoding with `-Dfile.encoding=COMPAT` on Java 18+; other override values
-  have unspecified behaviour;
+- supports startup settings `-Dfile.encoding=UTF-8` and `-Dfile.encoding=COMPAT` on Java 18+;
+  `COMPAT` selects `native.encoding`, while values other than these two have unspecified behaviour;
 - can differ across versions/configuration; do not infer boundary encoding from the host.
 
 Some APIs instead specify a fixed default: `Files.readString(path)` and
@@ -155,11 +155,19 @@ for text that the database rejects, and the failure appears as a truncation erro
 truncated value depending on the engine's mode.
 
 Validate against the real constraint — bytes in the target encoding when the column is
-byte-limited:
+byte-limited. For UTF-8, this count assumes well-formed UTF-16 input or an explicitly permitted
+replacement policy matching the eventual writer:
 
 ```java
 value.getBytes(StandardCharsets.UTF_8).length <= 50
 ```
+
+`getBytes(Charset)` replaces malformed input, so even a lone surrogate can pass this size check.
+If the boundary must reject invalid text, use a `CharsetEncoder` with both error actions set to
+`REPORT`, reject encoding failures, and check the resulting bytes against the limit. When this
+code owns the output boundary, emit those checked bytes rather than re-encoding with a different
+policy. Verify valid supplementary text, malformed surrogates and values at either side of the
+byte limit; code-point counting alone establishes neither encoding validity nor byte size.
 
 The same distinction applies to message-size limits, header limits, and anything else specified
 in bytes.
@@ -167,8 +175,10 @@ in bytes.
 ## Authoritative references
 
 - [CharsetDecoder error policy, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/charset/CharsetDecoder.html)
+- [CharsetEncoder error policy, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/charset/CharsetEncoder.html)
 - [String API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html)
 - [BreakIterator API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/text/BreakIterator.html)
+- [Supported file.encoding startup settings, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html#getProperties()>)
 - [JEP 400: UTF-8 by Default](https://openjdk.org/jeps/400)
 - [Files fixed UTF-8 convenience methods, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html)
 - [Properties byte-stream encoding, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Properties.html)

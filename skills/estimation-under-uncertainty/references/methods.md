@@ -81,18 +81,28 @@ the five-task SD is `5 × (4/3) = 6.67`, so relative uncertainty does not shrink
 
 ## Where the independence assumption breaks
 
-The sum-of-variances shortcut needs zero covariances. Shared risk can defeat it, and correlation
-is the norm in the cases that hurt:
+The sum-of-variances shortcut needs zero covariances. Shared uncertain factors can correlate
+durations:
 
 - One unfamiliar technology underlies six tasks — if it is harder than expected, all six slip.
-- One person is the only one who can do four of the pieces.
+- One person's uncertain productivity affects several pieces in the same direction.
 - All the estimates were made by the same person on the same optimistic afternoon.
 
-Represent a shared risk once, with its probability/scenario and effect on affected tasks;
-explicit mitigation work can be a task. Avoid counting the same delay in several independent
-inputs and then again as contingency. For example:
+Sharing one person also imposes a capacity constraint: two otherwise independent tasks cannot
+run concurrently if both require that person's full capacity. Reserve that capacity in the
+schedule; do not substitute perfect duration correlation for scheduling. Model common uncertain
+effects separately when supported. If sampled elapsed durations already include resource waits,
+do not add those same waits again.
+
+Represent each shared risk driver once, with its probability/scenario and effects on affected
+tasks. In simulation, sample a common realization and propagate the relevant impacts; do not
+draw independent copies of the same risk occurrence for each task. Count a common wait where it occurs in the
+schedule, while retaining distinct additional work required in each affected task. Avoid adding
+the same impact again as contingency; explicit mitigation work can be a task. An aggregate
+impact across the plan is also usable when its scope is clear. For example:
 "if the provider's API needs OAuth rather than an API key, add 3–5 days across the whole plan."
-That is more useful than smearing the same contingency into every line.
+Here 3–5 days must cover the combined additional work, not silently omit separate integration
+changes or repeat them in every line.
 
 ## Decomposition
 

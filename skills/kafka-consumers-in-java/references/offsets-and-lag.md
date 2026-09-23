@@ -43,14 +43,22 @@ Notes that decide the choice:
 ## `auto.offset.reset`
 
 Kafka 4.1 supports `by_duration:PnDTnHnMn.nS` in addition to `earliest`, `latest`
-and `none`. The setting applies **only when the consumer has no initial offset or the current
-offset no longer exists on the server**. Check the deployed client version before using a
+and `none`. The setting applies **per partition, only when the consumer has no initial offset
+or the current offset no longer exists on the server**. Check the deployed client version before using a
 new value. This is not a rare case; it is an incident/bootstrap case:
 
 - a brand-new consumer group, including one created by a typo in `group.id`
 - a group whose committed offsets expired after a long idle period
 - a committed offset that is no longer within retention, because the consumer was down longer
   than the topic keeps data
+- a newly added partition with no group checkpoint, even when the group's existing partitions
+  have valid committed offsets
+
+With `latest`, records produced to a new partition before its initial position is resolved can
+be skipped. Include partition expansion in bootstrap policy: if every record is required,
+choose a suitable reset policy or establish explicit starting offsets before admitting writes
+to the new partitions. Preserve valid checkpoints on existing partitions; initializing a new
+partition does not require resetting the whole group.
 
 | Value             | Behaviour with no valid offset                     | The risk you are accepting                                                                                                    |
 | ----------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
@@ -126,7 +134,10 @@ reassignment, replay, transaction durability or no-loss behavior.
   `max.poll.records` without checking the budget.
 - **Start a group with no committed offset.** Assert the consumer starts where
   `auto.offset.reset` says it should; include the intended subscription and retained data.
-  This makes the bootstrap policy observable before an incident.
+  Also stop an existing consumer, add a partition, produce identifiable records there and restart
+  the same group. Assert the chosen bootstrap result for the new partition while preserving old
+  partitions' valid checkpoints. Repeat with a valid checkpoint in the added partition as the
+  control: `latest` must not override it. This makes partition expansion part of reset validation.
 - **Complete out of order.** Delay a lower offset while a higher one finishes; crash after a
   commit attempt and prove the lower record is not skipped. This catches `max(completed)`
   offset trackers. Include delivered offsets 10 and 14 (no records 11–13), failed/cancelled

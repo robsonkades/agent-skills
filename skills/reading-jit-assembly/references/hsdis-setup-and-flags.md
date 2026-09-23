@@ -250,9 +250,14 @@ byte dump.
 
 ```bash
 java -jar benchmarks.jar SumArrayBenchmark -prof perfasm
-java -jar benchmarks.jar SumArrayBenchmark -prof perfasm:intelSyntax=true,saveLog=true
+java -jar benchmarks.jar SumArrayBenchmark -prof 'perfasm:intelSyntax=true;saveLog=true'
 java -jar benchmarks.jar -prof perfasm:help
 ```
+
+JMH 1.37 separates profiler option assignments with semicolons. Quote the whole profiler
+argument in Bash or PowerShell so the shell passes it as one argument. Commas separate values
+within an option such as `events`, not option assignments:
+`-prof 'perfasm:events=cycles,instructions;saveLog=true'`.
 
 Do not pass `-jvmArgs="-XX:+UnlockDiagnosticVMOptions"` merely to add the unlock: `-jvmArgs`
 **replaces** the benchmark's own `@Fork(jvmArgs…)`, and perfasm already adds what it needs.
@@ -354,4 +359,5 @@ the target build.
 - [JDK 25 CompileCommand matching](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compilerOracle.cpp)
 - [JDK 25 compiler directives reference](https://docs.oracle.com/en/java/javase/25/vm/compiler-control1.html)
 - [JMH 1.37 perfasm implementation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)
+- [JMH 1.37 profiler option parser](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/ProfilerUtils.java)
 - [JDK-8275128: build hsdis using the normal build system](https://bugs.openjdk.org/browse/JDK-8275128)

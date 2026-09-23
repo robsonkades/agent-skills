@@ -138,13 +138,17 @@ state distributions.
 
 Choose the artifact that answers the hypothesis:
 
-| Question                     | Candidate                                    | Important cost/limit                                             |
-| ---------------------------- | -------------------------------------------- | ---------------------------------------------------------------- |
-| Heap capacity/config now     | `GC.heap_info`, GC/JFR/log metrics           | low detail, attach required                                      |
-| Which classes/counts grow    | repeated class histograms                    | high-impact heap inspection; no instance retention paths         |
-| Who retains objects/paths    | heap dump                                    | potentially long stop/high CPU-I/O/disk; sensitive payloads      |
-| Where native categories grow | NMT baseline/diff/summary/detail             | NMT must have been enabled; coverage/overhead level-dependent    |
-| Container/process RSS grows  | proc/cgroup maps/smaps/status and OS metrics | attribution across heap/native/page cache/shared mappings needed |
+| Question                     | Candidate                                     | Important cost/limit                                             |
+| ---------------------------- | --------------------------------------------- | ---------------------------------------------------------------- |
+| Heap capacity/config now     | `GC.heap_info`, GC/JFR/log metrics            | low detail, attach required                                      |
+| Which classes/counts grow    | repeated class histograms                     | high-impact heap inspection; no instance retention paths         |
+| Who retains objects/paths    | heap dump                                     | potentially long stop/high CPU-I/O/disk; sensitive payloads      |
+| Where native categories grow | NMT summary/detail and existing-baseline diff | NMT must have been enabled; coverage/overhead level-dependent    |
+| Container/process RSS grows  | proc/cgroup maps/smaps/status and OS metrics  | attribution across heap/native/page cache/shared mappings needed |
+
+Preserve any existing NMT baseline comparison before taking a new baseline: that command
+replaces the saved comparison point. Follow the NMT ordering in
+[Adaptive capture protocol](references/capture-order.md) when collecting native-memory evidence.
 
 A live-object heap dump commonly requests a collection and heap traversal; `-all`, compression,
 and parallel options change semantics, CPU, bytes, and pause and are JDK-version-specific.

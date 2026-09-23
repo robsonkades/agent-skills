@@ -43,6 +43,13 @@ seen by a controller advice — it needs its own handling, which is why an authe
 failure often has a different error shape from every other error unless it is deliberately
 aligned.
 
+Response changes also depend on the handler's return type. For Spring MVC `@ResponseBody`
+and `ResponseEntity`, writing occurs inside the handler adapter, before interceptor
+`postHandle`; it is too late there to reliably add headers or wrap the body. Use
+`ResponseBodyAdvice` for supported message-converted bodies, or set headers at an appropriate
+stage before writing begins. For a view-rendering handler, `postHandle` can still adjust
+the `ModelAndView` before rendering. Verify the actual response path, especially for streaming.
+
 For async requests, a filter returning does not mean the response is complete. Configure
 REQUEST/ASYNC/ERROR dispatch coverage deliberately, restore logging context in `finally`,
 and propagate it explicitly across thread changes. Measure completion through the supported
@@ -128,10 +135,20 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 }
 ```
 
-Three properties worth insisting on: a **stable machine-readable code** (clients must not
-parse messages); the same envelope for every error including validation and framework
-errors; and no infrastructure detail in the body — a `SQLException` message reaching a
-client is both a leak and useless to the caller (`rpc-and-api-contracts`).
+Use a **stable machine-readable code** so clients need not parse messages, align application,
+validation and framework error responses, and keep infrastructure details out of the body
+(`rpc-and-api-contracts`). Once a response is committed, advice cannot replace its status
+and emitted body with problem details. For streaming or late serialization failures, record
+the failure, release resources and follow the stream's termination or in-band error contract;
+do not append an unrelated second JSON envelope. Test failures before and after the first flush.
+
+For Spring MVC's built-in method validation (6.1+), a signature change can change the error
+path: argument validation can raise `MethodArgumentNotValidException`, while direct parameter
+constraints such as `@Min` trigger method validation and `HandlerMethodValidationException`.
+`@Valid` alone is not a constraint. Cover both paths in advice tests; the latter uses 400 for
+invalid input and 500 for invalid return values, so do not flatten all validation failures
+into client errors. Inspect class-level `@Validated`: it selects AOP method validation rather
+than this built-in MVC path. Preserve the project's version and configured mechanism.
 
 ## Where controllers accumulate defects
 
@@ -180,7 +197,11 @@ being idempotent (`idempotency`, `delivery-semantics`).
 
 ## Primary contracts
 
-- [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations.
+- [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations and response writing before `postHandle`.
+- [Spring MVC 6.2.7 HandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java): `postHandle` can adjust `ModelAndView` before rendering.
+- [Spring MVC 6.2.7 validation](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-controller/ann-validation.adoc): argument versus method validation and class-level `@Validated`.
+- [Spring 6.2.7 HandlerMethodValidationException](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-web/src/main/java/org/springframework/web/method/annotation/HandlerMethodValidationException.java): input versus return-value status codes.
+- [Spring MVC 6.2.7 ResponseEntityExceptionHandler](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/ResponseEntityExceptionHandler.java): validation error handling and committed-response guard.
 - [Spring 6.2.7 declarative transactions](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/tx-decl-explained.adoc): advice around method invocation; an outer transaction can extend that scope.
 - [Spring MVC 6.2.7 asynchronous requests](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-ann-async.adoc): dispatch and completion lifecycle.
 - [ProblemDetail 6.2 API](https://docs.spring.io/spring-framework/docs/6.2.18/javadoc-api/org/springframework/http/ProblemDetail.html): available since 6.0.

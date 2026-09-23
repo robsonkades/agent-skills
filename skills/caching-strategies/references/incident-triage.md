@@ -9,6 +9,7 @@
 | Hit rate falling over days              | Working-set or popularity drift, key-format change           | Compare key cardinality/distribution, eviction and deployments         |
 | Instances disagree about a value        | Lost invalidation, stale fill, replica lag or key mismatch   | Trace value versions, fill/write ordering and invalidation offsets     |
 | Load latency rises with stable hit rate | Origin slowdown or loader executor queueing                  | Separate queue delay, origin service time and in-flight work           |
+| Origin work rises despite high hits     | Refresh, warming, retries or changed miss coalescing         | Count load attempts by trigger; inspect executor/client admission      |
 | Hit rate suddenly zero                  | Cold namespace, reset metrics, bulk expiry or routing change | Check absolute hit/miss counts, restarts, key prefixes and ownership   |
 | Cache never consulted, no error         | Proxy bypass or caching disabled/misconfigured               | Verify Spring mode, invocation path and an intercepted external call   |
 
@@ -47,6 +48,9 @@ Plus:
 Probabilistic early expiration reduces correlated refresh; it does not cap origin traffic.
 Use the equation and parameter constraints in the skill's stampede rule, then measure origin
 concurrency and apply admission control independently.
+The four scopes above are not a capacity limit: many distinct cold keys can start independent
+loads. Compare admitted/running/queued origin work against its budget, including loads whose
+callers have timed out. Do not infer bounded concurrency from `maximumSize` or same-key coalescing.
 
 ## Redis-side
 

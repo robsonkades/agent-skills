@@ -5,8 +5,11 @@ the matching executable, `libjvm`, dependent libraries and debug symbols/build I
 Everything below assumes that archived toolchain, matching OS/architecture and supported
 dump format. Shell examples are templates with placeholders, not an executable runbook.
 `ARCHIVED_JAVA_HOME` below identifies the preserved target JDK, never whichever `java` happens
-to be first on PATH. Core capture examples are Linux-specific; help checks alone do not
-validate live attachment or post-mortem readability on another OS.
+to be first on PATH. `TARGET_EXECUTABLE` identifies the archived executable that produced the
+core: normally that JDK's `bin/java`, but possibly a native launcher embedding HotSpot.
+Do not substitute the tool JVM's launcher for a different process executable. Core capture
+examples are Linux-specific; help checks alone do not validate live attachment or
+post-mortem readability on another OS.
 
 ## jhsdb modes
 
@@ -46,8 +49,11 @@ visual rather than scriptable.
 jhsdb jstack --pid <pid>
 jhsdb jstack --pid <pid> --mixed     # interleaves native C/C++ frames — useful for a JNI crash
 jhsdb jstack --pid <pid> --locks     # includes java.util.concurrent lock state
-"$ARCHIVED_JAVA_HOME/bin/jhsdb" jstack --exe "$ARCHIVED_JAVA_HOME/bin/java" --core /evidence/core.pid
+"$ARCHIVED_JAVA_HOME/bin/jhsdb" jstack --exe "$TARGET_EXECUTABLE" --core /evidence/core.pid
 ```
+
+For a relocated/container archive, apply the library-resolution setup under
+[Archived Linux root filesystems](#archived-linux-root-filesystems) before the core command.
 
 Normal SA thread listings omit unmounted virtual-thread stacks. On a live JDK 21+ target,
 inspect support for this additional evidence source:
@@ -140,10 +146,10 @@ ptrace permissions (`CAP_SYS_PTRACE`, Yama policy or equivalent) and matching cr
 ## Inspecting a core
 
 ```bash
-"$ARCHIVED_JAVA_HOME/bin/jhsdb" jstack --exe "$ARCHIVED_JAVA_HOME/bin/java" --core /evidence/core.pid
-"$ARCHIVED_JAVA_HOME/bin/jhsdb" jmap --exe "$ARCHIVED_JAVA_HOME/bin/java" --core /evidence/core.pid --heap
+"$ARCHIVED_JAVA_HOME/bin/jhsdb" jstack --exe "$TARGET_EXECUTABLE" --core /evidence/core.pid
+"$ARCHIVED_JAVA_HOME/bin/jhsdb" jmap --exe "$TARGET_EXECUTABLE" --core /evidence/core.pid --heap
 
-gdb "$ARCHIVED_JAVA_HOME/bin/java" /evidence/core.pid
+gdb "$TARGET_EXECUTABLE" /evidence/core.pid
 (gdb) bt            # backtrace
 (gdb) frame 3       # select a frame
 (gdb) info reg      # registers
@@ -153,6 +159,42 @@ gdb "$ARCHIVED_JAVA_HOME/bin/java" /evidence/core.pid
 `jhsdb` gives Java objects and threads; GDB gives native registers and memory. Configure
 GDB's `sysroot`/`solib-search-path` from the archived container/root filesystem and verify
 build IDs before trusting symbols. JNI/FFM/Unsafe crashes usually need both views.
+
+### Archived Linux root filesystems
+
+Read this before the core commands when the target's paths differ from the analysis host.
+`--exe` selects one executable; it does not remap the runtime loader or shared libraries.
+In OpenJDK 25.0.3's Linux SA, `SA_ALTROOT` redirects those lookups to an archived root tree:
+
+```bash
+# Example layout; replace these paths with the actual preserved assets.
+ARCHIVED_ROOTFS=/evidence/rootfs
+ARCHIVED_JAVA_HOME="$ARCHIVED_ROOTFS/opt/jdk"
+TARGET_EXECUTABLE="$ARCHIVED_JAVA_HOME/bin/java"
+# For an embedded VM, use its actual executable, e.g. "$ARCHIVED_ROOTFS/app/launcher".
+SA_ALTROOT="$ARCHIVED_ROOTFS" \
+  "$ARCHIVED_JAVA_HOME/bin/jhsdb" jstack --exe "$TARGET_EXECUTABLE" --core /evidence/core.pid
+```
+
+Use that environment assignment for each SA core command needing remapping. Core and
+`--exe` paths are opened directly in the analysis filesystem, so supply their accessible
+archived paths, not paths interpreted relative to `SA_ALTROOT`. The host must also be able
+to run the matching toolchain: this setting does not relocate the tool JVM's own loader.
+Other builds/platforms need their own verified behavior.
+
+For `/opt/jdk/lib/server/libjvm.so`, this implementation first tries the full path beneath
+`SA_ALTROOT`, then progressively shorter suffixes, ending with `/libjvm.so` beneath that root.
+The first successful open wins; it does not prove build identity. Preserve the original
+directory layout, inspect resolved files and compare build IDs/hashes with captured deployment
+provenance, especially if multiple versions share a basename. A missing file is an evidence
+gap, not a reason to copy a convenient host library.
+
+`SA_ALTROOT` is not a sandbox: ordinary path and symlink resolution still applies. Check
+symlink targets in the working copy; an absolute symlink can resolve outside the archive.
+Record actual resolution (using SA diagnostics or file-open tracing when needed) before
+trusting recovered state. Resolve missing/mismatched assets before treating debugger errors
+or implausible pointers as target corruption. GDB's `sysroot` is a separate configuration;
+setting it does not configure SA.
 
 ## Production JVM configured for crash analysis
 
@@ -201,5 +243,7 @@ secrets.
 ## Sources
 
 - [JDK 25 jhsdb](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jhsdb.html) and target `clhsdb help` — supported modes and invasive live attachment.
+- [OpenJDK 25.0.3 Linux SA path mapping](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/linux/native/libsaproc/libproc_impl.c) — `pathmap_open`, `SA_ALTROOT` and suffix fallback; implementation-specific behavior.
+- [OpenJDK 25.0.3 Linux core reader](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/linux/native/libsaproc/ps_core.c) — direct core/executable opens and mapped loader/shared-library reads.
 - [Linux core(5)](https://man7.org/linux/man-pages/man5/core.5.html) — routing, namespaces, limits and omitted mappings.
 - [systemd syntax source](https://github.com/systemd/systemd/blob/v257/man/systemd.syntax.xml) — full comment lines and continuation handling.

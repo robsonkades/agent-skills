@@ -2,7 +2,7 @@
 
 ```bash
 java -XX:+PrintCompilation -jar app.jar                      # product flag, writes to stdout
-java -Xlog:jit+compilation:file=jit.log -jar app.jar         # same lines through unified logging
+java -Xlog:jit+compilation:file=jit.log -jar app.jar         # related records; see bailout gap below
 ```
 
 Every line quoted here was produced on Temurin 25.0.3; the format is `CompileTask::print_impl`
@@ -44,6 +44,15 @@ tier 4 as task 36, then the tier-3 code retired. They are not the only legal pat
 profiling, queue-pressure, OSR, failure, and policy decisions can use other tier sequences. A
 status line repeats the **original** compile id and tier of the code being retired, not the id
 of its replacement.
+
+For ordinary Java compilation, the initial header is emitted before the compiler is invoked.
+Its timestamp marks the attempt, not successful completion or installation. A matching
+`COMPILE SKIPPED` reports a bailout, but no such suffix does not prove success: the capture
+may be incomplete, and unified logging omits that record on this build. Correlate the compile
+id with the enclosing LogCompilation task's `<task_done success='1'>` and matching `<nmethod>`,
+or JFR's `jdk.Compilation` outcome (`succeded`). `Compiler.codelist` can confirm a currently
+listed nmethod and its state; it does not reconstruct prior installations after reclamation.
+Keep an attempt with no captured outcome unresolved instead of counting it as installed code.
 
 ## The five flag positions
 
@@ -103,7 +112,12 @@ failure and policy state. The same failure can appear as `jdk.CompilationFailure
 
 `-Xlog:jit+compilation` prints through `CompileTask::print_ul` at **info** level in the short
 form: **no timestamp column** — the `uptime` decoration replaces it — and otherwise the same
-fields, including the status suffixes. `debug` and `trace` add nothing for this tag set, and
+fields for records it emits, including `made not entrant` suffixes. Coverage differs:
+`CompileBroker::invoke_compiler_on_method` sends `COMPILE SKIPPED` to VM output under
+`PrintCompilation`, not to this unified tag set on 25.0.3. A complete unified capture can
+therefore contain an attempt header without its later bailout. For failure/outcome evidence,
+use bounded `PrintCompilation`, explicitly enabled JFR compilation/failure events, or
+LogCompilation task results. `debug` and `trace` add nothing for this tag set, and
 `jit*` adds only two `jit,thread` lines. Plain `-Xlog:jit` selects nothing:
 
 ```
@@ -150,8 +164,9 @@ grep -cE '^ *[0-9]+ +[0-9]+ [ %s!bn]{5} 4 ' jit.txt           # 21 — every tie
 
 These filters assume tiered HotSpot 25.0.3 output with default compiler-name/verbosity settings.
 `CIPrintCompilerName` adds a compiler prefix and diagnostic verbosity may add columns; reject or
-handle those formats explicitly. Count status lines separately from successful compilations:
-a retirement line repeats a compile ID and is not another compilation.
+handle those formats explicitly. Count attempt headers separately from status records and
+confirmed successful compilations: a retirement or bailout repeats a compile ID, and an
+initial header alone does not establish success.
 
 The structural pattern follows the printf format — timestamp, spaces, id, one space, five
 flag characters, one space, the tier — and survives a five-digit id and an eight-digit
@@ -177,7 +192,7 @@ line mid-word in the lab run, so never assume two related lines are adjacent.
 
 ## What tier is it in right now
 
-No start-up flag is needed to answer "did this method reach tier 4" on a live JVM:
+No start-up flag is needed to inspect this method's currently listed nmethods on a live JVM:
 
 ```bash
 jcmd <pid> Compiler.codelist | grep 'com.myapp.Service.process'
@@ -236,6 +251,8 @@ whether the method was invoked.
 ## Primary references
 
 - [JDK 25.0.3+9 `compileTask.cpp`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileTask.cpp)
+- [Attempt headers, bailout output and JFR outcomes in `compileBroker.cpp`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
+  — source checked against 25.0.3+9; `COMPILE SKIPPED` output coverage reproduced on Temurin 25.0.3.
 - [Compiler-mode and legacy threshold initialization](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)
 - [JDK diagnostic commands](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [JDK-8290025: remove the sweeper](https://bugs.openjdk.org/browse/JDK-8290025)

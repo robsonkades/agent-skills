@@ -18,14 +18,21 @@ as hypotheses when that evidence is absent.
 
 ## Interpret shape with uncertainty
 
-| Fitted evidence                                                   | Safe reading                                                    | Do not conclude yet                                               |
-| ----------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `β` interval includes zero; curve saturates                       | compare beta=0 predictions/residuals before preferring it       | there is no coordination cost at larger N                         |
-| positive stable `α`, `β≈0`                                        | diminishing returns consistent with a linear denominator term   | a particular lock or serial fraction equals `α`                   |
-| positive stable `β`; held-out throughput declines                 | USL represents a retrograde region over tested range            | pairwise network messages are the cause                           |
-| coefficients unstable/correlated across bootstrap/leave-one-N-out | terms may be unidentified while local predictions remain useful | precise coefficients/peak or an action from point estimates alone |
-| negative coefficient/unconstrained superlinear fit                | standard nonnegative USL regime is unsupported                  | “bad optimizer”; superlinearity is impossible                     |
-| residual step at one N                                            | investigate phase change, drift, outlier or measurement fault   | smooth contention/coherency coefficient explains it               |
+| Fitted evidence                                                    | Safe reading                                                               | Do not conclude yet                                               |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `β` interval includes zero; curve saturates                        | compare beta=0 predictions/residuals before preferring it                  | there is no coordination cost at larger N                         |
+| positive stable `α`, `β≈0`                                         | diminishing returns consistent with a linear denominator term              | a particular lock or serial fraction equals `α`                   |
+| positive stable `β`; held-out throughput declines                  | USL represents a retrograde region over tested range                       | pairwise network messages are the cause                           |
+| coefficients unstable/correlated across bootstrap/leave-one-N-out  | terms may be unidentified while local predictions remain useful            | precise coefficients/peak or an action from point estimates alone |
+| negative point estimate; plausible coefficient values include zero | noise or weak identification may explain the sign; assess a boundary model | nonnegative USL is rejected; negative physical overhead exists    |
+| data require a negative coefficient beyond measurement uncertainty | standard nonnegative USL regime is unsupported over the tested range       | “bad optimizer”; superlinearity is impossible                     |
+| residual step at one N                                             | investigate phase change, drift, outlier or measurement fault              | smooth contention/coherency coefficient explains it               |
+
+For a sign decision, inspect joint uncertainty and residuals of the constrained fit, including
+boundary cases such as `β=0`. An interval containing zero does not establish a good fit, and an
+unconstrained negative estimate does not by itself establish a bad one. Near a constraint boundary,
+do not treat a symmetric local-covariance interval as decisive; use the fitting reference's profile
+or run-level bootstrap checks when the decision needs that precision.
 
 Compare contributions at the actual operating N, with coefficient uncertainty:
 
@@ -97,3 +104,5 @@ serial bottleneck independently before claiming that mechanism changed.
 - Gunther, [“A General Theory of Computational Scalability Based on Rational Functions”](https://arxiv.org/abs/0808.1431)
 - Gunther, Subramanyam and Parvu, [multicore scalability methodology](https://arxiv.org/abs/1105.4301)
 - [CRAN `usl` reference manual](https://cran.r-project.org/web/packages/usl/usl.pdf)
+- NIST, [least-squares parameter estimates and their uncertainty](https://www.itl.nist.gov/div898/handbook/pmd/section4/pmd431.htm)
+- SciPy 1.15.2, [`curve_fit` covariance approximation and bounds](https://docs.scipy.org/doc/scipy-1.15.2/reference/generated/scipy.optimize.curve_fit.html)

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: safepoints
-version: 1.3.2
+version: 1.3.3
 description: >-
   The HotSpot safepoint mechanism on JDK 25: thread-local polling words and where the JIT emits polls,
   loop strip mining, global safepoints versus thread-local handshakes, the VM operations

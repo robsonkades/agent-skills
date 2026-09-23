@@ -63,6 +63,15 @@ from risk and measured cost (java-testing-strategy). For database integration ch
 engine via Testcontainers or an equivalent isolated engine. They exercise selected schema/SQL behavior,
 not every migration state, query or production configuration.
 
+Inspect lifecycle bindings, not just the command's name. Maven Failsafe (reviewed at 3.5.4)
+records integration-test failures during `integration-test` and defers their enforcement to
+`verify`, allowing `post-integration-test` teardown first. Stopping at `mvn integration-test`
+can therefore return success despite failed assertions and omit teardown. With both Failsafe
+goals configured, invoke `verify` through the project's established Maven command/wrapper;
+check active profiles, selected modules, test filters and skip/failure-ignore settings.
+Prove that a representative failing integration test makes the final gate fail and that
+configured teardown runs. A report upload or report-generation goal does not enforce results.
+
 Two failure modes specific to test gates:
 
 - **Flaky tests**, which convert a red build into "run it again" and destroy the signal for
@@ -115,5 +124,7 @@ Primary references: [Maven dependency convergence](https://maven.apache.org/enfo
 [Maven reproducible builds](https://maven.apache.org/guides/mini/guide-reproducible-builds.html), and
 [NullAway](https://github.com/uber/NullAway), [Error Prone installation](https://errorprone.info/docs/installation),
 and the [JDK 25 javac manual](https://docs.oracle.com/en/java/javase/25/docs/specs/man/javac.html).
+For lifecycle enforcement, see the [Failsafe 3.5.4 introduction](https://maven.apache.org/surefire-archives/surefire-3.5.4/maven-failsafe-plugin/index.html)
+and [goal bindings](https://maven.apache.org/surefire-archives/surefire-3.5.4/maven-failsafe-plugin/usage.html).
 Tool compatibility and configured scope require local verification; the compiler's runtime and
 the application's target release are separate constraints.

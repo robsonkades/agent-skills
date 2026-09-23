@@ -59,8 +59,8 @@ Service Stub         a stand-in for an external service, so tests do not
    still change failure handling, wiring or resource ownership.
 2. **For an external dependency, assess the needed seam.** Reuse a suitable port or client;
    add a Gateway when translation, policy or isolation earns the extra boundary.
-3. **For a repeated null or default check, consider Special Case** — but only when the
-   default behaviour is genuinely the same everywhere.
+3. **For a repeated null or default check, consider Special Case** when the affected
+   domain operations have an agreed default contract across callers.
 4. **For an interface with one implementation, identify the contract it protects:** inversion,
    testing, API narrowing or supported extension (`layering-and-boundaries`).
 5. **Prefer direct injection for fixed collaborators.** Distinguish an ambient service locator
@@ -68,12 +68,13 @@ Service Stub         a stand-in for an external service, so tests do not
 6. **Match test doubles to the assertion.** Cover relevant success and failure outcomes across
    caller tests; test protocol translation at the actual adapter boundary.
 
-For Java examples, inspect the target Java, Spring/Boot and persistence versions; do not
-upgrade the project to fit them. References contain partial sketches with omitted domain types:
-records are standard from Java 16, sealed types 17, pattern `switch` 21; RestClient requires Spring 6.1+
-and its Java 17 baseline. For each proposed seam, name the dependency/variation it isolates,
-the simpler alternative and a focused success/failure check. With missing evidence, keep the
-choice conditional on a representative call path rather than inventing a pattern requirement.
+For Java examples, inspect Maven/Gradle release settings, toolchains and resolved Spring/Boot
+and persistence versions; do not upgrade the project to fit them. References contain partial
+Java 17 sketches with omitted domain types; the discussed pattern `switch` needs Java 21.
+RestClient requires Spring 6.1+ and its Java 17 baseline. For each proposed seam, name the
+dependency/variation it isolates, the simpler alternative and a focused success/failure check.
+With missing evidence, keep the choice conditional on a representative call path rather than
+inventing a pattern requirement.
 Deliver the retained choice or focused change, a representative caller interaction, its
 contract and simpler alternative, and checks performed versus still needed. Include a misuse
 or failure path and state what missing requirement would change the choice; no pattern report
@@ -90,9 +91,9 @@ a clock directly
           its errors, and let tests replace it.
 
 Two subsystems must exchange data and neither should know the other
-        → Mapper. If one is allowed to know the other, a direct
-          translation is simpler than a mapper (enterprise-base-patterns
-          exists to be skipped when it is not needed).
+        → Mapper. If one is allowed to know the other and you can modify
+          it, compare a direct translation with a separate mapper;
+          generated or third-party types may require external translation.
 
 Every type in a layer genuinely needs the same thing (an id, an audit
 stamp, an equality rule)
@@ -107,10 +108,10 @@ Code needs to find a collaborator and injection is available
         → inject it directly. If keyed discovery is the requirement,
           inject a scoped registry and define selection and lifetime ownership.
 
-The same "if absent, do X" appears in many callers, and X is the same
-everywhere
-        → Special Case (a NullCustomer, an UnknownRate). If X differs by
-          caller, keep Optional and let each caller decide.
+The same "if absent, do X" appears in many callers, and the operation
+has one agreed domain meaning
+        → Special Case (a NullCustomer, an UnknownRate). Where callers
+          own different absence decisions, keep Optional or explicit outcomes.
 
 Behaviour must be selected at deployment or supplied through a supported
 external extension contract
@@ -146,9 +147,10 @@ A test depends on a third-party service
 - **Ambient Registry lookup hides dependencies.** An injected registry can make dynamic
   selection explicit; define key/tenant scope, missing entries, mutation and provider cleanup
   ownership. A concurrent map alone establishes neither those contracts nor test isolation.
-- **Special Case removes branching only when the behaviour is uniform.** A `NullCustomer`
-  whose `discountRate()` returns zero is excellent; one that callers keep testing with
-  `instanceof` has made things worse than `Optional`.
+- **Special Case centralises the agreed behaviour of domain operations.** A `NullCustomer`
+  can supply a uniform zero discount even when a UI displays guests differently. Repeated
+  type tests that reimplement the discount policy undermine that boundary; a case-specific
+  presentation alone does not. Preserve explicit outcomes where the caller owns the decision.
 - Special Case and `Optional` are not rivals. `Optional` at a boundary where the caller must
   decide; Special Case inside a model where the absent case has real, uniform behaviour.
   An unresolved lookup or transport failure is not established absence; preserve failure and
@@ -170,7 +172,7 @@ A test depends on a third-party service
   system in Java with error translation, retry placement and the stub that mirrors it;
   gateways for time, identity and the filesystem; mapper placement and business-policy
   ownership; and the difference between a gateway and an adapter in the hexagonal
-  sense. Read when integrating with anything outside the process.
+  sense. Read when integrating outside the process or placing translation between subsystems.
 - [Structural base patterns](references/structural-base-patterns.md) — Layer Supertype,
   Separated Interface, Registry, Special Case and Plugin, each with a worked example, the
   cost it imposes and the concrete condition that justifies it; plus Record Set and Value

@@ -70,8 +70,10 @@ compatibility obligation without inventing a migration, generator or full CI mat
    startup validation can intentionally reject mixed-version rolling deploys or restricted
    production credentials; decide where it is safe and keep a pre-deploy compatibility gate.
 4. **Prefer typed generated references where supported.** Regeneration exposes removed/renamed
-   members at compile time when used. Remaining strings/constants need validation; moving a
-   string into a constant does not make its value schema-checked.
+   members at compile time when used. Verify that the configured processor runs in a clean build;
+   the compiler JDK controls processing defaults independently of the target `--release`.
+   Remaining strings/constants need validation; moving a string into a constant does not make
+   its value schema-checked.
 5. **Check which repeated facts must agree.** Domain, wire, persistence and schema contracts
    may intentionally differ. Identify redundant assertions of the same fact and validate
    required agreements or conversions; do not merge models or delete independent constraints

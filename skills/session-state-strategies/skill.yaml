@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: session-state-strategies
-version: 1.1.2
+version: 1.1.3
 description: >-
   Placing the state that spans several requests of one conversation: client session state,
   server session state and database session state, plus signed tokens and external stores.

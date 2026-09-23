@@ -119,8 +119,12 @@ buf breaking --against 'https://github.com/org/repo.git#branch=main,subdir=proto
 buf breaking --against buf.build/org/module
 ```
 
-Buf also runs the same detection server-side on every push to the BSR, which is what you want when
-you cannot trust every repository's local configuration.
+The BSR can enforce breaking checks independently of local `buf.yaml`, but publishing there does
+not activate a gate. In currently documented Enterprise dedicated/private deployments, an admin
+must enable the off-by-default check. It governs pushes advancing the default label; a violation
+either rejects the push or leaves the commit pending without advancing that label, depending on
+the review flow. Confirm active rules, exceptions and consumed label/commit references before
+relying on it; other labels can still resolve to pending commits.
 
 ## Avro compatibility as a plain unit test
 
@@ -193,4 +197,5 @@ BACKWARD_TRANSITIVE does not by itself guarantee that v1 readers accept v2 write
 deserializer lookup default changes; producers still need explicit configuration to emit header GUIDs.
 
 Sources: [Kafka 4.1 topic cleanup policies](https://kafka.apache.org/41/configuration/topic-configs/),
-[Confluent compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html).
+[Confluent compatibility](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html),
+[BSR breaking check activation and scope](https://buf.build/docs/bsr/checks/breaking/).

@@ -42,6 +42,11 @@ boundary alone does not establish the cost or justify a new interface.
 - You would wrap a JDK port (`Clock`, `Random` via `RandomGenerator`) without different
   policy semantics or a useful capability restriction. Inject the matching JDK type instead.
 
+Matching the API does not establish safe sharing. `Clock` implementations must be thread-safe;
+`RandomGenerator` implementations need not be. Select the implementation and its confinement or
+sharing scope together. Replacing a per-operation generator with one shared injected instance can
+change both concurrency safety and random-sequence ownership; injection alone validates neither.
+
 ## Making direction physical: JPMS
 
 `requires` edges are the dependency graph the compiler enforces. A layering rule
@@ -75,10 +80,17 @@ and launch-time `--add-reads`; absence of a direct edge alone proves less. JPMS 
 `requires`, but not every undesired edge creates a cycle. Keep the permitted direction under
 review and test that a forbidden source dependency fails to compile.
 
-`jdeps -verbose:class <policy-classes-or-jar>` exposes class-file dependencies, not arbitrary
-reflective class names, service-provider behavior or configuration/schema coupling. Inspect
-those separately. Without JPMS, package architecture tests can enforce finer-grained edge
-rules; their strength depends on the rule and coverage, not merely on being tests.
+`jdeps -verbose:class <policy-classes-or-jar>` exposes class-file dependencies, not all source
+or build dependencies. A vendor annotation with `RetentionPolicy.SOURCE` is discarded by the
+compiler: its absence from `jdeps` does not mean the policy source compiles without that vendor.
+Inspect source references, annotation processors and generated-source inputs; rebuild policy into
+a fresh output directory with the mechanism absent, avoiding cached classes or generated outputs
+that hide the missing dependency. Report accepted build-time coupling separately from runtime
+isolation rather than introducing a port merely because an annotation exists.
+
+Reflective class names, service-provider behavior and configuration/schema coupling also need
+separate inspection. Without JPMS, package architecture tests can enforce finer-grained edge
+rules; bytecode-based checks share the source-dependency blind spot.
 
 ## Factories
 
@@ -104,7 +116,7 @@ it does not by itself prove that the port was unnecessary:
 - The policy test constructs the subject with `new`, no framework and no reflection.
 - The test asserts on policy outcomes (what was sent, what was decided). Effect count/order
   matters when it is part of the contract; avoid asserting incidental helper-call scripts.
-- Deleting the adapter module leaves the policy module compiling.
+- Excluding the adapter module leaves the policy module compiling from source into fresh output.
 
 ## Primary sources
 
@@ -112,6 +124,8 @@ it does not by itself prove that the port was unnecessary:
   defines readability, transitive dependencies and cycle restrictions.
 - [JDK 17 jdeps](https://docs.oracle.com/en/java/javase/17/docs/specs/man/jdeps.html)
   documents the class-file analysis and output options.
+- [JDK 17 annotation retention](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/RetentionPolicy.html)
+  specifies that `SOURCE` annotations are discarded by the compiler.
 - [Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html)
   and [RandomGenerator](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/random/RandomGenerator.html)
   provide existing time/randomness seams; verify the target API version before choosing one.

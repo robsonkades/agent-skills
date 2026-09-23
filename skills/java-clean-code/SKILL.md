@@ -69,7 +69,9 @@ hypothesis. No findings is valid when the code already supports its readers and 
 
 - Prefer one abstraction level per method when named extractions reduce concepts held
   at once. Guards, resource scopes and trivial mechanics need not become helpers;
-  consult the structure reference when extraction would only add navigation.
+  consult the structure reference when extraction would only add navigation. Preserve
+  evaluation timing and count when they affect results, effects or failure behavior;
+  helper arguments are evaluated before its body.
 - Every extraction has a price — a name to trust and a hop to follow. A fragment with
   one caller, wide shared state and no independent meaning is a candidate for inlining,
   not an arity rule. Retain useful policy, extension, failure or resource boundaries;
@@ -97,7 +99,8 @@ hypothesis. No findings is valid when the code already supports its readers and 
 
 - **Concurrency:** extraction that promotes locals to fields can make a previously reentrant
   operation race. Run concurrent calls when a refactor changes state lifetime; `final` on the
-  field does not make the referenced accumulator safe.
+  field does not make the referenced accumulator safe. Also inspect implementation and sharing
+  when an ambient source becomes an injected dependency (`java-thread-safety-contracts`).
 - **Failure atomicity:** moving an effect into a helper does not make a workflow transactional.
   List effects and retry boundaries before rearranging persistence, messages or remote calls.
 - **Observability:** preserve event names, correlation and error classification. Do not retain

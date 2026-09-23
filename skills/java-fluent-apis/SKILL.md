@@ -84,6 +84,13 @@ unsupported migration claims conditional.
 - For chains that perform operations, state when effects occur, whether evaluation is deferred,
   whether reuse is allowed, and who closes acquired results or cleans up after failure. Passing a
   borrowed resource into a fluent call does not by itself transfer ownership.
+  Register an owned resource before later fluent setup can fail. For example,
+  `try (var lines = Files.lines(path).filter(predicate))` does not itself close the acquired
+  stream if `filter` throws before the initializer completes: acquire `lines` in the resource
+  declaration and filter inside the protected body. Check any API-specific cleanup guarantee;
+  [Files.lines](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html#lines(java.nio.file.Path)>)
+  requires closing, and [JLS §14.20.3.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.20.3.1)
+  explains which successfully initialized resources receive automatic cleanup.
 - Fluency that forces the reader to scan the whole chain before knowing what happens is a
   net readability loss. Prefer clear constructors/factories for a small required parameter set;
   justify an exception using concrete call-site needs rather than a numeric threshold.
@@ -111,7 +118,8 @@ unsupported migration claims conditional.
 Deliver the caller risk, selected form and lifecycle (reuse, thread confinement, snapshot or
 ownership transfer), plus compatibility impact and checks executed. State which caller or evolution
 evidence would change the choice. Exercise invalid values,
-option ordering, repeated build and alias mutation where applicable. Distinguish compilation
+option ordering, repeated build, alias mutation and cleanup after chain-setup failure where
+applicable. Distinguish compilation
 from runtime/framework validation and unmeasured performance expectations.
 
 - [Builder decision table](references/builder-decision.md) — read when deciding whether a

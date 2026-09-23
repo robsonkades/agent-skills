@@ -39,6 +39,38 @@ not bound total allocation for that operation. Separate cumulative allocation, a
 rate and live retained state, including chains held by stalled readers. A retry cap changes
 the operation's failure/cancellation outcomes; do not add one silently to claim bounded cost.
 
+## Stamped-reference protocol
+
+`AtomicStampedReference` atomically holds a reference/stamp pair; it does not implement the
+version policy. Use `get(int[])` with a thread-confined holder to capture the pair before
+deriving a candidate from it. Separate `getReference()` and `getStamp()` calls need not observe
+the same state. Every transition whose history must invalidate a pending operation must change
+the stamp in the same atomic publication, subject to the wrap/reuse proof.
+
+The caller supplies the new stamp; the API does not increment it automatically. `compareAndSet`
+checks both expected reference and expected stamp. `attemptStamp` checks only the expected
+reference, and `set` is unconditional: neither substitutes for validating the old pair.
+
+An illustrative interleaving exposes the difference (not a complete stack implementation):
+
+```text
+Initially: head=(A,0), A.next=B, B.next=C.
+Reader:    getReference() -> A; save A.next -> B; pause before getStamp().
+Other:     pop A -> head=(B,1); pop B -> head=(C,2).
+Other:     reuse A with A.next=C; push A -> head=(A,3).
+Reader:    getStamp() -> 3; compareAndSet(A,B,3,4) succeeds, resurrecting removed B.
+```
+
+If the reader instead captured `(A,0)` together before saving `next`, its CAS with expected
+stamp 0 rejects this history. That fixes this stale-pair acceptance, not the entire reuse
+protocol: prove safe field access, publication and lifetime for speculative readers, and
+prevent relevant stamp repetition while those readers remain active. A successful head CAS
+cannot repair a use-after-free or an invalid speculative access that already occurred.
+
+Keep an ordinary `AtomicReference` when immutable nodes are never reinserted and the proof
+excludes relevant ABA; do not add stamps solely because the algorithm uses CAS. A boolean
+mark can represent logical deletion, but a repeating mark is not a general version history.
+
 ## Linked queue checklist
 
 Linked nonblocking queues often allow tail to lag head/link state and rely on helping. Prove:
@@ -110,6 +142,8 @@ memory reclamation indefinitely while operations remain lock-free.
 
 - [Java concurrent package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [Java atomic package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
+- [AtomicStampedReference pair and update contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html)
+- [AtomicMarkableReference mark contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicMarkableReference.html)
 - [LongAdder sum and reset contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html)
 - [OpenJDK concurrent source, jdk-25+36](https://github.com/openjdk/jdk/tree/jdk-25%2B36/src/java.base/share/classes/java/util/concurrent) — implementation snapshot, separate from target runtime evidence.
 - [Michael and Scott queue paper](https://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html)

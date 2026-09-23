@@ -170,17 +170,39 @@ mean the Java heap was swapped.
 
 ## USDT validation
 
-Use the exact target library and PID:
+Resolve the exact library mapped by the target, including its container mount namespace;
+discovery of that artifact does not establish runtime enablement:
 
 ```bash
 bpftrace -l 'usdt:/exact/libjvm.so:hotspot:*'
 readelf -n /exact/libjvm.so
-java -XX:+PrintFlagsFinal -version | grep DTrace
 ```
+
+If authorized attach access is available, inspect the running JVM using a compatible JDK tool.
+Here `target_jdk` is that JDK's absolute path and `target_pid` is the verified process ID visible
+to the tool; run with the target's effective user/group and verify namespace access:
+
+```bash
+"$target_jdk/bin/jcmd" "$target_pid" VM.version
+"$target_jdk/bin/jcmd" "$target_pid" help VM.flags
+"$target_jdk/bin/jcmd" "$target_pid" VM.flags -all
+```
+
+`VM.flags -all`, when supported, reports the target's current flags. A separate matching
+`java -XX:+PrintFlagsFinal -version` invocation establishes flags/defaults for that new process,
+not the target's effective values. If attach is unavailable, use supplied target evidence and
+report what remains unknown; do not enable attach or restart the JVM just for this check.
 
 Then trigger one known event in a disposable JVM and count probe hits. Probe argument layout
 comes from the target JDK's generated/provider definitions, not from memory. Some flags may be
 diagnostic or unsupported and can impose high-frequency overhead; verify startup and measure.
+
+For probes with USDT semaphores, check the collector's uprobe-refcount support and process
+activation behavior separately from JVM flags. bpftrace 0.24 documents `-p` and
+`--usdt-file-activation` fallbacks when refcounts are unavailable; file activation is performed
+once and has mount-namespace/path limitations. An event predicate does not by itself limit
+semaphore activation to that process. Verify affected processes and activation/cleanup in the
+fixture before attaching, using the [USDT contract](https://bpftrace.org/docs/release_024/language#usdt).
 
 Uprobes on exported/native functions have binary ABI issues: attach to the correct inode/build,
 distinguish PLT from implementation, account for inlining/tail calls, and remember that
@@ -246,6 +268,7 @@ not validation.
 
 - [bpftrace standard library](https://bpftrace.org/docs/release_024/stdlib) — choose the installed release documentation.
 - [bpftrace language](https://bpftrace.org/docs/release_024/language)
+- [JDK 21 jcmd commands](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jcmd.html) — verify command support on the target JVM.
 - [Linux perf jitdump specification](https://github.com/torvalds/linux/blob/master/tools/perf/Documentation/jitdump-specification.txt)
 - [Linux tracepoints](https://docs.kernel.org/trace/tracepoints.html)
 - [Linux BPF maps](https://docs.kernel.org/bpf/maps.html)

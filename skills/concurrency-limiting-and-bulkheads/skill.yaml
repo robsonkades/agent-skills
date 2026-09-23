@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: concurrency-limiting-and-bulkheads
-version: 1.3.3
+version: 1.3.4
 description: >-
   Engineer process-local concurrency limits and bulkheads around scarce resources, with explicit
   admission deadlines, permit ownership, weighted work, partitioning, fairness, observability and

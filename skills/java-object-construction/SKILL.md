@@ -67,9 +67,10 @@ alternatives separately. Missing lifecycle/identity evidence makes a recommendat
 
 - Prefer a named static factory when the class has more than one meaningful way to be
   created, when creation may return a cached or a substituted instance, or when the return
-  type should be an interface or sealed supertype rather than the concrete class. Prefer a
-  public constructor when there is exactly one way, it always allocates, and the type is
-  the type.
+  type should be a common abstraction rather than the concrete class. A published sealed
+  hierarchy can expose its variants to exhaustive switches; returning its supertype does not
+  make adding variants transparent to callers. Prefer a public constructor when there is
+  exactly one way, it always allocates, and the type is the type.
 - Follow the platform naming conventions — `of`, `from`, `valueOf`, `instance`/`getInstance`,
   `create`/`newInstance`, `copyOf`, `parse`. A factory called `build`, `make` or `get` on a
   type whose neighbours use `of` may be surprising; an established domain/framework vocabulary can
@@ -94,9 +95,10 @@ alternatives separately. Missing lifecycle/identity evidence makes a recommendat
   concrete subclasses and suggests an extension contract.
 - Within standard reflection and Java serialization, a single-element enum has the strongest
   built-in singleton guarantees. A `private static final` field plus private constructor can be
-  bypassed by deep reflection (subject to module/access policy) and serialization creates another
-  instance unless `readResolve` returns the canonical one. Fields need not all be transient for
-  identity, though serializing instance state may be wasteful or unsafe.
+  bypassed by deep reflection (subject to module/access policy). Serialization constructs a
+  temporary instance before `readResolve` returns the canonical one; references that escape
+  through the deserialized graph are not repaired by that replacement. Audit that protocol,
+  not merely the hook's presence; see the singleton reference.
 - A singleton belongs to its defining class identity and class loader in one JVM. It is not a global lock, not a
   cluster-wide counter and not a distributed cache. When uniqueness must hold across
   replicas, define the invariant and hand it to the relevant distributed-system design;

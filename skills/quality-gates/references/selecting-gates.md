@@ -118,3 +118,25 @@ report not-run/invalid/inconclusive as appropriate. A comparator or enforcement 
 by untrusted PR code is not authoritative simply because it runs in a later step: preserve the
 trusted workflow/evaluator boundary (`performance-regression-ci`). Return the chosen gate set,
 actual results and remaining required checks; do not silently remove a red check to finish.
+
+### Required checks in GitHub Actions
+
+When implementing selection on GitHub Actions, distinguish workflow and job skips. A workflow
+filtered out by paths can leave a required check pending; a job skipped by a condition reports
+success. A required aggregate job can also be skipped after a dependency fails, so requiring
+only that job can fail to block the merge.
+
+Ensure the required result job runs after upstream failure, for example with job-level
+`if: always()` and explicit `needs`. Then inspect results: merely running the final job is not
+enforcement. Require success from the selection step and every selected check; reject failed,
+cancelled, missing or unexpectedly skipped results. Accept an out-of-scope skip only when the
+successful, trusted selection decision explains it. Test both legitimate non-selection and an
+upstream failure that must block merging.
+
+Verify which commit the required result covers (head, test merge or merge-group commit). If a
+merge queue requires this Actions check, include the `merge_group` trigger; a pull-request run
+alone does not supply that result. Confirm the configured required check name and source.
+
+See [GitHub required-check behavior](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)
+and [job dependencies and conditions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs).
+These platform-specific mechanics do not authorize changes to the repository's required-check policy.

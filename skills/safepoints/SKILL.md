@@ -118,9 +118,12 @@ collector and options before applying them. JDK 25 GA source is identified separ
   all thread-dump commands under the same safepoint cost.
 - A thread executing ordinary JNI/FFM native code is normally in a safepoint-safe native
   state; it does **not** have to return before a global safepoint can proceed. The transition
-  back to Java checks synchronization. JNI critical regions, VM/native transitions and
-  runtime stubs have different constraints and must be identified explicitly; do not “fix”
-  ordinary native batches for TTSP.
+  back to Java checks synchronization. FFM `Linker.Option.critical(...)` is a separate path:
+  the checked HotSpot 25 x86 stub skips that native-state transition, even for `critical(false)`.
+  The option requires extremely short functions with no upcalls; long/blocking calls are not
+  eligible. JNI critical regions have collector-specific pinning/GC constraints; G1 uses region
+  pinning since JDK 22. Read `references/ttsp-triage.md` to distinguish these mechanisms from
+  ordinary native execution and VM/runtime transitions before attributing TTSP.
 - Repeated global thread dumps can perturb production and form a biased statistical sampler.
   Use a wall/CPU sampler appropriate to the question and quantify its loss/overhead. Current
   async-profiler uses `asprof`; JFR CPU-Time Profiling (JEP 509) is experimental and

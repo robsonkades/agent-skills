@@ -155,10 +155,23 @@ void blankIdIsRejectedAtConstruction() {
 }
 ```
 
-`org.junit.jupiter.api.Assertions.assertThrows` is equivalent and returns the exception for
-further assertions. Both fail when _nothing_ is thrown. A correct `try/fail/catch` can also
-enforce the contract; prefer framework assertions when they clarify the failure, and check
-that no-throw and wrong-type paths really fail rather than rejecting the manual form by syntax.
+Keep fallible arrangement outside the callback: parsing input or constructing a fixture inside
+it can throw the expected exception before the intended operation runs. In this example the
+constructor is the operation under test; keep it inside, and prepare arguments outside if their
+construction can fail. Assert subsequent state or absence of side effects outside the callback
+when the rejection contract includes them.
+
+`org.junit.jupiter.api.Assertions.assertThrows` returns the exception for further assertions
+and accepts the expected class or a subtype. Do not tighten a valid subtype contract merely
+to make the test look stricter. For an exact-class contract, `assertThrowsExactly` is available
+since Jupiter 5.8 (stable since 5.10). On older versions, capture with `assertThrows`, then compare
+the expected exception class to `thrown.getClass()` using `assertEquals`; no upgrade is needed.
+The optional message argument to `assertThrows` is the assertion's failure message, not a check
+of the exception's message; assert that separately on the returned exception when contractual.
+
+Exception assertions fail when _nothing_ is thrown. A correct `try/fail/catch` can also enforce
+the contract; prefer framework assertions when they clarify the failure, and check that no-throw
+and wrong-type paths really fail rather than rejecting the manual form by syntax.
 
 Assert `hasMessage` only when that exact message is a contract. Use `hasMessageContaining`
 when a required diagnostic fragment is the contract; omit message assertions for incidental
@@ -184,5 +197,7 @@ Synchronization prevents some races but does not by itself prevent stale state l
 ## Primary references
 
 - [JUnit 5.13.4 user guide](https://docs.junit.org/5.13.4/user-guide/) — lifecycle, parameter conversion, assertions and execution configuration.
+- [JUnit 5.13.4 Assertions](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html) — exception scope, subtype acceptance, exact-type API availability and assertion messages.
+- [JUnit 5.7.2 Assertions](https://docs.junit.org/5.7.2/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html) — older `assertThrows` and `assertEquals` APIs for the exact-class fallback.
 - [JUnit 5.13.4 TestInstance](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
 - [JUnit 5.13.4 ResourceLock](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/parallel/ResourceLock.html)

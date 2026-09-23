@@ -113,6 +113,11 @@ IF the copy shares any mutable substructure with the original
 THEN classify the operation as shallow/selective/deep. Shared fields retain aliases;
      decide whether that sharing is intended and compatible with ownership.
 
+IF a field is a collection
+THEN preserve required key/element equality, comparator and iteration order as well as
+     ownership. A different container can change lookups or collapse distinct entries;
+     require an explicit normalization contract and collision policy before doing so.
+
 IF callers require a fresh object or preservation of runtime subtype
 THEN state and test that contract across supported subclasses. A constructor or static
      factory does not automatically preserve an unknown subtype. Sharing or a deliberate
@@ -172,6 +177,7 @@ THEN tests or construction structure must expose an omitted copy policy. A const
 - [ ] Every field is accounted for: copied, deliberately shared, or deliberately reset
 - [ ] Adding a field is caught by construction structure, generated code, or copy-contract tests
 - [ ] Independently owned mutable containers and elements are copied; intentional sharing is explicit
+- [ ] Collection equality, comparator, order and cardinality follow the copy contract
 - [ ] Identity, version, lifecycle and correlation fields follow an explicit
       clone-as-new versus snapshot/transfer policy
 - [ ] Copying under concurrency is either locked or performed on an immutable snapshot

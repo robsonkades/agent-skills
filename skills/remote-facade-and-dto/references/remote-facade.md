@@ -85,12 +85,39 @@ Coarsening is useful when it removes a demonstrated cost without losing those pr
 
 ## Batch operations and partial failure
 
+Choose where input validation belongs as well as whether execution is atomic. In Spring MVC,
+`@Valid @RequestBody List<PlaceOrderRequest>` alone does not establish element validation.
+Verify the configured Bean Validation provider and actual MVC/method-validation path on the
+target Spring version; `@Valid` alone does not activate method validation.
+
+For a new envelope-shaped contract, this partial Spring 6+/Jakarta Validation sketch validates
+structural bounds and null members. The maximum of 100 is illustrative; derive the actual limit
+from the operation's budget. Item-field validation is deliberately left to the policy below:
+
 ```java
+public record PlaceOrdersRequest(
+    @NotNull @Size(min = 1, max = 100)
+    List<@NotNull PlaceOrderRequest> items) { }
+
 @PostMapping("/orders/batch")
-BatchResult<OrderCreated> placeAll(@Valid @RequestBody List<PlaceOrderRequest> requests) { ... }
+BatchResult<OrderCreated> placeAll(@Valid @RequestBody PlaceOrdersRequest request) { ... }
 ```
 
-A batch endpoint must answer one question before it is written: **is it atomic?**
+An existing JSON array contract must not silently become an object with an `items` field.
+Preserve its shape through verified method validation or explicit envelope/item checks when
+compatibility requires it. After validation, copy mutable input values into application-owned
+commands as needed; the record's list is not deeply immutable.
+
+For reject-whole-request input semantics, add `@Valid` to the envelope's element type
+(`List<@NotNull @Valid PlaceOrderRequest>`) so item constraints cascade before the handler.
+For per-item outcomes, keep those constraints out of request-level cascading, validate each
+item explicitly before its effects, and translate violations into that item's safe result.
+Domain rules and authorization still belong to the use case. Test mixed valid/invalid items
+through HTTP binding and assert both result indexes and which effects occurred; compilation
+or a direct validator call alone does not prove MVC invokes the intended validation.
+
+Separately, define execution semantics: **is the batch atomic?**
+Successful input validation alone does not establish execution atomicity.
 
 - **Atomic** — all or nothing. One bad item can roll back every item. Choose it when the
   caller's contract requires or deliberately accepts that outcome and an actual atomic
@@ -118,6 +145,9 @@ actual transaction coordinator/resource boundary or expose orchestration semanti
 Bound batch items, total bytes, work, concurrency and duration, and state the bounds in the contract. An unbounded batch is a request
 that can take arbitrarily long, hold a transaction arbitrarily long, and time out after
 doing most of the work (`enterprise-transactions`).
+Collection-size validation runs after body deserialization; enforce request-byte limits at the
+transport/parser boundary too. Exercise null, empty, oversized and null-element inputs and
+confirm request-level failures occur before effects where that is the declared policy.
 
 ## Idempotency and conditional requests at the boundary
 
@@ -216,3 +246,5 @@ source types alone do not establish a defect.
 - [Fowler: Remote Facade](https://martinfowler.com/eaaCatalog/remoteFacade.html) — coarse remote translation without domain logic.
 - [RFC 9110: If-Match](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1) — strong comparison and precondition semantics.
 - [Spring Framework 6.0 release](https://spring.io/blog/2022/11/16/spring-framework-6-0-goes-ga) — Java 17 baseline; examples remain partial sketches.
+- [Spring MVC validation](https://docs.spring.io/spring-framework/reference/6.2/web/webmvc/mvc-controller/ann-validation.html) — argument versus method validation, root-container limitations and version-sensitive integration.
+- [Jakarta Bean Validation 3.0](https://jakarta.ee/specifications/bean-validation/3.0/jakarta-bean-validation-spec-3.0) — container-element constraints, cascaded validation and explicit Validator APIs.

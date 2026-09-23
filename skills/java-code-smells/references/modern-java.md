@@ -79,9 +79,11 @@ String label = Optional.ofNullable(order)
         .orElse(null);
 ```
 
-Three smells in one: it is a Message Chain wearing gloves (the structural coupling to
-every hop is untouched); `orElse(null)` re-imports the null it claimed to remove; and it
-hides _which_ hop may legitimately be absent — the design information a maintainer needs.
+Check three contracts before reporting this chain: does navigation cross independently owned
+objects; does the consumer accept a nullable result; and must different missing hops remain
+distinguishable? `map` collapses a null result into empty, and `orElse(null)` is allowed by the
+API. Traversing one owned representation to supply a nullable boundary can be intentional.
+Report evidenced coupling or lost absence semantics, not the syntax alone.
 Detection leads: a chain ending in `orElse(null)`, an `isPresent()`+`get()` pair that merely
 recreates a branch, `Optional` stored in persistence/serialization state without an explicit
 representation, or `Optional.of` used as a let-expression. None is an automatic finding:
@@ -99,12 +101,15 @@ requires them; a long component list alone proves neither choice. Depth: java-im
 
 ### Sealed sprawl
 
-Sealing a hierarchy that external code was meant to extend. Direct permitted subclasses must
-reside in the same named module (or, in the unnamed module, the same package), so an extension
-ecosystem cannot add implementations independently. Sealed is for a genuinely _closed_ set
-whose release boundary owns every variant. Detect: the permits list grows in most feature PRs
-while operations on the hierarchy remain stable — the axis is wrong and ordinary polymorphism
-may fit better (java-refactoring's polymorphism-vs-sealed table).
+Sealing a hierarchy that external code was meant to extend directly can break its contract.
+Permitted direct subclasses/subinterfaces must reside in the same named module (or, in the
+unnamed module, the same package). A permitted `non-sealed` branch can still admit independent
+indirect implementations, subject to ordinary accessibility and module exports. Inspect the
+whole hierarchy before calling the leaf set closed: a switch covering that branch as a whole
+can remain exhaustive while plugins add leaves, without forcing review of each new leaf.
+Preserve an intentional extension branch. If the permits list grows in most feature PRs while
+operations remain stable, reconsider whether ownership and the changing axis favour ordinary
+polymorphism (java-refactoring's decision table); growth alone is not a defect.
 
 ### Exhaustiveness hidden by a convenience default
 
@@ -118,5 +123,7 @@ the compatibility policy instead of chanting "never default".
 
 Primary language references for the Java 21 baseline: [JLS §14.11 (`switch`)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11),
 [JLS §8.1.6 (sealed classes)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html#jls-8.1.6),
+[JLS §9.1.1.4 (sealed and non-sealed interfaces)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html#jls-9.1.1.4),
 [JLS §13.4.2 (evolution and `MatchException`)](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.2),
 and [Record's shallow-immutability contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html).
+For null collapsing and nullable fallback see [Optional's `map` and `orElse` contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html).

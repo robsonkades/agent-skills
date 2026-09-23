@@ -22,8 +22,16 @@ see attributes supplied at span creation, not status or attributes added later.
 
 The component details here are pinned to Collector contrib 0.160.0. Its default
 `trace-complete` strategy evaluates accumulated data on timer handling; `span-ingest`
-evaluates arriving batches and can finalize terminal outcomes earlier. Check the actual
-strategy and policies before treating decision wait as a single fixed trace-completion rule.
+evaluates incoming batch span data and can finalize keep/drop outcomes immediately. Pending
+traces become not-sampled during cleanup without another policy evaluation.
+
+Choose the strategy by the evidence each policy needs, not only decision latency or memory.
+`span-ingest` rejects evaluators marked stateful, but accepting a configuration does not prove
+equivalent selection. For example, an AND policy requiring a cohort attribute and an error
+can match accumulated spans yet miss when those facts arrive in separate batches under
+`span-ingest`, even before the decision window ends. Compare retained trace IDs with the
+required same-batch, split-batch and late-span cases before treating the switch as a cost-only
+optimization. Check the actual strategy and policies before interpreting `decision_wait`.
 
 All relevant spans must reach the same decision shard within the policy window. A common
 topology is:
@@ -35,6 +43,15 @@ agents / SDK exporters
   -> stateful tail-sampling collectors
   -> exporters/backend
 ```
+
+Preserve receiver metadata when ordering processors. In 0.160.0, `k8sattributes` using
+connection-based pod association must precede batching and tail sampling, which remove the
+original connection context. This is receiver metadata, not the span's trace ID. Across a
+proxy or gateway, the immediate peer may also be the forwarding collector rather than the
+application pod. Enrich where the original connection is known, or associate by verified resource
+attributes such as pod UID. Keep attributes used by tail policies available before evaluation.
+Retain an adequate existing association; use existing evidence or a fixture to verify exported
+pod identity through the actual forwarding path.
 
 Verify component stability and configuration against the deployed Collector distribution.
 Size with measured:
@@ -149,6 +166,10 @@ backend access/retention. The collector is a security boundary and DoS target.
 - [Tail sampling processor, contrib 0.160.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/README.md)
   and [configuration contract](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/config.go)
   — strategy, cache, sizing and overflow details; verify the actual deployed release.
+- [Tail strategy implementation, contrib 0.160.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/processor.go)
+  — policy compatibility, incoming-batch evaluation and cleanup without re-evaluation.
+- [Kubernetes attributes processor, contrib 0.160.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/k8sattributesprocessor/README.md)
+  — connection context, processor ordering and resource-attribute association across gateways.
 - [Java 1.62.0 BatchSpanProcessor](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/sdk/trace/src/main/java/io/opentelemetry/sdk/trace/export/BatchSpanProcessor.java)
   — sampled export, queue/drop, flush and exporter-wait behavior.
 - [Java 1.62.0 property merging](https://github.com/open-telemetry/opentelemetry-java/blob/v1.62.0/sdk-extensions/autoconfigure-spi/src/main/java/io/opentelemetry/sdk/autoconfigure/spi/internal/DefaultConfigProperties.java)

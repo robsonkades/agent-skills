@@ -28,7 +28,7 @@ Detection   nothing emits this; it is found when a customer reports a missing
 ```
 
 **Mitigation** happens before the failure and reduces its probability or its cost. It is
-usually code, and if it is code it is a resource.
+tracked as work: a resource in the feature workflow, or a task in a standalone review.
 
 **Fallback** happens after and is what someone actually does. "Roll back" is only a fallback if
 rolling back is possible after the schema change — say whether it is.
@@ -62,17 +62,19 @@ Separate vague concerns from concrete events, while preserving links to upstream
 ## Worked shapes
 
 ```text
-RISK-01 Existing NULL dispatch states reach a reader that dereferences them
+RISK-01 NULL dispatch states reach a reader that dereferences them
       Impact        HIGH   legacy-order reads fail on the inspected reader path
-      Probability   UNKNOWN until NULL population and affected read exposure
-                    during the rollout are established
+      Probability   UNKNOWN until NULL population, continuing NULL writes and
+                    affected read exposure during the rollout are established
       Detection     pre-release fixture with NULL rows exercises that reader;
                     runtime error alert coverage and detection delay unverified
-      Mitigation    PLANNED RES-03 backfills existing NULLs and establishes the
-                    intended default; test old/new readers during staged rollout
+      Mitigation    PLANNED RES-03 backfills existing NULLs and sets the intended
+                    default for omitted values. Keep a compatible reader until
+                    old/new writer behavior and enforcement prevent new NULLs;
+                    test writes during backfill before relying on non-null state
       Fallback      retain a compatible reader while backfill is repaired;
                     verify rollback does not discard newly written state
-      Status        OPEN pending migration and reader evidence
+      Status        OPEN pending migration, writer and reader evidence
       Accepted by   pending residual-risk review by the authorized owner
 
 RISK-04 Billing consumer rejects the event once the new field is added
@@ -92,6 +94,10 @@ RISK-04 Billing consumer rejects the event once the new field is added
 These are illustrative records, not executed tests. A verified fact supports only the path it
 establishes. In PostgreSQL 18, `ALTER COLUMN SET DEFAULT` does not change existing rows; adding
 a new column with a default has different semantics. Check the actual DDL and target version.
+Defaults do not reject explicit `NULL` writes, and a completed backfill does not prevent their
+recurrence. If non-null state is required, assess writer changes and compatible enforcement such
+as `NOT NULL`; adding that constraint can reject an old writer's requests, so retain that rollout
+risk too. Keep the reader compatible until prevention and backfill are verified together.
 Likewise, ignoring unknown fields does not prove application compatibility, and reverting a
 producer does not remove events already delivered.
 
@@ -114,6 +120,9 @@ does not itself close the risk: reassess recurrence and residual exposure under 
 
 - [PostgreSQL 18 ALTER TABLE](https://www.postgresql.org/docs/18/sql-altertable.html): defaults,
   existing rows and DDL locks. No table rewrite does not imply no exclusive lock.
+- [PostgreSQL 18 defaults](https://www.postgresql.org/docs/18/ddl-default.html) and
+  [not-null constraints](https://www.postgresql.org/docs/18/ddl-constraints.html#DDL-CONSTRAINTS-NOT-NULL):
+  filling omitted values and rejecting explicit nulls are different controls.
 - [Protocol Buffers proto3 evolution](https://protobuf.dev/programming-guides/proto3/#updating):
   wire-format compatibility and application compatibility differ; check the actual format.
 - [Stripe idempotent requests](https://docs.stripe.com/api/idempotent_requests): an example of

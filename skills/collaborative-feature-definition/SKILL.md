@@ -210,6 +210,12 @@ may define both its technical criteria and the service or product outcome it pro
 Every criterion has an identifier and a verification method. Avoid criteria that only say “implemented,”
 “works,” “performant,” “secure,” or name a class/table/framework without an observable consequence.
 
+Separate delivery acceptance from a hypothesis about its benefit. A behavior or technical check does
+not by itself prove adoption, revenue, or productivity improved. Trace material value hypotheses to
+an appropriate outcome assessment, distinguishing evidence already obtained from planned measurement.
+Future outcome evidence is not required merely to finish defining the feature; preserve any explicit
+outcome-based acceptance obligation instead of silently replacing it with a delivery check.
+
 ### 7. Test the size
 
 Use `feature-decomposition` when the definition contains several independently valuable or verifiable

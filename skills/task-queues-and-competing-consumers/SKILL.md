@@ -116,9 +116,10 @@ Prefer an in-process executor instead when:
 - Size from the measured **receive-to-ack** distribution plus safety/resolution margin, against
   a stated premature-redelivery error budget and maximum crash-recovery delay. Segment by task
   class; censored timings from already-expired work do not reveal the unseen tail.
-- A heartbeat that extends the lease can keep wedged work hidden until renewal stops or a
-  broker limit is reached. Cap total
-  lease time and use credible progress where available, never thread liveness as proof of progress.
+- A heartbeat can keep wedged work hidden by extending visibility. Bound renewal and account
+  for the last granted timeout: stopping the heartbeat does not shorten it or settle an
+  in-flight extension. Use credible progress where available, never thread liveness as proof
+  of progress; `references/lease-model.md` separates these deadlines.
 - **A batch fetch starts every lease at receive time.** For `B` records processed serially, the
   last sees the sum of preceding durations; with `C` handler slots it waits behind roughly
   `ceil(B/C)-1` waves, but correlated tails and scheduling matter. Measure receive-to-start and

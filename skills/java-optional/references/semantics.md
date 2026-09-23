@@ -1,6 +1,6 @@
 # Optional semantics and misuse
 
-Contracts below match the JDK 25 Javadoc. Optional is a value-based class: do not compare
+Contracts below match the Java 21 API. Optional is a value-based class: do not compare
 instances with `==`, do not lock on them, and do not rely on identity. It does not
 implement `Serializable`—one reason it is often a poor persistence/DTO field type, not a language ban.
 
@@ -11,6 +11,10 @@ implement `Serializable`—one reason it is often a poor persistence/DTO field t
 | `Optional.of(v)`         | throws NPE on null — use when null would be a bug and should fail here |
 | `Optional.ofNullable(v)` | empty on null — the bridge from null-returning APIs (`Map.get`)        |
 | `Optional.empty()`       | an absent value; do not assume singleton identity                      |
+
+`Optional.ofNullable(map.get(key))` merges an absent key and a key mapped to null when the
+map permits null values. Use it only when that distinction is irrelevant or the map enforces
+non-null values. If a stored null is corrupt data, reject it rather than report normal absence.
 
 ## Transformation
 
@@ -32,7 +36,7 @@ implement `Serializable`—one reason it is often a poor persistence/DTO field t
 | `orElseThrow(exSupplier)`              | value or the supplied exception — the boundary between "absence is normal" and "absence is failure here"                                         |
 | `get()`                                | identical to `orElseThrow()`; the name reads as safe and is not — prefer `orElseThrow`                                                           |
 | `ifPresent(action)`                    | action on the value, nothing when empty                                                                                                          |
-| `ifPresentOrElse(action, emptyAction)` | exactly one selected branch, side-effect form (since 9) — beyond one statement per branch, an if reads better                                    |
+| `ifPresentOrElse(action, emptyAction)` | exactly one selected branch, side-effect form (since 9); compare a conditional when it makes the decision clearer                                |
 
 The eager/lazy distinction made concrete:
 
@@ -61,7 +65,7 @@ blanket promise that passing a null callback is permitted.
 | bare `opt.get()`                                          | absence may be unhandled                                   | establish presence or handle absence; `orElseThrow()` clarifies an intentional failure but still throws                          |
 | `orElse(repository.findDefault())`                        | query runs even when present                               | `orElseGet(...)` when the query is required only on absence                                                                      |
 | `Optional.ofNullable(x).orElse(y)`                        | wrapper may add no useful contract                         | a plain conditional; `Objects.requireNonNullElse(x, y)` (Java 9+) only when both-null must fail, since the original returns null |
-| `Optional.ofNullable(x).map(f).orElse(null)`              | wraps to unwrap into null again                            | plain `x == null ? null : f(x)` — or fix the API to return Optional throughout                                                   |
+| `Optional.ofNullable(x).map(f).orElse(null)`              | wraps to unwrap into null again                            | `x == null ? null : f.apply(x)` for stable `x` and non-null `f`; preserve callback evaluation as described below                 |
 | `Optional<List<T>>` when absence means zero results       | absence has an emptier spelling                            | empty list; retain Optional only for a documented not-loaded/not-applicable state                                                |
 | Optional field in persistence/bean DTO                    | native serialization unsupported; other codecs vary        | nullable/explicit result state, or retain Optional with a verified tool/consumer contract and a non-null Optional reference      |
 | Optional parameter with no composition benefit            | forces wrapping; three states if null Optional is accepted | reject null and prefer overload/two named methods; retain when a functional API genuinely composes Optional                      |
@@ -76,6 +80,12 @@ evaluates only its selected branch: replace a computed/side-effecting fallback w
 `orElseGet(() -> x)`, not eager `orElse(x)`. Preserve the contract when both values can be null;
 `Objects.requireNonNullElse` would change it. `Optional.of` is appropriate when null is a defect,
 and an explicit guarded `get` can be the clearest way to express several related operations.
+
+The `map(f)` rewrite assumes an already evaluated, non-null `Function`. `map` rejects a null
+mapper even when the Optional is empty, whereas the conditional skips `f.apply` when `x` is null.
+Preserve that validation if null callbacks are possible. A factory expression such as
+`map(makeMapper())` is also evaluated on the empty path; moving the factory into only the
+present branch would change its effects or failures. Preserve evaluation order and count.
 
 `map`/`flatMap`/`filter` pay off when transformations and predicates remain clear. Signs the
 chain has gone past its domain and an explicit conditional reads better:
@@ -99,3 +109,4 @@ their loss is intended by the consumer contract.
 ## Source
 
 - [Java 21 Optional API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Optional.html) — callback/null contracts and method introduction versions.
+- [Java 21 Map API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html) — `get` may return null for either an absent key or a stored null value.

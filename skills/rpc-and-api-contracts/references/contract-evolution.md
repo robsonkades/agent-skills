@@ -73,6 +73,14 @@ maximum values both ways. Proto3 implicit presence conflates absent/default; `op
 message fields restore it, while Editions default to explicit presence. Give enums a zero
 `UNSPECIFIED` and test generated-language unknown-value behavior.
 
+Include relays and gateways in that check. Current Proto3 binary parsing/re-emission preserves
+unknown fields, but conversion to JSON or reconstruction by copying known fields can discard
+them. If forwarding those fields is part of the contract, test new writer → deployed older
+relay → new reader with populated new fields and assert the required values/presence survive.
+Prefer message-level copy/merge operations that preserve unknowns when supported by the target
+runtime; an intentional projection needs its own contract. Endpoint parsing success alone does
+not prove compatibility through the full path.
+
 **Avro.** Decoding uses writer and reader schemas; record fields resolve by name/aliases.
 Adding a reader field absent from old data needs a reader default. Deleting a writer field
 still expected by an old reader requires that reader to have a default. Aliases are reader-side resolution aids,

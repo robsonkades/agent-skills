@@ -22,6 +22,8 @@ than translate the applicable cases; an unused feature is not a reason to expand
 - numeric minima/maxima, unsigned-to-signed, precision, rounding, and overflow;
 - UUID v7 insertion order under the actual destination type;
 - rollback/restart/concurrency and generated-key retrieval in batches;
+- first generated IDs after final catch-up and after reverse-sync, including sequence/identity
+  state and ORM-reserved ranges; matching rows do not prove allocator readiness;
 - competing upserts with multiple unique constraints;
 - stable keyset pagination with ties;
 - parameterized partial/expression-index plans after prepared-statement warm-up;

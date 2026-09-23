@@ -87,8 +87,9 @@ timestamp, PID start time, container identity, and JDK build. `VM.flags` does no
 1. **Pin builds and deployment variants.** Audit each materially distinct JDK/vendor/architecture,
    not only the newest developer machine.
 2. **Resolve option composition.** Expand launcher scripts, env variables, image defaults,
-   `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS`, service managers, and orchestration mutations. Detect
-   duplicates and ordering.
+   `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS`, build-specific option sources, service managers, and
+   orchestration mutations. Separate JVM options from application arguments; detect duplicates
+   and ordering.
 3. **Check masking and startup behavior.** Treat `IgnoreUnrecognizedVMOptions` as a material risk,
    then test questionable options on the exact build without masking in a disposable preflight.
 4. **Classify support and origin.** Live/product, diagnostic/experimental, deprecated, obsolete/
@@ -98,7 +99,8 @@ timestamp, PID start time, container identity, and JDK build. `VM.flags` does no
    CPU count, GC/compiler threads, compressed references/headers, code cache, native tracking,
    logging, and manageability.
 6. **Reconcile relevant resources.** Effective cgroup paths/limits/current/events, cpuset,
-   quota/period, Kubernetes request/limit/QoS, node topology, and OOM/throttle history.
+   quota/period, ancestor constraints, Kubernetes request/limit/QoS, node topology, and
+   OOM/throttle history. Distinguish reclaim pressure from a confirmed kill.
 7. **Price choices that could affect the objective or compatibility contract.** Group interacting
    flags where useful. Consider CPU, memory/headroom, startup/readiness,
    peak throughput, latency/tail, observability, failure semantics, portability, and operational
@@ -213,7 +215,8 @@ Inference: heap plus native/non-heap/file-backed resident memory can exceed the 
 Consequence: cgroup kill can occur without a Java heap OOME/heap-dump path.
 Scope: this image/JDK/pod class; runtime values captured at T.
 Confidence: high for zero configured headroom; unknown peak non-heap demand and kill likelihood.
-Confirms: memory.current approaches memory.max; memory.events increments; RSS decomposition.
+Supports pressure: aligned usage approaches the enforced limit; named max/oom counter deltas.
+Confirms a kill: oom_kill delta plus victim/time and kernel/runtime cause, not any event increment.
 Narrows/falsifies urgency: measured peak total remains below limit with declared rollout margin.
 Recommendation: measure peak heap/live set and non-heap/native/RSS across lifecycle; size a canary
 with explicit headroom derived from those distributions, then load/failure-test OOM behavior.

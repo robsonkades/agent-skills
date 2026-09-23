@@ -17,10 +17,11 @@ description: >
 
 ## Purpose
 
-A cache can reduce the arrival rate seen by an origin in `L = λ × W`: a hit consumes no origin
-connection, planner or I/O. Batching, admission control and eliminating work can also reduce
-origin demand, so caching is one option rather than a unique law. A stale, unbounded cache can
-show excellent hit rate; correctness, memory and origin protection must be measured beside it.
+A cache can reduce the arrival rate seen by an origin in `L = λ × W`: a simple cache-aside hit
+avoids the origin load. A hit that initiates refresh or revalidation can still consume origin
+resources. Batching, admission control and eliminating work can also reduce origin demand.
+A stale, unbounded cache can show excellent hit rate; correctness, memory and origin protection
+must be measured beside it.
 
 ## Workflow
 
@@ -36,7 +37,8 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
 2. **Measure the access distribution** and estimate `h` for the intended `maximumSize`.
 3. **Model saved work and latency, not hit rate alone.** Estimate origin work avoided by hit
    distribution and compare `h·T_hit + (1-h)·T_miss` (including queueing/load cost) with the
-   uncached distribution. Tail latency cannot be derived from averages.
+   uncached distribution. Count actual origin attempts, including refresh, warm-up and retries;
+   concurrent misses may coalesce into one load. Tail latency cannot be derived from averages.
 4. **Bound it**—by count or a measured weight proxy. Account for keys, values, node metadata,
    allocator/GC headroom and concurrent load buffers; a weigher's logical bytes are not measured
    heap retention. Validate with heap/allocation evidence under representative occupancy.
@@ -83,6 +85,10 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
   clock/units rather than copying the equation without its assumptions: require positive β and
   δ, consistent time units, and treat already expired entries as misses rather than probabilities
   greater than one.
+- Entry count/weight limits do not bound simultaneous loads for distinct keys. Bound origin
+  concurrency, queued work and load duration separately; include refresh and warm-up in that
+  budget. Use [origin admission checks](references/configuring-a-cache.md#bound-origin-work-separately)
+  before assuming a small cache or singleflight protects the origin.
 - `FLUSHALL` in a deploy pipeline is a stampede generator. If the service needs the cache to
   serve its load, the cache is an **availability** component, not a performance one. For a
   format change, version the key prefix, but stage and rate-limit warming: switching every
@@ -104,9 +110,12 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
   authoritative version or invalidation watermark, including absent entries and deletes.
   Write-through/CDC still need ordering against concurrent fills; use a tolerated stale window
   only when the consistency requirement permits it.
-- A key is an authorization boundary. Include tenant, locale, entitlement/principal dimensions
-  that affect the result; canonicalize them; never let one tenant reuse another's cached response.
-  Avoid secrets/PII in keys because keys appear in metrics, logs and admin tools.
+- A key defines cache isolation; it does not grant permission. Include and canonicalize trusted
+  tenant, locale and entitlement/principal dimensions affecting the result; never reuse another tenant's
+  response. Authorize hits as well as misses under the required revocation contract: checks only
+  inside the cached method/loader are skipped on hits. For Spring, verify actual security/cache
+  advice order. Read the [authorization checks](references/configuring-a-cache.md#authorize-cache-hits)
+  when caching protected data. Avoid secrets/PII in keys because admin tools and logs expose them.
 - Negative caching protects against penetration only with a short bounded TTL and input/cardinality
   controls. Caching every attacker-chosen miss is itself an unbounded-memory attack.
   Cache absence only when the source confirms it under the key's visibility contract; a timeout,
@@ -124,6 +133,7 @@ the next discriminating measurement; do not label an untested hypothesis a confi
 
 ## Primary sources
 
+- [Spring cache interception and advice order](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)
 - [Spring Data Redis object mapping and serializers](https://docs.spring.io/spring-data/redis/reference/redis/template.html)
 - [Spring Data Redis 4 migration guide](https://docs.spring.io/spring-data/redis/reference/upgrading.html)
 - [Caffeine refresh semantics](https://github.com/ben-manes/caffeine/wiki/Refresh)

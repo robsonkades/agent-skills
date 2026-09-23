@@ -84,11 +84,20 @@ Observe the mechanism and the outcome separately:
 - For `SEND_ZC`, distinguish send completion from buffer-release notification. Check documented
   usage reporting (such as `IORING_SEND_ZC_REPORT_USAGE`) for copied fallback; observing a `_ZC`
   opcode or notification alone does not establish that those bytes avoided copying.
-- CPU time and memory bandwidth per transferred byte test whether the path became cheaper.
+- CPU time and memory bandwidth per completed byte test whether the path became cheaper;
+  state which processes, threads and counters are included.
 - Throughput and p50/p95/p99 under matched payload, concurrency and backpressure test user-visible
   results.
 - Allocation/native-memory telemetry checks whether the optimization merely moved cost into
   buffer pooling or retention.
+
+For SQPOLL or io-wq, JVM-process CPU can fall while kernel pollers/workers consume the displaced
+work. Include attributable CPU from those tasks over the same workload interval. Do not assume
+`perf stat -p` for the JVM covers them. Where supported, ring `fdinfo` fields such as `SqThread`
+can help identify the poller; verify the kernel and PID namespace. Pollers/workers can be shared
+across rings: avoid double counting and distinguish total observed cost from an unproven per-ring
+attribution. If that scope cannot be established, report the JVM-only result and missing coverage,
+not a reduction in total CPU cost.
 
 Page faults and LLC misses are supporting signals, not signatures of an eliminated copy. Mapping
 can increase faults, cache behavior has many causes, and buffered I/O may be served from page
@@ -116,3 +125,5 @@ Ring activity exists but CPU/latency does not improve
 - [liburing setup and submission-polling contract](https://man7.org/linux/man-pages/man2/io_uring_setup.2.html)
 - [liburing enter results and errors](https://man7.org/linux/man-pages/man2/io_uring_enter.2.html)
 - [strace filters, returns and summary counts](https://man7.org/linux/man-pages/man1/strace.1.html)
+- [perf stat process and thread selection](https://man7.org/linux/man-pages/man1/perf-stat.1.html)
+- [Linux 6.6 ring fdinfo implementation](https://github.com/torvalds/linux/blob/v6.6/io_uring/fdinfo.c) — `SqThread` identifies the poller when available; inspect the deployed kernel's fields.

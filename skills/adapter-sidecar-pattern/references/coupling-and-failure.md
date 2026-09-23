@@ -50,6 +50,37 @@ snapshots; keep per-scrape state isolated so concurrent scrapes cannot overwrite
 or retain disappeared series. See
 [Prometheus exporter collection guidance](https://prometheus.io/docs/instrumenting/writing_exporters/#collectors).
 
+Delta values need a different contract: the latest interval count is not a cumulative counter.
+Prefer an available cumulative source endpoint. Otherwise define one ingestion owner, interval
+or sequence identity where available, replay/overlap handling and accumulator restart behavior;
+scrapers read its accumulated snapshot without consuming it. With reset-on-read sources,
+independent scrapers can divide the increments between them. A timeout after the source resets,
+or a crash before accumulation, can lose data; retries cannot recover it without source support.
+Do not claim lossless conversion merely because reads are serialized. Bound retained series and
+make source/adapter restarts and repeated delivery fixtures part of this stateful design.
+The [OpenTelemetry conversion contract](https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#sums)
+also distinguishes cumulative sums from deltas that require accumulation.
+
+For a **classic Prometheus histogram**, distinguish accumulation across time from accumulation
+across bucket boundaries. First establish whether the source counts cover process lifetime,
+disjoint time intervals or a sliding window. Then establish whether each bucket contains a
+disjoint range or all observations below its upper bound. Do not prefix-sum already cumulative
+buckets or expose a sliding window as a cumulative histogram. For disjoint lifetime buckets,
+this illustrative semantic fixture applies (not runnable code or a production capture):
+
+```text
+source: bounds_ms=[100, 500], disjoint_counts=[2, 3, 1], count=6, sum_ms=1000
+output: le=0.1 -> 2; le=0.5 -> 5; le=+Inf -> 6; count=6; sum_seconds=1
+```
+
+Convert duration boundaries and sum to seconds; counts are dimensionless. Require ordered
+bounds, nonnegative counts, matching total/count and a consistent source snapshot for the
+whole family. Reject mismatches explicitly rather than correcting them silently. The `+Inf`
+bucket equals `_count`; bucket values do not decrease as bounds increase. These are classic
+histogram rules, not a wire-format recipe for native histograms. See
+[Prometheus histogram exposition](https://prometheus.io/docs/instrumenting/exposition_formats/#histograms-and-summaries)
+and [OpenTelemetry's classic histogram conversion](https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#histograms-as-prometheus-histograms).
+
 Distinct observed label combinations determine series count. The product of label-domain sizes
 is a worst-case combination bound, not necessarily the actual count:
 

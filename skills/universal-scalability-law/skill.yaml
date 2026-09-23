@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: universal-scalability-law
-version: 1.2.2
+version: 1.2.3
 description: >-
   Fitting and falsifying the Universal Scalability Law (USL): load/resource definition,
   the scale coefficient gamma, contention alpha, coherency/retrograde beta, peak conditions,

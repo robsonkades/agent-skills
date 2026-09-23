@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jmh-microbenchmarks
-version: 1.4.2
+version: 1.4.3
 description: >-
   Designing and auditing JVM microbenchmarks whose workload, observation boundary,
   compiler context, state topology, lifecycle, units, and statistical comparison match the

@@ -73,9 +73,20 @@ frames, compiled versions or replaced/missing profiles. Prior lab observations:
 - the tested call site trapped four times before recompilation after a second type and again
   after a third. Inline shape depends on receiver frequencies, compiler policy and profiles;
   do not infer a mandatory monomorphic→bimorphic→virtual progression from type count alone;
-- `null_check`, `range_check` and `div0_check` converge on an explicit throw
-  (`GraphKit::builtin_throw`, `graphKit.cpp`); once the throw is hot the exception is
-  pre-allocated with no stack trace (`OmitStackTraceInFastThrow`).
+- `null_check`, `range_check` and `div0_check` can converge on a compiled throw
+  (`GraphKit::builtin_throw`, `graphKit.cpp`). A hot throw can use a preallocated exception
+  when stack-trace omission is permitted and that exception is available. JVMTI exception-event
+  delivery can instead require an `Action_none` trap; a debugger or agent is therefore another
+  path to repeated traps, independently of the recompilation cutoffs. When omission is disallowed
+  or the preallocated exception is unavailable, a sufficiently hot throw can also take an
+  `Action_none` path. Inspect the emitting compiler path, not just the action name.
+
+For a bounded fast-throw diagnostic comparison, `-XX:-OmitStackTraceInFastThrow` can restore
+stack traces only when `StackTraceInThrowable` is enabled; it does not restore traces deliberately
+suppressed by application code. It can increase exception cost and repeated traps. Inspect actual
+flags and exception construction, use an isolated reproduction where practical, and restore
+temporary settings. Correct invalid inputs or exceptional control flow while preserving required
+exception types and propagation.
 
 `PerMethodTrapLimit` (100) is the backstop: once a method has trapped that many times for
 one reason, C2 stops speculating on that reason anywhere in the method.
@@ -140,9 +151,12 @@ Several methods marked near a class-load line are a lead; the failed dependency 
 dependee establish the relationship, not timestamp proximity alone. The `jdk.Deoptimization` event alone misses this
 invalidation; other enabled JFR events may still supply class-loading or safepoint context.
 
-`RedefineClasses` (JVMTI: HotSwap, some instrumentation agents) is broader still: it flushes
-every nmethod with an `evol_method` dependency on the redefined class — every caller and
-every method that inlined it — inside a global safepoint named `RedefineClasses`.
+`RedefineClasses` (JVMTI: HotSwap, some instrumentation agents) runs inside a global safepoint.
+In the baseline's normal path, HotSpot scans compiled-code metadata for references to old methods,
+including inline-cache references; affected code can include callers and inliners. This is not a
+guarantee that every source-level caller is invalidated. Incomplete dependency recording can trigger
+a broader first-redefinition flush. The production reference explains the coverage condition and
+the `redefine+class+nmethod` diagnostics that distinguish those paths.
 
 ## The lifecycle, and where it can end
 
@@ -198,7 +212,7 @@ a method can allocate more than the method itself.
 | The above, recurring in steady state                                                        | Possibly generation, reloading or agent activity that violates further dependencies        | Confirm the source and cost; bound any class reuse by loader/tenant lifetime, or retain the design     |
 | `unstable_if` once per bci across many methods at start-up                                  | Branches first taken under real traffic                                                    | Often normal convergence; startup impact can matter even if the later rate is zero                     |
 | `unloaded` / `uninitialized` at start-up                                                    | Classes first reached after the caller compiled                                            | Accept adequate startup behavior or evaluate targeted warm-up/loading; verify actual CDS/AOT coverage  |
-| `null_check` or `range_check` once, then an exception with no stack trace                   | An exception used as control flow, now compiled as a fast throw                            | `-XX:-OmitStackTraceInFastThrow` to see it once; then remove the exception from the path               |
+| `null_check` or `range_check`, then an exception with no stack trace                        | Possible preallocated fast throw; a missing trace alone does not prove this                | Use the bounded diagnostic above; preserve required exception behavior when fixing the cause           |
 | `action=none` at a steady rate on one `cid` and `trap_bci`                                  | Trap state and compiled code are retained; a recompilation limit is one possible cause     | Inspect compile history, actual flags and the emitting compiler path before attributing a cutoff       |
 | `made not compilable on level 4 … give up compiling`                                        | C2 exclusion; C1 may remain available                                                      | Verify live tier and policy; diagnose the compilation history before changing limits                   |
 | `jdk.Deoptimization` and `jdk.CompilationFailure` on the same method                        | Compilation failure and a trap coexist; complexity is one hypothesis                       | Read failure text and compile history before changing bytecode shape                                   |
@@ -206,14 +220,14 @@ a method can allocate more than the method itself.
 
 ## Mitigations to compare when cost warrants a change
 
-| Strategy                                                | Effect                                                                                                                                                            | When                                                                                       |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Statically resolved target at the call site             | Can remove receiver-type speculation for this call; other guards, dependencies and inlining limits remain. C2 may already infer an exact type behind an interface | Only when generated-code evidence supports the benefit and API semantics permit it         |
-| Warm-up exercising expected concrete types              | Can move known profile transitions before traffic; future types, profiles and invalidations remain possible                                                       | When types and representative frequencies are known; verify warm-up and steady-state costs |
-| Load or generate known implicated classes at start-up   | Can move those transitions earlier; no guarantee about later types or dependencies                                                                                | When actual first-use cost exceeds the startup/retention trade-off                         |
-| Accept bounded or negligible-cost deoptimisation        | No code change                                                                                                                                                    | When measured startup and steady-state service criteria pass under representative demand   |
-| Isolate the problem call site into its own small method | May limit reconstruction work if the helper remains a compiled boundary; inlining can merge it again                                                              | When compiled-shape evidence and measured costs justify the additional boundary            |
-| Remove the exception from the hot path                  | No trap, no fast-throw                                                                                                                                            | `null_check` / `range_check` used as control flow                                          |
+| Strategy                                                | Effect                                                                                                                                                            | When                                                                                                               |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Statically resolved target at the call site             | Can remove receiver-type speculation for this call; other guards, dependencies and inlining limits remain. C2 may already infer an exact type behind an interface | Only when generated-code evidence supports the benefit and API semantics permit it                                 |
+| Warm-up exercising expected concrete types              | Can move known profile transitions before traffic; future types, profiles and invalidations remain possible                                                       | When types and representative frequencies are known; verify warm-up and steady-state costs                         |
+| Load or generate known implicated classes at start-up   | Can move those transitions earlier; no guarantee about later types or dependencies                                                                                | When actual first-use cost exceeds the startup/retention trade-off                                                 |
+| Accept bounded or negligible-cost deoptimisation        | No code change                                                                                                                                                    | When measured startup and steady-state service criteria pass under representative demand                           |
+| Isolate the problem call site into its own small method | May limit reconstruction work if the helper remains a compiled boundary; inlining can merge it again                                                              | When compiled-shape evidence and measured costs justify the additional boundary                                    |
+| Avoid exceptional control flow on the hot path          | Can avoid exception-related traps and fast throws when an equivalent path handles the normal case                                                                 | When invalid inputs can be prevented or normal control flow expressed without changing required exception behavior |
 
 Do not split an oscillating `if` solely because of an initial trap: check whether retained
 profiling already makes it converge. Raising a recompilation cutoff changes when the JVM gives up, not whether
@@ -224,4 +238,6 @@ the method converges — and the `none` storm sits well before the cutoff.
 - [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
 - [JDK 25 HotSpot `compile.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/compile.cpp)
 - [JDK 25 HotSpot `methodData.hpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/oops/methodData.hpp)
+- [JDK 25.0.3 HotSpot compiled-throw path](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/graphKit.cpp) — `builtin_throw` and the JVMTI exception-event trap.
+- [JDK 25.0.3 stack-trace omission conditions](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/ci/ciMethod.cpp) — `can_omit_stack_trace` checks the effective flags and method policy.
 - [JDK-8216041: JFR event for deoptimization](https://bugs.openjdk.org/browse/JDK-8216041)

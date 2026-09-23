@@ -1,10 +1,10 @@
 schemaVersion: 1
 
 name: gof-factory-method
-version: 1.2.2
+version: 1.2.3
 description: >-
   Factory Method in modern Java, and the three different things that share its name: the GoF
-  pattern (a creation hook a subclass overrides inside an inherited algorithm), Effective Java's
+  pattern (an overridable creation method that lets subclasses select the product), Effective Java's
   static factory method (a named constructor, not this pattern), and any method someone called
   createX. Covers when the subclass hook is genuinely right, when an injected Supplier or a keyed
   map is a simpler alternative, and the constructor-calls-an-overridable-method trap

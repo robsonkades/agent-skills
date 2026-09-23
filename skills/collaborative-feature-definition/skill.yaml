@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: collaborative-feature-definition
-version: 1.1.2
+version: 1.1.3
 description: >-
   Co-authoring Product Features and Tech Features through focused question-and-revision rounds. For
   a Product Feature, separates the business definition from an optional engineering analysis owned

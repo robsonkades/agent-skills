@@ -47,6 +47,8 @@ Report the binding owner, value ownership, execution boundaries and validation g
    registration inside a scope alone does not propagate it to deferred work.
 5. **Use structured inheritance when appropriate.** Bind before creating StructuredTaskScope:
    it captures bindings at creation. Existing executors can use explicit capture/rebinding.
+   Captured absence needs a policy too: omitting a binding can expose the executing thread's
+   unrelated outer context. See the executor cases in `references/context-propagation-bridges.md`.
 6. **Bridge, do not replace, framework context.** MDC, `SecurityContextHolder` and the
    OpenTelemetry `Context` are the framework's; set them from the scoped value at the
    boundary where needed, restoring previous context. The framework may remain the
@@ -90,9 +92,11 @@ Report the binding owner, value ownership, execution boundaries and validation g
   a long-running server must not carry one request's tenant across unrelated requests.
   For ordinary process configuration or a short call chain, explicit objects/parameters may
   already be sufficient; do not introduce scoped context solely to hide them.
-- Reading is fast — comparable to a local variable, with a small per-thread cache — but that
-  is an implementation property, not a specification. Do not design around it; do not
-  measure a micro-benchmark of `get()` and conclude anything about the application.
+- The JDK 25 implementation uses a small per-thread cache; a miss searches enclosing scopes.
+  Cycling through many keys can reduce the hit rate. Related fields can share an immutable
+  context record when ownership, access and lifetime match; keep separate keys when those
+  boundaries differ. There is no guaranteed local-variable cost. Measure the representative
+  context pattern rather than generalizing a `get()` microbenchmark to the application.
 - Under virtual threads, reason from retained state rather than slogans: a 1 KB object set
   as a distinct object in each of one million live virtual threads retains roughly 1 GB of payload before map and
   object overhead, while one immutable object bound through a structured subtree is shared.

@@ -198,11 +198,19 @@ For a v4.5 multi-event JFR, select the intended view rather than accepting a def
 ```bash
 jfrconv --wall --threads recording.jfr wall.html
 jfrconv --lock --total recording.jfr lock-duration.html
+jfrconv --live --total recording.jfr live-sampled-bytes.html
 ```
 
 Inputs must actually contain the selected events. Batched wall record counts need not equal
 expanded sample totals. A lock duration view is accumulated sampled wait time, not the
 number of requests delayed. Verify a known thread/stack and weight before interpreting.
+
+The live conversion requires `profiler.LiveObject` events captured with producer `--live`;
+it cannot reconstruct liveness from an ordinary allocation recording. Its byte total is
+sampled surviving object size, not estimated retained heap. Read the
+[live tracker limits](engines-and-events.md#java-allocation-live-objects-native-memory-and-locks)
+before making quantitative claims. Converter `--alloc` and `--live` select different event
+populations; inspect each separately rather than combining their totals.
 
 Converter upgrades can legitimately change names, stack reconstruction, batching expansion,
 colors, filters, and supported events. Treat a changed graph after converter upgrade as a

@@ -90,6 +90,8 @@ THEN define whether this is a no-op/not-applicable result, a terminal default, o
 IF handler order is expressed as unexplained @Order(100), @Order(200)
 THEN make the precedence rationale and tie policy reviewable. Named positions or an explicit
      list can help; retain documented framework ordering that already enforces the contract.
+     Check the actual consumer's assembled chain; testing a list factory alone does not prove
+     that dependency injection supplies that list to the consumer.
 
 IF a handler both handles and forwards, in a chain designed for
 "first match wins"

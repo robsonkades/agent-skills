@@ -42,6 +42,7 @@ profiles. During an incident, keep investigation within the authorized recovery 
 5. Vary one of task threshold, parallelism, data shape, blocking fraction or pool isolation, then
    validate throughput, tail latency and resource use.
 6. Confirm shutdown and exception ownership. Daemon workers and unobserved tasks are not durability.
+   A waiting `close()` has no timeout; use explicit lifecycle control when teardown needs a budget.
 
 ## Choose the mechanism by workload
 
@@ -72,7 +73,8 @@ costs and does not by itself make blocking safe.
   intermediate shared state still needs its own synchronization.
 - Cancellation depends on task construction. The default `ForkJoinTask.cancel` implementation
   ignores its interrupt argument; interruptible adapters have a different contract (see the pool
-  mechanics reference). Long computations still need cooperative checks where cancellation is required.
+  mechanics reference). Record the submission overload and submitting thread as well as the JDK:
+  `submit` can select different wrappers. Long computations still need cooperative checks where cancellation is required.
   Cancelled task status is not proof the task body has exited; do not release shared resources on
   that status alone.
 - Exceptions surface through `join`/`invoke`/`get`; an event task with no observer can fail without
@@ -93,6 +95,7 @@ For the Java 9+ extended constructor:
 - `maximumPoolSize` bounds compensation with documented transient caveats;
 - `minimumRunnable` influences replacement of managed blocked/joining workers;
 - `saturate` chooses rejection versus operating below target when replacement cannot be created;
+  rejection can occur inside an already accepted task at its managed wait, not just at submission;
 - `corePoolSize` is documented as ignored in current Java 25, a version-sensitive detail.
 
 The Java 25 implementation documents a maximum of 32,767 running threads and a common-pool default

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-state
-version: 1.2.2
+version: 1.2.3
 description: >-
   State in modern Java: making an object's behaviour depend on an explicit state, with the
   transitions themselves modelled rather than implied by scattered flags. Covers the intent

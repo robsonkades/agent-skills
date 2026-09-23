@@ -18,14 +18,15 @@ Coupling decides the blast radius of a change; cohesion decides whether a packag
 is one thing or several sharing a directory. This skill turns both into package-level
 review work on the _real_ dependency graph. The failure modes it exists to prevent:
 restructuring packages by aesthetics or by metric thresholds, and filing findings
-from numbers with no observed change pain behind them.
+from numbers alone without an observed cost or explicit boundary requirement.
 
 ## Workflow
 
 Inspect compiler release/toolchains, resolved dependencies, production artifacts, module
-descriptors and supported launch configuration first. Default to Java 25 only when no project
-baseline is specified; JPMS requires Java 9+, and the example's `List.copyOf`
-requires Java 10+. Use a compatible analyzer and the project's target versions; do not
+descriptors and supported launch configuration first. References use JDK 25; establish the
+project's target separately from its build and deployment evidence. If the target is unknown,
+state that gap and keep version-sensitive recommendations conditional. JPMS requires Java 9+,
+and the example's `List.copyOf` requires Java 10+. Use a compatible analyzer and the target versions; do not
 introduce modules, upgrade Java or add tools as an incidental cleanup.
 Reuse current scoped graphs and accepted constraints. Ask only for missing ownership,
 consumer or policy information that could change the decision; a small edge review need not

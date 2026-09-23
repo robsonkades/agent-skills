@@ -127,10 +127,12 @@ and [group selection](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298
   `-XX:+UseCompactObjectHeaders`, default `false` on 25.0.3). Aligned object-size savings
   depend on field packing, arrays and reference compression; measure actual layouts. Traversal
   and per-object costs may still dominate; remeasure rather than assuming shorter pauses.
-- [JEP 523](https://openjdk.org/jeps/523) is Closed/Delivered for release 27, verified
-  2026-09-05. This is integration status for that release, not evidence that a deployed older
-  JVM uses its default. Verify collector selection and `G1IHOP` alias behavior independently
-  on the exact vendor/build (`jdk-upgrade-impact`).
+- **JDK 27 GA**, released 2026-09-15, makes G1 the default in all environments (JEP 523),
+  enables compact object headers by default and renames IHOP to `G1IHOP`, retaining the
+  deprecated old spelling. These are
+  [release-note facts](https://www.oracle.com/java/technologies/javase/27all-relnotes.html),
+  not new workload measurements here. Remeasure object layouts and copy-cost estimates;
+  verify collector selection and accepted flags on the exact vendor/build (`jdk-upgrade-impact`).
 - **JDK 18** raised the manual `G1HeapRegionSize` ceiling to 512 MB (JDK-8275056); the
   ergonomic ceiling stays at 32 MB. A humongous-driven derivation on an older runtime
   had no such lever above 32 MB.

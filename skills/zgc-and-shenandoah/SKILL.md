@@ -90,6 +90,9 @@ authorized mitigation through a validated recovery path.
   heap multi-mapping. Multi-mapping history is not the same change as JEP 490's JDK 24 removal
   of non-generational ZGC. Reconcile target-build RSS/PSS, cgroup `memory.current`, heap
   committed/used and native domains over time.
+- ZGC's `SoftMaxHeapSize` is a heuristic target, not a container memory cap; heap growth can
+  reach `-Xmx`. For post-burst footprint, inspect the `-Xms` floor and uncommit policy before
+  changing delays or diagnosing a leak; see the flags reference.
 - Prefer ergonomics first for ZGC, then tune only a measured constraint. Heap/soft max,
   `ConcGCThreads`, CPU quota and allocation spikes interact; a copied knob can trade mutator
   CPU for fewer stalls or merely hide a capacity defect.

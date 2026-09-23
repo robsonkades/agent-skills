@@ -69,9 +69,10 @@ failure evidence could change the choice, propose a bounded pilot and keep those
 
 ## Rules
 
-- Separate three costs: round-trips, work per statement, and work per row. JDBC batching attacks the
-  first; rewrite/native APIs attack the first two; only server-side choices reduce index,
-  constraint, trigger, logging, and data-work cost.
+- Separate three costs: round-trips, work per statement, and work per row. Batching, rewrite and
+  native APIs can reduce communication and statement overhead; verify what the driver actually does.
+  Reducing rows written through filtering/deduplication can also reduce engine work, but must
+  preserve source ordering, duplicate, trigger and audit semantics. Measure these costs separately.
 - If a batch of B rows uses one round-trip instead of B, its round-trip component falls by
   `1 - 1/B`. This is not total elapsed-time improvement: row work, commits and driver behavior
   remain. Measure the knee and vary JDBC batch size separately from transaction/chunk size.
@@ -79,7 +80,8 @@ failure evidence could change the choice, propose a bounded pilot and keep those
   driver's effective properties.
 - Native APIs have different correctness defaults. PostgreSQL `COPY` validates constraints and
   fires triggers; SQL Server Bulk Copy skips some checks/triggers unless enabled; MySQL `LOAD DATA`
-  can convert bad input into warnings. Make these choices explicit.
+  can convert bad input into warnings. Make these choices explicit. Restoring checks after a load
+  does not establish that previously unchecked rows are valid; include validation before publication.
 - A durability relaxation needs named data-loss semantics, authority, a timed restoration step, and
   a crash test. A faster import is not evidence that correctness remained intact.
 - Dropping indexes on a hot final table can turn the load into an outage and alter constraints.

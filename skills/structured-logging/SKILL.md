@@ -75,6 +75,8 @@ formatted prose alone does not establish typed fields.
 Choose synchronous, buffered/asynchronous or durable delivery from the loss/blocking
 contract. Queue capacity, discard/block policy, shutdown flush, sink failure, rotation and
 container stdout behavior are part of production semantics—not implementation details.
+A normal return from the logging API is not a delivery acknowledgement, even on a synchronous
+path. Verify how the provider exposes runtime failures independently of the affected sink.
 
 ### 4. Propagate and clean context
 

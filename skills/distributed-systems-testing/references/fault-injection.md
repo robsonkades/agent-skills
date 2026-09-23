@@ -2,13 +2,13 @@
 
 ## The tooling ladder
 
-Each rung produces failures the rung below cannot, and costs more to run. Start at the top and
-descend only when the claim genuinely requires it.
+Choose the cheapest fixture that exercises the claimed failure and the relevant client behavior.
+These capabilities overlap; a lower row does not include every fault supported by the rows above.
 
 | Level                           | Produces                                                            | Cannot produce                                 | Cost            |
 | ------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------- | --------------- |
-| Pure policy unit test           | Every classification and state transition                           | Anything involving a socket                    | Microseconds    |
-| Stub HTTP server                | Delays, error codes, malformed bodies, connection reset             | TCP-level faults, partitions, bandwidth limits | Milliseconds    |
+| Pure policy unit test           | Selected classification and state transitions                       | Anything involving a socket                    | Microseconds    |
+| Stub HTTP server                | Delays, error codes, malformed bodies, supported socket resets      | Arbitrary packet loss on real dependency paths | Milliseconds    |
 | TCP proxy between real parties  | Latency, jitter, bandwidth caps, cut connections, one-way blackhole | Node death, scheduler behaviour                | Seconds         |
 | Container/pod manipulation      | Process death, restarts, rolling updates, probe failures            | Cross-region partitions                        | Tens of seconds |
 | Mesh / platform fault injection | Fault types supported by the chosen platform on selected targets    | Unsupported or bypassed paths and fault types  | Minutes         |
@@ -16,6 +16,9 @@ descend only when the claim genuinely requires it.
 Check actual path coverage and fault behavior, including direction and existing connections.
 A route-level delay/abort is not automatically a packet partition; confirm that the intended
 requests traverse the injector. Cost labels are rough planning categories, not measured durations.
+Verify socket faults on the actual runtime and OS: WireMock documents that its connection-reset
+fault may hang on Windows instead of resetting. Inspect the observed client error; use a supported
+network fixture if the required reset cannot be produced by the stub.
 
 The two most valuable rungs are the second and third, and they are the ones usually skipped in
 favour of a mock.
@@ -64,9 +67,11 @@ for example, `Socket` read timeout leaves the socket valid until its owner close
 
 The claim: _retries are bounded, backed off, and only applied to retryable failures._
 
-Count the calls. The following fixture assumes its accepted API contract maps 409 to a permanent
-duplicate rejection and 503 to a repeat-safe retry with three total attempts; derive these choices
-from the real contract rather than treating status classes as a universal policy.
+Count calls per logical operation. Reset the journal between isolated single-operation tests;
+for concurrent operations, filter each one's attempts by correlation identity. The following
+fixture assumes its accepted API contract maps 409 to a permanent duplicate rejection and 503
+to a repeat-safe retry with three total attempts; derive these choices from the real contract
+rather than treating status classes as a universal policy.
 
 ```java
 @Test
@@ -80,7 +85,7 @@ void permanentFailureIsNotRetried() {
 }
 
 @Test
-void transientFailureIsRetriedWithinBudget() {
+void transientFailureUsesThreeTotalAttempts() {
     stub.stubFor(post("/payments").willReturn(aResponse().withStatus(503)));
 
     assertThatThrownBy(() -> gateway.pay(request));
@@ -88,6 +93,17 @@ void transientFailureIsRetriedWithinBudget() {
     stub.verify(exactly(3), postRequestedFor(urlEqualTo("/payments")));
 }
 ```
+
+These examples check classification and attempt counts, not the backoff or total deadline.
+For backoff, observe the previous failure's completion and the next attempt's start at the client
+using one monotonic time source, or a supported scheduler seam that actually drives the retry.
+Start-to-start gaps also include response time, so a slow failure can hide a missing wait. Assert
+the configured fixed/exponential intervals or allowed jitter range with an explicit timing
+tolerance; a jittered delay need not increase on every attempt. Test the caller's total bound
+separately. Where deadline expiry or cancellation must prevent new attempts, advance the relevant
+scheduler through a pending retry and verify that no new call starts after that cutoff; record
+already-running work separately. In an isolated test variant, bypass the wait and confirm the
+backoff assertion fails without changing the allowed attempt count.
 
 For unknown outcomes, test the actual repeat-safety mechanism: a timeout after a charge may lose
 only the response. Natural or conditional operations, durable operation keys and proven
@@ -308,5 +324,7 @@ turning it into one of the deterministic tests above (`references/chaos-experime
 
 ## Source
 
+- [Resilience4j retry](https://resilience4j.readme.io/docs/retry) — attempt count and wait intervals are separate settings; inspect the installed policy.
+- [WireMock fault simulation](https://wiremock.org/docs/simulating-faults/) — supported socket faults and the platform caveat for connection reset.
 - [Resilience4j circuit breaker](https://resilience4j.readme.io/docs/circuitbreaker) — shared sliding-window history, minimum recorded calls and concurrent execution; verify the installed library.
 - [JDK 25 Socket read timeout](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/Socket.html) — timeout leaves the socket valid; ownership and close are separate.

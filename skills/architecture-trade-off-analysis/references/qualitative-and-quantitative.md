@@ -143,11 +143,14 @@ A user story or incident can supply a scenario; make stimulus, context, expected
 and acceptance measure explicit. Apply equivalent scenarios to each candidate and trace
 state transitions and dependencies rather than assigning generic topology ratings.
 
-SEI's [ATAM report](https://www.sei.cmu.edu/documents/629/2000_005_001_13706.pdf) uses
+SEI's [ATAM report, section 7.2](https://www.sei.cmu.edu/documents/629/2000_005_001_13706.pdf) uses
 quality-attribute scenarios to expose architectural risks, sensitivity points and tradeoff
-points. A design parameter affecting one response is a sensitivity point; one affecting
-multiple qualities can expose a tradeoff. This skill uses those concepts for focused
-comparison; it does not claim that completing a small matrix constitutes a full ATAM.
+points. A sensitivity point is an architectural property critical to achieving a particular
+quality-attribute response; a tradeoff point is a sensitivity point for more than one
+attribute. Identify the affected responses and why the influence is material; merely
+affecting a metric does not establish a sensitivity point. This skill uses those concepts
+for focused comparison; it does not claim that completing a small matrix constitutes a
+full ATAM.
 
 Seek plausible disconfirmation, not a guaranteed inversion. Stop when material scenarios
 are covered and additional investigation is unlikely to alter the decision enough to

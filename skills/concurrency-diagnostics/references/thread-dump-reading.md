@@ -18,6 +18,15 @@ The inspected 25.0.3 format includes per-thread timestamps/state, `blockedOn`, `
 lock identity/owner model; fields may be absent and object identifiers are not a universal resource
 ownership graph. Neither view should be called “complete” without stating the question.
 
+In this build, monitor and park-blocker object tokens use
+[`Objects.toIdentityString`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html#toIdentityString(java.lang.Object)>):
+the class name plus the hexadecimal identity hash. They are not object addresses or unique IDs;
+the [hash-code contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()>)
+allows distinct live objects to share a hash. Treat matching `blockedOn`/`monitorsOwned` tokens as
+candidate correlations, not a unique ownership edge. Corroborate critical edges with supported
+runtime owner-thread information, application-assigned resource IDs or a bounded reproduction.
+This ambiguity in parsed strings does not invalidate a supported runtime deadlock-detector result.
+
 Collection is diagnostic work with operational cost. `Thread.dump_to_file` impact scales with thread
 count and its output file must be protected. Confirm attach permission, container PID namespace,
 available disk and overwrite policy. Capture timestamp and runtime version embedded in the output.

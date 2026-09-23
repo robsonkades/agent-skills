@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-interpreter
-version: 1.2.2
+version: 1.2.3
 description: >-
   Interpreter in modern Java: representing a small language as a typed tree and evaluating it,
   using per-node interpretation or a sealed AST with an exhaustive switch according to the extension contract.

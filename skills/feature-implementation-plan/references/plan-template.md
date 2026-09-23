@@ -12,7 +12,7 @@ Depth: Light | Standard | Deep
 Persistence: Inline | Dossier
 Dossier: <existing authorized location, or N/A for Inline>
 Repository baseline: <revision and relevant working-tree changes>
-Status: draft | ready for <scope/resources>, with gate reference
+Status: draft | ready for <phase and scope/resources>, with gate reference
 Updated: <actual date>
 
 ## Summary
@@ -45,9 +45,11 @@ of the dependencies.>
 
 ## Execution order
 
-Forced: RES-03 needs RES-01's column.
+Forced integration/release: RES-03 needs RES-01's column applied and its migration checks passed.
 Ready initially: RES-01, RES-02, RES-05, subject to ownership/shared-file constraints.
-RES-03 becomes ready after RES-01; RES-02 and RES-05 have no dependency on that chain.
+RES-03 may also be implemented now if its accepted contract and adequate fixture already exist;
+otherwise name the missing implementation input. Its integration/release gate remains pending.
+RES-02 and RES-05 have no dependency on that chain. Label scheduling preferences separately.
 
 ## Schema changes
 
@@ -84,17 +86,21 @@ work or an explicitly accepted gap; do not invent an alert or imply coverage is 
 
 ## Migration strategy
 
-<Ordered steps, including backfill and how it is batched, and what runs while it does.>
+<Ordered steps, including backfill and how it is batched, and what runs while it does.
+For material steps, link accepted prerequisites, success/stop conditions and responsible role;
+identify what must be checked after failure or interruption before resuming.>
 
 ## Deployment strategy
 
 <Order of deployment across components; whether a flag gates it; whether old and new
-run at the same time.>
+run at the same time. Carry the accepted evidence and conditions for progressing, pausing or
+invoking recovery at each material stage; preserve unknown criteria as stage-specific blockers.>
 
 ## Rollback strategy
 
 <What is done at each stage if it goes wrong. Explicitly: what cannot be rolled back
-once it has run, and what the alternative is.>
+once it has run, and what the alternative is. Name the applicable recovery owner/runbook and
+the checks that establish the resulting data/application state before traffic or work resumes.>
 
 ## Risks
 

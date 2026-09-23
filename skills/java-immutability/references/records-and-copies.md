@@ -70,6 +70,25 @@ immutable contents. Preserve that contract or explicitly change the API. For bin
 compare the array pattern with a suitable immutable byte value; boxing into `List<Byte>` is not
 automatically the right representation.
 
+## Read-only buffers still have mutable state
+
+`ByteBuffer.asReadOnlyBuffer()`, `duplicate()` and `slice()` share backing bytes; they do
+not make a content snapshot. Read-only buffers reject writes, but relative `get()` still
+advances their position. Equality and hashing use the remaining range, so returning the
+stored buffer can change a containing value's equality/hash without changing any bytes.
+
+For a snapshot boundary, define the captured range (for example, current position to limit),
+then copy those bytes under the required confinement/synchronization or prove that no alias
+can change the backing storage. Keep the stored cursor private and stable; return a fresh
+read-only view per access. The returned view has its own mutable cursor and shares only the
+frozen content. On Java 17 these view factories initialize byte order to `BIG_ENDIAN`;
+reapply the required order **after** creating each view when typed reads must preserve it.
+Base value equality/hash on stable private state, not on a caller's moving cursor.
+
+Verify by mutating the original backing array, consuming one accessor result, and changing
+its limit: subsequent access and the value's hash must remain stable. Test a nonzero input
+position and little-endian typed reads, and verify that writes through returned views fail.
+
 ## Withers
 
 Java has no built-in wither syntax. One option is a method calling the canonical constructor,
@@ -159,6 +178,7 @@ does not make mutable components safe or stabilize a wire schema.
 
 - [Collections.unmodifiableList](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List)>)
 - [Record equality and reconstruction contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html)
+- [ByteBuffer views, byte order and remaining-range equality](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/ByteBuffer.html)
 - [JLS §8.10.4: Record Constructors](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
 - [Record serialization](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/serial-arch.html#serialization-of-records)
 - [List.copyOf contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

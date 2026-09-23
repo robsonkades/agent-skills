@@ -50,8 +50,9 @@ Start)`, `Concurrent Mark From Roots`, `Pause Remark`, `Pause Cleanup` and, on J
    alone establishes neither a faulty nor a well-calibrated predictor.
 4. **Track each trigger with its effective threshold, old-allocation rate, marking duration and
    post-cycle reclaim.** Rising start occupancy alone can reflect a changed old capacity/live set
-   or a healthy adaptive threshold. “Too late” requires insufficient headroom for marking plus
-   the mixed-collection/reclamation phase, evacuation failure or full-GC evidence.
+   or a healthy adaptive threshold. “Too late” requires insufficient headroom through marking
+   and reclamation, supported by allocation/capacity and fallback chronology. An
+   `Evacuation Failure: Pinned` alone proves neither late marking nor insufficient space.
 5. **Classify the failure mode from the log line, not from the full GC.** Mark stack
    overflow, evacuation failure and humongous pressure produce different upstream evidence.
    Use the table in `references/marking-pathologies.md`.
@@ -99,8 +100,9 @@ application budgets do not require tuning.
   overhead dropped from roughly 3% to 1.5% of the heap, and a concurrent
   "Rebuild Remembered Sets and Scrub Regions" phase appeared between `Pause Remark` and
   `Pause Cleanup`.
-- Objects allocated at or above a region's TAMS are implicitly live and are never marked in
-  the bitmap. That is what lets promotion continue during a cycle without forcing re-marking.
+- Objects at or above a region's TAMS are implicitly live for normal concurrent-mark liveness;
+  the normal bitmap-marking path skips them. This does not exclude root-region scanning above
+  TAMS or special bitmap use during evacuation-failure recovery. Keep those paths distinct.
 - Eager reclaim frees eligible humongous regions inside an ordinary STW pause. Eligibility is
   release-specific and considers marking/allocation timing, object kind/pointers, remembered-set
   evidence and pinning; it is not equivalent to “RSet size is zero”. Read `reclaim candidate` and

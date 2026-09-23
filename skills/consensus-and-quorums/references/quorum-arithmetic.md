@@ -10,11 +10,20 @@ or survive Byzantine/corrupt members.
 To keep a majority available while `f` nodes are down you need `N - f > N/2`, which is
 `N > 2f`, which is `N = 2f+1` at minimum.
 
-These counts assume a fixed committed voting configuration. Two unrelated majorities of
+These counts assume one stable voting configuration. Two unrelated majorities of
 different configurations need not intersect. Use the product's supported membership-change
 protocol, learner catch-up and promotion checks; do not replace voters by independently editing
 peer lists. Raft joint consensus requires majorities of both old and new configurations during
 the joint phase; other supported reconfiguration protocols have their own restrictions.
+
+Calculate availability at each migration step. Starting with three healthy voters, registering
+an unavailable fourth voter raises the quorum from two to three: the original three must all
+remain available until the newcomer can participate. Losing one then prevents progress, although
+the final four-voter cluster tolerates one failure. In etcd, stage additions as learners, catch up
+and promote through the supported checks; retain `strict-reconfig-check`, which rejects changes
+that leave fewer started members than the new quorum. A membership API acknowledgement is not
+evidence that the new process is running or caught up. A lost quorum cannot ordinarily commit
+its own repair; follow the product's disaster-recovery procedure rather than rewriting peer lists.
 
 | N   | Majority | Tolerated failures `f` | Worth choosing?                                                 |
 | --- | -------- | ---------------------- | --------------------------------------------------------------- |
@@ -118,3 +127,8 @@ actual semantics.
       caller that waits on it.
 - [ ] Read scaling uses a product-supported mode whose staleness and leader replication cost were tested.
 - [ ] A documented behaviour exists for clients on the minority side of a partition.
+
+## Sources
+
+- [Raft membership changes, section 6](https://raft.github.io/raft.pdf)
+- [etcd 3.6 runtime reconfiguration and learner promotion](https://etcd.io/docs/v3.6/op-guide/runtime-configuration/)

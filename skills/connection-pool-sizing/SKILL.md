@@ -34,9 +34,11 @@ capacity evidence requires a measurement plan and conditional recommendation, no
    the pool, which can include time before the first statement and after commit. Verify the metric
    adapter; completed-use samples can omit connections still stuck or leaked.
 2. **Compute mean concurrency `L = λ_borrow × mean(W)`** using completed borrows/second and
-   hold durations from the same pool and stable interval, not query rate or a percentile. Then model a candidate pool against the
-   arrival distribution and latency/error budget. A fixed 1.5× margin is a starting hypothesis,
-   not a sizing law.
+   hold durations from the same pool and stable interval, not query rate or a percentile. Use the
+   completed-use count; Hikari's acquisition timer can also count timeouts (see the sizing reference).
+   This estimates observed occupancy, not offered demand: saturation, rejected work and timeouts
+   can cap completed throughput. Model a candidate against offered arrivals and the latency/error
+   budget. A fixed 1.5× margin is a starting hypothesis, not a sizing law.
 3. **Establish the database-side budget** with the database owner: reserved administrative
    connections, total application instances, workload classes, CPU saturation, storage latency,
    lock pressure, and failover topology. The familiar `cores × 2 + spindles` expression is a
@@ -118,9 +120,9 @@ capacity evidence requires a measurement plan and conditional recommendation, no
 
 ## References
 
-Return the measurement interval/population, mean and tail hold times, borrow rate, candidate pool
-and aggregate database budget, competing diagnosis, and validation/rollback bounds. State which
-checks ran and which claims remain conditional.
+Return the measurement interval/population, mean and tail hold times, completed borrow rate and
+offered/failed demand, candidate pool and aggregate database budget, competing diagnosis, and
+validation/rollback bounds. State which checks ran and which claims remain conditional.
 
 - [Sizing and configuration](references/sizing-and-configuration.md) — the calculation, the
   HikariCP settings with their real defaults, and the pre-deploy and monitoring checklists.

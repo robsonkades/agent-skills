@@ -61,6 +61,11 @@ For an operation whose owner must keep control of cancellation, relay outcomes i
 future. `copy()` is sufficient for known base futures, but subclasses may preserve provider
 cancellation through `newIncompleteFuture()`; Java 25's default `HttpClient` does so.
 
+Use this helper for shareable values or values whose resource lifetime is independently managed
+by the operation owner. It does not implement exclusive resource delivery: the ignored return
+value from `view.complete` does not tell that owner whether the view accepted the result. A
+stream/response requiring ownership transfer needs a separate claim and cleanup protocol.
+
 ```java
 static <T> CompletableFuture<T> callerView(CompletionStage<T> operation) {
     var view = new CompletableFuture<T>();
@@ -87,6 +92,20 @@ late side effects explicitly. Cancelling this base view does not cancel `operati
 bridge must follow the operation owner's cancellation policy. The operation owner still observes
 late failures and owns cleanup of late resource-bearing results; relaying a value neither copies
 the resource nor creates another ownership claim.
+
+Cancellation isolation is not execution isolation. `view.complete` can run the caller's attached
+non-`Async` continuations inline on the provider's completing thread. Use an intentional executor
+edge where isolation is required, accounting for executors that execute inline or reject. Merely
+changing the relay to `whenCompleteAsync` and discarding its returned stage can leave `view`
+unfinished on executor rejection; preserve an observed failure path too.
+
+A view timeout/cancellation also does not unregister this relay's observation. With OpenJDK 25's
+`CompletableFuture`, the pending operation retains the observer and its captured view until the
+observation can run. Bound caller-view admission and the owner's operation lifetime; many callers
+timing out against one stuck operation can still retain many graph nodes. This is an
+[implementation observation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java),
+not a portable use of dependent-count metrics as synchronization. Do not close a shared response
+merely because one caller view lost its completion race: another consumer may still own it.
 
 Provider boundary: [Java 25 HttpClient cancellation](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html#sendAsync(java.net.http.HttpRequest,java.net.http.HttpResponse.BodyHandler)>)
 and [its derived future implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.net.http/share/classes/jdk/internal/net/http/common/MinimalFuture.java).
@@ -182,3 +201,9 @@ Use manually controlled futures to test already-complete and later-complete inpu
 two failures, executor rejection, action failure inside `whenComplete`, empty `allOf`/`anyOf`, timeout
 races and duplicate callback completion. Tests must assert both the returned outcome and whether
 losing work/resources were actually stopped or released.
+
+For `callerView`, cancel or time out one view while another remains pending, then complete the
+operation and assert that the second view still receives its result. Check provider cancellation
+separately, exercise an inline caller continuation on the completing thread, and verify that a
+late resource remains under its explicit owner's cleanup policy. If an executor is introduced
+into the relay, reject scheduling and assert that the public view terminates instead of hanging.

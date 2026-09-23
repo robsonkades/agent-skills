@@ -174,7 +174,13 @@ Use secondary results only after defining their collection boundary and denomina
   suffer skid;
 - JMH 1.37 `@AuxCounters` require `Scope.Thread`; public numeric fields/methods become metrics.
   `OPERATIONS` normalizes to benchmark time, while `EVENTS` counts events without that time
-  normalization. Neither automatically means a success fraction. Updates can perturb the path;
+  normalization and aggregates by sum. Neither automatically means a success fraction. Counters
+  can include iteration synchronization calls outside the primary timed loop, and primary
+  operation counts apply `OperationsPerInvocation`/batch scaling that auxiliary counts do not.
+  Inspect the generated harness before dividing an auxiliary result by the primary score; use
+  matching success/attempt counters for a fraction over their declared population. Read
+  `references/configuration-recipes.md` for window, unit, and aggregation checks. Updates can
+  perturb the path;
 - total throughput can improve while successes per operation fall.
 
 Report coverage/multiplex ratio, raw and normalized units, unsupported counters, and whether the

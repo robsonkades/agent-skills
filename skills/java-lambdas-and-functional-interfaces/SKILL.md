@@ -82,10 +82,12 @@ and performance conclusions can be made.
   specialisations cover nearly everything, compose via `andThen`, `compose`, `negate`, `and`,
   `or`, and interoperate with many library APIs.
 - Use the **primitive specialisations** (`IntPredicate`, `ToLongFunction`, `IntUnaryOperator`,
-  `ObjIntConsumer`, …) on measured paths that process primitives in bulk. A
-  `Function<Integer,Integer>` requires boxing semantics; allocation depends on cache ranges,
-  escape analysis and surrounding pipeline, while the specialized form avoids that conversion. Do not do the
-  reverse — cluttering a cold API with primitive variants — for a cost nobody measured.
+  `ObjIntConsumer`, …) on measured paths that process primitives in bulk. Boxing/unboxing occurs
+  where primitives cross reference boundaries such as `Function<Integer,Integer>`, not merely
+  because that type appears. Specialisations avoid those conversions when their primitive
+  input/result contracts fit; preserve null/absence semantics. Allocation depends on cache ranges,
+  escape analysis and the surrounding pipeline. Do not clutter a cold API with primitive variants
+  for a cost nobody measured.
 - Write your own functional interface when a name carries domain meaning at many call sites
   (`RetryPolicy`, `PricingRule`), when the signature is not expressible with a standard one
   (three parameters or a checked exception), or when default methods add

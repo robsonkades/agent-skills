@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: incident-evidence-capture
-version: 1.3.2
+version: 1.3.3
 description: >-
   Preserving decision-grade JVM incident evidence before remediation destroys it: setting an
   explicit recovery/evidence budget, selecting representative and control instances, copying

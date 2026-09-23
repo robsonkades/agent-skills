@@ -106,7 +106,8 @@ work; cancellation timing and admission affect the load increase.
 
 ## Bounding concurrency inside a scope
 
-A scope forks as many threads as you ask it to. Nothing in the API is a limit.
+A scope does not impose an admission limit. Cancellation can prevent later forks from
+starting threads, but it does not establish a safe concurrency cap.
 
 ```java
 Semaphore permits = new Semaphore(20);            // sized for the downstream, not for the JVM
@@ -132,6 +133,14 @@ This semaphore is local to this fan-out. Share the limiter at the dependency bou
 process-wide cap; it still leaves up to 10,000 threads waiting, so bound admitted fan-out size.
 `enrich` must finish using the protected resource before release. Returning an asynchronous
 handle or timing out does not prove the underlying work stopped.
+
+Keep acquisition and release inside the same callable when possible, as above. On JDK 25,
+[`fork` may return an `UNAVAILABLE` subtask without starting its thread](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html#fork(java.util.concurrent.Callable)>),
+if the scope is cancelled. A socket, permit or other resource acquired before that call cannot
+rely solely on the callable's `finally` for cleanup. When acquisition must happen first, retain
+parent ownership and close/release after the scope closes, including when `fork` throws;
+do not also release it in the callable. Checking `isCancelled()` before acquisition or forking
+does not make that handoff atomic: another subtask can cancel the scope between the check and fork.
 
 ## Nesting, and what it buys
 
@@ -262,6 +271,9 @@ Assert three things across the suite: the sibling was cancelled, the block retur
 bound (proving `close` did not hang), and the resource the subtask held was released. A test
 that only asserts the thrown exception proves nothing about the lifetime guarantee, which is
 the reason the API exists.
+
+Also cancel before a later `fork`: assert that its body never starts and that a resource acquired
+by the owner is still released exactly once. Successful-path cleanup alone misses this case.
 
 Tests need `--enable-preview` too — including in the IDE, in Maven Surefire
 (`<argLine>--enable-preview</argLine>`) and in whatever runs the build in CI.

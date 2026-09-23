@@ -58,6 +58,13 @@ operations queueing behind it.
 
 ## Double-checked locking
 
+Requires a non-null, non-reentrant factory: `create()` must not call this accessor directly or
+through callbacks before returning. As with synchronized initialization, a monitor permits the
+same thread to reenter; a recursive call can see `null`, create a second resource and have its result
+overwritten by the outer call. If reentry cannot be excluded, use explicit `INITIALIZING` state and
+creator identity under the lock to reject recursive access; the creator must not wait on its own
+unfinished initialization.
+
 ```java
 private volatile Resource value;
 private final Object lock = new Object();
@@ -75,8 +82,10 @@ Resource value() {
 ```
 
 The volatile publication and second check are load-bearing. Use only when the synchronized hot path
-is measured material. Also test exceptions, reentrancy, close and external side effects; the idiom
-only solves publication/single assignment.
+is measured material. Under these preconditions the idiom publishes one successful initialization
+while the value is not reset. Failure can still lead to retries, so it does not guarantee exactly-once
+external effects. Test exceptions, callback reentry, close and cleanup separately; define reset/retry
+and lifecycle transitions explicitly if they are supported.
 
 ## Future memoization
 
@@ -107,4 +116,5 @@ Close losing instances and account for thundering-herd cost.
 
 - [JLS 12.4.2 class initialization](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.4.2)
 - [JLS 17.4 memory model](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
+- [JLS 17.1 monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.1)
 - [`Future`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)

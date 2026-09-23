@@ -18,19 +18,19 @@ description: >
 On JDK 17-25, treat the normally segmented code cache as three independent allocators with
 separate ceilings. One `CodeHeap` can sit at 99.8% while the consolidated
 number reads 72%, and every tool that stops at the consolidated line reports a healthy
-system. Since JDK 20 the consequence of one full heap is not "the compiler stops": the
-allocator falls back to the other nmethod heap, so short-lived tier-3 code starts landing
-in the heap that was reserved for long-lived C2 code, and the GC-driven unloading that
-replaced the sweeper keys off the **aggregate** free ratio and does not notice. Compilation
-stops only when the allocation cannot be satisfied after the applicable fallback. Do not
+system. Allocation fallback already exists in JDK 17: pressure in one heap can send
+tier-3 code into the heap normally used for non-profiled code. Separately, since JDK 20,
+GC-driven unloading has replaced the sweeper, and code-cache GC triggers use aggregate
+pressure rather than detecting an individual full heap. A code-cache-full compiler stop
+occurs when allocation cannot be satisfied after the applicable fallback. Do not
 hard-code a count of three into tooling: unsegmented and interpreter-only modes have fewer
 heaps, and later HotSpot builds can add heap kinds. Discover the runtime shape from
 `Compiler.codecache` and `jdk.CodeCacheConfiguration`.
 
-The second failure this prevents is the reflexive "double `ReservedCodeCacheSize`". It works
-when the pressured segment happens to be one of the two that split the remainder 50/50, and
-wastes half the increase when it is not — or when the real cost was the GC pauses the code
-cache was triggering, which a bigger cache also fixes, for a different reason.
+The second failure this prevents is the reflexive "double `ReservedCodeCacheSize`". With
+default sizing, extra capacity is shared between the nmethod heaps; it does not proportionally
+raise `non-nmethods`. More capacity can also change code-cache GC frequency. Establish which
+mechanism is responsible before choosing a larger total or a different split.
 
 ## Workflow
 
@@ -43,7 +43,9 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
 1. **Read every available heap line** from `jcmd <pid> Compiler.codecache`, never the
    consolidated `CodeCache:` line alone. Also read the last line: `Compilation: enabled` or
    `disabled (not enough contiguous free space left)`, with `stopped_count` and
-   `restarted_count`.
+   `restarted_count`. A `Restarting compiler` log or `jdk.JITRestart` event alone is not
+   proof of recovery; confirm current state and counter changes. Productive recovery needs
+   successful compilation work started after the transition, not just older tasks finishing.
 2. **Confirm the runtime shape.** On JDK 17-25, three named heaps is the normal tiered shape;
    one unnamed heap means segmentation is off. HotSpot enables it ergonomically only with
    tiered compilation and `ReservedCodeCacheSize` **≥ 240 MB**, so a smaller explicit value

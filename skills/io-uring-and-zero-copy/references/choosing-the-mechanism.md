@@ -32,6 +32,16 @@ Java. FFM does not remove native code, Linux policy or seccomp restrictions, and
 helpers are C inline functions rather than exported symbols; verify exports or supply an owned
 shim instead of assuming every header function is directly callable.
 
+For an owned binding, match CQEs to stable request identifiers such as `user_data`, not their
+position in the completion queue. Submission order does not guarantee execution/completion order.
+Do not overlap independent sends, or independent receives, on an ordered TCP stream without an
+ordering mechanism; sending and receiving are independent directions. Serialize dependent work
+or use supported linkage, preserving backpressure and the operation's buffer-release contract.
+`IOSQE_IO_LINK` orders members of one chain within a submission batch, not other chains or later
+submissions. Handle each result: errors and unexpected short I/O can break the chain and cancel
+its unstarted remainder. A link neither completes missing bytes nor makes the batch atomic.
+With an existing transport, verify its ordering contract before adding a parallel native path.
+
 ## JDK transfer APIs versus io_uring
 
 | Property                      | `transferTo` / mapping                                                                   | io_uring transport                                                                       |
@@ -124,5 +134,7 @@ completion ownership and delayed buffer reuse.
 - [FileChannel transfer contract, JDK 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html)
 - [FFM final API, JEP 454](https://openjdk.org/jeps/454)
 - [liburing send-zero-copy completion contract](https://man7.org/linux/man-pages/man3/io_uring_prep_send_zc.3.html)
+- [io_uring request ordering and completion correlation](https://man7.org/linux/man-pages/man7/io_uring.7.html)
+- [Linked requests and failure semantics](https://man7.org/linux/man-pages/man2/io_uring_enter.2.html) — `IOSQE_IO_LINK`.
 - [Linux direct-file-I/O contract and restrictions](https://man7.org/linux/man-pages/man2/open.2.html) — `O_DIRECT` and NOTES, when that file mode is actually involved.
 - [JDK 25 custom selector-provider contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/spi/SelectorProvider.html) and [stock OpenJDK 25 Linux selector provider](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/linux/classes/sun/nio/ch/DefaultSelectorProvider.java) — distinguish the standard API from the deployed native backend.

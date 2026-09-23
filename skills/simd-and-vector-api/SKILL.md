@@ -52,8 +52,10 @@ constraints that change the choice. Missing measurements leave a benefit claim u
    NaN and signed zero, masked inactive lanes, bounds exceptions, overlap and reduction order
    can differ from an apparently equivalent scalar rewrite. Define tolerances and tests first.
 5. **Choose species from the portability contract.** Prefer `SPECIES_PREFERRED` for
-   shape-agnostic algorithms; consider `ofLargestShape` only for one lane type and fixed
-   species only when a protocol/algorithm requires it. Benchmark every supported node class.
+   shape-agnostic algorithms; consider `ofLargestShape` only for one lane type. A fixed species
+   can serve a protocol/algorithm requirement or a measured specialization for a deployed
+   CPU/JDK class. Benchmark every supported node class and retain a validated portable or
+   scalar path for classes outside that specialization.
 6. **Write a canonical bounded loop** — `loopBound`, the vector loop, then a scalar or
    masked tail. See `references/vector-api-recipes.md` for the shapes and the exact masked
    signatures.

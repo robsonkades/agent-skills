@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: sharding-and-partitioning
-version: 1.3.2
+version: 1.3.3
 description: >-
   Whether to split data across owners at all, and on which key: what sharding buys — write
   capacity, locality, data volume and isolation — against distributed transactions/indexes,

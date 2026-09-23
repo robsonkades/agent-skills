@@ -73,6 +73,13 @@ security/support exposure, recovery and lost options. Compare expected avoided c
 stated horizon against repayment effort, migration risk and displaced work; do not manufacture
 precision or double-count the same incident as both lost delivery and support cost.
 
+On reassessment, compare options from now. A past delivery benefit or effort already spent
+explains the history but does not itself justify retaining debt or finishing a rewrite.
+Exclude unrecoverable past expenditure from the comparison; existing code, tests and knowledge
+can still change remaining effort and risk. Include future abandonment/cleanup, migration,
+parallel-running and opportunity costs where they differ between options. Do not charge the
+original rewrite budget again or treat its spent portion as a benefit of continuing.
+
 ## Repayment strategies
 
 **Opportunistic** — improve it within an authorized change when shared context and checks reduce
@@ -128,6 +135,7 @@ not a reason to declare the cost zero.
   cleanup. Record unrelated opportunities without expanding the task; keep behavioral changes
   reviewable (java-refactoring, coding-agent-discipline).
 
-## Primary reference
+## Primary references
 
 - [Fowler: Technical Debt](https://martinfowler.com/bliki/TechnicalDebt.html) — carrying cost, repayment and uncertainty in effort estimates.
+- [HM Treasury: The Green Book (2026), sunk costs](https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-government/the-green-book-2026#sunk-costs) — the appraisal distinction between unrecoverable past spending and future opportunity costs; this does not import government approval procedures into a debt decision.

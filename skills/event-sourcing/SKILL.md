@@ -109,7 +109,8 @@ meaning current state cannot express
 Requirements demand "what did it look like on date X" as a first-class
 query, not a report
         → a real case, but compare against bitemporal tables first;
-          they are far cheaper if the need is only historical read.
+          compare their query, retention and operating costs when historical
+          reads are the only requirement.
 
 The domain is CRUD, and the state is the truth the business cares about
         → do not event source. You are buying a rebuild pipeline and a
@@ -154,6 +155,9 @@ a long-lived account)
 - For a transactional projection, apply the fold and advance its checkpoint atomically,
   using a conditional advance or another proven ownership/deduplication protocol. A failed
   advance can mean a missing predecessor, not just a duplicate; do not acknowledge it blindly.
+  Scope data and checkpoints to the projection generation and feed domain; a new fold must
+  not inherit an old generation's completed position. Preserve the provider's full cursor
+  and restart semantics (`references/projections-and-evolution.md`).
   Two workers reading the same
   watermark both apply a non-idempotent fold; this is the check-then-act that `idempotency`
   forbids (`delivery-semantics`).

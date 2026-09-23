@@ -56,8 +56,10 @@ may suffice without a new capture or configuration change.
    allocation-free claim, read the post-warm-up slope rather than the mere OOM.
 4. **For Shenandoah, confirm the build and the effective mode before measuring anything.**
    `java -XX:+UseShenandoahGC -version` on the actual vendor/platform binary, then
-   `-Xlog:gc+init` for `Mode:` and `Heuristics:`, or `jcmd <pid> VM.flags -all | grep -E
-"ShenandoahGCMode|ShenandoahGCHeuristics"`. Product is not default.
+   `-Xlog:gc+init` for `Mode:` and `Heuristics:`, alongside startup warnings and
+   `jcmd <pid> VM.flags -all`. Generational mode supports only `adaptive` on this baseline;
+   ignored heuristic requests can remain visible in flags. Product is not default, and a
+   requested heuristic is not necessarily the active one.
 5. **Check the time constraint and the capacity constraint separately.** Time:
    `(InitFreeThreshold − MinFreeThreshold)% × heap / allocation rate` illustrates
    single-generation learning headroom when soft and hard maxima match, not a guaranteed
@@ -128,8 +130,9 @@ accrued` per thread. Correlate affected requests; absent pauses alone do not ide
   currently present Java threads over the interval since the previous report, not just GC
   cycle time or request time. The captured example reports 51% for one thread with zero
   degenerated cycles; that is not a diagnostic cutoff or a request-latency measurement.
-- `ShenandoahGCMode=passive` and `ShenandoahGCHeuristics=aggressive` are **diagnostic** and
-  need `-XX:+UnlockDiagnosticVMOptions` (verified). `passive` disables collector barriers and
+- `ShenandoahGCMode=passive` is **diagnostic** and needs
+  `-XX:+UnlockDiagnosticVMOptions` (verified), as does the `aggressive` heuristic in `satb`
+  mode. `passive` disables collector barriers and
   concurrent heuristic cycles; allocation failures and explicit requests can cause STW
   degenerated/full collection. It does evacuate and compact. Never a
   production setting.

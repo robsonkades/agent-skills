@@ -64,20 +64,19 @@ See [JLS 21 §15.27.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15
 
 ## When the answer is no refactoring
 
-"No refactoring required" is a valid output of a detection pass and should be reported as
-one. Prefer it when:
+"No refactoring required" is a valid output when the candidate is falsified or no worthwhile
+improvement is established. Record the reason and counter-evidence. Examples include:
 
 - the code has low change pressure, low impact if wrong, no defect evidence and adequate tests;
   age alone is not innocence for security, concurrency, compatibility or data-integrity paths;
 - the fix would trade a smell for indirection: a one-implementation interface, a parameter
   object that is a grab-bag, a special case that swallows a real failure;
 - the abstraction is not yet earned — occurrence count alone establishes neither shared
-  knowledge nor independence; merging on a guessed axis can cost more than duplication;
-- the finding's blast radius crosses a published, serialised or persistence boundary and
-  nobody is paying for the migration it would need;
-- the same seam will already change in scheduled feature work and combining it does not make
-  review, rollback or behavior attribution materially harder. Refactoring is never literally
-  free; sometimes the migration cost is already being paid.
+  knowledge nor independence; merging on a guessed axis can cost more than duplication.
 
-Record it as a note with the reason, not as a finding. A backlog of findings nobody acts
-on trains the team to ignore the next pass.
+A supported finding remains a finding when its fix must be deferred. Rejecting an unsafe
+refactoring, lacking migration budget for a published/serialized/persistence contract, or
+waiting for scheduled feature work does not erase demonstrated harm. Keep evidence and impact
+separate from the action decision: staged migration, defer with a revisit trigger, or an
+explicitly accepted residual risk. Combine with feature work only when review, rollback and
+behavior attribution remain manageable; the refactoring is not literally free.

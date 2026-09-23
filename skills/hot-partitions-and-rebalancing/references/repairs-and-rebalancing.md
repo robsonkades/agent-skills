@@ -20,10 +20,11 @@ waiter's cancellation cancels shared work; bound waiter count and execution time
 
 ## Salting, written out
 
-Split one logical key into S physical keys only if its operations can be partitioned without
+Split one logical key into S bucket keys only if its operations can be partitioned without
 breaking required invariants. These are partial Java 17-compatible snippets: `stableHash`,
 `store`, `Entry` and key encoding are application-defined; S must be positive and the layout
-and hash stable across writers, readers and retries.
+and hash stable across writers, readers and retries. They illustrate one established salted
+layout, not the migration from an existing unsalted key or between layouts.
 
 ```java
 // Write: a stable entity/event id gives deterministic retry routing. Random selection needs
@@ -45,9 +46,19 @@ Consequences to accept before shipping it:
   sequential snippet accumulates service times; concurrent fan-out approaches the slowest
   branch plus coordination only with enough concurrency. Bound concurrency, result bytes,
   deadlines and partial-failure behavior. Known-item reads may calculate one bucket.
-- **S is part of the layout.** Changing it requires migration or explicit versioned layouts
-  that readers and retries understand; do not silently recompute old retries under a new S.
-  Old/new layouts increase read and operational costs until retired.
+- **Buckets are not physical partitions.** The store's routing determines where each bucket
+  lives; distinct keys can share a shard, and a suffix ignored by the routing key adds no
+  distribution. Verify placement or observed load against capacity before crediting salting
+  with extra headroom. S is not a promise of S-fold throughput.
+- **Enabling or disabling salting also changes the layout.** Version the routing metadata
+  for each affected key, including its salted/unsalted mode and S. Migrate with a safe cutover,
+  or explicitly read all coexisting layouts while preserving the required merge semantics;
+  suppress duplicate copies by stable entry identity where needed. A reader using only the
+  new layout can miss old data. Keep each operation's original route and idempotency outcome
+  resolvable rather than recomputing a timed-out retry under the new configuration. Prevent
+  incompatible writers from continuing on a retired layout. Retire it only after data is
+  reconciled and the supported client/retry window is handled. Coexistence increases read
+  and operational costs; a configuration toggle alone does not implement this transition.
 - **Independent entries or mergeable updates are required.** Counters, event streams and append-only lists
   can have defined merges, but global ordering, uniqueness and atomic aggregate checks no
   longer come for free. A single mutable value does not: S copies can disagree.
@@ -57,9 +68,8 @@ Consequences to accept before shipping it:
   append or increment: preserve the operation's natural or enforced repeat semantics
   (`idempotency`). A timed-out attempt may already have applied; retain its original layout
   and outcome evidence when reconciling or retrying across a move.
-- **Salt selectively.** Keep the hot-key list in configuration that can change without a
-  deploy, and salt only those keys; the alternative is charging every read in the system the
-  fan-out to fix one key.
+- **Salt selectively.** Configure the identified hot keys, but apply additions and removals
+  through the layout transition above. Avoid charging every read the fan-out to fix one key.
 
 ## Moving a partition while it serves
 
@@ -153,3 +163,6 @@ restartable, idempotent transition.
 - [DynamoDB random and calculated write sharding](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-sharding.html)
   — distinguishes full-key queries from directly routed item reads; apply the semantic
   distinction without assuming DynamoDB mechanisms exist in another store.
+- [DynamoDB partitions and data distribution](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.Partitions.html)
+  — the partition key feeds the store's hash-based placement; a bucket key is not a physical
+  partition identifier. Validate other stores against their own routing rules.

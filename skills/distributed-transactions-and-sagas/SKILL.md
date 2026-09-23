@@ -48,7 +48,8 @@ supported; do not introduce a saga merely to anticipate possible future distribu
    not be last, but nothing after it may require backward recovery.
 5. **Persist the saga state before invoking each step and the outcome after.** A position
    that exists only in a call stack, a `CompletableFuture` chain or an in-memory map is lost
-   on restart, silently.
+   on restart, silently. Preserve the plan definition and stable step identities across
+   deployments; a row's concurrency version does not identify which business plan it runs.
 6. **Design execute, status, compensation and completion protocols.** Each is repeat-safe and
    keyed by saga/step identity. Define terminal business rejection, ambiguous outcome,
    transient failure and permanent/manual-repair states separately.

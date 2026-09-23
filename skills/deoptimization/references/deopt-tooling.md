@@ -9,7 +9,8 @@ illustrative snippet was executed. Check the exact deployed build and recording 
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Continuous production monitoring, low overhead                  | JFR `jdk.Deoptimization` — on in `default.jfc`, with stack traces in `profile.jfc`          |
 | Investigation session, one line per trap with `cid` and `bci`   | `-Xlog:deoptimization=debug`                                                                |
-| Dependency invalidation (class loading, `RedefineClasses`)      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
+| Dependency invalidation from class loading                      | `-Xlog:jit+compilation=debug` (`marked for deoptimization`) plus `-Xlog:dependencies=debug` |
+| Class redefinition/retransformation invalidation scope          | `-Xlog:redefine+class+nmethod=debug` plus compilation and safepoint logs                    |
 | Was the invalidation a safepoint or a handshake, and how long   | `-Xlog:handshake=info`, `-Xlog:safepoint=info`                                              |
 | Frame reconstruction in detail, rematerialised objects          | `-XX:+UnlockDiagnosticVMOptions -XX:+TraceDeoptimization`, one-off only                     |
 | Installed compiled versions and their states, without a restart | `jcmd <pid> Compiler.codelist`                                                              |
@@ -51,7 +52,7 @@ Three things the levels do:
   No tag set matches selection: jit+deoptimization. Did you mean any of the following? deoptimization jit+thread jit+inlining jit+compilation
   ```
 
-Dependency invalidations need the other two tags:
+Class-loading dependency invalidations need the other two tags:
 
 ```bash
 java -Xlog:jit+compilation=debug,dependencies=debug,class+load=info:file=jit.log:uptime -jar app.jar
@@ -73,6 +74,10 @@ java -Xlog:jit+compilation=debug,dependencies=debug,class+load=info:file=jit.log
 `dependee` is the class whose loading broke the assumption; `context` is the type the
 assumption was about. In this observation its load preceded the block; concurrent log lines
 can interleave. Match the named failed dependency and class rather than assuming adjacency.
+For redefinition/retransformation, inspect `redefine+class+nmethod=debug`: the baseline reports
+`Marked dependent nmethods for deopt` or `Marked all nmethods for deopt`. The latter is the
+fallback for incomplete dependency recording, not an inevitable result of attaching an agent.
+See the production reference before interpreting the invalidation scope.
 `-Xlog:handshake=info` shows the mechanism and its cost:
 
 ```

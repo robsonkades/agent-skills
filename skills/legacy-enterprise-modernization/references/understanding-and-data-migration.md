@@ -76,26 +76,63 @@ Practices that make this work:
 Shared write authority constrains independent semantic evolution and is often substantial
 work; it does not block compatible additive changes or read-only extraction.
 
+First map the invariants and transaction participants, not just the table names. Moving one
+write behind an independently committing API can split an atomic operation: a reservation
+may commit remotely even though the caller's order transaction later rolls back. A local
+facade using the existing transaction may be enough to establish an ownership seam. Ordinary
+Spring transaction propagation does not extend across remote calls. Keep writes together
+when atomic visibility is required, or explicitly design coordination and recovery before
+splitting them; compensation is not the same as rollback or isolation. Use
+`enterprise-transactions` for the local contract and `distributed-transactions-and-sagas`
+when independent commit boundaries are unavoidable.
+
 ```text
 Step 1  Inventory the writers per table. Not "who should write" — who
         does. Include jobs, ETL, the reporting tool that "only reads",
-        and the DBA's maintenance scripts.
+        and the DBA's maintenance scripts, with their runtime principals.
 
-Step 2  Nominate one owner per table.
+Step 2  Nominate ownership consistent with the affected invariants and
+        transaction boundaries; one owner may need several tables.
 
-Step 3  Give the other writers an API from the owner. Start with the
-        lowest-volume writer; it proves the path.
+Step 3  Route other writers through that owner's interface with the
+        required atomicity and failure contract. A low-volume pilot
+        bounds exposure; it still needs representative failure tests.
 
-Step 4  Revoke write permission at the database level. This is the step
-        that makes ownership real — everything before it is a convention.
+Step 4  Remove obsolete write authority and test effective access using
+        the actual runtime roles, including indirect write paths.
 
 Step 5  Transfer write authority and make incompatible schema/semantic
         changes only after every remaining writer's contract is handled.
 ```
 
-Step 4 is the one that gets skipped and the one that matters. Ownership enforced by
-convention is re-violated by the next urgent fix, at 2 a.m., by someone who does not know
-the convention.
+In PostgreSQL 17, a direct `REVOKE` does not remove rights still available through role
+membership or `PUBLIC`. An executable `SECURITY DEFINER` function runs with its owner's
+privileges, and an object owner can regrant its own privileges. Separate owner and former
+writer credentials; audit inherited rights and callable routines before treating a revoke
+as proof. Retain a routine intentionally serving as the owner's interface only with its
+validation, authority and failure contract tested. Do not indiscriminately remove required
+owner access or controlled maintenance paths.
+
+Permissions alone do not establish that admitted work has finished. When transferring
+authority, use the **authority-transfer checkpoint** in `architecture-refactoring-paths`
+(`references/domain-and-persistence-paths.md`): drain/reconcile old work or enforce authority
+at the write boundary, then catch up before activation. Test the reverse transfer for rollback.
+
+### Adversarial checks before accepting ownership
+
+Run these against disposable representative fixtures, never production grants. They are
+required outcomes to verify, not claims that this example has been executed on your database.
+
+| Fixture or fault                                                                               | Required observation                                                                                                          |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Old login inherits a writer role; only its direct table grant is revoked                       | The remaining write exposes incomplete enforcement; correct the inherited path and verify rejection as that login             |
+| Old login can execute a definer function that mutates the table after direct writes are denied | Decide whether this is an approved owner interface or a bypass; close the bypass and retest, preserving intended operations   |
+| Owner and old process use the same credentials                                                 | The database cannot distinguish their authority by that identity; separate credentials before claiming independent revocation |
+| Owner operation commits, then the caller fails before its own commit                           | Required invariants hold under the declared protocol; local rollback must not be assumed to undo the remote commit            |
+| A paused old write or retry resumes after the switch                                           | It is drained, rejected or reconciled under the handoff protocol; a routing flag alone is insufficient                        |
+
+Also verify the intended owner's operations still succeed and preserve their invariants.
+An access-denied test alone can pass because all writers were accidentally disabled.
 
 ## Migrating a shared database
 
@@ -212,6 +249,8 @@ atomicity contract and needs its own justification.
 - [PostgreSQL 17 cumulative statistics](https://www.postgresql.org/docs/17/monitoring-stats.html) — per-table counters and visibility limits.
 - [PostgreSQL 17 trigger behaviour](https://www.postgresql.org/docs/17/trigger-definition.html) — transaction, timing and cascading effects.
 - [PostgreSQL 17 views](https://www.postgresql.org/docs/17/sql-createview.html) — update and security conditions for compatibility views.
+- [PostgreSQL 17 REVOKE](https://www.postgresql.org/docs/17/sql-revoke.html), [privileges](https://www.postgresql.org/docs/17/ddl-priv.html) and [CREATE FUNCTION](https://www.postgresql.org/docs/17/sql-createfunction.html) — inherited authority, owner grants and definer execution.
+- [Spring Framework 6.2 declarative transactions](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative.html) — transaction contexts do not automatically propagate across remote calls.
 - [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html) — atomic source intent and duplicate handling.
 - [Fowler, Strangler Fig](https://martinfowler.com/bliki/StranglerFigApplication.html) — incremental replacement and coexistence.
 - [JUnit 5.11.4 MethodSource](https://docs.junit.org/5.11.4/api/org.junit.jupiter.params/org/junit/jupiter/params/provider/MethodSource.html) — parameter sources; its [parameterized-test implementation](https://github.com/junit-team/junit5/blob/r5.11.4/junit-jupiter-params/src/main/java/org/junit/jupiter/params/ParameterizedTestExtension.java) consumes argument streams through `flatMap`, which closes them.

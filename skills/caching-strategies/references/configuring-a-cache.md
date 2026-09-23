@@ -82,6 +82,50 @@ parameters and returns a future. `buildAsync` also accepts a one-argument `Cache
 a value, which Caffeine executes asynchronously. Choose the overload by loader contract;
 do not accidentally create a cache whose values are themselves futures.
 
+## Bound origin work separately
+
+Separate served requests, hit/miss lookups and actual load attempts. Same-key misses can share
+one load; a hit can trigger refresh; scheduled warming can load without a request. Count first
+attempts by trigger and retries separately, without counting one refresh twice. The shortcut
+`origin rate = request rate × miss ratio` applies only when each miss causes one load and no
+other origin work occurs. Background loads can affect foreground latency through shared capacity.
+
+`maximumSize`/`maximumWeight` bound retained cache entries, not admitted loader operations or
+their buffers. Test many distinct cold keys against a blocked origin, not only many callers
+of one key. Bound concurrent source calls and queued work with an explicit rejection/stale-serve
+policy; a fixed-size executor with an unbounded queue merely moves the overload. Cache size,
+singleflight and TTL are not substitutes for this admission policy.
+
+Apply the bound where the origin work actually executes. An async loader can ignore Caffeine's
+executor and submit to another client/executor. A future timeout need not stop the underlying
+request; count work until it actually ends, or abandoned calls can escape the intended limit.
+Exercise refresh rejection, timeout and recovery as well as ordinary misses. Sharing a cache's
+executor with maintenance requires checking the selected executor/rejection behavior too.
+
+## Authorize cache hits
+
+Derive tenant/principal context from authenticated state; a caller-supplied tenant key is not
+proof of access. Keep the authorization check on a path that executes even when the value is
+already cached. A per-principal key prevents cross-principal reuse but does not revoke a cached
+allow decision when that same principal loses a role or resource access.
+
+For Spring, `@Cacheable` can skip the annotated method body. Inspect the actual proxy/advice
+chain and test both hit and miss paths instead of relying on annotation placement alone.
+Separate reusable data caching from permission evaluation when useful. If permission decisions
+are themselves cached, define their revocation/version/expiry contract explicitly; a long data
+TTL must not silently become the access-revocation delay.
+
+Use hostile checks: fill as an authorized caller, revoke access without changing the data key,
+then repeat the call; repeat under another tenant and with forged tenant input. The result must
+follow the declared authorization contract on hits and misses, without exposing cached data.
+These checks target cache integration; they do not establish a complete authorization policy.
+
+Contracts checked 2026-09-19 against the [Caffeine refresh documentation](https://github.com/ben-manes/caffeine/wiki/Refresh),
+[3.2.2 builder](https://raw.githubusercontent.com/ben-manes/caffeine/v3.2.2/caffeine/src/main/java/com/github/benmanes/caffeine/cache/Caffeine.java)
+and [Spring caching documentation](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html).
+The admission and authorization checks are design consequences, not evidence of a target
+application's actual executor, advice order or permission behavior.
+
 ## Redis
 
 ```java
@@ -130,4 +174,6 @@ version-checked cache reads.
 - [ ] `recordStats()` enabled
 - [ ] Invalidation strategy defined **and** tested where the freshness contract requires it
 - [ ] Cache key includes every tenant/authorization/locale dimension affecting the value
+- [ ] Authorization/revocation works on warm hits, including hostile tenant input
+- [ ] Distinct-key misses, refresh and warm-up share a measured origin admission budget
 - [ ] Cache-outage, loader-timeout, stale-fill race and cold-start behavior tested

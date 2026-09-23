@@ -112,8 +112,13 @@ context; absence of context alone does not authorize unmanaged executors.
 
 ## Helidon 4
 
-Virtual-thread-native: the server assigns a virtual thread per request with no flag. Verify the Helidon version and component being discussed; this server choice does not
-establish what auxiliary tasks or client callbacks use.
+The WebServer uses virtual threads without an enablement flag, but their lifetime need not
+match one request. For example, Helidon 4.0.0's HTTP/1.1 connection loop handles successive
+keep-alive requests on the same thread. Verify the deployed version, protocol and component
+before interpreting thread counts or treating thread lifetime as request scope. Restore or
+remove request-scoped `ThreadLocal` state at the request boundary; a virtual thread does not
+guarantee cleanup between requests. This server choice does not establish what auxiliary
+tasks or client callbacks use.
 
 ## Verifying what actually ran
 
@@ -201,3 +206,4 @@ Apply the relevant checks to the affected paths, reusing adequate existing evide
 - [Quarkus REST execution model](https://quarkus.io/guides/rest#execution-model-blocking-non-blocking) and [virtual-thread endpoints](https://quarkus.io/guides/rest-virtual-threads) — resolve these against the deployed Quarkus version.
 - [Jakarta Concurrency 3.1 ManagedExecutorDefinition](https://jakarta.ee/specifications/concurrency/3.1/apidocs/jakarta.concurrency/jakarta/enterprise/concurrent/managedexecutordefinition) — virtual request, inline tasks and Java 17 fallback.
 - [Helidon 4 WebServer](https://helidon.io/docs/v4/se/webserver) and [JDK 25 jcmd](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html) — component and tool scope.
+- [Helidon 4.0.0 ServerListener](https://raw.githubusercontent.com/helidon-io/helidon/4.0.0/webserver/webserver/src/main/java/io/helidon/webserver/ServerListener.java) and [Http1Connection](https://raw.githubusercontent.com/helidon-io/helidon/4.0.0/webserver/webserver/src/main/java/io/helidon/webserver/http1/Http1Connection.java) — virtual connection tasks and the HTTP/1.1 request loop; thread lifetime is not a request-context cleanup contract.

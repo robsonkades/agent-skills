@@ -1,8 +1,9 @@
 # Segments, sizing and rebalancing
 
-Every number here was read off Temurin 25.0.3 (`-XX:+PrintFlagsFinal`, `-Xlog:codecache`)
-or off `codeCache.cpp` / `compilerDefinitions.cpp` at the `jdk-25-ga` tag. Confirm against
-the runtime you are reasoning about before it becomes a production decision.
+Measured sizes below are from Windows x64 Temurin 25.0.3+9 (`-XX:+PrintFlagsFinal`,
+`-Xlog:codecache`); the default sizing example uses `CICompilerCount=12`. Startup arithmetic
+is checked against `jdk-25.0.3+9`, whose alignment logic differs from `jdk-25-ga`. Architecture,
+page size and compiler count matter; confirm against the target runtime before a sizing change.
 
 ## The JDK 17-25 CodeHeaps
 
@@ -30,7 +31,7 @@ default is not a constant.
 | `SegmentedCodeCache`      | `true` (ergonomic)                         | Enabled only when `ReservedCodeCacheSize >= 240*M` and tiered compilation is on. `239m` → `false`; `240m` → `true`                                                                      |
 | `NonNMethodCodeHeapSize`  | `7,667,712` with `CICompilerCount=12`      | 5 MB + `c1_count × Compiler::code_buffer_size() + c2_count × C2Compiler::initial_code_buffer_size()`. With `CICompilerCount=2` it is `5,832,704`                                        |
 | `ProfiledCodeHeapSize`    | `122,028,032`                              | `(cache_size - non_nmethod) / 2`                                                                                                                                                        |
-| `NonProfiledCodeHeapSize` | `122,028,032` (`121,962,496` with `=240m`) | Same, plus whatever the other two lose to `align_down`                                                                                                                                  |
+| `NonProfiledCodeHeapSize` | `122,028,032` (`121,962,496` with `=240m`) | Equal initial remainder share; alignment and the explicit total cap can reduce unset nmethod heaps                                                                                      |
 | `InitialCodeCacheSize`    | `2,555,904`                                | Floor for `ReservedCodeCacheSize`: `Invalid ReservedCodeCacheSize: 1024K. Must be at least InitialCodeCacheSize=2496K.`                                                                 |
 | `CodeCacheExpansionSize`  | 64 KB                                      | The step in which each heap commits memory as `used` grows                                                                                                                              |
 | Upper bound               | 2048 MB                                    | `Invalid ReservedCodeCacheSize=3000M. Must be at most 2048M.` — compiled code reaches other code with 32-bit relative branches                                                          |
@@ -84,13 +85,24 @@ and the JFR `jdk.CodeCacheFull` event name. The design consequences:
   fallback/expansion path. Free space need not be near zero: fragmented blocks or inability
   to commit additional memory can also prevent allocation. Correlate requested size,
   largest usable block, heap commitment and JVM/OS errors before calling it total exhaustion.
-- `-XX:+PrintCodeCacheExtension` prints `Extension of CodeHeap '…' failed. Trying to allocate
-in CodeHeap '…'.` on every spill — a lab-only flag, but the direct proof.
+- On a **debug build**, `-XX:+PrintCodeCacheExtension` prints `Extension of CodeHeap '…'
+failed. Trying to allocate in CodeHeap '…'.` when trying another heap. It is a `develop`
+  flag: a product JVM rejects it, including with diagnostic unlocks. The message proves
+  a fallback attempt, not that the destination allocation succeeded. On a product JVM,
+  correlate per-heap composition and tier history; retain spill as a hypothesis if those
+  observations cannot distinguish it from normal growth.
 
 ## Sizing arithmetic: what the JVM does with a partial configuration
 
 `initialize_heaps` distinguishes flags set **on the command line** (`FLAG_IS_CMDLINE`) from
 defaults, and the outcome depends on which combination was given. Verified on 25.0.3:
+
+On 25.0.3+9, enabled heap sizes are rounded **up** to the required alignment. An implicit
+reserved total can grow to their aligned sum. With an explicit total, HotSpot first tries
+to shrink unset nmethod heaps in alignment-sized steps, respecting their minima; it does
+not shrink the non-nmethod heap in this adjustment. Remaining mismatch is rejected.
+Thus raw flag values summing exactly is insufficient when they are not suitably aligned.
+The JDK 25 GA `align_down` explanation does not describe this update's algorithm.
 
 | Given on the command line                                                  | Outcome                                                                                                                                                                                                                 |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -136,11 +148,11 @@ climbing faster than its own tier mix explains".
 | Both approach their ceilings, or code-cache-triggered collections consume material SLO budget      | Increase total only after confirming compilation/class-generation demand is expected; preserve the measured split initially                                                                                 |
 | `non-nmethods` grows toward exhaustion                                                             | Inspect blob composition and compiler concurrency; raise it only when expected peak plus margin cannot fit. Its ergonomic value includes compiler buffers but workload-generated stubs/adapters also matter |
 
-The default action is to leave the three segment flags alone and move only
-`ReservedCodeCacheSize`. Because the two large heaps split the remainder evenly, doubling the
-total doubles both ceilings — which is why that fix works when the pressured segment is one of
-them, and wastes half its effect when the asymmetry runs the other way. Manual rebalancing is
-a second-line tool for persistent asymmetry; doing it before measuring is cargo cult tuning.
+When total nmethod capacity is the demonstrated constraint, first consider leaving the
+segment flags alone and changing `ReservedCodeCacheSize`. The two large heaps share the
+remainder after `non-nmethods`, so an increase benefits both; it does not target one heap
+or proportionally enlarge `non-nmethods`. Manual rebalancing is a second-line tool for
+persistent asymmetry. Keep the current sizes when the evidence does not support a change.
 
 Increasing `ReservedCodeCacheSize` immediately increases reserved virtual address space, not
 necessarily committed or resident memory. Heaps commit as they expand, so a larger ceiling can
@@ -184,6 +196,8 @@ survive with new meanings, listed there.
 ## Authoritative sources
 
 - [JEP 197: Segmented Code Cache](https://openjdk.org/jeps/197)
-- [JDK 25 HotSpot `codeCache.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeCache.cpp)
+- [JDK 25.0.3+9 HotSpot `codeCache.cpp`: alignment and fallback](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp)
+- [JDK 17.0.15+6 HotSpot `codeCache.cpp`: existing fallback](https://github.com/openjdk/jdk17u/blob/jdk-17.0.15%2B6/src/hotspot/share/code/codeCache.cpp)
+- [JDK 25.0.3+9 `globals.hpp`: debug-only extension logging](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/globals.hpp)
 - [JDK 25 HotSpot `compilerDefinitions.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compilerDefinitions.cpp)
 - [JDK 25 `java` launcher documentation](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)

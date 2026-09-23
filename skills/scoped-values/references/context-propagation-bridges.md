@@ -138,10 +138,27 @@ ExecutorService contextual(ExecutorService delegate) {
    execution models; final ScopedValue does not make StructuredTaskScope non-preview.
 
 Option 2 is partial: DelegatingExecutorService is application code, not a JDK class. Audit
-all execution methods, lifecycle ownership and capture points. The sketch rejects an unbound
-submitter; if absence is legitimate, branch on isBound and run without rebinding. Do not
-erase that distinction by binding null: `where(KEY, null)` is legal, while `orElse(null)`
-throws `NullPointerException` in Java 25.
+all execution methods, lifecycle ownership and capture points. The sketch deliberately rejects
+an unbound submitter. If absence is legitimate, define what the task must observe:
+
+- Running without rebinding is valid only when the execution boundary guarantees this key is
+  unbound. A task captured without a tenant and later invoked inside tenant B's dynamic scope
+  otherwise reads B. Capture-time `isBound()` does not clear execution-time context.
+- If true unbound semantics must be preserved, keep that unbound execution guarantee or reject
+  the submission; the API has no operation to temporarily unbind an already-bound key.
+- Alternatively, make absence explicit in the context model, such as
+  `ScopedValue<Optional<Tenant>>`, and bind the captured `Optional.empty()` around the task.
+  This masks an outer value but is a deliberate reader-contract change: `isBound()` is true
+  and readers inspect the optional. Do not silently substitute it for an API requiring an
+  unbound key.
+
+Binding null is also a binding, not absence: `where(KEY, null)` is legal, while `orElse(null)`
+throws `NullPointerException` in Java 25. Verify normal and exceptional restoration under an
+existing outer binding, plus the hostile case of absent capture followed by execution under
+another tenant. The [Java 25 ScopedValue contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html)
+defines reads by the current thread's dynamic scope; an
+[Executor](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html)
+does not promise that execution starts in an empty context.
 
 ## What still needs an explicit capture
 
@@ -160,5 +177,6 @@ throws `NullPointerException` in Java 25.
 - [ ] MDC projections restore previous values and preserve unrelated keys
 - [ ] Security context set inside subtasks rather than switched to inheritable mode
 - [ ] Executor-crossing work either wraps context explicitly or is moved into a scope
-- [ ] No `where(KEY, null)` reachable from an unbound path
+- [ ] Absent capture cannot expose another task's context; null/optional bindings are not
+      mistaken for an unbound key
 - [ ] Cross-process context travels as a header or message property, not as a scoped value

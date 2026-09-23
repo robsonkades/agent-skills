@@ -44,6 +44,13 @@ all data migrated. State what makes rollback unsafe after new writes or destruct
 - unknown-outcome recovery and whether repeated requests reuse an operation identity;
 - sandbox/certification evidence, version lifecycle and support escalation.
 
+Link the supplier's applicable published revision or agreement and define local integration
+obligations alongside it. Separate documented guarantees from assumptions and observed behavior:
+a passing sandbox test does not establish a production guarantee absent from those sources.
+When required semantics are missing, record the gap and dependent work; resolve it through the
+established decision/support policy rather than rewriting the provider contract. Reuse existing
+agreements and authority without requiring fresh supplier approval for already supported behavior.
+
 ## Security
 
 - principal identity and trust boundary;

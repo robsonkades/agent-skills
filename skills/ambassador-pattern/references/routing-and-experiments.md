@@ -10,7 +10,9 @@ GET /v1/accounts/AC-91823/balance          # key in the path
 X-Shard-Key: AC-91823                      # or in a header, when the path is opaque
 ```
 
-The ambassador extracts the key, applies the shard function, and forwards to the owner. Two
+The ambassador extracts the key, evaluates the datastore's agreed placement contract, and
+forwards to an eligible owner. It needs agreed key encoding, an authoritative map version and
+datastore ownership rules; a generic hash of proxy endpoints is not automatically that contract. Two
 mechanical rules follow:
 
 - **Prefer a key in visible request metadata** — path or trusted header. Body extraction
@@ -27,6 +29,25 @@ Multi-key requests require an explicit contract. The app can still form a logica
 an ordinary proxy cannot necessarily partition it by shard. A protocol-aware proxy or upstream
 coordinator may do that; otherwise the app must split it or the API must reject cross-shard
 batches. Name who owns partial failure and atomicity rather than assuming scatter/gather support.
+
+### Failover preserves shard ownership
+
+Separate **key → logical shard** from **shard → eligible serving endpoint**. Ring-hash host
+selection can move a key when hosts change; it does not copy its data or transfer ownership.
+Health checks, outlier ejection, retries and priority failover must not redirect stateful
+requests to another shard merely because it is healthy. Balance only among replicas authorized
+for the operation: a readable follower is not necessarily an eligible writer.
+
+For example, if A owns account K and unrelated shard B remains healthy after A fails, routing
+K to B is not recovery. Use the datastore's authorized replica/forwarding protocol, or return
+a bounded unavailable result. Stateless frontends that can all reach K are a different case;
+do not infer state ownership from a service name or deployment topology.
+
+Record the source and version of the ownership map, plus behavior when it is absent or stale.
+A last-known map is usable only while its ownership remains valid or the datastore safely
+rejects/forwards stale-owner requests. Test owner loss, ejection, fallback and retry with disjoint shard fixtures;
+assert that no request is served by an unauthorized shard, including when only that shard is
+healthy. Keep placement/migration protocol design in `sharding-and-partitioning`.
 
 ### The resharding window
 
@@ -125,3 +146,8 @@ demonstrates asynchronous duplication and ignored responses. These are moving de
 docs, not proof of support in an unspecified proxy release. Verify the deployed version.
 The ordering counterexample, mixed-map checks and isolation requirements above are engineering
 reasoning and validation criteria, not claims that a particular migration has been tested.
+
+Rechecked 2026-09-19: the load-balancer source describes host-set remapping, and
+[Envoy priority levels](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/priority)
+describes health-driven movement between priority levels. The ownership constraint follows
+from the stated disjoint-shard contract; neither mechanism transfers datastore ownership.

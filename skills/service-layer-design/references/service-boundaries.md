@@ -195,6 +195,21 @@ outcome certainty or cause. Keep infrastructure/protocol types out of the indepe
 contract. At the application boundary, decide whether a framework type is accepted coupling
 or needs adaptation for the actual callers (`layering-and-boundaries`).
 
+Preserve rollback behavior when changing failure types. Under default Spring 6.2 rules,
+`RuntimeException` and `Error` trigger rollback, while checked exceptions do not. Wrapping
+an unchecked failure in a checked application exception can change the transaction outcome
+even when its cause is retained. Inspect method-specific and global rollback rules instead
+of assuming the defaults; verify persisted state after a failure following the first write
+(`enterprise-transactions`).
+
+Check failures deferred until flush/commit as well as failures thrown by the adapter call.
+When the standard imperative Spring proxy owns the transaction, commit occurs after the
+target method returns: a `try/catch` inside that method cannot translate a later commit
+exception. If the public API promises translated completion failures, put that mapping at
+a boundary that observes transaction completion, such as around the proxy invocation.
+Joining a caller-owned transaction defers completion to that caller; successful service
+return alone does not establish that its writes committed.
+
 ## Read paths
 
 Read use cases can need authorization, snapshot consistency, orchestration or stable APIs.
@@ -211,5 +226,6 @@ do not return lazy resources whose owning context has already closed.
 - [Java SE 10 language specification, enhanced for](https://docs.oracle.com/javase/specs/jls/se10/html/jls-14.html#jls-14.14.2) — `var` in the illustrative loop; framework compatibility is a separate constraint.
 - [Spring Framework 6.2.12 transaction-bound listener contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalEventListener.java) — phases, fallback and transaction-context requirements.
 - [Spring Framework 6.2.12 event publisher contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java) — publication is a handoff, not a durability promise.
-- [Spring Framework 6.2.12 transactional annotations](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc) — proxy interception and configuration; verify the actual target version.
+- [Spring Framework 6.2.12 transactional annotations](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc) — proxy interception, rollback defaults and configured overrides; verify the actual target version.
+- [Spring Framework 6.2.12 transaction interceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java) — standard imperative invocation commits after the target returns; distinguish target exceptions from completion failures.
 - [MySQL 8.4: minimizing and handling deadlocks](https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html) — an engine-specific example of hidden index locks and recovery despite ordering precautions, not a substitute for the target engine's contract.

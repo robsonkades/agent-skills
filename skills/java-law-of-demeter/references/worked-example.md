@@ -102,8 +102,14 @@ The narrowed sending code no longer navigates `Order`, `Customer` or `ContactDet
 a retained compatibility entry point still depends on `Order`. Restructuring `ContactDetails`
 now touches the assembly point instead of every consumer. **Trade-off:** the parameter list grew from one to four; if it keeps
 growing, group them into an immutable purpose-specific `ReceiptData` snapshot and defensively
-copy lines. Four scalars read at different times from mutable/ORM state can be less correct than
-one container, so narrowing must preserve observation consistency.
+copy lines. If `OrderLine` is mutable, copying the list still shares the line objects: project
+the required line values into immutable receipt values under the same capture protocol. Already
+immutable elements may be shared. A [record is only shallowly immutable](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html),
+and [List.copyOf](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#unmodifiable)
+does not freeze its elements and rejects null elements; preserve the existing null contract
+when choosing the copy strategy. Neither mechanism makes several reads atomic. Four values read
+at different times from mutable/ORM state can be less correct than one container, so narrowing
+must preserve observation consistency.
 
 ## Chain 3 — correctly left alone
 
@@ -136,6 +142,10 @@ behalf of the API contract. Leave it.
 - In a temporary branch/fixture, change the published shape used by the assembly point
   (renaming only a private field proves little). Keep `ReceiptSender.send`'s contract stable;
   its code and tests should remain unchanged. Identify expected mapper/assembly edits explicitly.
+- For a receipt snapshot, mutate the original list and a mutable line after capture; receipt
+  values should remain unchanged. Check the established null contract too. This checks isolation
+  after capture, not whether concurrent reads during capture formed one consistent observation;
+  verify the owner's capture protocol separately.
 - Tests: `Membership.discountRate()` covered directly, including the GOLD-under-threshold
   and exact-threshold cases, SILVER, NONE and null tier. Retain service tests proving both
   callers obtain the owned rate; a unit test of the moved method does not prove caller wiring.

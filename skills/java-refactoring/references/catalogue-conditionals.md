@@ -53,8 +53,11 @@ if (!customer.getProfile().isVerified() || customer == null) return DENIED;
 ```
 
 **Cost:** multiple exit points. Fine in a short method, a liability in a sixty-line one —
-split the method first (java-clean-code owns that call). A guard inside a loop is
-`continue`, not `return`; conflating the two is the second common break.
+split the method first (java-clean-code owns that call). Inside a loop, preserve the original
+control-transfer target: `continue` skips the rest of the selected iteration, `break` exits
+its target loop, switch or labeled statement, and `return` exits the method. Keep labels and cleanup; a
+guard that aborts the whole batch must not become a per-item skip. See
+[JLS 25 control transfers](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.15).
 
 ## Consolidate Conditional Expression
 

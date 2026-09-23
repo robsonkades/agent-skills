@@ -59,10 +59,11 @@ threshold ("instability must stay under 0.8") should be rejected in review.
 - **Small codebases and single teams.** A full metric program may not repay its cost, but package
   cycles and boundary leaks can still matter for tests, native images or future extraction. Use
   the lightest graph that answers the decision.
-- **Code that does not change.** Restructuring a stable module trades real risk
-  (every move can break reflective access, serialised names, framework scanning,
-  build scripts) for a benefit that only materialises at the next change — which
-  may never come.
+- **Stable code with only speculative maintenance benefit.** Package moves can break
+  reflective access, serialised names, framework scanning or build scripts. When the only
+  benefit is cheaper future edits, low change frequency can make migration unjustified.
+  Existing failure costs or an explicit preventive boundary policy can still justify a
+  focused correction; state that objective and weigh the migration risk separately.
 - **Prototypes and spikes.** Structure is speculation until the requirements
   stop moving; the cheapest structure to change is the one you have not built.
 - **Mid-migration.** Transitional edges distort trend comparisons, but measuring during the

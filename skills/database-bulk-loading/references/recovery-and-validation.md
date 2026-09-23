@@ -68,10 +68,11 @@ At minimum reconcile:
 
 - source, accepted, rejected, warning, duplicate, inserted, updated, and unchanged counts;
 - null/type/range/domain constraints and representative samples or checksums;
-- generated keys and source-to-target identity;
+- generated keys, sequence/identity state for subsequent application writes, and source-to-target identity;
 - statistics freshness and representative executed plans;
 - replica/CDC convergence and lag recovery;
-- final configuration, triggers, constraints, indexes, and durability settings.
+- final configuration, triggers, constraints, indexes, and durability settings, including validation
+  of previously unchecked rows and constraint trust where the engine tracks it.
 
 Define mutually exclusive row dispositions (for example inserted/updated/unchanged/rejected)
 and count warnings separately: one row may produce multiple warnings and still be accepted.

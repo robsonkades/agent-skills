@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-facade
-version: 1.2.2
+version: 1.2.3
 description: >-
   Facade in modern Java: one coherent entry point over a subsystem of collaborators, so callers
   depend on an intention rather than on a sequence. Covers the difference between a facade

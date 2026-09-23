@@ -190,8 +190,8 @@ fi
 grep -i zgc "$thread_dir/threads.txt"                         # no match is not zero CPU
 jcmd "$pid" Thread.dump_to_file -format=json "$thread_dir/threads.json"
 
-top -H -p <pid>            # per-thread CPU
-pidstat -t -p <pid> 1      # Linux native TID; compare converted hexadecimal nid, not tid
+top -H -p "$pid"           # per-thread CPU
+pidstat -t -p "$pid" 1     # Linux native TID; compare converted hexadecimal nid, not tid
 ```
 
 Thread.print's `tid` is not the Linux native TID; native `nid` is commonly hexadecimal.

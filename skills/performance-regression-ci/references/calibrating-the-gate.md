@@ -156,6 +156,44 @@ Use pilot data to simulate the intended gate:
 Ten runs is neither required nor sufficient. A low-variance benchmark may need fewer; a
 heterogeneous or small-effect decision may need many more or a different environment.
 
+### Quantify uncertainty in the calibration itself
+
+An observed false-block fraction or detection fraction is an estimate. Report its numerator,
+denominator, trial population and uncertainty method before claiming it meets an error/power
+budget. This is uncertainty about the gate's operating characteristics, separate from the
+effect interval used for one baseline/candidate decision. Specify the confidence level or
+other assurance criterion for each claim.
+
+For an illustrative fixed rule with zero false blocks in `N` predeclared independent no-change
+gate trials, a binomial model with constant false-block probability gives the exact one-sided
+upper confidence bound:
+
+```text
+upper = 1 - alpha^(1/N)       # confidence level = 1 - alpha; N > 0
+N = 20,  alpha = 0.05        # upper is about 13.91%
+N = 300, alpha = 0.05        # upper is about 0.994%
+```
+
+Thus 0/20 does not support a 1% false-block ceiling at that confidence; 0/300 supports that
+particular bound under the stated assumptions, but says nothing by itself about detection
+power. These are conditional calculations, not a universal repetition count. `N` counts
+independent executions of the complete decision policy, not JMH iterations, forks inside one
+decision, or repeated decisions sharing correlated evidence. For clustered or changing
+conditions, retain the grouping and use an appropriate model instead of this binomial shortcut.
+An inadequate upper bound means the claimed capability is unestablished; it does not prove the
+true false-block rate is above the budget.
+
+Simulation/bootstrap repetition count controls Monte Carlo precision conditional on the
+chosen model/data. It does not create more independent measured environments or eliminate
+uncertainty in the pilot data. Retain that distinction when reporting simulated rates.
+
+Choosing thresholds, outlier rules or repetition counts on a pilot can favor sampling noise.
+Freeze the selected design and assess it on fresh independent confirmation trials, or use an
+assessment that explicitly accounts for the selection procedure. Do not label the same pilot's
+winning result independent confirmation. With only development data, report that limitation
+and keep the blocking-capability claim conditional. Reuse existing adequate confirmation for
+an unchanged rule; this does not require a new campaign for a narrow unrelated review.
+
 ## Multiplicity
 
 Define the family before looking at results. Options include Holm-style family-wise control
@@ -207,7 +245,8 @@ needed for claims about injected mechanisms and end-to-end operation.
 - [ ] MPIR and any required absolute guardrail trace to a product or operating consequence.
 - [ ] Independent unit, blocks, ordering, and carry-over controls are explicit.
 - [ ] Null and injected-effect trials exercise the same pipeline used for decisions.
-- [ ] False-block rate, power, inconclusive rate, and cost meet declared bounds.
+- [ ] Trial counts, uncertainty and selection/confirmation evidence support claimed false-block,
+      power, inconclusive-rate and cost bounds.
 - [ ] Multiplicity and sequential/retry behavior are included in calibration.
 - [ ] History retains failures and epoch markers, not only successful summaries.
 - [ ] Calibration is repeated after an incompatible environment or methodology change.
@@ -218,3 +257,6 @@ needed for claims about injected mechanisms and end-to-end operation.
 - [JMH 1.37 `Result` implementation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/results/Result.java) — reviewed source baseline; inspect the target version for result semantics.
 - [NIST/SEMATECH e-Handbook: process/product comparison](https://www.itl.nist.gov/div898/handbook/prc/prc.htm) — experimental comparison and uncertainty methods.
 - [NIST/SEMATECH e-Handbook: process monitoring](https://www.itl.nist.gov/div898/handbook/pmc/pmc.htm) — control-chart assumptions and process change detection.
+- [NIST: confidence intervals for proportions](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm) — uncertainty in estimated rates and exact binomial bounds.
+- [NIST: binomial distribution](https://www.itl.nist.gov/div898/handbook/eda/section3/eda366i.htm) — the fixed-probability model behind the zero-event calculation.
+- [Cawley and Talbot: selection bias in performance evaluation](https://jmlr.org/papers/v11/cawley10a.html) — selection on a noisy estimated criterion; the separation of tuning and confirmation is applied here to gate calibration.

@@ -39,7 +39,7 @@ Do not interpret width until these are known:
 
 ```text
 event/source and producer version:
-selection mechanism and eligible thread/process/task population:
+selection mechanism, sampling interval/probability, eligible thread/process/task population:
 one observation's weight and unit:
 recording interval, load/work completed, warm-up/lifecycle phase:
 thread/state/context filters and aggregation:
@@ -76,8 +76,8 @@ For conventional root-oriented flame graphs:
   that parent path;
 - the portion with no displayed child approximates leaf/self attribution under the captured
   stack semantics;
-- sibling widths partition their displayed parent's retained weight, subject to filtering,
-  truncation, aggregation, and rendering thresholds;
+- in a complete call tree, a parent's inclusive weight equals its self weight plus the
+  inclusive weights of its immediate children; hidden children can make apparent self too large;
 - horizontal position groups stacks for readability and is not time. Ordering is tool- and
   input-dependent, not a universal alphabetical contract.
 
@@ -188,12 +188,15 @@ fixture rather than assuming `-r` means the same thing everywhere.
 A differential graph localizes change; it does not establish statistical significance or
 causality. Before diffing, require compatible:
 
-- source/event/weight/unit and profiler/converter semantics;
+- source/event/weight/unit, sampling interval/probability, and profiler/converter semantics;
 - eligible population, filters, stack depth, symbols, and context;
 - workload mix, work completed, concurrency, errors, and lifecycle/warm-up;
 - platform/JDK/configuration epoch.
 
-Choose normalization from the question:
+First reconcile measurement weights: equal work does not make raw counts comparable when
+sampling rates differ. Use the source's justified event weights; do not multiply an already
+weighted total by the interval again. Unknown selection or loss can prevent correction
+(`references/reading-and-comparing.md`). Then choose normalization from the question:
 
 - equal exposure/fixed work: compare absolute weights;
 - unequal duration but stable rate: normalize by duration;

@@ -17,9 +17,14 @@ view or scatter-gather. In the scatter case:
 - **Pagination and ordering need a distributed plan.** Fetching up to 20 from each shard and
   merging is one correct top-20 plan with a common total order, not an unavoidable N×20 transfer:
   lazy merging/indexes can reduce it. A naive offset plan may request offset+limit from every
-  shard; pruning and richer plans can reduce that work. Keyset pagination on a
-  globally ordered column avoids deep offset scanning, but still needs stable tie-breakers,
-  snapshot/cursor semantics and per-shard continuation state.
+  shard; pruning and richer plans can reduce that work. Keyset pagination avoids deep offset
+  scanning but needs a total order with stable tie-breakers and declared snapshot/cursor semantics.
+  When every shard can seek after the same last-emitted ordering tuple, that global tuple can
+  drive the next page; per-shard cursors are an alternative required by some provider APIs or
+  merge plans, not a universal requirement. Match comparison direction, collation and null
+  handling across shards and the merger. A cursor must resume after emitted rows: advancing
+  to the last prefetched row loses fetched-but-unreturned rows unless they are retained in
+  continuation state. A cursor alone does not provide a stable snapshot under concurrent changes.
 - **Aggregates are only partly decomposable.** For disjoint contributions and a defined read
   snapshot, counts/sums combine by sum and extrema by min/max, preserving null, overflow and numeric
   precision semantics. `AVG(column)` needs sum and the count of non-null column values, not row count.
@@ -152,6 +157,8 @@ example does not authorize running them or establish a live migration's correctn
 
 ## Primary references
 
+- [PostgreSQL 18 LIMIT and OFFSET](https://www.postgresql.org/docs/18/queries-limit.html) — unique ordering for stable limited results; offset work.
+- [PostgreSQL 18 row comparisons](https://www.postgresql.org/docs/18/functions-comparisons.html#ROW-WISE-COMPARISON) — tuple comparison and null semantics underlying resume predicates; a distributed merge still needs matching ordering and read semantics.
 - [Kleppmann, Beresford and Svingen, Online Event Processing (2019)](https://martin.kleppmann.com/2019/05/01/olep-cacm.html) — background on event-log coordination, not a validation of this migration sequence.
 - [Debezium 3.3 PostgreSQL connector](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html)
 - [PostgreSQL 18 logical decoding concepts](https://www.postgresql.org/docs/18/logicaldecoding-explanation.html)

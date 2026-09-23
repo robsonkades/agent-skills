@@ -101,8 +101,8 @@ An abstraction's only stated purpose is hypothetical portability
           do not assume future use or non-use (architecture-decision-making).
 
 The codebase is unfamiliar but consistent, and change is cheap
-        → not a finding. Consistency has value; personal preference does
-          not.
+        → unfamiliarity alone is not a finding. Still investigate independently
+          evidenced correctness, security, availability or operating harm.
 ```
 
 ## Rules
@@ -149,7 +149,7 @@ Illustrative finding; replace these names and counts with inspected evidence:
 > The next rule change carries the same risk.
 > **Evidence:** `git log` shows 47 commits in 6 months from 5 teams; 9 touch pricing, and 6
 > of those touch exactly two of the three sites.
-> **First edit:** extract `Pricing` as a domain type with the discount chain, and have all
+> **First edit:** extract one shared `Pricing` policy with the discount chain, and have all
 > three call it. Do not move anything else.
 > **Validation:** preserve pricing outcomes at all three entry points, including rounding
 > and rejected inputs; verify that one representative rule change updates one policy site.

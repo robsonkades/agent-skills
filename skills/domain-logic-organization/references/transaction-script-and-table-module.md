@@ -71,20 +71,24 @@ count does not establish the need to convert.
 
 ### What it is genuinely good at
 
-Reporting-shaped operations, imports, integrations, admin operations, and anything where
-the interesting complexity is in the SQL rather than in the rules. Also: any module whose
-rules you do not yet understand. A script is the cheapest thing to write and the cheapest
-thing to replace once the shape reveals itself.
+Reporting-shaped operations, imports, integrations and admin operations are candidates when
+the complexity is mostly data access and the rules do not need a stateful owner. For a small
+new module with incomplete rule evidence, a script can be a provisional starting point.
+Keep rules testable and external contracts narrow; later conversion costs depend on how
+callers, persistence and transactions have become coupled to the procedure.
 
 ## Table Module
 
-One class per table, holding the behaviour for **all** rows of that table, operating over a
-record set rather than over one instance. Written for platforms with a first-class record
-set (ADO.NET, and the tooling that grew around it), the pattern is often declared
-irrelevant to Java. Its idea is not.
+One class per table or view, holding the business behaviour for its rows rather than
+creating a domain object with identity for each row. A record set is a natural data carrier;
+the pattern does not require every operation to be one SQL statement or forbid per-row
+calculations. Strong record-set tooling makes this organization convenient.
 
-The idea: keep the logic that is inherently set-shaped next to the set, instead of
-simulating sets with loops over objects.
+Distinguish the policy owner from a Table Data Gateway, which supplies database access.
+The following partial sketch is a SQL-oriented adaptation: ContractRateModule owns eligibility
+and indexation rules for contract rates. If callers instead decide those rules and this class
+only executes supplied persistence operations, it is a gateway, even if its SQL updates a
+million rows. Choose the owner from responsibilities, not the method name or row count.
 
 ```java
 @Component
@@ -162,3 +166,4 @@ compare the model's benefits and load costs (`domain-model.md`).
 - [JdbcClient API](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/jdbc/core/simple/JdbcClient.html): API introduced in Spring Framework 6.1.
 - [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.
 - [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.
+- [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html) — table-level database access, which does not by itself assign business-policy ownership.

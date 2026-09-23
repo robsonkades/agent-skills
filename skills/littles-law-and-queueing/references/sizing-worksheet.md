@@ -151,6 +151,22 @@ ThreadPoolExecutor executor = new ThreadPoolExecutor(
 Values are deliberately symbolic. A fixed pool makes concurrency ownership clearer than relying
 on queue-full expansion, but is not universally preferable.
 
+Check dependencies before accepting a pool size. If every worker holds its slot while calling
+`get()`/`join()` on a child queued to the same fixed executor, no worker remains to start the
+children. Low CPU plus a nonempty queue can then mean dependency starvation, even when measured
+CPU demand would fit the machine. Confirm the parent waits, child placement and occupied worker
+slots; low CPU alone does not establish this diagnosis. More queue space cannot break the wait,
+and more workers may only hide one observed fan-out width.
+
+Nonblocking completion composition can release the parent worker while children run. When blocking
+must remain, consider separately budgeted dependency execution and check for cycles across pools
+and held downstream permits. Preserve completion, rejection, cancellation and shutdown semantics;
+`executors-and-task-lifecycle` and `completablefuture-composition` own those implementation details.
+`SynchronousQueue` changes queueing into handoff, worker growth or rejection; a bounded maximum
+still needs a progress argument, while unbounded growth creates a resource-exhaustion risk.
+Validate with all parent slots occupied and children pending, then verify progress and terminal
+outcomes within a bounded test. Capacity averages alone do not prove liveness.
+
 ## 7. Choose overload semantics
 
 | Policy                        | Useful when                                                      | Failure mode to test                                                                            |
@@ -192,6 +208,8 @@ and retain context; mounted runnable work still competes for carriers. See
 ## Sources
 
 - [Oracle JDK 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Oracle JDK 25 `Future.get` waiting contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html#get()>)
+- [Oracle JDK 25 `CompletableFuture` composition](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 - [CallerRunsPolicy shutdown behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html)
 - [Oracle JDK 25 `Executors`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
 - [Oracle JDK 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)

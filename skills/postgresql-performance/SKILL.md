@@ -54,6 +54,8 @@ or blocking rewrites.
    - client: pgjdbc generic/custom transition, rewrite batching, cursor prerequisites, timeouts.
 3. Capture evidence at relation/query/session granularity before changing globals. A cluster average can
    hide one table whose scale-factor threshold or one transaction whose xmin controls the outcome.
+   Check observer transaction/cache behavior, reset intervals, collection settings and monitoring
+   privileges before interpreting flat counters or missing fields.
 4. For a justified intervention, predict the signal that should move, apply the narrowest authorized
    change, and validate with the relevant plan/workload and affected bloat/WAL/memory/lag guardrails.
    Preserve an adequate design; state which target effects remain unmeasured.
@@ -105,6 +107,8 @@ and `database-bulk-loading` when those are the actual decisions.
 - [MVCC, VACUUM, and indexes](references/mvcc-vacuum-indexes.md) — read for bloat, blocked cleanup,
   freeze/wraparound, HOT/fillfactor, visibility map, BRIN, or partial-index behavior.
 - [Plans, memory, WAL, and concurrency](references/plans-memory-wal-concurrency.md) — read for plan
-  evidence, work memory/spills, JIT, checkpoints/WAL, locks, isolation, or instance configuration.
+  evidence, statistics sampling, work memory/spills, JIT, checkpoints/WAL, locks, isolation, or instance
+  configuration.
 - [pgjdbc and PgBouncer](references/pgjdbc-and-pgbouncer.md) — read when plans change after warm-up,
-  fetch/batch does not behave as expected, or pool mode conflicts with session state.
+  fetch/batch does not behave as expected, pool mode conflicts with session state, or timeout recovery
+  depends on whether the server canceled a statement or terminated the session.

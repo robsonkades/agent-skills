@@ -23,7 +23,8 @@ RES-03 Dispatch state column and migration
       Notes         -
 ```
 
-Use fields needed for the feature; a Light item may be one line with identity, scope and validation.
+Use fields needed for the feature; a Light item may be one line with identity, scope, applicable
+acceptance and validation, retaining relevant prerequisites and shared ownership.
 Do not invent impact/decision IDs or populate an unrelated status ledger just to fill the example.
 For shared work, identify ownership and files that require coordination. Two fields do the real work:
 
@@ -55,6 +56,11 @@ establish the affected contract; a resource may span several kinds and need inte
 | Test harness             | The tests that need it can run                                                                   |
 | Documentation            | Matches the shipped behaviour                                                                    |
 
+A test-coverage outcome or shared integration check may itself be a resource when accepted scope
+or a real handoff warrants separate tracking. Name the behavior/criterion it verifies and its
+evidence, rather than treating a count of added tests as acceptance. This does not move ordinary
+resource-local tests into a separate testing phase or create a child feature by itself.
+
 ## Sizing
 
 A resource is about right when it can be implemented and validated without stopping, and when
@@ -82,6 +88,13 @@ Distinguish dependencies from scheduling preferences:
 Record the dependency graph and currently ready resources; give a preferred sequence separately.
 Check every referenced ID exists, reject cycles, and distinguish missing evidence from a real
 dependency. A blocked node need not stall unrelated work; shared-file ownership still matters.
+
+For example, a producer and consumer may be implemented against an agreed contract in parallel,
+while their integration check waits for both implementations. Link that common check and its
+prerequisites to both resources instead of adding reciprocal implementation dependencies. If the
+check is tracked separately, name its owner and link its evidence back to each affected criterion;
+keep affected acceptance open until its required evidence exists. A separate check does not waive
+that obligation or reopen unrelated acceptance already established by sufficient evidence.
 
 ## Revising an existing breakdown
 

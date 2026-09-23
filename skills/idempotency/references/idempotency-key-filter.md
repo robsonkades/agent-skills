@@ -31,6 +31,9 @@ record IdempotencyRecord(
 The primary key is `(scope, key)`. Keep an operation fingerprint to reject key reuse with
 different semantics. `resultReference` may identify the created resource or durable business
 result; persist an exact body only when it is bounded, non-secret and valid to replay.
+For external calls, also retain evidence of unresolved earlier attempts across takeover,
+in the operation state or an attempt history. This schema sketch omits that evidence tracking;
+replacing it with only the latest attempt's outcome loses the operation's uncertainty.
 
 ## Case 1: local mutation in the same database
 
@@ -80,7 +83,9 @@ durable operation state machine:
    ID;
 2. call downstream with that same ID on every retry;
 3. on confirmed success, persist `COMPLETED` and the stable result;
-4. on a definite pre-dispatch rejection, persist `REJECTED` or make the operation retryable;
+4. on a definite pre-dispatch rejection, record this attempt's failure; choose `REJECTED`
+   or `RETRYABLE` only if all earlier attempts are also known not to have applied and cannot
+   subsequently apply. Otherwise retain `UNKNOWN` and recovery;
 5. on timeout, disconnect, cancellation or crash, persist/retain `UNKNOWN` and query or
    reconcile downstream by operation ID;
 6. only retry an unknown call when downstream deduplicates that same operation ID throughout
@@ -92,12 +97,19 @@ try {
     var result = payments.charge(request, record.downstreamOperationId());
     records.completeIfOwner(key, attemptEpoch, stableResult(result));
 } catch (DefinitePreDispatchFailure e) {
-    records.markRetryableIfOwner(key, attemptEpoch, evidence(e));
+    records.recordPreDispatchFailureIfOwner(key, attemptEpoch, evidence(e));
 } catch (TimeoutException | IOException | CancellationException e) {
     records.markUnknownIfOwner(key, attemptEpoch, evidence(e));
     reconciliation.enqueue(key);
 }
 ```
+
+`recordPreDispatchFailureIfOwner` must atomically check the epoch and current durable state,
+record this attempt's evidence, and preserve any earlier uncertainty without overwriting a
+terminal outcome. It may choose `RETRYABLE` or `REJECTED` under step 4 only after that check;
+an in-memory snapshot of the row is insufficient. Include transparent SDK/proxy retries in
+the evidence. A later authentication or rate-limit rejection can occur before the provider's
+idempotency lookup, so that response does not resolve an earlier unknown result.
 
 **Never delete the claim merely because `execute()` threw.** The peer may have applied the
 effect before its acknowledgement was lost. Releasing the row turns ambiguity into a second
@@ -172,6 +184,10 @@ effects committed in that same transaction. Name the guarantee actually provided
   before local completion; verify downstream state after restart;
 - pause the first worker past lease expiry, let a second take over, then release the first;
   assert epoch fencing and one downstream operation ID;
+- time out an external attempt, let a safe same-key retry fail before dispatch, then allow
+  the earlier attempt to complete; assert `UNKNOWN` survives the later rejection and restart,
+  recovery discovers the result, and neither a terminal rejection nor a fresh operation key
+  is inferred from that later failure. Also test a first attempt proven never dispatched;
 - test expiry, DLQ/operator replay beyond expiry, rolling-version fingerprint compatibility,
   dedup-store failover and cleanup competing with live claims;
 - test a status lookup returning absent while an old request is still capable of applying,
@@ -187,6 +203,8 @@ proxy or test dependency that applies the operation and then drops the acknowled
 - [RFC 9110 §9.2.2: Idempotent Methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
 - [IETF HTTPAPI Idempotency-Key header draft](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/) — revision 07 is an expired Internet-Draft, not a published HTTP standard; use the actual API's contract.
 - [Stripe API: idempotent requests](https://docs.stripe.com/api/idempotent_requests)
+- [Stripe advanced error handling](https://docs.stripe.com/error-low-level) — authentication
+  and rate-limit failures can precede idempotency lookup; network errors leave outcomes unknown.
 - [PostgreSQL unique constraints](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
 - [PostgreSQL 17 conflict handling](https://www.postgresql.org/docs/17/sql-insert.html)
 - [PostgreSQL 17 transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html)

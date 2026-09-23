@@ -32,6 +32,17 @@ This Category C skill owns measurement design, probe selection, scoping, correct
 and evidence correlation. `linux-for-jvm`, `tcp-tuning`, `cpu-cache-and-numa`, and
 `io-uring-and-zero-copy` own the underlying OS/hardware mechanisms and remedies.
 
+## Compatibility contract
+
+This is Linux tracing guidance, with HotSpot-specific flags, probes and stack assumptions;
+it does not introduce Java language/API examples or require a Java upgrade. Establish the
+deployed JVM vendor/build, architecture, runtime image and effective flags from target evidence.
+Project toolchains and compiler release settings alone do not identify the running JVM, and a
+new `java` process from `PATH` does not reveal an existing process's configuration. For another
+VM implementation, verify its supported probes and unwind interfaces before reusing HotSpot
+guidance. The partial bpftrace example follows 0.24 documentation; it is not a claim of a
+load-tested kernel/JDK compatibility matrix.
+
 ## Observation contract
 
 Before writing a program, declare:
@@ -100,8 +111,9 @@ Scoping choices:
 - scheduler events describe arbitrary `prev`/`next` tasks, so current-process builtins do not
   identify both event subjects;
 - a snapshot of `/proc/<tgid>/task` misses threads created afterward and risks TID reuse;
-- cgroup identity is often the more durable pod/service scope, but migration/reuse and helper
-  support must be tested;
+- cgroup identity can cover dynamic tasks, but declare exact-cgroup versus subtree membership:
+  matching a pod parent's ID does not include child-container IDs. Verify hierarchy, helper
+  support, migration and recreation; see the interpretation reference for those semantics;
 - process name (`comm == "java"`) is neither unique nor durable;
 - PID namespaces change visible identifiers; record host and container mappings.
 
@@ -152,9 +164,9 @@ migration, duplicate enqueue, exit, TID reuse, and target membership changes—o
 reference tool such as the bpftrace/BCC run-queue tools for the supported kernel.
 
 Cgroup CPU throttling is not necessarily visible as ordinary host run-queue competition.
-Correlate with the target cgroup's `cpu.stat`, CPU pressure, runnable count, CPU affinity, and
-host utilization. A Java `RUNNABLE` thread means eligible/running at JVM state level, not that
-the scheduler currently grants CPU.
+Correlate with the target cgroup's `cpu.stat`, relevant ancestor quota/counter evidence, CPU
+pressure, runnable count, CPU affinity, and host utilization. A Java `RUNNABLE` thread means
+eligible/running at JVM state level, not that the scheduler currently grants CPU.
 
 ### Block I/O
 
@@ -181,6 +193,8 @@ Probe presence is a property of the exact `libjvm` build. Enumerate ELF notes/pr
 deployed binary and generate argument decoding from its provider definition/source. Some
 HotSpot probe families require diagnostic/product flags whose availability and cost are
 JDK-build/version dependent. Listing a dormant probe proves discoverability, not emission.
+For semaphore-based probes, also verify the collector's activation mechanism and affected
+processes; JVM flag state and USDT semaphore activation are separate evidence.
 
 High-frequency method/allocation probes can materially perturb execution. Validate on a
 reproduction or canary and prefer sampling/JFR events where they answer the question.

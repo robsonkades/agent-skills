@@ -62,9 +62,11 @@ planned. Identical field/method lists alone do not establish redundant indirecti
 
 ## Clean / onion
 
-Same rule as hexagonal — dependencies point inward — with prescribed concentric rings
-(entities, use cases, interface adapters, frameworks) and, usually, a use-case class per
-operation.
+Both direct dependencies toward the core, but their ring vocabularies are not identical.
+Clean describes entities, use cases, interface adapters, and frameworks as schematic rings.
+Onion centers the Domain Model, with behavior and inside-owned interfaces around it and
+infrastructure outside. The core's layer count can vary; do not derive a class-per-operation
+rule from either style name.
 
 **Makes explicit:** an application layer of use cases, also possible in hexagonal designs,
 which is useful when transaction and authorisation boundaries need to be visible
@@ -72,13 +74,15 @@ which is useful when transaction and authorisation boundaries need to be visible
 An ordinary application service in classical layering can make those duties explicit too;
 that need alone does not justify adopting concentric rings.
 
-**Costs:** the ring vocabulary and, in most implementations, a request/response object per
-use case, which is a second mapping layer on top of the adapter's.
+**Costs:** port/data contracts and mapping where representations differ. Clean's boundary
+guidance permits simple arguments or data structures; separate request/response classes for
+every use case are an implementation choice. Add mapping when it protects independence or
+a distinct contract, rather than automatically duplicating the adapter's representation.
 
 **Practical guidance:** use consistent names and explicit dependency rules instead of
-assuming a style label establishes them. Adopt the ring discipline only where the
-inversion is doing work; in most systems that is the persistence and integration edges, not
-every ring.
+assuming a style label establishes them. Choose boundaries where isolation does useful work,
+then enforce the inward-dependency rule at each chosen boundary. Additional rings and mappings
+need their own justification.
 
 ## Modular monolith
 
@@ -145,3 +149,6 @@ which is where most of the actual coupling lives.
 
 Primary account: [Cockburn, Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture)
 describes isolation and alternative driving/driven adapters, not a required number of implementations.
+For the Clean/Onion distinction, compare [Martin's Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+(schematic circles and simple data across boundaries) with [Palermo's Onion Architecture](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/)
+(Domain Model at the center and a variable number of core layers).

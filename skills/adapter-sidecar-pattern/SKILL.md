@@ -68,6 +68,6 @@ adjustment and confirming/refuting check. For a design or implementation, also p
 placement rationale, field/semantic mapping, failure policy and compatibility tests. State
 what ran and what remains unverified; do not claim a deployment fix from static analysis.
 
-When evaluating this skill's decisions, use
-[validation-cases.md](references/validation-cases.md). These are behavioral evaluation
-prompts, distinct from tests of an adapter implementation.
+For worked decision boundaries or when evaluating this skill's decisions, use
+[validation-cases.md](references/validation-cases.md). These teaching cases include expected
+behavior; they are known examples, distinct from tests of an adapter implementation.

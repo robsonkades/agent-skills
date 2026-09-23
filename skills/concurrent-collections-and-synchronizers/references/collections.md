@@ -8,8 +8,8 @@ fragments are method bodies in that same setting.
 The substitution table lives in the skill body. What it does not say is the boundary of the
 guarantee.
 
-Atomic in one invocation: `putIfAbsent`, `remove(k, v)`, `replace(k, v)`, `replace(k, old, new)`,
-`compute`, `computeIfAbsent`, `computeIfPresent`, `merge`. Each `compute*`/`merge` javadoc says
+For `ConcurrentHashMap`, atomic in one invocation: `putIfAbsent`, `remove(k, v)`, `replace(k, v)`,
+`replace(k, old, new)`, `compute`, `computeIfAbsent`, `computeIfPresent`, `merge`. Each `compute*`/`merge` javadoc says
 "The entire method invocation is performed atomically" (Java SE 25 API).
 
 The body's last row — a hot counter as `CHM<K, LongAdder>` — is the javadoc's own "scalable
@@ -287,6 +287,14 @@ freezes mutable element state; obtain a coherent source collection before publis
 in time buckets, deadline indexes and leaderboard ranges. If sorted output is infrequent, compare
 sorting collected CHM entries with maintaining ordering on every update. Output frequency and
 workload decide the cost; concurrent CHM traversal is not an atomic whole-map snapshot.
+
+The callback contract also changes when moving from CHM. `ConcurrentSkipListMap.compute`,
+`computeIfPresent` and `merge` may re-evaluate the remapping function under contention;
+concurrent `computeIfAbsent` calls may compute separate candidates for the same absent key.
+Prefer pure transformations that tolerate repetition. A final correct map value can hide
+duplicated external effects or discarded resource-producing candidates; count callback work
+and account for losing candidates when validating a migration. CHM's stronger per-invocation
+contract is still not an exactly-once guarantee across separate calls, failures or process restarts.
 
 |                                                     | `ConcurrentHashMap`                | `ConcurrentSkipListMap`                                  |
 | --------------------------------------------------- | ---------------------------------- | -------------------------------------------------------- |

@@ -102,10 +102,12 @@ public record GuestCustomer() implements Customer {
 
 Twenty callers stop writing `if (customer == null || !customer.isRegistered())`.
 
-**The condition that justifies it:** the special case's behaviour is **the same for every
-caller**. When callers need to know it is special — different messages, different flows,
-different authorisation — Special Case makes things worse: they will test with `instanceof`,
-which is worse than an explicit `Optional`.
+**The condition that justifies it:** the affected domain operations have an agreed contract
+across callers. A guest's zero discount and inability to pay on account can remain uniform
+while a UI displays a guest-specific message. Repeated type tests that reimplement those
+policies indicate a misplaced contract; distinguishing a case for presentation does not alone
+invalidate the pattern. Where callers own different absence decisions, retain `Optional` or
+explicit outcomes instead of forcing one default.
 Establish the case first: a known guest is different from an unresolved customer lookup.
 Do not convert a failure into guest privileges or silently change authorization behavior.
 
@@ -116,9 +118,9 @@ Null            only where the existing interop contract requires it;
                 handle it explicitly before business use.
 ```
 
-A modern refinement: a sealed interface plus exhaustive `switch` gives Special Case's
-polymorphism _and_ compile-checked handling where callers do need to distinguish
-(`patterns-and-modern-frameworks`).
+A sealed interface can combine polymorphic domain operations with explicit variant handling
+where needed. Exhaustive type-pattern `switch` requires Java 21 without preview; it does not
+remove the need to keep shared policy in one owner (`patterns-and-modern-frameworks`).
 
 ## Plugin
 
@@ -183,14 +185,16 @@ claiming a valid tax identifier
 | Add a base class                | Does _every_ subtype need every member?                     |
 | Add an interface                | What dependency, API or extension contract does it protect? |
 | Add a registry or static holder | Is lookup required, and what owns its scope and lifetime?   |
-| Add a null object               | Is the behaviour identical for every caller?                |
+| Add a null object               | Do the affected operations have one agreed domain contract? |
 | Add a plugin point              | Is there a concrete variation or supported external SPI?    |
-| Add a mapper                    | Must both sides remain ignorant of each other?              |
+| Add a mapper                    | What boundary or conversion responsibility justifies it?    |
 | Wrap an external system         | What isolation or policy is missing from the existing seam? |
 
 ## Sources
 
 - [Separated Interface](https://martinfowler.com/eaaCatalog/separatedInterface.html): separating contract from implementation; caller-package placement is not universal.
+- [Special Case](https://martinfowler.com/eaaCatalog/specialCase.html): special behavior through the expected interface; shared operations need not erase every caller distinction.
 - [Java 25 ServiceLoader](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ServiceLoader.html): independently deployed providers, selection with zero/one/many providers and configuration failures; not a requirement to adopt this loader.
 - [Java 17 CachedRowSet](https://docs.oracle.com/en/java/javase/17/docs/api/java.sql.rowset/javax/sql/rowset/CachedRowSet.html): disconnected tabular data support.
 - [Java 17 Record](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): shallow immutability and component-derived equality.
+- [Java 21 pattern matching for switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html): type patterns and exhaustiveness for sealed variants.

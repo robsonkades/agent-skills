@@ -32,9 +32,11 @@ advice about being careful.
    command/output, inspected artifact or version-matched primary source; distinguish that
    evidence from inferred or unverified behavior
    (`references/verification.md`).
-2. **Run repository-required checks and those the change's risk warrants** and read the output
+2. **Complete repository-required checks and those the change's risk warrants** and read the output
    rather than the exit code alone. Some runners can exit successfully with zero relevant tests.
-   Continue available required checks; disclosing that they were not run does not finish them.
+   Attribute existing local, CI or delegated evidence to its source and checked inputs; reuse it
+   only when it satisfies the required check. Continue available required checks that remain;
+   disclosing that they were not run does not finish them.
 3. **Compare the diff against the request.** Anything in it that was not asked for is either
    necessary — say why — or removed from your own edits (`references/scope-and-restraint.md`).
    Distinguish pre-existing staged, unstaged and untracked work first; never remove another
@@ -46,9 +48,10 @@ advice about being careful.
 
 ## Rules
 
-- Never state a result you did not observe. "Tests pass" requires having run them and seen them
-  pass. If you did not run them, the sentence is "I have not run the tests" — which is a
-  perfectly acceptable thing to say, and the only acceptable alternative.
+- Never state an unsupported result. A test-pass claim needs applicable results for the named
+  suite and checked inputs. Distinguish "I ran..." from "The inspected CI run reports..." or
+  "The reviewer reports..."; do not turn someone else's report or a cache hit into a claim of
+  personal execution. When no sufficient result is available, say what remains unverified.
 - Never present inference as observation. A successful build establishes the checked build
   result; a bug-fix claim needs evidence that the reported symptom is resolved. Say what you
   expect separately from what the available evidence establishes.

@@ -52,7 +52,11 @@ or distinguishing connascence forms.
    For a release view, distinguish demonstrated technical lockstep from policy-required coordination;
    compatible versions do not authorize bypassing a binding release policy. Record one-way rollout
    ordering separately. For a workflow view, follow dependencies needed for the stated success
-   criterion, including request/reply implemented through queues. Show shared infrastructure
+   criterion, including request/reply implemented through queues. Preserve all-of, any-of and
+   quorum requirements; surviving one peer's failure does not eliminate a dependency on its
+   group. For alternatives or cached fallback, read
+   [Runtime dependence and validation](references/measuring-the-unit.md#4-runtime-dependence-and-validation).
+   Show shared infrastructure
    failure domains separately rather than silently merging every tenant. Where an outcome needs
    atomic updates, establish actual transaction participants and recovery dependencies; a process
    or schema boundary does not by itself establish the transaction boundary.
@@ -76,7 +80,7 @@ or distinguishing connascence forms.
 | Axis                 | Question and required evidence                                                                                                                                                                           | What does not settle it                                             |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | S: structural/static | Which version, schema, library or platform capability must exist to build, start or remain correct? Which changes require consumer coordination? Inspect actual dependencies and compatibility evidence. | Same library name, database host or broker alone                    |
-| D: runtime           | For this operation, must the other component answer or act before success? Inspect traces and behavior during absence, delay and recovery.                                                               | HTTP versus messaging alone; returning 202 without defining success |
+| D: runtime           | For this operation, which peers or alternative/quorum groups must answer or act before success, in which operating phase? Inspect absence, delay and recovery behavior.                                  | HTTP versus messaging alone; one successful single-peer outage test |
 | Contract/semantic    | Which names, meanings, algorithms or invariants must agree, and who owns their evolution? Inspect schemas plus business semantics and mixed-version tests.                                               | A compatibility policy document alone; wire-schema validation alone |
 | Process              | Why did these targets deploy together: technical necessity, shared feature, pipeline convenience or release policy? Inspect artifacts and the change record.                                             | Timestamp proximity or a high co-deployment ratio                   |
 
@@ -89,7 +93,8 @@ or distinguishing connascence forms.
   ordering, completion or recovery obligations. A queue-based request/reply still waits logically.
 - A timeout is bounded failure, not successful fallback. Verify that degraded output satisfies the
   stated operation contract, for how long, and during recovery. Cached success may depend on a
-  freshness window. Callers and callees can have different SLOs and scale independently while a
+  freshness window; warm serving does not prove cold-start or recovery independence.
+  Callers and callees can have different SLOs and scale independently while a
   workflow remains dependent on both.
 - Co-change and co-deployment identify candidates to inspect. Neither frequency nor one incident
   establishes a permanent quantum boundary. Do not turn quantum/deployment count ratios into a

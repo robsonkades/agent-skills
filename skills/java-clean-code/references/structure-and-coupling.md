@@ -73,6 +73,14 @@ unused dependency through unrelated layers. Preserve the time zone and number/ti
 time reads with one boundary snapshot changes semantics if the operation intentionally
 observes elapsed time or a date rollover. Retain a clock for that contract.
 
+Preserve any required random distribution, algorithm/sequence and sharing contract when exposing
+a random source. [`Math.random()`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Math.html#random()>)
+supports concurrent callers; `RandomGenerator` instances need not be thread-safe. An injected
+generator may become shared through a singleton's lifetime. Inspect the concrete implementation
+and use documented safe sharing or appropriate confinement (`java-thread-safety-contracts`);
+an interface and a `final` field alone establish neither. Test reproducibility under the intended
+ownership and call sequence, not merely with one seeded single-threaded test.
+
 **False positives:**
 
 - Logging frameworks reading time — the timestamp is telemetry, not an input to logic.

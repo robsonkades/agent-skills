@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: opentelemetry-performance
-version: 1.2.2
+version: 1.2.3
 description: >-
   Designing OpenTelemetry tracing that remains causally useful within an explicit
   overhead and data-risk budget: auditing automatic/manual coverage, preserving context

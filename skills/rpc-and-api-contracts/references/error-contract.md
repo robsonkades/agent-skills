@@ -35,6 +35,21 @@ instance path or correlation value. A documented instance navigation contract ca
 apply the same origin, authorization and credential controls as other peer-supplied links.
 An instance link does not automatically provide authoritative operation status or retry safety.
 
+Before constructing a typed failure, normalize the RFC 9457 object:
+
+- The five standard members are optional. Ignore a standard member whose JSON value has
+  the wrong type, treating it as absent; do not coerce `"status": "503"` into a number or
+  reject the whole object solely for `"title": 42`.
+- Absent `type` defaults to `about:blank`. Resolve relative type/instance URI references
+  against the document's base URI before interpreting them; resolution does not require
+  fetching a URI. `about:blank` alone supplies no application-specific outcome/retry guarantee.
+- Ignore unrecognized extension members. This differs from an unknown value of a recognized
+  `outcome` or `retryCondition`: preserve the documented conservative handling of those values.
+
+Retain the actual HTTP status even when body `status` is absent or ignored. Missing optional
+diagnostics do not invalidate the problem object. Invalid JSON or missing trustworthy
+application evidence still cannot authorize a retry or establish that a mutation was rejected.
+
 ## The record
 
 Partial Java 16+ internal representation, not a serializer-ready wire guarantee. Define
@@ -42,6 +57,9 @@ extension encoding explicitly, including duration units, null/omission and URI h
 `Outcome` and `RetryCondition` below stand for application types with conservative handling
 of unknown/missing wire values; ordinary closed-enum deserialization can fail before the
 adapter runs. Decode unknown strings without classifying the effect as rejected.
+Populate this internal record after normalization; if `status` represents the effective HTTP
+status, do not confuse it with evidence that an advisory body member was present. Retain that
+member separately when its presence/value is needed for diagnostics.
 
 ```java
 public record ProblemDetails(
@@ -80,11 +98,13 @@ the domain failure type:
 
 ```text
 Read actual HTTP status, media type and bounded body.
-If absent, malformed, inconsistent or not an accepted problem contract:
+If absent, invalid JSON, not an object, or not an accepted media type:
     preserve status; keep a dispatched mutation UNKNOWN unless independent reliable evidence resolves it.
-Resolve the problem type; do not automatically fetch its URI.
+    stop problem-specific classification.
+Normalize optional standard members and ignore unknown extensions as described above.
+Resolve the problem type, defaulting to about:blank; do not automatically fetch its URI.
 Interpret known extensions using the method's published contract.
-For unknown/missing code, outcome or retry condition, use conservative defaults.
+For inconsistent data or unknown/missing code, outcome or retry condition, use conservative defaults.
 Validate delay and any navigation/status URI before returning or throwing a typed failure.
 ```
 
@@ -137,6 +157,10 @@ scoped review. Written cases are not evidence that the deployed decoder or retry
 
 - **Known mappings plus extensibility.** Walk known codes and assert stable status/outcome/
   retry condition; feed an unknown code/enum and assert conservative forward-compatible behavior.
+- **RFC decoding before application mapping.** Exercise omitted standard members, wrong-typed
+  `title`/`status`, relative type URIs and an added unknown extension. Assert normalization,
+  retained HTTP status and no automatic URI fetch; missing outcome evidence must not become
+  `REJECTED`. Invalid JSON must still take the conservative fallback.
 - **Contract tests for failures.** Record at least one interaction per code class, not only
   the happy path. The error surface is the part clients branch on and the part suites usually
   omit.

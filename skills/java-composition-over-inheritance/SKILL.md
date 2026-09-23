@@ -79,8 +79,9 @@ delegating wrappers.
   contract hierarchies without sharing algorithms.
 - Composition has costs — forwarding boilerplate, distinct identity (`wrapper != wrapped`),
   possible equality/listener mismatches and fluent returns that may expose the delegate.
-  Inspect and test those contracts before dismantling a working hierarchy; do not present delegation
-  as free.
+  An inherited interface default can also bypass the delegate's override of that operation.
+  Inspect method dispatch and test those contracts before dismantling a working hierarchy;
+  do not present delegation as free.
 
 ## Deliverable
 

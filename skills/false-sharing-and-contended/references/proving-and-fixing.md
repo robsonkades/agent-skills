@@ -2,13 +2,13 @@
 
 ## Hypothesis table
 
-| Hypothesis                       | Supporting observation                            | Discriminator                                 |
-| -------------------------------- | ------------------------------------------------- | --------------------------------------------- |
-| true CAS/data contention         | same logical value and retries                    | shard semantics or locked baseline            |
-| false sharing                    | independent writers, same line, coherence traffic | separate lines/owners without semantic change |
-| ordinary cache capacity/locality | misses track working set/read access              | block/compact/locality change                 |
-| scheduler/NUMA effect            | migration/socket/remote memory alignment          | controlled placement/first-touch              |
-| GC/JIT/load confounder           | aligned runtime phase/work changes                | matched window and runtime evidence           |
+| Hypothesis                       | Supporting observation                                        | Discriminator                                 |
+| -------------------------------- | ------------------------------------------------------------- | --------------------------------------------- |
+| true CAS/data contention         | same logical value and retries                                | shard semantics or locked baseline            |
+| false sharing                    | distinct locations, at least one writer, same line, coherence | separate lines/owners without semantic change |
+| ordinary cache capacity/locality | misses track working set/read access                          | block/compact/locality change                 |
+| scheduler/NUMA effect            | migration/socket/remote memory alignment                      | controlled placement/first-touch              |
+| GC/JIT/load confounder           | aligned runtime phase/work changes                            | matched window and runtime evidence           |
 
 ## PMU protocol
 
@@ -100,6 +100,7 @@ padding causes GC/cache regression
 
 ## Authoritative references
 
+- [Linux false sharing](https://docs.kernel.org/kernel-hacking/false-sharing.html) — writer/reader interference and mixed lock/data cases; its native layouts are examples, not Java layout guarantees.
 - [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html)
 - [Linux perf list/stat documentation](https://man7.org/linux/man-pages/man1/perf-stat.1.html)
 - [OpenJDK JMH](https://github.com/openjdk/jmh)

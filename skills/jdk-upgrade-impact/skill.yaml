@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jdk-upgrade-impact
-version: 1.2.2
+version: 1.2.3
 description: >-
   Moving a service between JDKs: what breaks, in what order to find it, and what should get
   faster — running unchanged on the new runtime with warnings visible, classifying each

@@ -40,6 +40,9 @@ observation period must cover the risks that actually drive the extraction.
 Before step 5, identify local transactions that cross the proposed boundary. Preserve their
 invariants with an explicit distributed protocol or retain the local boundary. A matching
 method signature does not make network failures equivalent to local calls.
+For cohort write handoff, apply the
+[authority-transfer checkpoint](domain-and-persistence-paths.md#authority-transfer-checkpoint);
+stable routing alone does not exclude paused old requests or stale routing clients.
 
 **Verification:** test supported overlapping versions, failure isolation and independent normal
 releases. An occasional ordered compatibility migration does not prove a distributed monolith;

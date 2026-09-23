@@ -115,7 +115,9 @@ IF an interface designed against a local implementation is about to be
 implemented remotely
 THEN review the contract: suitable granularity, propagated deadline/context, cancellation
      and named failure/unknown-outcome semantics may require change.
-     Otherwise a loop becomes N network calls (gof-proxy).
+     Keep an interface whose contract already covers these effects; check actual call count
+     (gof-proxy). A local System.nanoTime deadline cannot be compared in another JVM;
+     inspect the transport's budget representation and propagation (timeouts-and-deadlines).
 
 IF an in-process listener is being moved to a broker
 THEN it is a redesign: six properties change at once — thread,
@@ -130,9 +132,9 @@ THEN identify whether the protocol transfers a value or a remote handle. Neither
 
 IF a pattern name is applied to a deployed component — "the gateway is
 our facade", "the orchestrator is a mediator"
-THEN the name is a metaphor, not a design. The component has
-     availability, authentication, scaling and an outage surface that
-     no class has.
+THEN identify the actual deployment boundary and its availability, authentication,
+     scaling and failure contracts. The pattern name establishes none of these;
+     local object design can still affect whether the component meets them.
 
 IF the design question is really "where should this boundary be"
 THEN it is not an object-design question at all
@@ -160,10 +162,11 @@ Distributed pattern    what crosses a network: saga, outbox, circuit
 
 A GoF pattern is not a substitute for any of the lower three rows. Proxy is not an API gateway;
 Observer is not event-driven architecture; Mediator is not orchestration; Facade is not a
-backend-for-frontend; Memento is not event sourcing; Flyweight is not a distributed cache. In each
-pair the second has an operational existence — deployment, availability, scaling, failure — that
-the first does not, and using one word for both is how a network hop becomes invisible in a design
-discussion.
+backend-for-frontend; Memento is not event sourcing; Flyweight is not a distributed cache. The
+second decision includes contracts that the object pattern alone does not establish. Architecture
+can remain within one deployment: CQRS or event sourcing does not itself require separate services.
+Where components actually cross a process boundary, name their deployment, availability, scaling
+and failure contracts so the pattern vocabulary does not hide the network hop.
 
 Patterns can participate in architectures: an adapter can implement a port in hexagonal
 architecture, a CQRS write can be represented by Command, and saga progress can use a state
@@ -173,7 +176,7 @@ machine. The required behavior need not force a particular GoF object structure.
 
 - [ ] Every "only one" requirement names its scope, and the mechanism matches
 - [ ] Process-local limits are modeled across autoscaling and rollout replica ranges
-- [ ] No interface hides remoteness: deadlines, failure types and granularity are in the contract
+- [ ] Remote contracts expose deadline representation, failure types and operation granularity
 - [ ] Any getter/per-item remote call is explicit, bounded and protected from accidental fan-out
 - [ ] Published representations have explicit schema identity and compatibility/unknown-value policy
 - [ ] Delivery semantics drive idempotency/deduplication and atomicity requirements

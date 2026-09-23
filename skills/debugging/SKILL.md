@@ -22,9 +22,6 @@ Turn a report into a cause. The alternative — changing things until the sympto
 produces code nobody understands, a bug that returns under a slightly different input, and no
 way to tell whether the change helped or moved the failure somewhere quieter.
 
-The discipline is cheap and it is nearly always skipped under pressure, which is exactly when
-guessing is most expensive.
-
 ## Workflow
 
 1. **Restate the fault as an observation.** "Customer 88123 saw a negative balance at 14:02"
@@ -71,6 +68,8 @@ access or reproduction permits an evidence plan, not an invented root cause.
   when delay is unsafe, and record which volatile evidence the action destroyed
   (`references/production-evidence.md`).
 - Symptom disappearance is evidence of recovery, not proof of cause or durable correction.
+- Missing events refute a hypothesis only within verified collection coverage. Check enablement,
+  filters, sampling/thresholds and workload opportunity before interpreting an empty result.
 - Question the assumption that the fault is where the symptom is. Corrupted state is written
   in one place and observed in another, often much later. Trace the first contract violation;
   an incorrect write is one candidate, but valid data can also be misread or misinterpreted.

@@ -47,6 +47,7 @@ Examples of coordinate shapes:
 instance field: (DeclaringClass) -> T
 static field: () -> T
 array element: (T[], int) -> T
+byte-array/buffer view: (byte[] or ByteBuffer, int byteOffset) -> primitive
 memory layout: (MemorySegment, long, ...open path coordinates) -> carrier
 ```
 
@@ -59,6 +60,26 @@ lifetime/thread access and supported modes for foreign-memory handles under thei
 These layout coordinates use Java 25's final FFM API, not earlier incubator signatures. A successful
 CAS does not extend an arena lifetime or prove exclusive ownership; closure/reclamation and ABA
 remain separate protocol obligations.
+
+### Byte views depend on the runtime and backing storage
+
+JDK 23 removed stronger access modes for byte-array views and heap-buffer views. These methods
+still exist: compiling for Java 17 does not restore their former behavior on a newer runtime.
+Inspect the factory, runtime, backing storage and byte offset; an offset is not an element index.
+
+| Factory/coordinate on JDK 23+                | Access condition                                                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `byteArrayViewVarHandle`                     | Only plain `get/set`; stronger modes throw `UnsupportedOperationException`                                        |
+| `byteBufferViewVarHandle` with a heap buffer | Only plain `get/set`; stronger modes throw `IllegalStateException`                                                |
+| The same buffer handle with a direct buffer  | Stronger modes require an aligned address and support for the carrier/mode; also check bounds and read-only state |
+
+`isAccessModeSupported` can be true for the buffer handle while a particular heap or misaligned
+coordinate fails. Test representative coordinates as well as inspecting support. For an `int`
+direct-buffer view, byte offsets 0 and 1 on a suitably aligned buffer exercise different alignment
+conditions. Retain the publication contract: choose suitable typed storage, aligned direct storage
+with its lifecycle cost, or another synchronized design. Catching an access exception and switching
+to plain reads/writes loses the required ordering. For a retained older runtime, use its own factory
+contract rather than retroactively imposing the JDK 23 restrictions.
 
 ## Mixed access ledger
 
@@ -81,9 +102,19 @@ leaves the safety argument unresolved; missing evidence alone is not an observed
 ## Comparison operations
 
 For reference variables, expected/witness comparison follows VarHandle method semantics (`==` for
-the expected comparison). For floating values and bitwise behavior, read the exact API wording and
-test NaN/zero representations if relevant. Never infer equality semantics from a domain object's
-`equals`.
+the expected comparison), not the domain object's `equals`. Field and array handles for `float`
+and `double` compare raw bits. Consequently, `+0.0f` does not match expected `-0.0f`, although Java
+`==` says they are equal. Conversely, matching NaN representations can permit an update although
+Java `==` says the witness and expected values differ.
+
+For these handles, check a float compare-and-exchange witness with
+`Float.floatToRawIntBits(witness) == Float.floatToRawIntBits(expected)`; use
+`Double.doubleToRawLongBits` for double. `floatToIntBits`/`doubleToLongBits` canonicalize NaNs and
+can hide distinct representations, as can boxed equality. Preserve the API's caveat that NaN
+representations can change on some platforms; test the values actually carried through the
+operation. A failed signed-zero match and a successful same-representation NaN match are useful
+checks for a wrapper that returns a derived success flag. Do not reread the variable to infer
+whether an earlier update succeeded: another writer may already have changed it.
 
 CAS selection questions:
 
@@ -100,4 +131,8 @@ Can expected value recur (ABA), wrap, or be reclaimed/reused?
 
 - [Java 25 `VarHandle`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
 - [`MethodHandles` VarHandle factories](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.html)
+- [JDK 23 removal of aligned heap-view access modes](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html#JDK-8318966)
+- [Java 17 factories](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html) — older aligned-access contract; inspect the actual target runtime.
+- [Field VarHandle lookup](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html) — floating-point comparison and representation caveats.
+- [Float bit conversions](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Float.html) — raw versus canonical NaN representation; double provides corresponding conversions.
 - [Foreign memory layouts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/MemoryLayout.html)

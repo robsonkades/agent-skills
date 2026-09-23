@@ -40,6 +40,15 @@ hierarchy/version, whether the subject task can be queried at that hook, task mi
 sidecars, and cgroup-ID reuse. Verify membership against `/proc/<tid>/cgroup`/runtime metadata
 during the capture.
 
+In bpftrace 0.24, `cgroup` identifies the current task's cgroup v2 membership and `cgroupid(path)`
+resolves a v2 ID at compile time. Equality selects that cgroup, not its descendants; a pod parent
+and its child containers can have different IDs. For subtree scope, use a collector with verified
+ancestor-membership support or maintain the intended descendant-ID set with lifecycle updates.
+After deletion/recreation, re-resolve IDs and rebuild a filter that compiled an old ID. Check
+target children and excluded siblings with controls. These current-context helpers also do not
+identify the scheduler event's other subject tasks. See the
+[0.24 helper contracts](https://bpftrace.org/docs/release_024/stdlib#cgroup).
+
 ## Time semantics
 
 `bpf_ktime_get_ns` excludes system suspend. In bpftrace 0.24, bare `nsecs` defaults to
@@ -101,7 +110,7 @@ Evidence chain:
 ```text
 latency window
   -> target runnable demand and run-queue distribution
-  -> cgroup cpu.stat/pressure deltas and cpuset/quota
+  -> leaf and relevant ancestor cpu.stat/pressure deltas and cpuset/quota
   -> per-CPU utilization/run queue and migrations
   -> target CPU stacks and JFR safepoint/GC/task evidence
   -> controlled quota/affinity/load change
@@ -109,6 +118,11 @@ latency window
 
 A change that reduces queue delay but also reduces offered work or increases errors is not a
 capacity fix.
+
+A parent bandwidth limit can constrain a child without a limit of its own. Inspect the deployed
+kernel's counter semantics before excluding throttling from leaf counters or combining levels;
+hierarchical values need not be disjoint. See the
+[cgroup v2 CPU controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#cpu).
 
 ## I/O reasoning
 

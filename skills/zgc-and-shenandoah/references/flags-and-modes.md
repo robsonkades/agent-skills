@@ -56,6 +56,25 @@ The interval is not a minimum spacing guarantee: other triggers may start cycles
 The JDK 25 source also has minor/major intervals and a separate `ZCollectionIntervalOnly`
 policy; do not disable adaptive triggers merely to force a benchmark schedule.
 
+### Heap footprint and uncommit
+
+`SoftMaxHeapSize` guides ZGC's heuristics but permits growth to `-Xmx` to avoid stalls.
+Budget possible heap growth plus native/non-heap usage; the soft maximum does not bound
+total process or container memory.
+
+On JDK 25, ZGC normally uncommits unused heap, but never below `-Xms`. Equal `-Xms` and
+`-Xmx` implicitly disable uncommit even with `-XX:+ZUncommit`. `ZUncommitDelay` (default
+300 seconds) governs eligibility after memory is unused, not a deadline for RSS to drop.
+Lowering that delay cannot defeat the minimum-heap floor.
+
+For post-burst footprint, verify effective min/max/soft max and uncommit startup logs, then
+compare used/committed heap with native and cgroup accounting through idle and renewed load.
+Reducing commitment can trade footprint for recommit latency; retain a fixed heap when
+the measured latency objective needs it and its memory cost is budgeted. An idle RSS sample
+or launch-only check establishes neither a leak nor workload performance.
+
+Source: [Oracle JDK 25 ZGC heap sizing and uncommit](https://docs.oracle.com/en/java/javase/25/gctuning/z-garbage-collector1.html).
+
 ## Shenandoah
 
 ```bash

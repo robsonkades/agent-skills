@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: retries-and-backoff
-version: 1.1.2
+version: 1.1.3
 description: >-
   Retry as a policy with a cost: classifying a failure as transient, permanent or ambiguous
   before retrying anything; why a timeout is ambiguous and safe to retry only under

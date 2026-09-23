@@ -48,8 +48,9 @@ already authorized recovery through a validated rollback/drain path.
    callers whose demand changes. For each: how many threads,
    what resource sat behind it, and what happens if that number becomes unbounded. This
    inventory supports the migration decision; include queues, ordering, context and lifecycle ownership.
-3. **Audit for blockers** — native/foreign pinning, carrier-capturing or file-heavy
-   paths, `ThreadLocal` caches, thread-name dependencies, executors that encode ordering.
+3. **Audit for blockers** — monitor pinning on JDK 21–23, native/foreign pinning,
+   carrier-capturing or file-heavy paths, `ThreadLocal` caches, thread-name dependencies,
+   executors that encode ordering.
    The greps are in the playbook.
 4. **Preserve required limits before removing the old enforcement.** A separate platform-thread
    deployment can isolate limit-policy risk; an evidenced paired change can be appropriate when

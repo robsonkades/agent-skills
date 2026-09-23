@@ -24,10 +24,11 @@ such positive feedback expands or sustains the failure. Name and cut that edge. 
 coordinated bad deploy can create a wide blast radius without such a loop, so topology and timing
 remain competing hypotheses.
 
-The failure this prevents is the intervention that deepens the outage. **During a cascade
-the system is doing more work than normal and completing less of it** — retries, queued
-requests whose callers have already given up, connections held by abandoned calls. Common
-responses—uncontrolled replicas, longer timeouts, more retries—can increase offered load.
+The failure this prevents is the intervention that deepens the outage. **Feedback reduces
+useful completions by amplifying waste, resource retention or capacity loss.** Retries and
+abandoned calls can consume extra resources; repeated crashes or health-based ejections can
+overload the survivors even when total traffic and attempts per logical call stay unchanged.
+Common responses—uncontrolled replicas, longer timeouts, more retries—can increase offered load.
 Stabilization usually starts by reducing admitted work; repairing the trigger or adding warm,
 usable capacity can also recover the system when it does not amplify the bottleneck.
 
@@ -45,14 +46,16 @@ capacity number or diagnose metastability solely because recovery is slow.
    cascade; reconstruct the time order (`references/cascade-response.md`).
 2. **Name the amplification point.** Retries (system-level storm — the policy is
    `retries-and-backoff`), an unbounded queue, an exhausted thread or connection pool, or a
-   timeout stack. Rank edges by amplification and reversibility; incidents can have several loops.
+   timeout stack. Also check whether crashes or ejections shift load onto fewer healthy instances
+   (`load-balancing-and-routing`). Rank edges by amplification and reversibility; incidents can
+   have several loops.
 3. **Stabilize offered work before scaling blindly.** Shed at the entry point
-   (`rate-limiting-and-load-shedding`), cap concurrency at the saturated resource
+   (`rate-limiting-and-load-shedding`), bound active work and waiting admission at the saturated resource
    (`concurrency-limiting-and-bulkheads`), trip breakers on the failing dependency
    (`circuit-breakers`). Also cancel expired work, disable optional fan-out and stop retry owners.
 4. **Check the timeout stack down the call path.** An inner timeout longer than its caller's
-   remaining budget means the outer hop gives up while the inner call still holds a thread, a
-   connection and a downstream request. The bound arithmetic is `timeouts-and-deadlines`;
+   remaining budget can leave the inner call holding resources after the outer hop gives up.
+   Verify which resources survive cancellation. The bound arithmetic is `timeouts-and-deadlines`;
    the consequence — resources held by work nobody will read — is here.
 5. **Decide whether the state is metastable.** If the trigger is gone and the system is still
    down, backlog/retries may now sustain overload. Classify queued work as expired, supersedable or
@@ -68,10 +71,11 @@ capacity number or diagnose metastability solely because recovery is slow.
 
 ```text
 Reduce offered load (shed, cap concurrency, trip the breaker) when:
-- queue depth or time-in-queue is rising while completed requests per second is falling
-- the saturated resource is a pool whose utilisation has been at 100% for longer than one
-  timeout period
-- the dependency's inbound rate is above its normal rate while its success rate is below it
+- queue depth or time-in-queue is rising while goodput is falling
+- pool acquisition waits or rejections threaten request deadlines and resource evidence shows
+  saturation; do not wait a full timeout period or require exactly 100% utilisation to intervene
+- demand exceeds the dependency's currently usable capacity while goodput degrades, including
+  unchanged demand concentrated on fewer healthy instances
 Add capacity when:
 - evidence shows extra warm capacity at the actual bottleneck can increase useful completions
   without overloading a shared dependency; test a bounded increment and its rollback threshold
@@ -141,12 +145,14 @@ cancellation, isolation or recovery under load.
 - [Google SRE — Handling Overload](https://sre.google/sre-book/handling-overload/)
 - [AWS Builders' Library — Avoiding insurmountable queue backlogs](https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/)
 - [Java 17 ThreadPoolExecutor contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Java 17 Semaphore contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Semaphore.html):
+  timed acquisition bounds each caller's wait, not the total number of waiting callers.
 - [Resilience4j CircuitBreaker behavior](https://resilience4j.readme.io/docs/circuitbreaker)
 
 ## References
 
-- [Recognising and stopping a cascade](references/cascade-response.md) — the metric
-  signatures separating a cascade from a plain dependency outage, the intervention order with
+- [Recognising and stopping a cascade](references/cascade-response.md) — the evidence
+  distinguishing feedback from a plain dependency outage, the intervention order with
   each lever's cost, the actions that deepen it, and the recovery procedure with backlog
   shedding and ramped restart. Read during an incident, or when writing the runbook.
 - [Cutting the amplification points](references/cutting-the-loop.md) — the design control per

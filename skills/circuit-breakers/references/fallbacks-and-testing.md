@@ -66,6 +66,14 @@ for (int i = 0; i < minimumCalls; i++) callReturning(422); // declared validatio
 assertEquals(State.CLOSED, breaker.getState());
 ```
 
+Assert the effective sample boundary as well as the final state. For Resilience4j 2.3.0, a
+count window of 4 with minimum 10 remains closed after 3 failures and opens after the fourth
+(with failure threshold 50%). A time window of 4 seconds with minimum 10 remains below the
+minimum after those same 4 failures. Freeze time for this contrast so window expiry cannot
+explain the result. Also test a shared HTTP exception class plus a narrower recording
+predicate: their OR composition can still count validation failures; a matching ignore rule
+must leave both success and failure counts unchanged.
+
 **2. An isolated half-open round rejects excess pending probes.** Move the breaker to half-open
 directly — Resilience4j exposes `transitionToOpenState()`, `transitionToHalfOpenState()` and
 `transitionToClosedState()` for exactly this, which removes the need to sleep out the wait
@@ -82,9 +90,14 @@ Direct transitions test probe gating, not the configured wait duration or automa
 Test timing separately with a controllable clock/scheduler where supported, or a narrowly bounded
 integration test; do not make the suite depend on long sleeps.
 
-**3. It closes again.** From half-open, return successes for the probe count and assert the
-state is closed and traffic flows. A breaker tested only in the open direction has an untested
-recovery path — the half that keeps an outage going after the dependency is back.
+**3. It closes again at the intended sample boundary.** From half-open, complete the required
+recorded sample and assert the state is closed and traffic flows. In Resilience4j 2.3.0 that
+sample can be smaller than the permit allowance; derive it from the effective minimum in
+`breaker-configuration.md`. With minimum 1 and 3 permits, admit three pending stages, complete
+one fast success, and assert closed while the other two remain pending. With minimum 3, assert
+half-open until the third recorded outcome. Clean up all stages even if an assertion fails.
+A breaker tested only in the open direction has an untested recovery path — the half that
+keeps an outage going after the dependency is back.
 
 Also run the half-open failure direction and an incomplete sample with a configured maximum
 half-open wait. Verify reopening, and separately whether outstanding client work terminated.
@@ -114,6 +127,12 @@ Assert, in this order:
    marker is present, the response status is the one the API contract documents, and the
    degraded-response counter incremented.
 4. Nothing wrote wrong data. Where the fallback touches state, assert the state afterwards.
+
+For a normally returned HTTP error classified by `recordResult`, assert both the breaker
+failure count and the returned response. A result-based failure may open the breaker while
+the same response still reaches the caller; an exception-only fallback is not proof of
+degraded handling for that path. Exercise the chosen result-aware fallback or typed mapping
+separately, preserving the primary failure measurement.
 
 Finally, exercise the breaker in a load test: inject dependency latency at capacity and assert
 goodput on unrelated endpoints stays within its agreed isolation bound. That is the property the breaker exists for, and

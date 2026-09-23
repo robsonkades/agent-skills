@@ -67,8 +67,11 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
 
 ## Costs of the composition side — check before recommending
 
-- **Forwarding boilerplate**: every delegated method restated; a method added to the
-  delegate's interface does not automatically appear on the wrapper.
+- **Forwarding and defaults**: new abstract interface methods may require wrapper
+  implementations, while default methods can be inherited without forwarding. Self-calls
+  in an inherited default dispatch on the wrapper; they do not automatically invoke the
+  delegate's override of that default. Inspect both implementations before choosing explicit
+  forwarding or wrapper-owned behavior, including any wrapper checks and instrumentation.
 - **Distinct identity**: inspect identity-keyed maps, equality symmetry and listener removal
   tokens. Failures depend on those contracts, not merely on having two objects. Internal
   delegate self-calls bypass wrapper interception unless callbacks are explicitly wired.
@@ -80,6 +83,13 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
 - **Lifetime and ownership**: holding a delegate does not make the wrapper its owner.
   Preserve who may close resources or cancel work, including shared/borrowed delegates and
   failure cleanup. Forwarding `close()` or returning a delegate can change that contract.
+
+For example, a default bulk method may loop through single-item calls while the delegate's
+override validates the whole batch before writing anything. Forwarding only the single-item
+method can then introduce partial effects when a later item is invalid. Characterize valid and
+failing batches; neither successful compilation nor blindly forwarding the bulk method proves
+that the delegate's behavior and the wrapper's own checks are both preserved. Interface defaults
+also have evolution/conflict rules: see [JLS 21 §13.5.7](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.7).
 
 If these costs dominate and the base contract is stable and documented, keeping
 inheritance is the correct engineering decision — record it as such.

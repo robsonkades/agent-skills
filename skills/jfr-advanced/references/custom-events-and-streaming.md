@@ -72,13 +72,16 @@ public final class RequestOperationEvent extends Event {
 ```
 
 Use primitive/String/Class/Thread field types supported by the JFR API and content-type
-annotations for units. Avoid mutable objects, payloads, exception messages, arbitrary headers,
-or `toString()` values. Event schema/name changes need versioned reader tests; adding a field is
-usually more compatible than changing meaning/unit under the same name.
+annotations for units. Enum, array and other unsupported reference fields are silently omitted,
+not serialized as objects. Encode an enum-like value as a bounded String/int code and assert
+its descriptor and value in a recorded positive control. Avoid mutable objects, payloads,
+exception messages, arbitrary headers, or `toString()` values. Event schema/name changes need
+versioned reader tests; adding a field is usually more compatible than changing meaning/unit
+under the same name.
 
 ## Hot-path emission
 
-Correct duration-aware pattern:
+Duration-aware partial pattern for the schema above, which has no custom setting predicate:
 
 ```java
 RequestOperationEvent event = new RequestOperationEvent();
@@ -106,9 +109,11 @@ try {
 Subtleties:
 
 - `Event.isEnabled()` and `shouldCommit()` are instance methods. The latter includes duration
-  threshold and should be evaluated after timing.
-- If creating/canonicalizing the event's payload is expensive, do it only after
-  `shouldCommit()`. The measured operation itself cannot be skipped.
+  threshold and custom settings and should be evaluated after timing.
+- Defer expensive payload work until `shouldCommit()` only for fields not read by a custom
+  setting predicate. Populate bounded filter inputs first; the measured operation itself
+  cannot be skipped. Keep predicate evaluation inside the telemetry failure boundary when
+  expected telemetry exceptions could otherwise replace the business result.
 - A static `EventType` coarse guard can avoid allocation/preamble when disabled, but event
   registration and dynamic concurrent settings must be tested. It cannot know a duration
   threshold before execution.
@@ -141,7 +146,23 @@ Advanced events can define `@SettingDefinition` methods backed by `SettingContro
 custom filtering/combination across recordings, but parsing, `combine(Set<String>)`, dynamic
 changes, thread safety, allocation, and failure semantics are part of the event API. Use only
 when standard threshold/stack/period controls and bounded fields cannot express the decision.
-Test multiple simultaneous recording values and malformed strings.
+
+- Populate fields used by the predicate before `shouldCommit()`, and keep those fields stable
+  through `commit()`. For example, an operation-code filter cannot accept `"checkout"` if the
+  code is assigned only inside `if (event.shouldCommit())` and is still null at the check.
+- Keep predicates cheap, non-throwing and free of side effects. In the inspected HotSpot 25
+  implementation, `commit()` calls `shouldCommit()` again; one successful precheck does not
+  reserve an event or promise exactly one predicate call. Recheck implementation-sensitive
+  assumptions on the target build.
+- `combine` must preserve at least the events each active recording requests, such as a union
+  of accepted codes rather than their intersection. It must not throw, return null or have side
+  effects. Ignore invalid setting values rather than throwing from `combine`/`setValue`, and
+  provide a valid initial `getValue()` before registration. Reject invalid user configuration
+  separately when strict validation is required.
+
+Test unset/matching/rejected filter fields, repeated predicate evaluation, multiple simultaneous
+recording values and malformed strings. Bounded String/int codes avoid needing expensive or
+sensitive payload construction just to evaluate a filter.
 
 ## Programmatic `Recording`
 
@@ -171,7 +192,8 @@ an owned bounded worker, deduplicate alerts, verify free space, and checksum/rea
 
 ## `RecordingStream`
 
-Use for live local reactions/export when callback processing is bounded:
+Use for live local reactions/export when callback processing is bounded. This partial Java 17
+example bounds the observation window but does not guarantee that the final events are consumed:
 
 ```java
 try (RecordingStream stream = new RecordingStream()) {
@@ -199,11 +221,23 @@ bounds payload retention independently of that option.
 Use a bounded queue; track oldest-event lag, drops, exceptions, memory, export retries, and
 shutdown deadline. Event ordering across threads/types is not equivalent to causal ordering.
 
-`start()` blocks the caller until close; that can be correct on a dedicated owned thread. Use
+`start()` blocks the caller while processing; that can be correct on a dedicated owned thread. Use
 `startAsync()` when lifecycle code must continue. It returns `void`, not a future/thread;
-retain the stream, use `awaitTermination`/`close`, and coordinate draining the application queue
-separately. Leaving a try-with-resources block immediately after `startAsync()` closes the stream
-before a useful observation window. Stream close alone does not prove queued exports completed.
+retain the stream and coordinate its lifetime. Leaving a try-with-resources block immediately
+after `startAsync()` closes the stream before a useful observation window.
+
+Choose shutdown semantics explicitly:
+
+- Java 20+: `stop()` stops a started recording stream and waits for recorded events to be
+  consumed. Call it from the lifecycle controller, never an event/flush action: waiting on that
+  action can block indefinitely. Then close to release resources.
+- `close()` is abrupt; `awaitTermination(timeout)` merely limits waiting and does not initiate
+  a drain. If a controller enforces a shutdown deadline by closing, report incomplete coverage.
+- Java 17: do not generate a call to `stop()` or upgrade the application implicitly. If complete
+  bounded capture is required, use `Recording.stop()` plus dump/offline reading, or a separately
+  tested completion protocol. The live example above accepts an incomplete tail.
+- Stream draining does not acknowledge an external queue or backend. Finish owned export work
+  separately under its deadline and loss policy; slow/blocking callbacks can also delay `stop()`.
 
 ## Offline `RecordingFile`
 
@@ -244,9 +278,12 @@ Select the cases relevant to the event, recording or consumer contract under cha
 adequate fixtures can supply evidence. A focused offline reader does not need a live exporter.
 
 - event disabled, below/above threshold, and settings change mid-operation;
+- filter input unset versus populated before `shouldCommit`, repeated calls, invalid setting
+  strings and permissive combination across recordings;
 - two recordings with different thresholds/stack settings;
 - event burst and callback/exporter slowdown;
 - callback exception and queue full;
+- controller-initiated stream drain versus abrupt deadline close; export queue still pending;
 - disk full/unwritable destination/process shutdown during chunk/dump;
 - malformed/unknown JFC/event/setting;
 - old/new reader against old/new custom schema and Java 25 events;
@@ -260,6 +297,8 @@ adequate fixtures can supply evidence. A focused offline reader does not need a 
 - [Custom annotations guide](https://docs.oracle.com/en/java/javase/25/jfapi/custom-annotations.html)
 - [`Event`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Event.html)
 - [`EventType`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/EventType.html)
+- [`SettingControl` (Java 17)](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/SettingControl.html)
+- [HotSpot 25.0.3 event instrumentation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/EventInstrumentation.java)
 - [`Recording`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Recording.html)
 - [`RecordingStream`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingStream.html)
 - [`FlightRecorderMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management.jfr/jdk/management/jfr/FlightRecorderMXBean.html)

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-memento
-version: 1.2.2
+version: 1.2.3
 description: >-
   Memento in modern Java: capturing an object's state so it can be restored later, without
   exposing that state to whoever holds the capture. Covers the encapsulation techniques Java

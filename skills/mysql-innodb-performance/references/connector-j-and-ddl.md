@@ -7,6 +7,15 @@ round-trips; defaults for cache count and SQL-length limits may be too small for
 Driver batch rewrite is another mechanism again. Stable batch sizes limit statement-shape churn;
 confirm prepared-statement counts and server-observed statements.
 
+Check the caller's result contract before enabling rewrite. In Connector/J 8.4.0's successful
+multi-values rewrite path for more than one batch entry, each returned update count is zero when
+the aggregate is zero, otherwise `Statement.SUCCESS_NO_INFO`. In particular, rewritten
+`INSERT ... ON DUPLICATE KEY UPDATE` cannot identify each input's affected-row count from that
+aggregate. If exact per-item counts are required, preserve an execution path that supplies them or
+change the accounting contract explicitly; do not treat unknown counts as one affected row.
+Validate generated-key association, partial failures and transaction outcome as well as throughput
+on the actual driver and SQL shape. One `executeBatch()` call does not establish transaction atomicity.
+
 Treat copied connection properties as suspect. Some accepted legacy names are no-ops or removed;
 older SSL flags map to `sslMode`. Verify the exact Connector/J reference and effective connection
 behavior, including certificate/hostname verification.
@@ -56,11 +65,20 @@ redo/binlog, replica apply and reversal or cleanup as applicable. Validate affec
 claims with adequate evidence or a proportionate rehearsal; a source-only review does not prove
 runtime eligibility or completion time.
 
+A queued exclusive metadata-lock request from an online ALTER can block subsequent queries behind
+it, even while an older transaction is the original blocker. `LOCK=NONE` does not prevent this
+queue. Correlate `performance_schema.metadata_locks` with transaction owners before increasing the
+wait timeout. If the availability budget is exhausted, cancel/reschedule the DDL or coordinate
+completion of the blocking transaction; verify cancellation, cleanup and released locks rather
+than assuming the waiting migration is harmless or killing unrelated sessions.
+
 Sources: [Connector/J implementation notes](https://dev.mysql.com/doc/connectors/en/connector-j-reference-implementation-notes.html),
-[Connector/J cursor properties](https://dev.mysql.com/doc/connector-j/en/connector-j-connp-props-performance-extensions.html),
+[Connector/J performance properties](https://dev.mysql.com/doc/connector-j/en/connector-j-connp-props-performance-extensions.html),
 and [Connector/J 8.4.0 source](https://github.com/mysql/mysql-connector-j/tree/8.4.0/src/main) —
 `JdbcPropertySetImpl`, `StatementImpl` and `ResultsetRowsStreaming` define the reference behavior;
 the unversioned guide does not establish behavior of every deployed driver.
+For rewritten update counts, see the tagged [ClientPreparedStatement implementation](https://github.com/mysql/mysql-connector-j/blob/8.4.0/src/main/user-impl/java/com/mysql/cj/jdbc/ClientPreparedStatement.java),
+especially `executeBatchWithMultiValuesClause`.
 For DDL use the [MySQL 8.4 operation matrix](https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html),
 [ALTER TABLE concurrency clauses](https://dev.mysql.com/doc/refman/8.4/en/alter-table.html),
 [algorithm/lock concurrency rules](https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-performance.html),

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jfr-and-async-profiler
-version: 1.4.2
+version: 1.4.3
 description: >-
   Selecting the least-perturbing JVM evidence source that matches the question: JFR events and
   timeline versus async-profiler sampling, CPU versus elapsed/off-CPU, allocation versus

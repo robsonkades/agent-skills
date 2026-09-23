@@ -77,6 +77,29 @@ have committed its duration event. Report that unfinished population using threa
 and any justified observed lower bounds; a completed-event summary alone cannot rule out a long
 wait. Do not turn a missing event into zero duration or an invented completed acquisition.
 
+### Wait event versus wait-call latency
+
+The `Object.wait` contract requires restored monitor ownership before return or an interruption
+exception, but an event named `JavaMonitorWait` need not cover that entire interval. In OpenJDK
+25 GA's platform-thread `ObjectMonitor::wait` path, `post_monitor_wait_event` commits before the
+subsequent `enter` or `reenter_internal` call. Thus the event can finish while the caller still
+cannot proceed. Do not assume a separate `JavaMonitorEnter` event accounts for every remaining
+reacquisition path; check the target implementation and thread kind.
+
+When the question is full wait-call latency, correlate thread state/owner evidence or use bounded
+application timing around the complete call, including exceptional completion. Report separately
+what the event measured and what remains unknown. A long condition wait may be intentional;
+neither the event's name nor its duration alone establishes harmful monitor contention.
+
+### Previous owner versus hold-time attribution
+
+In the JDK 25 event schema, `JavaMonitorEnter` carries the acquiring thread's stack and a
+`previousOwner` thread identity; it does not capture that owner's hold stack or a history of
+owners. Other contenders, intervening owners and scheduling can contribute to the observed delay.
+Treat the identity as a correlation lead, not evidence that one owner held the monitor for the
+whole event duration. Match it with owner samples, guarded code or hold instrumentation before
+attributing a slow operation or recommending a lock-scope change.
+
 Instrument hold time at application boundary only if overhead/reentrancy/exceptions are handled and
 the critical section is known. High-cardinality monitor/object labels should stay in bounded
 diagnostic artifacts, not fleet metrics.
@@ -110,6 +133,8 @@ Report inconclusive if event opportunity/threshold or workload drift prevents di
 
 - [Java 25 Flight Recorder settings and control API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html) — event discovery, thresholds, stacks and commitment.
 - [OpenJDK 25 GA monitor-event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml) — inspect the actual target schema before consuming fields.
+- [OpenJDK 25 GA monitor implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/objectMonitor.cpp) — event commitment, previous-owner recording and wait/reacquisition boundaries.
+- [Java 25 Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)>) — reacquisition before return or interruption exception.
 - [JDK `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [Java monitoring API `ThreadInfo`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadInfo.html)
 - [JEP 444 thread observability](https://openjdk.org/jeps/444)

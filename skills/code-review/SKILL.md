@@ -31,8 +31,10 @@ was a formality. Both come from not deciding, up front, what this particular rev
    tests and relevant contracts before assuming intended behavior. If the requirement remains
    ambiguous, ask a focused question while continuing checks independent of that answer.
 2. **Set the depth from the risk**, not the diff size: what breaks if this is wrong, how
-   quickly would it be noticed, and can it be rolled back? A 400-line refactoring under test
-   is a lighter review than a 4-line change to a payment path.
+   quickly would it be noticed, and can it be rolled back? A four-line payment logic change
+   may need deeper review than a 400-line refactor, but the refactoring label and a green suite
+   do not prove behavior preservation. Inspect affected invariants, contracts and test coverage
+   before reducing review depth.
 3. **Look in payoff order** (`references/what-to-look-for.md`): does it do the right thing;
    does it fail well; concurrency and data; compatibility and migration; security; can it be
    operated; are the tests capable of failing. Reorder by concrete risk: authentication changes

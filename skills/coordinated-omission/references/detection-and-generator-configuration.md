@@ -95,6 +95,12 @@ responses share the batch's expected start; default recording includes each resp
 `-B` records only the last response of the batch. Request throughput and histogram count
 therefore need not have the same denominator. Verify the deployed fork before interpreting it.
 
+The JMeter manual specifies that **Open Model Thread Group interrupts threads when its schedule
+ends**. A bounded trailing `pause(...)` can provide drain time for existing users; it does not
+schedule new arrivals during that pause. Verify the installed version and count interrupted or
+unresolved operations after the declared drain. Excluding their unfinished waits is outcome
+selection/censoring, not by itself proof of response-coupled omission.
+
 ## k6 example and guardrails
 
 ```javascript
@@ -117,6 +123,13 @@ preallocating from trial evidence and notes that insufficient VUs emit `dropped_
 Record iteration duration (which includes script work), VU use, dropped iterations, generator CPU
 and actual request-start timestamps. One iteration may issue zero, one or many requests, so
 iteration schedule is not automatically endpoint arrival schedule.
+
+Check the metric's clock separately: k6 `http_req_duration` is the sum of sending, waiting and
+receiving time. It excludes initial DNS lookup/connection times and does not measure
+`completion−scheduledStart`. Inspect blocked/connect/TLS and iteration timings where client waits
+matter, and use paired timestamps for the required end-to-end boundary. Adding component p99s
+does not produce the p99 of their sum. An arrival-rate executor does not change the definition
+of `http_req_duration`.
 
 ## Validation protocol
 
@@ -144,6 +157,7 @@ and drain policy; generator validation is not permission to increase load withou
 - [wrk2 pipeline response recording, pinned implementation](https://github.com/giltene/wrk2/blob/44a94c17d8e6a0bac8559b53da76848e430cb7a7/src/wrk.c#L508-L558)
 - [Grafana k6: constant-arrival-rate executor](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
 - [Grafana k6: arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
+- [Grafana k6: built-in metric boundaries](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
 - [Gatling workload models](https://docs.gatling.io/testing-concepts/workload-models/)
 - [Gatling injection reference](https://docs.gatling.io/concepts/injection/)
 - [Apache JMeter component reference](https://jmeter.apache.org/usermanual/component_reference.html)

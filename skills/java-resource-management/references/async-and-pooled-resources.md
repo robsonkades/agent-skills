@@ -31,9 +31,15 @@ supplier, not at the `try`. Three legitimate fixes, in order of preference:
    }, ioExecutor);
    ```
 2. **Move ownership to a completion protocol.** Only when the resource genuinely must span stages.
-   Return the dependent stage that performs release and preserve close failures. Do not assume
-   `whenComplete(close)` is enough: cancellation may complete a `CompletableFuture` callback while
-   an underlying task that ignores/does not receive cancellation still uses the resource.
+   Keep cleanup and its failure observation under the lifetime owner's control; expose a separate
+   caller result with an explicit cancellation policy. In OpenJDK 21's base `CompletableFuture`,
+   cancelling or completing the dependent returned by `whenComplete` before its action starts can
+   skip that action entirely. Conversely, cancelling the source can run cleanup before underlying
+   use stops. A private cleanup stage must therefore follow an owner-controlled signal of actual
+   use termination, not merely the exposed future's completion. Handle synchronous startup failure
+   after acquisition too. If cleanup is dispatched, executor rejection also needs a release path.
+   Verify that caller cancellation neither skips release nor releases during live use, and that
+   the owner observes close failure even after the caller has stopped waiting.
 3. **Use structured concurrency**, placing the task scope inside the resource scope so all
    resource-using subtasks finish before the resource closes. Reversing close order is still
    unsafe. See structured-concurrency for the lifetime guarantee and its limits.
@@ -144,6 +150,7 @@ cover those conditional recovery concerns.
 - [StructuredTaskScope preview contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html)
 - [JEP 505: Structured Concurrency, fifth preview](https://openjdk.org/jeps/505)
 - [CompletableFuture cancellation contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>)
+- [OpenJDK 21+35 CompletableFuture: dependent completion and uniWhenComplete](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/util/concurrent/CompletableFuture.java)
 - [Runtime shutdown hooks, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Runtime.html#addShutdownHook(java.lang.Thread)>)
 - [Netty 4.1 reference-counted release](https://netty.io/4.1/api/io/netty/util/ReferenceCounted.html)
 - [HikariCP leak-detection setting](https://github.com/brettwooldridge/HikariCP#frequently-used)

@@ -43,6 +43,8 @@ over a stated horizon are all possible outcomes.
 3. **Price both sides.** What does taking it buy — days, a deadline, information? What does
    carrying it cost over the relevant horizon? Distinguish initial benefit, ongoing cost,
    repayment effort and change risk; use ranges and comparable units.
+   On reassessment, compare future differences between options; effort already spent or a
+   past deadline does not by itself justify continuing a rewrite or retaining a shortcut.
 4. **Choose proportionate containment.** An existing boundary or local guard may be enough.
    Compare the cost and failure modes of added containment with the exposure it reduces;
    a new interface or flag is not automatically necessary or cheap.

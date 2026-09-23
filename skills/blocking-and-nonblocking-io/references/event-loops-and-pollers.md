@@ -59,7 +59,8 @@ Use source review to locate candidate calls and instrumentation to exercise thos
 Neither proves the absence of blocking in unexercised or uninstrumented native code.
 
 ```java
-// Partial test setup; requires a compatible reactor-tools BlockHound dependency.
+// Partial test setup; requires compatible io.projectreactor.tools:blockhound
+// and import reactor.blockhound.BlockHound.
 // Test scope only. It instruments known blocking methods and fails when one is
 // called on a thread marked non-blocking.
 BlockHound.install();
@@ -106,8 +107,10 @@ The scheduler-wide cap is not a safe proxy for a database pool or vendor quota. 
 resource-local limit, measure pending/rejected tasks, and verify the Reactor version's exact
 defaults before setting the flag.
 
-The event loops themselves stay on platform threads, and should: a loop thread is meant to be
-runnable almost all the time, which is what a platform thread is good at.
+That property changes boundedElastic, not the event-loop transport or its thread factory.
+Configured Netty event loops normally retain their dedicated platform threads and channel
+affinity. An idle loop can wait for readiness; it need not be runnable most of the time.
+Measure busy-loop CPU separately from time waiting in the selector/poller.
 
 ## Diagnostics by model
 
@@ -147,3 +150,5 @@ what the model costs in diagnosability.
   reference for the project's release before relying on defaults.
 - [BlockHound project documentation](https://github.com/reactor/BlockHound):
   instrumentation scope, thread marking and JVM compatibility requirements.
+- [Netty 4.1 SingleThreadEventLoop](https://netty.io/4.1/api/io/netty/channel/SingleThreadEventLoop.html):
+  single-thread execution for registered channels; inspect the deployed transport and factory.

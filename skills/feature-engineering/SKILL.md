@@ -39,7 +39,8 @@ reopened when evidence makes a downstream artefact stale.
    invalidation rules and return to the owner of the affected stage.
 4. **Hold the gates.** A BLOCKING question prevents dependent implementation. Continue independent
    analysis or resources only when their own readiness is satisfied and they do not prejudge the
-   unresolved choice. No resource becomes DONE without observed validation evidence.
+   unresolved choice. Readiness covers only the stated scope; completion requires observed passing
+   evidence for its Required criteria. An accepted gap cannot make an unverified resource DONE.
 5. **Write decisions when made**, not at the end. A decision recalled at review time is a
    justification, and those differ from reasoning exactly where it matters.
 6. **Report state, not intention:** reviewed revisions, current phase, decisions, stale artefacts,
@@ -47,12 +48,14 @@ reopened when evidence makes a downstream artefact stale.
 
 ## Depth and persistence
 
-| Depth        | Fits when                                                                                                              |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| **Light**    | One local outcome, known behavior, reversible, no boundary/schema change and no material choice                        |
-| **Standard** | Several components, a shared boundary touched, a meaningful choice, or a regulated concern                             |
-| **Deep**     | New technology/integration, public or breaking contract, migration, PoC, costly reversal, or several authority domains |
+| Depth        | Fits when                                                                                                                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Light**    | One local outcome, known behavior, one authority domain, reversible, no new dependency or boundary/schema change and no material choice                                                    |
+| **Standard** | Several components, compatible shared/internal contract change, meaningful choice, or established and contained regulatory obligations                                                     |
+| **Deep**     | New technology/integration, public or breaking contract, migration, decision-relevant PoC, material security/privacy/compliance consequence, costly reversal, or several authority domains |
 
+An unknown material driver prevents Light until resolved. Use the detailed driver list in
+[depth and phases](references/depth-and-phases.md); a small diff does not imply low consequence.
 Persistence is **Dossier** when work crosses sessions or owners, or depth is Standard/Deep; otherwise
 it is **Inline**. Crossing a session changes persistence, not technical risk. Reclassify on evidence;
 never lower past an active material driver merely to shorten the process.
@@ -156,8 +159,9 @@ repository's existing convention. The dossier is a working resumption and audit 
 ceremonial deliverable assembled at the end.
 
 When reviewing or evolving the lifecycle itself, use
-[the behavioral validation cases](references/validation-cases.md). They are evaluation scenarios,
-not extra runtime ceremony.
+[the worked lifecycle cases](references/validation-cases.md) to check consequential transitions.
+They teach the intended behavior and provide known regression scenarios, not extra runtime ceremony
+or evidence of measured improvement.
 
 ## Output
 
@@ -170,4 +174,8 @@ stale artefacts, accepted gaps, blockers, and next transition. Normalize readine
 - RETURN TO ENGINEERING;
 - DECOMPOSE BEFORE PROCEEDING.
 
-Only the first two advance. A Light/Inline report may still be three lines.
+Only the first two advance the stated scope. Readiness does not establish completion or authorize
+deployment/publication. At completion, report **Complete: yes/no** against the accepted baseline,
+with the Required criteria's observed evidence and any missing or failed checks, using
+feature-readiness-review. Accepted gaps remain gaps; an authorized scope amendment changes the
+baseline explicitly. A Light/Inline report may still be three lines.

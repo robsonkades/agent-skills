@@ -55,6 +55,13 @@ isolated workspace/home, reviewed Maven/Flyway configuration and fixture-only cr
 clearing inherited connection overrides. Pin plugin/database/client versions. Provisioning
 and credentials are harness responsibilities, not supplied by this fragment.
 
+Patched `pg_dump` versions can emit random `\restrict`/`\unrestrict` keys even for an unchanged
+schema. The fixed key below is only for comparing this trusted, owned test fixture, using a
+client that supports `--restrict-key`. Treat the output as a comparison artifact, not a backup
+to restore. Do not apply a known key to untrusted-server dumps or general backup/restore jobs:
+the random key protects the restoring client from injected commands. Retain ordinary protected
+dumps for those uses rather than stripping their protection to obtain a clean diff.
+
 ```bash
 set -euo pipefail
 : "${MAPPING_TEST_PORT:?owned fixture port required}"
@@ -62,6 +69,10 @@ set -euo pipefail
 [[ "$MAPPING_TEST_PORT" =~ ^[1-9][0-9]{0,4}$ ]] &&
   (( MAPPING_TEST_PORT <= 65535 )) || exit 2
 [[ "$MAPPING_TEST_DB" =~ ^[a-z][a-z0-9_]*$ ]] || exit 2
+pg_dump --help | grep -- '--restrict-key' >/dev/null || {
+  printf '%s\n' 'Pinned pg_dump must support --restrict-key for this comparison' >&2
+  exit 2
+}
 mkdir -p target
 ./mvnw "-Dflyway.url=jdbc:postgresql://127.0.0.1:${MAPPING_TEST_PORT}/${MAPPING_TEST_DB}" \
   -Dflyway.user=mapping_test -Dflyway.schemas=public -Dflyway.defaultSchema=public flyway:migrate
@@ -69,14 +80,15 @@ mkdir -p target
   unset PGHOSTADDR PGSERVICE PGSERVICEFILE PGOPTIONS
   pg_dump --host=127.0.0.1 --port="$MAPPING_TEST_PORT" --username=mapping_test \
     --dbname="$MAPPING_TEST_DB" --schema=public --no-password \
-    --schema-only --no-owner --no-privileges
+    --schema-only --no-owner --no-privileges --restrict-key=MetadataMappingSnapshot
 ) > target/schema.sql
 diff -u src/test/resources/expected-schema.sql target/schema.sql
 ```
 
 The committed expected schema then reviews as part of the pull request, which is the point:
 a schema change becomes visible to a reviewer instead of being an inference from a
-migration file. This snapshot covers the selected schema; normalize irrelevant dump
+migration file. Create the expected snapshot with the same comparison options. This snapshot
+covers the selected schema; normalize irrelevant dump
 ordering/version noise without removing meaningful differences. It does not validate
 excluded objects, data migrations, runtime SQL or privileges.
 

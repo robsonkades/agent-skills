@@ -135,7 +135,8 @@ public final class Period implements Serializable {
     private final Date start;
     private final Date end;
 
-    public Period(Date start, Date end) { ... }        // validates, copies
+    // Copies dates; rejects start > end with IllegalArgumentException.
+    public Period(Date start, Date end) { ... }
 
     private static final class SerializationProxy implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -148,8 +149,14 @@ public final class Period implements Serializable {
         }
 
         // Deserialization ends here, going through the real constructor:
-        private Object readResolve() {
-            return new Period(new Date(startEpochMilli), new Date(endEpochMilli));
+        private Object readResolve() throws InvalidObjectException {
+            try {
+                return new Period(new Date(startEpochMilli), new Date(endEpochMilli));
+            } catch (IllegalArgumentException invalidBounds) {
+                InvalidObjectException failure = new InvalidObjectException("invalid period bounds");
+                failure.initCause(invalidBounds);
+                throw failure;
+            }
         }
     }
 
@@ -166,6 +173,13 @@ What it buys: deserialization runs the ordinary constructor, so validation and d
 apply; fields can be `final`; the class's internal representation can change while the proxy's
 form stays stable; and the "hand-crafted stream" attacks are closed by the `readObject` that
 always throws.
+
+The proxy maps the constructor's declared invalid-state exception to the stream's rejection
+contract, preserving its cause. Ordinary `readResolve` does not automatically wrap runtime
+exceptions; do not assume the record canonical-constructor rule applies to it. Catch the
+expected validation failure, not every `RuntimeException` or `Throwable`, which could conceal
+an unrelated defect. See the [serialization input contract](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html)
+and [OpenJDK 25 readResolve invocation](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/java.base/share/classes/java/io/ObjectStreamClass.java).
 
 Its limits: it does not work for classes that clients may extend, nor for object graphs with
 cycles through the proxied class (the `readResolve` would see a not-yet-constructed object),
@@ -216,8 +230,11 @@ Serialization bugs surface across time, not within a single build. The tests tha
   API/serialization-form diff tooling can complement it but does not replace execution.
 - **Round trip with mutation.** Deserialize, mutate what the stream could have aliased, and
   assert the object is unaffected — the defensive-copy test.
-- **Hostile stream.** Feed a stream with an invalid value and assert `InvalidObjectException`,
-  not a corrupt object.
+- **Hostile stream.** Feed invalid state through the class and proxy paths and assert the
+  declared rejection contract (`InvalidObjectException` for the validation examples above),
+  with no corrupt object returned. Check the preserved validation cause where applicable.
+  Corrupt stream structure and filter rejection have their own exception contracts; do not
+  require every deserialization failure to have one exception type.
 - **Forward compatibility**, when old readers coexist: exercise new-writer/old-reader. If it
   fails, keep the writer on the old form, use a versioned envelope/dual-write protocol, or drain
   and fence old readers before switching. A cache flush is safe only if repopulation cannot race

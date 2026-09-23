@@ -82,6 +82,36 @@ Exact mode improves attribution but still needs representative execution to reac
 path. `Warn` helps inventory multiple gaps; `Exit` is useful in a correctness gate where caught
 errors must not be hidden. Confirm these runtime options against the selected release.
 
+### Conditional inclusion and runtime activation
+
+In GraalVM 25's unified metadata, `typeReached` has two gates: inclusion when the condition type is
+reachable during analysis, then availability when it is reached at runtime, before its
+initialization starts or when a subtype is reached. A class literal alone does not activate it.
+Build-time-initialized types satisfy the condition as documented; do not change initialization
+timing merely to enable metadata.
+
+```json
+{
+  "reflection": [
+    {
+      "condition": { "typeReached": "com.example.PluginBootstrap" },
+      "type": "com.example.Plugin",
+      "methods": [{ "name": "<init>", "parameterTypes": [] }]
+    }
+  ]
+}
+```
+
+For this entry to supply access, `PluginBootstrap` must be reached before reflective plugin
+lookup/construction. Guarding that lookup with `Plugin` itself creates a circular prerequisite if
+reflection is its only activation path. Choose an owner guaranteed to run first, or justify a
+narrow unconditional bootstrap entry.
+Legacy JDK 21 `typeReachable` describes build-time reachability; migration requires reviewing
+runtime ordering, not simply renaming the key.
+
+Test the native artifact with the optional path absent/present and access before/after the trigger.
+Schema validity alone proves neither activation nor completeness.
+
 ## Class initialization and image-heap state
 
 Java requires a class to initialize at first active use. Native Image may move initialization to
@@ -197,6 +227,9 @@ platform being deployed:
 
 - [Native Image overview](https://www.graalvm.org/latest/reference-manual/native-image/)
 - [Reachability Metadata](https://www.graalvm.org/latest/reference-manual/native-image/metadata/)
+- [Conditional metadata, GraalVM for JDK 25](https://www.graalvm.org/jdk25/reference-manual/native-image/metadata/#conditional-metadata-entries)
+- [Legacy conditions, GraalVM for JDK 21](https://www.graalvm.org/jdk21/reference-manual/native-image/metadata/#specifying-metadata-with-json)
+- [Unified metadata schema, GraalVM 25.0.0](https://github.com/oracle/graal/blob/graal-25.0.0/docs/reference-manual/native-image/assets/reachability-metadata-schema-v1.1.0.json)
 - [Class Initialization](https://www.graalvm.org/latest/reference-manual/native-image/optimizations-and-performance/ClassInitialization/)
 - [Memory Management](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/native-image/optimizations-and-performance/MemoryManagement/)
 - [Debugging and Diagnostics](https://www.graalvm.org/latest/reference-manual/native-image/debugging-and-diagnostics/)

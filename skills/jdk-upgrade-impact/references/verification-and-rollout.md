@@ -41,6 +41,31 @@ Use `deny` when exercised code or dependencies may use Unsafe memory access; `de
 identify callers without forcing failure. A clean run covers only the paths exercised, not every
 dependency or production configuration. Other breakage classes still need their own checks.
 
+### Audit the destination API without changing the published release
+
+With `javac --release 17`, even a JDK 25 compiler checks against the JDK 17 API. Its lint
+does not reveal deprecations introduced later: `new URL(String)` can pass those lint flags
+although that constructor is deprecated in the JDK 25 runtime. Keep the existing release
+contract and add a target-release bytecode scan using the destination JDK's `jdeprscan`.
+
+```bash
+# Bash recipe for JDK 25; replace paths with existing compiled outputs.
+# Set AUDIT_CLASSPATH to the resolved dependency paths (':' on Unix, ';' on Windows).
+jdeprscan --release 25 --class-path "$AUDIT_CLASSPATH" build/classes/java/main
+jdeprscan --release 25 --class-path "$AUDIT_CLASSPATH" path/to/dependency.jar
+```
+
+Check `jdeprscan --help` for supported releases. Supply dependencies for class resolution;
+placing them on the classpath does not audit their implementations. Scan the relevant
+dependency artifacts as inputs too. Missing-class diagnostics leave coverage incomplete,
+even if the command exits successfully. Do not label that output clean.
+
+The scanner reports uses of deprecated **Java SE** APIs, not third-party deprecations or a
+complete inventory of removed/behaviorally changed APIs. `--for-removal` narrows the result;
+do not use it as the only pass when ordinary deprecations matter. Reflection-selected calls,
+generated code and unexamined artifacts still need inspection or runtime coverage. For
+example, a reflective `Thread.stop()` call can escape the scan and still fail on JDK 25.
+
 ## What to measure, and against what
 
 Prefer a pre-upgrade baseline with the method repeated on the target. If it was not captured,
@@ -102,6 +127,7 @@ must still be deployable. Two things quietly break that:
 
 - [JDK 25 java launcher](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html) — CDS launch modes, preview and diagnostic options.
 - [JDK 25 javac](https://docs.oracle.com/en/java/javase/25/docs/specs/man/javac.html) — release and warning options.
+- [JDK 25 jdeprscan](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jdeprscan.html) — target-release analysis, classpath resolution and Java SE coverage.
 
 ## When it stalls
 

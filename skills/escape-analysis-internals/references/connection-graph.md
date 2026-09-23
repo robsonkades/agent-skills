@@ -55,17 +55,20 @@ Parse: bytecode -> sea of nodes (parse-time inlining already resolved)
                    and candidates remain (iterative EA, compile.cpp)
 ```
 
-| State        | Definition                                                                                                                   | Scalar replacement                    | Lock elision |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------ |
-| NoEscape     | Not reachable outside the method or the thread by any edge                                                                   | **Yes**, if also "scalar replaceable" | Yes          |
-| ArgEscape    | Reachable by a called method that was not inlined; no edge reaches a static field, a return or a thread                      | **No — never**                        | Yes          |
-| GlobalEscape | Reachable from a static field, a field of an escaping object, the method's return, another thread, or a call with no summary | No                                    | No           |
+| State        | Definition                                                                                                                   | Scalar replacement                    | EA lock eligibility |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------------------- |
+| NoEscape     | Not reachable outside the method or the thread by any edge                                                                   | **Yes**, if also "scalar replaceable" | Eligible            |
+| ArgEscape    | Reachable by a called method that was not inlined; no edge reaches a static field, a return or a thread                      | **No — never**                        | Eligible            |
+| GlobalEscape | Reachable from a static field, a field of an escaping object, the method's return, another thread, or a call with no summary | No                                    | Ineligible          |
 
 Two things the table hides. NoEscape is necessary, not sufficient: step 4 can still refuse
 scalar replacement (non-constant array index, too many fields, identity hash, mixed unsafe
 access — the full list is the table in `diagnosing-elimination.md`), and such an object keeps
-its allocation while its lock still elides. And an object's **fields** carry their own escape
-state: a callee that reads the argument but stores something into one of its fields leaves the
+its allocation while its lock may still elide. EA lock eligibility also requires
+`EliminateLocks` and a balanced compiled locking region: `can_eliminate_lock` checks that
+its paths have corresponding lock/unlock pairs. Escape state alone is not a removal verdict;
+nested-lock elimination and coarsening are separate transformations. An object's **fields**
+carry their own escape state: a callee that reads the argument but stores something into one of its fields leaves the
 argument ArgEscape and marks its fields GlobalEscape (`set_fields_escape_state`), which is what
 stops the analysis from reasoning about what the fields contain.
 
@@ -186,8 +189,8 @@ There is no partial expansion through the third door. That, plus the first two, 
 mechanical distinction for one compiled graph. Measured bytes/op need not be binary: execution
 frequency, caches, mixed compiled versions, warm-up and rematerialization can produce averages.
 
-For locks the doors are analogous. `EliminateLocks` removes a `LockNode`/`UnlockNode` pair
-whose object is NoEscape or ArgEscape (`can_eliminate_lock`, kind `NonEscObj`);
+For locks the doors are analogous. With `EliminateLocks`, a balanced `LockNode`/`UnlockNode`
+region whose object is NoEscape or ArgEscape is eligible (`can_eliminate_lock`, kind `NonEscObj`);
 `EliminateNestedLocks` removes an inner pair on an object an enclosing inlined region already
 holds (`Nested`); lock coarsening (`AbstractLockNode::Ideal`, `Coarsened`) merges an unlock
 immediately followed by a lock on the same object into one region — the transformation that
@@ -196,12 +199,16 @@ of a slightly longer hold. Coarsening does not cross loop iterations.
 
 ## Boxing and string concatenation, the two special cases
 
-`Integer.valueOf` and friends are not ordinary calls under `EliminateAutoBox`. The call is
-parked as a **late boxing inline** (`Compile::inline_boxing_calls`) and its result is a
-JavaObject that is refused scalar replacement only when the fact that it "can be loaded from
-boxing cache" is observable; `AggressiveUnboxing` then folds an `intValue()` load through the
-box (`LoadNode::eliminate_autobox`, `memnode.cpp`), after which the box has no use and leaves
-by the second door. Measured: `Integer.valueOf(i + 1000).intValue()` is 0 bytes/op, 16
+`Integer.valueOf` and friends are specially handled under `EliminateAutoBox`. While a
+boxing call is deferred for late inlining, its result is a JavaObject; EA conservatively
+marks cache-capable boxing results GlobalEscape and not scalar replaceable. That does not
+prevent `AggressiveUnboxing` from folding an `intValue()` load through the boxing call
+(`LoadNode::eliminate_autobox`, `memnode.cpp`). If its result becomes unused,
+`PhaseMacroExpand::eliminate_boxing_node` can remove the remaining `CallStaticJavaNode`
+and log `<eliminate_boxing>`. This is distinct from removing an `AllocateNode` through
+either of the first two doors above; a boxing call that was inlined may instead expose an
+allocation to those paths. Match the log and graph representation before naming the mechanism.
+Measured: `Integer.valueOf(i + 1000).intValue()` is 0 bytes/op, 16
 bytes/op with `-XX:-DoEscapeAnalysis`, and 16 bytes/op when the box is stored into a list. A
 box that is rematerialised on deoptimisation is an `AutoBoxObjectValue`, so the cache identity
 (`Integer.valueOf(1) == Integer.valueOf(1)`) is preserved even then.
@@ -210,9 +217,12 @@ box that is rematerialised on deoptimisation is an `AutoBoxObjectValue`, so the 
 inlined `StringBuilder`/`StringBuffer` chains ending in `toString()`: it computes the final
 length and builds the `String` directly, removing the builder and its growable buffer.
 Measured: an explicit three-`append` chain is 31.6 bytes/op (the result `String` and its
-`byte[]`) and 63.6 bytes/op with the flag off. `"a" + i` compiled by javac 9+ is an
-`invokedynamic` and never enters this pass — its allocation is the same 31.6 bytes/op either
-way. The pass bails out if any intermediate builder escapes or the chain is not fully inlined.
+`byte[]`) and 63.6 bytes/op with the flag off. The lab's `"a" + i` used `invokedynamic` and
+measured the same 31.6 bytes/op either way. Default `javac` lowering uses that form for a
+Java 9+ target, but `javac 25 --release 8` still emits a builder chain. Inspect the effective
+release/target and `javap -c -p` output, not just compiler age: only the builder-chain shape
+is handled by `OptimizeStringConcat`. The pass bails out if any intermediate builder
+escapes or the chain is not fully inlined.
 
 ## Rematerialisation
 
@@ -280,6 +290,8 @@ Source links:
 
 - [HotSpot `escape.cpp`, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)
 - [HotSpot `macro.cpp`, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/macro.cpp)
+- [javac string concatenation lowering, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.compiler/share/classes/com/sun/tools/javac/jvm/StringConcat.java) — target-dependent selection in `makeConcat`.
+- [javac target capabilities, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/jdk.compiler/share/classes/com/sun/tools/javac/jvm/Target.java) — `hasStringConcatFactory` requires a Java 9+ target.
 - [JDK-8287061: allocation merge rematerialization](https://bugs.openjdk.org/browse/JDK-8287061)
 - [JDK-8316991: nullable allocation merges](https://bugs.openjdk.org/browse/JDK-8316991)
 - [JEP 410: Remove the Experimental AOT and JIT Compiler](https://openjdk.org/jeps/410)

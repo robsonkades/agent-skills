@@ -54,8 +54,8 @@ a demonstrated contract defect from a representation preference.
    encoded representations differ; identical encoded values can remain interchangeable.
 6. **Write `toString` for the person reading the incident**, then check what it discloses.
 7. **Verify by contract, not by example.** Reflexivity, symmetry, transitivity and the hash
-   obligation are properties: assert them over generated pairs, not over one hand-picked
-   pair.
+   obligation are properties: check individual values, pairs and triples as each law requires,
+   including generated/adversarial inputs rather than one hand-picked equal pair.
 
 ## Rules
 
@@ -69,6 +69,10 @@ a demonstrated contract defect from a representation preference.
   bucket or change equality without reindexing the stored entry. Behavior is unspecified;
   iteration may still find it, so do not rely on either lookup failure or success. A controlled
   remove-before-mutation and reinsert can suffice; immutable identity avoids that lifecycle burden.
+- Keep comparison-relevant state and comparator policy stable while elements/keys belong to a
+  `TreeSet`/`TreeMap`, even if equality and hash codes remain unchanged. Remove before changing a
+  sort key, then reinsert under the declared tie policy; changing the ordering policy may require
+  rebuilding the index. These collections do not automatically reindex mutated keys.
 - Prefer a record when the type _is_ its components. The generated `equals` and `hashCode`
   cover every component; the two edge cases to know are array components (compared by
   identity, which is valid only for that intended contract) and floating-point components (compared as by

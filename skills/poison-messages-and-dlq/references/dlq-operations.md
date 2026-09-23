@@ -9,14 +9,15 @@ fields and protected references for the actual source and consumer contract.
 ```java
 import java.net.URI;
 import java.time.Instant;
-import java.util.Map;
+import java.util.List;
 
 // Java 17 conceptual schema, not a complete validated/immutable DTO or serializer.
 public record DeadLetter(
-        byte[] boundedPayload,          // encrypted bytes, or null when blobRef is used
+        boolean sourceValueWasNull,     // original transport value, not a decoder's result
+        byte[] boundedPayload,          // protected bytes, null for original null or blobRef
         URI blobRef,                    // immutable protected object + digest for large data
         String payloadDigest,
-        Map<String, String> safeHeaders,// allow-list; never blindly copy credentials
+        List<SafeHeader> safeHeaders,   // ordered allow-list; bound count and encoded bytes
         String sourceSystem,            // cluster/account/namespace identity
         String sourceTopic,             // or queue name
         Integer sourcePartition,        // null for a queue
@@ -36,11 +37,15 @@ public record DeadLetter(
         String buildVersion,            // which deploy failed on it
         String schemaId,
         String operationId,
-        String traceId) {}              // distributed-tracing-design
+        String traceId) {               // distributed-tracing-design
+    public record SafeHeader(String name, byte[] value) {}
+}
 ```
 
-In an implementation, enforce payload/key bounds and origin variants and copy mutable arrays
-and header maps as required by the ownership contract; a record alone does not do this.
+In an implementation, enforce bounds and origin variants and copy mutable arrays, header lists
+and each header's value as required by the ownership contract; records alone do not do this.
+Validate payload representation: original null has neither inline bytes nor a blob; otherwise
+exactly one must be present. A zero-length byte array is present and is not a null value.
 Preserve any authoritative business sequence/version separately when replay requires it.
 
 Why each of the less obvious ones:
@@ -48,8 +53,22 @@ Why each of the less obvious ones:
 - **Raw bytes, not the object.** A payload may fail before it can be turned into an object.
   Storing `payload.toString()` loses the bytes and with them
   any chance of diagnosing an encoding or schema problem.
+- **Null is a source value, not missing evidence.** A Kafka tombstone can be a valid deletion
+  under the consumer contract. A deserializer may also yield null after failing on non-null
+  bytes; inspect its error metadata and retained input. Never replay that failure as a deletion
+  or replace an original null with empty bytes. If the original representation is unknown,
+  record the evidence gap rather than asserting `sourceValueWasNull`.
+- **Replay headers have their own data contract.** Kafka permits repeated header names and
+  byte-array values, with ordered iteration. Keep required allowlisted entries in that form;
+  flattening into a string map or decoding arbitrary values as UTF-8 can change replay behavior.
+  A diagnostic text summary is not a replacement for required replay metadata.
 - Bound inline size; for a large payload store an immutable encrypted blob plus digest and
-  access-controlled reference. Broker message-size limits apply again on the DLQ path.
+  access-controlled reference. Budget the complete serialized envelope, key and headers against
+  the producer/broker limits, including encoding/encryption overhead. Repeated recovery can
+  accumulate exception/origin headers until publication fails even with a small payload.
+  Retain only required inline history or externalize protected evidence without removing replay
+  prerequisites; if the remaining envelope cannot be durably published, do not acknowledge source
+  work. Check the deployed recoverer's header append/strip policy rather than assuming it is bounded.
 - **`sourcePartition` and `sourceOffset`.** Without them you cannot tell whether the record was
   skipped (leaving an ordering gap) or the partition was blocked, and you cannot reconstruct
   the sequence around it while the source retention lasts.
@@ -67,6 +86,14 @@ only when its remaining lifetime meets that contract; it is not an unexplored de
 Verify the broker's retention clock. SQS standard DLQ expiry uses original enqueue time;
 FIFO resets that timestamp on transfer. An age metric may measure time since DLQ arrival
 instead of remaining lifetime, so it cannot alone prove adequate recovery time.
+
+For a Kafka DLT, inspect effective `cleanup.policy` as well as time/size retention. Compaction
+by the original business key can remove earlier unresolved failures for that key. Preserve each
+required disposition with an append-retained topic or a unique quarantine key, retaining the
+original key separately for replay. A compacted disposition ledger can be intentional when
+updates represent the same quarantine identity. If a failed original-null record must survive,
+publish a non-null envelope containing its null marker; a naked null DLT value is a tombstone
+under compaction. Validate that the selected policy preserves the actual recovery workload.
 
 Apply the source's data classification or stricter controls: encryption, tenant-scoped ACLs,
 audit, legal hold/deletion, regional residency and field minimization. Stack traces and headers
@@ -195,12 +222,22 @@ transactions, retention or rebalances. Reuse adequate prior evidence for an unch
 - **Effect ambiguity and ordering.** Apply an external effect, lose its response and replay;
   assert one logical effect. Fail `A:48` while `A:49` arrives during delayed retry/rebalance;
   assert the chosen gate or documented reconciliation, not merely ordered DLQ reads.
-- **Privacy/size.** Include oversized payload, secrets in headers/stack and tenant isolation;
-  assert blob fallback, redaction, ACLs and deletion of envelope plus blob.
+- **Envelope fidelity.** Distinguish source null, empty bytes, externalized bytes and decoder
+  failure on non-null input. Round-trip required duplicate/binary headers in order. For a
+  compacted DLT, test two unresolved failures with the same original business key and a failed
+  tombstone; each required quarantine disposition must remain recoverable after cleaning.
+- **Privacy/size.** Include oversized payload, accumulated retry headers/stack, secrets and tenant
+  isolation; assert complete-envelope bounds, blob fallback, redaction, ACLs and deletion of
+  envelope plus blob. Failed quarantine publication must not advance the source acknowledgement.
 
 ## Primary references
 
 - [Kafka 4.1 transactions and delivery semantics](https://kafka.apache.org/41/design/design/#semantics)
+- [Kafka 4.1 compaction and tombstones](https://kafka.apache.org/41/design/design/#compaction)
+- [Kafka 4.1 headers: repeated names and iteration order](https://kafka.apache.org/41/javadoc/org/apache/kafka/common/header/Headers.html)
+- [Kafka 4.1 header values](https://kafka.apache.org/41/javadoc/org/apache/kafka/common/header/Header.html)
+- [Spring Kafka 3.3 null values and tombstones](https://docs.spring.io/spring-kafka/reference/3.3/kafka/tombstones.html)
+- [Spring Kafka 3.3 dead-letter header growth and publication failures](https://docs.spring.io/spring-kafka/reference/3.3/kafka/annotation-error-handling.html)
 - [AWS SQS dead-letter queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
 - [AWS SQS redrive: rate, ordering and new message identity](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html)
 - [Google Cloud Pub/Sub dead-letter topics](https://cloud.google.com/pubsub/docs/dead-letter-topics)

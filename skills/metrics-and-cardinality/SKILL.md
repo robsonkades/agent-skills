@@ -115,10 +115,12 @@ from one layer does not establish containment at another.
 
 ### 7. Validate and migrate
 
-Check changed normalization, unknown values, meter lifecycle and query aggregation with
-focused fixtures. Measure overhead or worst cardinality when existing evidence does not
-cover the proposed configuration/workload. For incompatible units, labels or histogram
-populations, plan a safe transition such as versioned dual publication and staged consumer
+Check changed normalization, unknown values, registration failures, filter-induced identity
+collisions, meter lifecycle and query aggregation with focused fixtures. A returned meter
+handle alone does not establish that the expected cohort reaches the scrape. Measure overhead
+or worst cardinality when existing evidence does not cover the proposed configuration/workload.
+For incompatible units, labels or histogram populations, plan a safe transition such as
+versioned dual publication and staged consumer
 migration without mixing schemas. A compatible addition need not migrate unchanged metrics.
 
 ## Label decision framework
@@ -154,15 +156,15 @@ classes. Use separate metric families when labels would mix incompatible quantit
 
 ## Failure modes
 
-| Symptom                                 | Distinguish with                                       | Response                                                   |
-| --------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
-| active series rises after deploy        | per-name/label combinations and churn                  | drop/relabel containment, fix source                       |
-| backend cost rises without active count | samples, scrape interval, histogram density/churn      | inspect ingestion and native/classic representation        |
-| gauge disappears/NaN                    | object lifecycle, callback exception, scrape gap       | fix ownership/computation; alert on absence where expected |
-| histogram query empty                   | export type/name/schema/buckets and selectors          | inspect exposition before changing query                   |
-| fleet p99 implausible                   | summaries/client quantiles averaged, missing le/schema | aggregate compatible histogram populations                 |
-| SLO denominator drops                   | rejected/timeout path, tag overflow, scrape limit      | restore logical-operation accounting                       |
-| instrumentation changes latency         | hot-path lookup/allocation/export pressure             | cache handles, sample/aggregate, reduce dimensions         |
+| Symptom                                 | Distinguish with                                               | Response                                                                       |
+| --------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| active series rises after deploy        | per-name/label combinations and churn                          | drop/relabel containment, fix source                                           |
+| backend cost rises without active count | samples, scrape interval, histogram density/churn              | inspect ingestion and native/classic representation                            |
+| gauge disappears/NaN or omits sources   | object lifecycle, ID collision, callback, scrape gap           | fix ownership/computation/aggregation; alert when an expected metric is absent |
+| histogram query empty                   | export type/name/schema/buckets and selectors                  | inspect exposition before changing query                                       |
+| fleet p99 implausible                   | summaries/client quantiles averaged, missing le/schema         | aggregate compatible histogram populations                                     |
+| SLO denominator drops                   | rejected/timeout path, registration failure, tag/scrape limits | restore logical-operation accounting                                           |
+| instrumentation changes latency         | hot-path lookup/allocation/export pressure                     | cache handles, sample/aggregate, reduce dimensions                             |
 
 ## Anti-patterns
 

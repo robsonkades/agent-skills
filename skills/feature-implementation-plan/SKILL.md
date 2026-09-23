@@ -32,14 +32,19 @@ keeping it true rather than about writing it well the first time.
    is incomplete for dependent work — route that decision while assembling independent parts.
 2. **Order the resources** from their dependencies, and mark which arrows are forced. The order
    is a dependency graph, not necessarily one chain. Validate IDs/cycles and identify ready work;
-   shared-file ownership and integration/release gates may constrain otherwise independent nodes.
+   preserve each dependency's stage and condition: implementation input, validation prerequisite
+   or release gate. An accepted contract/fixture may permit implementation before the real producer
+   is ready, while integration/release still waits. Shared-file ownership also constrains parallel work.
 3. **Name every change of kind** — schema, contract, configuration, security, observability,
    messaging — in a discoverable section or compact labelled entry. These are the entries
    people search for, and a change buried in a resource description is not found.
 4. **State the test strategy per resource kind**, not as a paragraph. What level, against what,
    and what it must establish.
 5. **Write migration, deployment and rollback as sequences**, with the ordering constraint
-   spelled out. "Deploy then migrate" and "migrate then deploy" are different plans.
+   spelled out. "Deploy then migrate" and "migrate then deploy" are different plans. For material
+   operational steps, carry accepted prerequisites, success/stop conditions, recovery checks and
+   responsible roles. Missing criteria remain unresolved for the affected step; do not invent
+   thresholds or block independent preparation.
 6. **Assemble, do not author, acceptance.** Carry accepted `BAC-*` from Product and `TC-*` from
    Engineering, trace both to `RES-*`, and name planned `EV-*`. If a criterion is missing or cannot
    become a check, return it to its owning stage instead of repairing intent in the plan.
@@ -85,8 +90,9 @@ THEN the plan must be readable cold. Assume the reader has none of the conversat
   provenance instead of deleting them from the plan.
 - **No design arguments.** The plan says what will be built; why it was chosen lives in the
   decision records, and duplicating it means two documents that disagree later.
-- **No aspiration.** Everything in the plan is work someone will do. Nice-to-haves belong in the
-  scope table's Optional bucket.
+- **Preserve selected scope.** Executable resources come from the accepted delivery baseline.
+  Optional or Recommended classification alone does not select an item for implementation;
+  keep unselected suggestions as proposals outside the execution order.
 - **The plan is a living artefact.** It is amended during implementation, not preserved as a
   historical curiosity and quietly ignored.
 - Cite the implementation baseline: repository/input revisions, relevant working-tree changes,
@@ -113,6 +119,8 @@ competing status source.
 ## Output
 
 The full section list and the shape of each is in `references/plan-template.md`. The plan is
-ready for its declared scope when applicable decisions are resolved, dependencies, paths and
+ready for its declared phase and scope when applicable decisions are resolved, dependencies, paths and
 acceptance agree, and planned validation names executable checks and prerequisites. Return draft
 status with affected blockers when that cannot yet be established; omit irrelevant template sections.
+Preserve existing gate evidence and authority: readiness to implement does not establish passing
+integration evidence or authorize deployment, and writing a plan does not execute its steps.

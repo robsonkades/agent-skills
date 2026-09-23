@@ -76,6 +76,14 @@ by plugin code whose classes are parent-defined do not by themselves retain that
 Closing does not invalidate already loaded classes, and weak hidden classes have separate lifetimes. Both
 halves are required: close it _and_ leave nothing reachable behind.
 
+Closing also prevents new classes/resources from being loaded from that loader's own URLs.
+An already loaded plugin may therefore run briefly and fail later when it reaches a previously
+unused class. Stop admission, drain in-flight calls, and finish plugin shutdown before closing
+the loader; the API leaves concurrent class loading during `close()` undefined. Do not return
+a plugin from a try-with-resources block that closes the loader while its callers still need it.
+Keep shutdown dependencies available until cleanup completes, then release the loader and its
+remaining registrations/references.
+
 ## Validate
 
 Repeat the same lifecycle workload and measurements, including unloading events and Metaspace
@@ -95,6 +103,8 @@ retaining path rather than changing map type alone.
 
 - [JLS 25 §12.7, unloading of classes and interfaces](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.7)
 - [Java 25 `ClassLoader`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ClassLoader.html)
+- [Java 25 `URLClassLoader.close`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/URLClassLoader.html#close()>)
+  — closing, already loaded classes, and the concurrent-loading restriction.
 - [Java 25 hidden-class `STRONG` option](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.ClassOption.html#STRONG)
 - [JEP 371: Hidden Classes](https://openjdk.org/jeps/371)
 - [Eclipse MAT: GC root kinds](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/gcroots.html)

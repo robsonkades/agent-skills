@@ -61,9 +61,9 @@ environment and trust the measured listing rather than the following common exam
   headers; an aligned `long` may start at 16 and a smaller field may fill the preceding gap.
 - **8-byte compact header**: opt-in on upstream HotSpot JDK 24–26; JDK 24 additionally needs
   `-XX:+UnlockExperimentalVMOptions` before `-XX:+UseCompactObjectHeaders`. Product in 25
-  (JEP 519); enabled by default in upstream 27's release candidate (JEP 534; status as of
-  2026-09-10). Check vendor backports/defaults and actual packing rather
-  than assuming support from the version alone or assuming the first field's offset.
+  (JEP 519); enabled by default in upstream 27 (JEP 534). Check vendor backports/defaults
+  and actual packing rather than assuming support from the version alone or assuming the
+  first field's offset. An upgrade can change the header mode even when launch flags are unchanged.
 
 This is why mental arithmetic is unreliable and why the tool takes two minutes — and why a
 JOL listing is only meaningful alongside the JDK and the header mode that produced it.

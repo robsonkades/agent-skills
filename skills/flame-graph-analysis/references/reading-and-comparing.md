@@ -49,15 +49,20 @@ request                                      100
 ├─ parse                                      35
 │  └─ decode                                  30
 ├─ persist                                    50
-│  └─ pool.borrow
+│  └─ pool.borrow                             45
 │     └─ park                                 45
 └─ respond                                    10
 ```
 
-Under this simplified aggregate, `request` has roughly 5 units with no displayed child,
-`parse` roughly 5, and `persist` roughly 5. That arithmetic can be distorted by filtered or
-hidden frames, recursion, truncation, inline attribution, and renderer minimum width. The graph
-does not say whether `park` is avoidable or which resource caused it.
+For this complete aggregate, self weight equals inclusive weight minus the sum of immediate
+children's inclusive weights: `request`, `parse`, and `persist` each have 5 self units;
+`pool.borrow` has zero. If `pool.borrow`'s weight were unknown, `park = 45` alone would not
+establish `persist`'s self weight: `pool.borrow` could also have self weight.
+
+Apply the arithmetic per call-path node, not by summing every occurrence of a method. Hidden
+children or clipped leaves can inflate apparent self; recursion, inline attribution and stack
+walk failures also affect interpretation. The graph does not say whether `park` is avoidable
+or which resource caused it.
 
 ### 5. Switch views
 
@@ -97,6 +102,22 @@ I/O-bound, eliminating it can reduce CPU cost materially while barely moving lat
 be valuable; they are different decisions.
 
 ## Differential design
+
+### Reconcile sampling weights before workload normalization
+
+Raw sample counts require compatible selection rates/probabilities before comparing resource
+cost. In a synthetic fixed-interval CPU-sampling example, 100 samples at 10 ms and 1,000 at
+1 ms both estimate one CPU-second, assuming the sampler actually accounts for CPU exposure
+that way, with comparable eligibility and negligible loss. A tenfold count increase alone
+would not establish tenfold CPU cost.
+
+Use recorded event weights or a source-supported estimator; do not weight an already weighted
+total twice. A nominal JFR execution-sampling period is not a generic CPU-time weight.
+Adaptive selection, throttling, unequal losses or unknown capture settings may prevent a
+valid correction. In that case, keep counts/shares descriptive and obtain comparable evidence
+through the collection owner. Dividing by duration/work or equalizing totals does not repair
+an unknown sampling bias. For example, async-profiler's interval unit depends on the event,
+and its `--total` output differs from sample-count output; inspect the producing release.
 
 ### Pair the question and denominator
 
@@ -184,3 +205,4 @@ A graph that “looks cleaner” is not a validation criterion.
 - [Flame Graphs](https://www.brendangregg.com/flamegraphs.html)
 - [Differential Flame Graphs](https://www.brendangregg.com/blog/2014-11-09/differential-flame-graphs.html)
 - [FlameGraph scripts](https://github.com/brendangregg/FlameGraph)
+- [async-profiler 4.2 options](https://github.com/async-profiler/async-profiler/blob/v4.2/docs/ProfilerOptions.md): event-dependent interval units and total metric weight versus sample counts; use the recording's producer version.

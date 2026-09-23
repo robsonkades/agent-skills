@@ -44,13 +44,15 @@ Keep a sound current mapping when it meets those constraints. Apply only the rel
    moving parts than a ring and needs no virtual-node tuning. A ring earns its complexity at
    larger N or where lookup must be sub-linear.
 3. **Specify the placement contract completely:** algorithm and variant, seed, byte encoding,
-   field framing, signed/unsigned ordering, virtual-point format and membership epoch. Prove
+   normalization and malformed-input policy, field framing, signed/unsigned ordering,
+   virtual-point format and membership epoch. Prove
    cross-runtime agreement with golden vectors. MurmurHash3 or xxHash can be suitable when
    the exact implementation is pinned. See
    `references/mapping-functions.md` for what disqualifies the obvious candidates.
 4. **Pick V by measurement, not by folklore.** Simulate representative keys, bytes, request
    rates and per-key cost over relevant node counts and seeds. Raise virtual points until the
-   worst load/mean for the relevant resource is inside tolerance, within a rebuild/memory budget. If skew is dominated by
+   worst actual/target load for the relevant resource is inside tolerance, within a rebuild/memory budget.
+   Use mean load only for equal target shares; normalize by the intended shares for weighted nodes. If skew is dominated by
    an indivisible hot key or poor hashing, more points are not the remedy. Measure lookup and rebuild cost.
 5. **For a ring, implement the wrap-around explicitly.** `ceilingEntry(h)` returning `null` means the key
    hashed past the last point on the ring and belongs to the first entry. This single branch

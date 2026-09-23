@@ -51,7 +51,8 @@ execution model or a full fault campaign.
 1. **State the completion rule before writing any code.** All-of-N (the answer needs every
    leaf), first-success (first acceptable equivalent answer), or k acceptable distinct owners
    by deadline. Define insufficient-k behavior separately; an error completing first is not
-   a successful winner. Every other decision below follows from this one.
+   a successful winner. Decide whether to fail once k becomes unreachable or continue collecting
+   useful partial answers within the budget. Every other decision below follows from this one.
 2. **Choose or retain N from the contract and cost.** N trades per-leaf work against tail
    exposure and coordination cost. One leaf per shard can be deliberate and bounded; compare
    owner coalescing or selective dispatch only when they preserve its semantics and improve
@@ -64,8 +65,8 @@ execution model or a full fault campaign.
    waiting tasks, response bytes and active leaf work. Virtual threads still retain memory;
    a semaphore caps holders, not its waiter population
    (`concurrency-limiting-and-bulkheads`).
-5. **Signal cancellation to losers when the gather is satisfied**, and observe root-task plus
-   remote resource lifetimes. Cancellation may be advisory and cannot undo a committed effect;
+5. **Signal cancellation when the gather is satisfied or terminal failure is declared**, and
+   observe root-task plus remote resource lifetimes. Cancellation may be advisory and cannot undo a committed effect;
    enforce/account for bounded residual work even after reply.
 6. **Decide the partial/quorum-result contract with the caller.** Distinguish expected,
    responded, missing and failed work, data/version watermark and whether aggregation is exact,

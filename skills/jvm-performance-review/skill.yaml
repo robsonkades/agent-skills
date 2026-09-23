@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-performance-review
-version: 1.3.2
+version: 1.3.3
 description: >-
   Auditing JVM configuration evidence across the supplied command, effective runtime flags,
   target JDK build, container/cgroup envelope, workload lifecycle, and stated SLO. Classifies

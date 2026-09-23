@@ -84,6 +84,8 @@ that depend on it.
   `title`, `status`, `detail` and `instance`. Put application-specific machine members — code,
   outcome/retry condition and correlation id — in extension members, never inside `detail`.
   The standard `type` URI is already the primary problem identifier; `code` is optional.
+  Apply the standard's optional-member, default and unknown-extension rules before typed
+  error mapping; the Java record is an internal representation, not a required wire shape.
 - In gRPC, mapping every failure to `INTERNAL` loses semantics, but no status is universally
   retryable. `UNAVAILABLE` may still be ambiguous for a mutation; `RESOURCE_EXHAUSTED` may be
   quota or capacity; `ABORTED` commonly means retry a higher transaction; `DEADLINE_EXCEEDED`

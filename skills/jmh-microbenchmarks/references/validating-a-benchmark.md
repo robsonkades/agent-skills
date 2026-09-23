@@ -30,6 +30,47 @@ For asynchronous APIs, distinguish enqueue/dispatch, completion and end-to-end r
 different operations. Returning a handle does not wait for the work. Ensure outstanding tasks
 do not accumulate across iterations or forks, and preserve exception/cancellation semantics.
 
+### Destructive inputs: decide what reset means
+
+Suppose a benchmark sorts the same array repeatedly. Trial setup supplies fresh data only for
+the first call; iteration setup supplies it only for the first call of each iteration. Neither
+models a stream of unsorted arrays. The official per-invocation setup sample demonstrates this
+failure and the overhead of moving the copy into invocation setup.
+
+- If the real operation must preserve the caller's array, time the complete preserving operation
+  (for example, copy plus sort) for both variants and verify that the original remains unchanged.
+  Excluding a required copy changes the cost being compared.
+- If the question is explicitly sort-only on already owned, unsorted inputs, a copy-plus-sort
+  result answers a broader question. Consider a bounded pool of fresh inputs or a justified
+  invocation fixture, accounting for memory footprint, cache preconditioning and timing overhead.
+  Check that no input is reused after mutation; do not subtract an independently timed copy to
+  manufacture sort-only latency.
+- If mutation itself is the intended workload, retain it but define the starting state and
+  trajectory. For example, a fixed-count growth experiment may use a single-shot batch with
+  iteration reset; a time-based loop otherwise visits different sizes as its speed changes.
+
+Validate the sequence of input states outside the decision timing run. A sorted output alone
+does not show that every call received representative input.
+
+### Check the batching denominator
+
+Distinguish the operations inside one benchmark method from JMH's batch of method calls:
+
+| Configuration                                                                               | Meaning of the reported time                           |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| One method processes exactly N elements, default `batchSize`, `@OperationsPerInvocation(N)` | Amortized time per element in that compiled loop       |
+| `SingleShotTime`, `batchSize = B`, default operations-per-invocation                        | Time for B method calls, reported as one operation     |
+| N varies by `@Param` or early exit, one fixed operations-per-invocation value               | Cannot generally label the score per completed element |
+
+For variable work, report per-invocation/batch results or derive a separate normalization from
+the actual count with its assumptions and units stated. Do not confuse attempted with completed
+operations. Preserve raw scores and configuration so the transformation is auditable.
+
+JMH 1.37's sample-time harness divides a sampled batch duration by operations-per-invocation
+before recording it. That creates a distribution of normalized batch durations, not observations
+of individual elements. A batch mean can hide one slow element; dividing its p99 cannot recover
+the element p99. Choose the observation boundary required by the question.
+
 ## Anti-optimization controls
 
 Select controls that distinguish the material threats to validity; no single control establishes
@@ -197,7 +238,7 @@ These are reproducible review inputs, not executed agent evaluations:
 - [OpenJDK JMH repository](https://github.com/openjdk/jmh)
 - [JMH samples](https://github.com/openjdk/jmh/tree/master/jmh-samples/src/main/java/org/openjdk/jmh/samples)
 - [JMH annotation APIs](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/package-summary.html)
-- [JMH `Level` warnings](https://javadoc.io/doc/org.openjdk.jmh/jmh-core/latest/org/openjdk/jmh/annotations/Level.html)
+- [JMH 1.37 `Level` warnings](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Level.java)
 - [JMH statistics implementation](https://github.com/openjdk/jmh/tree/master/jmh-core/src/main/java/org/openjdk/jmh/util)
 - [JMH 1.37 scope contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Scope.java)
 - [JMH 1.37 per-invocation setup sample](https://github.com/openjdk/jmh/blob/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_38_PerInvokeSetup.java)
@@ -205,3 +246,8 @@ These are reproducible review inputs, not executed agent evaluations:
   — iteration snapshot windows and operation normalization.
 - [JMH 1.37 Param contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Param.java)
   — trial parameterization rather than a per-invocation input distribution.
+- [JMH 1.37 batch-size sample](https://github.com/openjdk/jmh/blob/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_26_BatchSize.java)
+  — fixed-count mutation and single-shot batch units.
+- [JMH 1.37 operations-per-invocation contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/OperationsPerInvocation.java)
+- [JMH 1.37 generated measurement loops](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/generators/core/BenchmarkGenerator.java)
+  — batch/operation normalization and the observation boundary of sample-time results.

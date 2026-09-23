@@ -46,6 +46,15 @@ disabling a clustered index can make table data inaccessible.
 Do not declare `(a)` redundant merely because `(a,b)` exists: compare uniqueness, predicates,
 sort direction/collation, includes, width, constraints and measured read/write behavior.
 
+Plan removal's lock and transaction behavior as explicitly as creation's. In PostgreSQL 18,
+ordinary `DROP INDEX` takes an `ACCESS EXCLUSIVE` table lock. `DROP INDEX CONCURRENTLY` avoids
+blocking table reads/writes but can wait for conflicting transactions; bound the wait and inspect
+blockers. It accepts one index, cannot run in a transaction block or use `CASCADE`, and cannot
+remove an index owned by a constraint this way or a partitioned parent index. Check dependencies
+and the migration runner before selecting it. Do not silently fall back to a blocking drop when
+concurrent removal is unsupported. After interruption, inspect catalog state before retrying;
+keep the original definition and a recreation path whose cost fits the recovery objective.
+
 After removal, monitor the plans and invariants the index served and retain a tested recreation
 path. Do not drop several overlapping indexes at once unless the rollback can identify which one
 was needed.
@@ -53,5 +62,6 @@ was needed.
 ## Sources
 
 - [PostgreSQL concurrent index failure and recovery](https://www.postgresql.org/docs/18/sql-createindex.html)
+- [PostgreSQL 18 DROP INDEX locking and restrictions](https://www.postgresql.org/docs/18/sql-dropindex.html)
 - [MySQL 8.4 invisible index restrictions and maintenance](https://dev.mysql.com/doc/refman/8.4/en/invisible-indexes.html)
 - [SQL Server disabling indexes and consequences](https://learn.microsoft.com/en-us/sql/relational-databases/indexes/disable-indexes-and-constraints?view=sql-server-ver17)

@@ -154,7 +154,8 @@ The fault or its invariant cannot be observed
   retries plus the initial attempt at each layer permit sixty-four. This multiplication is
   a possible amplification bound, not a measured attempt count; clipping deadlines, retry
   predicates and admission can reduce it. Isolated single-service tests omit the composition
-  (`retries-and-backoff`, `cascading-failures`).
+  (`retries-and-backoff`, `cascading-failures`). Correlate attempts per logical operation;
+  aggregate counts can hide a violation, and counts alone do not verify configured backoff.
 - A circuit breaker's history usually spans multiple logical calls. Check its scope, window,
   minimum sample count, recorded outcomes and timeout/retry ordering. A caller's shorter
   deadline does not imply that the shared breaker can never open

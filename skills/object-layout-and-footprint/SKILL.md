@@ -7,7 +7,7 @@ description: >
   a bulk path; when -XX:+UseCompactObjectHeaders is evaluated for footprint; or when smaller
   objects are expected to buy shorter GC pauses without a collector-specific measurement.
   Answers in bytes per element; one record-versus-array comparison changes under the upstream JDK 27
-  default (JEP 534, not yet GA). Sizing a replacement belongs here; measuring what exists is
+  default (JEP 534, source-only). Sizing a replacement belongs here; measuring what exists is
   heap-dump-analysis. Not flag lifecycle (jvm-performance-review), @Contended padding
   (false-sharing-and-contended), cache hierarchy (cpu-cache-and-numa), allocation rate
   (allocation-profiling), container budget (jvm-memory-regions), compressed class space
@@ -104,8 +104,8 @@ threshold. _Where_ the threshold is as a heap-sizing decision is `jvm-performanc
 
 Defaults on the tested Temurin 21, 25 and 26 builds were classic `[executed]`; the upstream
 JDK 27 default is compact
-`[source-only: JEP 534, Closed / Delivered, Release 27]` — JDK 27 is not GA and nothing in
-this skill was run on it. Vendor backports and defaults can differ, including on JDK 17/21
+`[source-only: JEP 534, Closed / Delivered, Release 27]`. JDK 27 reached GA on 2026-09-15,
+but none of this skill's recorded measurements ran on it. Vendor backports and defaults can differ, including on JDK 17/21
 (JEP 534); use the effective target state. In the upstream lifecycle the flag is experimental on 24 and needs
 `-XX:+UnlockExperimentalVMOptions` there (JEP 450); a product flag on 25 (JEP 519, executed:
 no unlock needed); default on 27 (JEP 534). A JDK 24 command line pasted onto 25 works; a 25
@@ -169,7 +169,7 @@ from a recommendation to change production.
    `references/production-footprint-checks.md` §1 says what a heap dump cannot tell you.
 6. **Report the scoped result and its evidence.** Name shallow, reachable, retained or other
    quantities precisely, with known inputs and limits. Label source-derived estimates and
-   historical results; do not imply a new run. JDK 27 is not GA as of this review and was not executed here.
+   historical results; do not imply a new run. JDK 27 was not executed in the recorded audit.
 
 ## The headline: the record-versus-array intuition is backwards
 
@@ -186,8 +186,8 @@ array's 4-byte length field. Under compact object headers the **record wins by 8
 because 8-byte elements must stay 8-byte aligned, so `long[]` spends the freed header bytes
 on a pad and shrinks by nothing at any length.
 
-"Drop the record for a primitive array to save the header" is therefore wrong for a
-four-`long` payload today and **more** wrong once compact headers are the default. The
+"Drop the record for a primitive array to save the header" is therefore wrong for the
+tested four-`long` payload and **more** wrong with compact headers enabled. The
 comparison moves from a tie to a saving. If a deployment decision depends on that saving,
 confirm the target layout with adequate existing evidence or a bounded measurement.
 
@@ -231,7 +231,7 @@ it is the point of that reference.
 - **Shallow is not deep, and the gap is the whole answer for anything holding references.**
   `ClassLayout.instanceSize()` on `new String("EUR")` is 24 bytes; `GraphLayout.totalSize()`
   is 48. Name which one you measured, every time.
-- **Version-scope every size, and label anything not executed.** JDK 27 is not GA. Its
+- **Version-scope every size, and label anything not executed.** The JDK 27
   default header mode is read from JEP 534 (`Closed / Delivered`, Release 27, confirmed at
   `openjdk.org/jeps/534`), not observed. `-XX:+UseCompactObjectHeaders` is absent from
   the tested Temurin 21.0.12+8 build — it refuses to start with `Unrecognized VM option`
@@ -299,6 +299,7 @@ Authoritative sources for release-sensitive claims:
 - [JEP 450: Compact Object Headers (Experimental)](https://openjdk.org/jeps/450)
 - [JEP 519: Compact Object Headers](https://openjdk.org/jeps/519)
 - [JEP 534: Compact Object Headers by Default](https://openjdk.org/jeps/534)
+- [JDK 27 release status](https://openjdk.org/projects/jdk/27/) — GA on 2026-09-15; release status is not a layout measurement.
 - [`Instrumentation.getObjectSize`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html#getObjectSize(java.lang.Object)>)
 - [OpenJDK JOL](https://github.com/openjdk/jol) — verify the current release and tool limitations
 - [Oracle JDK GC Tuning Guide: class metadata and compact headers](https://docs.oracle.com/en/java/javase/26/gctuning/other-considerations.html)

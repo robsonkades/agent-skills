@@ -32,6 +32,15 @@ The explicit validation flag makes invalid active recipe configuration fail inst
 the plugin's default. Confirm option support in the pinned version; treat validation failures as
 configuration defects to resolve, not a reason to disable the check.
 
+When an existing CI policy requires recurrence enforcement, configure
+`<failOnDryRunResults>true</failOnDryRunResults>` or its supported CLI property. For Maven
+plugin 6.24.0, that property is `-DfailOnDryRunResults=true` (without the `rewrite.` prefix);
+verify it against the pinned plugin's goal metadata. Its default is false, so a successful
+preview can still contain changes. `failOnInvalidActiveRecipes` checks configuration and
+does not replace this gate. In an isolated fixture, prove a known violation fails because
+changes were detected, then prove the corrected input passes and a near-miss stays unchanged.
+Retain scope/attribution checks: an inactive or skipped recipe can also return success.
+
 ## The type-attribution trap
 
 This is the failure mode to expect. Recipes that match on a type — most useful recipes —
@@ -79,6 +88,14 @@ The building blocks worth knowing before writing a visitor: `ChangeType`, `Chang
 use the `fully.Qualified.Type method(ArgTypes)` form with `..` as a wildcard, and they
 match on resolved types — which is exactly why the trap above matters.
 
+If adding YAML `preconditions`, check which files the search recipe actually marks. They
+filter already-parsed files individually; finding a plugin in `build.gradle` does not by
+itself authorize Java edits throughout that module. Use a module-aware condition supported
+by the pinned version when that is the intended scope. Preconditions do not prevent parsing
+or constrain new-file generation by scanning recipes. Use parser exclusions for files that
+must not be parsed, recording the resulting coverage gap; control generation in the scanning
+recipe itself. Check existing files and created paths in the preview.
+
 ## Writing a visitor
 
 Only when no combination of the above expresses the rule. Two constraints shape a
@@ -92,8 +109,13 @@ well-behaved recipe:
   deliberately. Templates do not automatically make unresolved types correct, and manually built
   nodes require the same attribution discipline.
 
-Return the tree unchanged — the same instance — when nothing applies. Returning an equal
-but new instance marks the file as changed and produces diff noise.
+Never mutate the input LST or its collection fields in place, even when a returned list
+allows mutation. For example, `method.getArguments().remove(0)` can corrupt the original
+tree needed for diffing and omit required edits. Use `with...` updates and identity-aware
+helpers such as `ListUtils` to construct changed nodes while preserving untouched ones.
+Return the same tree instance when nothing applies. Copying an unchanged list/tree can be
+reported as a change and cause empty patches, unnecessary work or failing cycle assertions;
+an empty textual diff alone does not prove correct no-op behavior.
 
 ## Testing a recipe
 
@@ -123,6 +145,9 @@ attribution trap and passes for the wrong reason.
 Alternatively supply companion source fixtures as above. Check that the positive case actually
 changes and negative cases do not; do not disable type validation to obtain a pass. Test a fresh
 second invocation against the transformed project, not only repeated visitor cycles in one run.
+For custom visitors, check that the original input remains unchanged and the complete expected
+patch is produced. Include an already-correct input that produces no change result; do not weaken
+cycle assertions to accept an identical copy as a successful no-op.
 
 ## What a recipe still does not make safe
 
@@ -134,4 +159,7 @@ JUnit 4 to 5 migration changes how assumptions and expected-exception semantics 
 a recipe attached, and they need the upgrade's testing, not a refactoring's.
 
 Primary references: [Maven plugin goals and lifecycle](https://docs.openrewrite.org/reference/rewrite-maven-plugin),
+[6.24.0 dry-run property and failure behavior](https://github.com/openrewrite/rewrite-maven-plugin/blob/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteDryRunMojo.java),
+[declarative precondition scope](https://docs.openrewrite.org/reference/yaml-format-reference),
+[visitor identity and immutability](https://docs.openrewrite.org/authoring-recipes/recipe-conventions-and-best-practices),
 [recipe testing](https://docs.openrewrite.org/authoring-recipes/recipe-testing).

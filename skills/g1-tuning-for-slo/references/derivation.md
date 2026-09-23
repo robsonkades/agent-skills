@@ -291,8 +291,11 @@ Observed client p99 contains normal processing, GC pause, safepoint overhead fro
 causes and OS scheduling. Attributing the whole tail to GC without correlating timestamps is
 the most common error in this investigation.
 
-The partial example below assumes parsers with aligned clock domains and returns one overlap
-per request. It neither sums all overlapping pauses nor estimates a causal latency contribution.
+The partial Python example below assumes parsers with aligned clock domains and validated
+timestamps, interpreted as half-open intervals `[start, end)`. It returns one positive-duration
+overlap per request; touching endpoints or empty intervals do not qualify. It neither sums all
+overlapping pauses nor estimates a causal latency contribution. Report timestamp precision:
+coarse timestamps can leave boundary cases unresolved even with the correct interval test.
 
 ```python
 def correlate_gc_latency(request_log, gc_log):
@@ -301,7 +304,7 @@ def correlate_gc_latency(request_log, gc_log):
     affected = []
     for req in parse_request_log(request_log):
         for gc_start, gc_end, gc_pause in gc_events:
-            if gc_start <= req.end_ts and gc_end >= req.start_ts:
+            if max(gc_start, req.start_ts) < min(gc_end, req.end_ts):
                 affected.append((req, gc_pause))
                 break
     return affected

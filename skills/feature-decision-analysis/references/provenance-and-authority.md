@@ -12,10 +12,15 @@ Ask one question: **what would I show someone who disputed this?**
 | AGENT_PROPOSED     | The option set and the separating reason                                                        | A default that "everyone uses"                          |
 
 Use AGENT_PROPOSED when the agent actually proposes the choice, not as a fallback for lost
-history. If the origin is unknown, record that fact and a source check; keep the entry pending.
-An agent proposal later accepted by a person retains its provenance and gains separate
-acceptance evidence. Cite all relevant sources when a user instruction and project practice
-jointly support a choice.
+history. If the origin is unknown, record that fact and a source check. Establish acceptance
+separately: a documented authorized outcome can remain accepted for its evidenced scope even
+when the original proposer or proposal date is unknown. Missing historical provenance alone
+does not require reapproval; missing authority or applicable scope keeps the unsupported
+commitment pending. Do not invent historical details or infer a mandate from current code.
+
+An agent proposal later accepted by a person retains its provenance and gains separate acceptance
+evidence. The later approver need not be the original proposer. Cite all relevant sources when a
+user instruction and project practice jointly support a choice.
 
 ## The levels of "the project does this"
 

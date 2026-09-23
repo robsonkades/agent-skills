@@ -135,8 +135,18 @@ detail after the validated Eden counts; it does not validate that detail or infe
 
 Cross-checks when the number looks wrong: sample `jstat -gc <pid> 1000` and account for
 Eden resets across young collections rather than treating one `EU` delta as a rate. JFR
-`jdk.ThreadAllocationStatistics` provides interval thread totals, while sampled allocation
-events answer which sites contributed (allocation-profiling).
+`jdk.ThreadAllocationStatistics.allocated` is an approximate cumulative byte count since
+thread start. For successive samples of the same recorded thread identity in one JVM,
+estimate its interval rate as `(allocated_2 - allocated_1) / (time_2 - time_1)` with a positive
+time span. Do not sum snapshots or join by thread name; a decreasing counter needs investigation,
+not clamping to zero. Missing boundary samples and threads that start and exit between samples
+limit coverage, so these deltas do not establish an exact process-wide total. Use
+`allocation-profiling` for attribution and thread-accounting limits, including virtual threads.
+
+See the [OpenJDK 25 event metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml#L808)
+and [periodic emitter](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp#L462)
+for the counter meaning and sampled thread population. Sampled allocation events answer which
+sites contributed; they are a different measurement from this cumulative counter.
 
 ## Symptom to cause
 

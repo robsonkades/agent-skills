@@ -57,17 +57,18 @@ slow call; it is an availability incident waiting for the downstream to hang.
 
 ## The module as rehearsal
 
-The strongest reason to build a modular monolith before a service: the module boundary is
-the same boundary, and it costs a refactor to correct instead of a migration.
+Rehearsing responsibilities in a module lets code-only boundary changes remain local.
+Persisted data and contracts consumed outside that module can still require migration,
+even in one process; remote extraction also adds protocol and release coordination.
 
 ```text
 Stage 1   Package/module with a published surface; in-process calls.
-          Wrong boundary costs: an IDE refactor.
+          Check code ownership and existing data/contract migration needs.
 
 Stage 2   Same surface, but calls go through an interface with an
           in-process implementation. Data ownership enforced: only this
           module writes its tables.
-          Wrong boundary costs: a refactor.
+          Exercise the boundary before adding transport when feasible.
 
 Stage 3   Introduce a remote adapter and review caller contracts for
           deadlines, unknown outcomes, idempotency and compatibility.
@@ -120,11 +121,15 @@ storage is limiting it; service extraction alone does not remove a shared databa
 
 ## Running an extraction so it can be abandoned
 
-1. **Enforce data ownership first**, in the monolith. All access to the module's tables goes
-   through the module. This is the majority of the work and delivers value even if you stop
-   here.
+Use this sequence when an in-process rehearsal is feasible. For direct extraction, preserve
+the ownership and cutover checks while adapting the implementation sequence to its constraints.
+
+1. **Enforce data ownership first**, in the monolith. Access to private tables goes through
+   the owning module or an explicit supported contract. This can deliver value even if
+   extraction stops here.
 2. **Introduce the interface** at the intended boundary, with an in-process implementation.
-3. **Coarsen it** until the call count per use case is what it should be over a network.
+3. **Check remote granularity.** Retain a suitable interface; coarsen or batch measured
+   chattiness against payload, processing and consistency costs.
 4. **Add a remote adapter** with explicit failure semantics. Canary reads where safe;
    write routing must preserve one authoritative owner per key and operation identity.
    Do not execute both old and new write paths as an unprotected comparison.

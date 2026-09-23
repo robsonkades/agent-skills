@@ -38,7 +38,15 @@ Classify the boundary:
 - **resource-bound:** a resource guardrail predicts instability;
 - **collapse-bound:** useful throughput falls as offered work grows;
 - **external-bound:** dependency quota, partition, licence or placement caps scale;
-- **generator-bound:** the producer, client network or metrics path saturated first.
+- **generator-bound (measurement limit):** the producer, client network or metrics path
+  saturated first.
+
+A generator-bound run does not by itself establish a failing service-capacity point.
+Use the actual delivered load and retain only independently trustworthy outcome evidence.
+If no valid service failure was observed, the upper boundary remains unlocated; preserve
+valid passing points and repair the harness before extending the bracket. Generator CPU
+saturation can inflate measured latency as well as limit offered load; see the
+[k6 load-generator guidance](https://grafana.com/docs/k6/latest/testing-guides/running-large-tests/).
 
 ### Compare shapes, not only counts
 

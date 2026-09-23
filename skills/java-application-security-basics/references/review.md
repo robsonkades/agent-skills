@@ -109,8 +109,11 @@ this pass are recorded, not silently fixed.
 
 ## Secrets and leakage
 
-24. `rg -i 'password|secret|token|api[-_]?key' -- '*.yml' '*.yaml' '*.properties'` — a literal
-    value may expose a real credential in history; distinguish fixtures and placeholders.
+24. `rg -i -l -g '*.yml' -g '*.yaml' -g '*.properties' 'password|secret|token|api[-_]?key' .`
+    lists candidate file names. Inspect values without copying secrets into reports;
+    distinguish fixtures and placeholders. File and content filters can miss credentials,
+    so this is a triage lead, not a complete scan. A literal value may expose a credential
+    in history.
     Revoke or rotate an exposed credential first and verify the old value no longer works.
     History cleanup reduces residual exposure but cannot revoke copies in clones or backups.
 25. **Is a secret in an environment variable being treated as sufficient?** OWASP's Secrets
@@ -177,11 +180,18 @@ Design changes in this area are verifiable, and each one should be:
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Authorisation enforced by the operation | Call the protected method with a foreign actor; assert refusal and no mutation, including aliased claims |
 | Dummy-hash on the not-found path        | Compare latency distributions across warm/cold paths; no class should omit a KDF run                     |
-| Constant-time comparison                | Assert the call site is `MessageDigest.isEqual`; the timing itself is not unit-testable                  |
-| Parameters raised to OWASP              | Assert the encoder's configured `m`/`t`/`p` or iteration count                                           |
-| `upgradeEncoding` wired in              | Store a hash at the old cost, log in, assert the stored hash changed                                     |
+| Constant-time comparison                | Review the verifier contract and input lengths; test matching and same-length unequal values             |
+| Parameters raised to OWASP              | Check the algorithm and cost recorded for a newly persisted credential                                   |
+| Successful-login migration              | Verify an old credential, then check the persisted target policy and password verification               |
 | Secret removed from a type              | Assert `toString()` of the type does not contain the value                                               |
 | Single-use token lifecycle              | Race two redemptions against the real datastore; exactly one transition succeeds                         |
+
+For migration, decode the stored parameters or resolve the row's explicit policy version;
+a changed hash alone proves nothing about the cost because a new salt changes it too.
+Assert that a wrong password leaves the row untouched and that migration's conditional
+write cannot overwrite a concurrent password reset. Cover the old format's encoding and
+length boundaries. A vetted library verifier is valid without a visible `MessageDigest.isEqual`
+call; functional tests alone do not establish a constant-time guarantee.
 
 Two further signals, both cheap:
 

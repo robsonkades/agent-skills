@@ -53,6 +53,14 @@ between mechanics.
 
 ### After: cohesive settlement flow
 
+This sketch assumes stable settlement data and iteration, with side-effect-free, nonthrowing
+accessors on valid inputs. The `grossBefore` call reads `cutoff()` once, before evaluating its
+`entries()` argument and entering the loop; the original reads it after `capturedAt()` on every
+iteration. If those observations can change
+or fail, retain their original placement inside the helper instead of silently introducing a
+snapshot. Java evaluates method arguments before entering the helper, from left to right
+([JLS 25 §15.7.4](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.7.4)).
+
 ```java
 public BigDecimal settle(Settlement settlement) {
     requireEntries(settlement);
@@ -107,6 +115,9 @@ Run existing tests unchanged and compare both versions at the capture cutoff (eq
 timestamps remain included), the exact 50000 fee threshold, platinum precedence and
 half-even rounding ties. Verify the empty-input exception and ledger entry/effect count,
 including post failure; extraction must not reorder effects or change retry behaviour.
+Confirm the stable-data assumption before consolidating reads. For accessors that can change or
+throw, compare observation order, count and first failure; identical totals on fixed fixtures do
+not validate a snapshot replacement.
 
 ## Over-fragmented: a batch processor smeared across fields
 

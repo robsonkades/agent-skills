@@ -11,6 +11,25 @@ fragments are method bodies in that same setting.
 | `CyclicBarrier`  | fixed at construction | yes      | no      | yes                                                       | a `Runnable` barrier action             |
 | `Phaser`         | dynamic, ≤ 65535      | yes      | **yes** | `awaitAdvance` is **not**; `awaitAdvanceInterruptibly` is | overridable `onAdvance(phase, parties)` |
 
+### Check whether every signaler can run
+
+Count accepted tasks separately from tasks able to reach the synchronization point. With
+three barrier participants on a fixed two-worker executor, two tasks can occupy both workers
+in `await()` while the third remains queued. All submissions succeeded, but the generation
+cannot finish normally. A coordinator waiting for children queued behind it can create the
+same dependency through a latch.
+
+Inspect the wait-for chain, including executor slots and locks/permits retained by waiters.
+Waiting on a latch/barrier does not release an unrelated lock or permit needed by a signaler.
+Virtual-thread parking does not release those application resources. Conversely, a latch
+count larger than the pool is valid when tasks can finish sequentially and its coordinator
+does not block their execution; do not equate every party count with a minimum pool size.
+
+Choose a schedule/protocol that permits the required signals, and define bounded abort and
+cleanup for missing parties. A timeout exposes or ends a failed wait; it does not make an
+impossible normal schedule viable. Executor admission, restructuring and lifecycle choices
+belong to `executors-and-task-lifecycle`; verify the synchronization requirement here first.
+
 ### CountDownLatch — a gate, not a rendezvous
 
 "This is a one-shot phenomenon — the count cannot be reset." And: it "doesn't require that threads
@@ -62,6 +81,13 @@ Reusable after the waiting threads are released. The optional `Runnable` runs on
 point, "after the last thread in the party arrives, but before any threads are released", so it is
 where shared state is updated between phases. `await()` returns the arrival index, which gives the
 `if (barrier.await() == 0) { … }` idiom for electing one thread.
+
+Election after `await()` is not the constructor's barrier action: other parties may already
+be running. Put aggregation needed by their next phase in the barrier action, or add a second
+coordination step. The documented happens-before chain runs from pre-await work through the
+barrier action to successful returns; work performed by the elected thread after its return
+does not gain that ordering automatically. Post-return election fits work such as logging
+that does not require peers to remain suspended.
 
 **Breakage is all-or-none:** if any thread leaves the barrier point early through interruption,
 failure or timeout, every other waiting thread leaves abnormally with `BrokenBarrierException`.
@@ -322,3 +348,4 @@ javadoc recommends never using a `Condition` that way.
 - [Java 25 `Phaser`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Phaser.html)
 - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [Java 25 `Condition`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Condition.html)
+- [Java 25 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)

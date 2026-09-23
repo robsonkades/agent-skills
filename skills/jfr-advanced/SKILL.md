@@ -146,7 +146,8 @@ Design:
 - stable reverse-DNS event/annotation names and schema version;
 - fields with correct `@DataAmount`, `@Timespan`, `@Timestamp`, `@Percentage`, or custom
   metadata units;
-- bounded enums/IDs or sampled correlation tokens under privacy policy;
+- bounded String/int codes for enum-like values, or sampled correlation tokens under privacy
+  policy; enum and array fields are silently omitted by JFR, so verify recorded descriptors;
 - `@StackTrace(false)` by default for high-rate events;
 - threshold/filter/period controls appropriate to event type;
 - source compatibility and reader behavior for added/removed/renamed fields;
@@ -162,12 +163,16 @@ integrity.
 `Event.isEnabled()` is an instance method; `MyEvent.isEnabled()` is not a valid static guard.
 Options:
 
-1. allocate the event directly and defer expensive payload work until `shouldCommit()`;
+1. allocate the event directly and defer expensive non-filter payload work until `shouldCommit()`;
 2. cache/use `EventType.getEventType(MyEvent.class).isEnabled()` as a coarse precheck before
    expensive payload construction, while still using `shouldCommit()` for duration threshold;
-3. restructure to collect expensive fields only after the event's duration qualifies.
+3. restructure to collect expensive non-filter fields only after the event's duration qualifies.
 
-Pattern:
+Populate bounded fields used by a custom `@SettingDefinition` predicate before `shouldCommit()`;
+otherwise the predicate sees default values and can discard a qualifying event. Predicates must
+be cheap, non-throwing and free of side effects; do not rely on exactly one evaluation.
+
+Pattern for an event without a field-dependent custom filter:
 
 ```java
 RequestEvent event = new RequestEvent();
@@ -184,9 +189,10 @@ try {
 }
 ```
 
-`shouldCommit()` accounts for enablement and duration threshold after `end()`. It does not make
-the operation or event allocation free, and concurrent settings can change dynamically. Use a
-static `EventType` check only as an optimization proven safe with class registration and tests.
+`shouldCommit()` accounts for enablement, duration threshold and custom settings after `end()`.
+It does not make the operation or event allocation free, and concurrent settings can change
+dynamically. Use a static `EventType` check only as an optimization proven safe with class
+registration and tests.
 
 Do not quote nanoseconds/cycles or an event-rate threshold as universal. Before making an
 overhead claim, measure the relevant disabled, stack, burst, concurrent-recording or
@@ -213,6 +219,10 @@ Choose intentionally:
 thread. Neither solves callback backpressure. Event handlers must be fast, bounded, exception-
 safe, and decoupled from network I/O. Define queue/drop/spool/shutdown behavior and monitor
 consumer delay, drops, callback errors, memory, and repository retention.
+
+For graceful stream draining on Java 20+, use `RecordingStream.stop()` from lifecycle code,
+never from a callback; `close()` can discard unconsumed events. Neither drains an external
+export queue. See the consumer reference for Java 17 compatibility and shutdown limits.
 
 Closing a stream/recording, process exit, and diskless/disk-backed behavior have distinct data
 survival semantics. Test dump/readability on the deployed JDK; do not call a memory-only
@@ -248,8 +258,8 @@ that update. Method timing/tracing cost scales with selected invocation rate, tr
 stack/threshold settings, and class behavior; use narrow filters and a canary/bounded window.
 Generic Java 17/21 readers can discover many new event types through recording metadata, but
 format compatibility, event interpretation and command options still require fixture tests.
-Examples use Java 17-compatible core JFR APIs unless marked JDK 25; inspect project toolchains
-before applying newer features, without implicitly upgrading Java or enabling experiments.
+Examples use Java 17-compatible core JFR APIs unless a newer minimum is stated; inspect project
+toolchains before applying newer features, without implicitly upgrading Java or enabling experiments.
 
 ## Troubleshooting
 

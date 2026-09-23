@@ -45,6 +45,22 @@ Measure dimensions independently enough to localize cost:
 Do not compare one library's streaming API to another's new-array convenience API without calling
 that boundary difference the experimental factor.
 
+### Complete compressed output
+
+Define whether the measured operation produces a complete compressed message, a batch, or a chunk
+of a continuing stream. For Java 17 `GZIPOutputStream`, default `flush()` only flushes the downstream
+stream; `syncFlush=true` also flushes pending compressed data but does not finish the GZIP member.
+`finish()` completes it, including the trailer, without closing the downstream stream; `close()`
+also closes that stream. Assign wrapper cleanup and downstream ownership separately: finishing
+output does not replace resource cleanup.
+
+For independent messages, include required finalization in the encode boundary, count all emitted
+bytes, and check decompression through end-of-member outside timing; recovering the expected prefix
+alone can miss a truncated trailer. For a continuing stream, preserve its flush policy and measure
+when each message becomes consumable, accounting for eventual finalization at the batch/session
+level. Do not force per-message termination if production deliberately shares compression state.
+Exercise finalization failure: successful `write()` calls do not establish a complete output.
+
 ## JMH protocol
 
 Follow `jmh-microbenchmarks` and `jmh-advanced`:
@@ -101,6 +117,22 @@ including references/unregistered-name state; the default resolver keeps explici
 that range. Inspect the actual version, custom serializers and transport lease before choosing a
 reset/copy/reuse policy; reset alone does not establish safe cross-tenant access.
 
+For a legacy Java object stream, make its identity scope explicit. `ObjectOutputStream.writeObject`
+can encode a repeated object as a back-reference; mutating that object between writes does not
+automatically emit a new snapshot. This can make a repeated-object benchmark appear cheap while
+the reader still sees the earlier state. Test the required values and shared identity across
+successive messages. If identity across writes is intentional, preserve it rather than adding
+resets merely to make the benchmark resemble another codec.
+
+`ObjectOutputStream.reset()` clears remembered objects and emits a reset marker within the existing
+stream; its cost and changed identity semantics belong in a snapshot experiment that uses it.
+`ByteArrayOutputStream.reset()` only discards accumulated output, leaving a wrapping codec's state
+intact. Neither recreates a standalone serialization header. If each payload is read by a fresh
+`ObjectInputStream`, produce and validate a complete stream per payload, including construction
+and header cost in that boundary. `writeUnshared()` is not a recursive snapshot operation: its
+special treatment applies to the root, not transitively referenced objects. Exercise a mutated
+shared child as well as a repeated root. See `java-serialization-hardening` for legacy input safety.
+
 ## Production evidence map
 
 | Question            | Evidence                                                     | Limitation                                |
@@ -152,6 +184,7 @@ this list does not require every format/API review to exercise every dependency.
 - rolling old-new producers/consumers, replay old bytes, rollback;
 - unknown enum/field/default/map-order and deterministic-byte requirements;
 - codec throws mid-write/read and instance is returned to pool;
+- compression finalization fails or a truncated trailer follows an otherwise decodable payload;
 - shutdown while buffers/messages are in flight.
 
 ## Comparison report
@@ -182,3 +215,8 @@ selected candidate, rejected alternatives and residual risks:
 - [Kryo 5.6.2 reset](https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/Kryo.java)
 - [Kryo 5.6.2 Output](https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/io/Output.java)
 - [JMH 1.37 invocation fixture contract](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Level.java)
+- [Java 17 GZIPOutputStream completion](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/zip/GZIPOutputStream.html)
+- [Java 17 DeflaterOutputStream flush and close](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/zip/DeflaterOutputStream.html)
+- [OpenJDK 17u GZIP trailer emission](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/util/zip/GZIPOutputStream.java)
+- [Java 17 ObjectOutputStream identity, reset and writeUnshared](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/ObjectOutputStream.html)
+- [Java 17 ByteArrayOutputStream reset](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/ByteArrayOutputStream.html)

@@ -37,7 +37,9 @@ preview features or new dependencies; keep unsupported tool choices conditional.
    tightening a threshold fixes the problem; name a replay or fixture that could confirm it.
 3. **Define an evaluable contract.** Specify input population, scope/window, metric or rubric,
    threshold and justification, sampling/uncertainty, and what counts as pass, violation or
-   inconclusive. Missing data, tool failure, no matching classes and an empty scan must not
+   inconclusive. Bind evidence to the evaluated revision/artifact, control configuration and
+   applicable environment; freshness alone does not make a verdict applicable to this change.
+   Missing data, tool failure, no matching classes and an empty scan must not
    silently count as success. If evidence is unavailable, continue with a conditional design
    and list the validation still needed.
 4. **Choose placement and response.** Read [catalogue.md](references/catalogue.md) when choosing
@@ -49,7 +51,9 @@ preview features or new dependencies; keep unsupported tool choices conditional.
    one control may protect several. A single contributor still benefits from controls against
    costly errors and external drift. No contributor-count rule determines whether a check stays.
 6. **Test the control and hand off.** Exercise known passing, violating and unavailable-evidence
-   cases safely. Verify the actual response path: nonzero exit propagated to the gate, alert
+   cases safely, including an in-scope skipped check or a reused report with incompatible inputs.
+   Verify that the control ran on its intended population and test the actual response
+   path: nonzero exit propagated to the gate, alert
    routed to an owner, or manual verdict recorded with follow-up. Record what was executed.
    Delegate application test implementation to `architecture-testing` and rollout/baseline
    integration to `quality-gates`.

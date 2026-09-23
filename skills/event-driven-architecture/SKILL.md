@@ -47,8 +47,9 @@ its recovery window rather than restarting architecture discovery.
 4. **Design the payload.** Decide what the event carries versus what the consumer fetches,
    and name the authority for the current value — `references/event-design.md`.
 5. **Fix the compatibility direction and the window.** Historical reader support follows the
-   oldest data that can reappear from topics, archives or DLQs; old-reader/new-writer overlap
-   follows deployment and consumer support policy. These are not one additive duration;
+   oldest data that can reappear from topics (including compacted current values), archives
+   or DLQs; old-reader/new-writer overlap follows deployment and consumer support policy.
+   These are not one additive duration;
    use `schema-evolution-and-compatibility` for the format-specific contract.
 6. **Prove the commit boundary.** A local DB transaction does not include an ordinary broker
    send. Use an outbox/CDC, an explicitly enlisted XA resource, or a broker-local transaction
@@ -100,7 +101,8 @@ One consumer does not make a fact a command; asynchronous availability can still
 - New readers must read or transform historical events within the supported replay horizon;
   old readers must tolerate new events for their supported deployment overlap. Seven-day
   topic retention alone establishes neither every reader's support duration nor archive/DLQ
-  replay limits. Archives can use versioned
+  replay limits; compact-only topics can retain an old schema in a key's latest value
+  indefinitely. Archives can use versioned
   upcasters/migrations; “forever” is a costly policy, not a default.
 - Adding a subscriber is a capacity and governance change when it adds broker reads,
   fan-out or shared downstream load. Budget quotas, PII access and replay impact per consumer;
@@ -116,7 +118,8 @@ One consumer does not make a fact a command; asynchronous availability can still
 - **Anti-pattern — projection without authority or recovery.** Event-carried state transfer with no named
   authority for the current value: each consumer keeps its own projection, they diverge, and
   no service can answer "what is true now". Name the owner of each entity and how a consumer
-  resyncs after a gap.
+  resyncs after a gap. Recovery must cover the snapshot-to-stream boundary and deletions;
+  naming a read API or compacted topic alone does not establish that coverage.
 - **Anti-pattern — publish inside the transaction.** A `send()` between the write and the
   commit publishes facts that may never become true; a `send()` after the commit loses them on
   a crash. For independent sends, these are dual-write windows: select an atomic publication

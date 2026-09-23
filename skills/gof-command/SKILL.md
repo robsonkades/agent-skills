@@ -150,7 +150,8 @@ THEN the handler needs idempotent effects, deduplication, or an explicitly toler
 IF a command captures a mutable object and executes later
 THEN it holds a live reference, not a creation-time snapshot; unsynchronised changes
      need not be observed reliably. Choose snapshot values, an identifier to re-load,
-     or an explicit confined live-receiver lifetime.
+     or an explicit confined live-receiver lifetime. A record does not freeze its
+     components: copy mutable state to the required depth under consistent ownership.
 
 IF undo must address an effect outside the reversible state/transaction boundary
 THEN model compensation where the business permits it: refunds, cancellations and
@@ -203,7 +204,8 @@ THEN restrict selection to accepted types through a closed registry or equivalen
 - [Command against event](references/command-vs-event.md) — the full contrast with naming,
   ownership, coupling and retry semantics; command bus design and dispatch safety; what changes
   when a command is persisted (versioning, tolerant readers, replay); idempotency keys; and undo
-  by inverse, memento or compensation. Read when designing a command type or a bus.
+  by inverse, memento or compensation. Read when designing a command type or a bus, or choosing
+  how a deferred command captures state.
 - [Worked example](references/worked-example.md) — two uses of the same pattern: an editor undo
   stack where the inverse is exact, and a durable command queue where it is not — with the
   versioning, idempotency and dead-letter decisions each forced. Read when implementing.

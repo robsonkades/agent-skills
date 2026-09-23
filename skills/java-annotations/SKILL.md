@@ -104,6 +104,9 @@ convention or magic string doing a job an annotation would do with compile-time 
 - For repeatable annotations, inspect both the repeated annotation and its container: retention,
   target and inheritance must be compatible. For `TYPE_USE`, decide whether the consumer reads
   declaration annotations or type annotations; they occupy different class-file/reflection APIs.
+  Occurrences only on type uses do not trigger JSR 269 processor matching by annotation name.
+  Check processor invocation and type traversal before trusting a compile-time checker; the
+  retention reference covers selection and coexistence with other processors.
 - Deprecate with `@Deprecated(since = "…", forRemoval = …)` plus `@deprecated` Javadoc saying
   what to use instead. `forRemoval = true` turns usage warnings into a stronger signal and is
   part of the API contract — see java-api-design.

@@ -28,7 +28,8 @@ Two rounds with no new information means the exchange has stopped producing anyt
 message should be one of:
 
 - **A test or a measurement.** "I'll write the concurrent case and we'll see."
-- **A timebox.** "Let's spend an hour on a spike; if it holds up, we do it your way."
+- **A timebox.** "Let's spend an hour checking the disputed claim against agreed criteria;
+  if inconclusive, we'll report that to the decision owner."
 - **A decision by whoever owns it**, stated as such: "This is your area — I've registered my
   concern about the lock scope; going with your call."
 - **An escalation**, if the consequence is large and neither of you owns it.
@@ -36,6 +37,8 @@ message should be one of:
 What it should not be: the same argument in different words, or a longer version. Repeating
 an unchanged argument indefinitely adds no evidence. Two rounds is a practical
 prompt to change approach, not a mandatory threshold for urgent escalation.
+A timebox bounds the investigation, not the validity of a claim: failing to reproduce a
+failure during that hour does not by itself establish safety.
 
 ## Disagree and commit
 
@@ -43,13 +46,15 @@ Once an authorized decision is made within applicable constraints, implement it 
 Record a reconsideration trigger; new material evidence or a breached constraint warrants
 reopening the decision rather than silent compliance or a deliberately poor implementation.
 
-Record the disagreement where it is useful rather than in the code: a line in the decision
-record (architecture-decision-making), naming what you expect to go wrong and what would show
-it. That serves two purposes — it is a fair record, and if the predicted problem appears, there
+Record the positions and decision ownership in the decision record
+(architecture-decision-making), naming what you expect to go wrong and what would show it.
+That serves two purposes — it is a fair record, and if the predicted problem appears, there
 is a documented signal to act on rather than an argument about who said what.
 
-Never encode dissent as a comment in the source: `// this is a bad idea but I was overruled` is
-directed at a colleague, permanent, and read by people who have no context.
+Keep personal dissent out of source comments: `// this is a bad idea but I was overruled` is
+directed at a colleague and gives future maintainers no technical reason. Preserve a neutral
+comment explaining a non-obvious constraint or trade-off when it is needed to maintain the
+code correctly, linking to the decision record for the discussion.
 
 ## Disagreeing with someone more senior
 

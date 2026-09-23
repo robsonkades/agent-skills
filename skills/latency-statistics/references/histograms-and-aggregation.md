@@ -16,9 +16,9 @@ A histogram is a lossy distribution representation. Before trusting a derived qu
 
 Inspect overflow/error counters and reconcile histogram `_count` with the independently counted
 terminal outcomes. Unaccounted overflow, clamping or dropped observations invalidate deadline
-compliance claims. A complete finite bucket at or below the deadline gives a conservative lower
-bound on the compliant fraction, which can suffice for a decision even without an exact deadline
-bucket. A bucket spanning the deadline cannot resolve the exact compliant fraction.
+compliance claims. A complete finite bucket at or below an inclusive deadline gives a conservative
+lower bound on the compliant fraction, which can suffice for a decision even without an exact
+deadline bucket. A bucket spanning the deadline cannot resolve the exact compliant fraction.
 
 ## Why averaging quantiles does not recover the union's quantile
 
@@ -118,10 +118,10 @@ registry and Micrometer version; inspect effective configuration rather than ass
 | Prometheus native standard histogram | mergeable exponential schemas, adaptive sparse representation | scrape/remote-write enablement and backend/library support are version-specific; downscaling reduces resolution |
 | OpenTelemetry exponential histogram  | mergeable base-2 scales with downscaling                      | aggregation temporality, collector/backend translation and scale limits must be verified end-to-end             |
 
-For classic histograms, place boundaries at decision thresholds (for example, exactly 300 ms) so
-the compliant fraction is a bucket-count ratio without quantile interpolation. Add boundaries
-around expected quantiles only when the storage/cardinality cost is justified. A rolling deploy
-that changes classic bucket sets creates a mixed population whose cumulative buckets no longer
+For classic histograms, place boundaries at inclusive decision thresholds (for example, at most
+300 ms) so the compliant fraction is a bucket-count ratio without quantile interpolation. Add
+boundaries around expected quantiles only when the storage/cardinality cost is justified. A rolling
+deploy that changes classic bucket sets creates a mixed population whose cumulative buckets no longer
 describe one common ladder; dual-publish a new metric/schema or wait for convergence before
 comparing.
 
@@ -138,6 +138,17 @@ interpolation for nonzero buckets. The result's resolution cannot be better than
 If a proposed 10 ms improvement lies inside a 250 ms classic bucket, the dashboard cannot decide
 the regression even when request count is enormous.
 
+Check edge behavior before interpreting a plateau. For classic Prometheus histograms, a quantile
+in the `+Inf` bucket returns the last finite bucket's upper bound. If cumulative counts are 980 at
+30 s and 1,000 at `+Inf`, the displayed p99 is 30 s even though only 98% of observations were at
+most 30 s. This identifies an unresolved tail above 30 s, not a measured p99 of 30 s. Extend the
+finite range for future quantile estimates or obtain suitable raw observations; the existing
+30 s count fraction can still answer that threshold's compliance question.
+
+With zero observations, `histogram_quantile` returns `NaN`. A missing `+Inf` bucket or fewer than
+two classic buckets also yields `NaN`; inspect counts, schema and query inputs before calling
+that result “no traffic”. Preserve the distinction between no observations and broken telemetry.
+
 Separate three uncertainties:
 
 1. **Sampling/process variation** — which requests, runs, hosts and time windows occurred.
@@ -149,9 +160,11 @@ More samples reduce only the first, and only under the sampling/dependence assum
 
 ## SLOs and alerting
 
-When the objective is “99% under 300 ms”, alert on the count fraction above/below a bucket at
-300 ms and on burn rate, not on an interpolated p99 if avoidable. Include errors and timeouts in
-the SLI's denominator according to its contract. Choose evaluation windows and `for`/burn-rate
+When the objective is “99% at most 300 ms”, use the `le="0.3"` bucket fraction and burn rate,
+not an interpolated p99 if avoidable. `le` includes observations exactly at the boundary. A strict
+`T < 300 ms` fraction needs evidence excluding or separately counting ties; the `T ≤ 300 ms`
+bucket alone does not generally identify that strict fraction. Include errors and timeouts in the SLI's
+denominator according to its contract. Choose evaluation windows and `for`/burn-rate
 logic from detection and recovery objectives; no universal five-minute rule exists. Validate
 queries with synthetic boundary values, counter resets, absent series, mixed schemas and a known
 slow/error cohort.
@@ -159,6 +172,7 @@ slow/error cohort.
 ## Sources
 
 - [Prometheus: Histograms and summaries](https://prometheus.io/docs/practices/histograms/)
+- [Prometheus histogram_quantile edge cases](https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile) and [Prometheus 3.8 BucketQuantile implementation](https://github.com/prometheus/prometheus/blob/v3.8.0/promql/quantile.go) — empty/invalid histograms and the highest-bucket fallback.
 - [Prometheus native histogram specification](https://prometheus.io/docs/specs/native_histograms/)
 - [Micrometer: Histograms and percentiles](https://docs.micrometer.io/micrometer/reference/concepts/histogram-quantiles.html)
 - [HdrHistogram project and Java API notes](https://github.com/HdrHistogram/HdrHistogram)

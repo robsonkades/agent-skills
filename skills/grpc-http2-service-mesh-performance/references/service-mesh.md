@@ -31,8 +31,11 @@ means two per incoming attempt. If both layers can fully retry, the configured e
 policy-driven backend attempts per logical call, not 3 + 2. Deadlines, retryable status, response commitment,
 buffers and retry throttling can reduce it; hedges overlap in time. Count actual attempts and
 backend effects, and distinguish gRPC transparent retries before application processing from
-configured retries. Response headers commit a gRPC call for retry purposes; this is not proof that
-the business effect has or has not committed. A timeout can still leave an ambiguous result.
+configured retries. Receiving initial gRPC response metadata commits the call for retry purposes.
+A trailers-only error also travels in an HTTP/2 HEADERS frame, but may still be retryable under the
+configured status, buffer and budget rules. Seeing a HEADERS frame alone does not establish retry
+commitment. Neither response form proves whether the business effect committed; preserve repeat-safe
+effect protection or authoritative outcome resolution. A timeout can still leave an ambiguous result.
 
 The configured envelope is not a universal bound on physical attempts. Transparent retries may
 leave the configured attempt counter unchanged; local-only attempts do not reach the backend,
@@ -53,5 +56,8 @@ required guarantees.
 Primary references: the deployed mesh's versioned API and performance documentation,
 [TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446), and the relevant proxy configuration dump.
 For attempt and response-commit behavior see [gRPC retry](https://grpc.io/docs/guides/retry/).
-The counter distinction is visible in
+The counter and initial-metadata commitment distinctions are visible in
 [grpc-java 1.84.0 RetriableStream](https://github.com/grpc/grpc-java/blob/v1.84.0/core/src/main/java/io/grpc/internal/RetriableStream.java).
+For trailers-only framing see the [gRPC HTTP/2 protocol](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#responses);
+[grpc-java 1.84.0 NettyClientStream](https://github.com/grpc/grpc-java/blob/v1.84.0/netty/src/main/java/io/grpc/netty/NettyClientStream.java)
+routes end-of-stream headers to trailers and distinguishes attempts that fail before stream allocation.

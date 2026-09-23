@@ -34,7 +34,7 @@ acceptable rebuild load or timely recovery on its own.
 | In-memory queue / unbounded `BlockingQueue` | acceptance-dependent   | Sole accepted-work record can disappear on replacement; durable replay or accepted best-effort loss differs | `LinkedBlockingQueue` field, `executor.submit` after responding          | Broker/outbox and durable ack when promised; name loss policy |
 | Sequence / ID generator counter             | design-dependent       | Identical unnamespaced seeds collide; per-node/epoch scheme may be safe                                     | `AtomicLong` used to build an identifier                                 | Prove node/epoch uniqueness or use DB/standard ID scheme      |
 | WebSocket / SSE registry                    | local live connections | A push from another replica reaches nobody                                                                  | `Map<UserId, WebSocketSession>`, `SseEmitter` registry                   | A broker fan-out; the registry stays local per instance       |
-| Feature-flag or config snapshot             | derivable              | Replicas act on different config for as long as the refresh interval                                        | `@RefreshScope`, a field loaded once at startup                          | Stays, but bound the staleness and make it observable         |
+| Feature-flag or config snapshot             | derivable              | Missed refreshes or startup-only snapshots can leave replicas on different config indefinitely              | `@RefreshScope`, a field loaded once at startup                          | Stays if freshness/failure policy fits; observe revision/age  |
 | `ThreadLocal` set on a request              | per-request            | Not a replica problem — a **leak** problem: on a pooled platform thread it survives into the next request   | `ThreadLocal` without a `remove()` in a `finally`                        | Clear it, or use a request-scoped bean / `ScopedValue`        |
 | Connection pools, buffers, JIT state        | derivable              | Cold recovery, reconnect load and in-flight transaction outcomes need a policy                              | —                                                                        | Stays                                                         |
 
@@ -57,6 +57,14 @@ rg -n 'setAttribute\(|@SessionScope|@SessionAttributes|HttpSession' src/main/jav
 A hit is a question, not a defect. `static final Map` used as an immutable lookup table built
 at class initialisation is fine; the same declaration mutated on the request path requires authority and concurrency analysis.
 Read both writers and consumers, not only the declaration.
+
+For configuration snapshots, identify the actual update trigger and each instance's applied
+revision/last successful refresh. A nominal interval does not bound failed or missed refreshes.
+Spring Cloud 4.2's Config Client does not poll by default; `@RefreshScope` caches bean targets
+until invalidated, then reconstructs them on use. Refreshing A does not establish that B received
+or applied the update. A cosmetic flag may tolerate old values; a flag controlling protected
+actions must obey its authority/freshness policy when stale or unavailable. Retain local snapshots
+when that contract fits; neither the annotation nor shared configuration storage proves convergence.
 
 ## False positives — in-process state that is not a violation
 
@@ -92,7 +100,8 @@ isolated or authorized environment. A narrow explanation need not run this whole
    contract. Natural state idempotence need not mean one physical attempt.
 
 3. **Divergence and recovery.** Update authority, partition invalidation/config delivery, and
-   verify the promised convergence. When claiming full-fleet cold recovery, cover that population
+   verify applied revisions and stale/unavailable behavior on named instances. Repair delivery
+   and verify the promised convergence. When claiming full-fleet cold recovery, cover that population
    and measure rebuild/RTO plus shared-dependency surge; narrower replacement evidence has narrower scope.
 4. **Rolling mixed version.** Alternate requests between old/new instances and test session,
    cache serialization, tokens, local files and accepted queues through rollback.
@@ -108,3 +117,4 @@ classification and shutdown handoff. “Map” or “Redis” is an implementati
 - [Kubernetes 1.34 volumes](https://v1-34.docs.kubernetes.io/docs/concepts/storage/volumes/) — Pod lifetime versus container restarts; inspect persistent mounts separately.
 - [Java 25 ScopedValue](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ScopedValue.html) — dynamic binding lifetime, structured inheritance and mutable values.
 - [Spring 6.2.12 scheduling](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/integration/scheduling.adoc) — repeatable declarations and multiple bean instances; verify the deployed registration/coordination configuration.
+- [Spring Cloud 4.2 context refresh](https://docs.spring.io/spring-cloud-commons/reference/4.2/spring-cloud-commons/application-context-services.html) — explicit refresh triggers and cached bean targets; inspect the installed version and update delivery.

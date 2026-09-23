@@ -118,7 +118,8 @@ The plain guard is confined to the sole writer; it does not enforce multiwriter 
 
 - `compareAndSet` returns boolean and has volatile read/write semantics in the API contract.
 - `compareAndExchange*` returns the witnessed value; success is witness equal to expected according
-  to the API's comparison semantics.
+  to the factory's comparison semantics. Float/double field and array handles compare raw bits:
+  primitive `==` can misclassify success for signed zero or NaN; see the access-mode reference.
 - weak CAS can fail spuriously and has plain/acquire/release/volatile variants. A retry loop handles
   spurious failure but does not add missing ordering.
 - acquire update variants have acquire semantics for the read and plain semantics for the write;
@@ -133,6 +134,10 @@ asType-style casts, boxing/unboxing and widening; `withInvokeExactBehavior()` re
 access-mode descriptor. Coordinates, variable type and return type must satisfy the chosen
 invocation behavior; failures can be `WrongMethodTypeException`, `ClassCastException`,
 or `UnsupportedOperationException`. Check `isAccessModeSupported` when building generic adapters.
+Support does not validate actual coordinates: backing storage, alignment, bounds and access rights
+can still reject an invocation. In particular, JDK 23 changed byte-array and heap-buffer view
+support; consult the access-mode reference before reusing an older protocol. Do not fall back to
+plain access when the protocol requires acquire/release or volatile ordering.
 Write access to read-only/final variables is unsupported for relevant handles.
 
 ## CAS-loop correctness

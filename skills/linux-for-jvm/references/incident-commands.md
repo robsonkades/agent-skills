@@ -33,6 +33,9 @@ grep VmSwap /proc/<pid>/status            # is the process swapped?
 grep VmHWM  /proc/<pid>/status            # peak RSS (NOT VmPeak, which is virtual)
 cat /proc/<pid>/stat                      # parse comm safely as described below
 cat /proc/pressure/memory                 # PSI: time actually stalled
+# cgroup v2: usage, reclaim boundary, hard boundary (in that order)
+cat "$CGROUP/memory.current" "$CGROUP/memory.high" "$CGROUP/memory.max" \
+    "$CGROUP/memory.events" "$CGROUP/memory.pressure"
 ```
 
 Do not split the entire stat record on whitespace: field 2 (`comm`) can contain spaces and
@@ -43,6 +46,16 @@ zero does not exclude all swap-related pressure.
 
 Take `majflt` twice around the pause and use the **delta**. Attribute its cost with block-I/O,
 reclaim and wall-clock evidence on this host; device labels do not determine queueing latency.
+
+Check `memory.high` in the verified cgroup and visible ancestors. Exceeding this boundary puts
+tasks under reclaim pressure and throttles them; crossing it does not itself invoke the OOM
+killer. This can explain stalls below `memory.max` even without new OOM kills, swap activity or
+major faults. Compare same-window `memory.events` `high` deltas, scoped memory PSI and latency;
+the `high` counter counts occasions, not bytes or elapsed stall time. A usage snapshot taken
+after reclaim is insufficient to rule it out. Keep attribution conditional on this evidence,
+respect event hierarchy/local scope, and report inaccessible ancestors. Evaluate workload
+memory demand and host headroom before proposing a boundary change; raising the hard limit
+alone does not remove a lower high boundary.
 
 ## CPU throttling
 
@@ -132,6 +145,7 @@ Successful existing records can satisfy a check; unavailable evidence is not a n
 - [ ] Exit code checked **before** searching application logs
 - [ ] `dmesg` and cgroup `memory.events` consulted
 - [ ] `VmSwap` and the `majflt` delta measured around the pause
+- [ ] Relevant `memory.high` boundaries, `high` event deltas and scoped memory PSI checked
 - [ ] `nr_throttled / nr_periods` compared with baseline
 - [ ] `/proc/pressure/*` collected
 - [ ] Logged GC pause compared with client-observed pause, supported attribution or explicit unresolved hypotheses
@@ -140,7 +154,7 @@ Successful existing records can satisfy a check; unavailable evidence is not a n
 
 ## Sources
 
-- [Linux cgroup v2](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html): hierarchy, events and controller counters; use the deployed kernel documentation.
+- [Linux 6.12 cgroup v2](https://www.kernel.org/doc/html/v6.12/admin-guide/cgroup-v2.html): hierarchy, memory.high reclaim throttling, events and controller counters; use the deployed kernel documentation.
 - [Linux stat fields](https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html): comm and fault fields.
 - [Linux 6.12 throttling accounting](https://github.com/torvalds/linux/blob/v6.12/kernel/sched/fair.c): per-run-queue intervals added to bandwidth throttled time.
 - [PSI documentation](https://www.kernel.org/doc/html/latest/accounting/psi.html): units, scope and CPU full caveat.

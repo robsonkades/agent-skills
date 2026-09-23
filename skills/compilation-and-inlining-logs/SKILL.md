@@ -33,10 +33,11 @@ not happened yet — and is then read as "there is nothing to see".
 ## Workflow
 
 1. **Decide which question you are asking**, and reuse relevant existing captures before
-   collecting more. When and at which tier a method became native code is
-   `PrintCompilation` or `-Xlog:jit+compilation`; which
-   calls inside one compilation tree were inlined is `PrintInlining` or
-   `-Xlog:jit+inlining=debug`; currently listed nmethods and their tier/state are visible through
+   collecting more. For compilation-attempt timing and tier, use
+   `PrintCompilation` or `-Xlog:jit+compilation`; their attempt headers precede completion,
+   so confirm the outcome before claiming installed code. Use `PrintInlining` or
+   `-Xlog:jit+inlining=debug` for decisions within an attempt. Currently listed nmethods and
+   their tier/state are visible through
    `jcmd <pid> Compiler.codelist`; continuous production monitoring is JFR. A method can execute
    inlined in several callers without its own listed nmethod.
 2. **Record the runtime and compilation mode** before interpreting a tier. On the usual
@@ -59,6 +60,7 @@ trap`, or at tier 4 with the hot path still slow — each suggests a different n
    tier; interpret C2 verdicts only when C2 is the relevant target and a profile implicates this call.
 5. **Read the verdict for the relevant compiler and compilation.** When investigating C2,
    use its tier-4 tree rather than a nearby C1 tree; deliberate C1-only modes need C1 diagnosis.
+   An inlining decision in a task that later fails does not describe installed code.
    C2 names the limit it applied — `too big`, `hot method too big`, `inlining too deep`, `virtual call`,
    `already compiled into a big method` — and `callee is too large` is C1's verdict, which
    says nothing about C2. See `references/inlining-diagnosis.md`.
@@ -71,8 +73,9 @@ trap`, or at tier 4 with the hot path still slow — each suggests a different n
    to a caller affects matching compilation tasks; callee `CompileCommand` patterns may affect many
    callers. On the examined HotSpot implementation, tasks capture directives when initialized,
    so already queued tasks can retain old policy. See `references/directives-and-production-logging.md`.
-8. **Confirm the fix in a controlled comparison** — that the call is now inlined or the
-   method now compiles, and that workload-level latency/throughput did not regress. Remove
+8. **Confirm the intended compiler outcome in a controlled comparison.** For an inlining
+   change, verify that its enclosing task succeeded and installed code. Check workload-level
+   latency/throughput for regressions. Remove
    session-only flags; retain bounded production logging only when its operational value and
    cost are established.
 
@@ -82,11 +85,12 @@ trap`, or at tier 4 with the hot path still slow — each suggests a different n
   `CompilerDirectivesFile` and `-XX:CompileCommand=PrintInlining,…` all need
   `-XX:+UnlockDiagnosticVMOptions` **before** them on the command line; the JVM refuses to
   start otherwise (executed, 25.0.3).
-- The unified-logging equivalents exist and need no unlock: `-Xlog:jit+compilation` prints
-  the same lines as `PrintCompilation` (minus the timestamp column, plus decorations) and
-  `-Xlog:jit+inlining=debug` prints the same trees as `PrintInlining`. Plain `-Xlog:jit`
-  matches no tag set and warns `No tag set matches selection: jit`. Both can be turned on in
-  a running JVM with `jcmd <pid> VM.log what=jit+compilation output=<file>`.
+- Unified logging needs no unlock: `-Xlog:jit+compilation` formats attempt and retirement
+  records like `PrintCompilation` (minus the timestamp column, plus decorations), but omits
+  its `COMPILE SKIPPED` bailout records on 25.0.3. `-Xlog:jit+inlining=debug` exposes the
+  inlining decisions. Plain `-Xlog:jit` matches no tag set and warns
+  `No tag set matches selection: jit`. Both can be turned on in
+  a running JVM with `jcmd <pid> VM.log what=jit+compilation,jit+inlining=debug output=<file>`.
 - Filter by structure, not by field index: `awk '$4 == 4'` matches only lines that carry
   exactly one flag character — 6 of 21 tier-4 lines in a small run (executed, 25.0.3). Use
   `grep -E '^ *[0-9]+ +[0-9]+ [ %s!bn]{5} 4 '`, and validate any extraction command

@@ -31,7 +31,8 @@ for a seam nothing ever uses.
    Reuse the requested outcome and project conventions; investigate the affected edge, not
    every dependency by default. Ask only for unresolved consumer or lifecycle contracts that
    change the decision, and continue independent checks with stated limits.
-1. **Draw the actual direction.** Use compiled bytecode/package edges and JPMS `requires`, then
+1. **Draw the actual direction.** Inspect source references and build inputs alongside compiled
+   bytecode/package edges and JPMS `requires`; source-retained annotations leave no bytecode edge. Then
    add reflection, `ServiceLoader`, generated types, configuration and wire/schema dependencies.
    Imports can be unused; the compiler graph constrains source/link change but is not the only
    coupling that constrains deployment.
@@ -48,7 +49,8 @@ for a seam nothing ever uses.
 4. **Invert when the benefit justifies it.** Define the port next to the policy, named in the policy's vocabulary;
    implement it in an adapter beside the mechanism; construct and connect both in
    the composition root; hand the port in through the constructor.
-5. **Verify.** Compile policy with the mechanism absent, inspect full module readability
+5. **Verify.** Compile policy into a fresh output directory with the mechanism absent and no
+   cached classes or generated outputs masking the dependency. Inspect full module readability
    (including transitive edges), and exercise policy outcomes with a small double. A container
    is unnecessary for that check; separately test adapter translation and runtime wiring.
 
@@ -70,6 +72,9 @@ for a seam nothing ever uses.
 - A factory is itself a dependency. Inject one when policy legitimately controls creation
   or acquisition timing/scope, including lazy or per-unit-of-work use. Define freshness,
   reuse and cleanup; when one existing instance serves, inject the instance.
+- Preserve collaborator scope and concurrency when moving assembly. A `final` injected field
+  fixes the reference, not the collaborator's mutable state. Do not turn a confined or per-operation
+  instance into a shared singleton unless its contract supports the resulting concurrent calls.
 - The JDK already ships some ports — `java.time.Clock` is one. Inject those rather
   than merely renaming them in project-local interfaces. A business calendar or another
   narrower policy contract may still justify its own abstraction.

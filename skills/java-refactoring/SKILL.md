@@ -35,11 +35,13 @@ classes and domain helpers; they are illustrations rather than standalone compil
 1. **Establish and record the baseline.** Run the affected tests. They should be green;
    if unrelated failures already exist, record them precisely and require the
    same baseline after each step rather than claiming an all-green suite. If the changed path
-   has no meaningful coverage, write
+   has no meaningful coverage for an observable dimension the step can affect, write
    characterisation tests first — read `references/safety-workflow.md`, which includes
-   a worked example. No net, no refactoring. The one exception is the step that makes the
-   net possible at all: when the class cannot be constructed or the method cannot be
-   reached, breaking that dependency is done without tests, under the constraints in
+   a worked example. A purely syntactic local rename may need only compilation and review
+   when name resolution and behavior remain unchanged; this does not justify skipping checks
+   for extraction, evaluation order or runtime-reached names. When the class cannot be
+   constructed or the method cannot be reached, breaking the dependency to make a test
+   possible is done under the constraints in
    `java-legacy-code-testing`. Reuse an adequate existing harness or the first meaningful
    assertion from that handoff; successful construction alone is not the net.
 2. **Classify the boundary.** Private or package scope lowers source-compatibility risk, but

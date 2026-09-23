@@ -50,16 +50,32 @@ the following are starting points when the project does not prescribe a differen
 
 ## Reading the output
 
-Three failures that look like success:
+Failures that look like success:
 
 - **A suite that selected nothing.** It may exit zero. Check executed and skipped test counts.
 - **A test that misses the changed behavior.** Inspect assertions and the path exercised.
   A first-run pass can be valid for already-correct behavior; when a regression should be
   exposed, verify against the known failing case or a bounded controlled mutation if useful.
 - **A green build with a skipped module.** Check what ran, not just the final line.
+- **The right test against the wrong artifact.** Inspect which compiled classes, workspace
+  dependency, generated schema or deployed revision the runner actually loads. Run required
+  build/generation steps before the test when those inputs are stale. Reuse incremental builds
+  or cached evidence when their input tracking establishes applicability; neither rebuilding
+  everything nor trusting a passing count by itself establishes this.
 
-Record the command and the counts. "4 tests, 4 passed" is a claim someone can check; "tests
-pass" is not.
+An invocation's name does not establish its prerequisites. For example, Maven lifecycle phases
+run preceding phases, while a directly invoked plugin goal does not generally do so; Surefire
+executes generated test classes. Inspect the project's invocation and resolved classpath rather
+than assuming that a test command compiled current sources and dependencies.
+
+Inspect the resulting diff when generators, fixers or hooks can modify tested inputs. For example,
+`npm test` can run a `posttest` script after its test script. If a later step changes a relevant
+contract or implementation, the earlier result covers the earlier state. Check the impact and
+rerun the affected validation, preserving other contributors' edits; do not blindly discard
+generated changes or invalidate unrelated evidence.
+
+Record command, counts and the inputs/target actually checked. "4 tests, 4 passed" identifies a
+result, but supports this resource only when its exercised behavior and revision are relevant.
 
 ## When the planned validation is impossible
 
@@ -87,3 +103,9 @@ RES-06 Dispatch repository query          BLOCKED
 
 This accurately separates implemented code from verified SQL. An unavailable environment
 does not authorize claiming the query works or weakening its required validation.
+
+## Sources for command behavior
+
+- [Maven build lifecycle](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html): phases versus directly invoked goals; project bindings determine the actual work.
+- [Surefire test goal](https://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html): generated test classes and configured test classpath.
+- [npm lifecycle scripts](https://docs.npmjs.com/cli/v11/using-npm/scripts/): `pretest`, `test` and `posttest` order. Inspect the project's scripts and npm version before applying it.

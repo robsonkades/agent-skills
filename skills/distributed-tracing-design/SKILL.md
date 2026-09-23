@@ -20,7 +20,9 @@ links express additional or cross-trace relationships, and timing comes from eac
 own start/end—not from an assumption that parents must wait for or enclose children.
 
 The design must follow the pinned OpenTelemetry semantic-convention version. Protocol
-domains have different stability and migration rules.
+domains have different stability and migration rules. The protocol guidance here was
+reviewed against semantic conventions 1.44.0; this is a reference baseline, not an upgrade
+target. Use the project's emitted conventions when they differ.
 
 This is a telemetry-modeling skill, with no Java syntax baseline or executable examples.
 Inspect the target language/runtime, resolved OpenTelemetry API/SDK and instrumentation,
@@ -74,7 +76,7 @@ relationship across traces, or when the applicable semantic convention recommend
 
 Messaging conventions use links as the generally consistent default because messages can
 batch, fan out, redeliver and run inside another ambient context. For a single-message
-process span, current conventions permit the message creation context as parent in defined
+process span, the reference conventions permit the message creation context as parent in defined
 cases. Therefore “consumer is never a child of producer” is false. Pin and document the
 chosen topology.
 
@@ -97,6 +99,10 @@ ERROR updates under the API status precedence; generic instrumentation should no
 successful status UNSET. A recovered child failure need not make the root ERROR. Equally,
 some business failures represented by normal protocol statuses need an outcome attribute.
 Do not set status solely to satisfy a backend filter.
+
+Choose exception logs versus span events from the target conventions and supported
+instrumentation. Changing that signal requires export and query compatibility checks;
+read the migration rules in [Semantic conventions](references/semantic-conventions.md).
 
 ### 6. Validate with fixtures
 
@@ -150,7 +156,7 @@ Prefer same-trace parentage when:
 
 ## Messaging and batch rules
 
-- Model create/send, receive/process and settle according to the current messaging
+- Model create/send, receive/process and settle according to the pinned messaging
   conventions; they are not interchangeable durations.
 - One batch span can link to each message creation context and expose bounded batch count.
 - Per-record process spans are justified when individual latency/error/retry matters.

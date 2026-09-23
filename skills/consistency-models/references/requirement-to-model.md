@@ -27,7 +27,9 @@ from two devices using the same user ID do not acquire a program order from that
 
 **Scope is explicit.** Linearizability composes across objects for individual operations, but it
 does not make a sequence of operations atomically update an order and payment. Multi-object
-atomicity/invariants route to `distributed-transactions-and-sagas`.
+invariants within one transactional owner route to `enterprise-transactions`; coordination
+across transactional owners routes to `distributed-transactions-and-sagas`. Multiple objects
+alone do not require a distributed transaction or saga.
 
 Sequential consistency does **not** compose per object. With registers initially `x=y=0`,
 client A executes `write(x,1); read(y)->0`, while B executes `write(y,1); read(x)->0`.

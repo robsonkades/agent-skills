@@ -77,10 +77,10 @@ state the assumed contract and what must be verified before changing it.
   they may reasonably rely on. Document parameter constraints, caller-relevant failure
   conditions and nullness.
 - Overrides may **weaken preconditions** (accept more) and **strengthen postconditions**
-  (promise more), never the reverse. An override that throws where the supertype's
-  contract accepted, returns null where the supertype promised non-null, or narrows
-  accepted states, breaks every caller programmed against the supertype — it compiles;
-  only contract review catches it.
+  (promise more), never the reverse. Compare permitted outcomes for the same input and state:
+  throwing where the supertype requires normal completion, returning null where it promises
+  non-null, or rejecting a state it requires accepting violates substitutability. Such changes
+  can compile; review the inherited failure policy as well as normal results.
 - Assertions are disabled by default and controlled by assertion status (commonly `-ea`/`-da`).
   Public/trust-boundary preconditions and required corruption-prevention checks must enforce
   the failure contract even when assertions are disabled. A side-effect-free assertion of a

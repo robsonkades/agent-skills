@@ -114,14 +114,21 @@ Canary long enough to cover the workload's relevant peak, batch/cron and depende
 duration follows evidence, not a universal business-day rule. Compare against a concurrent control
 or seasonally matched baseline:
 
-| Signal                                 | Expected                                   | Roll back if                                        |
-| -------------------------------------- | ------------------------------------------ | --------------------------------------------------- |
-| p99 at target rate                     | inside predeclared objective/cost envelope | meaningful breach of the accepted envelope          |
-| Downstream error rate                  | inside error budget/no causal regression   | statistically/operationally significant causal rise |
-| Connection-pool wait time              | inside capacity/SLO envelope               | sustained queue-age/SLO breach                      |
-| Retained heap and GC phases            | stable at repeated load/recovery           | retained state or GC violates budget                |
-| Scheduler MXBean queued/pool estimates | explained and SLO-safe                     | sustained causal pressure/exhaustion                |
-| `jdk.VirtualThreadPinned`              | measured/impact understood                 | native/foreign pins causally constrain throughput   |
+| Signal                               | Expected                                   | Roll back if                                        |
+| ------------------------------------ | ------------------------------------------ | --------------------------------------------------- |
+| p99 at target rate                   | inside predeclared objective/cost envelope | meaningful breach of the accepted envelope          |
+| Downstream error rate                | inside error budget/no causal regression   | statistically/operationally significant causal rise |
+| Connection-pool wait time            | inside capacity/SLO envelope               | sustained queue-age/SLO breach                      |
+| Retained heap and GC phases          | stable at repeated load/recovery           | retained state or GC violates budget                |
+| Scheduler MXBean estimates (JDK 24+) | explained and SLO-safe                     | sustained causal pressure/exhaustion                |
+| `jdk.VirtualThreadPinned`            | measured/impact understood                 | pins causally breach the accepted workload envelope |
+
+Include monitor pinning on JDK 21–23 in that decision; on 24+ monitor use alone no longer pins,
+but native/foreign frames can still do so. The scheduler MXBean is unavailable before JDK 24;
+use supported JFR/dump evidence with carrier, admission and resource signals for those releases.
+For its pool, mounted and queued counts, `-1` means unknown, not zero. Missing or unknown
+scheduler data cannot establish an empty queue or healthy scheduler; record the coverage gap
+and use corroborating evidence appropriate to the runtime.
 
 Write the rollback criteria **before** the canary. Written afterwards they become negotiable
 in the exact moment they should not be.
@@ -181,6 +188,8 @@ removed pin diagnostics are gone, and the baseline/canary/rollback record is dur
 
 ## Authoritative references
 
+- [Java 21 virtual threads and monitor pinning](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html)
+- [Java 24 virtual threads](https://docs.oracle.com/en/java/javase/24/core/virtual-threads.html)
 - [Java 25 virtual threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
 - [JEP 444](https://openjdk.org/jeps/444)

@@ -41,7 +41,9 @@ selection.
 seams and compatibility requirements; do not assume a runtime stack-frame cost after JIT inlining.
 
 **Fix.** Call the constructor, or use a named static factory on the type if the name adds meaning
-(`gof-factory-method`).
+(`java-object-construction`). Use `gof-factory-method` when a creator defers product creation
+polymorphically to its subtypes, including calls from an external client; a named static factory
+does not establish that pattern.
 
 ## Abstract Factory everywhere
 
@@ -53,8 +55,9 @@ used at different call sites while still needing consistent family selection.
 **Cost.** A service locator with a factory's name: every caller couples to one type that knows
 everything, and the family guarantee it was built for no longer applies to most of its methods.
 
-**Fix.** Split by usage cluster, or delete and inject the products directly
-(`gof-abstract-factory`).
+**Fix.** Separate unrelated construction responsibilities while keeping each compatibility or
+ownership family together, even when its products are used at different call sites. Direct injection
+is an option only when the resulting wiring still preserves those invariants (`gof-abstract-factory`).
 
 ## Builder for a trivial object
 
@@ -96,7 +99,11 @@ the dominant retainer in a heap dump. Also: listeners firing after their owner i
 disposed, acting on stale state.
 
 **Fix.** A subscription object that is `AutoCloseable`, or explicit lifecycle pairing
-(`gof-observer`).
+(`gof-observer`). Check what disposal guarantees: removing a listener from a snapshot-based
+registry excludes later snapshots, but does not revoke callbacks already captured or running.
+If the contract forbids effects after disposal, define coordination that handles self-close without
+deadlock rather than assuming `close()` supplies it. Test capture-before-close followed by delivery,
+as well as later notification; verify retention separately from callback behavior.
 
 ## Mediator god object
 
@@ -240,4 +247,7 @@ never examined. No frequency estimate follows from these examples.
 **Fix.** Restate the problem with no pattern name in it and re-decide from the restatement
 (`gof-pattern-thinking`).
 
-Source: [Object.clone contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html).
+Sources:
+
+- [Object.clone contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html).
+- [CopyOnWriteArrayList snapshot iteration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html) — an existing iterator does not reflect subsequent removal.

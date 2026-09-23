@@ -47,6 +47,13 @@ release an otherwise unclaimed returned resource even when its result cannot be 
 Invoke an underlying handle's cancel according to its idempotency/retry contract rather than
 equating one successful public transition with one guaranteed downstream acknowledgement.
 
+Moving the hook outside a lock does not bound it. Keep cancel/close hooks and their inline
+callbacks bounded and safe on the initiating thread. `CompletableFuture` non-async completion
+actions may run on that thread too. If an abort may block, dispatch it through owned, bounded
+capacity with a policy for rejection, hook failure and grace expiry. Do not queue the only
+abort path behind the work it must unblock. A queued abort is not an acknowledged stop; keep
+its admission/execution state visible and retain an independent escalation path.
+
 For example, Java 25's default `HttpClient.sendAsync` returns cancelable futures (including
 derived futures) whose `cancel(true)` attempts exchange cancellation. The request may already
 have reached the server, and resource release can be asynchronous. Completion racing cancellation
@@ -54,6 +61,15 @@ can expose a wrapped cancellation exception even when `isCancelled()` is false. 
 cancellation state and exception chain; a nested I/O cause does not by itself make the operation
 an ordinary retryable failure. Neither local exceptional completion nor a closed transport proves
 that server-side work or committed effects have stopped.
+
+For a shared exchange, cancelling a provider-derived future can therefore affect other callers.
+Do not assume `copy()` removes that authority: OpenJDK 25.0.3's HTTP future preserves the cancel
+handle through `newIncompleteFuture()`. Under a caller-local abandonment policy, relay the outcome
+to a fresh base future without a downstream cancel bridge, and let the operation owner decide
+when shared work can stop. The owner still observes late failures and cleans up unclaimed
+resource-bearing results; relaying a value does not create a second ownership claim. Test that cancelling one
+view leaves another caller able to complete. See `completablefuture-composition` for the relay
+and deadline mechanics; inspect other providers before choosing an isolation boundary.
 
 ## Close as cancellation
 
@@ -83,6 +99,8 @@ only exceptional completion of the caller future.
 ## Authoritative references
 
 - [Java concurrency APIs](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [CompletableFuture execution and timeout contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+  — non-async callback execution, receiver mutation and derived-future construction; checked 2026-09-19.
 - [InterruptibleChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/InterruptibleChannel.html)
 - [JDBC `Statement.cancel`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Statement.html#cancel()>)
 - [Java HTTP client](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html)

@@ -2,6 +2,8 @@
 
 These cases evaluate record-making decisions, not application behavior or a Markdown
 parser. Inputs are synthetic. No paired agent runs have been executed for this revision.
+The examples teach lifecycle boundaries and ship with their answers; runs against them
+are known-example regressions, not unseen holdouts.
 
 ## Reproduction protocol
 
@@ -9,7 +11,10 @@ Run each request in fresh baseline and treatment sessions with the same model/ve
 reasoning settings, tools, permissions and repository context. The baseline has no access
 to this skill; the treatment receives its description and body with access to its three
 technical references. Keep this evaluation file and its expected/failure criteria
-unavailable to task-runner agents. Prevent automatic skill discovery in the baseline.
+unavailable to task-runner agents. Record this resource restriction: the comparison tests
+the body and three technical references, not the complete distributed skill. For a full
+package comparison, prepare independent cases and keep evaluator-only criteria outside
+actor access. Prevent automatic skill discovery in the baseline.
 For selection, first expose only the description among
 the same neighboring descriptions and record selection before providing the body.
 
@@ -143,6 +148,44 @@ analysis needed to select one without fabricating a library version that works.
 
 **Failure:** Claiming compatibility from the developer machine, changing runtime/build
 versions without authorization, or declaring that a draft ADR proves the library works.
+
+## 8. Authorized future replacement with an unfulfilled gate
+
+**Request/context:** “ADR-031 was approved today to replace ADR-012 for new clients after
+compatibility gate G passes. G has not run, and existing clients must keep ADR-012 until
+their separate migration. Local policy marks target decisions accepted immediately and
+keeps current guidance active until each cohort's gate passes. Update only the records;
+do not request approval again or claim the migration completed.”
+
+**Expected behavior:** Record ADR-031 as accepted with its supported activation conditions,
+preserve ADR-012's applicable guidance and explicitly link the staged relationship.
+
+**Required result:** Acceptance, effective applicability and implementation status remain
+separate; cite the supplied authorization, identify the evidence/owner for gate G, and
+preserve existing-client scope until its own supported transition. If the gate owner was
+not supplied or found, leave it unresolved rather than inventing one.
+
+**Failure:** Treating approval as proof that G passed, retiring guidance for all clients,
+leaving the authorized decision proposed solely because rollout is incomplete, seeking
+duplicate approval, or modifying deployment code.
+
+## 9. An acyclic decision graph with conflicting successors
+
+**Request/context:** “Accepted ADR-044 and ADR-045 both replace ADR-020 for the same service,
+production environment and period. One mandates local processing; the other mandates a
+remote call for that same operation. Both approvals are recorded, but no precedence or
+exception is documented. The link/cycle checker passes. Declare ADR-045 authoritative
+because its number is larger; we assume no further review is needed.”
+
+**Expected behavior:** Report unresolved applicability/authority conflict despite structural
+graph validity. Inspect the approval evidence and scope before recommending resolution.
+
+**Required result:** Identify both conflicting instructions and request the missing precedence
+decision only if available evidence cannot resolve it; preserve their historical rationale
+and avoid inventing an unrecorded supersession edge.
+
+**Failure:** Latest-number/date wins without local policy, a passing linter claimed to prove
+unambiguous guidance, or silently rejecting/retiring one authorized decision.
 
 ## Validation boundary
 

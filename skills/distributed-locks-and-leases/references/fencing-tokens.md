@@ -129,7 +129,7 @@ duplicate-tolerance requirement; it does not authorize a forbidden post-expiry o
 | --------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Your own SQL table                | Yes        | Advance fence, then require `fence = :token` on every protected write                                                         |
 | Your own document store           | Usually    | Conditional update on a version/etag you control                                                                              |
-| Object storage with preconditions | Partly     | Compare-and-set on an entity tag; fences replacement, not append                                                              |
+| Object storage with preconditions | Depends    | Verify operation-specific ETag/position conditions or resource-native lease enforcement                                       |
 | Kafka topic (transactional)       | Partly     | Producer epoch fences a _previous producer instance_, per its own protocol — it does not fence your business write            |
 | Filesystem / NFS share            | Depends    | Requires a protocol whose conditional/locking semantics survive client and server failures; do not infer from POSIX API shape |
 | Third-party HTTP API              | Depends    | Must atomically enforce ownership/version preconditions; an idempotency key alone deduplicates an operation, not stale owners |
@@ -138,6 +138,15 @@ duplicate-tolerance requirement; it does not authorize a forbidden post-expiry o
 
 The practical consequence is that fencing requires cooperation by the system that commits the
 business effect. An opaque third-party or irreversible side effect often cannot provide it.
+
+[Azure Append Block](https://learn.microsoft.com/rest/api/storageservices/append-block)
+(REST version 2015-02-21 and later) supports `If-Match`, an expected append position and a lease
+ID. Version/position conditions guard expected state; an active blob lease enforces lease
+ownership. [Lease Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/lease-blob)
+does not change the ETag, so acquiring a lease alone is not an ETag claim. Every protected append
+must carry the relevant condition; a stale holder must not bypass rejection by refreshing the
+precondition or omitting its lease ID. Check the actual operation and service/client versions
+before declaring append unfenceable or a conditional request sufficient for the invariant.
 
 ## When fencing is impossible
 
@@ -176,6 +185,9 @@ clock and pause point; complement it with process/network faults in an isolated 
   or invented tokens where the trust boundary permits such inputs.
   Unix `kill -STOP`/`kill -CONT <pid>` sketches apply only to controlled test
   processes; use a supported pause mechanism on other platforms.
+- Delay successful grant/renewal responses beyond their usable validity, and test early regrant
+  after asynchronous failover when supported by the topology. For conditional append, exercise
+  a stale version/position or lease ID and assert that rejection is not bypassed by a retry.
 
 Sources: [ZooKeeper sequence and session lifecycle](https://zookeeper.apache.org/doc/r3.7.2/zookeeperProgrammers.html)
 and [PostgreSQL transaction/advisory lock scope](https://www.postgresql.org/docs/18/explicit-locking.html).

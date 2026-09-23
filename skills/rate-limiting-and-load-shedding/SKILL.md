@@ -124,6 +124,10 @@ Do not use shedding as a substitute for capacity when:
   same bottleneck/quota, so blind failover amplifies load. Use `Retry-After` when meaningful;
   client backoff/jitter and an end-to-end deadline remain required. A limiter that returns 500 is
   indistinguishable from a defect; whether it is retried depends on the client's retry contract.
+- Rejection consumes capacity too: response encoding, logging and connection handling can
+  become the bottleneck. Keep ordinary 429/503 feedback; when measurements show that rejection
+  itself prevents recovery, consider earlier edge/listener admission and bounded diagnostics.
+  The policy reference covers connection drops, protocol effects and preserving accepted work.
 - Do not implement shaping as unbounded `Thread.sleep` on request workers. A bounded
   asynchronous delay queue can intentionally smooth traffic when deadlines and memory permit;
   account for held connections/context and reject when waiting cannot finish usefully.
@@ -157,7 +161,7 @@ Estimate safe concurrency/work rate with headroom
   ↓
 Allocate by trusted tenant/priority and reject before expensive work
   ↓
-Propagate explicit 429/503 outcome and retry guidance
+Return 429/503 and retry guidance; use earlier admission if rejection itself saturates
   ↓
 Observe survivor latency, fairness, shed SLI and recovery hysteresis
 ```

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-ml-inference
-version: 1.0.2
+version: 1.0.3
 description: >-
   Engineering CPU and accelerator-backed ML inference from JVM applications: choosing in-process
   versus remote serving, bounding native sessions and predictors, coordinating engine and request

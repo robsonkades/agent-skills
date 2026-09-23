@@ -33,7 +33,7 @@ entry point and find the current state, supporting evidence and next ready work.
 | **BLOCKED**     | Cannot proceed for a reason outside the work         | The blocker is identified              |
 | **DONE**        | Implemented and validated                            | The validation ran and passed          |
 | **SKIPPED**     | Deliberately not done in this feature; still wanted  | A decision, with a reason and an owner |
-| **CANCELLED**   | Resource retired: no longer needed or replaced       | Reason or replacement is recorded      |
+| **CANCELLED**   | Resource retired: no longer needed or replaced       | Reason and retained scope are recorded |
 
 Common transitions (additional evidence-based transitions are described below):
 
@@ -66,7 +66,9 @@ resumption, not workflow accounting for its own sake.
    edits into an event stream that costs more than the work.
 3. **Require relevant acceptance evidence for DONE.** Link what ran, results and the checked
    code/contract revision and environment; a command name alone is not a passing result.
-4. **Record a blocker with its question**, what it blocks, and what continues meanwhile.
+4. **Record a blocker's question or missing condition**, affected work, resolution owner,
+   evidence needed to unblock, and what continues meanwhile. If the owner is unknown, say so
+   instead of assigning decision authority by assumption.
 5. **Append to the execution log** on start, completion, blocking, unblocking and any plan
    change. The log is append-only; a correction is a new entry.
 6. **Leave the files true at the end of every session**, whatever state the work is in.
@@ -95,10 +97,11 @@ THEN it returns to IN_PROGRESS, and the log says which resource reopened it.
 IF an accepted baseline or CT-* changes
 THEN trace the impact to RES-*/EV-*, reopen affected rows, and preserve unaffected DONE evidence.
 
-IF a resource is skipped
-THEN record who decided, why and which commitments remain. Skipping execution does not amend
+IF a resource is skipped or cancelled
+THEN record who decided, why and which commitments remain. Neither status amends
      Required scope: link equivalent accepted coverage or an authorized scope/acceptance revision;
      otherwise report the feature incomplete against that commitment. Reuse existing authority.
+     A replacement still awaiting validation remains open under its own ID.
 
 IF the same resource has been IN_PROGRESS across three sessions
 THEN inspect remaining work, session length and dependencies. Split only when useful;
@@ -117,10 +120,12 @@ THEN keep proportionate inline status; do not create a dossier for ceremony. If 
 
 ## Constraints
 
-- **Make concurrent ownership explicit.** Prefer one owner per resource and mergeable per-resource
-  records or append-only events. If a shared table has multiple writers, use ordinary source-control
-  conflict detection and reconcile from validation evidence; “one writer” is an operating choice,
-  not a guarantee in a distributed workflow.
+- **Make concurrent ownership explicit.** In one shared working tree, coordinate an editor for
+  the shared snapshot/log or use separately owned records with an explicit merger. Git merge
+  conflicts do not protect against one writer overwriting another's uncommitted file updates.
+  With separate working trees, merge changes and reconcile status, dependencies and evidence
+  even when no textual conflict occurs. Ownership is a coordination rule, not a filesystem lock;
+  inspect fresh state before updating and preserve other owners' changes.
 - **Never mark DONE optimistically.** "It should work" is IN_PROGRESS with a note.
 - **Preserve resource identity and history.** Never delete a row or reuse its ID for a different
   obligation. For an accepted split/merge, link old and new IDs, the reason and updated dependencies;

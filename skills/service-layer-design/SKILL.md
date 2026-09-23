@@ -84,6 +84,8 @@ or integration-test campaign.
    independent where the selected architecture requires it. An application API may accept
    deliberate framework coupling; adapt when caller compatibility or domain independence
    needs it, rather than requiring another wrapper for every framework type.
+   Preserve rollback and outcome semantics when translating failures, including errors
+   deferred until transaction completion.
 6. **Justify the layer per module.** Inspect transaction semantics, authorization, audit,
    stable APIs and read consistency before deleting forwarding methods; write count is not
    the threshold.

@@ -7,10 +7,11 @@ answer; each has a defensible answer once the context is stated.
 ## Injection and stereotypes
 
 `@Service`, `@Component`, `@Repository` and constructor injection are the cheapest rung of
-the ladder. The class is a plain object with a constructor; the annotation tells a container
-to discover it; wiring also depends on constructor/configuration rules. Constructor injection remains plain Java; removing Spring from an annotated class
-also requires removing/replacing the annotation dependency and wiring, though its business behavior
-can remain directly testable.
+the ladder. Stereotypes make classes eligible for component scanning, but bean registration
+can instead use `@Bean`, XML or an explicit registration API. Wiring also depends on
+constructor/configuration rules. Constructor injection remains plain Java; removing Spring
+from an annotated class also requires removing/replacing the annotation dependency and wiring,
+though its business behavior can remain directly testable.
 `@Repository` can also enable exception translation when the corresponding post-processor is
 configured; inspect active advice before treating a stereotype as discovery-only metadata.
 
@@ -93,8 +94,11 @@ class that carries the business rules.
   This is the cost that gets omitted when the choice is argued on principle
   (`orm-structural-mapping`).
 
-The pattern-level version of this choice — Active Record versus Data Mapper — is
-`data-source-patterns`. What follows is only its coupling half.
+Keep access ownership separate from the number of object representations. Active Record
+puts persistence behavior on the object; Data Mapper manages persistence externally
+(`data-source-patterns`). A directly mapped JPA domain entity without persistence methods is
+already Data Mapper-style. A second domain/persistence representation is an additional
+isolation decision, priced below; it is not required to adopt Data Mapper.
 
 ```text
 Is the domain logic rich — invariants, state machines, rules that
@@ -233,6 +237,12 @@ defaults and isolated adapter transaction boundaries can be legitimate exception
 
 ## Sources and compatibility
 
+- [Fowler: Active Record](https://martinfowler.com/eaaCatalog/activeRecord.html)
+  and [Data Mapper](https://martinfowler.com/eaaCatalog/dataMapper.html): classify access
+  ownership separately from a decision to introduce two object representations.
+- [Spring bean declarations](https://docs.spring.io/spring-framework/reference/core/beans/java/bean-annotation.html)
+  and [explicit container registration](https://docs.spring.io/spring-framework/reference/core/beans/java/instantiating-container.html):
+  `@Bean`, XML and explicit registration are alternatives to component scanning.
 - [Spring injection and initialization](https://docs.spring.io/spring-framework/reference/core/beans/factory-nature.html):
   initialization validation belongs to the container lifecycle, not arbitrary construction.
 - [Repository stereotype](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/stereotype/Repository.html):

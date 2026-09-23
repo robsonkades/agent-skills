@@ -60,7 +60,15 @@ Lengths prevent ambiguous tuples such as (`"ab"`, `"c"`) and (`"a"`, `"bc"`) fro
 the same byte sequence. For this Guava example, integer lengths are little-endian; `asLong()`
 reads the first eight hash bytes little-endian. Java `String.compareTo` breaks score ties by UTF-16
 code-unit order, which a port must reproduce or replace through an explicit contract change.
-Define allowed key/ID encoding and normalization; include non-ASCII inputs and ties in agreement tests.
+Define allowed key/ID encoding, normalization and malformed-input behavior. Java
+[`String.getBytes(Charset)`](<https://docs.oracle.com/en/java/javase/16/docs/api/java.base/java/lang/String.html#getBytes(java.nio.charset.Charset)>)
+replaces malformed UTF-16, so selecting UTF-8 alone does not establish identical bytes across clients.
+The pinned Guava ring example follows that path through
+[`AbstractHasher.putString`](https://github.com/google/guava/blob/v33.4.8/guava/src/com/google/common/hash/AbstractHasher.java).
+Reject unpaired surrogates at the input boundary before hashing or membership mutation, or specify
+and test identical replacement behavior. Include malformed inputs, valid supplementary characters,
+normalization-sensitive strings and score ties in agreement tests. Changing this policy for existing
+keys is a placement-contract change, not an automatic cleanup.
 
 Properties that fall out of the definition rather than out of tuning:
 

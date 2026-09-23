@@ -214,9 +214,9 @@ void reports_no_more_elements_after_exhaustion() {
 }
 ```
 
-The second test is the one worth copying into any remote-iteration code. Every functional test
-passes whether the traversal ends because there is no more data or because the caller ran out of
-time; only an explicit test distinguishes them.
+Success-only tests may never exercise expiry and can miss a timeout incorrectly reported as
+normal exhaustion. The second test checks that failure contract explicitly; also retain tests
+for complete traversal and legitimate exhaustion.
 
 ## What was rejected
 

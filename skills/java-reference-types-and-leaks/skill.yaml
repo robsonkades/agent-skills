@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-reference-types-and-leaks
-version: 1.3.2
+version: 1.3.3
 description: >-
   Reachability-driven memory in Java: strong/soft/weak/phantom contracts and notification
   limits, WeakHashMap and its value-holds-key trap, explicit Cleaner cleanup versus

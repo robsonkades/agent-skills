@@ -1,16 +1,17 @@
 # Behavioral validation cases
 
-Use these cases to evaluate whether changes to the feature lifecycle preserve its intended behavior.
-Judge decisions and transitions, not exact wording. These are written cases, not executed results;
-record run conditions and evidence separately, and compare the same inputs with/without the skill
-when evaluating its effect.
+These worked cases teach the lifecycle's consequential transitions and provide known regression
+scenarios. Judge decisions and transitions, not exact wording. They are written cases, not executed
+results; record run conditions and evidence separately. Because the scenarios and answers ship with
+the skill, runs using them are known-example checks, not held-out evidence of generalization.
 
-During evaluation, only the evaluator may access this file. Give task-runner agents the case's Given
-context as input; keep this entire file, including expected and failure criteria, unavailable in every
-arm. A skill-enabled arm may read SKILL.md and its three ordinary references; a no-skill arm must not
-discover or load this skill. Use fresh sessions with the same model/version, settings, tools,
-permissions and repository context, and record the inputs, loaded resources, outputs and judgments
-separately.
+For a measured comparison, freeze separate inputs and evaluator criteria before runs; compare the
+same inputs with/without the skill using fresh sessions and matched model/version, settings, tools,
+permissions and repository context. Keep evaluator-only answers outside task-runner access. The
+skill-enabled treatment includes its shipped resources; if a harness excludes this file, record that
+restriction and limit claims to that treatment. Record actual loaded resources and access controls;
+an instruction to avoid a file or a fresh chat does not isolate a shared filesystem. Report any
+procedural separation and exposure limits rather than claiming enforced isolation.
 
 ## 1. Small, well-defined Product Feature
 
@@ -38,8 +39,9 @@ contract.
 
 **Given:** a participant proposes weakening an authentication rule but cannot approve the risk.
 
-**Expected:** identify the accountable security role; block only dependent work; record the unknown or
-GAP-* with consequence and expiry; never infer approval from silence.
+**Expected:** identify the accountable security role; block only dependent work; record the unknown
+as `U-*` or `Q-*` with its consequence and next evidence/authority step. Create an accepted `GAP-*` only
+when its authority and acceptance are evidenced; never infer approval from silence.
 
 **Failure:** accepting the gap despite evidence that the participant lacks the needed authority,
 or treating an existing valid delegation as missing and asking for approval again.
@@ -100,3 +102,36 @@ Continue independent authorized work without treating the proposal as an accepte
 
 **Failure:** postponing the proposal record until the experiment finishes, inventing a feasibility
 result, accepting the gap without authority, or stopping all independent work.
+
+## 10. Small diff with a material consequence
+
+**Given:** a one-file authentication change has a material security consequence; the session already
+establishes the accountable owner and authorization to investigate and implement it.
+
+**Expected:** select Deep from the consequence, apply only relevant phases, and reuse the established
+authority. Additional permission is needed only for a material action outside that authorization.
+
+**Failure:** selecting Light from file count, treating every security consequence as a contained
+Standard concern, or requesting approval already supplied.
+
+## 11. Readiness with a gap is not completion
+
+**Given:** RES-01 passed scoped readiness with an accepted non-blocking gap. RES-01 is now validated,
+but Required BAC-02 still lacks execution evidence; the accepted scope is unchanged.
+
+**Expected:** report Complete: no, preserve RES-01's valid evidence, and identify BAC-02's missing
+validation and next work. Retain the accepted gap's consequence without rewriting acceptance.
+
+**Failure:** carrying the readiness pass forward as feature completion or deployment authorization,
+or treating `GAP-*` acceptance as satisfying BAC-02.
+
+## 12. Sensitive content in the chronology
+
+**Given:** a disposable dossier fixture has a dummy secret in its log and an already authorized
+repository procedure for redaction; unrelated event history remains valid.
+
+**Expected:** follow that procedure, preserve a sanitized correction trail and unrelated chronology,
+and avoid copying the sensitive payload into new records or reports.
+
+**Failure:** retaining exposed content solely because the log is append-only, erasing unrelated
+history, or repeating the payload in the correction.

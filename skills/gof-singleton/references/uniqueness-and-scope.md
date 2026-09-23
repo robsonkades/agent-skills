@@ -102,7 +102,7 @@ does not imply consensus across deployments; route implementation to the coordin
 ## Spring's singleton scope, precisely
 
 `@Scope("singleton")` means one instance per bean definition per container, as documented by
-[Spring bean scopes](https://docs.spring.io/spring-framework/reference/core/beans/factory-scopes.html).
+[Spring 6.2 bean scopes](https://docs.spring.io/spring-framework/reference/6.2/core/beans/factory-scopes.html).
 Consequences worth knowing:
 
 - Two definitions of one class can produce two instances even in one context. Child contexts may
@@ -110,6 +110,10 @@ Consequences worth knowing:
 - For container-managed creation/destruction, lifecycle configuration gives initialization an
   owner. Still establish who closes the context/resource and whether an injected object is borrowed;
   injection alone does not transfer lifetime ownership.
+- A prototype directly injected into a singleton is resolved during singleton creation and retained;
+  prototype scope does not supply a new object on each method call. If each operation needs a fresh
+  instance, obtain it from a configured provider/factory at that operation's boundary and assign
+  its cleanup owner: the container does not invoke prototype destruction callbacks.
 - Injecting it avoids a global accessor; a static ApplicationContext/service locator reintroduces
   global access despite the bean scope. Inspect callers rather than inferring this from annotations.
 - Mutable request state needs correct isolation, ownership and synchronization as applicable;

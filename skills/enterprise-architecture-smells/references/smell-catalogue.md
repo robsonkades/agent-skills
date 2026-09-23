@@ -66,8 +66,8 @@ large, and its history shows one reason to change.
 **Symptoms** The same business rule implemented in four scripts, slightly differently;
 `copy-paste` lineage visible in the code.
 
-**Cause** Transaction Script applied to rules that interact — the condition under which the
-pattern stops being cheaper.
+**Possible cause** A rule has several independent owners. Interacting rules can increase
+this cost, but their presence alone does not establish that Transaction Script is unsuitable.
 
 **Consequences** Rules diverge silently; a fix lands in three of the four sites.
 
@@ -75,11 +75,14 @@ pattern stops being cheaper.
 distinct implementations. Check whether they implement the same rule/version and should
 change together; even two divergent implementations can matter, while similar checks may not.
 
-**Direction** Extract the interacting rules into a domain type used by every script; convert
-the module to a domain model only if the extraction proves insufficient.
+**Direction** Give the confirmed shared rule one owner: a function or policy may suffice for
+shared computation; compare a state-owning domain type when transitions must preserve an
+invariant. Preserve each entry point's results and transaction behavior. Consider a broader
+domain model only if shared policies leave repeated state coordination or bypassable rules
+(`domain-logic-organization`).
 
-**Acceptable when** the rules genuinely do not interact and the similarity is coincidental —
-two operations that both check a date are not duplication.
+**Acceptable when** scripts delegate common rules to a coherent shared owner, or the
+similarity is coincidental — two operations that both check a date are not duplication.
 
 ## Generic repository / DAO layer
 
@@ -233,13 +236,22 @@ everyone out; two tabs corrupt a flow.
 
 **Cause** State placed by default rather than by decision.
 
-**Consequences** Instances are not disposable; deploys lose work; concurrency bugs within
-one user.
+**Possible consequences** Local state without adequate recovery can tie work to an instance;
+concurrent updates can corrupt one user's flow even when losing that state is acceptable.
 
-**Direction** Inventory and place each item (`session-state-strategies`).
+**Detection** Identify attribute writers and overlapping requests for the same session,
+including multiple tabs. Servlet 6.0 protects the container's session-attribute collection,
+not concurrent access to mutable objects stored in it. Trace read-modify-write sequences;
+replacing a value with an immutable object does not by itself prevent lost updates.
 
-**Acceptable when** the state is small, transient and cheap to lose, and sticky routing is a
-recorded decision.
+**Direction** Inventory and place each item (`session-state-strategies`); establish the
+required update/conflict behavior for the actual session store. Check an overlapping-update
+case and instance loss/recovery against that contract. Neither sticky routing nor moving
+state to an external store establishes atomic application updates by itself.
+
+**Acceptable when** the loss/recovery policy is acceptable and concurrent updates preserve
+the required behavior. Small, transient state with deliberate sticky routing can qualify,
+but size and affinity do not serialize requests.
 
 ## ORM-driven domain design
 
@@ -285,8 +297,10 @@ Measure call topology, concurrency and correlated failures before quantifying th
 **Acceptable when** the calls are genuinely independent, parallel and bounded — and the
 bound is enforced.
 
-## Sources for framework-sensitive findings
+## Sources for consequential findings
 
+- [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — shared subtasks can remain procedures; duplicated logic does not mandate a domain model.
+- [Jakarta Servlet 6.0, section 7.7.1](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0.pdf) — container session-attribute collection safety and application responsibility for attribute-object access; check the target servlet/session implementation.
 - [Jakarta Persistence 3.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity construction/access, relationship ownership and cascade/orphan semantics; inspect the project's actual provider and persistence version.
 - [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html) — verify against the project's release.
 - [Spring AOP proxy semantics](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — inspect effective proxy configuration before extraction.

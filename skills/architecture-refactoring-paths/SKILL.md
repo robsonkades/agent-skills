@@ -60,7 +60,10 @@ using this skill does not authorize upgrades, preview features or new dependenci
    intentional corrections from preserved behavior, especially security defects or corrupt data.
 4. **Define the intermediate state explicitly.** While two mechanisms coexist,
    which one owns reads, writes and in-flight work for each case must be explicit. Test the
-   overlapping reader/writer versions, not only old-only and new-only deployments.
+   overlapping reader/writer versions, not only old-only and new-only deployments. A routing
+   flag does not stop a delayed old writer; use the persistence reference's
+   [authority-transfer checkpoint](references/domain-and-persistence-paths.md#authority-transfer-checkpoint)
+   when moving write ownership.
 5. **Validate each checkpoint.** Define acceptance, pause/abort criteria and an owner. Exercise
    relevant concurrent writes, partial failures and restart in isolation before rollout.
    Distinguish routing reversal, binary rollback, resynchronization, restore and forward repair.
@@ -144,6 +147,6 @@ refactor may need only one tested change, not a migration programme.
   optimistic locking, and synchronous call to event; each with its rollback story, its
   parallel-run policy where one applies, and the verification that the migration is
   complete. Read when changing a boundary or a concurrency mechanism.
-- [Validation cases](references/validation-cases.md) — evaluator-only requests and criteria;
-  withhold from the task agent during scored comparisons. Use the path references above to
-  challenge an actual plan's rollback, side-effect and mixed-writer assumptions.
+- [Validation cases](references/validation-cases.md) — exposed review exercises with expected
+  decisions and failure conditions. Read when challenging a plan's rollback, side-effect or
+  mixed-writer assumptions; these teaching cases are not unseen behavioral evaluations.

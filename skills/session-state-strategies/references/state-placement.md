@@ -95,6 +95,36 @@ behavior does not prove a deployed route never consults the store.
   functionality on public paths? Protected operations must reject unavailable authority rather
   than silently authorize an anonymous substitute. Test bypasses against the security filter chain.
 
+### Attribute tracking versus flush timing
+
+For Spring Session 3.3.7's `RedisSessionRepository`, inspect both modes before treating a missing
+basket update as a Redis or serialization failure. Other repositories/versions need their own check.
+
+| Save mode                    | What enters the attribute write set         | Consequence                                                                                           |
+| ---------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `ON_SET_ATTRIBUTE` (default) | Explicit attribute set/remove operations    | Mutating an existing, loaded object in place without `setAttribute` does not mark it for persistence. |
+| `ON_GET_ATTRIBUTE`           | Also attributes read through `getAttribute` | A reader can later write its old attribute value over another request's update.                       |
+| `ALWAYS`                     | All attributes when the session is loaded   | Broadens the stale snapshot write set, including attributes the request never used.                   |
+
+`FlushMode.ON_SAVE` (default) writes tracked changes when the repository saves; `IMMEDIATE`
+flushes at supported mutation points such as `setAttribute`. It does not detect arbitrary
+object mutations or provide atomic compare-and-update. With `ON_SET_ATTRIBUTE`, explicitly
+set the replacement attribute after changing a request-owned snapshot; mutating the object
+returned by `getAttribute` alone is insufficient. This also makes the mutation boundary clear,
+but does not solve two writers updating the same attribute. Broader save modes trade mutation
+coverage for more stale-write exposure; do not enable `ALWAYS` as a concurrency fix.
+
+Verify with the installed repository and serializer: load a previously saved basket, mutate it,
+save and reload in a separate request; compare with explicitly setting the updated attribute.
+Then have A and B load the same session, B update/save the basket and A save last after only
+reading it. Assert the required conflict/merge outcome, not just successful Redis commands.
+A test double must copy/serialize stored values so shared Java references cannot hide lost writes.
+Apply the separate stale-save/invalidation checks in [Session failure modes](session-failure-modes.md).
+
+Sources: [SaveMode 3.3.7](https://github.com/spring-projects/spring-session/blob/3.3.7/spring-session-core/src/main/java/org/springframework/session/SaveMode.java),
+[FlushMode 3.3.7](https://github.com/spring-projects/spring-session/blob/3.3.7/spring-session-core/src/main/java/org/springframework/session/FlushMode.java),
+[RedisSessionRepository 3.3.7](https://github.com/spring-projects/spring-session/blob/3.3.7/spring-session-data-redis/src/main/java/org/springframework/session/data/redis/RedisSessionRepository.java).
+
 ## Database session state, done properly
 
 Partial PostgreSQL 17 schema; it does not implement authentication, audit or concurrency by itself:

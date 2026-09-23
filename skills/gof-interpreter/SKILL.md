@@ -117,6 +117,8 @@ IF the AST is walked repeatedly
 THEN consider caching only after measuring parse cost. Bound size/weight, key by grammar/schema
      and relevant semantic configuration, and recheck caller permissions. Do not cache another
      caller's authorization or captured context under expression text alone.
+     For engine-owned expression objects, also inspect cached accessors/executors: changing
+     the evaluation context may not establish a new security boundary.
 
 IF evaluation is in a hot path
 THEN compare tree walking, specialized closures, bytecode and vectorized/batched
@@ -139,10 +141,10 @@ THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
 ## Cross-cutting checks
 
 - **Concurrency.** A deeply immutable, safely published AST can be shared; context values and
-  resolvers must still obey their own ownership and capability contracts. The failure is a node
-  that caches its last caller's result or holds a reference to the
-  context — then the same expression evaluated concurrently for two users can return one user's
-  answer to the other. Evaluation state belongs in a per-call context
+  resolvers must still obey their own ownership and capability contracts. Records provide only
+  shallow immutability: retained literal payloads must also remain stable after validation.
+  A node that caches its last caller's result or retains the context can return one user's answer
+  to another when the expression is shared. Evaluation state belongs in a per-call context
   (`java-immutability`).
 - **Distribution.** An expression transmitted between services makes the grammar a wire contract.
   A node type added by a newer producer must have a defined meaning for an older evaluator —

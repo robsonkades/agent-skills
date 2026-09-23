@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-exception-design
-version: 1.3.2
+version: 1.3.3
 description: >-
   Exceptions as API design in Java: checked versus unchecked as a deliberate decision,
   hierarchy sizing, translation at layer boundaries with cause preservation, typed failure

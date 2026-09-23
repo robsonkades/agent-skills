@@ -94,6 +94,18 @@ are accounted for; the replacement must preserve observable order and failure be
 be adequate; concurrent or reentrant runs need isolation. A per-run context is one option;
 shared step instances and collaborators must still support their actual use.
 
+Whole-run `synchronized` does not prevent same-thread reentry: a hook can call `run` again,
+replace the shared batch with the nested run's batch, then return to an outer `record` that reads
+the wrong batch. Java monitors are reentrant ([JLS 17 §17.1](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.1)).
+Single-thread confinement or one `ThreadLocal` value does not by itself isolate nested invocations.
+
+If nested runs are supported, carry distinct invocation state through hooks and verify that
+collaborators preserve that isolation. If the supported contract forbids reentry, reject it before
+the nested call mutates state or performs effects; release the guard in `finally`. Introducing that
+rejection into an existing extension API requires a compatibility decision. Test with a hook that
+reenters the same instance: either both invocations retain their own data or the nested call fails
+before effects, and a later permitted call still works after a failure.
+
 ## Migrating to composition
 
 A conversion to consider when its consumer and maintenance benefits justify migration. Keep

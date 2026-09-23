@@ -85,7 +85,9 @@ duration and fields; thresholds censor shorter events.
 
 Wall is not off-CPU-only: it includes execution as well as waiting. A dedicated off-CPU
 mechanism observes descheduled intervals with its own coverage; do not subtract unrelated
-CPU and wall percentages to derive blocked time.
+CPU and wall percentages to derive blocked time. Depending on its state filters, off-CPU
+evidence can include preemption and runnable time waiting for a CPU, not only blocking on a
+resource. A compute loop is therefore not a universal off-CPU negative control.
 
 For latency, select the evidence that distinguishes the remaining hypotheses from:
 
@@ -123,8 +125,10 @@ Map the code mechanism to target-JDK event types rather than one generic “bloc
 - virtual-thread pinning/scheduling/submit failures where supported;
 - application/executor/connection/remote queues not automatically represented by JVM events.
 
-Check event existence, enablement, threshold, stack setting, and workload opportunity. Treat
-zero events as evidence of absence only within validated coverage and configuration. If shorter
+Check event existence, enablement, threshold, stack setting, and workload opportunity, including
+whether the operation reached the event's commit point. An ongoing park can be absent from a
+JFR dump even with a zero threshold; use live thread/task evidence for an unresolved hang.
+Treat zero events as evidence of absence only within validated coverage and configuration. If shorter
 events matter, test a lower threshold on a canary or bounded window while measuring event volume
 and overhead; otherwise retain the current threshold and state its censoring limit.
 
@@ -149,7 +153,7 @@ Reuse relevant controls from the same capture configuration and environment when
 establish the required coverage. For new or uncertain coverage, choose the controls that can
 resolve that uncertainty, for example:
 
-- known CPU loop should appear in CPU sampling, not off-CPU;
+- known CPU loop should appear in CPU sampling; off-CPU presence can reflect scheduling delay;
 - known sleep/park/I/O should appear in appropriate wall/JFR event coverage;
 - known allocation site should appear with correct weight semantics;
 - known below/above-threshold contention should demonstrate censoring;

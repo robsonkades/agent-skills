@@ -35,9 +35,10 @@ Two different mechanisms; keep them distinct.
 
 - **Active health check** — the balancer probes the backend on an interval. It costs a request
   per backend per interval and detects an unresponsive backend even with no traffic.
-- **Passive health check / outlier ejection** — the balancer observes real responses and
-  temporarily removes a backend that produces consecutive errors or gateway failures. It costs
-  no additional probe traffic, but needs counters/processing and detects only what traffic reveals.
+- **Passive health check / outlier ejection** — the balancer observes request outcomes or
+  upstream connection failures; the configured policy decides whether to remove a detected
+  outlier temporarily. It costs no additional probe traffic, but needs counters/processing
+  and detects only what traffic reveals.
 
 Settings that decide the behaviour, by role:
 
@@ -74,6 +75,36 @@ useful service. If the required dependency is
 necessary to serve correct traffic, deliberate fail-closed readiness can be appropriate.
 Compare all-unready routing, retries/admission and recovery with application-level rejection;
 a passive ejection cap cannot override readiness or guarantee a usable backend.
+
+### When detection and removal disagree in Envoy
+
+Inspect the observing proxy's effective cluster/runtime configuration, host health flags and
+ejection/unejection events. Do not infer fleet-wide exclusion from one proxy's observation.
+The following behavior is verified against Envoy 1.35.0; check the deployed version and any
+control-plane overrides before applying it:
+
+- **Detection is not enforcement.** `enforcing_consecutive_gateway_failure` defaults to 0%,
+  while `enforcing_consecutive_5xx` defaults to 100%. Gateway errors can contribute to both
+  detectors. Compare `ejections_detected_*`, `ejections_enforced_*`, `ejections_overflow`
+  and current host state: reaching a threshold need not cause removal, and the cap can
+  prevent it. Disabled or gradual enforcement may be intentional; do not automatically
+  turn every detector up to 100%.
+- **Statistical detectors need observations.** Success-rate and failure-percentage checks
+  have minimum-host and per-host request-volume requirements over an interval. Below those
+  gates, absence of detection does not establish health. Check actual eligible sample counts
+  before tuning thresholds; a consecutive-failure detector may fit sparse traffic, with its
+  own false-ejection and capacity trade-offs.
+- **Active success can end passive ejection early.**
+  `successful_active_health_check_uneject_host` defaults to `true`. With active health already
+  healthy, one successful probe can clear passive ejection and reset consecutive-failure
+  counters. If active health is marked failed, its healthy threshold also governs return.
+  A shallow `/healthz` can therefore keep returning a host whose real requests still fail.
+  Compare a probe that meaningfully verifies recovery with setting this option to `false`.
+  The latter leaves passive recovery to its ejection timing and can delay useful capacity's
+  return; neither choice overrides the other health, membership or panic rules above.
+
+Correlate probe results, request outcomes and ejection/unejection timestamps. Increasing the
+ejection duration alone will not fix an active check that keeps clearing the ejection.
 
 ## The drain sequence
 
@@ -130,14 +161,19 @@ coverage limits before interpreting a test as success.
   In either model, retain latency, unexpected HTTP outcomes, gRPC terminal statuses,
   timeouts, resets and incomplete work. An open configuration alone does not prove schedule
   fidelity; use `coordinated-omission` to assess missing arrivals and timing boundaries.
-- **Ejection drill.** Fault-inject errors into one backend and confirm it is ejected; then
-  inject into all backends and confirm the chosen cap, admission and fail-open/closed contract.
-  Assert survivor saturation and recovery hysteresis, not merely that traffic kept flowing.
+- **Ejection drill.** Specify the error class, detector, sample requirements and enforcement
+  first. Fault-inject into one backend and compare detection with the expected removal or
+  observation-only behavior; then inject into all backends and confirm the chosen cap,
+  admission and fail-open/closed contract. Include a failing request path whose active probe
+  still passes, followed by genuine recovery, to check early unejection. Assert survivor
+  saturation and recovery hysteresis, not merely that traffic kept flowing.
 
 ## Primary references
 
 - [Envoy load-balancing architecture](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/overview)
 - [Envoy outlier detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Envoy 1.35.0 outlier configuration](https://github.com/envoyproxy/envoy/blob/v1.35.0/api/envoy/config/cluster/v3/outlier_detection.proto) — enforcement defaults, statistical prerequisites and active-check unejection option.
+- [Envoy 1.35.0 outlier implementation](https://github.com/envoyproxy/envoy/blob/v1.35.0/source/common/upstream/outlier_detection_impl.cc) — detected versus enforced counters and active-health recovery precedence.
 - [Kubernetes Services networking](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [The Power of Two Random Choices](https://www.eecs.harvard.edu/~michaelm/postscripts/handbook2001.pdf)
 - [k6 open and closed workload models](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/open-vs-closed/)

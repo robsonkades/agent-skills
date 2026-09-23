@@ -52,6 +52,15 @@ The default task's `cancel(true)` does not interrupt its worker. By contrast,
 the executing thread when cancelled with `true`. Check the actual task/adapter and release;
 interruption is still a request, and a cancelled Future can precede body exit and cleanup.
 
+The submitting context matters too. In the examined OpenJDK 25 implementation, `submit(Callable)`
+and the ordinary-`Runnable` submission overloads use interruptible wrappers when called outside any
+`ForkJoinWorkerThread`, but ordinary wrappers when called from a worker, even one belonging to a
+different pool. `submit(ForkJoinTask)` preserves the supplied task; `submit(Runnable)` also avoids
+rewrapping a task that is already a `ForkJoinTask`. The returned type alone does not identify the
+cancellation behavior. OpenJDK 17u's examined `submit` implementations use ordinary wrappers for
+plain tasks, so do not project the Java 25 behavior backward. When interruption is required, select
+an explicit supported adapter and still verify cooperative exit.
+
 ## Memory visibility and task state
 
 `ForkJoinTask` documentation warns that modifications made after `fork()` are not necessarily
@@ -80,6 +89,13 @@ may expand/activate spare capacity. Therefore a blocker must:
 - publish its result safely between these methods;
 - propagate/restores interruption according to the enclosing operation's contract;
 - release resources on failure and cancellation.
+
+Compensation rejection is a task failure path. In OpenJDK 25, `compensatedBlock` calls
+`tryCompensate` before `block()`, so a reached thread ceiling can throw
+`RejectedExecutionException` before the blocker runs. Observe the task's outcome and release any
+resources acquired before `managedBlock`, even when submission succeeded. Returning `true` from
+`saturate` suppresses that rejection but can leave no worker able to satisfy the wait; establish an
+independent progress source rather than assuming acceptance ensures liveness.
 
 This Java 17-compatible class uses imports from `java.util.concurrent`. Confine one blocker instance
 to one calling thread and invoke it through `ForkJoinPool.managedBlock(new AwaitLatch(latch))`.
@@ -120,17 +136,25 @@ but parameter behavior is version-sensitive (`corePoolSize` is documented ignore
 
 The common pool ignores shutdown requests and uses daemon workers. Its `awaitTermination` helps/
 waits for quiescence but always returns `false`; that result does not say whether a particular task
-succeeded. Its `close()` does not wait or take ownership of shared work. A dedicated pool has normal
-executor lifecycle: call its waiting `close()` from an owner outside the tasks whose completion it
-awaits, otherwise the caller can wait for itself. `shutdownNow()` for a fork/join pool always returns
-an empty list in Java 25; do not infer that there was no queued work.
-On Java 17 use `shutdown()` and bounded `awaitTermination` with an explicit failure policy instead
-of `close()`. On Java 25 scheduled delayed tasks can extend orderly shutdown; inspect ownership and
+succeeded. Its `close()` does not wait or take ownership of shared work. Call a dedicated pool's
+waiting `close()` from an owner outside the tasks whose completion it awaits, otherwise the caller
+can wait for itself. On interruption, `close()` escalates to `shutdownNow` behavior, prevents waiting
+tasks from executing, continues waiting for active bodies to finish, and restores the interrupt
+status before returning. It has no timeout and cannot force an uncooperative body to exit.
+`shutdownNow()` always returns an empty list in Java 25; do not infer that there was no queued work.
+
+On Java 17, or when any supported release needs bounded teardown, use `shutdown()` and bounded
+`awaitTermination` with an explicit timeout/interruption policy instead of relying on `close()`.
+Expiry still does not prove bodies exited: retain cleanup ownership and report remaining work.
+On Java 25 scheduled delayed tasks can extend orderly shutdown; inspect ownership and
 the documented `cancelDelayedTasksOnShutdown()` policy before changing it.
 
 ## Authoritative references
 
 - [Java 25 `ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
 - [Java 25 `ForkJoinTask`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinTask.html)
+- [OpenJDK 25 `ForkJoinPool` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java) — submission wrappers and compensation rejection.
+- [OpenJDK 25 `ForkJoinTask` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinTask.java) — interruptible wrapper behavior.
+- [OpenJDK 17.0.16 `ForkJoinPool` source](https://github.com/openjdk/jdk17u/blob/jdk-17.0.16-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java) — older `submit` wrappers; do not infer behavior of other submission APIs from these overloads.
 - [CountDownLatch publication contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)
 - [Java Language Specification §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)

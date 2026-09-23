@@ -84,8 +84,10 @@ card. Missing evidence limits the conclusions that depend on it, not every suppo
   controlled. An open experiment is appropriate when `N` is resources and capacity at each point
   is found with a validated offered-load sweep.
 - Standard physical interpretation normally constrains `α≥0`, `β≥0` and `γ>0`; do not force those
-  bounds merely to hide superlinear data or a bad fit. Negative estimates mean the standard regime
-  is unsupported—check cache/partition effects, heterogeneity and measurement, then segment or use
+  bounds merely to hide superlinear data or a bad fit. A negative unconstrained point estimate can
+  reflect noise or weak identification near zero; assess uncertainty and nonnegative/boundary-model
+  residuals before rejecting the regime. If the data require negative coefficients beyond measurement
+  uncertainty, check cache/partition effects, heterogeneity and measurement, then segment or use
   another model.
 - Do not require measured points beyond an estimated peak when crossing it would violate safety.
   Without retrograde-region evidence, assess identification of `β` and `N*` explicitly and make bounded

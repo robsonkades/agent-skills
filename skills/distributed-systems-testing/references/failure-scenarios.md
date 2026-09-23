@@ -29,13 +29,15 @@ and the **wrong assertion** that makes the test pass without proving anything.
 
 ## 3. Dependency failing intermittently
 
-- **Inject** — a fixed failure rate (say 30%) across a few hundred calls, mixing retryable
-  and non-retryable outcomes.
+- **Inject** — controlled per-operation sequences: retryable failure then success, retryable
+  then permanent failure, and retryable failures through exhaustion. A seeded failure-rate
+  workload can supplement these cases; retain its input and trace.
 - **Invariant** — attempts per logical call stay within the retry budget; non-retryable
   failures were not retried at all; the downstream received no more than the multiplier
-  allows. Counting requests at the stub is what makes this falsifiable.
-- **Wrong assertion** — asserting the overall success rate improved. Amplification, not
-  success, is the property under test (`retries-and-backoff`).
+  allows. Correlate each operation's attempts and outcomes; verify its configured backoff and
+  deadline as described in `fault-injection.md`.
+- **Wrong assertion** — only overall success rate or aggregate request count. A legal total
+  can hide extra attempts on one operation offset by fewer on another (`retries-and-backoff`).
 
 ## 4. Duplicate delivery
 

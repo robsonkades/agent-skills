@@ -139,8 +139,14 @@ see [AtomicReference 17](https://docs.oracle.com/en/java/javase/17/docs/api/java
 
 Restoring the exact old reference can produce A → B → A: identity-based CAS sees A again, not the
 intervening transitions. If those transitions must invalidate a writer, retain a non-restored
-generation/version or equivalent protocol. Checking only current identity is valid when that is
-the accepted policy; atomic publication alone does not choose the conflict rule.
+generation/version or equivalent protocol. Compare and update state plus generation as one
+operation: use the same lock for all edits/restores, or CAS one immutable holder containing both.
+A separate generation check followed by a state-only CAS is still a race. Advance the generation
+on edits and restores; do not restore or reuse it while an old writer can still present it.
+[AtomicStampedReference 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html)
+provides a joint reference/stamp comparison, but stamp advancement and wrap/reuse policy remain
+the application's responsibility. Checking only current identity is valid when that is the
+accepted policy; atomic publication alone does not choose the conflict rule.
 
 ## Versioning, once it is durable
 

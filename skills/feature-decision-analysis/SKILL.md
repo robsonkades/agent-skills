@@ -48,8 +48,10 @@ prevent documenting a proposal or continuing independent work.
    to decide whether a log entry suffices or an ADR is warranted. Link pending feasibility checks;
    recording a proposal does not authorize its dependent commitment.
 7. **When later evidence contradicts it**, first determine whether the premise is invalidated or the
-   implementation violates a still-valid decision. Correct the deviation, or supersede the decision
-   with supported authority and evidence; preserve history and update affected downstream work.
+   implementation violates a still-valid decision. Within the authorized task scope, correct the
+   deviation or supersede the decision with supported authority and evidence; preserve history.
+   For a record-only task, identify affected downstream work and the needed handoff without
+   changing implementation or claiming the correction is complete.
 
 ## Provenance — the four classes
 
@@ -168,8 +170,9 @@ ED-05 Dispatch retry policy within the accepted 30s request deadline
       Record:      this log entry; within ED-03/CT-02, no separate ADR required by local policy
 ```
 
-Every entry carries provenance, authority evidence and status. An unresolved source remains
-unknown in a pending record; never invent a mandate or relabel someone else's choice as yours.
+Every entry carries provenance, authority evidence and status. Keep unknown historical provenance
+explicit without discarding independently evidenced acceptance or its scope. An unsupported outcome
+remains pending; never invent a mandate or relabel someone else's choice as yours.
 
 Before handoff, check IDs, source/revision links, authority and status consistency. Decision acceptance
 and implementation verification are separate: an authorized choice is not proof that it works, and a

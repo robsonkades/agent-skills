@@ -42,13 +42,14 @@ public record Money(BigDecimal amount, Currency currency) {
         Objects.requireNonNull(amount);
         Objects.requireNonNull(currency);
         amount = amount.setScale(LEDGER_SCALE, RoundingMode.UNNECESSARY);
-    }                     // UNNECESSARY throws if the caller violates this ledger's input scale
+    }                     // rejects value loss, not removable trailing zeros
 
     public Money plus(Money other) {
         requireSameCurrency(other);
         return new Money(amount.add(other.amount), currency);
     }
 
+    /** Returns the share amount * rate; rate 0.19 means 19%, not rate 19. */
     public Money percentage(BigDecimal rate, RoundingMode mode) {
         return new Money(amount.multiply(rate).setScale(LEDGER_SCALE, mode), currency);
     }
@@ -72,6 +73,12 @@ order over all money, so the type does not implement `Comparable`. For display s
 currencies, define an explicit comparator (for example currency code then amount), without
 implying an economic exchange-rate comparison.
 
+`percentage` returns the calculated share, not the original amount plus that share.
+Its rate is a dimensionless fraction. If an external contract instead represents 19% as
+the decimal `19`, convert it once at that boundary with `percentValue.movePointLeft(2)`;
+do not convert an already fractional rate again or infer the unit from its magnitude.
+The domain separately defines whether negative rates or rates above 100% are valid.
+
 Points that generalise:
 
 - **Normalize the scale in the constructor** when scale is part of the domain representation, so
@@ -79,7 +86,10 @@ Points that generalise:
   vary by instrument, operation or effective date; `Currency.getDefaultFractionDigits()` is only
   ISO metadata and returns `-1` for pseudocurrencies.
 - **`RoundingMode.UNNECESSARY` at construction** turns "someone passed 10.005" into an
-  exception at the boundary rather than a silent rounding deep in a calculation.
+  exception rather than silent rounding. It accepts `10`, `10.0` and `10.000`, normalizing
+  each exactly to `10.00`. It is not a validator for an input spelling with exactly two
+  fractional digits or no exponent: enforce such a lexical contract on the original text
+  before normalization when the API requires it.
 - **Currency mismatch is a domain error**, checked in the type, not at each call site.
 - **Every operation that can lose precision takes a rounding mode** — or the type fixes one and
   documents it.
@@ -195,7 +205,7 @@ representations honestly.
 ## Authoritative references
 
 - [Comparable total-order contract, Java 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Comparable.html)
-- [BigDecimal API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html)
-- [RoundingMode API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/RoundingMode.html)
+- [BigDecimal API, Java SE 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html)
+- [RoundingMode API, Java SE 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/RoundingMode.html)
 - [Currency API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Currency.html)
 - [RFC 8259: JSON number interoperability](https://www.rfc-editor.org/rfc/rfc8259#section-6)

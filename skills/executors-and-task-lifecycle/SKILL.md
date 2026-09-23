@@ -72,6 +72,10 @@ does not occur because offers succeed; `maximumPoolSize` is then ineffective for
 With `SynchronousQueue`, direct handoff requires a receiver or growth/rejection. Queue choice defines
 latency, memory, ordering and burst behavior.
 
+Submission returning normally does not prove that a worker can start the task. A `ThreadFactory`
+returning `null` can leave queued work without a worker; inspect factory failures and progress,
+not just saturation or rejection counts. See `references/shutdown-and-rejection.md`.
+
 Factory methods such as fixed/single pools commonly use unbounded queues; cached pools can create
 many platform threads. They are conveniences, not safe network-ingress defaults. Inspect the exact
 implementation/JDK rather than depending on wrapper internals.
@@ -84,6 +88,9 @@ implementation/JDK rather than depending on wrapper internals.
   or completion hook, business failure can be invisible.
 - `afterExecute` receives `Throwable` directly for some `execute` failures, but submitted Future
   failures may require inspecting the completed Future. Hook code must not block/throw recursively.
+- A throwing `beforeExecute` can prevent the body and `afterExecute` from running, leaving a
+  submitted Future pending. Replacing the worker does not settle that result; preserve the
+  task-to-result mapping and handle setup failure explicitly.
 
 Define one observation path: join/get by owner, completion callback, supervised wrapper, or executor
 hook. Logs alone do not deliver failure semantics. Track task identity with bounded labels and avoid
@@ -180,7 +187,7 @@ transitions when decisions need accuracy. Metrics are not “free.”
 - context leakage after success/failure/cancel;
 - periodic long run, exception, clock jump, replica overlap and restart;
 - virtual-thread migration with connection/memory/downstream bounds;
-- executor hook/wrapper throws or blocks.
+- worker creation fails, or a hook/wrapper throws or blocks; check body execution and result settlement.
 
 ## Anti-patterns
 

@@ -31,8 +31,10 @@ Suspicion: this object should be eliminated and is not
      |-- still ~0 ... EA dependence not demonstrated. Inspect unused removal, caching,
      |                execution frequency and measurement coverage; do not force escape
      |                just to make the number nonzero.
-     +-- full size .. EA-dependent optimization is implicated; use compiler evidence
-                      to distinguish scalar replacement from related transformations.
+     +-- repeatable increase, including a partial average
+                     EA-dependent optimization is implicated; use compiler evidence
+                     to distinguish scalar replacement from related transformations.
+                     A difference within measurement variability remains inconclusive.
   |
   2. Ask the compiler: -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:LogFile=c2.xml
      Inside the method's tier-4 <task>: is there an <eliminate_allocation> for the class?
@@ -64,7 +66,7 @@ on 25.0.3 for a 24-byte `Point(int, int)` unless stated.
 
 | Shape                                                                                       | Mechanism                                                                                                                           | Measured                                                                   |
 | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Passed to a call that was not inlined, callee only reads it                                 | ArgEscape (BCEA `is_arg_stack`). Allocation stays, lock elides                                                                      | 24 bytes/op; lock cost 3.8 ns vs 15.4 ns with `-EliminateLocks`            |
+| Passed to a call that was not inlined, callee only reads it                                 | ArgEscape if BCEA succeeds. Allocation stays; EA lock removal additionally needs a balanced region and enabled policy               | 24 bytes/op; lock cost 3.8 ns vs 15.4 ns with `-EliminateLocks`            |
 | Passed to a non-inlined callee whose bytecode exceeds `MaxBCEAEstimateSize`                 | No summary: GlobalEscape. Lock is not elided either                                                                                 | 236-byte callee: 17.7 ns/op; `MaxBCEAEstimateSize=400`: 5.6 ns             |
 | Stored to a static, a field of an escaping object, returned, or handed to another thread    | GlobalEscape                                                                                                                        | full size                                                                  |
 | Rare branch whose store remained in the compiled graph                                      | Flow-insensitive classification can make the object escape on every path; frequency is not the decision by itself                   | Lab: 24 bytes/op when branch was observed about 1 in 1M calls              |
@@ -83,10 +85,10 @@ on 25.0.3 for a 24-byte `Point(int, int)` unless stated.
 | Result of `multianewarray`, or of a call that is not a boxing method                        | "is result of multinewarray" / "is result of call" — not scalar replaceable                                                         | full size                                                                  |
 | Used as base of a mixed or unsafe access, or in a `LoadStore` (CAS / `VarHandle` atomic)    | "is used as base of mixed unsafe access" / "is used in LoadStore or mismatched access"                                              | full size                                                                  |
 | Stored into a field of an object that is itself not scalar replaceable                      | "is stored into field with NSR base" — the container decides for its content                                                        | full size                                                                  |
-| `Integer.valueOf(i)` consumed by `intValue()` in the same compilation                       | Boxing late-inline (`Compile::inline_boxing_calls`) plus `LoadNode::eliminate_autobox`; the box is then unused and yanked           | 0 bytes/op; 16 with `-XX:-DoEscapeAnalysis`                                |
+| `Integer.valueOf(i)` consumed by `intValue()` in the same compilation                       | Macro removal of a remaining boxing call logs `eliminate_boxing`; earlier cleanup and inlined allocations take other paths          | 0 bytes/op; 16 with `-XX:-DoEscapeAnalysis`                                |
 | The same box stored into a collection                                                       | Escapes through the store                                                                                                           | 16 bytes/op                                                                |
 | Explicit `new StringBuilder().append(..).toString()` chain, fully inlined                   | `OptimizeStringConcat` (`stringopts.cpp`) replaces the chain and its buffer with one `String` construction                          | 31.6 bytes/op; 63.6 with `-XX:-OptimizeStringConcat`                       |
-| `"a" + i` compiled by javac 9+ (`invokedynamic`)                                            | Not a `StringBuilder` chain; `OptimizeStringConcat` does not apply and does not need to                                             | 31.6 bytes/op either way                                                   |
+| `"a" + i` whose bytecode uses `invokedynamic`                                               | `OptimizeStringConcat` does not handle this shape. Check release/target: javac 25 with `--release 8` emits a builder chain          | 31.6 bytes/op either way in the lab's invokedynamic case                   |
 | for-each over a monomorphic `ArrayList`, body inlined                                       | `ArrayList$Itr` is NoEscape; its `cursor` updates become Phis on the field value, which is fine                                     | 0 bytes/op                                                                 |
 | Capturing lambda, call site and `apply`/`get` inlined                                       | The hidden-class instance is an ordinary allocation; NoEscape once the functional call inlines                                      | 0 bytes/op                                                                 |
 | `Optional.of(x).map(f).orElse(d)`, all inlined                                              | Same; breaks when `map`'s internal `apply` site is megamorphic across the process (profile is per bytecode, not per caller)         | 0 bytes/op in isolation                                                    |
@@ -168,7 +170,7 @@ these work on a product build:
 
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:LogFile=c2.xml ...
-grep -n "eliminate_allocation\|eliminate_lock\|connectionGraph_bailout" c2.xml
+grep -n "eliminate_allocation\|eliminate_boxing\|eliminate_lock\|connectionGraph_bailout" c2.xml
 ```
 
 Real output, 25.0.3, from the tier-4 task of a method whose `Point` was scalar replaced and
@@ -195,6 +197,10 @@ Reading it:
   `Coarsened` and `Nested` (`callnode.cpp`, `_kind_names`).
 - A reducible merge logs one `<eliminate_allocation>` per input allocation, so a
   `a ? new P() : new P()` that worked shows two entries with different `bci`.
+- `<eliminate_boxing>` records removal of a deferred boxing call, not scalar replacement
+  of an `AllocateNode`. Resolve its method/BCI and inline chain in the same task; a boxing
+  investigation must not search only for `<eliminate_allocation>`. Earlier cleanup can
+  leave neither element, so do not require either one as the only successful outcome.
 - `<connectionGraph_bailout reason='reached time limit'>` (or `iterations limit`) means EA
   gave up on that analysis; EA-dependent elimination can be lost, while dead-code cleanup remains.
 - `<task>` can omit `level` for the highest compilation tier. Match its `compile_id` to an
@@ -312,6 +318,8 @@ than inferring no rematerialisation from an empty trap stream.
 - [ ] `-XX:+PrintInlining` tier-4 tree confirms the refusal for the relevant callee
 - [ ] Callee bytecode size from `javap -c -p`, compared with `MaxBCEAEstimateSize` (150)
 - [ ] Callee neither stores, returns nor forwards the argument to a call it cannot summarise
+- [ ] EA lock eligibility is checked against a balanced compiled region and effective
+      `EliminateLocks`; an ArgEscape verdict alone does not establish lock removal
 - [ ] Time measured with and without `-XX:-EliminateLocks` to confirm the gain is lock elision
 - [ ] Expectation recorded: lock elision, **not** removing the allocation
 

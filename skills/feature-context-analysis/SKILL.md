@@ -40,9 +40,11 @@ absence throughout the system.
 2. **Work the checklist** in `references/investigation-checklist.md` — build, dependencies,
    layering, persistence, messaging, configuration, security, observability, testing, delivery.
    Relevant concerns get a finding, bounded "not found", "not examined" or "unavailable".
-3. **Cite everything.** `path:line`, a dependency coordinate with its version, or the command
-   and what it printed. A material claim not established by evidence remains unknown; label it
-   an assumption only when provisionally adopted, with its basis and falsifier.
+3. **Cite findings to their sources.** Use `path:line` or a command with captured output and
+   its target module/profile/configuration. Dependency coordinates and versions identify an
+   artifact; also cite what establishes its declared or resolved status. A material claim not
+   established by evidence remains unknown; label it an assumption only when provisionally
+   adopted, with its basis and falsifier.
 4. **Close the unknowns it can close.** Walk the discovery ledger and mark each unknown this
    sweep answered, with the evidence. This is the phase's main product.
 5. **List reusable components** by name and location, with what each would have to change.
@@ -51,8 +53,9 @@ absence throughout the system.
 7. **Separate observed technologies from required constraints.** A technology mandate needs
    an applicable policy, contract or accepted decision with source and authority; presence in
    the implementation does not supply that authority.
-8. **Preserve traceability.** Assign or reuse `F-*` for evidence and resolve `U-*` by appending the
-   fact/source; name the input feature revision so later baseline changes can invalidate findings.
+8. **Preserve traceability.** Assign or reuse `F-*` for evidenced facts with linked sources, and
+   resolve `U-*` by appending the fact/source. Preserve each identifier's meaning; name the input
+   feature revision so later baseline changes can invalidate findings.
    Reuse the existing ledger when present; otherwise concise inline IDs/unknowns are enough.
    Record repository revision and relevant working-tree changes as well as the feature input.
 

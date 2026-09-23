@@ -143,6 +143,26 @@ public class PostTag {
 }
 ```
 
+Here `(postId, tagId)` identifies the link itself. Assign both parent references before
+persisting; setting scalar fields in `PostTagId` alone does not establish those relationships.
+Its attribute names and types must match the `@MapsId` names and referenced identifier types.
+The mapped identifier components derive from the associations; direct mutation of those
+components is not a request to update the foreign keys. See the
+[`@MapsId` contract](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/mapsid).
+
+Once persistent, do not change the primary key, whether natural, generated, assigned or derived.
+Changing this link's post or tag would change its identity. Jakarta Persistence defines primary-key
+mutation after persistence as undefined behavior; neither an exception nor a successful re-key is
+a portable expectation, and `merge` does not make it supported.
+
+If different endpoints mean a different link, remove the old link and create a new one within the
+intended transaction, preserving required audit information, constraints and shared parent rows.
+If link identity must survive reassignment, consider a stable independent id with ordinary mutable
+foreign keys and the required uniqueness constraint. An existing mapping with that shape can
+update the foreign key without changing its primary key, subject to domain and lifecycle rules.
+Do not redesign a suitable existing key merely to use a surrogate. For either path, inspect SQL
+and verify keys, endpoints, surviving parents and uniqueness after flush, clear and reload.
+
 Attributes alone do not require entity identity. An owner-bound `@ElementCollection` of
 embeddables can contain link values, including an owning `@ManyToOne` to the tag through a
 foreign key in the collection table. JPA restricts such elements to owning to-one entity

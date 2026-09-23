@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: sql-server-performance
-version: 1.0.2
+version: 1.0.3
 description: >-
   Diagnosing and tuning SQL Server 2022+ from engine evidence: waits, blocking/deadlocks, RCSI and
   version store, cardinality and parameter-sensitive plans, memory grants and parallelism,

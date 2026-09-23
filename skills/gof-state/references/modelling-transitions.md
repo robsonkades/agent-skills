@@ -99,11 +99,16 @@ static OrderState fromRow(String state, Row row) {
         case "DRAFT" -> new Draft();
         case "PAID" -> new Paid(row.instant("paid_at"), new PaymentReference(row.string("payment_ref")));
         case "SHIPPED" -> new Shipped(new TrackingId(row.string("tracking")), row.instant("shipped_at"));
-        case "CANCELLED" -> new Cancelled(row.instant("cancelled_at"), Reason.valueOf(row.string("reason")));
+        case "REFUNDING" -> new Refunding(row.instant("cancelled_at"), new PaymentReference(row.string("payment_ref")), reasonFromCode(row.string("cancel_reason")));
+        case "CANCELLED" -> new Cancelled(row.instant("cancelled_at"), reasonFromCode(row.string("cancel_reason")));
         default -> throw new UnknownPersistedState(state);      // reject; never coerce
     };
 }
 ```
+
+This mapper uses the five-state machine and column names from the worked example.
+The omitted `reasonFromCode` decoder maps stable reason codes and rejects unknown/missing ones;
+enum constant names are not implicitly its storage contract.
 
 Evolving the set:
 
@@ -131,6 +136,7 @@ Choose from all guards and the ownership boundary:
 
 ```java
 // 1. In-memory, immutable state behind a reference
+// Contract: re-evaluate this event against the latest state after contention.
 private final AtomicReference<OrderState> state;
 boolean apply(OrderEvent event) {
     OrderState current, next;
@@ -163,6 +169,13 @@ The CAS transition must be pure because it may run repeatedly. Use immutable val
 payloads and stable supplied time; never send email or debit a payment inside the retry loop.
 A reused enum reference can suffer ABA; include a revision when history matters. Committing CAS
 and then enqueueing work is not atomic/durable publication.
+
+Re-evaluation is also a command-contract choice. In the loop above, a cancellation can reload
+`Paid` after a concurrent payment and produce `Refunding`. That is unsuitable unchanged for
+"cancel only this draft revision". Such commands must retain their original expected state/version
+through the authoritative write and report conflict if it changed; replacing that token with a
+fresh read silently weakens the precondition. An explicit merge/retry policy may authorize a new
+attempt, but atomicity alone does not do so (`offline-concurrency-control`).
 
 ## Side effects of a transition
 

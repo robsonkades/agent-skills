@@ -128,6 +128,10 @@ The same structure is later needed in a WHERE clause or a report
 
 ## Rules
 
+- Keep an entity's established primary key unchanged after persistence, including identity
+  derived through `@MapsId`. Reassigning an identifying relationship is not an ordinary foreign-key
+  update. Choose explicit link replacement or an independently identified relationship from the
+  domain lifecycle; see the identity reference before changing the mapping.
 - **The owning side is the mapping attribute that controls the foreign key/join table**, which is
   not always the object residing in the table that physically stores the FK. Only changes to the
   owning mapping update that relationship. Inverse collection changes can still cascade

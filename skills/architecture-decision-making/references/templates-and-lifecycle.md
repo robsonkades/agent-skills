@@ -72,6 +72,13 @@ using a linked plan/issue when necessary. Rejection of an alternative inside an 
 ADR does not make the entire ADR rejected. A decision to retain the status quo may itself
 be accepted; it differs from an unanswered or rejected proposal.
 
+Acceptance date and effective applicability can also differ. Record which environments,
+consumer versions or cohorts follow the replacement, the activation condition/date and who
+verifies it. An accepted plan with an unfulfilled gate must not be reported as already in
+force for every consumer. Conversely, a failed rollout does not by itself revoke the team's
+accepted target architecture; record the operational fallback separately unless the decision
+authority has also changed the choice.
+
 A deferred proposal is not automatically rejected or accepted. Record its interim behavior,
 owner and ending condition in the local status vocabulary. Age alone does not establish
 abandonment. A future proposal can reopen a rejected subject with new evidence; the written
@@ -85,9 +92,14 @@ reason helps compare context rather than banning discussion forever.
 2. For a material change, draft a new record with the new evidence, rationale, affected
    scope and link back. While it is only proposed, identify it as a proposed replacement;
    do not mark the accepted record superseded.
-3. Once the replacement outcome is authorized, update the old record's status and forward
-   link in the same review/change as the new record's acceptance where practical. Preserve
-   the old context, decision and reasons. Do not reuse its ID or delete it from history.
+3. Once the replacement outcome is authorized, establish when and for whom it becomes
+   governing guidance. Update status and replacement links together where practical, under
+   local policy. If supersession is recorded at acceptance, as in the AWS process above,
+   make any continuing transition guidance explicit in the replacement and linked plan.
+   If local policy keeps the old record active until an effective date or verified gate,
+   preserve that state and record the authorized future replacement now. Do not invent
+   satisfaction of the gate or require approval again merely to document the accepted plan.
+   Preserve the old context, decision and reasons; do not reuse its ID or delete its history.
 4. Specify the relationship precisely. If only part of the old decision changes, identify
    that scope and the remainder still in force. Do not use a full supersession marker that
    hides active guidance; use a supported partial-supersession annotation or an explicit
@@ -98,7 +110,10 @@ reason helps compare context rather than banning discussion forever.
    expand the new decision's authority or retire batch guidance to satisfy a status field.
 5. Check both links, status consistency, non-self-reference and absence of a supersession
    cycle. Check the index and affected code/design references so readers can find current
-   guidance without losing the historical chain.
+   guidance without losing the historical chain. When multiple accepted successors exist,
+   verify that their scopes/activation conditions are compatible or that authorized precedence
+   is explicit. A newer date or larger ADR number does not automatically resolve incompatible
+   instructions for the same scope; report the conflict and the decision needed to resolve it.
 
 If the repository explicitly permits substantive in-place amendments, retain its convention
 but make the prior rationale, change, date and authority recoverable through its history

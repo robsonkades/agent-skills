@@ -19,9 +19,12 @@ ClassLoaderData
 └── one or more MetaspaceArena instances owning chunk lists and allocation cursors
 ```
 
-Arena allocations are reclaimed in bulk when the owning CLD dies rather than class by class.
-Loader lifetime is therefore central, but committed memory also responds to allocation rate
-and shape, reusable free chunks, uncommit policy, class unloading opportunities and CDS.
+CLD death returns its arena chunks in bulk. The JDK 25 implementation can also return
+individual obsolete metadata blocks or blocks from failed class definitions to arena-local
+free lists before the CLD dies. This permits reuse without a drop in committed bytes or
+loader count; it does not mean ordinary named classes can unload independently of their
+defining loader. Loader lifetime remains central, while committed memory also responds to
+allocation shape, reusable chunks, uncommit policy, class unloading opportunities and CDS.
 
 ## `jcmd <pid> VM.metaspace`
 
@@ -139,3 +142,5 @@ that do not exist are a recurring source of wrong instrumentation.
 - [JDK 25 metaspace diagnostic command](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspace/metaspaceDCmd.cpp): basic reporting versus the full report's safepoint operation.
 - [JDK 25 metaspace counters](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspaceCounters.cpp): combined versus class counters and reserved/committed values.
 - [JDK 25 NMT reporter](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/nmt/memReporter.cpp): accounting categories and displayed metadata breakdown.
+- [JDK 25 arena deallocation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/metaspace/metaspaceArena.cpp): `deallocate` returns individual blocks to arena-local free lists for reuse.
+- [JDK 25 CLD metadata cleanup](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/classfile/classLoaderData.cpp): `free_deallocate_list` handles eligible metadata while the CLD is not unloading.

@@ -107,10 +107,14 @@ Mitigations, in order:
    repeated stacks before attributing cost; a frame alone proves neither an attack nor an
    exponential growth rate. concurrency-diagnostics owns runtime attribution.
 
-`split` has its own trap: it takes a regex, so `split(".")` splits on every character and
-`split("|")` on nothing useful. For a literal separator, use `Pattern.quote`, or
-`StringTokenizer`-free alternatives such as `String.split(Pattern.quote("."))` or a simple
-`indexOf` loop.
+`split` interprets its separator as a regex: `split(".")` and `split("|")` do not mean a
+literal dot or pipe. For a non-empty literal separator, use `Pattern.quote` or a simple
+`indexOf` loop. Quoting does not decide the field contract: the one-argument `split` uses a
+zero limit and discards trailing empty fields. Use `input.split(Pattern.quote(separator), -1)`
+when those fields must be retained; preserve deliberate trimming in an existing contract.
+For example, splitting `"a||"` on a quoted pipe yields `["a"]` with the default limit and
+`["a", "", ""]` with `-1`. Verify leading, repeated and trailing separators plus empty input;
+splitting empty input with a non-empty literal separator yields one empty field.
 
 For literal replacement text containing `$` or `\`, use `Matcher.quoteReplacement`; quoting
 the pattern with `Pattern.quote` solves a different problem. Test hostile near misses at small,
@@ -171,6 +175,7 @@ See java-reference-types-and-leaks.
 
 - [JLS §15.18.1: String Concatenation Operator](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.18.1)
 - [Pattern API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/regex/Pattern.html)
+- [String.split limits, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html#split(java.lang.String,int)>)
 - [OWASP input validation and ReDoS guidance](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)
 - [ProcessBuilder API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ProcessBuilder.html)
 - [SecureDirectoryStream API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/SecureDirectoryStream.html)

@@ -62,7 +62,11 @@ every tool step or configure future capture during the incident.
    Know which stops temporarily, which terminates, how `core_pattern` routes output, and
    what `coredump_filter` omits.
 5. **Analyse a usable core with the matching build.** Use the archived `jhsdb` and binaries
-   that match the target; add GDB when native registers/memory can resolve the question.
+   that match the target. `--exe` names the crashed process's executable, which may be a
+   native launcher embedding HotSpot. For relocated/container archives, also resolve the
+   target loader and libraries using the command reference's archived-rootfs guidance;
+   `--exe` alone does not relocate them. Add GDB when native registers/memory can resolve
+   the question.
 6. **Name the gaps in the evidence.** Unmounted virtual threads appear in neither
    `jstack` nor `jhsdb jstack`; say so rather than concluding from their absence.
 7. **Size from measurement, not a rule of thumb.** Before concluding "the container was

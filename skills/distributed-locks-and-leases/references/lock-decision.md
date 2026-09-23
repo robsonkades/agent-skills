@@ -49,6 +49,17 @@ tasks need distinct logical holders or local serialization. Do not share a sessi
 infer exclusion from two successful calls. Advisory locks also rely on every conflicting writer
 following the same protocol; they do not automatically block an ordinary SQL update.
 
+**A successful reply does not restart the TTL.** Inspect when the protocol starts expiry and
+how the client derives remaining validity. Redlock requires a majority and subtracts acquisition
+elapsed time plus its clock-drift allowance from the requested TTL; a non-positive remainder is
+not a usable grant. Measure elapsed time from before sending the acquisition, not from receipt.
+For example, a 10-second TTL with 9 seconds elapsed and a 0.1-second drift allowance leaves at
+most 0.9 seconds under those assumptions. Renewal must satisfy its own protocol: Redlock requires
+extension on a majority within the existing validity window and accounts for elapsed time and
+drift for the extension too. A late successful renewal does not establish continuous ownership;
+stop work and recover/reacquire according to the implementation's contract. These local budgets
+do not replace resource fencing or survive a violated timing/failover assumption.
+
 ## The Redlock disagreement, stated fairly
 
 The dispute is about which assumptions a distributed system may make, not about arithmetic.

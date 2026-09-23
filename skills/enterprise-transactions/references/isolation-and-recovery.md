@@ -5,20 +5,22 @@
 Isolation levels are defined by which anomalies they permit. State the anomaly you are
 preventing; do not choose a level by name.
 
-| Anomaly             | What a client observes                                                                    | Prevented from     |
-| ------------------- | ----------------------------------------------------------------------------------------- | ------------------ |
-| Dirty read          | Reads another transaction's uncommitted write, whether it later commits or rolls back     | READ COMMITTED     |
-| Non-repeatable read | Reads a row twice in one transaction, gets two values                                     | REPEATABLE READ    |
-| Phantom read        | Runs the same range query twice, gets a new row the second time                           | SERIALIZABLE       |
-| Lost update         | Two transactions read, both write; the second silently overwrites the first               | Not by level alone |
-| Write skew          | Two transactions each read a set, each writes based on it, jointly violating an invariant | SERIALIZABLE       |
+| Anomaly             | What a client observes                                                                    | Prevented from  |
+| ------------------- | ----------------------------------------------------------------------------------------- | --------------- |
+| Dirty read          | Reads another transaction's uncommitted write, whether it later commits or rolls back     | READ COMMITTED  |
+| Non-repeatable read | Reads a row twice in one transaction, gets two values                                     | REPEATABLE READ |
+| Phantom read        | Repeats a predicate query and finds its matching row set changed by another transaction   | SERIALIZABLE    |
+| Lost update         | Overlapping transactions each read then write; one overwrites the other's change          | SERIALIZABLE    |
+| Write skew          | Two transactions each read a set, each writes based on it, jointly violating an invariant | SERIALIZABLE    |
 
 These are minimum standard-level distinctions; engines may prevent additional anomalies.
-For a read-modify-write within one transaction, conflict detection or locking can prevent
-lost updates below SERIALIZABLE. For a stale value read in a completed transaction and
-written in a later transaction, even SERIALIZABLE does not validate the earlier observation:
-use a version or another explicit precondition (`offline-concurrency-control`). HTTP request
-count alone does not define the relevant transaction boundaries.
+The lost-update row assumes each operation's read and dependent write are in the same
+transaction and the competing transactions use SERIALIZABLE. Conflict detection or locking
+can also prevent that anomaly at lower levels. For a stale value read in a completed
+transaction and written in a later transaction, even SERIALIZABLE does not validate the
+earlier observation: use a version or another explicit precondition
+(`offline-concurrency-control`). HTTP request count alone does not define the relevant
+transaction boundaries.
 
 ## Engine differences that break portable assumptions
 
@@ -42,14 +44,21 @@ also have engine-specific lock, null, indexing and error semantics; verify those
 | Problem                                   | Targeted mechanism                                                                             | Why not isolation                                                                                    |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Duplicate rows from concurrent inserts    | Unique constraint matching the business key; handle conflict                                   | Directly protects every write path; SERIALIZABLE can also prevent an unsafe interleaving by aborting |
-| Lost update within one transaction pair   | `SELECT ... FOR UPDATE` on the row before deciding                                             | Costs blocking only on that path, not globally                                                       |
+| Overlapping read-modify-write operations  | `SELECT ... FOR UPDATE` on the row before deciding, on every competing path                    | Targets contention on that row; snapshot behavior and conflict retries still depend on the engine    |
 | Stale update across separate transactions | `@Version` or explicit version predicate, check affected rows                                  | Later isolation does not validate an earlier completed read                                          |
 | Counter increments                        | `UPDATE t SET n = n + 1 WHERE id = :id`                                                        | Removes the application read/write gap; the engine still locks or detects conflicts                  |
 | Reserve limited stock                     | `UPDATE stock SET qty = qty - :n WHERE id = :id AND qty >= :n`, check exactly one affected row | With positive n and a unique id, protects this row's stock invariant; may block or abort             |
-| Invariant over a set (write skew)         | Range lock, a materialised aggregate row to lock, or SERIALIZABLE + retry                      | This is the one case where the level is often the honest answer                                      |
+| Invariant over a set (write skew)         | Verified range-lock protocol, shared guard row, or SERIALIZABLE + retry                        | Lock coverage and fresh invariant reads must cover every writer; row locks alone may be inadequate   |
 
-The conditional-update idiom is the single most useful of these and the most under-used:
-it moves the decision into the statement, so there is no window between reading and acting.
+`SELECT ... FOR UPDATE` is not portable predicate protection. PostgreSQL locks the returned
+rows; an empty result does not prevent a competing insert. Engine-specific range/gap locking
+depends on isolation, indexes and statement semantics. With a shared guard row, every writer
+must acquire it before checking the invariant. Under snapshot isolation, locking an unchanged
+guard may still leave a stale snapshot after waiting; use an engine-verified protocol that
+validates or refreshes the invariant reads, such as updating the guard and retrying conflicts.
+
+A conditional update moves this row's decision into the statement, closing the application
+read/write gap. It does not automatically enforce invariants over other rows.
 
 ## Retryable failures
 
@@ -98,8 +107,8 @@ is a deadlock.
 3. **Index-driven locking.** Index/range locks can connect otherwise distinct writes.
    Page-latch contention from an append hotspot is a different mechanism; do not diagnose
    it as a transaction deadlock without the wait cycle.
-4. **Long transactions widening the window.** The most effective deadlock fix is often
-   simply making transactions shorter.
+4. **Long transactions widening the window.** Shortening lock occupancy can reduce overlap,
+   but does not remove a lock-order cycle. Verify the changed wait graph and failure rate.
 
 **Diagnosis:** capture the engine's deadlock graph — `deadlock_timeout` and
 `log_lock_waits` in PostgreSQL, the deadlock trace flag or Extended Events in SQL Server,
@@ -128,6 +137,7 @@ atomicity with a designed, visible intermediate state — which is the honest tr
 ## Sources and validation
 
 - [PostgreSQL 18 isolation](https://www.postgresql.org/docs/18/transaction-iso.html): concrete engine example, not a cross-database contract.
+- [PostgreSQL 18 explicit locking](https://www.postgresql.org/docs/18/explicit-locking.html): row-lock coverage and the difference between row locks and predicate protection.
 - [PostgreSQL 18 serialization-failure handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html): error classification and complete-transaction retries.
 
 For the target database, use two independent connections and barriers to force the disputed

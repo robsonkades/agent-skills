@@ -76,6 +76,19 @@ If an attempted copy acquires resources and later fails, release only its newly 
 according to that protocol; leave source/shared ownership intact and preserve failure evidence.
 Discarding an unpublished object or copy map does not close external resources.
 
+Container independence does not guarantee equivalent behavior. Preserve required equality,
+comparator, iteration order and cardinality separately from copying keys/elements/values.
+`IdentityHashMap` can hold distinct keys that are equal by `equals`; moving them to an ordinary
+map can collapse entries. A set can similarly lose elements when its equality policy changes.
+If normalization is intentional, name the target policy and reject collisions or define an
+explicit domain merge; silently keeping one value is not a faithful copy.
+
+For sorted maps, constructor overload selection matters: `new TreeMap<>(sortedSource)` preserves
+the comparator when the argument's static type is `SortedMap`; the `TreeMap(Map)` overload instead
+uses natural key ordering. Widening the same source to `Map` can therefore change lookup/order
+semantics or fail for keys lacking a compatible natural ordering. Neither constructor deep-copies
+keys or values. Test representative lookups, order and entry count, plus intended mutation isolation.
+
 ## Cycles and identity
 
 A naive depth-first copy of a graph with cycles does not terminate, and one with shared nodes
@@ -181,6 +194,7 @@ observation that immutability is the real alternative to this pattern.
 
 Primary sources: [Object.clone](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#clone()>),
 [IdentityHashMap](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/IdentityHashMap.html),
+[TreeMap constructor contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html),
 [resource cleanup on abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3),
 [Java serialization architecture](https://docs.oracle.com/en/java/javase/17/docs/specs/serialization/serial-arch.html),
 and [Jakarta Persistence 3.2 entity lifecycle](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2).

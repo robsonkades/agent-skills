@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: refactoring-automation
-version: 1.1.2
+version: 1.1.3
 description: >-
   Applying repeatable Java changes with IDE refactoring, OpenRewrite, structural search,
   compiler tooling or hand edits; checking tool coverage and making large diffs reviewable,

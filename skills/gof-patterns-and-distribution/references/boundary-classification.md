@@ -51,13 +51,24 @@ when the accepted recovery contract requires it. Keep opacity, ownership and res
 | Pattern     | Its job at the seam                                | The hazard                                             |
 | ----------- | -------------------------------------------------- | ------------------------------------------------------ |
 | **Adapter** | Where a foreign model, vocabulary and failure stop | Forwarding the vendor's exception; missing timeouts    |
-| **Proxy**   | Standing in for the subject                        | Making a network call look like a method call          |
-| **Facade**  | Coarse operations                                  | Fan-out with no deadline and no partial-failure result |
+| **Proxy**   | Standing in for the subject                        | Hiding remote latency, failure or call count           |
+| **Facade**  | Simplifying use of a subsystem                     | Fan-out with no deadline and no partial-failure result |
 | **Bridge**  | Backends behind one contract                       | An interface designed against the in-memory backend    |
 
 **Adapter** maps foreign failure/schema semantics and enforces the remaining deadline from the
 owning call context. Retry safety depends on operation effects, not merely transient/permanent
 exception labels. Unknown enum behavior belongs to the accepted boundary contract (`gof-adapter`).
+
+Deadline representation is part of that seam: Java's
+[`System.nanoTime()`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/System.html#nanoTime()>)
+has a JVM-local origin, so do not serialize its absolute value for another JVM to compare.
+Prefer the transport's existing deadline propagation after checking its target-version contract;
+[gRPC](https://grpc.io/docs/guides/deadlines/) propagates a remaining timeout after deducting elapsed
+time. A receiver can enforce that budget with its own local clock; restarting the full timeout at
+each hop or retry extends the caller's budget. A remaining duration alone cannot account for
+unknown transit delay before receipt: retain the caller's original deadline and cancellation,
+and inspect queueing/propagation behavior. Absolute wall-clock deadlines instead need an explicit
+clock-skew policy. Check exhausted budgets and delayed hops (`timeouts-and-deadlines`).
 
 **Proxy** is the pattern most able to hide a boundary, and the failure is architectural rather than
 local:
@@ -130,7 +141,7 @@ local effects or use deduplication/idempotency for ambiguous outcomes. Propagate
 detached durable workflows instead need their own deadline/cancellation contract
 (`cancellation-and-interruption`).
 
-## Algorithm — largely unaffected, with three exceptions
+## Algorithm — largely unaffected, with four exceptions
 
 | Pattern             | Unaffected              | The exception                                                                |
 | ------------------- | ----------------------- | ---------------------------------------------------------------------------- |

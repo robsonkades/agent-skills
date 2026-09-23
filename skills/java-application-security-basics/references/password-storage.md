@@ -32,8 +32,17 @@ module and approved operating mode; selecting PBKDF2 alone is not certification.
 legacy-only and is deliberately omitted as a new-storage option. These SHA-256/SHA-512
 figures were rechecked against OWASP on **2026-09-10**.
 
-**Upgrading legacy hashes.** Two sanctioned routes: expire inactive users' passwords, or
-layer the hashes (`bcrypt(md5($password))`) and replace with a direct hash on next login.
+**Upgrading legacy hashes.** Verify the old format, then hash the successfully authenticated
+password directly with the new KDF; reset inactive accounts when retiring old verification.
+Offline wrapping of an existing hash, such as `bcrypt(md5($password))`, is only a temporary
+migration option: OWASP warns that layering can make cracking easier. A leaked inner hash
+can enable password shucking, and wrapping does not repair an earlier credential exposure.
+Do not adopt that notation as a generic recipe: specify the legacy byte encoding, outer
+input encoding and length constraints, distinguish wrapped rows from direct hashes, and
+replace wrapped rows on successful login. Use reset/recovery when the exposure or legacy
+semantics require it. See OWASP's [legacy migration](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#upgrading-legacy-hashes)
+and [bcrypt pre-hashing cautions](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#pre-hashing-passwords-with-bcrypt),
+rechecked **2026-09-21**.
 
 ## 2. Argon2id versus bcrypt — the live disagreement
 

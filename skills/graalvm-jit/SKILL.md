@@ -60,15 +60,18 @@ No JVMCI compiler found`. Oracle JDK 25 removed the Graal JIT that 23 and 24 bun
 3. **Confirm the mode and the configuration before interpreting any warm-up number.**
    `-Djdk.graal.ShowConfiguration=info` prints one line: `loaded from a Native Image
 shared library` is libgraal, `loaded from class files` is jargraal. The JFR
-   `jdk.Compilation` event's `compiler` field (`jvmci` versus `c2`) proves who produced the
-   tier-4 code — HotSpot's `-XX:+PrintCompilation` never names the compiler.
+   `jdk.Compilation` event identifies the compiler path (`jvmci` versus `c2`), but includes
+   failed attempts. Require `succeded = true` and `compileLevel = 4` for the relevant
+   method or compiled caller in the measured process; see `references/enabling-and-comparing.md`.
+   HotSpot's `-XX:+PrintCompilation` never names the compiler.
 4. **Use representative evidence for the unresolved question.** Compare the real workload
    and lifetime; add JMH for an isolated hot-path question when existing evidence is insufficient,
    using methods profiling actually named. A microbenchmark is not a prerequisite to retaining
    an adequate runtime or a substitute for application outcomes.
 5. **When comparing, prefer A/B inside one compatible binary.** `-XX:-UseJVMCICompiler` on the GraalVM build gives C2 on the
    same class library, the same GC build and the same machine, so the compiler is the only
-   intended treatment. Pin the GC and all non-compiler flags on both runs. Use independent
+   intended treatment. Pin the GC and all non-compiler flags on both runs. For JMH, set and
+   verify the fork JVM and arguments: launcher flags can be overridden by `@Fork`. Use independent
    forks, inspect per-iteration convergence, retain confidence intervals/raw results, and
    compare both steady state and time-to-steady-state; a fixed “last iterations within 5%”
    rule can accept drift or reject normal noise.

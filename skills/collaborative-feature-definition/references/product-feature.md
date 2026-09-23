@@ -25,7 +25,8 @@ Depth drivers: <evidence supporting the selected depth>
 
 ## Value and expected outcome
 
-<What becomes possible or improves; leading/lagging measure where available.>
+<What becomes possible or improves; distinguish evidenced value from an expected benefit. Name the
+outcome measure or review method where material, preserving unknown baselines and proposed targets.>
 
 ## Detailed description
 
@@ -110,6 +111,19 @@ the delivery channel belongs in rules or a decision only if already authoritativ
 Value must name a beneficiary and a change. Revenue is not the only value: reduced completion time,
 fewer errors, access to a capability, lower operational burden, or compliance with an established
 obligation can qualify when observable.
+
+For an unproven benefit that drives the decision, record how it will be assessed: measure or review
+method, relevant population, known baseline, target and its authority, observation period, and owner
+of the follow-up decision. Keep unknowns explicit and scale this record to the claim; do not invent
+a numeric target or require a new experiment when applicable evidence is sufficient. This follows
+the distinction between delivered features and demonstrated value in the
+[Evidence-Based Management Guide, May 2024](https://scrumorg-website-prod.s3.amazonaws.com/drupal/2024-05/Evidence%20Based%20Management%20Guide%202024.pdf).
+
+For example, verifying that users can save and resume a draft establishes that behavior for the
+tested conditions. It does not establish the separate hypothesis that fewer users will abandon the
+process. Record that expected benefit and its assessment separately; a planned observation is not
+evidence that the benefit occurred. Do not remove an outcome criterion the product owner explicitly
+requires, or add one as a release gate without that authority.
 
 Describe the happy path and the decisions at boundaries. Screen-by-screen prose is useful only when UI
 sequence is itself part of the behavior; implementation component inventories belong to later planning.

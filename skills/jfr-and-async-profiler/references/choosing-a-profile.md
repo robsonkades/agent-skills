@@ -28,15 +28,30 @@ appropriate.
 
 Wall sampling locates where eligible threads reside during elapsed time, including CPU work.
 Dedicated off-CPU profiling instead targets descheduled intervals; confirm the tool's mechanism
-before treating either as a blocked-time measurement. Wall mixes healthy idleness and
-harmful waiting unless split by role/state/work. With many threads, event volume and overhead can
-be large. It cannot by itself identify the resource owner or request critical path.
+and state filters before treating either as a blocked-time measurement. Preempted runnable
+threads and wakeup-to-run delay can contribute to scheduler-based off-CPU time. A CPU-heavy
+stack there does not alone prove a hidden lock or a broken profiler; separate runnable delay
+from resource waiting with scheduler evidence when that distinction changes the diagnosis.
+Wall mixes healthy idleness and harmful waiting unless split by role/state/work. With many
+threads, event volume and overhead can be large. It cannot by itself identify the resource owner
+or request critical path.
 
 ### Duration events
 
 Use JFR/app/trace events for typed start/duration/fields. Thresholds censor short events and
 event coverage may omit async work or certain APIs. Summed durations across threads overlap.
 Inspect event schema/settings and correlate with request/work identifiers carefully.
+
+Timing an operation and publishing its event are separate steps. The JFR `Event` API writes on
+`commit()`, not `begin()` or `end()`. In OpenJDK 25, `Unsafe_Park` commits the platform-thread
+park event after the underlying park returns. A dump taken while that park remains in progress
+can contain no event for it, even though the elapsed wait already exceeds the threshold. This is
+a visibility limit, not evidence of no wait or a reason to lower the threshold.
+
+Check the emission point for the actual event/JDK. For a live hang, use thread/task dumps or
+appropriate wall/scheduler evidence within the recovery budget. If the operation later finishes
+while recording remains active, a later artifact may capture its full duration. Do not force
+completion, prolong an incident, or treat every event type as having identical lifecycle rules.
 
 ### Allocation events
 
@@ -57,6 +72,7 @@ For every expected event, estimate opportunity:
 
 ```text
 eligible operations/threads/allocations during window
+* fraction reaching the emission point (where completion is required)
 * fraction above threshold or selected by sampler
 * target/filter coverage
 = expected recorded population before loss
@@ -67,10 +83,11 @@ When zero appears:
 1. Was the target/load active during the exact recording time?
 2. Does the event exist and support this platform/JDK/tool?
 3. Was it enabled with the intended threshold/period/throttle/stack/filter?
-4. Did the parser/view include the right event and schema?
-5. Did buffers/rate/memory/disk lose or suppress it?
-6. Does an applicable existing positive control validate coverage, or is a bounded new control needed?
-7. Only then report no qualifying observed events, bounded to this window/configuration.
+4. Did the operation reach its commit/emission point before the dump or recording stopped?
+5. Did the parser/view include the right event and schema?
+6. Did buffers/rate/memory/disk lose or suppress it?
+7. Does an applicable existing positive control validate coverage, or is a bounded new control needed?
+8. Only then report no qualifying observed events, bounded to this window/configuration.
 
 `jfr summary` validates actual file event counts; metadata validates schemas. Neither alone
 proves the application had an opportunity to emit an event.
@@ -179,3 +196,16 @@ Expected count/weight and controls:
 Overhead/storage/privilege/privacy bounds and abort:
 Artifact validation and owning analysis skill:
 ```
+
+## Sources for visibility and clock limits
+
+- [JDK 25 `Event` API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Event.html)
+  specifies begin/end versus commit and threshold behavior.
+- [OpenJDK 25 `Unsafe_Park`](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/prims/unsafe.cpp)
+  shows the platform-thread park event committed after the park returns; this is implementation
+  evidence for that JDK, not a guarantee for every event or JVM.
+- [Linux scheduler documentation](https://docs.kernel.org/scheduler/sched-design-CFS.html)
+  explains runnable tasks and preemption.
+- [BCC `offcputime` implementation](https://github.com/iovisor/bcc/blob/master/tools/offcputime.py)
+  demonstrates switch-out/switch-in timing and optional state filtering; inspect the deployed
+  tool's version rather than assuming every off-CPU engine uses the same population.

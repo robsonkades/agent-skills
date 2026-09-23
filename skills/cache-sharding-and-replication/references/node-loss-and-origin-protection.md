@@ -25,7 +25,12 @@ Origin load immediately after the loss:
 ```
 
 The arithmetic assumes fail-fast remapping, uniform miss rate on survivors and identical origin
-cost per key. Heavy-tailed access can make `q_i` very different from key share or `1/N`. It also
+cost per key. It applies when healthy shards remain usable and affected requests fall back to
+the origin. If a cluster-wide health policy rejects queries across all slots, the affected
+request population can approach the whole tier; if clients shed or fail requests instead,
+those are errors rather than origin calls. Establish this behavior before substituting a node's
+share; see the clustered-cache conditions in [topologies.md](topologies.md).
+Heavy-tailed access can make `q_i` very different from key share or `1/N`. It also
 omits the following possible effects:
 
 - **Second-order eviction.** The remapped keys land on the nine survivors, whose memory did
@@ -74,6 +79,16 @@ protection the failure estimate requires, rather than introducing every lever.
 
 ## Warming a returning node
 
+Before rejoining, establish which dataset the restarted node will expose and which way
+synchronization flows. A replica is useful only while its cached data survives the restart
+protocol. [Redis's replication documentation](https://redis.io/docs/latest/operate/oss_and_stack/management/replication/)
+describes a persistence-disabled primary restarting empty and then replacing its replicas'
+datasets with that empty state; an automatic restart can even precede failure detection and
+promotion. Healthy replica processes therefore do not by themselves prove warm recovery.
+Verify persistence, restart/failover ordering and readiness for the deployed topology. Choose
+recovery behavior against the origin budget and data contract; disposable cached values do not
+make the resulting cold refill affordable. Do not infer that every cache must enable persistence.
+
 An empty node rejoining a client-side ring can immediately take ownership without cached data.
 Products that transfer slots or synchronize replicas have different rejoin behavior; inspect
 the actual readiness and routing protocol. For an empty ownership target, options include:
@@ -115,6 +130,10 @@ the cache. A passing run establishes behavior for its workload and failure scena
 
 For a migration, include concurrent updates/deletes and delayed fills across cutover and rollback;
 assert the declared read contract on every still-routable owner, not just successful transfer.
+For replicated restart/failover, verify the serving dataset and synchronization direction,
+including a persistence-disabled primary restart where applicable. For clustered products,
+probe unaffected slots as well as the failed shard: test the configured full-coverage and
+promotion/quorum behavior instead of assuming that replica process health preserves hits.
 
 Origin/client bounds are the acceptance evidence. "The cache recovered" or a restored hit rate is
 insufficient: recovery can be slow, fail, or succeed only after the origin violated its SLO.

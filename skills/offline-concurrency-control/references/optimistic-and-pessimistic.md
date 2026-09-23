@@ -36,6 +36,14 @@ The editor's original version must travel to the client and back. Re-reading on 
 protects against a concurrent database write after that read, but does not detect an edit
 that became stale during the user's thinking time.
 
+The partial DTO below assumes the request boundary rejects an omitted or null version
+before this method runs. A primitive `long` cannot distinguish absence from a bound zero;
+zero may be a valid version, so rejecting every zero is not a substitute. Inspect the actual
+decoder's required-property and null handling, or use a nullable transport field with an
+enforced required-value check. For example, [Jackson 2.18's defaults](https://github.com/FasterXML/jackson-databind/blob/jackson-databind-2.18.0/src/main/java/com/fasterxml/jackson/databind/DeserializationFeature.java)
+can substitute primitive defaults for missing creator properties or JSON null. Validate the
+project's resolved configuration; never fill a missing precondition with the current version.
+
 ```java
 public record UpdateOrderRequest(String shipTo, long version) { }
 
@@ -58,7 +66,19 @@ Over HTTP, the natural carrier is a conditional request: `ETag` on the read,
 onto a standard precondition enforced by the origin server; intermediaries may ignore it
 (`remote-facade-and-dto`).
 
+For a snapshot-protected edit, require the concrete version or usable entity tag from the
+editor's read. `If-Match: *` is a valid HTTP existence condition; it does not compare that
+snapshot with the current state. Document its rejection as insufficient for this endpoint's
+edit contract rather than pretending the wildcard failed merely because the version changed.
+Presence-only or deliberate last-write-wins operations have a different contract.
+
 ### Presenting the conflict
+
+Reject an absent required precondition before mutation. When the API requires `If-Match`,
+HTTP [428 Precondition Required](https://www.rfc-editor.org/rfc/rfc6585.html#section-3) expresses
+that missing-condition policy and should explain how to resubmit. It is distinct from a
+supplied condition that fails; a missing body version follows the API's input-validation
+contract. Preserve established error contracts unless changing them is in scope.
 
 Return a stable conflict code and authorized recovery information. Use 412 when an
 `If-Match` precondition fails (strong ETag comparison); a business version supplied in a
@@ -171,15 +191,21 @@ require all recipes. These are integration-test recipes, not an already executed
 
 1. **Stale client:** commit B's edit from v7, then submit A's different edit carrying v7.
    Reject A and preserve B. This tests the client-version contract.
-2. **Flush race:** load v7 in two separate transactions, synchronize after both loads and
+2. **Required precondition:** exercise the real request binding with missing and null body
+   versions against a row whose valid version is zero; reject both without a write. The same
+   otherwise-valid request with explicit zero must remain eligible to succeed. For an API
+   requiring a specific `If-Match` validator, also test an absent header, a wildcard and a
+   stale concrete tag against their distinct documented responses; none may silently replace
+   a snapshot-derived edit's precondition with the current version.
+3. **Flush race:** load v7 in two separate transactions, synchronize after both loads and
    before either flush, then change to distinct addresses. Let both attempt commit and assert
    exactly one commits; inspect the final address and advanced version in a third fresh
    transaction. A barrier before entering the service is insufficient to guarantee both
    reads occurred before either write.
-3. **Child race:** edit scalar fields on two existing children under the same root version;
+4. **Child race:** edit scalar fields on two existing children under the same root version;
    assert one transaction fails and the aggregate invariant holds. Separately test collection
    membership changes and bulk/native paths.
-4. **Expired lease:** acquire token A, expire it, acquire B, then attempt A's renewal,
+5. **Expired lease:** acquire token A, expire it, acquire B, then attempt A's renewal,
    release and save. All must fail without changing B's ownership or protected data.
 
 Bound waits and database lock/statement timeouts. On failure, release barriers, roll back

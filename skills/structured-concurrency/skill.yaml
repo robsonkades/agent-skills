@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: structured-concurrency
-version: 1.3.2
+version: 1.3.3
 description: >-
   StructuredTaskScope as a lifetime guarantee for a fan-out: fork, join, close, and the rule
   that no subtask thread outlives the block. Covers the API as it stands on each JDK — still
-  a preview API on every released version, renamed between 25 and 26 and changing again in
+  a preview API on every released version, renamed between 25 and 26 and changed again in
   27 — the Joiner completion policies, scope timeouts, nesting, and what close actually
   waits for. Use when writing or reviewing a parallel fan-out inside one request, when a
   sibling task keeps running after another failed, when code copied from a blog uses

@@ -65,6 +65,9 @@ it. There is no token, so nothing downstream can reject the slow one.
 
 Consequences for configuration and design:
 
+- A contender finding the lock held skips that invocation; it does not wait in a queue for a
+  later turn. If every scheduled interval must be processed, define durable pending work or
+  catch-up elsewhere. A later cron trigger does not by itself recover the missed interval.
 - Set `lockAtMostFor` from execution-duration evidence and a justified margin, and instrument
   overruns. Observed maxima are not hard execution bounds. No finite value proves a hung/paused
   job has ended; too low creates overlap, too
@@ -81,6 +84,25 @@ Consequences for configuration and design:
 - It does not make a `@Scheduled` method a singleton _role_. A long-lived poller or connection
   needs a lifecycle/ownership protocol if exclusivity is required; an ordinary consumer group
   or local cache may need no additional election.
+
+## Work recovery across handover
+
+Fencing and work identity answer different questions. A fence identifies current authority;
+a durable operation ID or `(job, scheduled interval)` identifies the same work across retries
+and leader changes. Do not generate a fresh deduplication identity merely because the term changed.
+
+For example, term 17 commits an interval's effect and crashes before saving its completion
+checkpoint. Term 18 activates its fence and replays that interval: the fence correctly accepts
+the new leader, but the business effect may occur twice. Saving completion before the effect
+instead can lose work on a crash; a checkpoint alone does not close either window.
+
+Reuse an existing invariant-preserving recovery protocol: atomically commit effect and completion
+when the resource supports it, use stable operation-scoped idempotency for replayed effects, or
+reconcile an uncertain outcome when the contract allows it. Route implementation detail to
+`idempotency`; election does not make a remote effect and a local checkpoint transactional.
+Define whether missed intervals are skipped, coalesced or caught up and how recovery fits the
+failover budget. Repeat-safe reconciliation with acceptable missed intervals need not acquire a
+new per-interval ledger. Check the chosen protocol at the effect/checkpoint crash boundary.
 
 ## Decision block
 
@@ -152,3 +174,4 @@ provider's contract before transferring a behavior to it.
 - [ShedLock 6.10.0 README and behavioral guarantees](https://github.com/lukas-krecan/ShedLock/blob/shedlock-parent-6.10.0/README.md)
 - [client-go 0.33.0 election timing and fencing limitations](https://github.com/kubernetes/client-go/blob/v0.33.0/tools/leaderelection/leaderelection.go)
 - [PostgreSQL 17 explicit locking: row and advisory lifetimes](https://www.postgresql.org/docs/17/explicit-locking.html)
+- [Amazon Builders' Library: stable request identity and atomic recording of effects](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)

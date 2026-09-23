@@ -137,6 +137,29 @@ This separation can:
 It requires no CQRS infrastructure — two interfaces over the same database are enough, and
 going further is a separate decision with its own drivers.
 
+### A stream is also a lifetime contract
+
+For a repository/query method returning `Stream<T>`, inspect the implementation before
+changing the boundary. A database cursor needs a named consumer/closer and a usable context
+and connection throughout traversal. Spring Data JPA 4.1.1 streaming query execution checks
+for a surrounding transaction; putting `@Transactional` only on a producer that returns
+the stream does not extend that transaction through later caller consumption.
+
+Consume and close such a stream inside the owning use case's valid transaction/context,
+using try-with-resources even for `findFirst`, partial traversal or a consumer exception.
+A terminal operation is not a substitute for `close()`. Do not return a stream already
+closed by the producer's try-with-resources, or pass a live cursor into asynchronous or
+controller processing without an explicit lifetime design. Verify resource release after
+early termination and failure against the actual adapter/provider.
+
+A bounded list of fully materialized DTO values, or its in-memory stream without external
+resource dependencies, can safely outlive the transaction. For larger results, consider
+bounded pages with an explicit ordering/consistency contract or deliberate cursor ownership;
+account for the connection and transaction held while a slow consumer runs. Do not promise
+constant memory from `Stream` alone: JPA's default `getResultStream()` delegates to
+`getResultList().stream()`, providers may override it, and driver buffering and managed-entity
+retention also matter. Verify the deployed provider/driver behavior before claiming a benefit.
+
 ## When the hand-written interface is not worth it
 
 Be honest about the alternative:
@@ -193,3 +216,6 @@ existing evidence without adding a full database test campaign.
 - [Fowler: Repository](https://martinfowler.com/eaaCatalog/repository.html)
 - [Spring Data JPA 4.1.1: persisting entities](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/entity-persistence.adoc)
 - [Spring Data JPA 4.1.1: transactionality](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)
+- [Spring Data JPA 4.1.1: streaming execution](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/JpaQueryExecution.java) — `StreamExecution` requires a surrounding transaction.
+- [Spring Data JPA: streaming query results](https://docs.spring.io/spring-data/jpa/reference/repositories/query-methods-details.html#repositories.query-streaming) — resource ownership and closing.
+- [Jakarta Persistence 3.2: Query](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/query) — default `getResultStream()` behavior.

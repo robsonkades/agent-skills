@@ -1,0 +1,679 @@
+{
+  "date": "2026-09-19",
+  "kind": "Predefined response regression cases; no causal comparison",
+  "status": "Nineteen response cases recorded: thirteen historical, two Java-test-doubles cases, one original/revised query pair and one original/revised scoped-values pair on2026-09-22.",
+  "controls": {
+    "context": "First seven cases used fresh actor context. Four architecture-fitness-functions/cache-sharding-and-replication cases used a reused support thread with prior review/evaluation context, disclosed per case. Two additional java-test-doubles cases on 2026-09-22 used separate fresh actors.",
+    "isolation": "Procedural read restrictions in a shared workspace, not an enforced filesystem sandbox.",
+    "exposure": "Related shipped teaching cases may be read; these are known-mechanism regressions, not unseen holdouts.",
+    "scope": "Response decisions only; no production execution, natural selection or comparative superiority inferred."
+  },
+  "cases": [
+    {
+      "id": "adapter-read-clear",
+      "skill": "adapter-sidecar-pattern",
+      "request": "Review this proposed exporter. A vendor endpoint returns the number of completed jobs since its previous read and atomically clears that count. Two Prometheus servers scrape independently; support staff also call the endpoint. The proposal exposes each returned value as jobs_total on scrape and says Prometheus handles resets. We cannot change the vendor binary. Give the smallest sound correction and the evidence needed before claiming complete job counts. Do not implement or claim to run a deployment.",
+      "required": [
+        "Reject raw read-and-clear values as a cumulative counter and identify competing readers consuming increments.",
+        "Require an exclusive collector/ownership contract or acknowledge irrecoverable missing increments if exclusivity is impossible.",
+        "Explain accumulation lifetime/reset/restart semantics and bounded failure behavior without claiming exactness from scrape success."
+      ],
+      "failure": [
+        "Approves the raw counter because Prometheus detects decreases.",
+        "Claims multiple destructive readers can independently reconstruct complete counts without an additional source contract.",
+        "Claims executed deployment or runtime results."
+      ],
+      "response": "The smallest sound correction is one ingestion owner per vendor endpoint that accumulates successful reads into jobs_total. Both Prometheus servers and support staff read its non-consuming snapshot. Restrict direct access so diagnostic calls cannot bypass that owner. This still cannot guarantee complete counts: a response lost after the vendor clears its count, or an adapter crash before durable accumulation, loses observations.",
+      "judgement": "passed",
+      "actor": "/root/evaluate_adapter_sidecar_round2",
+      "evidence": [
+        "Identifies delta values and destructive readers consuming different portions.",
+        "Requires one ingestion owner and non-consuming snapshots; restrict direct endpoint reads.",
+        "States serializing reads/persisting an accumulator cannot repair response-loss and crash gaps; requires a recoverable source contract before completeness."
+      ],
+      "responseExcerpt": "The smallest sound correction is one ingestion owner per vendor endpoint that accumulates successful reads into jobs_total. Both Prometheus servers and support staff read its non-consuming snapshot. Restrict direct access so diagnostic calls cannot bypass that owner. This still cannot guarantee complete counts: a response lost after the vendor clears its count, or an adapter crash before durable accumulation, loses observations.",
+      "resourcesRead": [
+        "skills/adapter-sidecar-pattern/SKILL.md",
+        "skills/adapter-sidecar-pattern/references/coupling-and-failure.md",
+        "skills/adapter-sidecar-pattern/references/adapter-or-node-agent.md",
+        "https://prometheus.io/docs/prometheus/latest/querying/functions/#rate",
+        "https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#sums",
+        "https://prometheus.io/docs/instrumenting/exposition_formats/#histograms-and-summaries"
+      ],
+      "responseFormat": "Selected response excerpt; decision coverage recorded in evidence."
+    },
+    {
+      "id": "adapter-histogram",
+      "skill": "adapter-sidecar-pattern",
+      "request": "A source reports disjoint duration buckets with inclusive upper bounds 50 ms, 100 ms and +Inf. In interval A the counts are [2,3,5], with 750 ms total duration; in the immediately following non-overlapping interval B they are [1,4,0], with 450 ms total duration. Both intervals belong to one uninterrupted source identity, with no gaps or retries. Design Prometheus classic histogram exposition after each interval, preserving a cumulative lifetime series. State what extra contract is needed when intervals can be replayed after reconnect. No runtime implementation is requested.",
+      "required": [
+        "After A bounds 0.05,0.1,+Inf have cumulative bucket counts 2,5,10, count10,sum0.75 seconds.",
+        "After B lifetime buckets are 3,10,15,count15,sum1.2 seconds.",
+        "Distinguish spatial bucket accumulation from temporal accumulation, require replay identity/deduplication/reset contract."
+      ],
+      "failure": [
+        "Exposes disjoint buckets directly.",
+        "Uses B alone as lifetime totals or double-counts boundaries.",
+        "Claims conversion alone deduplicates replay."
+      ],
+      "response": "Assuming a zero lifetime accumulator before A, first accumulate disjoint intervals over time, then prefix-sum across bucket bounds. After A: bounds0.05/0.1/+Inf have buckets2/5/10, sum0.75 seconds,count10. After B: lifetime disjoint counts3/7/5 yield buckets3/10/15,sum1.2 seconds,count15. Include any baseline preceding A; publish one consistent histogram snapshot that repeated scrapes do not accumulate again. Replay needs a stable source identity/generation and immutable interval identity, defined overlap/gap/conflict behavior, and recovery that consistently restores both accumulator and deduplication position or reconstructs both from retained history. Replaying A or B leaves the final snapshot unchanged. No runtime implementation or validation tool ran.",
+      "judgement": "passed",
+      "originalCase": {
+        "request": "A source reports disjoint duration buckets with inclusive upper bounds 50 ms, 100 ms and +Inf. In interval A the counts are [2,3,5], with 650 ms total duration; in the immediately following non-overlapping interval B they are [1,4,0], with 450 ms total duration. Both intervals belong to one uninterrupted source identity, with no gaps or retries. Design Prometheus classic histogram exposition after each interval, preserving a cumulative lifetime series. State what extra contract is needed when intervals can be replayed after reconnect. No runtime implementation is requested.",
+        "required": [
+          "After A bounds 0.05,0.1,+Inf have cumulative bucket counts 2,5,10, count10,sum0.65 seconds.",
+          "After B lifetime buckets are 3,10,15,count15,sum1.1 seconds.",
+          "Distinguish spatial bucket accumulation from temporal accumulation, require replay identity/deduplication/reset contract."
+        ],
+        "actor": "/root/evaluate_adapter_sidecar_round2",
+        "judgement": "Invalid positive fixture; actor correctly identified impossible supplied sum.",
+        "responseExcerpt": "There is a supplied-data inconsistency: for nonnegative durations, A has three observations above 50 ms and five above 100 ms, so its sum must exceed 3×50 + 5×100 = 650 ms. Thus these blocks show the mechanical translation, not validated exposition. Reject or flag A until its sum or documented rounding semantics are clarified; do not silently repair it."
+      },
+      "correctionEvidence": "Before fresh confirmatory run, seven Node assertions validated raw witnesses A=[5,10,51,52,53,101,102,110,120,146], B=[50,100,100,100,100]; sums 750/450 ms, cumulative buckets [3,10,15], final sum1.2s. Original transcript retained; no expectation weakened to match an erroneous response.",
+      "actor": "/root/evaluate_adapter_histogram_corrected",
+      "responseFormat": "Condensed transcript preserving numerical outputs and decision constraints.",
+      "resourcesRead": [
+        "skills/adapter-sidecar-pattern/SKILL.md",
+        "skills/adapter-sidecar-pattern/references/coupling-and-failure.md",
+        "https://prometheus.io/docs/concepts/metric_types/#histogram",
+        "https://prometheus.io/docs/instrumenting/exposition_formats/#histograms-and-summaries"
+      ],
+      "evidence": [
+        "Both corrected histogram snapshots match independently checked raw observations.",
+        "Separates time and bucket accumulation, provides replay/deduplication/reset/recovery contracts.",
+        "Makes absent pre-A baseline explicit; no fabricated execution."
+      ]
+    },
+    {
+      "id": "ambassador-shard-owner",
+      "skill": "ambassador-pattern",
+      "request": "Our datastore contract maps customer K to logical shard A. Only a1 and a2 replicate A. Both are unavailable; b1 and b2 are healthy but hold disjoint shard B. The local proxy uses ring hash over all four hosts, and its outlier failover is proposed as transparent availability for writes to K. Can we ship this routing policy? Specify the ownership-preserving alternative and one adversarial acceptance check. Assume we are not authorized to migrate data.",
+      "required": [
+        "Reject failover from A to healthy B despite matching hash or proxy health.",
+        "Apply authoritative key-to-logical-shard ownership first, then choose among replicas authorized for that shard.",
+        "Define failure/backpressure when all eligible replicas fail and an adversarial check ensuring no write reaches B."
+      ],
+      "failure": [
+        "Treats consistent hashing or backend health as evidence of data ownership.",
+        "Silently authorizes migration or writes to B.",
+        "Claims availability can always be preserved without the shard."
+      ],
+      "response": "Do not ship this policy. The authoritative mapping is K → A; ring hashing across all four hosts can select B, and outlier failover does not transfer data or ownership.\n\nSeparate routing into key → logical shard → eligible serving endpoint. For K, select only A replicas authorized to accept writes under the datastore’s leader/fencing contract. Keep health filtering, retries and failover inside that eligible set. With both A endpoints unavailable, return a bounded unavailable result within the caller’s deadline. B’s health cannot restore availability for K, and no migration is authorized.\n\nAdversarial acceptance check: in an isolated environment, make a1/a2 unavailable while b1/b2 are healthy and deliberately accept arbitrary writes. Submit writes to K through the actual proxy configuration with outlier ejection, retries and fallback enabled. Assert zero K attempts and zero K mutations at B, no reported success, and bounded failure. This is a proposed check, not an executed result.",
+      "judgement": "passed",
+      "actor": "/root/evaluate_ambassador_round2",
+      "resourcesRead": [
+        "skills/ambassador-pattern/SKILL.md",
+        "skills/ambassador-pattern/references/failure-and-policy-composition.md",
+        "skills/ambassador-pattern/references/routing-and-experiments.md",
+        "https://www.rfc-editor.org/rfc/rfc9525.html#section-6",
+        "https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.6"
+      ],
+      "evidence": [
+        "Rejects ring-hash ownership inference, preserves authorized A writer set, returns bounded failure.",
+        "Hostile fixture makes B accept arbitrary writes; expected zero attempted/mutating writes and no success."
+      ]
+    },
+    {
+      "id": "ambassador-tls-identity",
+      "skill": "ambassador-pattern",
+      "request": "A Java client calls https://orders.internal.example. We are adding a local proxy on 127.0.0.1:8443. The proposed change replaces the URL with https://127.0.0.1:8443 and disables hostname verification after certificate errors, while forwarding Host: orders.internal.example. The proxy mode and certificate termination are undecided. Review the proposal and state the distinct identities that an implementer must settle before client-specific configuration. The client library/version is not supplied.",
+      "required": [
+        "Reject disabled hostname verification and explain that Host does not repair certificate identity checks.",
+        "Separate connection address, HTTP authority, TLS SNI and verified certificate reference identity; determine per-hop TLS termination or tunnel/CONNECT mode.",
+        "Keep client implementation conditional on library/version and explicit trust configuration."
+      ],
+      "failure": [
+        "Accepts Host or SNI alone as a substitute for certificate identity validation.",
+        "Invents client-specific working code without library/version.",
+        "Silently changes trust or terminates end-to-end TLS."
+      ],
+      "response": "Reject disabling hostname verification. Forwarding Host: orders.internal.example does not repair TLS peer authentication. The expected certificate identity must match the presented certificate, independently of whether its chain is trusted.\n\nBefore client-specific configuration, record connection address, HTTP authority, TLS SNI and verified certificate identity/trust roots separately for every applicable hop. Choose the proxy mode first: a forward proxy with CONNECT retains origin URL and tunnels end-to-end TLS if client support exists; TLS-terminating reverse proxy authenticates the local endpoint under an explicit identity and separately configures upstream authority/SNI/verification; TCP pass-through preserves origin TLS identity while redirecting the connection address using a supported mechanism, with encrypted authority unavailable for proxy routing.\n\nVerify legitimate traffic succeeds and a trusted-CA certificate for the wrong name fails; forged authority must not select an unauthorized destination. No checks were executed. Java/runtime and HTTP-client library/version evidence is required before selecting APIs or runnable configuration.",
+      "judgement": "passed",
+      "actor": "/root/evaluate_ambassador_round2",
+      "resourcesRead": [
+        "skills/ambassador-pattern/SKILL.md",
+        "skills/ambassador-pattern/references/failure-and-policy-composition.md",
+        "skills/ambassador-pattern/references/routing-and-experiments.md",
+        "https://www.rfc-editor.org/rfc/rfc9525.html#section-6",
+        "https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.6"
+      ],
+      "responseFormat": "Condensed transcript preserving the actor's technical conclusions; source links retained in resourcesRead.",
+      "evidence": [
+        "Explicitly rejects disabling hostname verification and Host-header substitution for TLS authentication.",
+        "Separates all four identities and three proxy modes; code remains conditional on client/version."
+      ]
+    },
+    {
+      "id": "allocation-recording-loss",
+      "skill": "allocation-profiling",
+      "request": "We claim a 40% allocation improvement because the sum of jdk.ObjectAllocationSample weights fell from 100 GB to 60 GB in two equally long JFR recordings. Only the second recording has nonzero jdk.DataLoss; configured event names and rates match. No operation counts, workload mix or independent allocation counters were retained. Review what is established and propose the minimum discriminating follow-up. No profiler run is possible in this task.",
+      "required": [
+        "Reject a confirmed40% improvement or comparable bytes-per-operation conclusion from these recordings.",
+        "Distinguish data loss from proof that specifically allocation events were lost; cannot infer missing weights or correct the result quantitatively.",
+        "Request comparable workload/operation denominator, recording coverage and independent allocation evidence/repeat capture within feasible constraints."
+      ],
+      "failure": [
+        "Subtracts or scales sampled weights using DataLoss bytes as allocation bytes.",
+        "Treats matching configuration as complete capture.",
+        "Claims an executed benchmark or exact allocation savings."
+      ],
+      "response": "Only 40% less recorded allocation-sample weight is established. DataLoss refers to recording-buffer data and neither identifies missing event types nor quantifies application allocation; do not add its amount to sample weights. Equal duration/settings do not establish equal completed work or payload mix. Inspect actual recording bounds, loss timestamps, coverage and errors; denominators cannot be reconstructed from missing data. When possible, compare matched workload/concurrency/lifecycle windows with completed-operation counts and an independently supported process-wide allocation counter delta, accounting for background/failed work. Compare bytes/s and bytes/completed operation with repeat variability. Repeat profiling only when attribution is needed. No profiler run occurred; current improvement claim remains unsubstantiated.",
+      "judgement": "passed",
+      "actor": "/root/evaluate_allocation_round2",
+      "resourcesRead": [
+        "skills/allocation-profiling/SKILL.md",
+        "skills/allocation-profiling/references/allocation-tools.md",
+        "skills/allocation-profiling/references/reducing-allocation.md",
+        "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml",
+        "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/ByteBuffer.html",
+        "https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/BufferPoolMXBean.html"
+      ],
+      "responseFormat": "Condensed transcript preserving technical conclusions and evidence limits.",
+      "evidence": [
+        "Separates observed weight reduction from actual bytes/op savings.",
+        "Does not assign DataLoss bytes to lost allocations.",
+        "Names both coverage and workload denominator gaps and feasible follow-up."
+      ]
+    },
+    {
+      "id": "allocation-direct-buffers",
+      "skill": "allocation-profiling",
+      "request": "A Java service replaces repeatedly allocated heap byte arrays with allocateDirect buffers retained in an unbounded cache. Measured heap bytes per completed request decrease, but latency, native-memory use and total retained memory are unmeasured. The change is called a proven total-memory optimization and should ship on that basis. Review the conclusion and identify the smallest sufficient lifecycle/capacity and measurement evidence. No application execution is requested.",
+      "required": [
+        "Accept only the scoped measured heap-allocation reduction, reject unmeasured total-memory/latency benefit.",
+        "Identify unbounded retention and direct/native resource lifecycle, define capacity and ownership without inventing a portable deterministic close for ByteBuffer.",
+        "Request comparable workload, heap/native/process memory plus retention/latency evidence appropriate to desired claim."
+      ],
+      "failure": [
+        "Equates lower heap bytes with lower total memory.",
+        "Recommends an unbounded pool/cache or claims garbage collection guarantees prompt native release.",
+        "Invents standard AutoCloseable ByteBuffer cleanup or measured performance."
+      ],
+      "response": "The measurement supports lower heap allocation per completed request only. Direct backing storage is outside measured heap and the unbounded cache has no demonstrated retained-capacity limit. Define an enforceable byte budget including concurrent borrowers, oversized/idle entries and behavior at capacity; specify ownership, safe reuse, eviction and actual reclamation across completion/exceptions/cancellation. Eviction does not imply immediate native release. Preserve backing-array requirements. Compare original and bounded candidate through fill/churn/bursts/drain, measuring heap allocation, retained heap, direct/native and resident memory plus latency/throughput/CPU without double-counting overlapping metrics. BufferPoolMXBean estimates do not cover all native memory; unavailable memory estimates are -1. A temporary plateau cannot prove an unbounded cache has a bound. No application or benchmark ran.",
+      "judgement": "passed",
+      "actor": "/root/evaluate_allocation_round2",
+      "resourcesRead": [
+        "skills/allocation-profiling/SKILL.md",
+        "skills/allocation-profiling/references/allocation-tools.md",
+        "skills/allocation-profiling/references/reducing-allocation.md",
+        "https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml",
+        "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/ByteBuffer.html",
+        "https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/BufferPoolMXBean.html"
+      ],
+      "responseFormat": "Condensed transcript preserving technical conclusions and evidence limits.",
+      "evidence": [
+        "Accepts only the measured heap reduction and rejects broader unmeasured benefit.",
+        "Requires capacity/ownership/lifecycle evidence without inventing closeable ByteBuffer.",
+        "Requests comparable lifecycle measurements and avoids RSS/heap double counting."
+      ],
+      "actorContribution": {
+        "helper": "/root/evaluate_allocation_round2/direct_buffer_review",
+        "scope": "Bounded read-only analysis of direct-buffer scenario; final grading uses the parent actor's response.",
+        "resources": [
+          "skills/allocation-profiling/SKILL.md",
+          "skills/allocation-profiling/references/reducing-allocation.md"
+        ]
+      }
+    },
+    {
+      "id": "allocation-live-ratio",
+      "skill": "allocation-profiling",
+      "request": "With async-profiler 4.1, our normal allocation report has 1 GiB total weighted allocation and a --live --total capture has 10 MiB. We conclude that about 1% of allocated bytes survive; to make it exact we will increase the capture duration and reduce the allocation sampling interval. Review this conclusion using the version-specific measurement contracts. No profiler execution is available.",
+      "required": [
+        "Reject survival ratio because live actual sampled-object sizes and ordinary weighted allocations have different units/populations.",
+        "Identify finite live reference tracking and omission when full/contended as4.1 implementation limits.",
+        "Do not promise longer capture/smaller interval fixes coverage; request appropriate retention/lifecycle evidence."
+      ],
+      "failure": [
+        "Accepts10MiB/1GiB as a measured survival fraction.",
+        "Treats live tracking capacity as JVM-wide bound.",
+        "Guarantees longer capture makes live measurement complete."
+      ],
+      "response": "10 MiB / 1 GiB is approximately0.98%, but not a supported survival fraction. In async-profiler4.1 the ordinary JVMTI samples use max(object size,sampling interval) pressure weights; live totals sum actual sizes of tracked sampled objects remaining uncollected, without extrapolation to all surviving/retained heap. The tracker has at most1024 references and can omit samples when full or contended. Objects allocated before capture are also outside its population. Longer captures or smaller intervals cannot make the ratio exact; long-lived references can fill the tracker and observation cohorts/endpoints change. Report10MiB of tracked sampled objects remaining uncollected; use allocating stacks as leads. A fraction needs a defined cohort/endpoint and compatible allocated/surviving-byte measurements with validated coverage or sampling correction. Retention questions need heap/root/lifecycle evidence. No profiler executed.",
+      "judgement": "passed",
+      "criteriaStatus": "Added and frozen before third scenario was delivered to allocation actor.",
+      "actor": "/root/evaluate_allocation_round2",
+      "resourcesRead": [
+        "skills/allocation-profiling/SKILL.md",
+        "skills/allocation-profiling/references/allocation-tools.md",
+        "https://github.com/async-profiler/async-profiler/blob/v4.1/src/objectSampler.cpp"
+      ],
+      "responseFormat": "Condensed transcript preserving technical conclusions and evidence limits.",
+      "evidence": [
+        "Rejects incompatible sample populations and weights.",
+        "Identifies release-specific1024-reference tracker rather than JVM bound.",
+        "Rejects longer-capture completeness guarantee and defines evidence for survival/retention."
+      ]
+    },
+    {
+      "id": "fitness-skipped-check",
+      "skill": "architecture-fitness-functions",
+      "skillVersion": "1.3.2",
+      "request": "GitHub Actions required check appears green/Skipped due to paths filtering while PR changes a covered module.",
+      "required": [
+        "Reject attestation based on skipped status",
+        "Identify effective scope/artifact/rule and actual execution evidence",
+        "Scoped workflow correction requires changed covered module to execute verification",
+        "Do not claim hypothetical GitHub run executed"
+      ],
+      "failure": [
+        "Treat skipped/success as executed assertion",
+        "Recommend green placeholder without semantic coverage"
+      ],
+      "response": "Cannot attest the architectural property: the in-scope module was not checked. Classify as missing/inconclusive evidence, not proof of correct or incorrect architecture. Distinguish a condition-skipped job, which can satisfy a required check, from a whole paths-filtered workflow whose check normally stays pending. Inspect evaluated revision, PR diff, rule/population, filter, decision logs, actual steps/imported modules and check report; a nonzero class count does not prove the affected module was included. Correct the responsible selector and any aggregator accepting relevant skipped execution; distinguish pass, violation, missing evidence and justified exclusion. Preserve rule/threshold; route pipeline repair to quality-gates and apply existing policy or authorized scoped/time-limited exception. Propose conforming, deliberate-violation and relevant-skipped cases, verifying gate consequences; these runs were not executed.",
+      "responseFormat": "Condensed transcript preserving all decisions and limitations.",
+      "judgement": "passed",
+      "actor": "/root/prior_review_inventory",
+      "resourcesRead": [
+        "skills/architecture-fitness-functions/SKILL.md",
+        "skills/architecture-fitness-functions/references/catalogue.md",
+        "skills/architecture-fitness-functions/references/ungoverned.md",
+        "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions",
+        "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushpull_requestpull_request_targetpathspaths-ignore",
+        "https://slsa.dev/spec/v1.1/verifying-artifacts"
+      ],
+      "controls": "Revised skill only; reused support thread with prior catalog context; no baseline/control/activation comparison. Scenario A overlaps exposed shipped teaching material.",
+      "criteriaTiming": "The skill's existing criteria predated execution. Coordinator case criteria recorded after dispatch but before receiving or reviewing the response. No fresh confirmatory or causal comparison is claimed.",
+      "evidence": [
+        "Rejects skipped attestation and distinguishes job versus workflow skip.",
+        "Requires actual module/rule/revision execution evidence; scoped selector and aggregator correction.",
+        "Proposed acceptance executions explicitly not claimed as run."
+      ]
+    },
+    {
+      "id": "fitness-reuse-identical-artifact",
+      "skill": "architecture-fitness-functions",
+      "skillVersion": "1.3.2",
+      "request": "Prior result has exact artifact digest, same rules/configuration/population/dependencies; deployment uses same digest.",
+      "required": [
+        "Allow conditional verified reuse with matching scope, validity and provenance",
+        "Check environment-dependent rules separately",
+        "Invalidate on changes to relevant artifact/rules/config/population/dependencies or evidence freshness"
+      ],
+      "failure": [
+        "Require blind rerun regardless of reusable evidence",
+        "Authorize reuse merely from matching commit or green badge"
+      ],
+      "response": "Reuse is valid when the result proves successful execution over the required property and all relevant inputs remain equivalent: deployed digest, rules, configuration, tool, population, exclusions and dependencies. Verify report provenance and artifact binding; digest identity alone does not prove the property. Validity policy, environment and observation window must remain applicable when they influence the property. Structural checks on identical bytes can remain valid; availability/performance observations do not automatically transfer to another environment or period. Relevant changes to artifact/rule/tool/configuration/population/dependencies/environment/external data, expiry or discovery of a faulty original control invalidate reuse. Irrelevant changes do not require rerunning by principle. Record reused status with original execution/provenance/applicability.",
+      "responseFormat": "Condensed transcript preserving all decisions and limitations.",
+      "judgement": "passed",
+      "actor": "/root/prior_review_inventory",
+      "resourcesRead": [
+        "skills/architecture-fitness-functions/SKILL.md",
+        "skills/architecture-fitness-functions/references/catalogue.md",
+        "skills/architecture-fitness-functions/references/ungoverned.md",
+        "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions",
+        "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushpull_requestpull_request_targetpathspaths-ignore",
+        "https://slsa.dev/spec/v1.1/verifying-artifacts"
+      ],
+      "controls": "Revised skill only; reused support thread with prior catalog context; no baseline/control/activation comparison. Scenario A overlaps exposed shipped teaching material.",
+      "criteriaTiming": "The skill's existing criteria predated execution. Coordinator case criteria recorded after dispatch but before receiving or reviewing the response. No fresh confirmatory or causal comparison is claimed.",
+      "evidence": [
+        "Allows evidence reuse with identity/provenance and complete input equivalence.",
+        "Distinguishes structural evidence from environment/window-sensitive measurements.",
+        "Names invalidating changes and preserves valid reuse for irrelevant differences."
+      ]
+    },
+    {
+      "id": "cache-full-coverage-origin",
+      "request": "Redis OSS 7.2.0 cluster has ten primaries, no replicas, uniformly distributed requests, 50,000 requests/s and a 95% hit ratio. One primary loses its slots. Effective settings: cluster-require-full-coverage=yes and cluster-allow-reads-when-down=no. The client falls back to origin on cache errors. A proposed runbook approves the origin's measured 10,000 requests/s capacity because 5,000 affected requests plus 2,250 survivor misses equals 7,250. Review this approval and identify missing evidence; no implementation or production experiment requested.",
+      "required": [
+        "Rejects lost-shard-only estimate under full coverage failure.",
+        "Explains possible cluster-wide read failure and origin demand near50k/s if allrequests fallback.",
+        "Conditions on effective client/runtime/failure transitions; no automatic flag changes."
+      ],
+      "failure": [
+        "Approves10kcapacity solely7250arithmetic.",
+        "Claims exact demand without client/failure-state evidence.",
+        "Calls cache errors originrequests ifclient actuallysheds, or claimsRedisexperimentexecuted."
+      ],
+      "skill": "cache-sharding-and-replication",
+      "skillVersion": "1.3.4",
+      "response": "The 7,250 requests/s approval is unsupported: it assumes the nine surviving shards serve. Full coverage and disabled reads-while-down can cause healthy shards to reject as the cluster enters failure. With one origin request per cache-error fallback, origin demand can approach50,000/s before retries,20times baseline2,500/s and5times measured10,000/s; these50,000 already include old misses. Detection/client timing affects the transition, so this is not an instantaneous measured rate. Confirm fallback/retry/coalescing/rejection timing, duration, concurrency, querycost and capacity against the actual SLO/mix. Propose isolated real-client/config failure/recovery tests probing surviving andlostslots, reads/fillwrites and origin/queue/error/p99 limits. Use proportional aggregate protection and verified recovery; partial-coverage/down-read flags require an explicit consistency/availability decision, not automatic modification.",
+      "responseFormat": "Condensed transcript preserving numerical results, decisions and limitations.",
+      "judgement": "passed",
+      "actor": "/root/prior_review_inventory",
+      "controls": "Revised skill only, reused support thread, procedural shared-workspace separation. Cases supplied by reviewer and not held out; no baseline comparison.",
+      "criteriaTiming": "Frozen before actor dispatch.",
+      "resourcesRead": [
+        "skills/cache-sharding-and-replication/SKILL.md",
+        "skills/cache-sharding-and-replication/references/topologies.md",
+        "skills/cache-sharding-and-replication/references/node-loss-and-origin-protection.md",
+        "skills/cache-sharding-and-replication/skill.yaml (first six lines)",
+        "https://github.com/redis/redis/blob/7.2.0/redis.conf",
+        "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/#safety-of-replication-when-master-has-persistence-turned-off"
+      ],
+      "evidence": [
+        "Rejects7,250estimate; correctly derives conditional50k demand with no double-counted misses.",
+        "Explains cluster-wide failure and client/failure-state qualification.",
+        "Requires origin protection/recovery validation; does not change flags or claim execution."
+      ]
+    },
+    {
+      "id": "cache-primary-empty-restart",
+      "request": "A Redis cache uses one primary and two replicas. Persistence is disabled on the primary. It automatically restarts empty before Sentinel promotes another node. Replica processes remain healthy. The runbook says replication factor3 guarantees warm recovery and prevents a cold origin refill. Review this claim and propose evidence needed for a recovery decision. No production action is authorized.",
+      "required": [
+        "Explains primaryemptydataset canpropagate toreplicas despiteprocesshealth.",
+        "Inspects restart/failoverorder,datasets,syncdirection andreadiness.",
+        "Conditionsrecoverychoices ondataandoriginbudget; no universalpersistence requirement."
+      ],
+      "failure": [
+        "TreatsRF3orhealthyprocesses as sufficient warmdata.",
+        "Automaticallyenablespersistenceforallcaches or claimsactualdeploymenttest."
+      ],
+      "skill": "cache-sharding-and-replication",
+      "skillVersion": "1.3.4",
+      "response": "Replication factor3 and healthy processes do not guarantee warm recovery. An empty restarted primary can become the replication source and replace replica datasets before Sentinel detection/promotion. Warm recovery requires preserving a suitable copy, promoting/routing it and preventing destructive synchronization first. Inspect effective persistence/restart policy, timeline, Sentinel/replication logs, roles, IDs/offsets and actual serving datasets. Consider coordinated return, suitable persistence or budgeted cold recovery with admission/warming; no universal persistence requirement. Validate the specific empty-restart-before-promotion failure and origin/SLO limits. No Redis instance/deployment/test executed.",
+      "responseFormat": "Condensed transcript preserving numerical results, decisions and limitations.",
+      "judgement": "passed",
+      "actor": "/root/prior_review_inventory",
+      "controls": "Revised skill only, reused support thread, procedural shared-workspace separation. Cases supplied by reviewer and not held out; no baseline comparison.",
+      "criteriaTiming": "Frozen before actor dispatch.",
+      "resourcesRead": [
+        "skills/cache-sharding-and-replication/SKILL.md",
+        "skills/cache-sharding-and-replication/references/topologies.md",
+        "skills/cache-sharding-and-replication/references/node-loss-and-origin-protection.md",
+        "skills/cache-sharding-and-replication/skill.yaml (first six lines)",
+        "https://github.com/redis/redis/blob/7.2.0/redis.conf",
+        "https://redis.io/docs/latest/operate/oss_and_stack/management/replication/#safety-of-replication-when-master-has-persistence-turned-off"
+      ],
+      "evidence": [
+        "Explains empty-source synchronization despite healthy replica processes.",
+        "Names dataset, roles, timing, offsets and restart/promotion evidence.",
+        "Compares coordinated restart/persistence/budgetedcoldrecovery without unconditionalpersistence."
+      ]
+    },
+    {
+      "id": "migration-watermark-boundary",
+      "skill": "database-engine-selection-and-migration",
+      "skillVersion": "1.0.3",
+      "request": "Both migration systems report applied watermark W. Source read sees10; an update changes amount to20; destination read sees20. Team wants to declare corruption and approve other matches.",
+      "required": [
+        "Reject same applied watermark alone as proof of equivalent versions",
+        "Treat observed difference as inconclusive pending matched boundary",
+        "Propose bounded matched snapshot/replay/frozen or version-aware reconciliation and separate unmatched coverage"
+      ],
+      "failure": [
+        "Declare corruption solely from mismatch",
+        "Normalize away meaningful differences"
+      ],
+      "response": "Do not declare corruption or approve equivalence from the watermark. W proves applied progress, not identical query versions. Amount10 versus20 can follow a correct intervening update; confirm commit/apply order. Preserve queries, parameters, isolation and boundaries; replay against matched frozen/snapshot/versioned state including updates/deletes. Independent repeatable-read transactions do not prove alignment. Compare multiplicities/types/invariants and track valid matches, valid mismatches and inconclusive coverage separately.",
+      "responseFormat": "Condensed transcript preserving decisions, conditions and limitations.",
+      "judgement": "passed",
+      "actor": "/root/prior_review_inventory",
+      "controls": "Reused support thread; revised-skill response regression, not fresh/holdout or A/B; known review scenarios, no natural-activation test; shared-filesystem separation procedural.",
+      "criteriaTiming": "Frozen before dispatch.",
+      "resourcesRead": [
+        "skills/database-engine-selection-and-migration/SKILL.md",
+        "skills/database-engine-selection-and-migration/references/shadow-and-cutover.md",
+        "skills/database-engine-selection-and-migration/references/migration-compatibility.md",
+        "https://www.postgresql.org/docs/18/transaction-iso.html",
+        "https://www.postgresql.org/docs/18/logical-replication-restrictions.html",
+        "https://www.postgresql.org/docs/18/functions-sequence.html",
+        "https://www.postgresql.org/docs/18/sql-createsequence.html"
+      ],
+      "evidence": [
+        "Rejects watermark-only equivalence, separates inference from verified corruption.",
+        "Requires matched boundaries and explicit inconclusive coverage without normalizing differences away."
+      ]
+    },
+    {
+      "id": "migration-allocator-cutover",
+      "skill": "database-engine-selection-and-migration",
+      "skillVersion": "1.0.3",
+      "request": "Replicated IDs1..100/checksums/zero lag, target sequence1, ORM reserved ranges remain live. Team proposes setval(max(id)+1), one insert/rollback, open writes, then reverse after target101 replicates to source whose next value is101.",
+      "required": [
+        "Do not approve writes with target sequence at1 and replicated IDs1..100",
+        "Inventory cached/reserved/ORM allocator ranges and fence stale writers",
+        "Validate first generated-key writes and source allocator before reversal",
+        "Recognize PostgreSQL nextval/setval not generally undone by rollback"
+      ],
+      "failure": [
+        "Blind MAX(id)+1 with live allocators",
+        "Approve reversal solely from replicated row101"
+      ],
+      "response": "Do not open writes or reverse as proposed. Fence all source writers, drain, establish final commit/apply boundary; retire stale ORM allocators and sequence session caches before reseeding. Inventory increment/cycle/cache/limits/ORM blocks and emitted/reserved IDs; MAX(id) alone is insufficient. For the conditional simple increment1/no-reservations case, setval(seq,100,true) or setval(seq,101,false) yields next101; two-argument setval101 yields102 and does not repair stale reservations. Validate actual driver/ORM concurrent allocators, block exhaustion, batches/restart/delayed retry. nextval/setval are not undone by rollback. Before reversal fence destination, reconcile all accepted writes and source allocators; existing101 with source next101 risks collision, conditionally need next at least102. Never reopen two authorities. No DB or runtime test performed.",
+      "responseFormat": "Condensed transcript preserving decisions, conditions and limitations.",
+      "judgement": "passed",
+      "actor": "/root/prior_review_inventory",
+      "controls": "Reused support thread; revised-skill response regression, not fresh/holdout or A/B; known review scenarios, no natural-activation test; shared-filesystem separation procedural.",
+      "criteriaTiming": "Frozen before dispatch.",
+      "resourcesRead": [
+        "skills/database-engine-selection-and-migration/SKILL.md",
+        "skills/database-engine-selection-and-migration/references/shadow-and-cutover.md",
+        "skills/database-engine-selection-and-migration/references/migration-compatibility.md",
+        "https://www.postgresql.org/docs/18/transaction-iso.html",
+        "https://www.postgresql.org/docs/18/logical-replication-restrictions.html",
+        "https://www.postgresql.org/docs/18/functions-sequence.html",
+        "https://www.postgresql.org/docs/18/sql-createsequence.html"
+      ],
+      "evidence": [
+        "Rejects unsafe live-allocator reseed and rollback assumptions.",
+        "Conditions concrete next-value arithmetic on simple increment/no reservations; requires fence, cached-range retirement and reverse allocator validation."
+      ]
+    },
+    {
+      "id": "doubles-full-value-contract",
+      "skill": "java-test-doubles",
+      "skillVersion": "1.0.4",
+      "date": "2026-09-22",
+      "request": "Java 25 and Mockito 5.23. Immutable record Event(String orderId, BigDecimal amount, Instant observedAt). Test uses verify(publisher).publish(expectedEvent). Reviewer proposes ArgumentCaptor plus selected fields because whole-object equality is supposedly brittle. Recommend smallest suitable assertion; no dependency upgrades. Contract requires ord-1, new BigDecimal(\"42.00\"), and exact Instant from injected Clock.",
+      "required": [
+        "Preserve whole-value equality when all record components are contractual.",
+        "No mandatory captor, fake or dependency change."
+      ],
+      "failure": ["Drops a contractual field.", "Bans whole-value equality unconditionally."],
+      "responseExcerpt": "Keep the existing assertion: verify(publisher).publish(expectedEvent). All three components are contractual. A captor asserting fewer fields weakens coverage; asserting all three adds unnecessary code.",
+      "judgement": "passed",
+      "actor": "/root/evaluate_doubles_full_contract",
+      "evidence": [
+        "Preserves equality and all required components.",
+        "Distinguishes outgoing mock evidence from broker delivery.",
+        "Reports no tests, edits or upgrades."
+      ],
+      "resourcesRead": [
+        "skills/java-test-doubles/SKILL.md",
+        "skills/java-test-doubles/references/mockito-hazards.md"
+      ],
+      "responseFormat": "Selected response excerpt; decision coverage recorded in evidence.",
+      "controls": {
+        "context": "Fresh fork_turns=none actor; same parent model inherited.",
+        "expectations": "Frozen in checkpoint12-handoffs-1.json and merged main record before dispatch.",
+        "isolation": "Procedural read restrictions in shared filesystem; not enforced sandbox. Actors reported only listed local resources plus primary web docs.",
+        "exposure": "Revised skill explicitly loaded; known-mechanism regression, not held-out or natural activation test.",
+        "scope": "Output decisions only; no original/no-skill comparison or measured causal improvement."
+      }
+    },
+    {
+      "id": "doubles-partial-value-contract",
+      "skill": "java-test-doubles",
+      "skillVersion": "1.0.4",
+      "date": "2026-09-22",
+      "request": "Java 25 and Mockito 5.23. Immutable record Event(String orderId, BigDecimal amount, Instant observedAt). Test uses verify(publisher).publish(expectedEvent). Reviewer proposes ArgumentCaptor plus selected fields because whole-object equality is supposedly brittle. Recommend smallest suitable assertion; no dependency upgrades. Contract requires ord-1 and new BigDecimal(\"42.00\"); observedAt is diagnostic and unconstrained by this test.",
+      "required": [
+        "Assert contractual id/amount while leaving timestamp unconstrained.",
+        "Allow equality when the whole value contract warrants it rather than banning it universally."
+      ],
+      "failure": [
+        "Retains incidental timestamp assertion.",
+        "Changes dependencies or claims tests executed."
+      ],
+      "responseExcerpt": "The change is justified because observedAt is outside this test’s contract. A captor is valid, but the smallest suitable assertion is verify(publisher).publish(argThat(event -> event != null && \"ord-1\".equals(event.orderId()) && new BigDecimal(\"42.00\").equals(event.amount()))).",
+      "judgement": "passed",
+      "actor": "/root/evaluate_doubles_partial_contract",
+      "evidence": [
+        "Changes recommendation under the single decisive contract difference.",
+        "Preserves id/amount and leaves timestamp free.",
+        "Reports no tests, edits or upgrades."
+      ],
+      "resourcesRead": [
+        "skills/java-test-doubles/SKILL.md",
+        "skills/java-test-doubles/references/mockito-hazards.md"
+      ],
+      "responseFormat": "Selected response excerpt; decision coverage recorded in evidence.",
+      "controls": {
+        "context": "Fresh fork_turns=none actor; same parent model inherited.",
+        "expectations": "Frozen in checkpoint12-handoffs-1.json and merged main record before dispatch.",
+        "isolation": "Procedural read restrictions in shared filesystem; not enforced sandbox. Actors reported only listed local resources plus primary web docs.",
+        "exposure": "Revised skill explicitly loaded; known-mechanism regression, not held-out or natural activation test.",
+        "scope": "Output decisions only; no original/no-skill comparison or measured causal improvement."
+      }
+    },
+    {
+      "id": "query-empty-authorization-original",
+      "skill": "query-objects-and-specifications",
+      "skillVersion": "1.3.2",
+      "date": "2026-09-22",
+      "request": "Spring Data JPA 4.0.0. A query builder obtains trusted allowed-customer predicates. It calls Specification.anyOf(allowedPredicates), then ANDs that specification outside user filters. The trusted list is empty; a user OR branch matches every stored row. The developer says an empty OR is false and proposes approving the query unchanged. Review and give the smallest correction consistent across content, count, exists and export. Preserve this framework version and do not run code or edit files.",
+      "required": [
+        "Identify absent-predicate/no restriction behavior of empty anyOf on the specified version.",
+        "An empty trusted authorization scope returns no results via explicit false or safe early empty result across all paths.",
+        "Mandatory scope remains outside user-controlled OR/NOT; no unrequested framework upgrade."
+      ],
+      "failure": [
+        "Approve empty anyOf as denial.",
+        "Use not(unrestricted()) as false on4.0.",
+        "Invent code execution, change files or require unrelated refactor."
+      ],
+      "actor": "/root/evaluate_query_original",
+      "judgement": "passed",
+      "responseExcerpt": "Block approval: empty authorization scope currently permits every matching row. anyOf(emptyList) returns unrestricted; use cb.disjunction() for empty trusted list and share scope across content/count/exists/export.",
+      "resourcesRead": [".codex/review-resumed-artifacts/2026-09-22/query-original/SKILL.md"],
+      "checks": "Each actor read only its assigned SKILL.md, verified tagged primary framework/API sources and reported no code/test execution or edits.",
+      "controls": {
+        "actors": "Fresh fork_turns=none; same parent model/tools and identical task; only original versus revised normal skill files differ.",
+        "isolation": "Procedural read restrictions in shared filesystem, not an enforced sandbox.",
+        "scope": "Known-mechanism regression; not held-out/natural selection; one output per arm cannot establish broad causal improvement."
+      },
+      "evidence": [
+        "Correct 4.0.0 absent-predicate semantics.",
+        "Explicit false for empty authorization and all four paths protected.",
+        "Version preserved; no invented execution."
+      ]
+    },
+    {
+      "id": "query-empty-authorization-revised",
+      "skill": "query-objects-and-specifications",
+      "skillVersion": "1.3.3",
+      "date": "2026-09-22",
+      "request": "Spring Data JPA 4.0.0. A query builder obtains trusted allowed-customer predicates. It calls Specification.anyOf(allowedPredicates), then ANDs that specification outside user filters. The trusted list is empty; a user OR branch matches every stored row. The developer says an empty OR is false and proposes approving the query unchanged. Review and give the smallest correction consistent across content, count, exists and export. Preserve this framework version and do not run code or edit files.",
+      "required": [
+        "Identify absent-predicate/no restriction behavior of empty anyOf on the specified version.",
+        "An empty trusted authorization scope returns no results via explicit false or safe early empty result across all paths.",
+        "Mandatory scope remains outside user-controlled OR/NOT; no unrequested framework upgrade."
+      ],
+      "failure": [
+        "Approve empty anyOf as denial.",
+        "Use not(unrestricted()) as false on4.0.",
+        "Invent code execution, change files or require unrelated refactor."
+      ],
+      "actor": "/root/evaluate_query_revised",
+      "judgement": "passed",
+      "responseExcerpt": "Block approval: this bypasses the allowed-customer restriction. anyOf(emptyList) returns unrestricted; explicitly deny the empty trusted scope using cb.disjunction() and preserve outer AND across all query paths.",
+      "resourcesRead": ["skills/query-objects-and-specifications/SKILL.md"],
+      "checks": "Each actor read only its assigned SKILL.md, verified tagged primary framework/API sources and reported no code/test execution or edits.",
+      "controls": {
+        "actors": "Fresh fork_turns=none; same parent model/tools and identical task; only original versus revised normal skill files differ.",
+        "isolation": "Procedural read restrictions in shared filesystem, not an enforced sandbox.",
+        "scope": "Known-mechanism regression; not held-out/natural selection; one output per arm cannot establish broad causal improvement."
+      },
+      "evidence": [
+        "Correct 4.0.0 absent-predicate semantics.",
+        "Explicit false for empty authorization and all four paths protected.",
+        "Version preserved; no invented execution."
+      ]
+    },
+    {
+      "id": "scoped-absence-original",
+      "skill": "scoped-values",
+      "skillVersion": "1.3.2",
+      "date": "2026-09-22",
+      "request": "Java25 final ScopedValue. Nosso wrapper captura um tenant opcional ao registrar Runnable; a tarefa pode ser executada inline dentro do escopo de outro tenant. Quando o submitter não tem tenant, o contrato existente dos leitores exige TENANT.isBound()==false; bound-null e Optional não são equivalentes. A implementação atual, quando a captura é ausente, chama apenas task.run(); quando presente, usa ScopedValue.where(TENANT,captured).run(task). Revise esse desenho e proponha a menor correção compatível. Inclua o caso de captura A executada sob B e restauração excepcional. Não altere arquivos nem afirme testes executados.",
+      "required": [
+        "Identify absent capture exposing executing outer B.",
+        "No invented temporary-unbind operation; unbound execution guarantee or reject incompatible execution required.",
+        "Null/Optional not silent replacements for specified reader contract.",
+        "Bound A shadows B then restores B also on exception."
+      ],
+      "failure": [
+        "Approve unchanged absent branch under inline B.",
+        "Invent unbind or make unsupported guarantee.",
+        "Silently change reader contract."
+      ],
+      "actor": "/root/evaluate_scoped_original",
+      "judgement": "passed",
+      "responseExcerpt": "Absent branch exposes B; no temporary unbind. Guard plus execution boundary guaranteed unbound, preserving accepted-task lifecycle; bound A restores B even on exception.",
+      "resourcesRead": [
+        ".codex/review-resumed-artifacts/2026-09-22/scoped-evaluation/original/SKILL.md",
+        ".codex/review-resumed-artifacts/2026-09-22/scoped-evaluation/original/references/context-propagation-bridges.md",
+        ".codex/review-resumed-artifacts/2026-09-22/scoped-evaluation/original/references/threadlocal-migration.md"
+      ],
+      "checks": "Read-only actor used assigned full package and primary Java25API sources; no compilation/runtime/edits.",
+      "controls": "Same request and complete package snapshot per arm; isolated actor context, web available; no application runtime execution required.",
+      "evidence": [
+        "All frozen criteria met.",
+        "Original actor explicitly identified incorrect absence guidance and corrected it using API contract.",
+        "Both preserve reader contract and restoration."
+      ],
+      "limitations": ["JEP506 HTTP403; API verification succeeded."]
+    },
+    {
+      "id": "scoped-absence-revised",
+      "skill": "scoped-values",
+      "skillVersion": "1.3.3",
+      "date": "2026-09-22",
+      "request": "Java25 final ScopedValue. Nosso wrapper captura um tenant opcional ao registrar Runnable; a tarefa pode ser executada inline dentro do escopo de outro tenant. Quando o submitter não tem tenant, o contrato existente dos leitores exige TENANT.isBound()==false; bound-null e Optional não são equivalentes. A implementação atual, quando a captura é ausente, chama apenas task.run(); quando presente, usa ScopedValue.where(TENANT,captured).run(task). Revise esse desenho e proponha a menor correção compatível. Inclua o caso de captura A executada sob B e restauração excepcional. Não altere arquivos nem afirme testes executados.",
+      "required": [
+        "Identify absent capture exposing executing outer B.",
+        "No invented temporary-unbind operation; unbound execution guarantee or reject incompatible execution required.",
+        "Null/Optional not silent replacements for specified reader contract.",
+        "Bound A shadows B then restores B also on exception."
+      ],
+      "failure": [
+        "Approve unchanged absent branch under inline B.",
+        "Invent unbind or make unsupported guarantee.",
+        "Silently change reader contract."
+      ],
+      "actor": "/root/evaluate_scoped_revised",
+      "judgement": "passed",
+      "responseExcerpt": "Absent branch exposes B; no transparent inline-under-B solution. Execution-time guard rejects conflict, otherwise guarantee unbound boundary; bound A restores B even on exception.",
+      "resourcesRead": [
+        ".codex/review-resumed-artifacts/2026-09-22/scoped-evaluation/revised/SKILL.md",
+        ".codex/review-resumed-artifacts/2026-09-22/scoped-evaluation/revised/references/context-propagation-bridges.md",
+        ".codex/review-resumed-artifacts/2026-09-22/scoped-evaluation/revised/references/threadlocal-migration.md"
+      ],
+      "checks": "Read-only actor used assigned full package and primary Java25API sources; no compilation/runtime/edits.",
+      "controls": "Same request and complete package snapshot per arm; isolated actor context, web available; no application runtime execution required.",
+      "evidence": [
+        "All frozen criteria met.",
+        "Original actor explicitly identified incorrect absence guidance and corrected it using API contract.",
+        "Both preserve reader contract and restoration."
+      ],
+      "limitations": []
+    }
+  ],
+  "summary": {
+    "validCases": 13,
+    "passed": 13,
+    "failed": 0,
+    "invalidOriginalFixtures": 1,
+    "originalFixtureOutcome": "Actor correctly detected impossible histogram sum; original retained and corrected before a fresh run.",
+    "comparison": "No no-skill/original/revised controlled comparison; no causal improvement claim.",
+    "reusedContextCases": 6
+  },
+  "lastUpdated": "2026-09-22T23:56:07.374Z",
+  "comparisons": [
+    {
+      "id": "query-empty-authorization-original-vs-revised",
+      "arms": ["query-empty-authorization-original", "query-empty-authorization-revised"],
+      "outcome": "Both passed the same frozen criteria. No observed decision improvement on this case.",
+      "limits": "One known-mechanism case per arm, ordinary web access, procedural isolation. Both actors read only the skill body, not the changed references. This does not measure reference retrieval or broader effectiveness."
+    },
+    {
+      "id": "scoped-absence-matched",
+      "arms": ["scoped-absence-original", "scoped-absence-revised"],
+      "outcome": "Both passed; no observed decision improvement on this case.",
+      "limits": "One known-mechanism case per arm, procedural isolation with web access. Both read changed reference. Original actor corrected defective guidance; this does not invalidate the documentation correction or establish broader skill effectiveness."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-reflection-and-method-handles
-version: 1.4.3
+version: 1.4.4
 description: >-
   Runtime access to code through dynamic names: what reflection costs beyond speed — weaker
   ordinary compile-time/refactoring checks, module access requirements,

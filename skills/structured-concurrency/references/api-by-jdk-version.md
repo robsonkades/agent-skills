@@ -37,7 +37,9 @@ responsibilities; its semantics are not automatically identical to a scope.
 Read one column. Mixing two is how code ends up calling a method that exists in neither.
 Examples are partial: supply domain types/functions and imports for the scope, nested
 `Subtask`/`Joiner` and collection/time types. Preview requires the matching feature-release
-compiler, not just a newer javac's `--release`. JDK 27 integration does not establish vendor GA.
+compiler, not just a newer javac's `--release`.
+[JDK 27 reached GA on 15 September 2026](https://openjdk.org/projects/jdk/27/);
+structured concurrency remains a preview API. Inspect the actual vendor build deployed.
 On [JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html),
 fork/shutdown may also be called by contained threads, while join/close are owner-only.
 Do not carry that fork permission into JDK 25's owner-only API.

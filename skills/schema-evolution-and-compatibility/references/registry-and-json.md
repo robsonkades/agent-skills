@@ -99,8 +99,11 @@ For a schema-reference wrapper that intentionally selects latest:
 ```properties
 auto.register.schemas=false
 use.latest.version=true
-latest.compatibility.strict=false   # only with separately verified wrapper/reference compatibility
+# only with separately verified wrapper/reference compatibility
+latest.compatibility.strict=false
 ```
+
+Keep comments on their own lines in Java `.properties`; inline `#` text becomes part of the value.
 
 With `auto.register.schemas=true`, "`use.latest.version` and `latest.compatibility.strict` are
 ignored, so it doesn't matter how those are set". On the **deserialiser**, `use.latest.version=true`
@@ -241,6 +244,7 @@ yes; Glue: no, it has its own header).
 Sources: [Confluent framing and migration order](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html),
 [Confluent v8.3.1 serializer selection](https://github.com/confluentinc/schema-registry/blob/v8.3.1/avro-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaAvroSerializer.java),
 [v8.3.1 schema lookup checks](https://github.com/confluentinc/schema-registry/blob/v8.3.1/schema-serializer/src/main/java/io/confluent/kafka/serializers/AbstractKafkaSchemaSerDe.java),
+[Java 17 Properties format](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Properties.html#load(java.io.Reader)>),
 [JSON Schema default annotation](https://json-schema.org/understanding-json-schema/reference/annotations),
 [Apicurio 3.3 rule reference](https://www.apicur.io/registry/docs/apicurio-registry/3.3.x/getting-started/assembly-rule-reference.html),
 [AWS Glue schema registry](https://docs.aws.amazon.com/glue/latest/dg/schema-registry.html),

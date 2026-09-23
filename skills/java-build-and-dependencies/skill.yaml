@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: java-build-and-dependencies
+version: 1.0.0
+description: >-
+  Diagnose and repair Maven or Gradle builds when a managed dependency is missing,
+  a transitive version wins unexpectedly, compilation and runtime classpaths differ,
+  or the launcher JDK, toolchain and release target disagree. Use for dependency
+  conflicts, missing runtime artifacts, plugin classpath failures and unreliable
+  dependency resolution. Covers focused build repairs and reproducibility checks;
+  intentional JDK upgrades, classloader internals and published-library governance
+  belong to neighboring skills.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-build-and-dependencies
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-build-and-dependencies
+
+keywords:
+  - java
+  - maven
+  - gradle
+  - dependencies
+  - toolchains
+  - reproducibility
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - feature-context-analysis
+  - jdk-upgrade-impact
+  - jvm-class-loading
+  - component-and-release-boundaries
+  - quality-gates
+
+capabilities:
+  - reads-source
+  - runs-commands
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java Build and Dependencies
+      short_description: Diagnose Maven and Gradle dependency and JDK mismatches

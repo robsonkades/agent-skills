@@ -102,7 +102,7 @@ state minor reversible assumptions and continue independent investigation.
 2  Composition          hold a collaborator in a field and delegate
 3  Function value       Function/Predicate/Supplier/Consumer, or a
                         single-method domain interface, passed as a lambda
-4  Dependency injection the container selects and wires the variant
+4  Dependency injection a composition root or container supplies collaborators
 5  Configuration        the variation is data, not code
 6  Framework mechanism  filter chain, interceptor, event listener,
                         converter registry, client builder
@@ -123,9 +123,11 @@ classical structure when rungs 1–6 already supply the mechanism is what makes 
 IF the problem statement contains a pattern name
 THEN restate it as what breaks, and re-decide from the restatement.
 
-IF one implementation exists and no second is scheduled
-THEN do not claim runtime variability. Still retain a structural pattern
-     when it enforces dependency direction, translates a foreign protocol,
+IF only one implementation is known
+THEN distinguish actual usage from supported extension/selection contracts.
+     A public callback or SPI can support runtime substitution without a second shipped
+     implementation; an interface alone does not establish such a requirement.
+     Retain a structural pattern when it enforces dependency direction, translates a foreign protocol,
      narrows authority or creates an intentional failure-injection seam.
 
 IF variation is one axis and each variant is one behaviour

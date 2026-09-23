@@ -2,7 +2,7 @@
 name: gof-factory-method
 description: >
   Factory Method in modern Java, and the three different things that share its name: the GoF
-  pattern (a creation hook a subclass overrides inside an inherited algorithm), Effective Java's
+  pattern (an overridable creation method that lets subclasses select the product), Effective Java's
   static factory method (a named constructor, not this pattern), and any method someone called
   createX. Covers when the subclass hook is genuinely right, when an injected Supplier or a keyed
   map is a simpler alternative, and the constructor-calls-an-overridable-method trap
@@ -18,9 +18,10 @@ description: >
 
 ## Purpose
 
-Let an inherited algorithm create an object whose concrete type it must not know. The creator
-class supplies workflow behaviour and delegates product creation to an overridable method.
-Other hooks and creation arguments can coexist with this pattern.
+Let a creator defer the concrete product type to subclasses through an overridable creation
+method. Inherited workflow code may call it, or clients may invoke the creator directly. An
+inherited algorithm is a common reason for the hook, not a defining prerequisite. Other hooks
+and creation arguments can coexist with this pattern.
 
 That is a narrow pattern, and most code labelled Factory Method is not it. A `static of(...)` on
 the type itself is a **static factory method**: a named constructor with the freedom to cache,
@@ -44,8 +45,8 @@ questions that could change extension compatibility or lifecycle.
 ```text
 An algorithm is inherited, and one variation point is which
 concrete product it creates
-        → Factory Method (this is Template Method whose varying step
-          is construction).
+        → Factory Method; it can also be the construction step in a
+          Template Method.
 
 A framework must let unknown subclasses supply the product, and
 cannot accept constructor arguments (it instantiates the subclass
@@ -58,10 +59,11 @@ DocumentReader subtype pairs with its Document subtype
         → Factory Method, with the covariant return declared.
 ```
 
-## When it is not
+## When a simpler alternative may fit
 
-- **The creator has no inherited algorithm.** Consider a `Supplier`, but keep a named domain
-  provider when checked failures, arguments, lifecycle or a published SPI justify its contract.
+- **The creator exposes only creation.** This can still be Factory Method, but compare a
+  `Supplier`; keep a named domain provider or subclass contract when checked failures,
+  arguments, lifecycle, covariance or a published SPI justify it.
 - **Application-controlled subclasses exist only to select products.** An injected creation
   function may simplify this selection. Inspect supported external subclasses and useful
   creator/product typing before replacing the hierarchy (`java-composition-over-inheritance`).
@@ -154,7 +156,8 @@ For a review, return the concrete hook/call sites, creation frequency and owners
 alternative or reason to retain the hook, and checks performed versus pending. If framework
 construction or external subclass usage is unknown, keep removal conditional until inspected.
 
-- [ ] The creator has real inherited behaviour, not just the hook
+- [ ] Subclass-based creation has a concrete purpose; an inherited algorithm is one justification,
+      not a required part of the pattern's definition
 - [ ] No constructor calls the overridable factory method
 - [ ] A new hook earns its extension cost; existing supported hooks are not removed merely for test style
 - [ ] Subclassing is justified by an inherited algorithm, open extension constraint, or useful

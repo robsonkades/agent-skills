@@ -21,7 +21,10 @@ join a separate SQL checkpoint transaction.
 Partial Java 21/Spring snippet for one ordered feed and a preinitialized checkpoint row.
 `previousPosition` is the preceding feed cursor, not necessarily `position - 1` or the
 aggregate's prior revision. `RetryProjectionAdvance` is an application runtime exception;
-the subscription must retry without acknowledging a failed delivery.
+the subscription must retry without acknowledging a failed delivery. `PROJECTION_NAME`
+identifies this fold generation and feed domain, and `balances` writes only that generation's
+data. Position parameters preserve the provider's complete cursor, encoded without losing
+components; the SQL below uses equality, not arithmetic on that cursor.
 
 ```java
 @Transactional
@@ -87,11 +90,20 @@ but initialization, state transitions and business invariants often do not. Even
 provide stream order; a global cross-stream order exists only if the selected store exposes
 and preserves one. Depending on it couples the projection to that sequencing contract.
 
-**The checkpoint is per ordering domain.** From a totally-ordered
-catch-up subscription it is one number. From a partitioned broker it is one number _per
-partition_; a single `lastProcessed` over a partitioned feed silently discards every event
+**The checkpoint is per projection generation and ordering domain.** Bind it to the feed,
+including filters that determine which events the fold must cover. A totally ordered
+catch-up subscription has one cursor, which need not be a number: KurrentDB's `$all` API
+uses a `Position` with commit and prepare components. Preserve the native cursor and use the
+provider's ordering and resume contract; do not invent numeric comparisons or discard components.
+From a partitioned broker keep a cursor _per partition_; a single `lastProcessed` over a
+partitioned feed silently discards every event
 whose offset is below the highest seen on another partition. From a per-stream subscription it
 is one per stream.
+
+Distinguish the initial subscription marker from a saved checkpoint. KurrentDB Java 1.2
+subscriptions resume after the supplied position; a numeric zero is not generally a marker
+before the first event. Use the documented beginning marker, or a validated snapshot/bootstrap
+cursor whose covered prefix is already represented in this generation's data.
 
 Where projections are fed through a partitioned broker, partition by the aggregate id so one
 stream's events stay ordered, keep a position per partition, and accept that cross-aggregate
@@ -103,7 +115,7 @@ A projection you cannot rebuild is a schema you cannot migrate. The rebuild is n
 emergency procedure; it is the normal way a projection changes shape.
 
 ```text
-1. Create the new projection alongside the old, at position 0.
+1. Create the new projection generation with isolated data and checkpoints at the feed's start.
 2. Replay history into it. The old projection keeps serving reads.
 3. When the new one catches up to the live position, switch reads over.
 4. Delete the old one once the switch is proven.
@@ -111,6 +123,12 @@ emergency procedure; it is the normal way a projection changes shape.
 
 This is a blue/green deployment for derived data, and it is why the pattern's flexibility is
 real: a new query shape costs a replay, not a migration script.
+
+Use a distinct generation key or separate schema/tables for both its data and checkpoints.
+Reusing an old checkpoint with empty new tables skips history; sharing target rows while old
+and new folds run can mix incompatible state. Changing the feed filter can also expose earlier
+events that the old checkpoint never covered; replay or prove an explicit compatible migration
+before reusing it.
 
 “Catches up” needs a race-free protocol: capture a high-water position, consume through it,
 continue tailing while routing switches, then atomically publish the active projection version.
@@ -141,7 +159,7 @@ production complaint about event-sourced systems and it is a design decision, no
 | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Return the new state in the command's response                           | The write handler must now produce the read shape; **does not survive a redirect or a second device** | A screen that can render from the response and never re-reads |
 | Read from the write model (replay the stream) for the affected aggregate | A stream read per request                                                                             | Detail screens right after a write                            |
-| Block until the projection reaches the written position                  | Latency, a timeout and a fallback; needs a comparable position and a session pin                      | A redirect to a list the user expects to be current           |
+| Block until the projection reaches the written position                  | Latency, a timeout and a fallback; needs a comparable position and a read path that includes it       | A redirect to a list the user expects to be current           |
 | Client-side optimistic update                                            | Client complexity; divergence if the command failed                                                   | Rich clients that already model pending state                 |
 | Accept the staleness and show it                                         | Freshness indicators and a policy for excessive lag                                                   | Dashboards/reports whose contract permits stale results       |
 
@@ -154,6 +172,13 @@ Two traps in that table:
   or per partition. They are different coordinate systems. Send a session consistency token
   to a reader/coordinator capable of comparing it; sticky routing is only one implementation
   (`consistency-models`).
+
+The barrier must cover the **actual read**. A committed checkpoint on the projection writer
+does not prove an asynchronous read replica, cache or already-open database snapshot contains
+the same data. Serve from a generation and storage path known to include the required position,
+with a suitable read snapshot; revalidate after routing, failover or generation changes. If the
+deadline expires, use the declared fallback or fail the strict read, rather than silently
+returning stale data. Replica and snapshot mechanisms belong to `consistency-models`.
 
 Choose per screen. Applying one answer everywhere produces either needless latency or a
 confusing UI.
@@ -280,3 +305,8 @@ store. This simplifies deletion but identifiers and other linkable facts may sti
 data. A single `DELETE` does not remove backups, derived copies or downstream data. Decide
 retention and erasure obligations with the relevant owners; GDPR Article 17 includes
 conditions and exceptions, not an unconditional technical deletion recipe.
+
+## Sources for projection recovery and visibility
+
+- [KurrentDB Java 1.2 catch-up subscriptions](https://docs.kurrent.io/clients/java/v1.2/subscriptions) — complete positions, beginning markers and exclusive resume semantics.
+- [PostgreSQL 18 transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html) — a repeatable-read snapshot does not advance when another transaction commits; verify the actual database and isolation level.

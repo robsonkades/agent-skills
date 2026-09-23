@@ -171,6 +171,9 @@ need the corresponding pipeline and compatibility evidence. Reuse adequate suppl
    dependency/registry outage and resource exhaustion.
 
 Use `references/benchmarking-serialisers.md` for the experiment matrix.
+For stateful or compressed streams, establish whether one operation produces an independent
+message or advances a session. Include required finalization and validate the resulting bytes;
+buffer reset, codec reset, flush and stream completion are different contracts.
 
 ## Production attribution
 

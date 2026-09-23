@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-iterator
-version: 1.2.2
+version: 1.2.3
 description: >-
   Iterator in modern Java: traversing an aggregate without exposing it, and choosing between
   Iterator, Stream and Spliterator — external pull versus internal lazy pipeline versus the

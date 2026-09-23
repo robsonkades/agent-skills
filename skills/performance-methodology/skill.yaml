@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: performance-methodology
-version: 1.4.2
+version: 1.4.3
 description: >-
   The investigation process for performance work: defining measurable goals, recording a baseline,
   characterising before diagnosing, falsifiability, fixed-work speedup bounds,

@@ -17,7 +17,7 @@ public final class LazyReportEngine implements ReportEngine {
     private final Supplier<ReportEngine> factory;
     private volatile ReportEngine target;          // written once, published safely
     private RuntimeException failure;              // guarded by this; permanent for this proxy
-    private boolean initializing;                  // detects recursive factory entry under this lock
+    private boolean initializing;                  // detects same-thread recursive factory entry
 
     public LazyReportEngine(Supplier<ReportEngine> factory) {
         this.factory = java.util.Objects.requireNonNull(factory);
@@ -59,6 +59,19 @@ pure and different identities are acceptable, compare the duplicate-construction
 Successful publication does not make render thread-safe: the engine must support concurrent calls
 or the owner must confine/synchronize them.
 
+The factory runs while this proxy's monitor is held. `initializing` detects same-thread reentry;
+a different thread blocks on the monitor before it can inspect that flag. The factory must not
+wait for a callback that needs this proxy, directly or through an initialization dependency cycle.
+For example, submitting `proxy.render(...)` to an executor and waiting for its result inside the
+factory creates such a cycle. Moving creation into a future does not by itself remove dependency
+cycles; establish which work can complete without the unfinished target.
+
+This sample does not implement a caller deadline or interruptible monitor acquisition. If factory
+work can block, define its I/O bounds and partial-resource cleanup; a timeout on that work alone
+does not enforce each waiting caller's remaining budget. Required bounded or cancellable waiting
+needs an explicit coordination policy or a different initialization lifecycle. Safe publication
+and one successful construction are separate properties from timely completion.
+
 Two things this proxy must not do, and does not:
 
 - **Retry permanent initialization failures silently.** This example caches RuntimeException,
@@ -93,6 +106,12 @@ void propagates_an_initialisation_failure_on_every_call() {
 ```
 
 Neither path runs in a happy-path test, and both are the reason the class exists.
+Also check same-thread recursive initialization and factory dependency cycles with bounded harnesses
+that always release workers. A timed `Future.get` limits that wait; it does not itself cancel work
+or make monitor acquisition interruptible. Do not leave a deliberately deadlocked test process.
+
+Sources for these limits: [JLS 17 monitor semantics](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.1)
+and [Future wait/cancellation contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Future.html).
 
 ## 2. A remote proxy that had to stop pretending
 

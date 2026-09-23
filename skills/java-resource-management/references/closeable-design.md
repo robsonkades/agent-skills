@@ -65,8 +65,8 @@ public final class LedgerExport implements AutoCloseable {
         } catch (RuntimeException | Error failure) {
             try {
                 out.close();                                           // constructor failed: release
-            } catch (IOException closeFailure) {
-                failure.addSuppressed(closeFailure);
+            } catch (Throwable closeFailure) {
+                if (closeFailure != failure) failure.addSuppressed(closeFailure);
             }
             throw failure;
         }
@@ -88,8 +88,17 @@ public final class LedgerExport implements AutoCloseable {
 
 Points that generalise:
 
+- **Preserve the acquisition/construction failure.** The factory catches `Throwable` only during
+  cleanup after an existing failure, so an unchecked close failure cannot replace the original.
+  The identity guard avoids self-suppression if both paths throw the same exception object;
+  this is not a general instruction to swallow errors or continue after failed acquisition.
 - **Narrow the declared exception.** `close() throws Exception` propagates to every caller's
   catch clause. Declare `IOException`, or nothing at all when the close genuinely cannot fail.
+- **Do not lose interruption through suppression.** `AutoCloseable` advises against throwing
+  `InterruptedException` from `close`. For interruptible cleanup, define how interruption is
+  preserved and what remains unreleased; merely wrapping or suppressing an exception after an
+  interruptible wait cleared the flag can lose the signal. An interrupted wait does not prove
+  completed release.
 - **Idempotent where the contract permits.** Decorators and error paths can double-close;
   arbitrary `AutoCloseable` or reference-counted releases need their own protocol. This
   confined wrapper marks itself closed before release and does not blindly retry a failed close.
@@ -141,8 +150,8 @@ public Stream<String> lines() throws IOException {
 
 ## Authoritative references
 
-- [JLS §14.20.3: try-with-resources](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.20.3)
-- [AutoCloseable contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/AutoCloseable.html)
+- [JLS §14.20.3: try-with-resources, Java SE 21](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3)
+- [AutoCloseable contract, Java SE 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html)
 - [Closeable idempotence contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html)
 - [JDBC Connection close/transaction contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#close()>)
 - [Cleaner explicit release and automatic fallback, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/Cleaner.html)

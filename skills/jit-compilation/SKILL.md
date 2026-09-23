@@ -61,7 +61,9 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
 6. **Gate traffic on service behavior, not a sleep.** Use correct responses plus latency/error
    acceptance under representative self-training or ramped traffic. Compiler-statistics deltas,
    queue depth, and code-cache state explain convergence but are not sufficient readiness
-   criteria. `jdk.Compilation` event thresholds are configuration- and version-specific.
+   criteria. Compute rates from timed samples of the same JVM's cumulative counters; a final
+   snapshot is not a recording-interval total. `jdk.Compilation` event thresholds are
+   configuration- and version-specific.
 
 ## Rules
 
@@ -88,7 +90,8 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   Raising it on a one-CPU pod adds no CPU. The default full C1/C2 mode requires at least 2;
   C1-only `TieredStopAtLevel=1` accepts 1 on JDK 25, so inspect the compilation mode too.
 - Code-cache pressure can trigger unloading/GC and recompilation churn; allocation failure can
-  stop compilation until the JVM later restarts it or space becomes available. Treat a rising
+  stop compilation. With flushing enabled, the JVM may later restart it when space permits;
+  disabling flushing can make the stop permanent for that process. Treat a rising
   `fullCount`, compiler stop/restart counts, per-heap free/contiguous space, and recurring
   code-cache-triggered GC as incident evidence, not an automatic root cause.
 - `-Xcomp` belongs in controlled compiler experiments, not routine production tuning. It requests
@@ -125,7 +128,7 @@ do not equate configured thresholds, elapsed compile time or a counter plateau w
   OSR, the JFR events with their real thresholds, small-container and autoscaling behaviour,
   and the symptom-to-cause table. Read when a compilation log or a container looks wrong.
 - [Warm-up and cold start](references/warmup-and-cold-start.md) — computing warm-up time,
-  the observable readiness criterion and the JFR event that measures it, deployment gating,
+  the service readiness criterion and JFR counters that help explain convergence, deployment gating,
   autoscaled fleets, and what the AOT cache (JEP 483/514/515) does and does not accelerate.
   Read when latency is bad after a deploy or when sizing a startup probe.
 - [Code cache](references/code-cache.md) — the two exhaustion shapes on JDK 25, the

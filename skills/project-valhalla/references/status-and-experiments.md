@@ -10,14 +10,15 @@
 Capture URL, retrieval date, JEP status/target and exact build. A proposed target can move; an
 Integrated JEP in a future release is not functionality in an older supported release.
 
-### Verified snapshot: 2026-09-05
+### Documentation checked: 2026-09-22
 
 [JEP 401: Value Objects (Preview)](https://openjdk.org/jeps/401) and
 [JEP 539: Strict Field Initialization in the JVM (Preview)](https://openjdk.org/jeps/539)
 both report **Integrated**, release **28**. The project page directs experiments to
-[JDK 28 EA](https://jdk.java.net/28/), whose page listed build 14 dated 2026-09-03.
+[JDK 28 EA](https://jdk.java.net/28/), whose page listed build 16 dated 2026-09-17.
 This is integration into an EA release line, not GA delivery or a backport to standard JDK 25/27.
 Recheck these headers before repeating the status; verify inclusion in the particular binary.
+This snapshot records source checks, not execution or performance validation of that binary.
 
 The separate [Valhalla EA download page](https://jdk.java.net/valhalla/) still lists
 `27-jep401ea3+1-1` dated 2026-03-11. Its JDK 27 basis does not establish a JDK 27 GA feature.
@@ -38,11 +39,40 @@ does. Match preview mode and dependencies between EA control/treatment, verify t
 forms they exercise, and record a preview-disabled platform comparison separately if relevant.
 Matching only the EA binary does not isolate the application representation change.
 
+Compile the unchanged control with that preview mode before altering declarations. JEP 401
+also changes construction rules for ordinary identity records: a canonical constructor that
+uses `this` before its fields are initialized can fail under preview without any `value`
+declaration. Diagnose that compatibility failure separately, and retain equivalent constructor
+invariants in both experiment arms rather than deleting validation to obtain a benchmark.
+
 The current proposal changes identity semantics, including `==`, but explicitly does not make
 `==` a replacement for `equals`. Value fields are final; references can still point to mutable
 identity objects. Null-restricted layouts and specialized generics are not implied by declaring
 a value class. Test synchronization, reference/identity APIs and serialization/native integration
 against the exact design rather than assuming source compatibility means behavioral compatibility.
+
+### Migration gates for this snapshot
+
+The current JEP 401 and matching API documentation impose these specific constraints. Recheck
+them for the pinned build; they are not claims about ordinary classes on the supported JDK.
+
+- **Reachability-based ownership:** value objects cannot be `java.lang.ref` referents or
+  [WeakHashMap keys](https://download.java.net/java/early_access/jdk28/docs/api/java.base/java/util/WeakHashMap.html);
+  these uses throw `IdentityException`. Strongly held map values are a different case.
+  Preserve the required cache/cleanup lifetime; retaining an identity-bearing key or wrapper
+  needs an explicit ownership model, and may remove the hoped-for footprint benefit.
+- **Reflective construction:** populating value-object fields through deep reflection is
+  unsupported even with `--enable-final-field-mutation`. A framework must use constructors;
+  verify its actual construction path before calling the type a migration candidate.
+- **Serialization:** a serializable value record uses record serialization, subject to its
+  component contracts. A non-record serializable value class needs replacement handling
+  with `writeReplace`/`readResolve` under this proposal; otherwise serialization can fail
+  with `InvalidClassException`. Test reconstruction, invariants and compatibility with existing
+  data instead of treating `implements Serializable` as sufficient.
+
+If one of these contracts cannot be preserved, retain the identity representation or narrow the
+experiment to an internal representation behind an unchanged boundary. Source-backed rejection
+of a migration is useful even when an EA runtime is unavailable; an unrun workaround is not validated.
 
 ## Experiment record
 

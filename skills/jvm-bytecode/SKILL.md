@@ -42,7 +42,8 @@ distinct—inspect the failure phase rather than assuming “first execution” 
    Examples here use JDK 25; Class-File API needs JDK 24+, not an implicit project upgrade. `javap`
    for signatures, `javap -c` for the code, `javap -c -p` to include private members,
    `javap -v` for the constant pool, the attributes and the `StackMapTable` (`-v` does not
-   imply `-p`).
+   imply `-p`). For a multi-release JAR, explicitly select the target release or exact entry;
+   default classpath disassembly can show the base class instead of the deployed version.
 2. **Read the header before the instructions.** `major_version`, the access flags and
    `this_class` answer most version questions on their own — see
    `references/javap-and-class-file-anatomy.md`.
@@ -58,7 +59,8 @@ distinct—inspect the failure phase rather than assuming “first execution” 
    have different resolution/selection rules from receiver-dispatched virtual/interface
    calls; javac 11+ may encode private nestmate calls with virtual/interface opcodes.
    `invokedynamic` links a call site through a bootstrap. Bytecode form is not the final
-   dispatch cost after JIT compilation. See
+   dispatch cost after JIT compilation. Match methods by owner, name and full descriptor,
+   including return type; inspect bridge methods before treating synthetic code as redundant. See
    `references/dispatch-and-abstraction-cost.md`.
 6. **Separate what bytecode can and cannot answer.** It shows interpreter-level instruction
    semantics, symbolic allocations/calls, and the code size consumed by JIT policy. It does
@@ -72,6 +74,11 @@ distinct—inspect the failure phase rather than assuming “first execution” 
    hardware, JDK and flags. A bytecode or API explanation can finish without a new benchmark;
    a quantitative runtime claim needs supporting evidence. If that evidence is missing, state
    the limit and propose the smallest discriminating check rather than inventing a cost.
+
+For a diagnostic result, identify the artifact/entry and runtime, the method descriptor and
+relevant BCI or attribute, what they establish, and the fix or next discriminating check.
+If the rejected bytes are unavailable, keep the producer/root cause conditional; a source
+recompilation cannot establish which bytes failed in production.
 
 ## Rules
 
@@ -167,9 +174,10 @@ distinct—inspect the failure phase rather than assuming “first execution” 
 ## References
 
 - [javap and class file anatomy](references/javap-and-class-file-anatomy.md) — the `javap`
-  invocations, an annotated JDK 25 disassembly, `LocalVariableTable` versus
-  `MethodParameters`, the `major_version` table and the preview marker, the constant pool
-  entry kinds including `MethodHandle`/`MethodType`/`Dynamic`, descriptors versus `Signature`,
+  invocations and multi-release entry selection, an annotated JDK 25 disassembly,
+  `LocalVariableTable` versus `MethodParameters`, the `major_version` table and preview marker,
+  the constant pool
+  entry kinds including `MethodHandle`/`MethodType`/`Dynamic`, descriptors versus `Signature` and bridges,
   what the verifier checks with the exact `VerifyError` texts, the JDK 25 lambda dump property,
   and the Class-File API next to ASM. Read when disassembling anything, when diagnosing a
   `VerifyError`, or when writing or fixing a class transformer.

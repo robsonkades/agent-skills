@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-chain-of-responsibility
-version: 1.2.2
+version: 1.2.3
 description: >-
   Chain of Responsibility in modern Java, and the pipeline it is usually confused with: the
   classical first-accepting form versus middleware where stages may all process and forward

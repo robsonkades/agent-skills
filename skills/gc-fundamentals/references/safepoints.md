@@ -37,9 +37,17 @@ Safepoint "G1CollectForAllocation", Time since last: 48521900 ns, Reaching safep
 need not equal one GC sub-operation. `Total` is the logged interval, not every thread's stop
 time or a client's added latency. Read the tail and maximum of `Reaching safepoint`
 over the window together with event count; a mean hides rare stalls, while a single
-maximum may be an outlier or a different operating regime. The JFR equivalents are
-`jdk.SafepointBegin`,
-`jdk.SafepointStateSynchronization` (the TTSP part) and `jdk.SafepointEnd`.
+maximum may be an outlier or a different operating regime.
+
+JFR has related events with different timing boundaries. On the verified 25 build,
+`jdk.SafepointBegin` includes setup and synchronization; `jdk.SafepointStateSynchronization`
+is an overlapping aggregate interval, not a per-thread delay or the whole logged TTSP.
+`jdk.SafepointEnd` covers leaving the safepoint. Join by `safepointId` and inspect intervals;
+do not add overlapping durations or assume exact equality with unified-log timers.
+Check recording enablement and thresholds: the stock `profile.jfc` disables synchronization
+and end events on this build. An absent event does not establish zero time in that phase.
+Detailed reconstruction belongs to safepoints; the timing scopes come from the
+[HotSpot 25.0.3 implementation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/safepoint.cpp).
 
 ## Distinguishing causes of high TTSP
 
@@ -76,10 +84,11 @@ Candidate causes on 25 include:
   `nr_throttled / nr_periods` on the cgroup — linux-for-jvm, and container-awareness for
   what the JVM believes its CPU count is.
 - **Page faults.** A thread waiting on major faults is not running, and cannot arrive.
-- **Thread count.** TTSP is the maximum over every thread; the more platform threads, the
-  more likely one of them is in one of the states above. Virtual threads do not count —
-  their executing carriers participate instead. Suspended virtual-thread stack chunks remain
-  relevant to heap/root work even though they do not each rendezvous as OS threads.
+- **Thread count.** Synchronization can be delayed by the last required thread to become safe,
+  but also includes VM coordination; it is not simply a maximum of measured per-thread delays.
+  More platform threads can increase exposure to the states above. For virtual threads,
+  their executing carriers participate; suspended stack chunks still contribute to heap/root
+  work without each rendezvousing as an OS thread.
 
 To find the thread, `-XX:+SafepointTimeout` with `-XX:SafepointTimeoutDelay=<ms>`
 (default 10000 ms; both product flags on 25) reports delayed threads. The diagnostic

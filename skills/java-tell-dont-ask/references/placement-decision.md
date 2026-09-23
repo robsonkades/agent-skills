@@ -35,7 +35,7 @@
 | A pricing engine reading catalogue, customer and campaign objects | Cross-aggregate policy: no participating entity owns the whole rule. A domain policy or service decides, asking each object questions it can answer (`campaign.isActiveOn(date)`), rather than mining raw fields. |
 | Reporting and analytics queries                                   | Read models exist to be asked.                                                                                                                                                                                    |
 | A transaction script over a table with no invariants              | CRUD. Adding behaviour methods to a bag of columns is ceremony; anemia without invariants is not a disease.                                                                                                       |
-| Framework-required accessors (JPA, Jackson)                       | The framework asks by contract. Keep those accessors from becoming the API other _domain_ code uses to decide.                                                                                                    |
+| Accessors required by the chosen mapping (JPA, Jackson)           | Preserve mapping contracts and legitimate queries, including inputs to separately owned policies. Correct duplicated object-owned rules and unsafe mutation bypasses; a getter alone is not a defect.             |
 
 ## The costs of moving — count them before refactoring
 

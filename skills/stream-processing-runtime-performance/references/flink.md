@@ -23,8 +23,14 @@ recovery promise, exercise the relevant failure points before/after prepare, dur
 restore in an authorized scope; reuse adequate evidence for an unchanged contract.
 Separate barrier travel/alignment from synchronous snapshot, asynchronous upload and sink commit.
 In Flink 2.0, unaligned checkpoints can bypass alignment delays by including in-flight buffers,
-at the cost of checkpoint bytes and recovery I/O; they do not fix a slow state store or blocked
-user callback. Incremental checkpoint upload bytes are not the total retained/restorable state.
+at the cost of checkpoint bytes and recovery I/O. Check `EXACTLY_ONCE` mode and a maximum of one
+concurrent checkpoint before enabling them. In 2.0.0, graph generation warns and disables unaligned
+mode with `AT_LEAST_ONCE`; coordinator configuration rejects more than one concurrent checkpoint
+while unaligned mode is enabled. A configured flag alone therefore does not establish effective
+mode. Check the graph's supported exchanges and recovery constraints too, especially custom partitioners.
+Use unaligned checkpoints when barrier travel/alignment is the limiting phase; additional channel
+state can worsen storage I/O pressure, and it does not fix a blocked user callback.
+Incremental checkpoint upload bytes are not the total retained/restorable state.
 Track shared files, restore downloads and retained checkpoint/storage growth separately.
 
 Before rescale/upgrade, preserve stable operator UIDs, compatible state serializers and supported
@@ -60,6 +66,9 @@ effective budget or overrides in a particular job. Use the versioned
 [checkpoint trade-offs](https://nightlies.apache.org/flink/flink-docs-release-2.0/docs/ops/state/checkpointing_under_backpressure/),
 [state TTL](https://nightlies.apache.org/flink/flink-docs-release-2.0/docs/dev/datastream/fault-tolerance/state/),
 and [state backend memory/recovery](https://nightlies.apache.org/flink/flink-docs-release-2.0/docs/ops/state/state_backends/).
+For unaligned mode, the 2.0.0 [job-graph validation](https://github.com/apache/flink/blob/release-2.0.0/flink-runtime/src/main/java/org/apache/flink/streaming/api/graph/StreamingJobGraphGenerator.java)
+and [checkpoint coordinator configuration](https://github.com/apache/flink/blob/release-2.0.0/flink-runtime/src/main/java/org/apache/flink/runtime/jobgraph/tasks/CheckpointCoordinatorConfiguration.java)
+establish the disabling and concurrency checks; match the actual release before predicting a failure mode.
 For restore changes, also read [savepoint mapping and rescaling](https://nightlies.apache.org/flink/flink-docs-release-2.0/docs/ops/state/savepoints/)
 and the [2.0.0 TTL contract](https://github.com/apache/flink/blob/release-2.0.0/docs/content/docs/dev/datastream/fault-tolerance/state.md#state-time-to-live-ttl).
 Release-2.0 documentation may include patch updates; match the deployed patch/backend before relying

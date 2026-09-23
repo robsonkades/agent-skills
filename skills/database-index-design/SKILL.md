@@ -51,6 +51,8 @@ lock-wait and cleanup bounds. Rollback does not restore every sequence or extern
 2. Derive candidate keys from contiguous navigation: equality prefix, then the chosen range or
    ordering. For non-sargable predicates compare a semantics-preserving rewrite with an
    expression/computed-column index; preserve collation, null, time-zone and parameter semantics.
+   Check the expression and predicate's engine-specific eligibility before DDL; do not falsify
+   determinism/immutability declarations to bypass a restriction.
 3. Evaluate the candidates against the workload, not one query. Prefer extending or consolidating
    an existing prefix when that preserves important orderings and does not create harmful width.
 4. Decide which columns belong in the key and which only cover the result. Account for the engine's

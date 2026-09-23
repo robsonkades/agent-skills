@@ -36,11 +36,17 @@ allocation, compilation stops:
 [0.645s][warning][codecache] Try increasing the code cache size using -XX:ReservedCodeCacheSize=
 ```
 
-plus the same text as `OpenJDK 64-Bit Server VM warning:` on stderr. No exception, no failed
-health check. Already-compiled methods stay fast; every newly hot method runs interpreted
-until compilation is restarted—which the JVM can attempt once space is freed. Observe
-`stopped_count`, `restarted_count`, and method/code-cache state rather than assuming restart is the
-only recovery.
+plus the same text as `OpenJDK 64-Bit Server VM warning:` on stderr. Stopping new compilations
+does not itself invalidate all existing compiled code: a method may keep using valid C1 or C2
+code, while a method with no usable compiled entry executes interpreted. Higher-tier promotion
+can be blocked even when lower-tier code exists. Deoptimization and reclamation can still
+change which code remains usable; do not promise that already-compiled paths stay fast.
+
+The warning alone establishes neither service health nor failure. Measure request latency,
+timeouts and probe outcomes. With `UseCodeCacheFlushing` enabled, the JVM can attempt to restart
+compilation when space permits; on this source baseline, disabling flushing takes the
+`disable_compilation_forever()` path when the cache fills. Observe `stopped_count`,
+`restarted_count`, effective flags, and method/code-cache state before choosing recovery.
 
 Both shapes can look like “it degraded after a while and a restart fixed it”. Check them early,
 but also compare load, generated/loaded classes, deoptimization, GC, host throttling,
@@ -98,8 +104,8 @@ rebalancing.
   `240m`. Below that, `Compiler.codecache` shows one unnamed heap and per-segment
   monitoring shows nothing.
 - `-XX:+UseCodeCacheFlushing` is **already the default**. Disabling it converts shape 1 into
-  shape 2 — a loud failure instead of a quiet one — and is a diagnostic experiment, not a
-  fix.
+  a potential permanent compiler stop when the cache fills; it is a diagnostic experiment,
+  not a fix.
 - Derive alerts from per-heap headroom, growth/churn rate, fragmentation/allocation failures,
   `full_count`, and time to exhaustion. A universal 80% threshold can be too early for a stable
   cache or too late for a fragmented/growing segment. Alert on recurring steady-state GC cause
@@ -146,4 +152,5 @@ segmentation additionally depends on mode, reserved size and explicit overrides.
 
 - [JDK-8290025: remove the HotSpot sweeper](https://bugs.openjdk.org/browse/JDK-8290025)
 - [HotSpot 25.0.3 code cache source](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeCache.cpp)
+- [HotSpot 25.0.3 compiler stop policy](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)

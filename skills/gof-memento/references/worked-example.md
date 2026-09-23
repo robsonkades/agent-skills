@@ -9,7 +9,8 @@ settlement option — so command inverses were not available for most operations
 ### First version: opaque memento
 
 Partial Java 17 example: all LineItem, Adjustment and SettlementOption values are deeply
-immutable; mutable leaves would require value copies. This version is confined to the session's
+immutable; mutable leaves would require copies on capture and restore, or immutable snapshot
+representations. This version is confined to the session's
 single editing thread. Concurrent readers/mutators must share a lock covering capture and restore.
 
 ```java
@@ -71,6 +72,10 @@ void restoring_a_capture_returns_the_draft_to_that_state(@ForAll("drafts") Claim
 If reviewer is omitted from State, comparing capture() before and after cannot detect it:
 both captures omit the same field. An edit must change reviewer and the independent observation
 must include it. Also test null/foreign snapshots, mutation after capture and repeated restores.
+For mutable leaves, restore the capture, mutate a restored leaf, then restore the same capture
+again and compare with the independent baseline. Copying only at capture time fails this case
+if restore hands the captured mutable object back to live state. Java references can alias the
+same object; see [JLS 17 reference values](https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.3.1).
 
 ### When the stack grew
 
@@ -122,7 +127,11 @@ multi-field observation. Volatile does not make read-modify-write edits atomic: 
 or use a CAS loop with pure transformations. Define whether restore intentionally overwrites
 intervening edits or rejects stale versions; do not reset a conflict counter as part of undo.
 Restoring the same prior State reference can make an identity-only CAS miss intervening edits
-(A → B → A). If the policy rejects such writers, carry a non-restored generation alongside the state.
+(A → B → A). If the policy rejects such writers, compare and update a non-restored generation
+atomically with the state, under the same lock or through one CAS on an immutable holder.
+Advance it for edits and restores; checking a separate counter before a state-only CAS leaves
+a race. See the generation/reuse constraints in
+[Torn captures](memento-snapshot-eventsourcing.md#torn-captures).
 
 ## 2. A batch job checkpoint — deliberately not a memento
 

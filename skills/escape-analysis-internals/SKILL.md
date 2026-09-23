@@ -36,7 +36,9 @@ code/compiler-log evidence.
    site, available evidence and remaining gaps. For C2, check
    `DoEscapeAnalysis`, `EliminateAllocations` and `EliminateLocks` with unlocked
    `-XX:+PrintFlagsFinal`; inspect `ReduceAllocationMerges` only where available (JDK 22+).
-   Preserve the project's target rather than upgrading it. Check diagnostics against the exact VM.
+   Inspect the build's compiler release/target separately from the running VM; bytecode shape
+   can differ even with the same `javac` version. Preserve the project's target rather than
+   upgrading it. Check diagnostics against the exact VM.
 2. **Establish that allocation is really happening, then that EA is the mechanism.**
    Validate the counter/event, measured threads, execution window and operation denominator.
    Partial bytes/op can reflect execution frequency, mixed tiers or other allocations; full
@@ -45,9 +47,10 @@ code/compiler-log evidence.
    with `-XX:-DoEscapeAnalysis`: still zero means EA dependence was not demonstrated. Inspect
    dead-code removal, caching, untaken paths and measurement scope before attributing a mechanism.
 3. **Ask the compiler before theorising.** On the target HotSpot product build,
-   `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation` writes `<eliminate_allocation>` and
-   `<eliminate_lock>` in C2 tasks. Join compile IDs to installed C2 nmethods and match the
-   allocation's method/BCI and inline context; absence alone is inconclusive.
+   `-XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation` writes `<eliminate_allocation>`,
+   `<eliminate_boxing>` and `<eliminate_lock>` for their respective transformations in C2 tasks.
+   Join compile IDs to installed C2 nmethods and match the allocation's method/BCI and inline
+   context; absence alone is inconclusive.
    See `references/diagnosing-elimination.md`.
 4. **Find the inlining boundary.** `-XX:+PrintInlining`, tier-4 tree — is there a refusal on
    the chain that carries the object? Confirm the callee's real bytecode size with
@@ -141,7 +144,7 @@ diagnosis, not a flag recommendation.
 - [Diagnosing a failed elimination](references/diagnosing-elimination.md) — the procedure
   with its EA-off control, the "why did this allocation survive" table with measured
   results on 25.0.3, the flag table by class, what `CompileCommand` does not accept, reading
-  `LogCompilation`'s `eliminate_allocation` / `eliminate_lock` elements, the corrected JFR
+  `LogCompilation`'s allocation, boxing and lock elimination elements, the corrected JFR
   event matrix, lock elision timings, and the checklists. Read while running an
   investigation.
 - [HotSpot C2 escape analysis source, JDK 25](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/escape.cpp)

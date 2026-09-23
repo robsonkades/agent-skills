@@ -127,7 +127,8 @@ For the people who were not in the room. The cause, the trigger, what was affect
 been fixed, what remains, and action ownership. Keep the causal account blameless while
 retaining accountable owners and necessary audit facts.
 
-> **Checkout errors, 13:58–14:31, ~15% of requests failed.**
+> **Checkout errors, 13:58–14:31. During 14:15–14:20, ~15% of checkout requests failed,
+> from the request dashboard; the whole-incident failure rate is still uncalculated.**
 >
 > **Cause:** deploy 4471 reduced the HTTP client's connection pool from 50 to 5 per route,
 > through a configuration default that changed in the library upgrade included in that deploy.
@@ -140,13 +141,17 @@ retaining accountable owners and necessary audit facts.
 > of 5; the previous setting clears them. Staging did not exercise that rate.
 >
 > **Mitigation:** rollback completed 14:31; request errors returned to baseline and remained
-> there through 15:00. Permanent configuration change followed at 15:10.
+> there through 15:00.
 >
-> **Fixed:** pool size set explicitly and asserted in a configuration test. Deployed 15:10.
+> **Change deployed:** pool size set explicitly and asserted in a configuration test.
+> Deployed 15:10; post-deployment validation is pending. The rollback observation window
+> does not validate this later deployment.
 >
-> **Remaining:** the client's connection-pool saturation is not on a dashboard — we found this
-> from a thread dump. Platform owns pool-wait metrics and an alert (PLAT-882), due Friday;
-> validate the alert with a controlled saturation exercise before closing the ticket.
+> **Remaining:** Checkout owns checking error rates and connection waits under representative
+> traffic against the agreed recovery criteria before marking the change verified. The client's
+> connection-pool saturation is not on a dashboard — we found this from a thread dump. Platform
+> owns pool-wait metrics and an alert (PLAT-882), due Friday; validate the alert with a controlled
+> saturation exercise before closing the ticket.
 
 The "remaining" section is the part that prevents the next occurrence, and it is the part most
 often omitted because the incident feels over.

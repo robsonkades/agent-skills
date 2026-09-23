@@ -21,10 +21,15 @@ Two consequences that decide job design:
   incrementally.
 
 Define barrier identity by job/stage epoch and the expected logical participant set. Count one
-committed arrival per participant, reject old-epoch/duplicate arrivals, and persist enough state
-for coordinator recovery. A failed worker must trigger a bounded retry, abort or explicitly
-partial release policy; silence is not completion. Membership changes require an explicit new
-epoch or engine protocol. Test a late completion from an old attempt after recovery.
+committed arrival per participant; reject unexpected IDs as well as old-epoch/duplicate arrivals.
+An arrival must refer to the selected output durably published and readable by the next stage,
+not merely to a worker that reported finishing. Bind the release decision to that epoch's
+persisted participant set and selected outputs in the commit protocol; concurrent membership
+changes must not race the completeness check. A failed worker must trigger a bounded retry,
+abort or explicitly partial release policy; silence is not completion. Membership changes
+require an explicit new epoch or engine protocol, preserving or reconciling coverage of the
+required input snapshot. Removing a failed worker does not remove its logical work from the
+complete-result contract. Test a late completion from an old attempt after recovery.
 
 ## Straggler mitigation, in order of cost
 
@@ -34,8 +39,9 @@ epoch or engine protocol. Test a late completion from an old attempt after recov
    deterministic data skew, but not host faults, transient contention or input-dependent
    algorithmic cost.
 2. **Split the heavy key.** A single key too large for one task needs a two-phase reduce:
-   salt the key into `k` sub-keys, aggregate each, then combine — which requires the
-   combining function to be associative and commutative anyway. The read-side cost of
+   salt the key into `k` sub-keys, aggregate each, then combine. Arbitrary salting/reordering
+   requires an associative and commutative combiner; an order-sensitive aggregate instead
+   needs order-preserving splits and combination. The read-side cost of
    salting and the rest of the skew repertoire are `hot-partitions-and-rebalancing`.
 3. **Speculative re-execution.** Start a duplicate of a task running far beyond the
    distribution, preserving the input snapshot and required result equivalence. Atomically
@@ -52,13 +58,21 @@ epoch or engine protocol. Test a late completion from an old attempt after recov
 
 ## The two join shapes
 
-|                     | Broadcast (replicated) join                                                                                             | Shuffle (repartition) join                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Mechanism           | Ship the small side to every worker; each streams its slice of the large side against an in-memory map                  | Repartition **both** sides by the join key so matching rows meet on one worker |
-| Selecting condition | The small side fits in each worker's heap **alongside its working set**, measured                                       | Both sides are large enough that neither fits                                  |
-| Network cost        | small × workers                                                                                                         | both sides, once                                                               |
-| Synchronisation     | build side must be available before probing unless the engine implements a streaming variant                            | repartition/exchange boundary; pipelining is engine-specific                   |
-| Fails when          | The "small" side grows — a lookup table that was 40 MB last year and is 4 GB now, producing OOM on every worker at once | The join key is skewed                                                         |
+|                     | Broadcast (replicated) join                                                                                             | Shuffle (repartition) join                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Mechanism           | Replicate the build side; each worker probes it with its slice of the other side                                        | Align both sides by join key; exchange inputs whose existing distribution is unsuitable           |
+| Selecting condition | Join type/build side is supported; expanded build state fits alongside each worker's working set                        | Suitable when broadcast is unsupported or more costly; inspect distribution and sort requirements |
+| Network cost        | replicated build bytes across receivers; serialization and topology matter                                              | bytes in required exchanges, including spill/retry effects; not invariably both full inputs       |
+| Synchronisation     | build side must be available before probing unless the engine implements a streaming variant                            | repartition/exchange boundary; pipelining is engine-specific                                      |
+| Fails when          | The "small" side grows — a lookup table that was 40 MB last year and is 4 GB now, producing OOM on every worker at once | The join key is skewed                                                                            |
+
+These are physical execution choices, not replacements for the logical join contract. For a
+bag equijoin, two left rows and three right rows for one key produce six matches; a lookup
+retaining only one build row silently loses results unless uniqueness is guaranteed. State
+the null-equality and inner/outer/semi/anti semantics before choosing a build side. Replicating
+the preserved side of an outer join and emitting unmatched rows independently can duplicate
+them or declare a row unmatched even though another worker found a match. Use an engine-supported
+plan and inspect its build side, exchanges, memory and spill; a broadcast hint is not a guarantee.
 
 **Skew is the shuffle join's characteristic failure.** If 40% of rows carry one key, one
 logical partition receives that key's matching rows; output cardinality can be much worse
@@ -77,7 +91,14 @@ Three rules that are cheap to get right and expensive to get wrong:
 - **Use a storage-specific commit primitive.** Same-filesystem atomic rename is one option;
   many object stores implement rename as copy/delete. Immutable attempt files plus an atomic
   manifest/pointer, a transactional sink, or the engine's output committer avoids exposing a
-  torn checkpoint.
+  torn checkpoint. Atomic visibility alone does not choose among concurrent coordinators:
+  publish against the expected manifest version and valid job/stage epoch using a conditional
+  write, transaction or the engine's ownership protocol. Epoch/ownership validation and
+  publication must share one serialized decision; checking authority and then writing
+  separately leaves a race. An ETag precondition checks object state, not writer authority:
+  bind the epoch to the conditional state or use a sink-enforced ownership protocol. A conflict
+  requires reconciliation; an obsolete writer must not fetch the latest token and rebase its
+  old checkpoint onto it. Keep generation identity monotonic across recovery.
 - **Derive the interval from expected cost.** Balance checkpoint duration and interference
   against failure rate and replay work, then measure recovery. High checkpoint cost relative
   to useful work can destroy progress, but no single MTBF inequality proves non-completion.
@@ -102,12 +123,18 @@ Retry the failed tasks when:
 Emit a partial result when:
 - the consumer's contract can carry an explicit completeness record naming the missing
   partitions, in the output itself and not only in a log
-- an approximate answer now genuinely beats an exact answer later for this consumer
+- the consumer accepts an answer over the explicitly incomplete input population
 Never:
 - emit a partial result that looks complete. A total over 9,997 of 10,000 partitions, with
   no marker, is indistinguishable from a real drop in the business and will be treated as
   one. The per-request form of this contract is scatter-gather.
 ```
+
+Keep coverage separate from approximation error. Completing 9,997 of 10,000 partitions says
+nothing about the missing record count or value mass without their sizes/content; missing
+heavy keys can dominate the answer. A sketch's error guarantee concerns the input it received,
+not the omitted population. Do not extrapolate a partial total or percentile to the whole job
+without an explicit sampling/estimation model and its assumptions.
 
 ## Testing a batch job with an injected failure
 
@@ -139,3 +166,17 @@ Add cut points before output flush, after durable attempt output but before mani
 and after commit response loss. Run concurrent duplicate attempts and assert that only one
 logical partition contribution becomes visible. Also corrupt/truncate a checkpoint and prove
 the reader rejects it rather than accepting a plausible partial state.
+
+Race a resumed coordinator's new checkpoint against a delayed old coordinator's publication;
+assert that the obsolete publication cannot replace the current result. Check the exact expected
+participant set too: duplicate, unknown, old-epoch or unreadable-output arrivals must not make
+a missing participant disappear. Recover the coordinator with one required partition absent;
+verify that its removal/reassignment cannot silently turn partial coverage into complete coverage.
+
+## Sources
+
+- [Spark 3.5.7 logical join semantics](https://spark.apache.org/docs/3.5.7/sql-ref-syntax-qry-select-join.html)
+- [Spark 3.5.3 broadcast build-side eligibility](https://github.com/apache/spark/blob/v3.5.3/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/optimizer/joins.scala)
+- [Spark 3.5.3 existing distribution checks before exchange](https://github.com/apache/spark/blob/v3.5.3/sql/core/src/main/scala/org/apache/spark/sql/execution/exchange/EnsureRequirements.scala)
+- [Spark 3.5.7 join hints and adaptive plan behavior](https://spark.apache.org/docs/3.5.7/sql-performance-tuning.html)
+- [S3 conditional-write preconditions](https://docs.aws.amazon.com/AmazonS3/latest/userguide/conditional-writes.html)

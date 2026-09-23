@@ -115,20 +115,25 @@ The gateway's interface lets a stub supply the outcomes a caller test needs:
 ```java
 final class StubCreditBureau implements CreditBureau {
 
-    private final Map<TaxId, CreditAssessment> canned = new HashMap<>();
-    private boolean unavailable = false;
+    private record Request(TaxId taxId, Money requested) { }
+    private final Map<Request, CreditAssessment> canned = new HashMap<>();
 
     @Override public CreditAssessment assess(TaxId taxId, Money requested) {
-        if (unavailable) return new Unavailable(Optional.empty());
-        return canned.getOrDefault(taxId, new Declined(DeclineReason.NO_HISTORY));
+        var response = canned.get(new Request(taxId, requested));
+        if (response == null) throw new IllegalStateException("Unconfigured bureau request");
+        return response;
     }
 
-    void willBeUnavailable() { this.unavailable = true; }
-    void approves(TaxId taxId, Money limit, Instant validUntil) {
-        canned.put(taxId, new Approved(limit, validUntil));
+    void answers(TaxId taxId, Money requested, CreditAssessment response) {
+        canned.put(new Request(taxId, requested), Objects.requireNonNull(response));
     }
 }
 ```
+
+Configure `Approved`, `Declined` or `Unavailable` for each expected request. This input-sensitive
+stub rejects an unknown request instead of inventing a business decline, exposing wrong caller
+arguments or missing setup. Its request keys rely on stable value equality for `TaxId` and `Money`.
+A deliberate answer for all inputs can serve a different test; it does not verify argument forwarding.
 
 A successful stub can serve a focused test. Across the relevant tests, exercise the declared
 failure outcomes as well; passing caller tests do not establish provider or transport behavior.
@@ -184,11 +189,12 @@ final class OrderMapper {
 
 ### Two rules
 
-**Use a mapper only when neither side may know the other.** If the persistence model is
-allowed to know the domain (the usual case in a Spring application), a constructor or a
-static factory on one side is simpler and one indirection cheaper. The mapper's justification
-is mutual ignorance, and that is a real requirement only sometimes
-(`data-source-patterns`).
+**Use a Mapper to preserve subsystem independence.** If one side may depend on the other
+and you own its source, compare a constructor or static factory with a separate translation
+class. Generated or third-party types may not be editable, even when dependency direction
+allows it. A separate translator can also centralise shared conversion or generated mapping;
+name that responsibility rather than asserting that every class called a mapper isolates
+two independent models (`data-source-patterns`).
 
 **A mapper must not invent business policy.** Faithful parsing, units and representation
 conversion still require logic, including rejection of malformed or lossy inputs. Keep those

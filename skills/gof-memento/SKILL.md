@@ -150,7 +150,9 @@ THEN encapsulation is broken and the capture is now a contract. Either
 
 IF the capture shares mutable structure with the originator
 THEN restoring later restores whatever it has become, not what it was.
-     Copy the mutable parts at capture time.
+     Isolate mutable parts at capture time. Restore must also keep a retained
+     capture isolated from later edits: copy mutable parts back into live state,
+     or use immutable snapshot values. Deeply immutable values may remain shared.
 
 IF the source can be mutated while it is being captured
 THEN the capture may hold fields from two different states. Capture
@@ -199,7 +201,9 @@ THEN consider event sourcing before building a snapshot history that
   long editing session" (`heap-dump-analysis`).
 - **Testing.** The property to assert is a round trip: `restore(capture(s))` leaves the object
   equal to `s`, over generated states, plus mutate-after-capture and restore-after-intervening-change
-  cases. It catches omitted state only when generators and semantic equality include that state.
+  cases. Restore a capture, mutate the restored object, and restore that same capture again to
+  expose aliases introduced by restore. These checks catch omitted state only when generators
+  and semantic equality include that state.
 
 ## Review checklist
 
@@ -209,7 +213,7 @@ and compatibility conditional; enumerate fields and external effects before prop
 
 - [ ] Immutable state is retained without unnecessary copying; required opacity and ownership remain intact
 - [ ] The capture type is opaque to the caretaker
-- [ ] Every mutable component is copied at capture time
+- [ ] Retained captures cannot be mutated through live state after capture or restore
 - [ ] Capture and restore are atomic with respect to concurrent mutation
 - [ ] Independent semantic observations cover every restorable field; capture equality alone is insufficient
 - [ ] History bounds cover actual retained state, including variable capture sizes and redo/branch history

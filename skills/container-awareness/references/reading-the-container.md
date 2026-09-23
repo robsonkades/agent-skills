@@ -67,11 +67,21 @@ at the leaf does not establish unlimited effective resources.
 
 ```bash
 cat /sys/fs/cgroup/memory.max                 # bytes, or the literal "max"
+cat /sys/fs/cgroup/memory.high                # reclaim/throttling boundary, or "max"
 cat /sys/fs/cgroup/memory.current
-cat /sys/fs/cgroup/memory.events.local | grep oom # local oom / oom_kill
+cat /sys/fs/cgroup/memory.events.local        # local high / max / oom / oom_kill counters
 cat /sys/fs/cgroup/cpu.max                    # "$QUOTA $PERIOD", microseconds
 cat /sys/fs/cgroup/cpu.stat | grep -E "nr_periods|nr_throttled|throttled_usec"
 ```
+
+`memory.high` is a separate cgroup v2 reclaim/throttling boundary. Exceeding it can force
+tasks into direct reclaim and slow the application below `memory.max`; crossing `high`
+does not itself invoke the OOM killer. Compare timestamped `high` counter deltas with
+charged memory and latency, including relevant visible ancestors. The count is neither a
+stall duration nor proof that reclaim caused every latency spike. Read the effective file:
+its default is `max`, and a Kubernetes request alone does not prove a finite threshold was
+configured. Do not assume a platform memory-throttling feature is enabled. Route deeper
+reclaim/pressure attribution to `linux-for-jvm`.
 
 With a configured 100 ms period, `limits.cpu: "2"` commonly becomes
 `cpu.max = "200000 100000"` — 200 ms of CPU time per period. Read both fields; the period

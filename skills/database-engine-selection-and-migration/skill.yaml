@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: database-engine-selection-and-migration
-version: 1.0.2
+version: 1.0.3
 description: >-
   Choosing among SQL Server, MySQL/InnoDB, and PostgreSQL for a greenfield system, or planning a
   migration between them, from explicit semantic, workload, operational, JVM-driver, DDL, cost,

@@ -9,17 +9,16 @@ description: >
   obligations, and the contract test implementations can share. Use when an algorithm must vary
   at runtime, when a switch over a type code keeps growing, when a class hierarchy exists whose
   members are one-line methods, or when strategy classes differ only in a rate or a threshold.
-  Does not cover lifecycle-governed legal operations and transitions (gof-state), two independently varying hierarchies (gof-bridge), an
-  algorithm skeleton with varying steps (gof-template-method), or choosing which object to create
-  (gof-factory-method).
+  Does not cover lifecycle-governed legal operations and transitions (gof-state), separating an
+  abstraction from independently evolving implementations (gof-bridge), an algorithm skeleton
+  with varying steps (gof-template-method), or subclass-controlled creation hooks (gof-factory-method).
 ---
 
 # Strategy
 
 ## Purpose
 
-Let an operation's algorithm vary independently of the code that uses it. Strategy is the most
-useful and frequently over-implemented pattern in object design. The design concept can be sound
+Let an operation's algorithm vary independently of the code that uses it. The design concept can be sound
 while a class hierarchy, lambda, enum strategy, table or direct branch is the better mechanism.
 
 Three things share the name, and separating them settles most arguments:
@@ -28,16 +27,16 @@ Three things share the name, and separating them settles most arguments:
 The concept        "This algorithm varies; callers rely on a shared
                    contract." Selection may still be explicit.
 
-The class          interface + N implementations + a selector. One
-hierarchy          expression of the concept, and the heaviest.
+The class          interface + implementations. Useful when related
+hierarchy          operations, dependencies or lifecycle belong together.
 
 The function       a lambda or method reference passed where the
 value              algorithm is needed. Another expression of the same
-                   concept, and usually the right one.
+                   concept when its single operation fits the contract.
 ```
 
-A `Comparator` lambda is Strategy. Say so in review — recognising the intent is what keeps the
-design legible; hand-building the hierarchy is what makes it bulky.
+A `Comparator` lambda can express Strategy. Recognise the intent before choosing the mechanism;
+neither a lambda nor a named implementation needs a dedicated selector class.
 
 Start with consumer calls, required inputs/results/failures, the extension model and existing
 selection/configuration evidence. Reuse accepted contracts before asking about material gaps;
@@ -55,7 +54,9 @@ self-contained calculation
         → Strategy, keyed by that code.
 
 Callers must be able to supply their own algorithm
-        → Strategy as a functional interface in your public API.
+        → Strategy through a contract suited to callers: a functional
+          interface for one operation, or a cohesive type when related
+          operations or lifecycle require it. Preserve published contracts.
 ```
 
 ## When it is not

@@ -112,6 +112,10 @@ Comparator<Order> byValueThenId =
 
 - `andThen` runs the receiver first, `compose` runs the argument first. Getting them the wrong
   way round type-checks whenever the types happen to line up.
+- `Consumer.andThen` stops on failure: if the first consumer throws, the second is not invoked,
+  and the exception reaches the caller. Retain this behavior when fail-fast sequencing is intended.
+  Mandatory cleanup needs explicit `try`/`finally` or try-with-resources under the resource's
+  ownership and failure contract; putting cleanup in `after` does not guarantee it runs.
 - `Predicate.not(...)` (Java 11+) reads better than `p.negate()` for a method reference.
 - Composed predicates evaluate left to right with short-circuiting. Reorder for cost only
   when effects, exceptions, null guards and semantic dependencies remain equivalent.
@@ -167,3 +171,4 @@ Two related points:
 
 Primary reference for receiver evaluation and null timing:
 [JLS method-reference evaluation](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.3).
+For composition failure, see [Consumer.andThen](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Consumer.html#andThen(java.util.function.Consumer)>).

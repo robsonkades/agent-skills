@@ -85,7 +85,9 @@ link and is often worse than the chain.
   partial-failure semantics; a shorter chain alone proves neither fewer calls nor a better boundary.
 - Narrowing to several scalar parameters can destroy snapshot consistency and create long
   parameter lists. Prefer one immutable purpose-specific projection when values must be observed
-  together; copy mutable collections at the boundary.
+  together. Copying a collection does not freeze mutable elements: capture their required values
+  under the owner's consistency protocol too. A record or unmodifiable list alone is not an
+  immutable snapshot; see the receipt example before replacing entities with a projection.
 - Hiding a chain may reduce source coupling while leaving semantic/schema coupling unchanged.
   Verify with an actual shape change and runtime query/trace evidence, not import count alone.
 

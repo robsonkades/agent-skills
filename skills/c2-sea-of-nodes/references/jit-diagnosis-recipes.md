@@ -116,7 +116,7 @@ assigned each allocation; `-XX:+PrintEliminateAllocations` reports specifically 
 allocation was removed by scalar replacement — the question that matters when a `new` that
 looked eligible is still there.
 
-**Both are `develop` flags: they exist only in a debug build.** On any shipping JDK the JVM
+**Both are `develop` flags: they require a debug build.** A product HotSpot JVM
 refuses to start rather than ignoring them, so this is not a command to reach for on a
 production runtime or a stock local JDK:
 
@@ -177,17 +177,30 @@ java -XX:+PrintFlagsFinal -version | grep -E "EscapeAnalysis|ScalarReplace|UseCo
 
 ## Isolating one factor at a time
 
-Before attributing a cost to inlining, escape analysis or C2 as a whole, turn off exactly one
-thing:
+Before attributing a cost to inlining, escape analysis or C2 as a whole, change one control
+at a time and inspect which transformations actually changed:
 
 ```bash
-java -XX:-Inline MyBench              # no inlining anywhere in the process
+java -XX:-Inline MyBench              # ordinary inlining off; exceptions below
 java -XX:-DoEscapeAnalysis MyBench    # EA off; dependent optimizations can also change
 java -XX:-EliminateAllocations MyBench # EA on, scalar replacement off
 java -XX:TieredStopAtLevel=1 MyBench  # C1-only control; a difference does not prove a C2 bug
 ```
 
-`-XX:-Inline` is process-wide and blunt. JMH `@CompilerControl(DONT_INLINE)` or
+`-XX:-Inline` is process-wide and does not guarantee that every call survives. On the
+inspected C2 build, `InlineAccessors` still permits eligible accessors and the library
+intrinsic path. A bounded run on Temurin 25.0.3+9 retained both a getter reported as
+`accessor` and `Math.sqrt` reported as `(intrinsic)` with `-XX:-Inline`. This checks flag
+semantics, not performance. `InlineAccessors` is a `develop` flag: adding
+`-XX:-InlineAccessors` to a product JVM aborts startup, even with diagnostic unlocks.
+Inspect the target compilation's inlining tree and generated code before treating the
+experiment as a call-versus-inline comparison.
+
+See the pinned [C2 call generator](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/doCall.cpp),
+[accessor policy](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/bytecodeInfo.cpp)
+and [flag declaration](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/c2_globals.hpp).
+
+JMH `@CompilerControl(DONT_INLINE)` or
 `CompileCommand=dontinline,Class::method` scopes a **callee method**, still affecting all
 relevant call sites/compilations rather than one source call site. Use compiler directives and
 separate benchmark shapes when true call-site isolation matters.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: executors-and-task-lifecycle
-version: 1.3.2
+version: 1.3.3
 description: >-
   Engineering the full lifecycle of tasks accepted by Java executors: ownership, admission,
   queue/grow behavior, execution context, result/failure observation, rejection, cancellation,

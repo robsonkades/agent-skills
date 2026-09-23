@@ -5,6 +5,11 @@ interfaces at runtime, pin the exact artifact used, and preserve the command plu
 incident manifest. Values such as duration and interval below are illustrative; derive them from
 the decision, expected event opportunity, overhead budget, and incident lifetime.
 
+The documentation baseline here is HotSpot JDK 25 and async-profiler v4.4; it does not require
+upgrading the target. Inspect project toolchains, runtime image/build and deployment flags;
+select supported commands/events for that environment. Java 25-specific choices are not
+available merely because an analysis host has a newer JDK.
+
 ## Preflight
 
 Record before attaching:
@@ -81,7 +86,9 @@ jcmd <pid> JFR.dump name=<recording-name> filename=/durable/path/snapshot.jfr
 ```
 
 Discover whether the target supports the intended time filters and options. A dump can contain a
-different interval than the incident unless start/end times are checked.
+different interval than the incident unless start/end times are checked. Dumping does not force
+in-flight operations to commit duration events. Preserve live thread/task evidence when a wait
+is still ongoing; a later dump can differ because the operation subsequently completed.
 
 ### Startup recording
 
@@ -117,6 +124,7 @@ Validation questions:
 - Does the file parse and cover the intended process and wall-clock interval?
 - Are the expected event types present in metadata and nonzero when a positive control ran?
 - Do settings, thresholds, periods, stacks, and event counts match the question?
+- Had expected duration operations reached their commit point before this artifact was dumped?
 - Are start time, duration, time zone/clock context, JDK build, and workload markers preserved?
 - Was the artifact truncated, overwritten, left in an ephemeral layer, or collected after the
   symptom disappeared?

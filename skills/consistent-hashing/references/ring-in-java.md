@@ -5,6 +5,11 @@ The canonical shape is an ordered map from a collision-safe ring point to physic
 `Map<Long, String>` is subtly wrong: two virtual points with the same 64-bit hash cause one
 to overwrite the other, and removing either cannot reconstruct the lost point.
 
+The class below assumes callers supply non-null keys and enforce the placement contract's
+allowed strings before calling `add`, `owner` or `owners`. It does not reject malformed UTF-16:
+the pinned Guava UTF-8 path replaces unpaired surrogates. Require well-formed input at the boundary
+or specify identical replacement behavior across clients; validate node IDs before mutating membership.
+
 ```java
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
@@ -124,7 +129,7 @@ independent copies. `owners` returns one coherent list per invocation, not a mig
 ## Choosing V
 
 There is no correct constant. Measure over relevant node counts, multiple seeds and realistic
-key sets:
+key sets. For a nonempty sample and equal target shares:
 
 ```java
 Map<String, Long> perNode = keys.stream()
@@ -132,7 +137,14 @@ Map<String, Long> perNode = keys.stream()
 double worstRatio = Collections.max(perNode.values()) * (double) nodeCount / keys.size();
 ```
 
-Repeat the calculation for key count, bytes, requests per second and estimated service cost;
+For unequal positive target shares, use `max_i(load_i / (totalLoad * targetShare_i))` across all nodes.
+With proportional point weighting, the intended key-count share is `weight_i / sum(weights)`;
+it is an expectation, not a guarantee for one ring. A 1:3 weighting with 25/75 keys has normalized
+worst ratio 1, whereas the equal-node formula reports 1.5 and can prompt pointless increases in V.
+Define targets for the resource being evaluated, and treat zero total load as insufficient evidence
+rather than a balance result.
+
+Repeat the calculation with appropriate targets for key count, bytes, requests per second and estimated service cost;
 uniform key count can hide a catastrophically skewed workload. Raise V until the relevant
 ratios are inside tolerance, then stop — the ring costs `V × N` entries and
 `O(log(V × N))` per lookup. Record V and the evidence next to the constant. Heterogeneous
@@ -177,7 +189,7 @@ the positions for a fixed node list, held as a golden file, must be reproduced b
 by the current code — the
 regression test for someone "tidying" the `node + '#' + i` format or swapping the hash, both
 silent, and both of which split the cluster's view of ownership. Include algorithm variant,
-seed, encoding, framing, unsigned ordering and collision cases in those vectors.
+seed, encoding, normalization, malformed-input policy, framing, unsigned ordering and collision cases in those vectors.
 
 ## Membership handoff
 

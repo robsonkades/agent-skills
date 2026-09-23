@@ -95,6 +95,10 @@ outage or alert routing. Use isolated rule fixtures, replay or authorized contro
 traffic/faults as needed; retain applicable existing evidence. A page is a production
 interface and needs version control, review and tests.
 
+At the PromQL alert boundary, false conditions must remove result series; a returned zero
+still activates an alert. Keep alert identity labels stable and changing measurements in
+annotations. See the burn-rule reference for comparison and composition semantics.
+
 Inspect the relevant Prometheus/rule evaluator version and evaluation settings before
 version-sensitive syntax or timing advice, and exporter/Java instrumentation configuration
 before changing measurement or buckets. Arithmetic-only answers need the population and

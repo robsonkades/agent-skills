@@ -1,16 +1,19 @@
 # Behavioral validation cases
 
-These cases evaluate skill selection and observable decisions, not the adapter's code.
+These cases teach boundary decisions and can evaluate observable behavior, not the adapter's code.
 Status: documented, not executed. No measured improvement is claimed.
 
 Run each request below in a fresh session. For a paired comparison, hold model/version,
 tool access, system instructions and supplied context constant. In the baseline omit this
-skill; in the treatment provide SKILL.md and allow its referenced resources. Keep these
-expectations out of both prompts and exclude this evaluation file from task-runner access;
-the treatment's technical resources are the other two references. Record outputs, tool calls, model/settings, date and
-pass/fail per required characteristic with evidence. For selection cases, provide the same
-neighboring descriptions to both runs, adding this skill's description only in the treatment.
-Do not count repository verification or fixture tests as these runs.
+skill; in the treatment provide SKILL.md and allow its referenced resources. Because these
+examples and their answers ship with the skill, report them as known-example regressions,
+not unseen holdouts. For a fresh comparison, keep independently prepared cases and evaluator
+criteria outside actor access. If the runner excludes this file to hide its answers, record
+that resource restriction: it tests SKILL.md plus the other two references, not the complete
+distributed skill. Record outputs, tool calls, model/settings, date and pass/fail per required
+characteristic with evidence. For selection cases, provide the same neighboring descriptions
+to both runs, adding this skill's description only in the treatment; explicit loading tests
+execution, not automatic selection. Do not count repository or fixture checks as agent runs.
 
 ## 1. Representative translation with semantic drift
 
@@ -125,3 +128,37 @@ an explicit application impact; `emptyDir` does not preserve the queue across Po
 **Failure:** Ignoring existing backlog, claiming continuing availability at a blocked producer,
 declaring drops inevitable despite the stated backpressure, or treating a disk-backed `emptyDir`
 as durable across Pod replacement.
+
+## 8. Destructive reads are not counter snapshots
+
+**Request/context:** “A vendor endpoint atomically returns and resets the number of requests
+since its previous read. Two Prometheus servers and an operator scrape our adapter independently.
+Expose each returned number as requests_total; calling the endpoint is cheap. We cannot change
+the vendor or recover a response lost after reset.”
+
+**Expected behavior:** Reject exposing consumed increments as cumulative counters or assuming
+ordinary scrape-time collection is safe. Consider a cumulative endpoint if one exists; otherwise
+define one ingestion owner and a shared accumulated snapshot, with lifecycle and loss limits.
+
+**Required output:** Distinguish source ingestion from reads of the exported snapshot, explain
+how independent destructive readers divide data, and identify timeout/crash loss despite serialized
+reads. Include accumulator restart and concurrent-scrape checks.
+
+**Failure:** Every scrape resets the source, every response is treated as a cumulative counter,
+or serializing reads is claimed to guarantee lossless collection.
+
+## 9. Two meanings of cumulative histogram
+
+**Request/context:** “Our vendor API exposes lifetime disjoint duration buckets: up to 100 ms
+has 2 requests, over 100 through 500 ms has 3, and over 500 ms has 1. It also returns count=6
+and sum_ms=1000 in one snapshot. Emit a classic Prometheus histogram in seconds. A proposed
+upgrade changes those buckets to counts within a sliding one-minute window.”
+
+**Expected behavior:** Convert disjoint ranges into cumulative upper-bound buckets and distinguish
+that operation from accumulation across time; reject silently treating the sliding window as lifetime.
+
+**Required output:** Buckets `0.1 -> 2`, `0.5 -> 5`, `+Inf -> 6`, count 6 and sum 1 second;
+test count mismatch and source reset, and require a new temporal contract for the upgrade.
+
+**Failure:** Exposing bucket values `2, 3, 1`, scaling counts by 1000, ignoring the time-window
+change, or accepting a `+Inf` bucket different from count.

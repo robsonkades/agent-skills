@@ -124,14 +124,19 @@ Classify from the strongest available evidence, not the Java exception class:
 4. client transport phase (queued, connected, bytes written, response started);
 5. timeout/cancellation alone — normally `Unknown` for a mutating operation.
 
-Cancellation only stops the caller's wait unless the protocol confirms cancellation of the
-operation. An HTTP/2 stream reset, interrupted Java future, or expired deadline does not by
-itself roll back a peer-side commit.
+Cancellation may prevent an unstarted task from running or request interruption/cooperative
+stop after it starts; the client and protocol determine the behavior. Observing cancellation
+or even handler termination does not by itself establish whether an effect already applied.
+Classify `Rejected` only with evidence that the relevant effect never applied and cannot apply
+later, accounting for earlier attempts. An HTTP/2 stream reset, interrupted Java future, or
+expired deadline does not by itself roll back a peer-side commit.
 
 ## Primary references
 
 - [RFC 9110: HTTP Semantics, §9.2.2 Idempotent Methods](https://httpwg.org/specs/rfc9110.html#idempotent.methods)
 - [Java 17 Connection.commit](<https://docs.oracle.com/en/java/javase/17/docs/api/java.sql/java/sql/Connection.html#commit()>): commit contract and exceptions; determine actual outcome from protocol evidence.
+- [Java 17 Future.cancel](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)>): cancellation before execution and attempted interruption after execution starts.
+- [gRPC cancellation](https://grpc.io/docs/guides/cancellation/): cancellation signals and cooperative server-side termination.
 - [JDBC 4.3 specification, transactions](https://jcp.org/aboutJava/communityprocess/mrel/jsr221/index3.html)
 - [Apache Kafka 4.3 producer configuration: delivery timeout and idempotence](https://kafka.apache.org/43/configuration/producer-configs/)
 - [Apache Kafka 4.0 consumer API: offset commits and rebalance](https://kafka.apache.org/40/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)

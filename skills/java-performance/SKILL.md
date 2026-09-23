@@ -90,6 +90,11 @@ Useful parallel views, when already available or safely collectable:
 - code/config/JDK/dependency/deployment diff;
 - one affected instance versus a genuinely comparable control.
 
+Profile percentages describe composition, not absolute cost. Before treating a changed stack as
+evidence of regression, check event/weight, sampled population, collection settings, absolute
+totals and work denominator. Route uncertain profile interpretation to `flame-graph-analysis`;
+more raw samples per operation can result from more frequent sampling.
+
 Every collection has a time, overhead, privilege, survivability, and perturbation budget.
 Read-only diagnostics can still pause or trigger GC: inspect the target command's documented
 impact, not merely whether it changes application data. Keep files on bounded storage that
@@ -176,15 +181,15 @@ evidence shows existing behavior meets the goal?
 
 ## Troubleshooting triage failures
 
-| Failure                | Symptom                                          | Correction                                                                       |
-| ---------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Premature routing      | team tunes GC/threads from one dashboard         | restore alternative hypotheses and separating signals                            |
-| Aggregate hides cohort | fleet mean normal, some users/pods fail          | segment by version/instance/operation/failure domain with cardinality discipline |
-| Denominator drift      | CPU/samples rise with traffic or retries         | normalize by accepted/completed work and retain errors/timeouts                  |
-| Lifecycle confound     | only new pods slow                               | compare uptime/JIT/cache/readiness/traffic ramp, not steady-state fleet          |
-| Evidence mismatch      | metrics/JFR/profile use different windows/clocks | align markers and state uncertainty; recollect if decision-critical              |
-| Tool perturbation      | capture worsens tail or disappears after drain   | measure overhead; preserve pre-action data; use safer/sparser instrument         |
-| Restart folklore       | restart helps, code cache blamed                 | enumerate every reset state and design a discriminating recurrence test          |
+| Failure                | Symptom                                          | Correction                                                                             |
+| ---------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Premature routing      | team tunes GC/threads from one dashboard         | restore alternative hypotheses and separating signals                                  |
+| Aggregate hides cohort | fleet mean normal, some users/pods fail          | segment by version/instance/operation/failure domain with cardinality discipline       |
+| Denominator drift      | CPU/samples rise with traffic or retries         | match profile event/selection/weight first; normalize cost by work and retain failures |
+| Lifecycle confound     | only new pods slow                               | compare uptime/JIT/cache/readiness/traffic ramp, not steady-state fleet                |
+| Evidence mismatch      | metrics/JFR/profile use different windows/clocks | align markers and state uncertainty; recollect if decision-critical                    |
+| Tool perturbation      | capture worsens tail or disappears after drain   | measure overhead; preserve pre-action data; use safer/sparser instrument               |
+| Restart folklore       | restart helps, code cache blamed                 | enumerate every reset state and design a discriminating recurrence test                |
 
 ## Handoff contract
 
@@ -193,6 +198,7 @@ Give the specialist:
 ```text
 precise symptom and affected cohort/window
 metric and workload definitions with raw/normalized values
+for profiles: event, weight, scope, sampling settings, absolute totals and relative shares
 leading hypothesis and alternatives
 evidence already collected, provenance, loss, and perturbation
 why this evidence routes to that owner

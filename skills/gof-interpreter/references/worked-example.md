@@ -46,6 +46,15 @@ It bounds vocabulary, not caller authorization or query cost: a permitted field 
 an expensive scan. Reject unknown fields without leaking names the caller may not discover;
 validate permissions, operator/types and query budgets separately.
 
+`Value` must own immutable scalar data or a bounded, deeply immutable collection. Copy mutable
+containers at the boundary and ensure their elements are immutable too; an unmodifiable view
+or a record component does not freeze caller-owned contents. A compiled predicate retains its
+literal values, so later mutation must not change a previously validated rule. `Document` supplies
+a stable per-evaluation snapshot with bounded, side-effect-free accessors. Bound text/collection
+sizes and numeric precision on both literal and document operands before costly copying or
+comparison; a small AST does not bound the work of one comparison. These are prerequisites for
+the omitted domain types, not guarantees implemented by the shown record constructors.
+
 ## Parse, with the limits at the boundary
 
 ```java
@@ -179,8 +188,10 @@ static List<Issue> validate(Filter filter, Set<Field> permitted) {
         case Or o -> concat(validate(o.left(), permitted), validate(o.right(), permitted));
         case Not n -> validate(n.inner(), permitted);
         case Comparison c -> {
+            if (!permitted.contains(c.field())) {
+                yield List.of(Issue.forbiddenField(c.field()));
+            }
             var issues = new ArrayList<Issue>();
-            if (!permitted.contains(c.field())) issues.add(Issue.forbiddenField(c.field()));
             if (!c.field().supports(c.operator())) issues.add(Issue.badOperator(c.field(), c.operator()));
             if (!c.field().type().accepts(c.value())) issues.add(Issue.typeMismatch(c.field(), c.value()));
             yield issues;
@@ -194,8 +205,13 @@ client without access to `internalNotes` cannot use it as an oracle by filtering
 observing which documents come back. That attack is invisible if authorisation is applied only to
 the returned fields.
 
-Validation collects every issue rather than throwing on the first, because the caller is fixing a
-query and wants the whole list (`java-exception-design`).
+Validation visits the whole bounded AST, including branches that evaluation might short-circuit.
+Collect useful issues from permitted comparisons, but stop field-specific checks on an inaccessible
+comparison: reporting its accepted operators or value type can disclose restricted metadata.
+Where schema discovery is restricted, map unknown and inaccessible fields to an equivalent public
+error contract without hidden field suggestions or type details. Internal issue objects are not
+automatically safe response payloads. Continue collecting independent, permitted issues rather
+than rejecting the entire tree at the first error (`java-exception-design`).
 
 ## The hot path: closure compilation
 
@@ -249,6 +265,10 @@ cases provides evidence, not proof for all expressions; compare exceptions and s
 behavior as well as successful booleans. Commutativity applies only to total pure predicates,
 not error-producing, stateful or budget-sensitive evaluation. Add hostile field identifiers,
 trailing tokens, oversized literals, malformed/deep ASTs and cross-caller cache reuse tests.
+For a forbidden field, use operator/type checkers that fail if invoked; validation must reject
+the field without calling them, while still reporting allowed-field errors in other branches.
+Also test public diagnostics for guessed hidden fields and mutation of caller-owned literal
+containers after AST construction; parser and response serialization require their own fixtures.
 
 ## What was rejected
 
@@ -261,3 +281,8 @@ trailing tokens, oversized literals, malformed/deep ASTs and cross-caller cache 
   actual context, functions, limits and dependency constraints.
 - **Unvalidated String identifiers.** A closed enum simplifies structural validation, but both
   enum and string designs still need current authorization, type checks and trusted SQL mappings.
+
+## Sources for the value and diagnostic contracts
+
+- [Java 21 Record](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html): shallow immutability and defensive copying of mutable components.
+- [OWASP GraphQL guidance](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html#secure-configurations): validation and field suggestions can disclose schema information. The filter's public-error policy applies the same disclosure concern; this example is not a GraphQL implementation.

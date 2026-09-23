@@ -39,8 +39,9 @@ Membership can be discovered dynamically; client-side ownership does not itself 
 redeploy. Compare the existing client's discovery and migration contract with the proposed
 proxy or cluster before introducing another routing tier.
 
-**Proxy-fronted.** The hop is real and it is on the fast path — measure it against
-`T_source`, because a cache is chosen for latency and doubling its latency is a genuine cost.
+**Proxy-fronted.** The hop is real and it is on the fast path. Measure cache-hit latency and
+the complete hit/miss workload against the required SLO; a slow origin does not make the
+extra hop negligible for a predominantly cache-hit journey.
 The proxy is also a new failure domain: loss of the only routing path can make the whole
 cache unavailable, so a proxy tier needs its own redundancy and its own
 connection-limit sizing. It repays that with the ability to change topology, add nodes and
@@ -56,6 +57,20 @@ guaranteed (`consistency-models`).
 Server-owned placement still needs compatible clients: for Redis Cluster, verify `MOVED` and
 `ASK` handling and reachability/authentication of advertised target endpoints from every client
 network. A reachable bootstrap address does not prove resharding or failover will work.
+
+Surviving data and permission to serve it are separate checks. In the
+[Redis Open Source 7.2.0 configuration](https://github.com/redis/redis/blob/7.2.0/redis.conf),
+`cluster-require-full-coverage` defaults to `yes` and `cluster-allow-reads-when-down` to `no`.
+An uncovered slot range can therefore make otherwise healthy shards reject queries as the
+cluster enters its failed state. A partition can also prevent automatic promotion when the
+candidate cannot reach a majority of voting primaries; replica count alone does not supply that quorum.
+Verify the deployed version, effective settings and eligible replicas before using a
+lost-shard-only origin estimate. See the [cluster availability model](https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/).
+
+Test reads and cache-fill writes separately through the actual clients. Allowing partial
+coverage or reads while down changes behavior; it neither recreates missing data nor restores
+promotion quorum, and may expose stale reads. Treat such settings as a contract decision, not
+a default fix for origin overload.
 
 **Fully replicated.** Memory is approximately `N × W` plus metadata, and write propagation grows
 with replicas. It fits a small, read-dominated, slow-changing dataset when the convergence model is

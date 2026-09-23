@@ -107,7 +107,9 @@ decision. Missing cancellation/close guarantees must remain explicit unknowns.
   future completes; the stage then fails with a closed-resource error under load and not in
   the test. Acquire inside the actual task where possible. A `whenComplete(close)` callback is
   insufficient if cancellation completes the exposed future before underlying use stops; release
-  only after actual use terminates and propagate/suppress close failure deliberately.
+  only after actual use terminates. Cancelling the dependent stage that performs cleanup can also
+  prevent the callback from running. Keep cleanup under the lifetime owner's control and
+  propagate/suppress close failure deliberately; see the async-resource reference.
 - Do not use finalizers or rely on automatic `Cleaner` execution for a release deadline.
   An owned `close()` may invoke `Cleanable.clean()` for explicit release, with optional
   automatic cleanup/reporting. At-most-once action invocation neither makes concurrent losing

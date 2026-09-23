@@ -69,9 +69,13 @@ Light/Inline work need not create an artifact solely to document sub-minute step
 4. **Validate at the level the resource warrants** (`references/validation-by-resource.md`).
    Reuse meaningful existing checks; do not add tests merely to mirror a reversible edit.
    If planned validation is missing or inadequate, define the needed evidence before completion.
+   Confirm the executed artifacts and effective configuration include the relevant changes;
+   satisfy build/generation prerequisites without discarding valid incremental results.
    Use the project's test strategy and tools; route to `java-testing-strategy` for Java-specific
    choices. Test methods and gate policies guide implementation without changing its target stack.
 5. **Read the output.** A suite can exit successfully while running zero relevant tests.
+   Inspect changes made by validation commands or their hooks; recheck affected properties if
+   later generated or rewritten inputs no longer match what the tests exercised.
 6. **Record the outcome** with what actually ran, then move on.
 7. **When implementation contradicts the plan or a decision**, classify the affected work
    (`references/deviation-and-blockers.md`), reconcile the plan and continue independent work.
@@ -127,7 +131,9 @@ THEN preserve its true IN_PROGRESS or BLOCKED state, with exactly what remains a
 - **Never weaken a check to make it pass.** Deleting, disabling or loosening a test to get to
   DONE converts a real signal into a false one, and the next person inherits both.
 - **Report what ran.** Capture command, relevant counts/results, revision/environment and
-  limitations. Summarize output; do not paste secrets or imply skipped tests executed.
+  the artifact or deployed target actually exercised. Record uncertain provenance as a limitation;
+  a current checkout does not establish a remote target's revision. Summarize output; do not
+  paste secrets or imply skipped tests executed.
 - **Honor the requested delivery boundary.** Local implementation and passing checks do not
   themselves authorize publication, deployment or a production migration.
 

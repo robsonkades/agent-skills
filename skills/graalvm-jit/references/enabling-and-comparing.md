@@ -94,16 +94,23 @@ The two places that do name it:
 java -Djdk.graal.PrintCompilation=true Main
 # HotSpotCompilation-146  Ljava/util/HashMap;  afterNodeInsertion  (Z)V | 231us  2B bytecodes  128B codesize ...
 
-# JFR: the compiler field of jdk.Compilation. A recording threshold can exclude short
+# JFR: retain whole events, including outcome and level. A threshold can exclude short
 # compilations; explicitly enable the event and set its threshold to zero.
 java '-XX:StartFlightRecording=filename=g.jfr,jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms' Main
-jfr print --events jdk.Compilation g.jfr | grep -c 'compiler = "jvmci"'   # Graal tier 4
-jfr print --events jdk.Compilation g.jfr | grep -c 'compiler = "c2"'      # C2 tier 4
+jfr print --json --events jdk.Compilation g.jfr > compilations.json
 ```
+
+`jdk.Compilation` reports attempts, including failures. Inspect each event's `values`:
+require `succeded = true` (the JDK 25 field is spelled this way), `compileLevel = 4`, and
+the relevant `method`. A method inlined into a caller may have no separate compilation;
+inspect the caller and inlining evidence instead. Retain the process/fork, timestamp and
+`compileId`; counting compiler-name strings can count failed or unrelated compilations.
 
 On Temurin the tier-4 events say `compiler = "c2"`; on GraalVM CE they say `"jvmci"`; C1
 says `"c1"` on both. A JVMCI event identifies the JVMCI compiler path; confirm the Graal
-implementation through distribution/configuration evidence. Recording can also start with
+implementation through distribution/configuration evidence. Successful compilation alone
+does not establish that code remained active after deoptimisation or invalidation; correlate
+the workload timeline and execution profile when making that claim. Recording can also start with
 `jcmd JFR.start`, but it cannot recover compilations that completed before recording began.
 No tier-4 events is inconclusive until event settings and compilation activity are checked.
 
@@ -115,17 +122,31 @@ flag, `Hot::sum` reaches tier 4 with no Graal configuration line and the JFR com
 reads `c2`. That removes the JDK base, the class library and the GC build as variables.
 
 ```bash
-# Graal side (default on GraalVM):
-$GRAALVM_HOME/bin/java -XX:+UseG1GC -jar benchmarks.jar MyBench -f 3 -rf json -rff graal.json
+# Bash; existing benchmark JAR, JMH 1.37 option syntax. Flags below target the forks.
+# Graal side:
+"$GRAALVM_HOME/bin/java" -jar benchmarks.jar MyBench -f 3 \
+    -jvm "$GRAALVM_HOME/bin/java" -jvmArgs "-XX:+UseG1GC -XX:+UseJVMCICompiler" \
+    -rf json -rff graal.json
 
 # C2 side, same binary:
-$GRAALVM_HOME/bin/java -XX:-UseJVMCICompiler -XX:+UseG1GC -jar benchmarks.jar MyBench -f 3 \
+"$GRAALVM_HOME/bin/java" -jar benchmarks.jar MyBench -f 3 \
+    -jvm "$GRAALVM_HOME/bin/java" -jvmArgs "-XX:+UseG1GC -XX:-UseJVMCICompiler" \
     -rf json -rff c2.json
 ```
 
+JMH 1.37 chooses explicit fork options before `@Fork` settings, then falls back to the
+launcher JVM/arguments. Thus `@Fork(jvmArgs = {"-Xmx512m"})` can discard a compiler flag
+placed only on the launcher. `-jvmArgs` replaces that base argument list: include the
+benchmark's required heap, module and agent options identically on both sides. Inspect
+`jvmArgsPrepend`/`jvmArgsAppend`, environment-injected options and profiler additions for
+conflicts. Retain the JMH VM header and `-v EXTRA` fork command, and confirm compiler evidence
+inside the measured forks. A JFR recording of the launcher proves nothing about their hot
+code. Use separate recording files per fork; keep diagnostic runs distinct from timing runs
+unless equivalent instrumentation is intentionally part of the comparison.
+
 A comparison with the production OpenJDK build is relevant when migration or rollback uses
-that image and suitable evidence is missing — but it answers "is this OpenJDK build
-different from GraalVM's OpenJDK base", a separate question from "is Graal faster than C2".
+that image and suitable evidence is missing. It measures the combined runtime migration,
+including compiler, distribution and build differences; it cannot isolate the compiler's effect.
 
 Pin the GC and other non-treatment flags on both runs even when defaults currently match.
 Also save `PrintFlagsFinal`: ergonomics can react to CPUs/memory, and “same binary” does not
@@ -227,5 +248,7 @@ documentation for the GraalVM in use.
 - [Graal JIT Compiler Configuration](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/java/options/)
 - [GraalVM 25.3 release notes](https://www.graalvm.org/release-notes/25.3/)
 - [JMH project and samples](https://github.com/openjdk/jmh)
+- [JMH 1.37 fork JVM and argument selection](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/runner/Runner.java)
+- [JDK 25 JFR compilation event fields](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)
 - [JEP 410: retained external JVMCI compiler use](https://openjdk.org/jeps/410)
 - [Graal compiler build and runtime prerequisites, vm-25.0.2](https://github.com/oracle/graal/blob/vm-25.0.2/compiler/README.md)

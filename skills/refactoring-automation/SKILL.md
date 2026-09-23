@@ -47,6 +47,8 @@ preconditions, representative match categories, exceptions and compatibility evi
    `references/large-scale-change.md` covers staging, review, blame and rollback.
 6. **Prevent recurrence when justified.** Add a scoped enforcement check only when it
    reliably detects a consequential regression and fits existing policy (quality-gates).
+   Prove that a known violation fails the check and a clean input passes; a preview that
+   reports changes can still exit successfully. Keep near-miss cases unchanged.
    Report matches, changed paths, residual exclusions, actual validation and remaining limits.
 
 ## Decision rules

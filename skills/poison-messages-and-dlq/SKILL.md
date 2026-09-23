@@ -88,6 +88,8 @@ recovery owner and checks actually run or still required.
   deserialization error can be corrupt bytes, unknown schema, missing decryption key or a bad
   deployment. Preserve raw bytes before deserialization and compare failure rate/build/schema
   compatibility before deciding record-local quarantine versus containing an affected environment.
+  A Kafka null value may be a valid tombstone; distinguish original null from a decoder returning
+  null on failure before classifying it or constructing the replay envelope.
 - Unobserved unresolved work risks missed recovery or expiry; missing a particular alert does
   not establish actual loss. Arrival/failure rate and unresolved age are useful signals;
   assess equivalent business-completeness, backlog/drain and retention controls against the
@@ -96,10 +98,15 @@ recovery owner and checks actually run or still required.
   reference and safe headers, failure code/evidence, attempt history, source topic/partition/
   offset or queue and stable message ID, original key, first- and last-failure timestamps, consumer group and
   build/schema version, and correlation/trace IDs (`distributed-tracing-design`). Redact
-  credentials and bound stack/payload size; DLQs often become long-lived PII stores.
+  credentials and bound the complete serialized envelope, including headers and accumulated
+  failure history; a payload below the limit does not prove the DLQ publish will fit. Preserve
+  required header bytes/multiplicity instead of assuming a string map is lossless.
+  DLQs often become long-lived PII stores.
 - Give the DLQ enough remaining retention for detection, investigation and recovery,
   including human response delay when applicable. Verify when its clock starts and budget
   source residence too; broker-specific expiry can consume the budget before transfer.
+  Check cleanup/compaction policy too: retaining the latest value per business key does not
+  retain every unresolved failure for that key. See `references/dlq-operations.md`.
 - **Skipping leaves a gap in the complete effect sequence**, even if remaining records
   retain their relative order. Stopping commits alone does not stop already dispatched or
   buffered work. Gate dispatch and account for in-flight effects when preserving order, or

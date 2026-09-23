@@ -28,9 +28,14 @@ Blanks that fail the test — and mean the products should be injected independe
 | Independent injection of each product    | Wiring, testing, lifecycle                                     | Nothing prevents a mixed set if two families are wired simultaneously      |
 | One `@Configuration` per profile         | Deployment-time selection with coherent wiring                 | Automatic proof against multiple active profiles or incompatible beans     |
 | `Map<Key, Family>` where family = record | Selection of one bundle, including bundles supplied by plugins | Compatibility, sharing or lifecycle enforcement merely from the map/record |
-| Sealed `Format` + exhaustive `switch`    | Compile-time proof that every family is handled                | Families contributed by code you do not compile                            |
+| Sealed `Format` + exhaustive `switch`    | Compile-time coverage of the selector type's cases             | Runtime registration, provider loading or product compatibility            |
 | `ServiceLoader<FamilyProvider>`          | Third-party providers through a typed runtime service          | Family compatibility, application key uniqueness or failure policy         |
 | Configuration properties                 | Families that differ only in values                            | Families that differ in behaviour                                          |
+
+Pattern-switch exhaustiveness (Java 21 without preview) checks the selector type's cases, not
+whether every requested family is registered and usable. A sealed root can deliberately permit a
+`non-sealed` extension branch; a switch can cover that branch without knowing each plugin
+implementation. Keep registry validation and an explicit unsupported-key path for those families.
 
 For a deployment-selected Spring family, existing configuration may already do the assembly.
 Plain constructor wiring at a composition root can do the same; no container is required.
@@ -68,9 +73,12 @@ Detection: inspect implementors and actual consumers. Keep a justified public SP
 otherwise consider removing speculative indirection. Preserve public compatibility and lifecycle
 before deleting an interface.
 
-**Family selected by a boolean.** `newFactory(boolean legacy)` grows into `newFactory(boolean
-legacy, boolean v2, boolean tenantB)` and the call sites become unreadable. Fix: a named key
-type — an enum or a sealed interface — from the start.
+**Family selected by ambiguous flags.** When `newFactory(boolean legacy)` grows into
+`newFactory(boolean legacy, boolean v2, boolean tenantB)`, use a named key that fits the extension
+contract: an enum for application-owned finite choices, a sealed hierarchy for modeled variants,
+or a value key checked against the authorized registry for runtime-contributed families. Do not
+close an extensible plugin set merely to replace booleans; preserve public API compatibility when
+migrating existing callers.
 
 ## Removing an Abstract Factory safely
 
@@ -87,3 +95,6 @@ contract; renaming a public type is not required to make an adequate design soun
 See [Java 17 ServiceLoader](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html)
 for provider discovery and failures, and [interface evolution](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.5.7)
 for why a default method can preserve old binaries yet introduce invocation or source conflicts.
+For the selection boundary, see [Java 17 sealed classes](https://docs.oracle.com/en/java/javase/17/language/sealed-classes-and-interfaces.html)
+for permitted extension branches and [Java 21 exhaustive switches](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11.1.1)
+for the compiler's coverage rules.

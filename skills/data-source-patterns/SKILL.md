@@ -73,7 +73,8 @@ APIs on older stacks; adopting this skill does not authorize a dependency/runtim
 4. **Check the work shape.** Consider a SQL gateway for set-based or reporting work when
    query control, translation or measured cost warrants it. An existing ORM projection or
    bulk query may already fit; validate its invariant, versioning and managed-state effects
-   before adding another access layer. Mixing is normal and correct.
+   before adding another access layer. For mixed JDBC/JPA paths, verify transaction participation
+   and flush/context visibility; sharing a database URL does not prove atomicity.
 5. **Decide per module.** A pricing engine with a mapper and an admin CRUD area with Active
    Record in one application is a reasonable design, provided the boundary between them is
    explicit.
@@ -149,7 +150,8 @@ Read path of an application whose write path uses a mapper
   (`offline-concurrency-control`).
 - SQL can avoid object loading for reporting and bulk changes; verify plans, rows touched,
   round trips and application latency. Set-based writes must preserve invariants, versioning
-  and transaction semantics; ORM callbacks and managed state may be bypassed.
+  and transaction semantics; ORM callbacks and managed state may be bypassed. Decide flush
+  and invalidation order before direct SQL; `clear` can discard unflushed entity changes.
 
 Deliver a pattern choice grounded in one representative read/write path, ownership and
 coupling costs, plus a validation case and revisit trigger. If schema or lifecycle evidence

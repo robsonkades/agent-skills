@@ -45,8 +45,9 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
    or explicit event settings) for
    production, `-Xlog:deoptimization=debug` for a session. Both see **uncommon traps only**:
    a class-loading or `RedefineClasses` invalidation appears in neither. If that path matters,
-   use existing evidence or collect `-Xlog:jit+compilation=debug` and
-   `-Xlog:dependencies=debug` within the budget. See
+   use existing evidence or collect `-Xlog:jit+compilation=debug` with
+   `-Xlog:dependencies=debug` for class loading, or `-Xlog:redefine+class+nmethod=debug`
+   for redefinition scope, within the budget. See
    `references/deopt-tooling.md`.
 3. **Group by method and bci, reason and action, over a stated window.** The criterion is
    the rate per site and its decay, not presence: a site trapping once, or up to four times
@@ -121,9 +122,10 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
   needs dependency/redefinition context to establish the cause.
 - A CHA invalidation on JDK 25 runs as a `Handshake "Deoptimize"` (`-Xlog:handshake=info`;
   `DeoptimizeMarkedClosure`, `deoptimization.cpp`), not a global safepoint.
-  `RedefineClasses` is a global safepoint and flushes every nmethod with an `evol_method`
-  dependency on the class — callers and inliners alike. `safepoints` owns the cost model of
-  each.
+  `RedefineClasses` is a global safepoint; its invalidation scope depends on compiled-code
+  references to old methods and dependency-recording coverage. Do not infer every caller or
+  a whole-code-cache flush from the operation name. See the production reference for the
+  scoped and broad paths; `safepoints` owns the cost model.
 - Linking another lambda implementation can load a hidden class and invalidate a still-valid
   unique-implementor dependency (observed in the prior lab). Re-evaluating one lambda expression
   does not imply a new class each time. Proxies, generated accessors and scripting can do the same; `jvm-class-loading`

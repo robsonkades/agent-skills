@@ -95,6 +95,9 @@ closed bounded producer, but is unsafe as implicit overload policy for open traf
 Queue capacity, enqueue deadline, rejection, caller behavior and shutdown ownership are part of pool
 sizing. `CallerRunsPolicy` is not a generic backpressure solution: it can block event loops, invert
 latency, propagate reentrancy and silently discard after shutdown according to its contract.
+Before sizing for blocked workers, check whether they await child tasks queued to the same pool.
+If all workers are occupied by those parents, the children cannot run; a wait/service ratio does
+not resolve this dependency. Virtual threads also cannot resolve cycles through held resource permits.
 
 ## Virtual-thread model
 
@@ -102,6 +105,8 @@ latency, propagate reentrancy and silently discard after shutdown according to i
 a pool with a tunable task-worker count. Closing the executor performs orderly shutdown and waits, so
 scope it to an application/component lifetime or a deliberately bounded batch—not casually per
 request.
+Virtual threads are always daemon threads. They do not keep the JVM alive after the last started
+non-daemon thread terminates; the lifecycle owner must await required work before permitting exit.
 
 Do not pool virtual threads to limit concurrency. Use a semaphore/client pool/weighted gate around
 the limited operation. Remember that blocked virtual threads and queued task objects both retain task

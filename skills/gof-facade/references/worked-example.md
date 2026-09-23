@@ -75,16 +75,26 @@ One effective transaction is an explicit assumption, not a consequence of one me
 ```java
 // stayed in the domain
 public static Order from(Basket basket, PricedBasket priced, Reservation reservation) {
-    if (priced.total().isGreaterThan(basket.customer().creditLimit())) {
-        throw new CreditLimitExceeded(basket.customerId(), priced.total());
+    if (priced.total().isGreaterThan(basket.customer().perOrderLimit())) {
+        throw new PerOrderLimitExceeded(basket.customerId(), priced.total());
     }
     ...
 }
 ```
 
-The credit-limit rule is a decision about an order, so it lives on `Order`. Had it gone into
-`place()`, the rule would be unenforced for every other path that creates an order — including
-the migration script written next quarter (`domain-logic-organization`).
+This rule caps **one order**, using a policy valid for this creation. If a current policy version
+is required, revalidate it within the write boundary. Keeping the check only in `place()` would
+leave other creation paths needing the same guard; route supported creation through the validating
+domain operation (`domain-logic-organization`).
+
+It does not enforce a customer's total outstanding credit. Two concurrent orders of 60 can each
+pass a limit of 100 while exceeding a shared allowance together. That invariant belongs with the
+owner of the credit exposure/reservations and requires concurrency control at that boundary;
+neither a stale customer snapshot nor the facade's sequencing proves it. Let the facade coordinate
+that owner's operation instead of moving the invariant into `place()` (`enterprise-transactions`).
+This distinction follows the ownership of aggregate integrity described in
+[DDD Aggregate](https://martinfowler.com/bliki/DDD_Aggregate.html); the two-order counterexample is
+specific reasoning about this sketch, not a guarantee supplied by a framework.
 
 The distinction to hold: the facade knows **what happens in what order**; the domain knows
 **what is allowed**.

@@ -84,8 +84,10 @@ A long-running process must be resumable and its position queryable
   matter.
 - **There is no lifecycle or transition behavior at all.** Consider Strategy or plain type dispatch;
   this does not exclude terminal states within a real lifecycle.
-- **The status is derived, not stored.** If `isOverdue` is a function of a date and the clock, it
-  is a query, not a state; storing it creates a second source of truth that goes stale.
+- **Only a present-time query is needed.** An `isOverdue` display derived from a date and clock
+  need not become stored lifecycle state; materializing it needs an explicit refresh contract.
+  A committed expiry decision that changes legal operations, records history or requires effects
+  can still be a state transition. Distinguish the query from that decision and its delivery.
 - **Only caller policy varies.** Separate authorization/policy from lifecycle mechanics, but apply
   its guards at the authoritative transition boundary; State and policy can coexist.
 
@@ -138,7 +140,8 @@ IF two requests can transition the same entity
 THEN check-then-act is a race. Use a conditional update (compare the
      current state in the WHERE clause), optimistic locking with a
      version, or a CAS on an immutable state reference
-     (offline-concurrency-control).
+     (offline-concurrency-control). Preserve any caller expected-state/revision precondition;
+     retry on fresh state only when the command contract permits re-evaluation.
 
 IF a transition has side effects
 THEN define required completion, allowed loss/partial effects and recovery lifetime.

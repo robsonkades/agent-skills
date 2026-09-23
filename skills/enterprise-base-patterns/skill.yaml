@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-base-patterns
-version: 1.2.2
+version: 1.2.3
 description: >-
   The small structural patterns that hold an enterprise application together — Gateway,
   Mapper, Layer Supertype, Separated Interface, Registry, Special Case, Plugin and Service

@@ -10,6 +10,30 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-09-22
+
+### Added
+
+- Five specialist skills: `java-date-and-time`, `online-database-schema-migrations`,
+  `spring-security-for-apis`, `change-data-capture-operations`, and
+  `java-build-and-dependencies`, bringing the catalog to 280 skills.
+- Executable temporal and Spring Security examples, with 18 temporal checks and 27
+  security cases, including signed hostile tokens through the real decoder.
+- Per-skill review evidence and five independent response evaluations for the additions,
+  with explicit limits for unexecuted database, connector and Gradle integration.
+
+### Changed
+
+- Completed a further review of the 275 existing skills: 264 packages updated and 11
+  retained, preserving useful guidance and distinguishing example tests from agent evaluations.
+- Updated cross-skill handoffs for API security and relational schema rollouts, and
+  regenerated catalog versions and integrity hashes.
+
+### Fixed
+
+- Corrected version-sensitive Java/JVM, concurrency, persistence and distributed-system
+  guidance, including evidence requirements, failure recovery and compatibility boundaries.
+
 ## [1.6.0] — 2026-09-11
 
 ### Added
@@ -305,7 +329,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/robsonkades/agent-skills/compare/v1.6.0...v1.7.0
 [1.2.0]: https://github.com/robsonkades/agent-skills/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/robsonkades/agent-skills/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/robsonkades/agent-skills/releases/tag/v1.0.0

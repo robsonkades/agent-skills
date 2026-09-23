@@ -50,6 +50,32 @@ recommend it as a drop-in Java 17 API. An opens requirement can concern applicat
 as well as JDK internals; record the target package, consuming library and compatibility risk
 (java-reflection-and-method-handles, jdk-upgrade-impact).
 
+## A class loads, but its packaged resource is missing
+
+First check the actual artifact, resource path and lookup API. `ClassLoader.getResource` takes a
+root-relative path without a leading slash; `Class.getResource` accepts a leading slash for an
+absolute path and otherwise resolves relative to that class's package. A `null` result alone
+does not distinguish a missing file from module encapsulation.
+
+For non-`.class` resources inside a package of a named module, `ClassLoader.getResource` and
+`getResources` require that package to be open **unconditionally**, even for a caller in the
+resource's own module. An export or qualified `opens p to consumer` does not satisfy this API;
+neither does `--add-opens owner/p=ALL-UNNAMED`. Do not broaden package access merely to make
+a generic resource scanner work.
+
+When the resource is an implementation detail, prefer a lookup performed by its owning module
+through `Owner.class.getResource("settings.properties")`, returning only the needed result via
+its API. For an external caller, `Class.getResource` checks whether the resource's package is
+open to that caller's module; changing the class literal alone does not bypass encapsulation.
+An intentional shared-resource contract may justify a qualified opening with that lookup API,
+or unconditional `opens p` if loader-wide discovery is truly required. Resources outside module
+packages and `.class` resources have different encapsulation rules; do not use a successful
+class-file lookup to prove arbitrary resource visibility.
+
+Validate the actual calling module and lookup API with the packaged artifact. A useful pair is
+`opens p to consumer` versus `opens p`: the consumer's class-based lookup can succeed in both,
+while loader-based lookup for `p/settings.properties` succeeds only in the second.
+
 ## What the module system changes in delegation
 
 Parent-first delegation is the default `ClassLoader.loadClass` policy; custom loaders can override
@@ -101,3 +127,7 @@ TCCLs unreachable—there is no mutation or unload API for a live layer.
   — open packages are considered exported at runtime.
 - [Java 25 AccessibleObject](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/reflect/AccessibleObject.html)
   — reflection assumes readability, with separate access-suppression conditions.
+- [Java 17 ClassLoader resource lookup](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/ClassLoader.html#getResource(java.lang.String)>)
+  — unconditional opening for non-class resources in module packages.
+- [Java 17 Class resource lookup](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html#getResource(java.lang.String)>)
+  — name resolution and access relative to the calling module.

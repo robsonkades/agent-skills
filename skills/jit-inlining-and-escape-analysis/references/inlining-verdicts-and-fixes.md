@@ -41,11 +41,12 @@ and compiler state also apply.
 
 ## Verdict to fix
 
-The string C2 prints is the limit's name in disguise. Read the **tier-4** tree; a tier-3 tree
-above it carries C1's verdicts (`callee is too large`, `inlining prohibited by policy`,
+Match the compilation root, caller/BCI and tier before interpreting a verdict. Under the
+stated HotSpot configuration, read the **tier-4** tree for C2; levels 1–3 use C1's verdicts
+(`callee is too large`, `inlining prohibited by policy`,
 `callee uses too much stack`, `total inlining greater than DesiredMethodLimit` — from
-`c1/c1_GraphBuilder.cpp`) and says nothing about what C2 will do. `inlining prohibited by
-policy` on these JDK 25 sources means a profiling C1 compilation (level 2 or 3) sees
+`c1/c1_GraphBuilder.cpp`). These do not predict C2's decision. `inlining prohibited by policy`
+on these JDK 25 sources means a profiling C1 compilation (level 2 or 3) sees
 `highest_osr_comp_level() == 4` for the callee (`compiler/compilationPolicy.cpp`,
 `should_not_inline`). This records prior C2 OSR compilation, not proof that its nmethod is
 still installed. Check the exact build before transferring that interpretation.
@@ -59,28 +60,38 @@ uses tier-4 instructions from verified entry to instruction end, less skipped in
 recorded training data can supply the metric instead. It is not total nmethod storage
 (`ci/ciMethod.cpp`).
 
-| Verdict (C2, `bytecodeInfo.cpp`)        | Cause                                                                             | Fix, in order of preference                                                                                                         |
-| --------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `too big`                               | Callee > 35 bytes at a **cold** site                                              | Usually nothing: the site is cold. If profiling says it matters, the caller's hot path is not where you think — re-read the profile |
-| `hot method too big`                    | Callee exceeds the selected raised bytecode-size policy (default 325)             | Test a semantics-preserving cold split or scoped `CompileCommand=inline`; validate benefit before accepting either                  |
-| `already compiled into a big method`    | Callee instruction heuristic > `InlineSmallCode` (default 2500)                   | The compiled callee may have grown through unrolling, vectorisation or inlining. Compare retaining it with a measured local change  |
-| `already compiled into a medium method` | Lower-policy path and instruction heuristic > `InlineSmallCode / 4` (default 625) | Usually retain; establish actual workload cost before changing the boundary                                                         |
-| `inlining too deep`                     | Tree deeper than `MaxInlineLevel`                                                 | Compare retaining the chain with a local flattening experiment; preserve useful delegation/extension contracts                      |
-| `recursive inlining is too deep`        | Method inlined into itself more than once                                         | Expected for recursion; test a behaviorally equivalent loop only when measured cost warrants it                                     |
-| `virtual call`                          | No usable guarded/static target under current profile/policy                      | Inspect types at **this** site; isolate a stable hot site only if design remains sound                                              |
-| `no static binding`                     | Interface or abstract call with no usable profile                                 | Same as `virtual call`; often a call on a `default` method or through a generic helper with a polluted profile                      |
-| `low call site frequency`               | Site below `MinInlineFrequencyRatio`                                              | Nothing: it is cold                                                                                                                 |
-| `never executed`                        | Callee has no counters and no code                                                | Nothing; the path did not run during profiling                                                                                      |
-| `call site not reached`                 | Current profile/graph treats the site as unreachable                              | Exercise representative paths; later execution may trap and recompile                                                               |
-| `size > DesiredMethodLimit`             | Current or proposed aggregate inline bytecodes reach the limit                    | Inspect caller total and proposed callee size; test a smaller inline tree only when worthwhile                                      |
-| `NodeCountInliningCutoff`               | Live nodes above `LiveNodeCountInliningCutoff`                                    | Same: the compilation unit is enormous. Split the caller                                                                            |
-| `not inlineable` after `(not loaded)`   | Callee class not loaded when the caller compiled                                  | Warm the path before it matters, or accept: loading may permit later compilation; verify the result rather than assuming a fix      |
-| `unloaded signature classes`            | A parameter or return type not yet loaded                                         | Same                                                                                                                                |
-| `exception method`                      | Callee on a `Throwable` subclass called from normal code                          | Nothing; exception construction is meant to stay out of line                                                                        |
-| `native method`                         | JNI callee                                                                        | Nothing; only intrinsics cross this boundary                                                                                        |
-| `disallowed by CompileCommand`          | `-XX:CompileCommand=dontinline` or a directive                                    | Establish the rule's purpose/owner; remove only if obsolete or a validated replacement preserves its required behavior              |
-| `don't inline by annotation`            | `@DontInline` on a **JDK** method                                                 | Nothing; it is not yours to change                                                                                                  |
-| `force inline by CompileCommand`        | Your `inline` command was honoured                                                | Confirms a compiler decision, not a performance gain; compare unforced code and workload outcomes                                   |
+| Verdict (C2, `bytecodeInfo.cpp` / `doCall.cpp`) | Cause                                                                             | Fix, in order of preference                                                                                                         |
+| ----------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `too big`                                       | Callee > 35 bytes at a **cold** site                                              | Usually nothing: the site is cold. If profiling says it matters, the caller's hot path is not where you think — re-read the profile |
+| `hot method too big`                            | Callee exceeds the selected raised bytecode-size policy (default 325)             | Test a semantics-preserving cold split or scoped `CompileCommand=inline`; validate benefit before accepting either                  |
+| `already compiled into a big method`            | Callee instruction heuristic > `InlineSmallCode` (default 2500)                   | The compiled callee may have grown through unrolling, vectorisation or inlining. Compare retaining it with a measured local change  |
+| `already compiled into a medium method`         | Lower-policy path and instruction heuristic > `InlineSmallCode / 4` (default 625) | Usually retain; establish actual workload cost before changing the boundary                                                         |
+| `inlining too deep`                             | Tree deeper than `MaxInlineLevel`                                                 | Compare retaining the chain with a local flattening experiment; preserve useful delegation/extension contracts                      |
+| `recursive inlining is too deep`                | Method inlined into itself more than once                                         | Expected for recursion; test a behaviorally equivalent loop only when measured cost warrants it                                     |
+| `virtual call`                                  | No usable guarded/static target under current profile/policy                      | Inspect types at **this** site; isolate a stable hot site only if design remains sound                                              |
+| `low call site frequency`                       | Site below `MinInlineFrequencyRatio`                                              | Nothing: it is cold                                                                                                                 |
+| `never executed`                                | Callee has no counters and no code                                                | Nothing; the path did not run during profiling                                                                                      |
+| `call site not reached`                         | Current profile/graph treats the site as unreachable                              | Exercise representative paths; later execution may trap and recompile                                                               |
+| `size > DesiredMethodLimit`                     | Current or proposed aggregate inline bytecodes reach the limit                    | Inspect caller total and proposed callee size; test a smaller inline tree only when worthwhile                                      |
+| `NodeCountInliningCutoff`                       | Live nodes above `LiveNodeCountInliningCutoff`                                    | Same: the compilation unit is enormous. Split the caller                                                                            |
+| `unloaded signature classes`                    | A parameter or return type not yet loaded                                         | Exercise the real path; loading may permit later compilation, but verify rather than assume a fix                                   |
+| `exception method`                              | Callee on a `Throwable` subclass called from normal code                          | Nothing; exception construction is meant to stay out of line                                                                        |
+| `native method`                                 | JNI callee                                                                        | Nothing; only intrinsics cross this boundary                                                                                        |
+| `disallowed by CompileCommand`                  | `-XX:CompileCommand=dontinline` or a directive                                    | Establish the rule's purpose/owner; remove only if obsolete or a validated replacement preserves its required behavior              |
+| `don't inline by annotation`                    | `@DontInline` on a **JDK** method                                                 | Nothing; it is not yours to change                                                                                                  |
+| `force inline by CompileCommand`                | Your `inline` command was honoured                                                | Confirms a compiler decision, not a performance gain; compare unforced code and workload outcomes                                   |
+
+Two similar-looking messages come from **C1** `GraphBuilder::invoke` in the pinned source:
+
+- `no static binding`: C1 could not statically bind the call after its target analysis.
+  This alone does not establish a polluted receiver profile or predict C2's guarded inlining.
+- `not inlineable`: C1's initial eligibility gate failed; unloaded targets/holders,
+  disabled inlining or appendix patching are possible causes. `(not loaded)` narrows the
+  explanation, but the bare verdict does not. Inspect loading, flags and the exact call site.
+
+Neither message means the callee needs a standalone nmethod before it can inline. C2 parses
+callee bytecodes into the caller graph; an absent callee entry in `PrintCompilation` is not
+an inlining verdict. Read the caller's inlining tree and subsequent compilations.
 
 `megamorphic`, `too large` and `not inlined` are not strings C2 prints on 25. A script that
 greps for them returns nothing and the silence reads as "everything inlined".
@@ -151,9 +162,9 @@ A method above the tested `HugeMethodLimit=8000` was excluded while
 `DontCompileHugeMethods=true`. On 25.0.3 a 22,368-byte method produced **no line at
 all** in `PrintCompilation` or `-Xlog:jit+compilation`, no `jdk.CompilationFailure` event,
 and 432 of 436 `jdk.ExecutionSample` frames in it were `Interpreted`. One possible symptom is
-therefore a hot method shown as interpreted, with nothing in the
-compiler logs to explain it, and a callee that PrintInlining lists as `not inlineable`
-because it has no code to inline.
+therefore a hot method shown as interpreted, with nothing in the compiler logs to explain
+it. Confirm bytecode size and compilation policy separately from the caller's inlining
+decision; absence of a standalone compilation does not mean there are no bytecodes to inline.
 
 Generated code is where this occurs—large switches, generated serializers or initializers.
 Splitting is usually safer. Disabling `DontCompileHugeMethods` made this example compile, but
@@ -169,14 +180,18 @@ and does not prove any one method is huge.
 
 ## Changing a limit: the trade
 
-| Change                              | Scope                          | What it costs                                                                                                        |
-| ----------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Refactor so the hot part fits       | One source area                | Engineering/semantic risk; may improve or worsen runtime and must be measured                                        |
-| `CompileCommand=inline` / directive | Matching methods/compile roots | A decision pinned outside the code; must ship with the launch config and be re-validated on every JDK upgrade        |
-| `-XX:FreqInlineSize=<n>` globally   | Every hot site in the process  | Larger nmethods, more code cache, longer C2 compiles, more `MaxNodeLimit` bailouts, worse I-cache locality elsewhere |
-| `-XX:MaxInlineSize=<n>` globally    | Every cold site too            | The same, for code that was not hot enough to justify it                                                             |
-| `-XX:MaxInlineLevel=<n>`            | Every deep chain               | Rarely the real cause; deep trees are usually a `DesiredMethodLimit` problem in waiting                              |
-| `-XX:InlineSmallCode=<n>`           | Every already-compiled callee  | Duplicates large machine code into every caller                                                                      |
+| Change                              | Scope                                                  | What it costs                                                                                                        |
+| ----------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Refactor so the hot part fits       | One source area                                        | Engineering/semantic risk; may improve or worsen runtime and must be measured                                        |
+| `CompileCommand=inline` / directive | Matching methods/compile roots                         | A decision pinned outside the code; must ship with the launch config and be re-validated on every JDK upgrade        |
+| `-XX:FreqInlineSize=<n>` globally   | Every hot site in the process                          | Larger nmethods, more code cache, longer C2 compiles, more `MaxNodeLimit` bailouts, worse I-cache locality elsewhere |
+| `-XX:MaxInlineSize=<n>` globally    | Every cold site too                                    | The same, for code that was not hot enough to justify it                                                             |
+| `-XX:MaxInlineLevel=<n>`            | Every deep chain                                       | Rarely the real cause; deep trees are usually a `DesiredMethodLimit` problem in waiting                              |
+| `-XX:InlineSmallCode=<n>`           | Sites consulting the callee instruction-size heuristic | May admit more/larger inline graphs; caller code size and compilation cost must be measured                          |
+
+C2 reparses bytecode and optimizes it in the caller's context; it does not copy the callee's
+existing machine code into every caller. Raising `InlineSmallCode` relaxes a heuristic,
+not the other inlining gates, and cannot predict final caller size on its own.
 
 A global limit is a process-wide bet that the gain at one site outweighs bloat elsewhere. It
 needs whole-process throughput/tails, compilation CPU/time, code-cache and instruction-cache
@@ -210,6 +225,10 @@ better than reshaping a clear API for one compiler heuristic.
 ## Primary references
 
 - [HotSpot C2 inlining policy (`bytecodeInfo.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/bytecodeInfo.cpp)
+- [HotSpot C1 call eligibility and verdicts (`c1_GraphBuilder.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/c1/c1_GraphBuilder.cpp)
+- [HotSpot C2 call selection (`doCall.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/doCall.cpp)
+- [HotSpot C2 bytecode parsing for inlining (`callGenerator.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/callGenerator.cpp)
+- [HotSpot compilation eligibility (`compilationPolicy.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compilationPolicy.cpp)
 - [HotSpot callee instruction-size metric (`ciMethod.cpp`)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/ci/ciMethod.cpp)
 - [HotSpot compiler globals](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compiler_globals.hpp)
 - [HotSpot C2 globals](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/c2_globals.hpp)

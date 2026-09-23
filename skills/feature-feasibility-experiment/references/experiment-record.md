@@ -23,13 +23,14 @@ Hypothesis: <falsifiable statement>
 Pass: <observable threshold>
 Fail: <observable threshold>
 Inconclusive: <insufficient coverage/uncertainty or unmet validity condition>
+Inference when needed: <practical margin, uncertainty method/assumptions and decision rule>
 
 ## Method
 
 Environment: <isolated environment and relevant versions>
 Inputs/data: <source, scale, authorization and representativeness>
 Procedure: <repeatable commands or steps>
-Controls/repetitions: <comparison and count>
+Controls/repetitions: <comparison, independent unit and count; or why a deterministic check suffices>
 Validity: <setup checks proving the intended condition was exercised>
 Stopping: <time/resource budget and predeclared completion rule>
 
@@ -70,8 +71,24 @@ configuration was actually exercised, rather than an accidentally different setu
 For a performance claim, state the useful operation, baseline, workload distribution and
 scale, concurrency, placement, warm-up/measurement windows and relevant runtime settings.
 Choose repetitions to assess observed variability and alternate/control run order when drift
-could bias results. More repetitions do not correct an unrepresentative workload. Route actual
+could bias results. Name the independent unit (for example run, host or deployment); many
+correlated requests within one run are not independent repetitions of that run. More repetitions
+do not correct an unrepresentative workload. Route actual
 load-test design to `load-testing`; avoid turning a smoke test into a production-capacity claim.
+
+When sampling uncertainty matters, distinguish an absolute limit, a minimum useful improvement
+and an equivalence margin. Choose the inference method and its assumptions before interpreting
+results. Under an interval-based rule, an interval spanning both acceptable and unacceptable
+values is inconclusive, even if the point estimate passes. A large p-value does not by itself
+establish equivalence, and statistical significance does not establish a useful effect size.
+Do not extend a fixed-sample experiment until it happens to pass; use its stopping rule or a
+predeclared sequential design with appropriate error control.
+
+Zero observed failures also leaves uncertainty. For example, with 20 independent trials having
+the same failure probability, the exact one-sided 95% upper binomial bound after zero failures
+is `1 - 0.05^(1/20)`, about 13.9%. This does not establish a failure probability below 0.1%.
+The bound depends on those sampling assumptions; counting correlated requests as independent
+trials would not justify it.
 
 For compatibility or integration, pin the exact supported versions and exercise the failing
 edge: old bytes, rejected inputs, timeouts, duplicate requests or partial failure as relevant.
@@ -87,3 +104,11 @@ configuration are available. A missing broker blocks conclusions that depend on 
 it need not block decoding, and successful decoding does not prove delivery or live integration.
 A reproducible decoding or semantic failure in the valid configuration can refute compatibility.
 Changing the reader before retrying tests a different claim and requires a new recorded revision.
+A deterministic check of a specified fixture need not acquire statistical repetitions or a
+p-value; limit its conclusion to that configuration and contract rather than a population-wide
+failure rate.
+
+## Sources
+
+- [NIST confidence intervals for proportions](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm): one-sided bounds and exact binomial intervals for small failure counts.
+- [ASA statement on p-values](https://www.amstat.org/asa/files/pdfs/p-valuestatement.pdf): significance, effect size and the limits of a p-value alone.

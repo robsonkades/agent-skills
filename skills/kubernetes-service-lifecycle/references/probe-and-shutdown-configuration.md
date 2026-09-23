@@ -140,6 +140,25 @@ Notes that decide correctness:
   and security rules. Numeric probe ports do not require a `containerPort` declaration or
   a Service port; named ports require a matching named container port. A stale path can
   return 404 and fail the probe.
+- Verify the HTTP response, not just the health body: kubelet does not interpret a JSON
+  `DOWN` or `OUT_OF_SERVICE`. HTTP 200 passes even with that body; a same-host redirect to
+  a login page returning 200 can also pass without consulting the health group. Use a direct
+  health response with the intended access rules; do not expose unrelated Actuator endpoints
+  or disable application security to make a probe green.
+- Check effective status mappings as well as group membership. In Boot 3.4, a custom
+  `management.endpoint.health.status.http-mapping` replaces the default `DOWN` and
+  `OUT_OF_SERVICE` mappings to 503; unmapped statuses return 200. Groups inherit the system
+  mapper unless overridden. Inspect group-specific mappings and custom `HttpCodeStatusMapper`
+  beans too. When adding a custom status, explicitly retain `down: 503` and
+  `out-of-service: 503` if those states must fail the probe. Preserve an adequate existing
+  mapping; changing thresholds cannot repair a response that always reports success.
+
+When verifying a changed readiness response, use an isolated lifecycle test to switch
+readiness from accepting to refusing traffic and back. Check the status returned on the
+configured path/port with the probe's headers and access rules, then observe the pod's
+readiness transition after its configured thresholds. A login redirect or HTTP 200 with an
+unhealthy body must fail this validation even if kubelet reports success. This checks the
+probe contract, not the rollout's complete availability SLO.
 
 ## Resources and disruption
 
@@ -163,8 +182,10 @@ Notes that decide correctness:
 ## Sources
 
 - [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/): scheduling, thresholds and probe-level grace.
+- [Kubernetes 1.34 HTTP probe implementation](https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/probe/http/http.go): response-status interpretation and redirect handling.
 - [Kubernetes 1.34 feature gates](https://v1-34.docs.kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/): sleep-action and native-sidecar release/gate conditions.
 - [Kubernetes sidecar lifecycle](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/): termination ordering and the shared grace budget.
 - [Kubernetes disruption budgets](https://kubernetes.io/docs/tasks/run-application/configure-pdb/): unhealthy-pod eviction policy and its availability tradeoff.
 - [Boot 3.4 release notes](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes): graceful shutdown default.
 - [Boot Actuator probes](https://docs.spring.io/spring-boot/reference/actuator/endpoints.html#actuator.endpoints.kubernetes-probes): main-port health groups and management-port blind spots. Match properties to the deployed Boot line.
+- [Boot 3.4 health status mappings](https://docs.spring.io/spring-boot/3.4/reference/actuator/endpoints.html#actuator.endpoints.health.writing-custom-health-indicators): custom mappings replace defaults; health groups can inherit or override the system mapper.

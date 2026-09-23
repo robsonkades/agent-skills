@@ -123,15 +123,23 @@ only when load, cache state, topology, JDK/layout and capture filter are normali
 | One dominator owns a material share and grows across normalized observations | High-value starting point; a business cache/index may legitimately dominate                         |
 | Many medium objects, none dominant                                           | Legitimate fragmented usage, or several small simultaneous leaks                                    |
 
-## Two dumps beat one
+## Comparing captures when justified
 
 ```bash
+# Only after the pause/data-exposure decision above, with fresh destinations:
 jcmd <pid> GC.heap_dump dump1.hprof
-sleep 600
+# Wait for the relevant growth, expiry or reuse cycle under comparable conditions.
 jcmd <pid> GC.heap_dump dump2.hprof
-
-# MAT: Window -> Heap Dump -> Compare Baselines -> "Compare Histograms"
 ```
+
+In MAT, open each dump and run its Histogram (or the same retained-set query). In each
+dump's **Navigation History**, add the result to the **Compare Basket**. Put the baseline
+first, execute the comparison, and choose absolute values or deltas. Record the grouping,
+filters and retained-size calculation used; comparing different populations can manufacture
+growth. This workflow compares aggregate results, not the identity of individual objects.
+An HPROF address may change when GC moves an object, and MAT object IDs are local to their
+snapshot. Match individual domain objects only with an independently justified stable key;
+equal addresses or class names do not establish identity across captures.
 
 Monotonic normalized growth strengthens an unbounded-retention hypothesis; it does not by
 itself prove a defect. Legitimate append-only state, changed traffic/cardinality, delayed
@@ -167,3 +175,4 @@ OQL/retained-set workflow or of enough capacity for a particular large dump.
 - [HotSpot 25 heap dumper: safepoint capture, virtual-thread roots and subsequent merge](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/heapDumper.cpp)
 - [HotSpot 25 VM-reported OOME once-only guard](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/utilities/debug.cpp)
 - [JMC 9.1.0 JOverflow HPROF editor registration](https://github.com/openjdk/jmc/blob/9.1.0-ga/application/org.openjdk.jmc.joverflow.ui/plugin.xml)
+- [MAT comparison workflow and limits of cross-dump object identity](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/comparingdata.html)

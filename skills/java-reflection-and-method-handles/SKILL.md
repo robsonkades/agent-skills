@@ -85,7 +85,7 @@ which becomes an execution primitive once initialization, construction or invoca
   handle visible as a compiler constant often enables adapter/target inlining, but this is a JIT
   decision, not a `static final` guarantee. `invokeWithArguments` intentionally performs generic
   array/spreader adaptation; `Method.invoke` has varargs/boxing/wrapping/access costs. Measure the
-  actual target and storage shape. Core reflection is MethodHandle/VarHandle-based since JDK 18;
+  actual target and storage shape. Core reflection uses method handles by default since JDK 18;
   the old implementation was removed in JDK 22, making old inflation/direct-handle switches no-ops.
 - Use `VarHandle` rather than `sun.misc.Unsafe` or reflection for low-level field access with
   explicit memory-ordering semantics. Query `isAccessModeSupported`; final fields support reads,

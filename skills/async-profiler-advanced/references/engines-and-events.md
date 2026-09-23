@@ -39,6 +39,24 @@ engine is part of the experiment, request it explicitly where the pinned version
 fail or label the recording when unavailable. Kernel-frame absence alone is not definitive:
 user-only mode and symbol restrictions can produce the same appearance.
 
+For v4.5 JFR, inspect the profiler's `jdk.ActiveSetting` entries using a compatible JDK's
+offline tool:
+
+```bash
+jfr print --events jdk.ActiveSetting recording.jfr
+```
+
+Read `engine` alongside `version`, `event`, `alluser`, and `kernelSymbols`, retaining chunk
+and recording context if settings differ. The `engine` setting identifies the primary
+sampling engine; it does not identify every auxiliary engine in a multi-event capture.
+For example, requested `event=cpu` with `engine=ctimer` explains missing kernel stacks without
+proving lost CPU samples. In v4.5 on Linux, `-e cpu-clock --all-user` requests user-space
+perf sampling explicitly when that is the desired experiment; it still requires perf access
+and must not be substituted silently for a kernel-inclusive capture.
+See [CPU engine selection](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/CpuSamplingEngines.md)
+and [recorded settings](https://github.com/async-profiler/async-profiler/blob/v4.5/src/flightRecorder.cpp).
+If the recording/settings are absent, keep the engine unknown until other evidence resolves it.
+
 ## CPU, wall, and wait interpretation
 
 CPU sampling probability is approximately proportional to CPU/event consumption, so idle
@@ -59,6 +77,11 @@ Producer `-I`/`-X` use simple name patterns with edge wildcards for supported ag
 converter `-I`/`-X` take regular expressions. Do not copy patterns between them unchanged or
 expect a JFR recording to be reduced by HTML-output filters. Verify the intended retained
 population with a known stack and keep collection cost separate from output size.
+
+For a discriminating converter-filter check, use folded stacks `root;ServiceWorker 20`,
+`root;Servic 5`, and `root;Other 10`. Converter `-I 'Service.*'` should retain only
+`ServiceWorker`; `-I 'Service*'` should retain only `Servic`. The latter regex repeats the
+letter `e`, not the entire suffix. Use separate output paths for each conversion.
 
 In v4.5, batched wall output uses `profiler.WallClockSample`; one JFR record can represent
 multiple logical samples. Compare expanded weights using a matching converter, not raw JFR
@@ -183,6 +206,18 @@ miss rate or latency.”
   intervals and TLAB/outside-TLAB mechanisms affect coverage.
 - Live allocation filtering at recording end is window- and GC-dependent. Surviving a short
   recording does not prove a leak; dying before the end does not prove harmlessness.
+  On HotSpot, `--live` requires the JVMTI sampled-allocation engine (JDK 11+ capability);
+  forcing `--tlab` does not provide that engine. Confirm producer support and live events
+  before converting. The v4.5 tracker holds at most 1,024 weak object references and can
+  omit later samples when full or contended. Live byte totals sum actual sizes of the
+  surviving tracked objects, whereas ordinary JVMTI allocation weights use
+  `max(object size, sampling interval)`. Do not divide these totals to estimate a survival
+  rate or treat missing classes as unretained. A longer capture or smaller interval can
+  fill the tracker sooner without improving coverage. See the
+  [v4.5 live tracker](https://github.com/async-profiler/async-profiler/blob/v4.5/src/objectSampler.cpp),
+  [engine selection](https://github.com/async-profiler/async-profiler/blob/v4.5/src/profiler.cpp),
+  and [TLAB engine guard](https://github.com/async-profiler/async-profiler/blob/v4.5/src/allocTracer.cpp).
+  Hand retention/root analysis to `heap-dump-analysis`.
 - Native-memory hooks cover the allocator APIs/interposition paths the profiler implements.
   Custom arenas, direct syscalls, device memory, other processes, and ownership transfers may
   be absent.

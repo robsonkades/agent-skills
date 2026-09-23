@@ -96,6 +96,9 @@ evidence explicitly; do not invent handlers or retry guarantees from a type name
   `InterruptedException` when the API permits; if converting for an outer owner, restore the
   interrupt flag and ensure retry loops stop. A terminal task owner may consume it after cleanup
   and termination. Do not relabel it as a retryable dependency outage.
+  Cancellation of a local wait does not prove that a remote operation stopped or was not applied.
+  Preserve known/unknown remote effects for the owning workflow's reconciliation contract while
+  terminating the cancelled retry flow; see the payment example.
 
 ## Deliverable
 

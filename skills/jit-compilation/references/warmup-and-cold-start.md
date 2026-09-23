@@ -59,6 +59,10 @@ jfr print --events jdk.CompilerStatistics warm.jfr | grep -E 'startTime|compileC
 # delta per window: compiler activity; correlate with workload, queue and latency
 ```
 
+Use the timestamps of the samples that actually bound each delta, not the requested recording
+duration. The `compiler-statistics` view shows the last cumulative JVM values; it includes
+pre-recording activity. See `tiered-compilation-model.md` for sample coverage and rate arithmetic.
+
 Use recording status and a bounded deadline to observe completion, then validate the artifact
 with `jfr summary` before extraction. If an earlier snapshot is needed, use the target JDK's
 supported `JFR.dump` command and validate that output instead. Resolve the destination in the
@@ -119,11 +123,18 @@ fleet-level failure mechanisms against actual startup CPU, traffic and service e
 
 On the JDK 25 baseline the warm-up story is AOT cache, not only CDS:
 
-| Mechanism              | Accelerates                      | Does not accelerate                    |
-| ---------------------- | -------------------------------- | -------------------------------------- |
-| CDS                    | class loading, linking           | `<clinit>`, JIT profiling, compilation |
-| AOT cache (JEP 483)    | class loading, linking           | `<clinit>`, JIT profiling, compilation |
-| AOT profiles (JEP 515) | + C2 starts with method profiles | `<clinit>`, compilation                |
+| Mechanism                       | Work shifted ahead of time                           | Work still needed                                   |
+| ------------------------------- | ---------------------------------------------------- | --------------------------------------------------- |
+| Ordinary CDS                    | class-file reading/parsing through shared metadata   | runtime loading/linking, `<clinit>`, profiling, JIT |
+| AOT cache (JEP 483, JDK 24+)    | reading/parsing plus supported class loading/linking | `<clinit>`, JIT profiling, compilation              |
+| AOT profiles (JEP 515, JDK 25+) | + profiles for trained methods                       | `<clinit>`, compilation, adaptation to new behavior |
+
+CDS can reduce class-startup cost without providing JEP 483's loaded-and-linked class state.
+Do not prescribe JDK 24/25 AOT flags to an older runtime or infer AOT use from a mapped CDS
+archive. Preserve the project's runtime; inspect which mechanism is available and actually used.
+Unsupported AOT loading/linking cases fall back to runtime work, so cache presence does not
+prove every class avoids that work. These mechanisms do not generally preexecute application
+static initializers.
 
 Among these cache mechanisms, JEP 515 targets the profiling phase. It caches **profiles,
 not compiled application methods**: the training run's

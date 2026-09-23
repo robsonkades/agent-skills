@@ -43,9 +43,14 @@ deploy loses in-flight work and no two components agree on what state a case is 
 
 **Dominant forces:** data complexity, query performance, schema evolution.
 
-**Follows:** SQL owned by gateways; projections for query-shaped work; careful indexing and pagination
-(keyset for depth); explicit inheritance and mapping decisions; migrations as the schema's
-source of truth.
+**Follows:** query-shaped projections through adequate existing ORM or SQL access; consider
+a gateway when query control or an explicit boundary warrants it (`data-source-patterns`).
+Check query/index behavior and the navigation contract before choosing pagination: keyset
+suits sequential deep traversal with a deterministic order, not arbitrary page-number access.
+Make mapping decisions explicitly. For schemas the project owns, migrations record intended
+changes; for externally owned schemas, use the owner's contract and verify mapping compatibility
+rather than inventing application-owned migrations. Compare intended and deployed schema where
+drift affects the decision.
 
 **Characteristic failure:** a domain model applied to set-shaped work, loading hundreds of
 thousands of objects to change a column.
@@ -155,3 +160,5 @@ transaction/query trace and change or incident history before proposing restruct
 - [Fowler: CQRS](https://martinfowler.com/bliki/CQRS.html): separate read/write models have application-specific benefits and complexity.
 - [Richardson: Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html): atomic local state/publication intent and duplicate relay delivery.
 - [Spring Batch: Chunk-oriented Processing](https://docs.spring.io/spring-batch/reference/step/chunk-oriented-processing.html): writes and commits at the chunk transaction boundary; consult the project's release for implementation details.
+- [Spring Data JPA: Projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html): repositories can return query-shaped projections; inspect generated queries and the project's supported version before adding another access layer.
+- [Spring Data Commons: Scrolling](https://docs.spring.io/spring-data/commons/reference/repositories/scrolling.html): keyset continuation uses sort keys and requires a stable order; implementation-specific property and projection restrictions require a version-matched check.

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-decorator
-version: 1.2.2
+version: 1.2.3
 description: >-
   Decorator in modern Java: wrapping an object in something of its own interface to add behaviour,
   stackably, at runtime — and the fact that the stacking order changes the semantics. Covers the

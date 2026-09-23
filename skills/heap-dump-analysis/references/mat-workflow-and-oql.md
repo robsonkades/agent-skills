@@ -147,12 +147,19 @@ registered on a static bus.
 ### Virtual threads and `StackChunk`
 
 When a virtual thread is unmounted, its stack does not live in an OS thread stack — it
-lives in the Java heap, in a `StackChunk` under `jdk.internal.vm.Continuation`. Two
-consequences:
+lives in the Java heap, in a `StackChunk` under `jdk.internal.vm.Continuation`. Consider
+both heap ownership and diagnostic coverage:
 
-- `jstack` enumerates OS threads and therefore does **not** list unmounted virtual
-  threads. Use `jcmd <pid> Thread.dump_to_file -format=json`, which walks the JVM's own
-  registry.
+- Traditional `jstack`/`Thread.print` dumps do **not** enumerate virtual threads. On
+  JDK 21 and later, use `jcmd <pid> Thread.dump_to_file -format=json <file>` with a fresh
+  destination in the target's filesystem. Check `help Thread.dump_to_file` on the target:
+  JDK 21 requires the path; some later builds allow console output with a size limit.
+  An explicit file avoids that console limit; verify completion and parse the JSON.
+- Record thread-tracking coverage before interpreting an absent virtual thread:
+  `-Djdk.trackAllThreads=false` can omit threads created directly with `Thread.Builder`.
+  This is a thread observation, not the same capture as HPROF; lifetimes can change
+  during capture. Neither absence from this dump nor a smaller
+  thread count proves that the heap contains no retained virtual-thread state.
 - With tens of thousands of virtual threads in flight (for example
   `spring.threads.virtual.enabled=true`), aggregate retained heap under
   `VirtualThread` → `Continuation` → `StackChunk` is a real and non-obvious memory driver.
@@ -182,3 +189,5 @@ third-party allocations and some JDK-library memory are outside NMT's coverage.
 - [MAT unreachable-object population and reparsing](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/reference/inspections/unreachable_objects.html)
 - [ThreadLocalMap weak keys, strong values and cleanup, OpenJDK 25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/java/lang/ThreadLocal.java)
 - [NMT coverage, JDK 25](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)
+- [JEP 444: thread-dump syntax and virtual-thread tracking coverage](https://openjdk.org/jeps/444)
+- [OpenJDK 25.0.3 thread dumper: bounded console output and file output](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/java.base/share/classes/jdk/internal/vm/ThreadDumper.java)

@@ -43,11 +43,13 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
    `-XX:NativeMemoryTracking=summary` at start, then
    `jcmd <pid> VM.native_memory summary`; `baseline` followed later by `summary.diff`
    attributes tracked growth to a category. Periodic JFR NMT/RSS events can provide a
-   related time series when present/enabled, but do not assume identical semantics. NMT cannot be
-   enabled on a running process.
+   related time series when present/enabled, but do not assume identical semantics. The NMT
+   events also require NMT enabled at startup; starting JFR later cannot recover that missing
+   attribution. NMT cannot be enabled on a running process.
 3. **Budget every region and peak overlap**: candidate heap max = limit − measured/modelled
    non-heap/cgroup peaks − uncertainty/recovery headroom. Then express it as `-Xmx` or
-   `MaxRAMPercentage` against the memory value the JVM actually detected;
+   `MaxRAMPercentage` against the memory value the JVM actually detected, and verify the
+   resulting `MaxHeapSize`: small-memory ergonomics and alignment can change the percentage result;
    the arithmetic and the RSS-versus-NMT gap table are in
    `references/container-budget.md`.
 4. **Distinguish virtual reserved, NMT committed, resident and cgroup-charged.** `ps` exposes
@@ -86,7 +88,7 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
   thread or its old lifecycle states as evidence.
 - Measure object layout with JOL rather than estimating headers. Compact object headers
   (JEP 519, product in 25) are **off by default through JDK 26 and on by default from
-  JDK 27** (JEP 534, delivered into 27 but not yet GA); disable with
+  JDK 27** (JEP 534); confirm the effective setting on the target build. Disable with
   `-XX:-UseCompactObjectHeaders`. **Do not budget 8 bytes
   per object**: alignment makes savings class/layout-dependent, and some common small
   objects can retain the same aligned size while their surrounding graph/arrays change.
@@ -128,5 +130,6 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
 Authoritative sources: [Oracle Native Memory Tracking guide](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html),
 [Oracle container support guide](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#java-options-for-linux),
 [JEP 519](https://openjdk.org/jeps/519), [JEP 534](https://openjdk.org/jeps/534),
+[JDK 27 release notes](https://www.oracle.com/java/technologies/javase/27all-relnotes.html),
 [HotSpot sweeper removal, JDK-8290025](https://bugs.openjdk.org/browse/JDK-8290025), and the
 [Linux cgroup v2 memory controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory).

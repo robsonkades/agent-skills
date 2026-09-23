@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-bytecode
-version: 2.1.2
+version: 2.1.3
 description: >-
   Reading and reasoning about JVM bytecode: javap -c -p -v, operand stack and local slots, the
   constant pool and resolution timing, descriptors versus Signature, the invoke* family with

@@ -78,6 +78,14 @@ budgets are rejected and null raises `NullPointerException`; positive overflow s
 distinguish additional lifecycle policies. Double-close is harmless but leaked or prematurely
 closed leases remain bugs; idempotent release does not prove that protected work has finished.
 
+Despite the name `tryAcquire`, a positive waiting budget can block the calling thread. If that
+thread is an event loop, or all workers in the completion executor wait for permits, admitted work
+may be unable to finish and release them. A timeout bounds the stall; it does not make admission
+nonblocking. Use `Duration.ZERO` for an immediate attempt with explicit rejection, or an
+asynchronous admission mechanism with bounded waiters/bytes and deadline/cancellation cleanup.
+Offloading the wait must still bound waiting tasks and retained bytes, and must not occupy all
+workers needed for resource completion. Do not hide an unbounded queue behind the semaphore.
+
 Partial usage sketch: `deadline.remaining()` must recalculate from one monotonic request deadline,
 clamp expired time to zero and reserve response/cleanup time. The exceptions and client are
 application-defined; the client here must finish local resource cleanup before returning/throwing.
@@ -100,6 +108,15 @@ until the caller's future timed out. If the server continues after transport can
 permits alone do not bound server execution; observe that late work or use server admission.
 For asynchronous clients, transfer ownership to their actual completion/cleanup callback, handle
 synchronous launch failures, and do not wrap future creation in this lexical try-with-resources.
+
+Check what the client's completion actually means. With Java `HttpClient` and
+[`BodyHandlers.ofInputStream()`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpResponse.BodyHandlers.html#ofInputStream()>),
+the response can be available before its body has fully arrived; the caller must obtain and close
+the stream. If the protected unit is the whole streaming exchange, releasing from `sendAsync`'s
+response-future callback is too early. Transfer the stream and lease to the body consumer and keep
+the permit through body use and required close/cancellation cleanup. Cover read failure, an
+abandoned response, and failure to hand ownership to the consumer. A synchronous `send` returning
+a stream has the same lifetime issue; method return alone does not establish resource release.
 
 ## Weighted admission
 
@@ -149,6 +166,10 @@ Test removal and reactivation while old work or an admission attempt still holds
 - double close and forgotten close detection;
 - zero/negative/overflowing duration and weight greater than capacity;
 - slow dependency and caller timeout with residual provider work;
+- response future completes while its streaming body remains active: retain the permit through
+  body use/cleanup, including failed consumption or ownership handoff;
+- admission waits on the executor needed for release: expose stalled completion, then verify the
+  chosen immediate/async admission policy preserves progress and bounds waiting work;
 - replica overlap and another client consuming the same dependency;
 - tenant skew, reserve exhaustion and high partition churn;
 - limit decrease while more work is already in flight: no early release, and no new admissions

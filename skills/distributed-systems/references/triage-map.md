@@ -25,15 +25,20 @@ not establish it.
 
 ## The data is wrong or stale
 
-**Separating question:** is the value _old_, or is it _inconsistent between readers_?
+**Separating question:** is an old value being served, do readers disagree, or did a stale
+write replace the authoritative value?
 
 - Old everywhere, converges later → test replication lag, cached snapshots and delayed
   invalidation; route to `consistency-models` or `caching-strategies` based on the serving path.
 - Different per replica or per instance, does not converge → `cache-sharding-and-replication` if a
   cache is involved, otherwise `consistency-models` for the model actually in force.
 - The writer cannot read its own write → read-your-writes: `consistency-models`.
-- Correct value overwritten by an older one → ordering or a missing version guard:
-  `message-ordering-and-partitioning`.
+- Correct stored value overwritten by an older one → inspect the original read/version,
+  update path and enforced write precondition. Replayed or reordered messages route to
+  `message-ordering-and-partitioning`; stale client read/edit/save across transactions routes
+  to `offline-concurrency-control`. A missing version guard does not establish a broker fault.
+  [HTTP conditional writes](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1) are one
+  example of enforcing the client's original precondition.
 
 ## Something is slow
 
@@ -77,8 +82,12 @@ not establish it.
 - Rejecting with 429 → inspect the named quota/scope and `Retry-After`; it may be valid
   admission control, quota misconfiguration or unexpected workload. Route to
   `retries-and-backoff` and `rate-limiting-and-load-shedding`.
-- Up, healthy, and useless (gray failure) → `failure-models`, then `load-balancing-and-routing`
-  for outlier ejection.
+- Health checks pass but useful work fails → `failure-models`; compare client-visible
+  outcomes by endpoint and path before naming a gray-failure mechanism. Route to
+  `load-balancing-and-routing` for ejection only when the detector can observe the relevant
+  failures and usable alternatives have enough capacity. Successful protocol responses can
+  conceal wrong results; ejection does not repair a shared cause. See the detection inputs
+  and ejection limits in [Envoy 1.35.3](https://www.envoyproxy.io/docs/envoy/v1.35.3/intro/arch_overview/upstream/outlier).
 
 ## Ordering looks broken
 

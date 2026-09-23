@@ -46,7 +46,8 @@ for that session. No global linearizability requirement follows from this observ
 4. **Trace the whole read path, not the database.** Unchecked replica or mutable-cache reads
    can weaken a linearizable store's client-visible guarantee. Validate routing, versions and
    read snapshots; an immutable-version endpoint may have a different contract from a mutable
-   "latest" lookup. Topology alone does not establish the path's guarantees.
+   "latest" lookup. A caught-up server does not refresh an already established transaction
+   snapshot. Topology alone does not establish the path's guarantees.
 5. **Separate but connect isolation from consistency explicitly.** Decide the transaction isolation
    level for interactions among concurrent transactions, and the distributed model for ordering
    and recency across nodes; a product may bundle these as strict serializability.

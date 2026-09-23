@@ -112,12 +112,15 @@ THEN enforce it at the value's constructor/factory boundary and delegate from bu
 
 IF the builder is stored in a field or shared between requests
 THEN inspect ownership and escape paths. Prefer per-construction confinement;
-     alternatives need an explicit immutable or synchronized lifecycle contract.
+     alternatives need an explicit ownership-transfer, immutable or synchronized lifecycle
+     contract. Synchronizing individual setters/build() does not isolate the whole
+     construction session; protect that session and define reuse/reset behavior.
 
 IF the builder can produce an object that later throws because a
 combination was illegal
-THEN the illegal combination must be rejected in build(), naming both
-     fields. "field X is required" when Y was set is not enough.
+THEN reject the combination no later than construction, naming both fields;
+     build() delegates intrinsic invariants to the product boundary. Earlier rejection
+     may enforce an explicit builder protocol. "field X is required" when Y was set is not enough.
 
 IF @Builder is applied to a JPA entity
 THEN verify the generated constructor path, identity/lifecycle rules, association
@@ -127,9 +130,10 @@ THEN verify the generated constructor path, identity/lifecycle rules, associatio
 
 ## Cross-cutting checks
 
-- **Concurrency.** A conventional mutable builder is not thread-safe by default. The hazard can be a builder
-  held as a field of a singleton, or captured by a lambda that outlives the call. Build inside
-  the scope that needs the object, publish the finished immutable value.
+- **Concurrency.** A conventional mutable builder is not thread-safe by default. Inspect actual
+  aliases and overlapping use, not field placement or lambda capture alone. Prefer construction
+  within one owner and publication of the finished immutable value; transferring a builder to
+  another owner needs safe publication and exclusive use during that ownership.
 - **Distribution.** Builders are the normal shape for protocol messages and outbound requests,
   and generated ones (protobuf, Avro, gRPC, cloud SDKs) already exist — reuse them unless an
   application-owned contract or validation boundary justifies an adapter. What crosses the wire is the built value, so its invariants must hold after
@@ -148,7 +152,7 @@ THEN verify the generated constructor path, identity/lifecycle rules, associatio
 
 - [ ] Value-product constructors enforce invariants; mutable GoF products have explicit ownership and completion rules
 - [ ] Every public value-construction path enforces intrinsic invariants; builder-specific state checks remain local
-- [ ] Cross-field rules are checked at `build()` and name both fields when violated
+- [ ] Cross-field rules hold at the product boundary; constructor/build diagnostics identify conflicting fields
 - [ ] Required components are enforced — by a staged builder, or by a check that names them
 - [ ] Builder confinement, reuse/reset semantics and failed-build behavior are explicit
 - [ ] Call-site ambiguity, optionality, staged construction, or representation variance actually

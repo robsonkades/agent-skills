@@ -40,8 +40,8 @@ the diagnosis or permitted action. If the current behavior meets the relevant bu
    supported/enabled `com.sun.management.ThreadMXBean`, but must subtract harness work,
    isolate the measured thread and confirm compilation state; it is not automatically the
    same experiment. In production,
-   `jdk.ObjectAllocationSample` in JFR names the most-allocated types; `allocation-profiling`
-   owns the attribution.
+   `jdk.ObjectAllocationSample` in JFR estimates allocation pressure by aggregating sample
+   `weight` by type/stack, not by counting events; `allocation-profiling` owns the attribution.
 2. **Reconcile bytes with object layout and compilation.** A repeatable delta close to an
    aligned object size is a useful hypothesis, not identity proof: boxing, lambda objects,
    arrays, harness/class-init work and different compiled paths contribute too. Correlate
