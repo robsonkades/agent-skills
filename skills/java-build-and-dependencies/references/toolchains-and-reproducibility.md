@@ -51,6 +51,52 @@ on the supported runtime. Do not upgrade the production runtime to hide an accid
 new API or dependency. An intended baseline migration has wider checks owned by
 `jdk-upgrade-impact`.
 
+## Missing generated code: identify the producer before changing dependencies
+
+First distinguish a type expected from a dependency JAR from one produced during this
+build. Inspect the annotation/generator contract, compiler diagnostics, expected generated
+sources/classes or other documented processor effect, and the failing main/test/custom
+source set. Separate the annotation API used by source code, the processor executed by
+the compiler and any runtime library required by the generated code. A processor path
+is not the source compilation classpath or the application runtime classpath.
+
+Starting with JDK 23, `javac` does not automatically run processors discovered only on
+the ordinary classpath without explicit processing configuration. The executing compiler
+determines this policy; `--release 17` does not restore JDK 17 processor discovery.
+Inspect the effective processor path/module path, named processors and `-proc` options,
+including intentional `-proc:none`. Configure the intended trusted processors rather
+than blindly enabling classpath-wide discovery with `-proc:full`. These processors
+execute build-time code. Sources: [JDK 23 release notes](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html)
+and the [OpenJDK engineering explanation](https://inside.java/2024/06/18/quality-heads-up/).
+
+Use the target build's supported configuration:
+
+- **Maven 3:** inspect the effective Compiler Plugin configuration, such as
+  `annotationProcessorPaths` and `annotationProcessors`, for the failing execution.
+  Those processor artifacts need not appear in an ordinary application dependency tree.
+  Keep annotations/runtime support in their separately justified dependency scopes.
+  The [Compiler Plugin 3.13.0 parameter reference](https://maven.apache.org/plugins-archives/maven-compiler-plugin-3.13.0/compile-mojo.html#annotationProcessorPaths)
+  documents these options; match the installed plugin instead of copying
+  [Maven 4 processor dependency syntax](https://maven.apache.org/plugins/maven-compiler-plugin-4.x/examples/annotation-processor.html)
+  into a Maven 3 project.
+- **Gradle 8.14.3 Java plugin:** inspect `annotationProcessor` or the relevant source
+  set's processor configuration, for example `testAnnotationProcessor`, and the compile
+  task's actual `annotationProcessorPath`. An `implementation` declaration alone is not
+  that processor configuration. See the [versioned Java plugin documentation source](https://github.com/gradle/gradle/blob/v8.14.3/platforms/documentation/docs/src/docs/userguide/platforms/jvm/java_plugin.adoc).
+
+If generation ran but compilation still cannot see its outputs, check generated-source
+registration and task/phase ordering. A separate generator task/plugin must run before
+its consumer and declare/register the outputs that consumer needs; fixing processor
+discovery cannot repair an unrelated generator that was never scheduled. Compare IDE
+and CI behavior without treating stale generated files as proof of a working build.
+
+Verify from an isolated fresh output directory or a justified scoped clean: the intended
+producer ran, expected output/effect exists and the consuming compilation/test succeeds.
+If generation is intentionally disabled and nothing requires its outputs, preserve that
+choice. If the processor fails while executing, inspect compatibility with the actual
+compiler separately from the application's bytecode target; do not upgrade the entire
+dependency family or production runtime to conceal that failure.
+
 ## Wrapper checks before execution
 
 Read wrapper scripts and properties, inspect changes/provenance and confirm distribution

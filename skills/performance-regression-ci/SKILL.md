@@ -207,6 +207,12 @@ Choose one explicitly:
 Never hide multiplicity by reporting only the worst delta. Preserve all results and disclose
 selection rules.
 
+Define how component decisions become the suite decision. If each critical benchmark must
+pass, speedups elsewhere cannot compensate for its regression, invalid evidence or inconclusive
+result. A mean or geometric-mean score answers a different question unless that composite is
+the declared objective. Keep required guardrails independent of that summary; see
+`references/ci-pipeline.md` for aggregation and missing-component policy.
+
 ## Baseline lifecycle
 
 Treat a baseline as a versioned release artifact, not a mutable cache entry. It needs commit,

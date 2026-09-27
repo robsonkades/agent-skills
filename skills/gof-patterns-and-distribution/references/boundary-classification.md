@@ -94,6 +94,48 @@ across several calls (`scatter-gather`, `structured-concurrency`).
 A local wrapper alone does not reduce downstream round trips; the operation placement, batching or
 other actual access change must do that. Preserve required capabilities and failure semantics.
 
+## Authority across a boundary
+
+Read this when a Proxy, Adapter, Command or other collaborator forwards caller context or executes
+a protected effect remotely. A process boundary need not introduce a new trust domain; retain an
+existing adequate mechanism after checking its scope. Identify the authenticated producer, any
+represented user, the executing service, and the allowed operation, resource and tenant. Transport
+authentication of a peer does not establish that it may request arbitrary effects for other users.
+
+Do not treat a serialized principal, tenant ID, remote handle or trace field as proof by itself.
+For example, [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/#baggage-security-considerations)
+has no built-in integrity checks and may propagate to unintended recipients. Derive trusted claims
+from the established authentication/delegation mechanism; do not copy credentials into message or
+trace metadata merely to preserve local call context. The
+[confused-deputy problem](https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html)
+illustrates how a privileged intermediary can otherwise perform an unauthorized caller's action.
+
+For delayed commands, permission timing is part of the contract, distinct from message freshness:
+
+- If the policy requires permission when the queued operation executes, a validly submitted job
+  may need rejection after revocation. Define that terminal result and its effect on retries.
+- If acceptance establishes a durable obligation and policy makes later caller revocation apply
+  only to new requests, retain the accepted operation under the service's scoped authority.
+  Preserve trustworthy evidence of the accepted intent and its scope; apply the specified
+  cancellation/revocation rules instead of silently substituting a new policy.
+
+Thus the same queue delay and identity payload can require different outcomes. Inspect existing
+decisions before asking which policy applies; keep the uncertain effect conditional and continue
+independent boundary analysis. Permission to publish/consume a queue and duplicate suppression
+do not, by themselves, authorize its requested business effect.
+
+Verification should include an authenticated caller substituting another tenant's resource and
+a queued operation whose permissions change before execution. Assert the policy's allowed effect
+or denial, not merely successful deserialization or message acknowledgement. These are adversarial
+contract cases, not claims that a particular deployed service has been tested.
+
+When enforcement is unclear, pass the operation, subject/service identities, trust boundaries and
+delayed-execution policy to the project's security owner; use `java-application-security-basics`
+for Java operation guards within its scope. Request the enforcement point and negative cases,
+not a new authentication stack. If that help is unavailable, record the missing authority evidence
+and dependent recommendation without inventing a policy, changing the Java baseline or bypassing
+an existing guard.
+
 ## Interaction — the pattern shapes who talks to whom
 
 | Pattern      | Distributed form  | Must be added                                                                   |

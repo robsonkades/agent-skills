@@ -46,6 +46,7 @@ thread/state/context filters and aggregation:
 stack depth, truncation, unknown/unresolved/lost/rate-limited observations:
 JDK/profiler/collector/converter versions and symbol source:
 total event weight and number of independent recordings:
+known capture overhead or changes in behavior when profiling starts:
 ```
 
 Examples of different denominators:
@@ -94,6 +95,10 @@ leaf/self width -> where did samples stop under this stack representation?
 caller context  -> which operation/data/resource reaches the mechanism?
 ```
 
+Asynchronous handoffs break ordinary call ancestry. A worker stack alone does not identify the
+submitting request or time spent queued before execution. Use validated task/trace linkage and
+timing, or limit attribution to the local execution mechanism; see `references/sources-and-orientations.md`.
+
 ## Analysis workflow
 
 Reuse supplied profiles, configuration, trials and accepted outcome targets before asking for
@@ -128,6 +133,12 @@ underpowered; absent frames can mean no selected samples, not zero execution/cos
 
 The flame graph itself has no uncertainty interval. Use the raw recording and sampling design
 to estimate one.
+
+If the symptom starts with capture or changes with collection settings, consider measurement
+perturbation before blaming application code. Reuse matched unprofiled outcome evidence where
+available; repeated profiles of the same perturbed execution do not establish its unprofiled
+cost. Hand missing control evidence to the collection owner with the settings, window and
+suspected effect; keep the conclusion conditional if a comparison is unavailable.
 
 ## Opportunity bounds and Amdahl
 

@@ -156,6 +156,10 @@ An external caller needs a coarse-grained, network-shaped operation
   identity on every caller path. Domain policy may participate; repository/RLS predicates
   may enforce isolation. Do not remove one layer's enforcement without proving equivalent
   coverage, including jobs and consumers.
+- Check service lifetime before storing invocation data. A shared service must not keep the
+  current actor, tenant, command or loaded aggregate in fields reused by other calls. Prefer
+  parameters and local state; deliberate shared collaborators need concurrency and lifecycle
+  contracts. Changing bean scope alone does not prove isolation between callers.
 - Orchestration that spans a network boundary is not a transaction. A service that writes
   locally and calls a remote system needs an explicit outcome for "local committed, remote
   failed" — retries, compensation or an outbox — decided at this layer

@@ -3,13 +3,14 @@
 ## Five surfaces
 
 - Schema: types, defaults, generated IDs, constraints, indexes, collations, computed/generated
-  columns, partitions, triggers, views, extensions.
+  columns, partitions, triggers, views, extensions, ownership and row/column access policies.
 - SQL: application queries, procedures, hints, pagination, upsert, functions, casts, `NULL`, order.
 - Concurrency: effective isolation, lock order/ranges, retries, timeouts, advisory locks, incidental
   invariants.
 - JVM: dialect, driver properties, identifier generation, batch, fetch/cursor, timezone, generated
   keys, pools/poolers by role.
-- Operations: backup/restore, replication, CDC, jobs, observability, maintenance, DDL and recovery.
+- Operations: backup/restore, replication, CDC, jobs, observability, maintenance, DDL, recovery,
+  role membership/grants, routine execution privileges and credential mapping.
 
 ## Applicable edge cases
 
@@ -29,6 +30,29 @@ than translate the applicable cases; an unused feature is not a reason to expand
 - parameterized partial/expression-index plans after prepared-statement warm-up;
 - result sets larger than client memory with the actual fetch/transaction settings;
 - deliberate DDL failure midway and inspection of committed state.
+
+## Validate access under the runtime identity
+
+When the source relies on database permissions, row-level policies or tenant session state,
+inventory their enforcement point and test both allowed and denied operations on the destination.
+Include views and routines with elevated/definer privileges; copying SQL bodies or table grants
+does not establish equivalent effective authority. A missing destination mechanism requires an
+explicit replacement design, not silently broader access or an assumption that the application
+will take over enforcement.
+
+Run those checks with the effective application role and actual pool/session setup. For example,
+PostgreSQL 18 superusers and `BYPASSRLS` roles bypass row security, and table owners normally do too
+unless forced to obey it. Comparisons through a bypassing identity do not exercise ordinary tenant
+restrictions. See [PostgreSQL row security](https://www.postgresql.org/docs/18/ddl-rowsecurity.html).
+
+Use a hostile synthetic fixture: tenant A owns row 101; tenant B owns row 202 containing a fake
+sensitive marker. As A, read/update its own row, then request B's key directly, scan broadly and
+attempt to change a row's tenant identity. Assert the allowed operation works and the forbidden
+operations reveal no B marker and make no unauthorized change, with the contract's expected
+filter/error behavior. Reuse a pooled connection across A, B and missing-context requests; verify
+that old tenant/role state cannot leak into the next request and missing context follows the
+declared denial policy. Do not run these checks against real tenants. This is a test specification,
+not evidence that any destination's policy has been validated.
 
 ## Source-specific traps
 

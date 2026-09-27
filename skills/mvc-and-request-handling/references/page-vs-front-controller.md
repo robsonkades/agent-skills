@@ -56,6 +56,25 @@ and propagate it explicitly across thread changes. Measure completion through th
 async lifecycle, avoiding duplicate observations on redispatch. A tenant from an untrusted
 header is a claim, not authorization to access that tenant.
 
+## Binding surface before validation
+
+For form/query `@ModelAttribute` binding, prefer a type exposing only the intended input fields
+or an appropriately configured constructor-binding path. If mutable property binding is required,
+use an `@InitBinder` field allowlist (`WebDataBinder.setAllowedFields`) and inspect nested paths;
+default property binding can populate writable properties the page never displayed. A dedicated
+type still needs review if it exposes a privileged field.
+
+For JSON `@RequestBody`, inspect the request type and message converter's deserialization rules
+and unknown-property policy. `setAllowedFields` restricts property binding, not the preceding
+`HttpMessageConverter` deserialization. Validation of the resulting object does not turn those
+fields into authorized input. Resolve authoritative actor/tenant/state from trusted context and
+the application operation rather than accepting a bound role, owner or status as authority.
+
+Test valid requests containing extra privileged fields and nested properties, such as `role`,
+`tenantId` or `profile.admin`, through each supported input path. Assert that they cannot change
+server-owned state while intended fields still bind. Reject or ignore unsupported properties
+according to the API contract; do not assume every converter or binder shares that policy.
+
 ## A handler doing only its job
 
 Partial Spring MVC snippets: imports, request/application types and configured resolvers
@@ -197,6 +216,8 @@ being idempotent (`idempotency`, `delivery-semantics`).
 
 ## Primary contracts
 
+- [Spring MVC 6.2.7 binding model design](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/partials/web/web-data-binding-model-design.adoc): dedicated inputs, constructor/property binding and allowed fields.
+- [Spring MVC 6.2.7 request-body processing](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/RequestResponseBodyMethodProcessor.java): message conversion precedes binder validation; property binding is not the JSON deserialization mechanism.
 - [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations and response writing before `postHandle`.
 - [Spring MVC 6.2.7 HandlerInterceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/HandlerInterceptor.java): `postHandle` can adjust `ModelAndView` before rendering.
 - [Spring MVC 6.2.7 validation](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-controller/ann-validation.adoc): argument versus method validation and class-level `@Validated`.

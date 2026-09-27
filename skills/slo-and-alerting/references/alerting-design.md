@@ -32,6 +32,26 @@ needs only the fields relevant to its conclusion:
 Avoid static “first three steps” when topology varies; encode a short decision tree with
 the highest-information checks.
 
+## Grouping and inhibition
+
+Grouping bundles related alerts into notifications; inhibition suppresses a target's
+notifications while a matching source is active. Neither establishes recovery or restores
+error budget. Start with grouping when responders still need the distinct impacts. Inhibit
+only when the source's response covers the target's action within the intended scope.
+An outage page need not cover independent data-corruption containment, even in the same cluster.
+
+For Alertmanager, inspect source/target matchers and the `equal` scope labels on actual emitted
+alerts, after relabeling. Missing and empty label values compare equally: `equal: [cluster]`
+can permit inhibition when both alerts lack `cluster`. Require the needed scope labels to
+be present and nonempty, including through source/target matchers when appropriate; test the
+configuration on the deployed version. A YAML syntax check alone does not establish this.
+
+Exercise a same-scope duplicate, a different cluster/tenant, missing scope labels, an
+independent urgent hazard, and the source clearing while its target remains active. Verify
+which notifications are suppressed and subsequently eligible, plus the receiving route;
+eligibility is not proof of immediate delivery. If Alertmanager cannot be exercised, report
+the unverified notification path rather than claiming that a passing PromQL rule test covers it.
+
 ## Multi-window burn alerts
 
 For ratio SLOs, pair a longer window (budget significance) with a shorter window (condition
@@ -98,3 +118,8 @@ Review:
 - alerts whose source/query changed.
 
 Never delete a rare safety alert merely because it did not fire; test it and reassess risk.
+
+## References
+
+- [Alertmanager grouping and inhibition](https://prometheus.io/docs/alerting/latest/alertmanager/) — notification semantics.
+- [Alertmanager inhibition configuration](https://prometheus.io/docs/alerting/latest/configuration/#inhibit_rule) — source/target matching and missing/empty equality labels.

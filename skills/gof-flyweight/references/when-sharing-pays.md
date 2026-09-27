@@ -58,6 +58,34 @@ but can express scope, bounds and eviction explicitly.
 Source: [OpenJDK 17 HotSpot StringTable](https://github.com/openjdk/jdk/blob/jdk-17-ga/src/hotspot/share/classfile/stringTable.cpp)
 — `WeakHandle` entries and weak storage in the local table, distinct from the shared archive table.
 
+## Define interchangeable values before pooling
+
+Derive the key from the intrinsic operations consumers need, not just the object's display text
+or an existing `equals` method. For example, two compiled patterns with the same expression but
+different flags need different keys: `Pattern.compile("a", 0)` and
+`Pattern.compile("a", Pattern.CASE_INSENSITIVE)` do not match the same inputs. The expression
+and flags can form an immutable record key; per-use matcher state stays outside it. The
+[Java 17 Pattern contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/regex/Pattern.html)
+defines both compile inputs. A conservative key may miss some equivalent patterns, which costs
+sharing opportunities; merging behaviorally different ones corrupts results.
+
+Hashing locates candidates; it does not prove equivalence. Unequal values may have equal
+[hash codes](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html#hashCode()>).
+Keep the full key or a collision-resolution mechanism, and keep equality/hash inputs stable
+while entries are present, as required by the
+[Map contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html).
+Case folding, trimming or omitted tenant/version dimensions are semantic choices, not harmless
+memory optimizations. If key semantics remain unresolved, pass the candidate key, equality/hash
+implementation and affected consumers to `java-object-contracts`; require a stable equivalence
+contract before merging values. If unavailable, keep distinct values pending that check.
+
+Inspect existing identity-sensitive uses before replacing occurrences. Two equal objects used
+as separate locks become one monitor when canonicalised; immutability does not prevent that
+change ([JLS 17.1](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.1)).
+Keep per-occurrence wrappers or dedicated locks when their independence is required and share
+only eligible intrinsic payloads. This is a compatibility check, not an invitation to redesign
+the application's synchronization as part of a memory optimization.
+
 ## Alternatives to compare
 
 **GC string deduplication.** On collectors/JDKs that support it, `-XX:+UseStringDeduplication`

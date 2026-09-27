@@ -67,6 +67,10 @@ freshness, queue age, goodput and business outcomes specific to the system.
 
 Counters are not “never read as values”: total since process start is legitimate when its
 scope is desired. Across restarts/windows use reset-aware operations.
+For independently resetting counters, calculate `rate`/`increase` per original series before
+aggregating; summing cumulative values first can hide a reset or invent a fleet-wide spike.
+Recording rules must preserve this order. Current-state gauges can instead be summed directly
+when their quantities/populations are additive; `rate` does not turn a gauge into a counter.
 
 ### 4. Design labels and budget
 

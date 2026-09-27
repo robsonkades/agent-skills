@@ -33,6 +33,17 @@ constraint; separate its purpose without discarding it or reopening existing aut
 This skill is language-neutral. For Java tasks, preserve the evidenced compiler/runtime,
 framework and compatibility constraints; requirements analysis does not authorize upgrades.
 
+Distinguish explicit requirements and applicable documented standards from consistent
+conventions, isolated implementation choices and assumptions. Code and tests show existing
+behavior within their coverage; check whether it expresses an intended contract before
+promoting it to a requirement.
+A discrepancy can be a defect or an authorized change, so do not silently rewrite either side.
+
+When requirements are settled and the remaining question is test placement, pass the criteria,
+changed risks, project constraints and available evidence to `java-testing-strategy` for a
+test-level recommendation. If unavailable, name the needed verification and uncovered boundary
+without reopening agreed requirements.
+
 ## Workflow
 
 1. **Separate the four things.** A request usually mixes them:
@@ -52,7 +63,8 @@ framework and compatibility constraints; requirements analysis does not authoriz
    routine choices. Pending answers block only dependent work; continue independent
    authorized work.
 5. **Write acceptance criteria** at the behaviour level, one per rule, each derivable into a
-   test (`references/acceptance-criteria.md`).
+   test (`references/acceptance-criteria.md`). Check the set against the intended workflow as
+   well as each criterion's testability: could every check pass while the user's need fails?
 6. **Record material scope boundaries** without inventing exclusions to requested work. Scope is defined as much by the exclusions as by
    the inclusions, and unstated exclusions are where "but obviously it should also…" lives.
 7. **Close clarification for the next increment** when its intended behavior, constraints and
@@ -86,6 +98,9 @@ framework and compatibility constraints; requirements analysis does not authoriz
   Do not turn an example checklist into new mandatory approvals, migrations or telemetry.
 - Report criteria as met, unmet or unverified with supporting evidence. A passing test proves
   only the cases and environment exercised; missing measurements are unknown, not success.
+- When an authorized requirement changes, update the affected criteria and assess whether
+  existing evidence still applies. Keep the reason and source of a material change visible;
+  do not lower a target solely because the implementation failed it.
 
 ## Output
 
@@ -103,5 +118,6 @@ actual validation and disclose what remains unverified.
   edges are unstated.
 - **Writing acceptance criteria** — `references/acceptance-criteria.md`. Criteria at the right
   level of abstraction, the Given/When/Then form and where it misleads, deriving tests from
-  criteria, consumer-specific export contracts, non-functional scenarios, and a definition
-  of done that is a checklist rather than a sentiment. Read when writing or reviewing criteria.
+  criteria, checking coverage of the intended need, consumer-specific export contracts,
+  non-functional scenarios, and a definition of done that is a checklist rather than a
+  sentiment. Read when writing or reviewing criteria or assessing changed requirements.

@@ -121,6 +121,38 @@ Say "rolled back" or "mitigated" plainly when it happens, and do not declare res
 agreed recovery criteria hold: name the affected metrics, observation window and any
 remaining backlog or integrity checks. A mitigation is not necessarily a permanent fix.
 
+## Correcting a material claim
+
+Distinguish new conditions from an error in the earlier message. Different time windows or
+populations can legitimately produce different results. Compare the underlying evidence before
+calling a difference a correction, a recovery or a regression. If reports still contradict one
+another, state the disagreement and the next check instead of averaging or choosing the more
+confident speaker's claim.
+
+**Fails:**
+
+> Updated: EU is fine, but US needs another look.
+
+This hides that the earlier message told readers all regions had been verified as recovered.
+Someone acting on that message may continue treating the incident as resolved.
+
+**Works:**
+
+> **14:40 UTC — Correction to the 14:30 update: recovery was verified only for EU, not all regions.**
+>
+> The dashboard query behind the earlier update excluded US. The US dashboard for
+> 14:30–14:35 still shows checkout errors above baseline. Global recovery is unconfirmed.
+>
+> The incident remains open; do not use the earlier update as evidence of global recovery.
+> The incident communications lead will provide the next update at 14:50 with the status
+> of the regional checks, even if they are incomplete or inconclusive.
+
+The corrected claim, evidence boundary and implication are explicit. Draft for the audience that
+could act on the original claim, using its established channel and disclosure constraints; the
+usual authorization to send still applies. If updating the incident record is part of the task,
+retain a traceable correction rather than silently replacing the earlier account. No new record
+is needed for a minor wording edit that changes neither meaning nor action.
+
 ## Post-incident summary
 
 For the people who were not in the room. The cause, the trigger, what was affected, what has

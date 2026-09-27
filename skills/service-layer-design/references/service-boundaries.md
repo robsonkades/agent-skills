@@ -218,6 +218,24 @@ reads when equivalent enforcement remains. A service does not inherently create 
 Materialize required data within its valid persistence context and bound streams/cursors;
 do not return lazy resources whose owning context has already closed.
 
+## Service lifetime and invocation state
+
+Spring's default singleton scope shares one instance per bean definition and container,
+not one instance per use case invocation. Keep the trusted actor, tenant, command and loaded
+aggregate in parameters or invocation-local state; a `currentTenant` field can let one call
+use another caller's identity. A transaction annotation does not isolate Java object fields.
+Verify two overlapping calls with different actors, including failure/cleanup paths.
+
+Stateless orchestration can still use intentionally shared caches or collaborators with explicit
+concurrency and ownership contracts. Do not serialize the whole service merely to retain
+avoidable conversational fields. If per-operation mutable state is necessary, give it an
+explicit lifetime. A prototype directly injected into a singleton is resolved once; it is not
+fresh per method invocation. A factory/provider can create one state object per operation,
+kept locally for that operation. Scoped proxies can resolve an active request scope, but jobs
+and message consumers need their own valid lifecycle; request scope is not a universal fix.
+Preserve any legitimate stateful workflow and its persistence/concurrency protocol when extracting
+services rather than converting it to untracked in-memory conversation state.
+
 ## Primary references
 
 - [Fowler: Service Layer](https://martinfowler.com/eaaCatalog/serviceLayer.html) — application boundary and coordinated operations.
@@ -228,4 +246,5 @@ do not return lazy resources whose owning context has already closed.
 - [Spring Framework 6.2.12 event publisher contract](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java) — publication is a handoff, not a durability promise.
 - [Spring Framework 6.2.12 transactional annotations](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/annotations.adoc) — proxy interception, rollback defaults and configured overrides; verify the actual target version.
 - [Spring Framework 6.2.12 transaction interceptor](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java) — standard imperative invocation commits after the target returns; distinguish target exceptions from completion failures.
+- [Spring Framework 6.2.12 bean scopes](https://github.com/spring-projects/spring-framework/blob/v6.2.12/framework-docs/modules/ROOT/pages/core/beans/factory-scopes.adoc) — default singleton lifetime, prototype injection and scoped/provider access to shorter-lived dependencies.
 - [MySQL 8.4: minimizing and handling deadlocks](https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html) — an engine-specific example of hidden index locks and recovery despite ordering precautions, not a substitute for the target engine's contract.

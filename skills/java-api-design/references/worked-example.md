@@ -172,6 +172,41 @@ handling and uncertain outcomes; this call site alone is not an implementation o
 - A second request type avoids weakening v1.0 but duplicates part of the conceptual operation.
   A major release may unify the model after a measured migration.
 
+## Result lifetime is part of the consumer API
+
+Suppose a later receipt-export requirement is still being designed. For a small, bounded result
+that callers traverse repeatedly, a documented `List<SettlementReceipt>` snapshot avoids a
+resource lifetime in every consumer. If the export is too large to materialize and consumption
+holds an I/O resource open, compare a streaming API with explicit ownership instead:
+
+```java
+// Partial API sketch; import java.util.stream.Stream.
+public interface ReceiptExport {
+    // Caller owns this one-use result and must close it, even after partial consumption.
+    Stream<SettlementReceipt> openReceipts(String merchantId);
+}
+
+// Consumer fragment; exporter is a borrowed ReceiptExport.
+try (Stream<SettlementReceipt> receipts = exporter.openReceipts("merchant-42")) {
+    Optional<SettlementReceipt> first = receipts.findFirst();
+}
+```
+
+Changing only the required result size changes this trade-off; returning `Stream` is not inherently
+more flexible. Specify acquisition timing, encounter order, traversal failures, valid resource scope
+and close behavior before implementing it. Consuming a stream does not close it; early termination
+and traversal exceptions still require cleanup. If provider-owned state cannot outlive the method,
+returning its lazy stream is invalid unless ownership/lifetime is extended. Hand that lifecycle
+context to java-resource-management; if unavailable, keep the design conditional on verified cleanup.
+
+This is a new capability, not a replacement of an existing published `List` return. Such a replacement
+changes the binary return descriptor and callers' traversal/lifetime contract. Test ordinary full
+consumption, early exit and traversal failure, checking the actual owned resource's release rather
+than only the produced values. The [Stream contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Stream.html)
+and [Files.lines](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html#lines(java.nio.file.Path,java.nio.charset.Charset)>)
+illustrate one-use pipelines and resource-backed lazy I/O; the settlement sketch does not implement
+a resource or prescribe its storage.
+
 ## Verification
 
 Acceptance checks to run on a concrete implementation; these are not recorded test results:
@@ -182,5 +217,7 @@ Acceptance checks to run on a concrete implementation; these are not recorded te
   signatures.
 - The v1.0 test suite runs unmodified against v1.1 and passes.
 - Representative v1.0 client binaries run without recompilation, and downstream sources recompile.
-- Contract tests prove that repeated calls with one caller-supplied idempotency key yield the
-  specified outcome; compilation checks alone cannot establish that behaviour.
+- Contract tests exercise repeated calls with one caller-supplied idempotency key against the
+  specified outcome. Include the failure and retry cases required by the implementation's protocol;
+  report the cases exercised, since passing tests do not prove every distributed failure outcome.
+  Compilation checks alone cannot establish that behaviour.

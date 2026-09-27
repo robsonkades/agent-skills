@@ -4,8 +4,8 @@ description: >
   Co-authoring Product Features and Tech Features through focused question-and-revision rounds. For
   a Product Feature, separates the business definition from an optional engineering analysis owned
   by an architect or senior engineer, including PoCs, ADRs, contracts, and engineering premises.
-  Use when the deliverable is an agreed feature brief or ticket, not implementation. The completed
-  package is handed to feature-engineering for lifecycle validation and execution planning.
+  Use when an idea needs an agreed feature brief or an evidenced decision not to proceed, not
+  implementation. Accepted features go to feature-engineering for validation and execution planning.
 ---
 
 # Collaborative Feature Definition
@@ -17,7 +17,8 @@ intent or turning discovery into a one-shot questionnaire. The artefact is a liv
 conversation round resolves the highest-impact gaps, updates the draft, and exposes what remains
 unknown.
 
-This skill stops at an accepted definition and, when required, its engineering-analysis companion.
+This skill stops at an accepted definition and, when required, its engineering-analysis companion,
+or an evidenced decision not to pursue the proposal. Discovery need not produce delivery work.
 `feature-engineering` owns the subsequent independent readiness validation, planning,
 implementation, progress, and completion review.
 
@@ -48,19 +49,21 @@ engineer. A new chat is not mandatory, but a distinct author and explicit stage 
 
 ## Choose proportional depth
 
-Start at the least depth supported by current evidence, state the choice and its drivers, and reassess
-when an answer changes risk or scope:
+Choose the depth required by the highest evidenced driver, consistent with `feature-engineering`;
+state the choice and its drivers, and reassess when an answer changes risk or scope:
 
-| Depth        | Use when                                                                                                | Effect on the workshop                                       |
-| ------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| **Light**    | One outcome, known behavior, one authority domain, reversible, no contract                              | Few focused rounds; compact ledgers and direct verification  |
-| **Standard** | Several rules/components, an existing integration or contract is touched                                | Explore boundaries, failures, ownership, and impact          |
-| **Deep**     | New/public contract, migration, security/compliance, costly reversal, PoC, or several authority domains | Require stronger evidence, options, traceability, and review |
+| Depth        | Use when                                                                                                                                                                                                                              | Effect on the workshop                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Light**    | One local outcome, known behavior, one authority domain, reversible, no new dependency or boundary/schema change and no material choice                                                                                               | Few focused rounds; compact ledgers and direct verification  |
+| **Standard** | Several rules/components, compatible existing internal contract change, meaningful choice, or established and contained regulatory obligations                                                                                        | Explore boundaries, failures, ownership, and impact          |
+| **Deep**     | New runtime technology, infrastructure component or external integration, public/breaking contract, migration, material security/privacy/compliance consequence, costly reversal, decision-relevant PoC, or several authority domains | Require stronger evidence, options, traceability, and review |
 
 Depth changes how much evidence and challenge are warranted, not the quality gates. A small feature can
-be Deep because it is irreversible; a large description is not automatically complex. The user may
-request more depth. Do not reduce depth past a material driver without recording the resulting gap and
-acceptance by the authority that owns that risk.
+be Deep because it is irreversible; a large description is not automatically complex. An unknown
+material driver prevents Light until resolved; record the uncertainty instead of treating missing
+evidence as low risk. Reusing an established security rule is not by itself a new security boundary.
+The user may request more depth. Reduce depth only when evidence removes a driver; accepting residual
+risk does not make the driver disappear.
 
 Use the stage template as a content contract, not a demand for empty headings. Light briefs may group
 applicable fields into a compact record; explain material inapplicability and keep ownership, criteria,
@@ -171,16 +174,29 @@ three recommendations:
 
 - **Continue** — name the unresolved decision and the quality, scope, risk, or acceptance problem that
   another round will resolve. Ask the next focused questions within the agreed workshop scope.
-- **Close the stage** — state that no blocking gap remains. Reuse evidenced acceptance of the current
-  revision; request only missing acceptance or a genuinely undecided handoff. Name optional deepening
-  without making it a prerequisite.
+- **Close the stage** — either the definition meets its convergence gates, or the accountable owner
+  has decided not to pursue the proposal. Reuse evidenced acceptance of the current revision or
+  closure decision; request only missing acceptance or a genuinely undecided handoff. Name optional
+  deepening without making it a prerequisite.
 - **Blocked** — name the missing owner, evidence, or decision and the dependent area it blocks. Ask for
   the missing input and continue independent authorized work; do not offer unsupported advancement.
 
+When evidence shows that existing behavior meets the need, the value premise is refuted, or no viable
+change is justified within the constraints, recommend retaining the current solution or not pursuing
+this proposal. Check whether the evidence covers the affected users and conditions; an unanswered
+question or unavailable evidence alone does not refute value. Keep a recommendation distinct from an
+owner's decision. For an accepted closure, record `Not proceeding`, the proposal/revision, evidence,
+reason, accountable owner/source, remaining obligations, and a reopening condition if useful. Do not
+invent criteria, engineering analysis or a validation PASS for abandoned work. A mandatory obligation
+remains unresolved unless it is satisfied or legitimately changed; rejecting one solution does not
+waive the underlying requirement. This use of discovery to decide whether to continue is also
+described in the [GOV.UK discovery guidance](https://www.gov.uk/service-manual/agile-delivery/how-the-discovery-phase-works#how-you-know-discovery-is-finished);
+its government-specific process requirements are not imposed here.
+
 The user's instructions control the cadence, including an explicit pause. Answering the offered
-questions means continue; choosing to close triggers the stage gates; asking for more depth starts
-another round in the requested area. Do not ask permission to continue work already authorized. A
-request to prepare a draft is still not acceptance of the result.
+questions means continue; closing a definition being pursued triggers the stage gates; asking for
+more depth starts another round in the requested area. Do not ask permission to continue work already
+authorized. A request to prepare a draft is still not acceptance of the result.
 
 One round may be sufficient; five or ten may be appropriate when each produces new consequential
 information. Never continue merely to exhaust the topic, and never stop because a target number of
@@ -232,6 +248,9 @@ each slice independently meets those three properties. Technical work with no di
 Tech Feature or implementation resource, not a fake user story.
 
 ### 8. Close the correct stage
+
+These gates apply to a definition being submitted for further work. An accepted `Not proceeding`
+decision uses the closure record in step 4 instead.
 
 The product-definition stage may finish when:
 
@@ -349,6 +368,9 @@ Questions    <one coherent round of one to three questions, only when continuing
 Impact       <downstream items made stale by this change, or None>
 Draft        <only the affected excerpt, unless a full draft was requested>
 ```
+
+For an accepted `Not proceeding` outcome, return the compact closure record above; it is a completed
+discovery disposition, not a feature ready for implementation or validation.
 
 At a product-stage handoff, return the agreed Product Feature, its revision, engineering-analysis
 requirement and status, and the unresolved items assigned to engineering. At final convergence, return

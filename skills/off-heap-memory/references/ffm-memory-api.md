@@ -54,6 +54,39 @@ try (Arena arena = Arena.ofConfined()) {
 // memory freed here, deterministically; access after close() throws IllegalStateException
 ```
 
+## Adapting existing ByteBuffer consumers
+
+Keep an adequate direct-buffer or library-pool contract when migration has no demonstrated benefit.
+When an existing API requires `ByteBuffer`, `segment.asByteBuffer()` shares the segment's storage;
+it does not copy it or acquire independent ownership. A synchronous consumer may borrow it inside
+the arena's lifetime. A retained/asynchronous consumer needs an owner that survives through actual
+completion, or a copy into storage whose existing ownership contract fits the consumer.
+
+The view retains read-only, lifetime and thread-access restrictions. Access after arena close
+fails even if the buffer remains reachable; an `ofBuffer(asByteBuffer())` round trip does not
+escape that scope. Confined-backed buffers can also fail in asynchronous channel I/O; do not
+assume a `ByteBuffer` parameter erases confinement. Use a shared arena with coordinated completion
+and close only when the consumer supports this lifetime model, or retain its established buffer
+owner. Cancellation alone is not actual completion.
+
+Preserve representation semantics at the bridge: `asByteBuffer()` starts at position zero with
+limit/capacity equal to segment size, uses `BIG_ENDIAN` byte order, and cannot represent more than
+`Integer.MAX_VALUE` bytes. Set the order explicitly to match the data format; a segment's typed
+access layout does not carry over automatically. Use bounded slices when the consumer can process
+windows of a larger segment. Check read-only requirements as well as size.
+
+In the other direction, `MemorySegment.ofBuffer(buffer)` covers the buffer's current
+position-to-limit region and shares its storage. It preserves the scope of a segment-derived
+buffer; otherwise its automatic scope keeps the original buffer reachable. It does not retrofit
+deterministic release onto a legacy direct buffer. Budget according to the originating allocator,
+not merely the bridge buffer's `isDirect()` result.
+
+These contracts are specified by Java 22
+[`asByteBuffer`](<https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/MemorySegment.html#asByteBuffer()>)
+and [`ofBuffer`](<https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/MemorySegment.html#ofBuffer(java.nio.Buffer)>).
+Verify both directions with the actual consumer, including its retention, byte order and completion
+behavior; successful synchronous access alone does not validate an asynchronous migration.
+
 ## Structured layouts
 
 ```java

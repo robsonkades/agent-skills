@@ -19,8 +19,7 @@ description: >
 
 ## Purpose
 
-Keep four distinct properties distinct, because every confused architecture argument about
-virtual threads and reactive programming comes from collapsing them:
+Keep four distinct properties distinct when diagnosing or reviewing an I/O path:
 
 ```text
 Blocking API          the caller may wait for this call's specified result
@@ -51,13 +50,15 @@ project or add instrumentation dependencies merely to apply this skill.
 
 ## Workflow
 
-1. **Ask which property the claim is about.** "Is this blocking?" is four questions;
-   answer the one that determines the decision at hand.
+1. **Establish which property matters.** "Is this blocking?" is four questions. Inspect
+   the call site, configuration, tests and reported symptom first; ask only for missing
+   context that changes the classification or remedy. A review request need not change code.
 2. **Classify each I/O wait on the path**: can it unmount? If it retains the carrier,
    does the implementation request compensation, or does it block without compensation?
    Identify any pinning frame separately; the actual path determines the cost and fix.
 3. **Check for file system I/O.** Identify the concrete synchronous path and whether the
-   JDK marks it for compensation; a package name alone does not establish this.
+   JDK marks it for compensation. For an asynchronous API, trace submission, worker I/O and
+   completion separately; an immediate return says nothing about the worker's syscall.
 4. **Check for foreign code**: JNI, FFM, a driver with a native transport. An enclosing
    native frame prevents unmounting. Pinning alone does not request compensation; check
    whether the actual blocking operation has a separate compensation hook.
@@ -114,6 +115,10 @@ project or add instrumentation dependencies merely to apply this skill.
 - A "non-blocking" client library is only non-blocking to the boundary of its own API. A
   reactive database driver that hands work to a bounded internal pool has a worker/queue
   ceiling distinct from connection limits and database capacity; inspect each bound.
+- **An asynchronous result does not end resource ownership.** Keep buffers and admission
+  permits owned until the underlying operation is finished; a timeout or cancelled Future
+  may only end the caller's wait. For asynchronous file channels, use the reference's
+  executor and cancellation contracts before choosing bounds or reusing buffers.
 - Unmounting makes thread waiting **cheap**, not **free**: in-flight calls retain stack
   state and any resources they still own, such as connections, buffers or locks. Bound
   admission as well as active I/O; a semaphore's waiters can still retain unbounded state.
@@ -129,12 +134,21 @@ propose the smallest change with a resource bound and a before/after check (loop
 carrier/native memory, throughput and tail latency as relevant). Do not label an unmeasured
 optimization a fix.
 
+For a service-wide choice between reactive and thread-per-request, pass the classified
+paths, runtime/framework versions, resource limits and latency evidence to
+`reactive-and-virtual-thread-selection`; request a model decision with migration costs.
+If unavailable, present these constraints and viable alternatives without prescribing a
+rewrite. For carrier-mechanics diagnosis beyond classification, pass stacks, recording
+settings and version details to `virtual-threads-internals`; without it, report the
+remaining hypothesis and next discriminating capture.
+
 ## References
 
 - [What unmounts and what does not](references/what-unmounts.md) — the operation-by-operation
   table, the capture / compensation / pinning distinction with the evidence that separates
-  them, handling file-heavy workloads, and verifying a third-party client's behaviour. Read
-  when classifying a path or when carrier count is growing.
+  them, synchronous/asynchronous file work, completion ownership, and verifying a
+  third-party client's behaviour. Read when classifying a path, choosing an async-file
+  executor, handling cancellation, or when carrier count is growing.
 - [Event loops, pollers and blocking detection](references/event-loops-and-pollers.md) — how
   the JDK's socket poller works and its tuning knobs, the event-loop model and the cost of
   blocking one, BlockHound in tests, and the diagnostics for each model. Read when working on

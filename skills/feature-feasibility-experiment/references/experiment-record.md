@@ -19,7 +19,8 @@ If inconclusive: <next action and what remains blocked>
 
 ## Hypothesis and threshold
 
-Hypothesis: <falsifiable statement>
+Hypothesis: <falsifiable statement; candidate revision, configuration and input domain>
+Scope: <fixed requirements versus changeable design choices; what a failure can rule out>
 Pass: <observable threshold>
 Fail: <observable threshold>
 Inconclusive: <insufficient coverage/uncertainty or unmet validity condition>
@@ -31,7 +32,7 @@ Environment: <isolated environment and relevant versions>
 Inputs/data: <source, scale, authorization and representativeness>
 Procedure: <repeatable commands or steps>
 Controls/repetitions: <comparison, independent unit and count; or why a deterministic check suffices>
-Validity: <setup checks proving the intended condition was exercised>
+Validity: <setup checks, source of expected outcomes and detection checks when needed>
 Stopping: <time/resource budget and predeclared completion rule>
 
 ## Known limits
@@ -65,6 +66,36 @@ ended, not that the hypothesis was supported. If an unavailable tool prevents th
 record `Not run` and the reason; if evaluation is attempted, its conclusion remains
 `INCONCLUSIVE`. A compatibility failure can refute a claim only when the intended supported
 configuration was actually exercised, rather than an accidentally different setup.
+
+## Scope of a feasibility conclusion
+
+Resolve what the hypothesis quantifies over before choosing the experiment. Is it one specified
+case, every supported input for a fixed candidate, a sampled workload, or the existence of any
+acceptable design? Inspect the accepted requirement and option constraints first; ask a focused
+question only when the unresolved scope changes what would count as refutation.
+
+- **Candidate failure:** an eager export implementation exceeds the memory cap on the required
+  dataset. A valid result rejects that implementation under the tested conditions. If streaming
+  or another implementation is permitted, return those alternatives for analysis; do not declare
+  the feature impossible or claim that an untested streaming alternative will pass.
+- **Changed decisive constraint:** the same implementation revision and configuration are the
+  only permitted option, and the memory cap and dataset are fixed. The same evidence now rejects
+  feasibility under those constraints. Report the conflict and which constraint would have to
+  change; do not silently enlarge memory or substitute a library. If a verified specification or
+  lower bound already establishes the conflict, a PoC adds no decision value.
+- **Coverage:** a fixed converter claimed to preserve every supported identifier is refuted by
+  one valid counterexample that truncates an identifier. A passing ordinary identifier establishes
+  that case, not the universal claim. A defect in the result checker instead makes that result
+  unusable; it does not refute the converter. Record both what is known and what remains open.
+
+Make the result checker capable of distinguishing the outcomes that drive the decision. For
+example, a conversion benchmark must verify the required records and their expected meaning;
+the same buggy conversion used to generate both actual and expected values is not an independent
+check. A small accepted fixture or independently derived expected result may suffice. When a
+custom harness's sensitivity is uncertain, an intentionally missing record or otherwise known
+violation can check that it fails as intended. This is a validity check, not a requirement to
+build a general testing framework for every experiment. Preserve invalid-run evidence and repair
+the harness before using new results; never relabel a broken run as feature infeasibility.
 
 ## Choosing a valid comparison
 
@@ -110,5 +141,7 @@ failure rate.
 
 ## Sources
 
+- [NIST experiment objectives](https://www.itl.nist.gov/div898/handbook/pri/section3/pri31.htm): choose the design from the decision objective and distinguish narrow initial comparisons from broader confirmation.
+- [ISTQB Foundation Level syllabus 4.0.1](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf), sections 1.2.3, 1.3 and 1.4.1: distinguish failure causes, limited test evidence and comparison with expected results. The candidate-versus-feature examples above apply that reasoning to feasibility decisions.
 - [NIST confidence intervals for proportions](https://www.itl.nist.gov/div898/handbook/prc/section2/prc241.htm): one-sided bounds and exact binomial intervals for small failure counts.
 - [ASA statement on p-values](https://www.amstat.org/asa/files/pdfs/p-valuestatement.pdf): significance, effect size and the limits of a p-value alone.

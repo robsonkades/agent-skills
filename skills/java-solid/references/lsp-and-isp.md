@@ -104,6 +104,23 @@ the base can use exact-class equality so cross-subtype values are always unequal
 `instanceof` equality in an extensible value class plus a state-adding subtype, especially when
 the subtype overrides equality differently.
 
+### Observable effects and resource ownership
+
+Compare the caller's state and usable resources after a call, not only its return value.
+For example, `InputStream.readAllBytes()` promises not to close the stream. An override returning
+the right bytes but also closing it violates that promise. For an application method accepting
+a stream, establish whether ownership is borrowed or transferred: closing borrowed input can
+break the caller, while closing input the method explicitly owns can be required cleanup.
+Do not infer an ownership transfer merely from a parameter's `AutoCloseable` type.
+
+Failure effects are also contractual. If a failed update promises no state change, a subtype
+that changes state before throwing weakens that guarantee. If the contract explicitly permits
+partial progress, SOLID does not require inventing rollback. Exercise valid, boundary and failure
+calls through the supertype's contract; assert the promised state/effects and resource lifetime.
+Use a close-tracking resource or one whose closure is observable: a byte-array stream whose
+`close()` has no effect can conceal the ownership defect. Passing return-value tests alone does
+not establish substitutability.
+
 ### LSP false positives
 
 - **Covariant return types** legally narrow the declared reference return type. This alone is not
@@ -164,6 +181,8 @@ See [Collection optional operations](https://docs.oracle.com/en/java/javase/21/d
 and [JLS 21 interface evolution](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.5.7)
 when deciding whether throwing or adding a default is actually a contract defect.
 For equality, check both [Object.equals and Object.hashCode contracts](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Object.html).
+For the ownership example, see [InputStream.readAllBytes](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/InputStream.html#readAllBytes()>)
+and [ByteArrayInputStream.close](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/ByteArrayInputStream.html#close()>).
 For return-type rules, see [JLS §8.4.8.3](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3);
 covariant reference returns have been supported since Java 5, independently of behavioral contracts.
 For inherited history constraints, see [Liskov and Wing, behavioral subtyping](https://www.cs.cmu.edu/~wing/publications/LiskovWing94.pdf),

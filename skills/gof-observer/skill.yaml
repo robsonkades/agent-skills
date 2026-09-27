@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-observer
-version: 1.2.3
+version: 1.2.4
 description: >-
   Observer in Java: choosing and reviewing in-process listener contracts for ordering,
   errors, threads, registration lifetime, reentrancy and notification outside locks.

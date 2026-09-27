@@ -78,6 +78,28 @@ that `Money.byAmount()` treats equal while `Money.equals` distinguishes scale/cu
   `Comparator.nullsFirst` / `nullsLast` at the nullable element/key layer. A raw comparison may
   throw on null when that comparison is reached; exception location is not a contract diagnosis.
 
+### Reverse the intended part of the order
+
+`reversed()` reverses the comparator it receives, including null placement and any tiebreakers
+already composed into it. Algebraically valid comparators can therefore implement the wrong
+consumer order. For descending scores, null scores last, and ascending ids among tied scores:
+
+```java
+record RankedItem(Integer score, long id) { }
+
+Comparator<RankedItem> byRank =
+    Comparator.comparing(RankedItem::score, Comparator.nullsLast(Comparator.reverseOrder()))
+              .thenComparingLong(RankedItem::id);
+```
+
+This partial Java 16+ snippet assumes non-null items and a stable unique id when rows must remain
+distinct. The comparator factories themselves require Java 8+. If null scores should instead
+appear first, use `nullsFirst` around the descending key comparator. If null items are allowed,
+wrap the completed item comparator separately. Applying `reversed()` after `nullsLast` would
+put those nulls first; applying it after `thenComparingLong` also reverses id ties. Choose whole-order
+reversal only when all of those reversals are intended. Test at least two different scores, a
+null score and tied scores with distinct ids, as well as the comparator laws.
+
 ## "Comparison method violates its general contract!"
 
 OpenJDK's ordinary object-array/list sorting paths commonly use TimSort, which detects some—not

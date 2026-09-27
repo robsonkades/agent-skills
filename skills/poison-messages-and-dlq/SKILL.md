@@ -64,7 +64,9 @@ recovery owner and checks actually run or still required.
 4. **Design the quarantine record and atomic transfer before the DLQ.** Preserve bounded raw
    bytes or a secure blob reference, origin/identity, schema, failure evidence and operation
    history. Publishing the DLQ record and advancing the source must be atomic where the broker
-   supports it, or repeat-safe/reconciled otherwise. Schema in `references/dlq-operations.md`.
+   supports it, or repeat-safe/reconciled otherwise. A blob reference is recoverable only after
+   its bytes are durably stored and accessible for the recovery window; a broker transaction
+   does not include the blob store. Schema and transfer protocol in `references/dlq-operations.md`.
 5. **Verify owned, actionable monitoring.** Detect failed/unresolved work early enough to
    meet its recovery and retention budget; reuse adequate existing signals and routing.
 6. **Establish the recovery/disposition path when designing or changing it**, with redrive

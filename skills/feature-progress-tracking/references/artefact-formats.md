@@ -61,6 +61,34 @@ blocker section states the question in full, and "Next" names ready work and its
 If RES-05's poison-message work depends on unresolved idempotency semantics, keep that part
 blocked rather than assuming all work on the consumer is independent.
 
+## Evidence that survives a handoff
+
+Use the existing evidence record rather than creating another tracking system. Retain the check
+identity, observed outcome, checked revision, relevant environment and acceptance coverage shown
+above, plus a stable run/attempt identifier when available. A link to the latest pipeline can
+change its target; a local temporary report may disappear when the session ends. Check that the
+next owner can use the cited evidence, and record known access or retention limits.
+
+Keep only the detail needed to substantiate acceptance under the project's requirements; do not
+copy entire logs or sensitive payloads by default. GitHub Actions, for example, supports
+[configurable artifact retention](https://docs.github.com/en/actions/tutorials/store-and-share-data#configuring-a-custom-artifact-retention-period);
+a saved artifact URL is not a promise of permanent availability. This does not authorize changing
+CI retention, exporting artifacts or granting access.
+
+If evidence becomes inaccessible, preserve what was actually observed and distinguish an access
+gap from a failed or unexecuted check:
+
+- An expired raw report with a retained, applicable result sufficient under the project's
+  evidence requirements can leave DONE intact. Note the lost detail; do not rerun solely because
+  the link expired.
+- An expired report whose only remaining record is a green badge cannot establish which revision
+  or acceptance checks passed. Reopen the affected completion claim as IN_PROGRESS, or BLOCKED
+  if an external dependency prevents obtaining required evidence. Record the gap and arrange
+  targeted retrieval or validation with the resource owner; do not invent the missing result.
+
+If the project requires the original artifact, a summary alone cannot replace it. Preserve other
+resources' sufficient evidence and distinguish this evidence gap from an implementation defect.
+
 ## execution-log.md
 
 Append corrections at the bottom with actor, resource, baseline and recording time. Preserve

@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: delivery-semantics
-version: 1.2.3
+version: 1.2.4
 description: >-
   Precise end-to-end delivery and processing semantics: acknowledgement placement, loss and
   duplicate windows, Kafka transactions, visibility leases, ambiguous outcomes and external
-  side effects. Use when reviewing "exactly once", consumer commits, redelivery or a handler
+  side effects. Use when reviewing "exactly once", consumer commits, publisher confirms, redelivery or a handler
   that writes outside its broker. Idempotent handler design belongs to idempotency; retries,
   ordering, poison messages and fault assumptions have their own skills.
 

@@ -64,6 +64,24 @@ The cast counts the array and safely traverses its non-null elements. Primitive 
 not have this varargs ambiguity. Traverse a bounded, stable graph; a concurrent mutation is
 not an atomic snapshot. Use multiple explicit roots in one walk to count shared objects once.
 
+**The walk follows fields, not the collector's reference-strength rules.** JOL 0.17 reads
+non-static reference fields, including a `WeakReference` or `SoftReference` referent when
+accessible and non-null. A graph total therefore does not establish strong reachability or
+bytes reclaimed when an owner disappears. Pass the root set, sharing/reference types and
+measurement conditions to `heap-dump-analysis` for a retention question; without that evidence,
+report the traversed graph and leave retained bytes unresolved.
+
+The returned `GraphLayout` also holds ordinary strong references to encountered objects.
+Keeping snapshots during a collection experiment can itself keep the measured population
+alive. Bound the fixture, retain scalar results when sufficient, and discard graph results
+before investigating collection; discarding them does not guarantee when GC occurs.
+
+A deterministic review check on Temurin 25.0.3+9 with JOL 0.17 traversed a shared `byte[4096]`
+from weak and soft wrappers once. After both wrappers were explicitly cleared, a new walk
+excluded the array; the previous result still held it. In both header modes the graph-size
+difference equalled the agent-reported 4,112-byte array size. This tested traversal and probe
+ownership, without invoking GC or asserting collection timing.
+
 ## 2. The four ways it fails
 
 ### 2.1 `parseClass` on a record throws — the single most likely first move
@@ -239,3 +257,8 @@ inherits the shallow layouter's assumptions.
   mode, and `production-footprint-checks.md` §1 covers it and what a heap dump cannot say.
 
 Source for root semantics: [JOL 0.17 GraphLayout](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/GraphLayout.java).
+Sources for traversal and probe ownership:
+[AbstractGraphWalker](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/AbstractGraphWalker.java),
+[GraphWalker](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/GraphWalker.java),
+[GraphPathRecord](https://github.com/openjdk/jol/blob/0.17/jol-core/src/main/java/org/openjdk/jol/info/GraphPathRecord.java);
+[Java reference strengths](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/package-summary.html).

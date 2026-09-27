@@ -78,9 +78,13 @@ shared library` is libgraal, `loaded from class files` is jargraal. The JFR
 6. **Read the result against the workload shape and the compiler version,** not against
    expectation. GraalVM Community 25.3 gained loop vectorisation and a new default inliner;
    a prior formed on 25.0 is stale. See `references/workload-fit-and-migration.md`.
-7. **Check the gate conditions before migrating:** measured lifetime break-even, consistent wins across
-   runs, native image considered if the critical metric is start-up, the licence confirmed
-   at the official source, and a support horizon for the GraalVM line now that it is
+7. **Check the gate conditions before migrating:** representative outputs and application contracts
+   remain correct on the selected runtime and launch settings; a speedup does not excuse a
+   result mismatch or unexplained compiler failure. Reuse suitable regression evidence, and
+   diagnose failures with `references/troubleshooting-and-timeline.md`. Then check measured
+   lifetime break-even, consistent wins across runs, native image considered if the critical
+   metric is start-up, the licence confirmed at the official source, and a support horizon
+   for the GraalVM line now that it is
    detached from the Java SE release train.
 8. **After migrating, confirm the laboratory gain in production under real load,** with a
    tested rollback plan, and watch RSS: libgraal's threads and isolate heap live outside
@@ -164,9 +168,9 @@ find option X` — so never carry a flag across versions unlisted: `-XX:+JVMCIPr
   receives quarterly CPUs. Confirm the selected line's terms; these are distinct support choices.
   The dissolved Galahad project
   is no delivery commitment for future OpenJDK integration. Licence **and support horizon**
-  are both gates; JDK 17 CPU releases already
-  moved from GFTC to the OTN licence. Confirm at the official source before a corporate
-  decision.
+  are both gates. Check terms for the actual artifact and intended use; a published update
+  schedule or the underlying JDK's support dates do not establish GraalVM support entitlement.
+  Confirm at the official source before a corporate decision.
 - Truffle languages (GraalJS, GraalPy) need the Graal compiler for partial evaluation. For
   Polyglot 25.1+, on OpenJDK or Oracle JDK 25 the optimising runtime uses a polyglot isolate;
   otherwise the engine prints `[engine] WARNING: The polyglot engine uses a fallback
@@ -178,8 +182,10 @@ runtime` and interprets. Polyglot 25.1 withdraws the external-jargraal route for
 
 ## References
 
-The release-line facts below were checked against GraalVM 25.3.4.1 (2026-08-25). Consult the
-current official release calendar and target build properties before a new migration.
+Release availability and compiler changes were checked through GraalVM 25.4.4.1.1
+(2026-09-22). Runtime checks remain explicitly scoped to their tested builds; a release note
+does not verify an option on an older installation. Consult the current official release
+calendar and target build properties before a new migration.
 
 - [Workload fit and the migration decision](references/workload-fit-and-migration.md) — the
   workload-shape table with the reason each way and the GraalVM line it was true on, the

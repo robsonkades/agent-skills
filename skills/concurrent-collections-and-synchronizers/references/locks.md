@@ -251,6 +251,52 @@ lock or another representation. Virtual-thread parking does not improve fairness
 diagnosability. Evaluate it for small, hot in-memory structures with a stable field layout and
 measured optimistic-read success; compare with immutable snapshots and a plain lock.
 
+### Conditional update and read-to-write conversion
+
+Unlike a read-only RRWL holder, a `StampedLock` reader can try an atomic conversion with
+`tryConvertToWriteLock(stamp)`. A valid sole reader can obtain a write stamp; competing readers
+make conversion fail with zero and leave the read hold intact. Do not overwrite a held read
+stamp with that zero or spin while holding it: preserve the stamp, release the read hold, acquire
+write access, and recheck the condition because another writer may have changed the state.
+
+This Java 25 example uses only stable APIs and demonstrates that recheck:
+
+```java
+import java.util.concurrent.locks.StampedLock;
+
+final class GuardedValue {
+    private final StampedLock lock = new StampedLock();
+    private int value;
+
+    boolean replaceIfEqual(int expected, int update) throws InterruptedException {
+        long stamp = lock.readLockInterruptibly();
+        try {
+            if (value != expected) return false;
+            long writeStamp = lock.tryConvertToWriteLock(stamp);
+            if (writeStamp != 0L) {
+                stamp = writeStamp;
+            } else {
+                lock.unlockRead(stamp);
+                stamp = 0L; // cleanup must not release the old hold if acquisition is interrupted
+                stamp = lock.writeLockInterruptibly();
+                if (value != expected) return false;
+            }
+            value = update;
+            return true;
+        } finally {
+            if (stamp != 0L) lock.unlock(stamp); // release the mode actually held
+        }
+    }
+}
+```
+
+Test successful conversion, a competing reader, a predicate changed during the unlock/relock
+gap, and interruption while acquiring the fallback write lock. After every exit, subsequent
+acquisition must still succeed. This is a mechanism illustration, not a reason to replace a
+plain lock or `AtomicInteger.compareAndSet` for a single integer. Take the write lock initially
+when updates are common; conversion earns its complexity when measured read-mostly work and
+conditional updates justify it. A request deadline additionally needs timed acquisition.
+
 ## AbstractQueuedSynchronizer, last
 
 AQS provides "a framework for implementing blocking locks and related synchronizers … that rely on

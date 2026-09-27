@@ -35,7 +35,13 @@ feature nor a measurement here authorizes changing the project's runtime.
 
 ## Workflow
 
-1. **Read the full OOM message first.** It suggests an allocation path or resource limit, not necessarily
+Start from the requested decision and available deployment, runtime and workload evidence. A
+flag explanation does not require a new recording, and a sound existing budget need not change.
+Use the relevant steps below; a sizing request without a failure needs capacity evidence rather
+than an invented OOM diagnosis. Treat an unknown limit or unobserved peak as an assumption to
+resolve, not a measured value. Changes or restarts must fit the already authorized action scope.
+
+1. **For a failure, read the full OOM message first.** It suggests an allocation path or resource limit, not necessarily
    the root cause; preserve causes and external process/container evidence. `Metaspace`, `Direct buffer memory` and `unable to create native
 thread` require different evidence; raising `-Xmx` is not a general repair and can increase
    native/cgroup pressure even when it also raises an implicit direct-buffer limit.
@@ -45,7 +51,10 @@ thread` require different evidence; raising `-Xmx` is not a general repair and c
    attributes tracked growth to a category. Periodic JFR NMT/RSS events can provide a
    related time series when present/enabled, but do not assume identical semantics. The NMT
    events also require NMT enabled at startup; starting JFR later cannot recover that missing
-   attribution. NMT cannot be enabled on a running process.
+   attribution. NMT cannot be enabled on a running process. When it is absent, use existing
+   metrics/maps and retain the attribution gap; restarting solely to complete this workflow
+   is not required. Near a hard limit, diagnostic clients and extra JVM probes consume scarce
+   capacity too; prefer existing telemetry and bounded OS reads until their overhead fits the budget.
 3. **Budget every region and peak overlap**: candidate heap max = limit − measured/modelled
    non-heap/cgroup peaks − uncertainty/recovery headroom. Then express it as `-Xmx` or
    `MaxRAMPercentage` against the memory value the JVM actually detected, and verify the

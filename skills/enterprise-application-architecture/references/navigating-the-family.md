@@ -7,6 +7,7 @@
 | Question                                         | Skill                               |
 | ------------------------------------------------ | ----------------------------------- |
 | How do I make and record this decision?          | `architecture-decision-making`      |
+| What does an ambiguous quality requirement mean? | `architecture-characteristics`      |
 | Which patterns should this module use?           | `pattern-selection-and-composition` |
 | Does the framework already provide this pattern? | `patterns-and-modern-frameworks`    |
 | What kind of application is this?                | this skill, `application-types.md`  |
@@ -46,6 +47,7 @@
 | Question                              | Skill                              |
 | ------------------------------------- | ---------------------------------- |
 | Should this be a separate service?    | `distribution-boundaries`          |
+| Who may act on this data?             | `java-application-security-basics` |
 | What should the remote API look like? | `remote-facade-and-dto`            |
 | How is a request routed and handled?  | `mvc-and-request-handling`         |
 | How is the response produced?         | `view-and-representation-patterns` |
@@ -71,7 +73,9 @@ question is resolved rather than reading the entire family.
 | A list screen slows as query/call work grows    | `architecture-and-performance`, then `query-objects-and-specifications` |
 | `LazyInitializationException`                   | `orm-behavioral-patterns`                                               |
 | A client saves state read before another commit | `offline-concurrency-control`                                           |
-| A use case half-committed                       | `enterprise-transactions`                                               |
+| A use case half-committed                       | `enterprise-transactions`; apply the recovery fork below                |
+| Another tenant's object can be read or changed  | `java-application-security-basics`                                      |
+| Internal fields appear in an external response  | `remote-facade-and-dto`                                                 |
 | Adding a field touches seven files              | `enterprise-architecture-smells`                                        |
 | A service class has 3 000 lines                 | `service-layer-design`                                                  |
 | Entities are anaemic                            | `domain-logic-organization`                                             |
@@ -93,6 +97,7 @@ These pairs are easy to confuse; the distinction decides which skill applies.
 | Pair                                                                  | The distinction                                                                |
 | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `enterprise-transactions` vs `offline-concurrency-control`            | Reads/writes within each transaction, or stale state across transactions       |
+| `enterprise-transactions` vs `distributed-transactions-and-sagas`     | One verified atomic resource scope, or durable recovery across separate owners |
 | `layering-and-boundaries` vs `distribution-boundaries`                | Source-code dependency direction, or a process boundary                        |
 | `domain-logic-organization` vs `service-layer-design`                 | Where the rules live, or what wraps them                                       |
 | `data-source-patterns` vs `repository-pattern`                        | How code reaches the database, or the collection abstraction over aggregates   |
@@ -103,12 +108,32 @@ These pairs are easy to confuse; the distinction decides which skill applies.
 | `enterprise-architecture-smells` vs `architecture-decision-making`    | Is something wrong, or how to decide and record what to do                     |
 | `architecture-and-performance` vs `performance-methodology`           | Attributing latency to architecture, or the investigation process itself       |
 
+### Route a partially completed use case
+
+Carry the invariant, actual commit points, enlisted resources, observable intermediate states
+and permitted recovery outcome into the handoff:
+
+- Writes that should share one transaction: `enterprise-transactions` verifies effective
+  enlistment and rollback. The same annotation or database address is not enough evidence.
+- Local state plus publication intent: `delivery-semantics` checks durable intent and duplicate
+  delivery; an outbox does not make the consumer's remote effect atomic with the local commit.
+- Steps committed by separate owners: `distributed-transactions-and-sagas` compares an existing
+  valid atomic scope, supported coordinated transactions and durable application recovery.
+  Compensation is conditional on acceptable intermediate states and meaningful recovery, not
+  the default merely because several services exist.
+
+This fork locates the decision; return to the original use-case acceptance check instead of
+expanding an orientation request into a saga implementation.
+
 ## Neighbours outside this family
 
 This family stops where these begin:
 
 - `java-concurrency` — shared-memory races and task lifecycles inside one JVM. Trace the
   state owner before treating a concurrency symptom as a database problem.
+- `java-application-security-basics` — code-level authorization ownership and trusted identity;
+  pass actors, resources, allowed operations and alternate entry paths. Full security architecture
+  or deployment controls require the project's security owner; this entry point does not certify them.
 - `performance-methodology`, `latency-statistics`, `java-performance`, `jvm-gc-tuning` —
   performance investigation, statistics and runtime behaviour.
 - `littles-law-and-queueing`, `connection-pool-sizing`, `universal-scalability-law` — the
@@ -135,7 +160,34 @@ This family stops where these begin:
 
 The rest are consulted by question, not read in sequence.
 
-## Sources for concurrency routing
+## Decision checks
+
+These teaching cases are walkthrough/evaluation inputs, not executed behavioral evidence.
+
+- **Same business unit, different resource scope:** two writes use a verified shared local
+  transaction versus the second write committing in a partner service. Expected: investigate
+  local rollback/enlistment in the first case and observable partial state/recovery ownership in
+  the second. Failure: assume the caller's annotation covers the partner or mandate a saga
+  without checking tolerated intermediate states and existing alternatives.
+- **Hostile alternate entry path:** an authenticated tenant A supplies tenant B's order ID;
+  HTTP rejects it, but an import job calls the same mutation without equivalent authorization.
+  Expected: preserve the differing entry paths and trusted actor/resource evidence, route the
+  protected-operation contract to the security owner, and request a negative authorization
+  check for the bypass. Failure: treat login or the HTTP guard as proof of authorization, or
+  redesign persistence without addressing the access decision.
+- **Adequate simple module:** a public read-only reference-data module already meets its
+  latency, schema and exposure contracts. Expected: explain and retain it; no new Domain Model,
+  service split or access hierarchy is required by this routing exercise. Failure: impose a
+  family-wide reference architecture merely because other modules are more complex.
+- **Unresolved driver:** a new module is called "secure and scalable" without an affected
+  operation, workload or access rule. Expected: inspect available requirements, ask only about
+  consequential gaps and keep alternatives conditional. Failure: invent throughput/authorization
+  policy or declare an architectural style necessary from those adjectives alone.
+
+## Sources for routing boundaries
 
 - [JLS 17, happens-before order](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.4.5) defines ordering and visibility for shared-memory actions; this is a different contract from database isolation.
 - [RFC 9110, If-Match](https://www.rfc-editor.org/rfc/rfc9110.html#section-13.1.1) describes client preconditions against overwriting changed state; the stale-client problem is not limited to human editing.
+- [OWASP Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html): map actors, resources and operations; verify authorization at the protected access, including negative cases.
+- [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html): use data flows and trust boundaries to locate security questions without prescribing one architecture.
+- [Richardson: Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html): local transaction/publication intent and duplicate relay delivery are distinct from remote business completion.

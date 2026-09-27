@@ -45,6 +45,9 @@ over a stated horizon are all possible outcomes.
    repayment effort and change risk; use ranges and comparable units.
    On reassessment, compare future differences between options; effort already spent or a
    past deadline does not by itself justify continuing a rewrite or retaining a shortcut.
+   Check whether plausible uncertainty changes the preferred option. If it does, identify the
+   decisive assumption and seek proportionate evidence or give a conditional recommendation;
+   do not block an otherwise supported, reversible choice on unrelated unknowns.
 4. **Choose proportionate containment.** An existing boundary or local guard may be enough.
    Compare the cost and failure modes of added containment with the exposure it reduces;
    a new interface or flag is not automatically necessary or cheap.
@@ -102,6 +105,7 @@ Implement authorized prerequisite fixes rather than stopping because an item is 
   a containment checklist, and three worked decisions — a deadline, an incident, and a spike
   about to become production code. Read when a shortcut is being proposed.
 - **Recording and repaying** — `references/recording-and-repaying.md`. The debt record and
-  where it lives, writing a trigger that fires, estimating carrying cost, repayment strategies
+  where it lives, writing a trigger that fires, estimating carrying cost, testing whether
+  uncertainty changes the choice, repayment strategies
   (opportunistic, scheduled, strangled), and how to decide that a debt will never be repaid and
   say so. Read after the decision, and when planning repayment.

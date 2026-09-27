@@ -102,6 +102,35 @@ For measured events `S_i`, the exact path availability is
 When possible, calculate the joint request outcome directly from traces or correlated SLI
 time series. Never average percentages without the matching denominator.
 
+### What can be concluded without independence
+
+First distinguish an observed/assumed availability `A_i` from an SLA or SLO threshold. A promise
+of at least 99.9% is not evidence that availability equals 99.9%, nor that it cannot exceed it.
+Historical probabilities also do not promise the same future workload or failure distribution.
+
+For aligned probabilities of required component-success events, arbitrary dependence still allows:
+
+```text
+max(0, 1 - sum(1 - A_i)) <= P(all required components succeed) <= min(A_i)
+```
+
+The lower bound follows because the probability of any component failure is at most the sum
+of the failure probabilities; the upper bound follows because success requires each component.
+These are probability bounds, not statistical confidence intervals. See the
+[probability union and intersection bounds](https://www.stat.berkeley.edu/pub/users/stark/SticiGui/Text/probabilityAxioms.htm).
+
+For two required components each measured at 99.9% on the same population/window, the joint
+success fraction is between 99.8% and 99.9%. Perfectly overlapping failures yield the upper end;
+disjoint failures yield the lower end. A 99.95% joint target is outside that modeled interval;
+99.85% requires overlap/joint evidence to assess. Do not substitute the independence product
+as an observed result. A changed contract, such as an accepted fallback that removes a required
+component, changes the event being modeled and therefore the bound.
+
+The interval covers only the modeled component-success event. Omitted application failures,
+routing errors or insufficient survivor capacity can lower actual path availability. Missing
+population/window alignment prevents even this calculation; report that gap instead of forcing
+unlike percentages into either a product or a bound.
+
 ## Enumerating domains
 
 Name the fault as well as the domain. The table models complete domain loss or a defect

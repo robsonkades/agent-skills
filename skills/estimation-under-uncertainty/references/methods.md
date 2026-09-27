@@ -79,6 +79,38 @@ SD/mean of 33% on one task becomes 15% across five under these assumptions; thes
 coefficients of variation, not confidence-interval bounds. With perfect positive correlation,
 the five-task SD is `5 × (4/3) = 6.67`, so relative uncertainty does not shrink.
 
+## Task percentiles are not project percentiles
+
+The additivity of expected values does not apply to quantiles. For a small exact example,
+suppose each of two tasks takes 1 day with probability 0.8 or 10 days with probability 0.2.
+These are invented model inputs, not team observations. Define P80 here as the smallest
+duration whose cumulative completion probability is at least 0.8; each task's P80 is 1 day.
+
+For independent sequential tasks, enumerate their joint outcomes:
+
+| Total duration | Probability | Cumulative probability |
+| -------------- | ----------- | ---------------------- |
+| 2 days         | 0.64        | 0.64                   |
+| 11 days        | 0.32        | 0.96                   |
+| 20 days        | 0.04        | 1.00                   |
+
+Adding the task P80s gives 2 days, with only 64% model completion probability. The project's
+P80 is 11 days under this discrete convention; its coverage exceeds 80% because the CDF jumps.
+If both tasks start together with sufficient separate capacity and both must finish, project
+duration is their maximum: completion by 1 day still has probability 0.64, so project P80 is
+10 days. Taking the largest individual P80 would again be wrong.
+
+Change only dependence: one shared outcome makes both tasks fast with probability 0.8 or both
+slow with probability 0.2. The same marginal task distributions now give sequential project
+P80 of 2 days (parallel P80 of 1 day). The sequential expected total remains 5.6 days in both
+models. This is a counterexample to percentile shortcuts, not a reason to choose a dependence
+model that satisfies a target. Establish shared risk drivers from evidence; if dependence is
+unknown, show conditional scenarios instead of claiming a uniquely determined project P80.
+
+For empirical samples, record the tool's quantile/interpolation convention when it affects
+the decision, especially for small or discrete samples. The exact CDF calculation above is
+not an empirical percentile estimator and does not establish calibration on real deliveries.
+
 ## Where the independence assumption breaks
 
 The sum-of-variances shortcut needs zero covariances. Shared uncertain factors can correlate
@@ -192,4 +224,5 @@ percentiles as calibrated facts.
 
 - [GAO Schedule Assessment Guide, Best Practices 3 and 8](https://www.gao.gov/assets/gao-16-89g.pdf): resource-aware schedules, dependencies, correlation and schedule risk analysis. Its project examples are not software-team calibration data.
 - [NIST prediction uncertainty](https://www.itl.nist.gov/div898/handbook/pmd/section5/pmd512.htm): prediction for a future observation differs from uncertainty in an estimated mean. The worked PERT arithmetic above remains a stated heuristic.
+- [NIST percentiles](https://www.itl.nist.gov/div898/handbook/prc/section2/prc262.htm): empirical quantile conventions can differ, particularly for small samples. The two-task example is exact enumeration of a declared model; it is not a NIST dataset.
 - [Forecasting: Principles and Practice, time series cross-validation](https://otexts.com/fpp3/tscv.html): forecast-origin and horizon-aware evaluation without future-data leakage; applying this discipline does not make software deliveries a time series model.

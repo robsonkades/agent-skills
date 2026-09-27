@@ -113,6 +113,11 @@ TLS, framing, decompression, buffer conversion, alignment and application materi
 
 ## Buffer, ownership, and streaming
 
+Establish who supplies message boundaries: the transport, an envelope, or the codec. A successful
+parse alone does not prove that one complete business message was consumed. Verify message count,
+values and frame completeness; do not remove framing cost from a stream benchmark or add a second
+envelope when an existing bounded transport frame already meets the contract.
+
 Prefer writing to the next stage's bounded buffer/stream when it eliminates a demonstrated copy.
 Before reuse/pooling, define:
 

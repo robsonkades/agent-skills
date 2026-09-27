@@ -87,6 +87,14 @@ recording, inventory active sessions with the target's `JFR.check` and record th
 the continuous recording's own configuration does not describe all effective event settings.
 See [hybrid patterns](architecture-choice.md#hybrid-patterns).
 
+Successive dumps of a running recording may contain the same events. Different filenames,
+checksums or upload IDs do not make their time ranges disjoint. Keep them as incident archives,
+or use a verified ingestion policy that accounts for overlap before adding their weights.
+For interval exports, verify actual event coverage and boundary handling rather than assuming
+requested file windows are exact event partitions. The JDK's
+[`Recording.dump`](<https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Recording.html#dump(java.nio.file.Path)>)
+copies data; it does not establish an exporter checkpoint.
+
 ## RecordingStream design
 
 `RecordingStream` requires JDK 14+ with JFR support. `start()` blocks; `startAsync()` starts
@@ -121,6 +129,40 @@ callback exception, backend timeout, and schema rejection.
 Preserve full stack and event weight where profiling queries require them. A map keyed only by
 top method loses caller ownership, timestamp, thread/task context, and uncertainty; exporting
 such a counter is telemetry, not a continuous profiler.
+
+## Export and replay accounting
+
+Define the accepted loss/duplication trade for the question. An incident archive may tolerate
+duplicate objects; a CPU-per-operation query cannot silently count their samples twice.
+
+1. **Locate acknowledgement and durability.** Determine whether success confirms acceptance
+   by an intermediate collector, durable storage, or query visibility. Keep collection time
+   separate from upload/ingest time; recovered backlog belongs to its original workload window.
+   A timeout after sending has an unknown outcome, not confirmed rejection.
+2. **Define replay identity and its lifetime.** When the backend supports deduplication, retain
+   the same logical batch identity and payload through retries; scope it to producer/process
+   lifetime, channel and configuration epoch. Verify the deduplication window covers spool
+   replay and restart recovery. A profile ID or checksum alone does not promise that the
+   receiver deduplicates. Distinct overlapping snapshots require separate overlap handling.
+3. **Respect the actual protocol.** For OTLP 1.11.0, a populated `partial_success` response must
+   not be retried; inspect rejected counts and warnings even after HTTP 200. Unacknowledged
+   requests may be replayed and produce duplicates. Profiles remain a development signal in
+   this version: verify client/server compatibility instead of assuming a stable profile API.
+   See the [OTLP delivery contract](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.11.0/docs/specification.md).
+4. **Bound recovery.** Limit queue/spool bytes, age, attempts and retry rate; define which
+   evidence is dropped when capacity is exhausted and expose its affected interval/cohort.
+   Do not block application work indefinitely to preserve profiling data. If receiver semantics
+   are unknown, retain the uncertainty and avoid quantitative claims for the affected data;
+   do not invent exactly-once delivery or require a replacement backend for an exploratory view.
+5. **Test the ambiguous cuts.** Interrupt a disposable exporter before acknowledgement and
+   after receiver acceptance; replay after restart. Reconcile source weights, accepted batches,
+   rejected/dropped evidence and queried totals. Include a recovery longer than dedup retention
+   and two distinct snapshots of overlapping history, not just an identical-payload retry.
+
+For a bespoke delivery design, pass the acknowledgement boundary, replay identity, retention,
+failure model and required aggregate invariant to `delivery-semantics`; expect a bounded
+loss/duplication contract and failure tests. If unavailable, keep that contract provisional
+and validate against the receiver's documented behavior.
 
 ## Context propagation contract
 
@@ -162,6 +204,7 @@ bounded approved context
 service version, artifact/image digest, JDK/profiler/config epoch
 sample/event totals and loss/throttle counters
 source manifest and checksum
+batch/replay identity, snapshot overlap policy, acknowledgement and rejection evidence
 ```
 
 Profile stores often intern stacks and labels. Schema changes to frame normalization,
@@ -272,6 +315,27 @@ or historical queries can return plausible but wrong aggregates.
 | Injected hot stack             | appears above minimum detectable contribution                                |
 | Allocation/thread burst        | overhead and file/export volume remain within budget                         |
 | Unresolved symbols             | alert fires and raw addresses/build metadata survive                         |
+| Lost acknowledgement/replay    | repeated delivery does not silently inflate queried weights                  |
+| Overlapping snapshot exports   | repeated observations are archived separately or counted once                |
+
+### Decision checks
+
+These teaching cases are reproducible evaluation inputs, not evidence of executed behavior.
+
+- **Same timeout, different receiver:** a batch worth 12 CPU-seconds was accepted but its
+  acknowledgement was lost. With verified deduplication covering the replay horizon, retry
+  using the same identity and verify a 12-second aggregate. With an additive receiver and no
+  deduplication, retain the ambiguous outcome and choose the permitted loss/duplication policy;
+  do not promise a 12-second aggregate after replay or divide duplicated weight by unchanged
+  workload counters. Missing receiver semantics require targeted discovery.
+- **Different files, overlapping history:** export the previous 30 minutes of the same rolling
+  JFR every ten minutes. Expected: identify repeated observations despite unique files and keep
+  incident archives separate or validate overlap accounting. Failure: sum all file totals as
+  disjoint ten-minute CPU cost, or assume a checksum handles overlapping but different files.
+- **Successful status, partial acceptance:** OTLP 1.11.0 returns HTTP 200 with populated
+  `partial_success` and nonzero rejected profiles. Expected: expose the rejection, investigate
+  its cause and follow the no-retry contract for that request. Failure: mark coverage complete
+  from HTTP status alone or resend the entire partially accepted request.
 
 ## Authoritative references
 

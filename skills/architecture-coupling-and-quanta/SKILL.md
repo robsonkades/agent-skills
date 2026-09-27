@@ -32,7 +32,9 @@ or distinguishing connascence forms.
    shared column). Identify the affected business outcome and binding release/approval policies,
    their owners and any unresolved authority; distinguish these from delivery preferences.
    Inventory independently addressable deployment/rollback targets and their
-   artifacts. One pipeline can ship several targets; a target can use several pipelines.
+   artifacts. Include effective configuration/feature-flag revisions when they change the
+   contract without a binary deployment. One pipeline can ship several targets; a target can
+   use several pipelines.
    Published libraries and shared platforms enter as dependencies, not extra service deployments.
 2. **Collect enough evidence for the claim.** For release independence, inspect manifests,
    dependency versions, migration ownership, API/event contracts and deployment/rollback records.
@@ -41,7 +43,7 @@ or distinguishing connascence forms.
    inputs that could change the finding; continue supported edges while others remain unknown.
    Record source, date and coverage. A diagram alone identifies questions, not proven boundaries.
    Read [Measuring the unit](references/measuring-the-unit.md) before deriving metrics or counts.
-   For Java library changes or event evolution, use its
+   For Java library changes, event evolution or activation/rollback constraints, use its
    [compatibility evidence](references/measuring-the-unit.md#compatibility-evidence-for-the-actual-release) checks.
 3. **Record separate findings per edge.** Use the table below. S and D can both be present;
    mark each as supported, absent within the tested scope, or unknown. Distinguish an observed
@@ -74,6 +76,9 @@ or distinguishing connascence forms.
    check are explicit; a completed map need not imply remediation. Choosing a new process boundary belongs
    to `distribution-boundaries`; evaluating a smell to `enterprise-architecture-smells`;
    shared-library release design to `component-and-release-boundaries`.
+   Pass the scoped map, supported constraints, unknowns and the decision needed; request an
+   alternative/verification plan from that owner. If unavailable, return that handoff and the
+   next discriminating check without inventing a split/merge or migration design.
 
 ## Edge questions
 
@@ -89,6 +94,10 @@ or distinguishing connascence forms.
 - A version-pinned shared library remains a structural dependency, but compatible consumers need
   not upgrade together. A shared schema can constrain evolution even when read-only; distinct
   schemas can share capacity/outage risk without sharing table ownership. Record the mechanism.
+- Independently deploying binaries does not prove independent feature activation or rollback.
+  Check the reachable versions, effective flags and persisted effects together; disabling a flag
+  does not undo data already written. Record the required sequence and evidence, not an automatic
+  lockstep-release verdict. A shared flag alone also does not prove that consumers must agree.
 - Async can remove waiting for a consumer at request acceptance; it does not remove event-schema,
   ordering, completion or recovery obligations. A queue-based request/reply still waits logically.
 - A timeout is bounded failure, not successful fallback. Verify that degraded output satisfies the

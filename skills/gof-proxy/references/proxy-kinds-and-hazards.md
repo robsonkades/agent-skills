@@ -54,6 +54,23 @@ A returned `CompletionStage` can fail after `invoke` returns: observe the stage 
 concerns completion, and preserve its failure/cancellation contract. Invocation return alone does
 not justify releasing resources still used by that work.
 
+**Fluent returns need their own receiver check.** With the simple forwarding handler above,
+`proxy.configure(options).execute()` can run `configure` through the handler but `execute`
+directly on the target if `configure` returns `this`. The JDK returns the handler's result; it
+does not automatically replace target references with the proxy. Inspect consumer chains and
+callback/nested-object aliases when interception is required.
+
+For a method whose contract returns the same guarded receiver, a handler may replace a result
+identical to the target with the proxy when the declared return type accepts it. Do not replace
+a distinct newly created object or assume a proxy fits a concrete target return type. If the API
+cannot preserve the required boundary, prefer an explicit non-chaining operation or redesign the
+return contract compatibly. Test the second call's advice, not only the first call's return type.
+
+Framework behavior can differ: [Spring 6.2.11's JDK proxy implementation](https://github.com/spring-projects/spring-framework/blob/v6.2.11/spring-aop/src/main/java/org/springframework/aop/framework/JdkDynamicAopProxy.java)
+substitutes the proxy for some compatible direct self-returns, with exceptions, and cannot repair
+a target reference embedded in another returned object. This is implementation evidence for that
+version; verify the actual framework and return contract rather than generalizing it to all proxies.
+
 | Mechanism         | Requires                                    | Cannot intercept                                                          |
 | ----------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
 | JDK dynamic proxy | Eligible interfaces                         | Target-only methods; Object.equals/hashCode/toString do reach the handler |
@@ -183,6 +200,25 @@ Ways to enforce that boundary:
 
 Ordinary Spring proxy-based method security inherits self-invocation bypass; verify the configured
 mode and any enforcement already established at the outer entry point.
+
+### Cache hits are also access paths
+
+An outer cache can return a saved result before an inner protection proxy or method-body check
+runs. A previously authorized read followed by permission revocation can then return protected
+data even though callers never obtained the raw target. Trace the actual chain and require the
+relevant policy on the hit path, including result-level filtering where needed; do not infer a
+safe order from annotation order in source.
+
+This consequence follows from caching's short-circuit behavior, documented for
+[Spring 6.2 `@Cacheable`](https://docs.spring.io/spring-framework/reference/6.2/integration/cache/annotations.html).
+Its default keys use method arguments, not arbitrary caller context. When tenant or caller context
+changes the result or visibility, include the required partitioning or move caching behind an
+appropriate policy boundary. Partitioning does not by itself recheck expired permissions. Public,
+context-independent values can remain shared; a cache is not automatically a security defect.
+
+Verify a miss, a hit after revocation and two callers whose permitted views differ. Observe both
+returned data and whether the required check ran. Keep cache freshness/eviction design separate
+from this proxy's obligation to preserve the access contract.
 
 ## Identity and unwrapping
 

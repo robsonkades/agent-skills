@@ -160,8 +160,8 @@ Actual layout `[executed]`, 25.0.3, `ClassLayout.parseInstance(...).toPrintable(
 
 What this establishes:
 
-- **Source order is discarded.** Fields are grouped by descending size, with **references
-  placed last**.
+- **Source order is discarded.** In this `AllTypes` fixture primitive fields are grouped
+  by descending size, with references placed last; this is not a universal inheritance rule.
 - **The grouping does not start at the first slot under classic headers.** The JVM hoists a
   4-byte field into the 12–15 header hole, ahead of the 8-byte group: `int i` sits at offset
   12, before `long l` at 16. Descending-size grouping therefore does not mean the first
@@ -188,6 +188,23 @@ follow a different algorithm and must not be carried forward (not verified here 
 build available). The offsets above were reproduced in the historical audit with
 `Unsafe.objectFieldOffset` on 25.0.3, JOL-free: `int i @ 12` under classic headers,
 `long l @ 8` under compact ones.
+
+**A superclass ending in a reference changes the placement order.** The pinned
+[JDK 25.0.3 field-layout builder](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/classfile/fieldLayoutBuilder.cpp)
+allocates a subclass's reference fields before considering its primitives in that case,
+allowing adjacent reference maps to merge; available gaps still affect actual offsets.
+For `class Parent { Object parent; }` and
+`class Child extends Parent { Object child; long value; }`, a bounded review check on
+Temurin 25.0.3+9, compressed oops/class pointers, alignment 8, JOL 0.17 found:
+
+| Mode    | `parent` offset | `child` offset | `value` offset | Shallow bytes |
+| ------- | --------------- | -------------- | -------------- | ------------- |
+| Classic | 12              | 16             | 24             | 32            |
+| Compact | 8               | 12             | 16             | 24            |
+
+`Instrumentation.getObjectSize` agreed with both shallow totals. This supports those target
+offsets; it does not make references-first a portable rule either. Preserve inherited layout
+when explaining offsets, and verify actual offsets before drawing cache-line conclusions.
 
 ## 5. Superclass gap filling
 

@@ -114,6 +114,51 @@ unwrapping in normal business paths where it bypasses wrapper policy. Blindly fo
 can violate reflexivity or symmetry even for a value-based delegate; use identity or an explicit
 wrapper equality policy tested in both directions and consistent with hashCode.
 
+## Method and return coverage
+
+Map the public entry points to the methods they actually invoke. Same-interface forwarding does
+not intercept calls that the delegate makes on itself; `delegate.batch()` calling its own
+`send()` bypasses a separate wrapper's `send()`. Decide whether the policy covers batches or
+each item. A default method executed on the wrapper may instead call its overridden methods;
+blindly forwarding that default to the delegate can change coverage. For Spring proxy interception,
+pass the affected call path and required coverage to `gof-proxy`; if unavailable, report the bypass
+and test a supported entry path before claiming advice applies.
+
+Bulk overloads can also apply a policy twice. Java 17
+[`FilterOutputStream.write(byte[], int, int)`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/FilterOutputStream.html#write(byte%5B%5D,int,int)>)
+calls `write(int)` for each byte. Counting bytes in both overrides while the bulk override calls
+`super.write(...)` therefore double-counts a successful write. Choose one accounting boundary;
+test each overload and its actual dispatch path before optimizing it to call the delegate directly.
+Such an optimization can bypass a required transformation in the single-byte override.
+
+Fluent return values need a different choice depending on the contract:
+
+- A mutating method that promises the same receiver, such as
+  [`Writer.append`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/Writer.html#append(java.lang.CharSequence)>),
+  must return the outer wrapper after applying its behavior. Returning `delegate.append(...)`
+  exposes the delegate and subsequent chained calls skip this layer. Test both identity and
+  behavior of the next call in the chain.
+- An immutable `withOption(...)` that returns a new configured component must preserve that new
+  result. If decoration is required on subsequent calls, decorate the result with an explicit
+  state/ownership policy. Returning `this` loses the option; returning a raw result loses the layer.
+  Do not wrap unrelated result values or share stateful policy objects without checking their scope.
+
+## Asynchronous observation
+
+For `CompletionStage` results, timing only the call to the delegate measures stage creation, not
+terminal completion. Handle a synchronous throw before a stage is returned as well as later
+success, failure and cancellation. Use controlled incomplete stages in tests, then complete them
+and assert the intended observation exactly once; avoid sleep-based timing assertions.
+
+[`whenComplete`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html#whenComplete(java.util.function.BiConsumer)>)
+returns a new stage. A throwing callback can make that returned stage fail after source success;
+when both fail, the source failure takes precedence. Contain expected recorder failures under the
+best-effort telemetry contract. Decide whether to return the original or a dependent stage based
+on required ordering and cancellation semantics; a new stage is not a transparent replacement
+merely because its generic type matches. Check the implementation's executor/context behavior and
+keep callbacks short. Terminal observation still does not establish that a cancelled transport has
+released its resource. Preserve the ownership rule below.
+
 ## Resource ownership
 
 A wrapper must state whether it owns the delegate or only borrows it. Forwarding `close` is correct

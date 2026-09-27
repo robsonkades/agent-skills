@@ -17,6 +17,36 @@ obligation; a semantic explanation does not require filling an unrelated operati
 Also show representation invariants before/after every successful atomic transition and why a
 failed transition leaves no visible side effect.
 
+## Commit versus cancellation
+
+First distinguish stopping retries or abandoning a result from guaranteeing that an accepted
+cancellation prevents the operation's effect. A separate volatile/atomic flag provides visibility,
+but the following schedule remains possible even with sequentially consistent actions:
+
+```text
+Operation: reads cancelled == false; derives next from current; pauses.
+Canceller: sets cancelled = true; returns an acknowledgement.
+Operation: compareAndSet(current, next) succeeds; the state change is committed.
+```
+
+This can satisfy a documented best-effort contract. It violates an acknowledgement promising that
+the operation did not and will not commit. For a single-use operation whose mutation fits one
+immutable aggregate, commit and cancellation can CAS from the same pending snapshot into distinct
+terminal states, including the data change in the commit transition. The winning CAS decides the
+outcome; a losing cancellation must not report that it prevented the effect. A status CAS followed
+by a separate mutation is not this protocol: prove the publication/helping gap or use a simpler
+locked design if it satisfies the requirements.
+
+Test cancellation before the publication attempt, after successful publication but before return,
+and between retries. Assert both the returned outcome and actual state. Post-commit notification
+or cleanup failures must not trigger a retry based on the false premise that nothing happened.
+These schedules challenge safety; passing them does not prove nonblocking progress.
+
+For interrupt propagation or resource shutdown beyond this in-memory operation, pass the owned
+task/resources and known commit state to `cancellation-and-interruption` for its lifecycle policy.
+If unavailable, retain the project's established cancellation policy and qualify any unresolved
+termination guarantee instead of deriving it from a CAS loop.
+
 ## Treiber stack checklist
 
 ```text
@@ -140,6 +170,8 @@ memory reclamation indefinitely while operations remain lock-free.
 
 ## Authoritative references
 
+- [Java 17 AtomicReference single-reference CAS contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html)
+  — the commit/cancel schedule is a consequence of separate atomic actions, not a weak-memory claim.
 - [Java concurrent package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
 - [Java atomic package](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html)
 - [AtomicStampedReference pair and update contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html)

@@ -96,6 +96,34 @@ The common single-threaded `ConcurrentModificationException` is not a concurrenc
 it is a structural change inside a for-each over the same collection. The fix is
 `Iterator.remove()` if supported, or supported `Collection.removeIf` outside that traversal.
 
+`Collections.synchronizedList` adds another policy: synchronize on the returned wrapper for the
+whole iterator traversal, with all access following the wrapper's synchronization policy. Locking
+individual `hasNext()`/`next()` calls leaves an interference window. For slow callbacks, consider
+copying under the lock and processing the snapshot after releasing it, if that consistency
+contract is acceptable. Follow the exact mutex rules for collection views; see
+[Collections 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html).
+
+## Removal and lookahead
+
+When supported, `remove()` deletes the element most recently returned by this iterator's `next()`;
+before any `next()`, or twice after one `next()`, it throws `IllegalStateException`. Unsupported
+removal throws `UnsupportedOperationException`. A lookahead call must not change the removal
+target. See [Iterator 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Iterator.html).
+
+Counterexample: a wrapper returns `A`, then `hasNext()` consumes and caches `B` from the source.
+Delegating `remove()` now removes `B` from that source, although the wrapper's caller last received
+`A`. Filtering wrappers can advance even farther. Keep removal unsupported unless the adapter can
+preserve the last-returned element and valid traversal state under the source's mutation contract.
+If removal is required, prefer a suitable existing iterator or redesign the adapter; deleting by
+equality is not a general repair when equal elements can appear more than once. Test
+`next(); hasNext(); hasNext(); remove()` and inspect the backing collection, not just emitted values.
+
+Do not transfer the ordinary-loop mutation guarantee to `forEachRemaining`: its callback mutation
+is unspecified unless an overriding policy allows it, as is iterator behavior after a callback
+throws. The base contract also leaves `remove()` after `forEachRemaining` unspecified. Use an
+explicit pull loop when per-element removal is required; define any stronger custom recovery
+contract rather than inferring it from one implementation.
+
 ## Closing
 
 ```java
@@ -115,6 +143,15 @@ tell from the type. Terminal operations do not call close automatically. Establi
 if constructing the stream fails after acquiring the resource. For Spring Data JPA streaming,
 check the repository/provider transaction and cursor requirements for the project version;
 consume within the required scope and close it (`repository-pattern`).
+
+For resource-owning pull APIs, neither `Iterator` nor `Iterable` supplies `close()`, and the
+[enhanced-for translation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.14.2)
+does not close a cursor on exhaustion, `break` or failure. Keep traversal inside the resource
+owner's scope, retain the original stream when using `stream.iterator()`, or expose a
+project-specific cursor that implements both `Iterator<T>` and `AutoCloseable`. Document who
+closes it and whether it owns or borrows the underlying resource. A scoped callback API can keep
+ownership in the provider when callers do not need interleaved/resumable pull. Do not add closing
+machinery to a plain in-memory iterator.
 
 ## When a hand-written Iterator is right
 

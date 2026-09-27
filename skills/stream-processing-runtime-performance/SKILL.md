@@ -50,6 +50,27 @@ the affected mechanism unresolved; it does not invalidate independent documented
    compare the affected steady-state, failure, restore or rescale contract in an authorized scope;
    a narrow answer does not require every campaign. Do not report a proposed test as executed.
 
+## Recovery completion
+
+Define whether recovery means task availability or restored output timeliness. For the latter,
+observe restart/assignment, state restoration, backlog replay and sink visibility; phases may
+overlap, so do not blindly sum their durations. A running task or restored store alone does not
+establish the output-age objective. Include required replay and arrivals during downtime in the
+backlog at resumption, without counting the same work twice.
+
+For a stable work mix at one bottleneck, a backlog `B` drains in approximately
+`B / (mu - lambda)` when sustained useful processing capacity `mu` exceeds ongoing arrival rate
+`lambda`. Use the same work units and stage boundary for all three; restore bytes/second and
+post-aggregation output counts are not interchangeable with source events/second. Measure capacity
+under relevant recovery conditions. If `mu <= lambda`, waiting cannot drain a positive backlog
+under those assumptions; a shorter state restore alone does not demonstrate processing headroom.
+Check the limiting partition/operator, since aggregate spare capacity may not be assignable there.
+
+Validate backlog age and useful sink results while ingress continues, against the requested recovery
+objective and source-retention limits. Reuse adequate existing recovery evidence. For broader capacity
+or admission changes, pass the stage rates, skew, resource limits and recovery target to
+`capacity-planning`; if unavailable, report the shortfall and a scoped measurement/change to validate.
+
 ## Rules
 
 - Size Kafka partitions from representative workload and per-partition capacity for each required

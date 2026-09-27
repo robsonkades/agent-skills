@@ -36,7 +36,7 @@ Data complexity          does the object model diverge from the schema?
                          who owns the schema?
 Work shape               per-instance decisions, or set-shaped work?
 Concurrency              conflicts within a transaction, or across a
-                         user's thinking time?
+                         user's thinking time? which reads/writes share an invariant?
 Transaction scope        one write, several writes, or across a boundary?
 Distribution             one process, or several? whose driver?
 Performance              round-trip budget; read/write asymmetry
@@ -137,6 +137,12 @@ Multi-request conversation state
   authorization, orchestration and multiple callers can justify it; read-only or remote
   operations need not start a database transaction
   (`service-layer-design`).
+- **Atomic commit and per-entity version checks do not by themselves protect every invariant.**
+  If a decision reads several aggregates or a predicate but updates only one, disjoint writers
+  may each pass their local checks while jointly breaking the rule. Identify the invariant's
+  read/write set and authoritative coordination before choosing aggregate boundaries, lock
+  scope or isolation. Preserve a sufficient local protocol when the invariant is local;
+  do not prescribe a larger aggregate or stronger isolation solely from the pattern name.
 - **Outbox follows a durable-publication requirement, not a Domain Model requirement.**
   When business state and publication intent must commit together, compare an outbox with
   the existing delivery contract. Transaction Scripts can need it too; a local synchronous
@@ -200,6 +206,7 @@ improvement from pattern names; inspect versions and measure the target implemen
   module or reviewing a proposed set of patterns.
 - [Reference architectures and the relationship graph](references/reference-architectures.md)
   — four complete compositions traced end to end (rich domain, transaction script, remote
-  API, read/write split), the pattern relationship graph showing which pattern implies
-  which, and the consequences of each composition stated concretely. Read when assembling an
-  architecture or explaining an existing one.
+  API, read/write split), the pattern relationship graph showing common collaborators and
+  tensions, and the consequences of each composition stated concretely. Read when assembling an
+  architecture or explaining an existing one, especially when a rule spans independently
+  versioned aggregates.

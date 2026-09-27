@@ -55,6 +55,11 @@ Inspect the JDK/compiler, JPA namespace/version, ORM/provider, annotation proces
 database dialect and schema deployment pipeline first. Examples are partial; this skill
 does not authorize upgrading the stack to match its documentation sources.
 
+For a mapping mismatch, trace the active persistence unit, packaged resources, configuration
+overrides and access strategy before changing annotations or DDL. A source file's presence
+does not prove it was loaded. For mixed annotations/XML, use the discovery and precedence
+checks in [Where mapping metadata lives](references/metadata-sources.md).
+
 Start with the requested mapping decision or changed contract. Reuse existing configuration
 and validation evidence; an adequate mapping or narrow API explanation can close with no
 change. Apply the steps and checks relevant to that scope, reporting any specific unresolved
@@ -158,6 +163,20 @@ need no deploy
   bounded field/type limits and contract tests remain possible and necessary. Require a
   concrete variability driver and confine dynamic behavior where practical
   (`orm-structural-mapping` on serialized LOB).
+
+## Output and completion
+
+Return the relevant placement or drift decision, its evidence, and the focused check that
+supports it or remains to run. A review reports findings and corrections; apply changes only
+when requested. For a changed mapping, verify the effective packaged configuration and the
+affected query/write contract, not just compilation. State unresolved provider, artifact or
+schema assumptions and what would resolve them; ask only when they change the decision.
+
+If the problem is relationship/identity shape, pass the current mapping, schema and required
+read/write contract to `orm-structural-mapping`; for a staged transition, pass compatibility
+constraints to `architecture-refactoring-paths`. Request the mapping decision or migration
+sequence respectively. If unavailable, give scoped options and the outstanding obligation.
+Stop when the requested decision is supported or the remaining evidence gap is explicit.
 
 ## References
 

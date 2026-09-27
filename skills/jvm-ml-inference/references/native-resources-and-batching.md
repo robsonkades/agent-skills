@@ -1,5 +1,28 @@
 # Native resources, parallelism and batching
 
+## Serving correctness and provider placement
+
+Treat the model artifact, input/output signature and pre/postprocessing as one tested version.
+Inspect input names, dtype, rank, supported dynamic dimensions and layout; feature order,
+normalization, tokenization and output-label mapping need application/model evidence, not just
+shape metadata. ONNX Runtime's `getInputInfo()` and `getOutputInfo()` expose node metadata;
+they do not establish those application semantics.
+
+Before accepting an engine/provider, precision, tensor-layout or batch change, run representative
+accepted inputs through the whole path, including pre/postprocessing. Check output shape and
+item association plus agreed numerical tolerances or task decisions; do not invent an epsilon
+or require bitwise identity unless that is the contract. Include boundary shapes and batched
+versus individual results where relevant. Quantization can change accuracy; a faster kernel
+alone does not establish acceptable results. This regression gate preserves an existing quality
+target, rather than defining model quality or a training method.
+
+Provider registration does not prove every operator runs there. ONNX Runtime assigns supported
+nodes/subgraphs by provider capability and priority; unsupported work can run on a configured
+CPU provider. Inspect actual placement using supported logs/profiles, and separate preprocessing,
+host/device transfers and engine execution before increasing concurrency. Decide whether such
+fallback meets the deployment contract and budgets; required accelerator execution and an
+allowed CPU fallback are different readiness conditions.
+
 ## Ownership ledger
 
 For each engine object involved in the change or suspected retention, record who creates/closes it,
@@ -39,6 +62,16 @@ release ownership. Do not add transfers to ordinary Java results that own no nat
 These are documented examples, not a universal session contract; confirm the resolved
 engine/provider release.
 
+When replacing a model in place, include both generations' weights, sessions/workspace and
+in-flight buffers in the peak host/device budget. Validate and warm the new version before
+routing new work to it; couple its preprocessing and postprocessing to that same version.
+Acquire and retire generation leases with a protocol that prevents new acquisition during
+retirement. Close the old resources only after queued/active uses and output consumers have
+completed or transferred ownership, including abandoned callers' still-running native work.
+Construction/warm-up failure must release new resources without closing the active version.
+If both versions cannot coexist within budget, plan a drained replacement or separate serving
+capacity and its availability/rollback cost; do not assume a live pointer swap solves lifetime.
+
 ## Parallelism matrix
 
 Start with the axes implicated by profiles, queue measurements or engine configuration;
@@ -60,6 +93,11 @@ Preserve each request's remaining upstream deadline, accounting for time already
 local deadline only when the contract supplies no earlier one. Use a monotonic clock for local
 elapsed budgets. Bound queue items and estimated bytes/tokens, and batch only compatible
 model versions, shapes/dtypes and provider constraints (or explicitly validated padding).
+For stateful inference, preserve sequence identity and state ownership, with ordering or instance
+affinity where the state contract requires them. Explicit state carried in each request does not
+by itself require one fixed predictor. A stateless dynamic batcher is not interchangeable with a
+sequence scheduler; use the engine/server's supported mechanism or retain unbatched execution
+when necessary.
 
 For a candidate batch, dispatch when full or by the earliest item's latest safe dispatch time:
 remaining deadline minus estimated execution, transfer/postprocessing and safety margin.
@@ -87,6 +125,9 @@ generalize one wrapper's behavior.
 - [ONNX Runtime 1.22.0 OrtSession source](https://github.com/microsoft/onnxruntime/blob/v1.22.0/java/src/main/java/ai/onnxruntime/OrtSession.java) — `Result.close`, `isResultOwner` and caller-supplied pinned-output ownership.
 - [DJL 0.33.0 inference performance](https://github.com/deepjavalibrary/djl/blob/v0.33.0/docs/development/inference_performance_optimization.md) — predictor concurrency; engine tuning details require their own version checks.
 - [DJL 0.33.0 memory management](https://github.com/deepjavalibrary/djl/blob/v0.33.0/docs/development/memory_management.md) — manager ownership, `PredictorContext` and resource outputs.
+- [ONNX Runtime execution providers](https://onnxruntime.ai/docs/execution-providers/) and [profiling](https://onnxruntime.ai/docs/performance/tune-performance/profiling-tools.html) — graph placement by capability/priority and operator-level evidence; use the target Java/provider release's available controls.
+- [ONNX Runtime quantization](https://onnxruntime.ai/docs/performance/model-optimizations/quantization.html) — quantization is not lossless; performance alone does not establish acceptable outputs.
+- [Triton dynamic and sequence batching](https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/batcher.html) — a concrete serving distinction between stateless batching and stateful sequence routing, not a requirement to adopt Triton.
 - [HotSpot JDK 25 NMT](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html) — tracking scope excludes third-party native allocations; it is not a process RSS ledger.
 - [JEP 444](https://openjdk.org/jeps/444) and [JEP 491](https://openjdk.org/jeps/491) — virtual threads became final in JDK 21; native execution remains a carrier concern after JDK 24's monitor changes. Pin events concern blocking while pinned, not every interval of native CPU work.
 

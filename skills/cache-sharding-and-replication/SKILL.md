@@ -56,14 +56,22 @@ measurement needed, not a production sizing or confirmed incident diagnosis.
    fits comfortably in one node's memory and reads dominate, replicating everything can remove a
    network hop only when the replica is process-local. It avoids key loss after a node failure if
    routing and remaining capacity work, and costs roughly `N ×` value memory plus metadata.
+   Preserve a single-node design when its capacity and failure behavior already satisfy the
+   request. Budget resident data, process overhead and recovery separately; an eviction limit
+   is not a process-memory limit. Read the capacity section in `references/topologies.md`
+   before sizing nodes or changing the copy count.
 4. **Choose the topology** — client-sharded, proxy, or clustered — on operational cost and
    client complexity and measured end-to-end latency. The comparison is `references/topologies.md`.
 5. **Set the replication factor from step 2**, not from a default. Replication exists here to
    keep the shard served when a node dies; if the arithmetic says the origin survives a node
    loss, RF=1 is a legitimate, cheaper answer. RF counts all copies including the primary;
    place them across the failure domains being protected and check promotion/quorum requirements.
+   At a fixed memory budget, extra copies reduce distinct data capacity: recompute steady-state
+   misses as well as failure load. Count only nodes eligible to serve each operation, and check
+   their remaining throughput during promotion and replica rebuild.
 6. **Exercise failure under load**—crash, partition/timeout, promotion and rejoin—and assert bounds
-   on origin rate/concurrency, client errors and recovery, not only cache hit rate.
+   on origin rate/concurrency, client errors and recovery, not only cache hit rate. If the contract
+   includes a rack or zone loss, exercise that correlated loss; a one-node test cannot establish it.
 7. **Add a local L1 only for a measured reason**, and accept that invalidation now has to
    reach every instance's L1 as well as the shared tier.
 
@@ -151,12 +159,19 @@ Adding owner shards does not split a hot key:
 Scale the result to the task. For a topology decision, return the recommendation (including
 keeping the current design), the materially relevant alternative and why it loses, measured
 inputs versus assumptions, node-loss origin-load estimate, replica placement/read policy, and
-failure-test acceptance bounds with rollout abort criteria. State what evidence would change
-the decision. Stop discovery when the remaining unknowns do not change it; otherwise name the
+memory/serving-capacity budget where changed, plus failure-test acceptance bounds with rollout
+abort criteria. State what evidence would change the decision. Stop discovery when the remaining
+unknowns do not change it; otherwise name the
 specific measurement or experiment needed. An incident diagnosis need not choose a replacement
 topology: distinguish observed timing/counters from the cache-loss hypothesis and name evidence
 that would refute it. State which checks actually ran; a paper estimate is not demonstrated
 failure tolerance.
+
+If cache validity or a read guarantee is unresolved, pass the observed read/write paths,
+candidate copy layout, freshness requirement and failure scenario to `caching-strategies` or
+`consistency-models`, respectively. The needed result is a compatible invalidation/read protocol,
+not a new topology by default. If that expertise or evidence is unavailable, retain the known
+contract and mark dependent topology choices conditional; replica count alone cannot settle it.
 
 ## Primary sources
 
@@ -170,8 +185,9 @@ failure tolerance.
 
 - [Cache topologies](references/topologies.md) — client-side sharded, proxy-fronted,
   clustered and fully replicated compared on failure behaviour, operational cost, client
-  complexity and consistency, with the near-cache layer and a decision table. Read when
-  choosing or changing a topology, or when a client library's sharding is in question.
+  complexity and consistency, with copy/process-memory budgets, the near-cache layer and a
+  decision table. Read when choosing or sizing a topology, changing replication factor, or
+  when a client library's sharding is in question.
 - [Node loss and origin protection](references/node-loss-and-origin-protection.md) — the miss
   storm computed from real numbers, replication factor as the lever, warming, coalescing,
   origin admission control, and the kill-a-node-under-load test with the bound it asserts.

@@ -2,13 +2,13 @@
 
 ## The two contracts
 
-|                           | First-match CoR with owner iteration       | Pipeline / middleware                          |
-| ------------------------- | ------------------------------------------ | ---------------------------------------------- |
-| How many handlers run     | Until one handles; then stop               | All, unless one short-circuits deliberately    |
-| Handler's answer          | "mine" / "not mine"                        | "here is the request, possibly transformed"    |
-| Unhandled                 | A real outcome needing a policy            | Terminal/short-circuit outcome must be defined |
-| Handler controls the rest | No                                         | Yes — it invokes the next, and may wrap it     |
-| Typical examples          | Tenant → product → default rule resolution | Servlet filters, interceptors, Netty pipeline  |
+|                           | First-match CoR with owner iteration       | Pipeline / middleware                           |
+| ------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| How many handlers run     | Until one handles; then stop               | Eligible stages until short-circuit or failure  |
+| Handler's answer          | "mine" / "not mine"                        | "here is the request, possibly transformed"     |
+| Unhandled                 | A real outcome needing a policy            | Terminal/short-circuit outcome must be defined  |
+| Handler controls the rest | No                                         | Depends: continuation or owner-driven callbacks |
+| Typical examples          | Tenant → product → default rule resolution | Servlet filters, interceptors, Netty pipeline   |
 
 ```java
 // classical: the chain owner iterates; handlers cannot see each other
@@ -41,6 +41,31 @@ alone does not establish termination; retain a separate work-completion/cleanup 
 Choose the linked form only when a stage needs to control the invocation of the rest — timing it,
 catching around it, retrying it, running it elsewhere, or skipping it. Otherwise the iterated form
 keeps the order visible in one place and removes successor wiring entirely.
+
+## Continuation and completion are contracts
+
+For synchronous middleware assembled as `A(B(terminal))`, ordinary entry runs A then B,
+and return unwinds B then A. Code after `next` runs only if it returns normally; a `finally`
+also runs on an exception through that call. Neither is proof of asynchronous completion.
+State whether each invocation may forward zero or once, what a zero-forwarding stage returns
+or writes, and who owns resources on each path. An early response needs to end that branch;
+falling through to `next` can invoke a handler after rejection or write a second response.
+
+Use a recording terminal and resource close counter to distinguish these synchronous paths:
+
+```text
+A forwards, B forwards: A.enter, B.enter, terminal, B.cleanup, A.cleanup; terminal once
+A forwards, B returns:  A.enter, B.enter, B.cleanup, A.cleanup; terminal never
+terminal throws:       A.enter, B.enter, terminal, B.cleanup, A.cleanup; failure propagates
+```
+
+Here each stage acquired a resource and uses `finally`; these traces are a proposed local
+contract, not every framework's callback schedule. Test throwing before forwarding too.
+Cleanup must not accidentally replace the chosen result or primary exception: a return or
+throw from `finally` can do so. Use the project's resource/exception convention; lexical
+`AutoCloseable` ownership can use try-with-resources, while asynchronous use needs a completion
+owner. Do not share a mutable continuation cursor across requests or retain a continuation
+past its supported invocation lifetime.
 
 ## Ordering discipline
 
@@ -150,6 +175,20 @@ async-dispatch and context/metrics behavior. None of those guarantees follows fr
 A hand-rolled chain beside them means two mechanisms can
 apply to the same request with no single place showing the combined order.
 
+In Spring 6.2, `HandlerInterceptor` uses callbacks rather than a handler-owned `next`.
+Its `afterCompletion` applies only when that interceptor's `preHandle` completed with `true`.
+A stage that acquires a resource then returns `false` or throws needs its own cleanup for
+that path. `postHandle` is a success hook, not unconditional cleanup. Async handling can
+release the request thread without either completion callback; redispatch can invoke the
+interceptors again, and timeout/network-error paths need the documented async callbacks.
+Distinguish thread-context cleanup from releasing a resource still used by asynchronous work.
+Use the security framework for mandatory security coverage, not MVC interceptor path matching.
+
+Netty 4.1 routes inbound and outbound events in opposite directions and skips handlers that
+do not implement the relevant event direction. Inspect the event and forwarding method before
+diagnosing an absent handler as a broken order. These are versioned examples: check the
+project's actual APIs and mappings instead of imposing either framework's lifecycle elsewhere.
+
 Hand-roll when the chain is **domain-shaped** — pricing rules, underwriting checks, approval
 policies, document transforms. Frameworks have no concept of those, and pushing them into filters
 couples business rules to the transport.
@@ -167,11 +206,48 @@ var issues = checks.stream().flatMap(c -> c.problems(request).stream()).toList()
 if (!issues.isEmpty()) throw new ValidationFailed(issues);
 ```
 
-Collecting is almost always better for anything a human corrects, and fail-fast is right when
-later checks are unsafe or expensive after an earlier failure. The mistake is having it be
-accidental — determined by whether a handler throws or returns.
+Collect independent, side-effect-free violations when one response helps a caller correct the
+input. Gate dependent checks on their prerequisites: a malformed identifier must not trigger
+an account lookup, and a failed size limit must not lead to expensive decoding merely to collect
+more errors. Bound work and error output for untrusted bulk input. Treat an unavailable dependency
+as an execution failure, not a fabricated validation violation. A phased validator can fail fast
+on structural prerequisites and collect independent field violations afterward; choose from the
+contract rather than whether a handler happens to throw or return.
+
+## Decision cases
+
+These are teaching walkthroughs, not measured agent evaluations:
+
+- **First-match denial:** two rules match a document route; the earlier one returns an explicit
+  rejection. Preserve that result and prove the later allow rule is not invoked. Treating rejection
+  or a handler exception as abstention fails the contract.
+- **Cleanup pair:** a synchronous Spring 6.2 interceptor acquires a request-scoped resource.
+  A returns `true`; its successful registration permits cleanup in `afterCompletion`. B instead
+  returns `false`; clean up B's resource on that branch because B's `afterCompletion` will not run.
+  Acquisition/`preHandle` failure also needs cleanup. Changing only the return outcome changes
+  the required path; demanding a new custom chain for either is unnecessary.
+- **Async lifetime:** a stage returns a future while downstream still reads its buffer. Keep the
+  buffer valid through actual use, including cancellation races; releasing it when `next` returns
+  or assuming future cancellation stopped work is a failure.
+- **Unknown wiring:** plugins match the same input, but no effective registration or tie policy
+  is supplied. Inspect configuration and caller tests; ask only for unresolved precedence policy.
+  Inventing priority from source-file order or an unused list factory is a failure.
+- **Simple baseline:** three stable overlapping predicates already have tested priority and no
+  contribution requirement. Retain the conditionals or ordered loop. Handler count alone cannot
+  justify classes, dependencies or an incompatible pattern switch on Java 17.
+- **Dependent validation:** a form has independent field checks plus a remote lookup requiring
+  a valid identifier. Collect the independent issues but skip the lookup if that prerequisite
+  fails. Running every check indiscriminately or reporting an outage as invalid input is a failure.
+- **Service boundary:** a request is already handled by several separately deployed services.
+  Pass effect/acknowledgement order, uncertain outcomes and recovery requirements to
+  `distributed-transactions-and-sagas`; if unavailable, report those unresolved contracts and
+  propose the next diagnostic step. A local successor interface supplies no distributed rollback.
 
 ## Sources
 
 - [Spring 6.2 collection injection and ordering](https://docs.spring.io/spring-framework/reference/6.2/core/beans/annotation-config/autowired.html).
 - [Spring 6.2.12 dependency resolution](https://github.com/spring-projects/spring-framework/blob/v6.2.12/spring-beans/src/main/java/org/springframework/beans/factory/support/DefaultListableBeanFactory.java): name/qualifier shortcuts and collection-element resolution precede the direct collection-bean fallback.
+- [Java 17 try/finally semantics](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.2): abrupt cleanup can replace the pending return or exception.
+- [Spring 6.2.12 HandlerInterceptor](https://docs.spring.io/spring-framework/docs/6.2.12/javadoc-api/org/springframework/web/servlet/HandlerInterceptor.html): callback eligibility, reverse completion order and security-mapping limits.
+- [Spring 6.2.12 AsyncHandlerInterceptor](https://docs.spring.io/spring-framework/docs/6.2.12/javadoc-api/org/springframework/web/servlet/AsyncHandlerInterceptor.html): thread exit, redispatch and completion paths without redispatch.
+- [Netty 4.1 ChannelPipeline](https://netty.io/4.1/api/io/netty/channel/ChannelPipeline.html): event direction and eligible handler traversal.

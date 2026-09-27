@@ -17,6 +17,57 @@ must select one output per logical partition/attempt lineage, or the aggregate i
 idempotent under duplicate contribution (for example set union). Ordering, regrouping and
 duplicate suppression are separate proof obligations.
 
+### Accumulation, merge and transport must agree
+
+Test the functions together, not only the binary combiner. With `fold` starting from a fresh
+identity and using the accumulator, the exact-result contract requires:
+
+```text
+finish(fold(X ++ Y)) == finish(merge(fold(X), fold(Y)))
+```
+
+Here `++` preserves the required input order; equality is the declared result equivalence.
+For example, over non-negative integers, both addition and maximum have associative,
+commutative combination with identity zero. But a local **sum** accumulator with a **max**
+combiner returns `3` for partitions `[2]` and `[3]`, instead of the sequential sum `5`.
+Passing standalone max-associativity tests would approve the wrong aggregate. Test empty
+partitions, singletons, different boundaries and multi-level merges against the same oracle.
+For approximate results, check the promised error invariant for each permitted execution
+shape instead of assuming byte-identical accumulators.
+
+Preserve the sufficient state across transport/checkpoint encoding: serializing only an
+average loses its count, just as premature finishing does. A decode/encode round trip must
+preserve subsequent merge/finish behavior under the contract. For mutable accumulators, use
+independent state per partition and follow the engine's ownership/reuse rules; serialization
+support does not make a shared accumulator thread-safe. A Java non-concurrent `Collector`
+uses isolated mutable containers, whereas its concurrent form has a different contract.
+
+### Grouping keys are part of correctness
+
+Specify which keys denote the same business group before selecting a partitioner: include
+case/collation, numeric scale, normalization and null handling where relevant. Inspect the
+engine's actual grouping equality; it may use a comparator or encoded bytes rather than
+Java `equals`. Keys equal under the intended grouping must reach the same final group.
+Distinct groups must remain distinct even if their partition hashes collide. A collision
+can share a worker; it must not merge unrelated keys.
+
+For a hash-partitioned grouping stage, equal grouping keys need compatible partitioning;
+normalizing only after the shuffle can leave one group split across reducers. For example,
+raw encodings of `A1` and `a1` differ. For case-insensitive ASCII identifiers, normalize
+consistently before grouping or retain an engine-supported comparator/partitioner combination
+that co-locates and equates them. A case-sensitive contract must preserve both. Do not add
+normalization merely to make counts agree. Deliberate salting requires a final
+combine by the original group, as described in the barrier reference.
+
+Check determinism across workers and retries, and compatibility across the deployed encoder
+versions. Apache Beam's `GroupByKey`, for example, groups by encoded key bytes and requires a
+deterministic key coder; satisfying Java equality alone is insufficient. This is an example
+of a framework contract, not a requirement to adopt Beam or change the project's version.
+Test equivalent-key representations and distinct-key collisions through the actual shuffle
+when available; an in-memory map test does not establish remote grouping behavior.
+
+### Mergeable operations and numeric domains
+
 | Operation                 | Associative             | Commutative | Distributed form                                                                  |
 | ------------------------- | ----------------------- | ----------- | --------------------------------------------------------------------------------- |
 | bounded integer sum/count | yes modulo width        | yes         | use checked/exact arithmetic if overflow is invalid                               |
@@ -163,3 +214,30 @@ Sources: [BigDecimal arithmetic and equality](https://docs.oracle.com/en/java/ja
 [HdrHistogram 2.2.2 merge implementation](https://github.com/HdrHistogram/HdrHistogram/blob/HdrHistogram-2.2.2/src/main/java/org/HdrHistogram/AbstractHistogram.java),
 [Count-Min Sketch authors' reference](https://sites.google.com/site/countminsketch/),
 and [t-digest implementation and accuracy discussion](https://github.com/tdunning/t-digest).
+
+The [Java Collector contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Collector.html)
+defines equivalence between split accumulation and combination, and mutable-container
+ownership. [Beam GroupByKey](https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/transforms/GroupByKey.html)
+and [Coder determinism](https://beam.apache.org/releases/javadoc/current/org/apache/beam/sdk/coders/Coder.html)
+support the encoded-key example (checked against the published 2.76.0 documentation on
+2026-09-25); verify the target engine/version rather than generalizing this equality mechanism.
+
+## Decision rehearsals
+
+These are teaching cases and structured walkthrough inputs, not measured agent evaluations.
+
+- **Algebra without compatibility:** an exact total uses local addition and merges partials
+  with maximum; all standalone merge laws pass. Expected: reject it using `[2]`, `[3]` versus
+  `[2, 3]`, then use a compatible sum state. Failure: approving from associativity alone.
+- **Key-contract pair:** a batch groups ASCII merchant IDs including `A1` and `a1`. When
+  the contract declares IDs case-sensitive, keep two groups. Change only the contract to
+  case-insensitive: require consistent key normalization or proven equivalent engine grouping/
+  partitioning, with matching results across workers/retries. Failure: always lowercasing,
+  relying only on Java `equals`, or
+  normalizing after unrelated reducer outputs were already finalized. If the contract is
+  unavailable, inspect producer/schema and consumer requirements before asking a focused
+  question; preserve raw keys while the consequential choice remains unresolved.
+- **Existing exact solution:** a bounded exact distinct set fits the measured peak and its
+  consumer requires exact counts. Expected: retain it; a mergeable approximate sketch adds
+  error without satisfying a missing constraint. Failure: selecting a sketch only because
+  the job is distributed.

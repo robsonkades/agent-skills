@@ -69,6 +69,12 @@ public class TemporalChecks {
         return !clock.instant().isBefore(expiresAt);
     }
 
+    static ZonedDateTime parseConsistent(String text) {
+        var parsed = DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(text);
+        return ZonedDateTime.ofStrict(
+            LocalDateTime.from(parsed), ZoneOffset.from(parsed), ZoneId.from(parsed));
+    }
+
     static void check(boolean condition) {
         if (!condition) throw new AssertionError("Check " + (checks + 1));
         checks++;
@@ -95,6 +101,16 @@ public class TemporalChecks {
         Instant later = resolve(overlap, paris, ZoneOffset.ofHours(1));
         check(earlier.equals(Instant.parse("2024-10-27T00:30:00Z")));
         check(later.equals(Instant.parse("2024-10-27T01:30:00Z")));
+
+        String inconsistent = "2024-07-01T12:00+01:00[Europe/Paris]";
+        check(ZonedDateTime.parse(inconsistent).getHour() == 13);
+        rejects(() -> parseConsistent(inconsistent));
+        check(parseConsistent("2024-07-01T12:00+02:00[Europe/Paris]").getHour() == 12);
+        rejects(() -> parseConsistent("2024-03-31T02:30+01:00[Europe/Paris]"));
+        check(parseConsistent("2024-10-27T02:30+02:00[Europe/Paris]")
+            .toInstant().equals(earlier));
+        check(parseConsistent("2024-10-27T02:30+01:00[Europe/Paris]")
+            .toInstant().equals(later));
 
         var noon = ZonedDateTime.of(2024, 3, 30, 12, 0, 0, 0, paris);
         check(noon.plus(Period.ofDays(1)).getHour() == 12);

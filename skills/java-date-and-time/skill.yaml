@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-date-and-time
-version: 1.0.0
+version: 1.0.1
 description: >-
   Model and validate Java date and time values when choosing between civil dates,
   local date-times and instants, resolving DST gaps or overlaps, applying calendar

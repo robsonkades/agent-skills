@@ -58,6 +58,10 @@ upgrades, and generic gRPC guidance does not establish a Java transport's exact 
 - Flow-control tuning follows bandwidth-delay product and observed stalls. Larger windows permit
   more outstanding DATA and can worsen overload; credit is not a measurement of allocated
   memory. Identify receiver, direction and hop before changing a window.
+- Distinguish a DATA stall from a rejected message/body. HTTP/2 frame size, flow-control credit,
+  gRPC per-message limits and proxy buffering limits govern different things. Locate the rejecting
+  component and effective limit before enlarging a window, pool or payload allowance; a status code
+  alone is not a diagnosis. Validate boundary payloads through the transport and filters that enforce it.
 - A long-lived HTTP/2 connection through an L4 balancer can pin many calls to one backend. Route
   connection distribution to `load-balancing-and-routing`; adding streams to that connection does
   not rebalance it.
@@ -86,6 +90,6 @@ supported no-change result does not require a tuning campaign.
 ## References
 
 - [HTTP/2 and gRPC mechanics](references/http2-and-grpc.md) — read when diagnosing stream stalls,
-  channel pools, flow control, deadline expiry or Netty execution.
+  payload-size rejection, channel pools, flow control, deadline expiry or Netty execution.
 - [Service-mesh cost and policy composition](references/service-mesh.md) — read when a proxy,
   mTLS, outlier detection or mesh retry participates in the path.

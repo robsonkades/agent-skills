@@ -57,8 +57,11 @@ The point is not the fluency. It is that a test names _only the field it depends
 reader sees the relevant input. When a record gains a component, centralize incidental defaults
 in the builder, but explicitly revisit tests whose behaviour depends on the new component.
 
-Keep builders in test source, one per aggregate you construct often. A builder for a
-two-component record is ceremony; construct it directly.
+Keep builders in test source when recurring arrangement benefits from them. Prefer direct
+construction for a small, clear fixture; component count alone does not decide. Even a
+two-component record can contain costly nested setup or repeated incidental defaults. Compare
+an existing fixture factory with a builder, choosing the form that exposes this test's relevant
+inputs without hiding the contract or sharing mutable state.
 
 ## Naming, arrangement, assertion
 
@@ -177,6 +180,28 @@ Assert `hasMessage` only when that exact message is a contract. Use `hasMessageC
 when a required diagnostic fragment is the contract; omit message assertions for incidental
 wording and prefer stable structured exception fields where available.
 
+## Check that the intended case ran
+
+An element-wise assertion says nothing about whether required elements exist. `allMatch`
+returns true for an empty stream, and `assertAll` over an empty collection/stream has no
+executables to check. For a scenario requiring exactly subscription `sub-1` to be returned,
+this partial test body checks the population before its facets (`due` is the actual result):
+
+```java
+assertEquals(List.of("sub-1"), due.stream().map(Subscription::id).toList());
+assertAll(due.stream().map(s -> () -> assertTrue(s.active())));
+```
+
+Choose membership, multiplicity and order assertions from the contract; do not require order
+for an unordered result or nonemptiness when the scenario expects no matches. For an empty-result
+case, assert emptiness explicitly. A test can execute successfully while an empty loop checks
+nothing, so runner counts alone are insufficient.
+
+Likewise, a failed Jupiter assumption aborts a test instead of failing it. Use assumptions for
+genuine environment applicability, not to turn a missing required fixture or incorrect result
+into an unexecuted assertion. Record skipped/aborted cases as coverage limitations and establish
+where the required scenario actually runs; do not report discovery or a started test as a pass.
+
 ## Lifecycle, and where shared state comes from
 
 | Choice                                     | Instance per test | Consequence                                               |
@@ -201,3 +226,5 @@ Synchronization prevents some races but does not by itself prevent stale state l
 - [JUnit 5.7.2 Assertions](https://docs.junit.org/5.7.2/api/org.junit.jupiter.api/org/junit/jupiter/api/Assertions.html) — older `assertThrows` and `assertEquals` APIs for the exact-class fallback.
 - [JUnit 5.13.4 TestInstance](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/TestInstance.html)
 - [JUnit 5.13.4 ResourceLock](https://docs.junit.org/5.13.4/api/org.junit.jupiter.api/org/junit/jupiter/api/parallel/ResourceLock.html)
+- [Java 17 Stream.allMatch](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html#allMatch(java.util.function.Predicate)>)
+  specifies empty-stream success without evaluating the predicate.

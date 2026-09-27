@@ -43,6 +43,9 @@ no-change conclusion is valid; an assessment need not start a new rollout or cha
 
 - Treat maturity as an evidence inventory. Never average away a missing safety-critical dimension.
 - Use ordinal levels only to communicate; retain the underlying evidence and gaps for decisions.
+- Prioritize capabilities by user impact, recurring performance loss or cost exposure and the
+  evidenced gap, weighed against adoption and ongoing support effort. Separate urgent remediation
+  from pilot readiness; a convenient pilot does not discharge risk on an unready critical service.
 - Standardize contracts and required fields, not one tool or one numeric threshold across unlike
   workloads. Inspect service criticality, runtime/tool versions and deployment constraints before
   applying a template; the program does not authorize upgrades or new release approval gates.
@@ -76,4 +79,8 @@ need not create a new central approval process.
 - [Maturity and rollout](references/maturity-and-rollout.md) — read when designing an assessment,
   adoption waves, champion rotation or the program scorecard.
 - Use `slo-and-alerting`, `performance-regression-ci`, `continuous-profiling` and
-  `performance-incident-response` for their respective artifacts.
+  `performance-incident-response` when the request needs an SLO, regression gate, profiling
+  deployment or incident coordination. Pass the objective, service evidence, versions, owners and
+  constraints; expect the applicable artifact or action plan with validation and limitations.
+  If a specialist is unavailable, retain an owned next action and required evidence; keep the
+  artifact-dependent conclusion conditional while completing the supported program assessment.

@@ -121,8 +121,34 @@ Reuse evidence for the same assumption; do not impose one test per mock or assum
 covers every query. A round trip can preserve a shared encoder/decoder bug; compare against
 independently specified fields and values. Recorded stubs only reflect their capture version.
 
+## A selected level must actually execute
+
+Trace the test from source set and discovery to the command used by the intended CI/release gate.
+Inspect plugin/task bindings, module selection, profiles, filename patterns, tags, engines,
+disabled tests and environmental assumptions. Read fresh per-test reports, not only aggregate
+success: the intended case may be absent or skipped while unrelated tests pass. Also check
+whether failures are ignored, retried away or merely reported without failing the gate.
+
+For Maven with Failsafe bound to `integration-test` and `verify`, `mvn test` stops before those
+phases. Invoking only `integration-test` can execute failing cases without failing the build:
+Failsafe defers that decision to `verify`, allowing post-test cleanup first. Use the configured
+`verify` lifecycle path for that gate and inspect the effective bindings; the plugin's presence
+or a class named `*IT` alone does not schedule it. Retain the project's wrapper, versions and
+profile choices rather than adopting these names as a universal build recipe.
+
+When selection is wrong, repair that path within the requested scope; do not duplicate the same
+test at a broader level to make it visible. A missing environment is an explicit coverage gap,
+not a passing integration check. If no-tests failure options are appropriate, scope them to the
+suite/module expected to contain tests; aggregator or deliberately test-free modules differ.
+
 ## Sources
 
+- [Maven Failsafe lifecycle](https://maven.apache.org/surefire/maven-failsafe-plugin/index.html)
+  and [configured executions](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html):
+  execution and failure verification are separate goals; checked 2026-09-27.
+- [Surefire discovery filters](https://maven.apache.org/surefire/maven-surefire-plugin/examples/inclusion-exclusion.html)
+  and [Failsafe verification options](https://maven.apache.org/surefire/maven-failsafe-plugin/verify-mojo.html):
+  inspect the project's configured selection and no-tests/failure policy.
 - [Boot 3.4 database replacement API](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.html)
   and [replacement modes](https://docs.spring.io/spring-boot/3.4/api/java/org/springframework/boot/test/autoconfigure/jdbc/AutoConfigureTestDatabase.Replace.html).
 - [Boot 3.4 application testing](https://docs.spring.io/spring-boot/3.4/reference/testing/spring-boot-applications.html):

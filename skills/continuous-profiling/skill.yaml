@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: continuous-profiling
-version: 1.3.3
+version: 1.3.4
 description: >-
   Designing and operating always-on production profiling: question-driven signal choice,
   permanent overhead and coverage budgets, in-process versus host collection, context-label
@@ -46,6 +46,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - delivery-semantics
   - metrics-and-cardinality
   - jfr-and-async-profiler
   - latency-statistics

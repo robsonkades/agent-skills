@@ -66,6 +66,21 @@ not claim a mean-only measurement satisfies it. If the owner actually specifies 
 preserve that interpretation rather than imposing a different target. These are scenario
 refinement checks, not a request to implement SLOs or pick architecture mechanisms.
 
+When operating conditions change the required behavior, keep their acceptance rules separate.
+Capture which operation and failure/load condition an exception covers, who authorized it, what
+must remain true, and the condition for returning to the ordinary target. A system that currently
+fails a target has exposed a gap, not established an approved degraded-service requirement.
+If exception authority is missing, retain the stated obligation and mark feasibility unresolved;
+do not quietly relax it or promise that the system can meet it.
+
+For example, an approved normal-operation completion limit and permission to queue during a named
+dependency outage describe two scenarios. Preserve any acknowledged-work durability requirement
+in both, and clarify the outage acknowledgement and post-recovery completion targets. Without
+that permission, queueing beyond the stated limit remains a potential violation, even if a team
+calls it graceful degradation. This is an acceptance distinction; choosing a queue belongs to
+design analysis. SEI's [QAW description](https://www.sei.cmu.edu/library/quality-attribute-workshop-collection/)
+includes the environment in scenarios and uses refinement to expose stakeholder assumptions.
+
 [SEI's ATAM report](https://sei.cmu.edu/documents/629/2000_005_001_13706.pdf), sections 5.3 and 8.5,
 uses scenario refinement and assesses importance and perceived difficulty/risk, often coarsely
 as high/medium/low. These are separate dimensions: high importance with low risk is not a waiver;

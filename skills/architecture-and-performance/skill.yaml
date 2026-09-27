@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-and-performance
-version: 1.3.2
+version: 1.3.3
 description: >-
   Attribute endpoint latency and throughput limits to architectural choices when query counts
   grow with result size, remote calls are chatty, connections are held across other work,
@@ -56,6 +56,9 @@ suggests:
   - offline-concurrency-control
   - query-objects-and-specifications
   - serialization-performance
+  - retries-and-backoff
+  - concurrency-limiting-and-bulkheads
+  - capacity-planning
 
 capabilities:
   - reads-source

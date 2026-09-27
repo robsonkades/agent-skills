@@ -27,6 +27,7 @@ treating migration as its remedy; reuse accepted decisions when the target is fi
 read/write/admin SLOs, availability, RPO/RTO, retention, and growth:
 OLTP/analytic/hybrid workload, data shape/distribution, working set, and peak concurrency:
 transaction invariants and anomalies the domain permits or forbids:
+what an acknowledged commit must survive: process crash, host/storage loss, or failover:
 topology, regions, replication/CDC, backup/restore, and failover requirements:
 required SQL/types/extensions/indexes/search/JSON/partitioning/columnar capabilities:
 JDK, ORM, pool, exact driver versions, batching/fetch/generated-key behavior:
@@ -48,6 +49,8 @@ supported by the available evidence.
    intended isolation level. Isolation names are not portable behavior contracts.
 3. Use production-shaped volume, skew, correlations, transaction durations, and concurrency. Compare
    work—reads/buffers, rows examined, spills, log/WAL, locks, and p99—not empty-schema averages.
+   Compare configurations that satisfy the same required durability and failover contract;
+   faster acknowledgment with accepted-write loss is a changed guarantee, not an engine win.
 4. Exercise inevitable operations: vacuum/purge/version store, checkpoints, growth, replication lag,
    backup/restore, failover, and a large DDL under concurrent traffic.
 5. Run the intended JVM stack. Drivers and poolers change prepared statements, plans, batch/fetch,
@@ -62,7 +65,9 @@ supported by the available evidence.
 2. Turn every source-specific behavior into an explicit destination invariant or an accepted change.
    Do not transliterate hints, types, index syntax, isolation names, or driver properties.
 3. Compare source and destination using an anonymized edge-case corpus and production-shaped load.
-   Check result set, order, JDBC types, errors, plans, and work.
+   Check result set, order, JDBC types, errors, plans, and work. Exercise the actual application
+   roles and tenant/session context, including forbidden reads and writes; privileged shadow
+   comparisons do not prove authorization compatibility.
 4. Force concurrent interleavings for critical invariants and failure cases for DDL, partial loads,
    restart, failover, lag, timeout, and generated keys.
 5. Shadow side-effect-free reads at a demonstrated common data boundary and reconcile without erasing
@@ -94,8 +99,10 @@ supported by the available evidence.
 
 ## Output contract
 
-For greenfield, produce an ADR with context, vetoes, measured scenarios, accepted trade-offs, risks
-and owners, reversibility, and review trigger. For migration, produce a compatibility inventory,
+Match the output to the requested decision stage. A preliminary shortlist or narrow review can
+return supported conclusions, decisive gaps and the next discriminating checks. For a completed
+engine selection, record an ADR with context, vetoes, measured scenarios, accepted trade-offs, risks
+and owners, reversibility, and review trigger. For a full migration plan, produce a compatibility inventory,
 evidence matrix, shadow/reconciliation plan, cutover/abort/rollback runbook, and unresolved risks.
 
 Each decisive claim must identify evidence, inference, confidence reason, and the test that could

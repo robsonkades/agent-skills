@@ -28,6 +28,9 @@ JDBC driver versions, database engine/version, metrics binding and transaction/c
 mode. No single Java baseline is declared for this diagnostic workflow; the SQL examples target
 PostgreSQL, and virtual-thread APIs require Java 21+. Preserve target versions. Missing workload or
 capacity evidence requires a measurement plan and conditional recommendation, not an invented size.
+Start from the requested sizing, diagnosis or review and reuse adequate evidence. Ask only for
+missing workload, deadline or database-budget inputs that change the decision. A review can retain
+a sound configuration; it does not require changing pool settings or database access code.
 
 1. **Measure `W`**, the mean connection **hold** time, with `hikaricp.connections.usage`;
    inspect p50/p99 separately for tails. Hold time runs from successful checkout until return to
@@ -47,7 +50,7 @@ capacity evidence requires a measurement plan and conditional recommendation, no
 4. **Set the timeouts and lifetimes** deliberately (see Rules).
 5. **On an incident, check in order**: `pending` and `acquire` p99 (is it the pool?),
    `usage` p50 versus p99 (does a minority hold connections far too long?),
-   `pg_stat_activity` for long `idle in transaction` sessions (what code is holding a transaction
+   `pg_stat_activity` for long idle transactions, including aborted ones (what code holds a transaction
    open while no statement runs?), then `pg_stat_statements` ordered by `total_exec_time` **and** by `calls`
    — high call counts identify candidates for per-request N+1 investigation.
 
@@ -66,11 +69,16 @@ capacity evidence requires a measurement plan and conditional recommendation, no
   budget. This configured ceiling is separate from measured safe database execution concurrency.
   With a connection proxy, budget client connections and backend sessions separately; do not assume
   a one-to-one mapping or a vendor default (see the sizing reference).
+- Choose the warm idle floor as well as the maximum. Inspect effective `minimumIdle` and
+  `idleTimeout`: a larger maximum can also increase maintained idle sessions when the minimum
+  defaults to the maximum. Compare connection-creation delay during bursts with the cost of
+  retaining idle database sessions; see the fixed/elastic choice in the sizing reference.
 - Avoid `connection-timeout=0`, which HikariCP treats as effectively unbounded. Its default is
   **30,000 ms** and its accepted minimum is 250 ms. Choose a finite value inside the caller's
-  remaining deadline and validate the resulting rejection behaviour. Failing fast
-  is what enables a circuit breaker, backoff retry and a degraded response — a long wait
-  converts partial saturation into total unavailability.
+  remaining deadline, reserving time for execution and cleanup, and validate rejection behaviour.
+  An acquisition timeout alone does not prove the database is unavailable. Immediate retries
+  against the same exhausted pool can amplify overload; prefer bounded rejection/degradation
+  unless a retry has remaining deadline, safe operation semantics and a bounded retry budget.
   This timeout is pool-wide and covers acquisition, not query execution or the whole request.
   For shorter remaining budgets than the supported minimum, use deadline-aware upstream admission
   and a client cancellation policy; do not assume setting a sub-minimum value works.

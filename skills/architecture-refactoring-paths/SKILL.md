@@ -48,6 +48,9 @@ serializer versions, CI and runtime images. Preserve the target's compatibility 
 using this skill does not authorize upgrades, preview features or new dependencies.
 
 1. **State the harm and constraints**, with evidence (`enterprise-architecture-smells`).
+   Reuse the agreed target, ADRs and documented standards; distinguish these from incidental
+   implementation patterns and assumptions. Inspect available evidence before asking. Continue
+   reversible planning on stated assumptions when they do not determine a cutover's safety.
    Inspect writers, consumers, jobs, schema/ORM versions, transaction boundaries and deployment
    topology. Obtain the target invariants, downtime and recovery/data-loss objectives. Separate
    observed harm from its hypothesized cause; name a measurement that could refute the proposed
@@ -75,8 +78,8 @@ using this skill does not authorize upgrades, preview features or new dependenci
 
 ```text
 The change requires a data migration
-        → define authority, backfill races and catch-up first; use the
-          persistence reference. Expand/contract does not make every
+        → define authority, invariant enforcement, backfill races and catch-up
+          first; use the persistence reference. Expand/contract does not make every
           phase reversible, especially after old writes stop.
 
 The change breaks an API consumer

@@ -107,6 +107,63 @@ lifetime permits it. A supplier is a creation function replacing the GoF hook, n
 inheritance pattern. The Spring configuration is optional wiring and needs the project's
 existing Spring dependencies; the map can be built directly without a framework.
 
+## When creation transfers an owned resource
+
+Keep the simpler supplier above for its stated resource-free contract. This separate Java 17
+variant applies when the original API already exposes `IOException` and each successful
+creation transfers one parser to the current run. A named functional interface preserves that
+checked failure without forcing inheritance or converting it into an unchecked exception.
+Reuse an existing provider with this contract when available.
+
+Partial replacement members; imports and domain types remain omitted. `parse` materializes
+rows that remain valid after parser closure, and `saveAll` completes its use synchronously.
+The factory and repository parameters are required; the repository is borrowed.
+
+```java
+interface OwnedParser extends AutoCloseable {
+    List<Row> parse(Path file) throws IOException;
+    @Override void close() throws IOException;
+}
+
+@FunctionalInterface
+interface ParserFactory {
+    // On success, transfers a non-null parser for this run to the caller.
+    // On failure, releases resources acquired internally before throwing.
+    OwnedParser open() throws IOException;
+}
+
+static ImportResult runOwned(Path file, ParserFactory factory, ImportRepository repository)
+        throws IOException {
+    Objects.requireNonNull(factory, "parser factory");
+    Objects.requireNonNull(repository, "repository");
+    try (var parser = Objects.requireNonNull(factory.open(), "parser factory returned null")) {
+        var rows = parser.parse(file);
+        var valid = rows.stream().filter(Row::isComplete).toList();
+        repository.saveAll(valid);
+        return new ImportResult(rows.size(), valid.size());
+    }
+}
+```
+
+This calls the factory once and closes the returned parser after success, parse failure or save
+failure. If `open` throws before returning, the caller has no parser to close; partial acquisition
+cleanup belongs inside the factory. If processing and close both fail, try-with-resources keeps
+the processing exception primary and suppresses the close failure; a close-only failure
+propagates. See [JLS 17 try-with-resources](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20.3).
+Closing the parser does not roll back `saveAll`; a failed close after saving is not evidence that
+retrying the import is safe.
+
+The decisive counterexample is a factory that returns an application-owned shared parser. It
+does not satisfy this transfer contract: do not put that borrowed parser in this per-run
+try-with-resources block. Keep cleanup with its owner, or obtain an explicit per-run lease.
+For streaming rows, asynchronous saving or multiple acquired resources, pass the acquisition
+path, aliases and last-use boundary to `java-resource-management` and obtain a cleanup protocol;
+if unavailable, keep that lifecycle change conditional rather than copying this lexical scope.
+
+Verify factory invocation count, null rejection before parsing, acquisition failure without
+processing, and closure on parse/save failure. Include simultaneous processing/close failures
+to check the primary exception, and a borrowed-product case to prevent accidental closure.
+
 ## Where the hook correctly stays
 
 A framework may expose a required creation hook. This illustrative SPI invokes it after

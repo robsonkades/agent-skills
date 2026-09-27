@@ -37,6 +37,10 @@ shape.
    invalid or unauthorized use where those risks exist. State what the provider guarantees and
    what the consumer must do, then define inputs, outputs, invariants, errors, timeouts, retries,
    duplication, ordering, partial success, authorization, and observability where applicable.
+   When an interaction crosses several surfaces, check their promises together: what a success
+   response means for subsequent reads, emitted events and downstream effects. Follow
+   [Interacting surfaces](references/contract-surfaces.md#interacting-surfaces); separate valid
+   schemas do not establish a coherent end-to-end contract.
 5. **Define evolution.** Current version, proposed version, compatible and incompatible changes,
    coexistence window, migration/deprecation, rollout order, rollback limit, and consumer evidence.
    Name exact producer/consumer/schema revisions and retained data that remain supported;

@@ -131,6 +131,20 @@ Identifiers must be unique within an entity hierarchy. Use a provider-supported 
 scheme such as a shared sequence; independent per-table generators can collide. Check
 TABLE_PER_CLASS support and generator restrictions in the actual provider.
 
+## Business-key uniqueness across subtypes
+
+Establish whether a business key, including its tenant/provider scope, is unique per subtype or
+across the hierarchy. With SINGLE_TABLE or JOINED, shared key columns in the common table can
+carry a hierarchy-wide `UNIQUE`. Including the discriminator in that key instead allows the same
+business key in different subtypes; choose from the required contract.
+
+Under TABLE_PER_CLASS, separate `UNIQUE` constraints enforce only their own tables. Two subtype
+rows can therefore share a business key even when a shared sequence gives them distinct primary
+keys. If that must be prevented, compare a common-table mapping with a transactionally maintained
+shared key registry backed by uniqueness enforcement. Include every writer and the registry's
+ownership/release rules; an application lookup followed by insertion is not sufficient without
+appropriate concurrency control. Verify null and comparison semantics on the actual database.
+
 ## Side by side
 
 | Dimension                     | Single table                         | Joined                       | Concrete table                     |
@@ -199,5 +213,7 @@ an arbitrary multi-column hierarchy. The storage can stay flat
   concrete root tables and polymorphic UNIONs under TABLE_PER_CLASS.
 - [PostgreSQL 18 partial indexes](https://www.postgresql.org/docs/18/indexes-partial.html):
   predicate implication and query-plan limitations.
+- [PostgreSQL 18 unique constraints](https://www.postgresql.org/docs/18/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS):
+  table-scoped uniqueness, composite keys and null semantics.
 - [Spring Data JPA auditing](https://docs.spring.io/spring-data/jpa/reference/auditing.html):
   auditing infrastructure and listener setup for the optional timestamp example.

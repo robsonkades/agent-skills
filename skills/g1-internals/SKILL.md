@@ -45,7 +45,10 @@ question. An explanation or a justified unchanged configuration can complete the
 1. **Read young and mixed collections separately.** They are different events with
    different budgets; grep them apart before computing any statistic.
 2. **Break the pause into phases** with `-Xlog:gc+phases=debug` and identify which one dominates.
-   Everything after this step depends on that answer.
+   Use elapsed top-level durations for pause attribution; parallel worker `Sum` is accumulated
+   worker time, not pause duration or measured CPU time. Do not add nested totals to their children.
+   Use worker spread and work counts to distinguish uneven work from execution delays; see the
+   phase reference before interpreting `Min`, `Avg`, `Max`, `Diff` and `Sum`.
 3. **If `Evacuate Collection Set` dominates**, distinguish `Object Copy` from root scanning.
    For copying, correlate live bytes, promotion and CSet size with worker imbalance, CPU availability
    and memory bandwidth; a long phase does not prove a larger live set.

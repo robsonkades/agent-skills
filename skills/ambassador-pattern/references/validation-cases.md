@@ -149,3 +149,44 @@ alternative. Define positive virtual-host and hostile wrong-name/forged-authorit
 
 **Failure:** Treating loopback as preserving the origin automatically, SNI as certificate
 validation, any CA-signed name as sufficient, or silently weakening verification.
+
+## 9. Same canary, different selection unit
+
+**Request/context A:** “We make independent unary RPCs over persistent HTTP/2 connections.
+The ambassador can inspect HTTP/2 and has a documented per-request weighted route. Both
+backends implement the same idempotent operation. Send approximately 10% of RPCs to the
+canary, with no user stickiness requirement. Does persistent connection reuse prevent this?”
+
+**Expected behavior/output:** Distinguish requests/streams from their transport connection;
+consider the existing request-level proxy adequate for selection, subject to version/config
+verification and measured split/error/latency behavior. Use eligible RPCs as the denominator
+and tolerate finite-sample variation. Do not force connection churn merely to select variants.
+
+**Changed constraint B:** “The ambassador instead receives an opaque end-to-end TLS/TCP
+tunnel. It cannot inspect requests or terminate TLS. Each connection carries unequal numbers
+of RPCs, and some stay open for hours. Keep the same per-RPC canary requirement.”
+
+**Expected behavior/output:** Reject a connection weight as proof of the required RPC split.
+Compare existing client-side selection or another authorized protocol-aware endpoint; ask
+whether connection-level assignment is acceptable only if that requirement is unresolved.
+State the incompatible constraints if neither placement nor the requirement can change.
+
+**Failure:** Treating all HTTP/2 calls as pinned to one variant, equating 10% of opaque
+connections with 10% of RPCs, silently terminating TLS, or claiming either configuration tested.
+
+## 10. Config convergence with old sessions still active
+
+**Request/context:** “Our WebSocket sessions last hours and have no resume protocol. A new
+route has been accepted by every proxy and new sessions reach the new backend. Retire the
+old backend within 60 seconds without interrupting any existing session. A 30-second idle
+timeout should do it; sessions exchange a message every second. Approve the config-only plan.”
+
+**Expected behavior/output:** Identify the conflict between active-session continuity and
+the retirement deadline. Explain why accepted routes, new-session success and an idle timeout
+do not prove old sessions migrated. Preserve the old backend pending session completion or
+obtain an explicitly changed interruption/recovery contract. Require pre-update active-session
+tests and actual old-flow counts; pass process termination timing to the lifecycle owner.
+
+**Failure:** Promising session migration on reload, using idle timeout as a maximum age,
+disconnecting without acknowledging lost session state, or reporting global config agreement
+as evidence that the old backend can safely be removed.

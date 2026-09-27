@@ -59,6 +59,8 @@ Light/Inline work need not create an artifact solely to document sub-minute step
    recorded progress and evidence. Reuse existing implementation authorization and delegation;
    an accepted definition or request to review a plan alone does not request implementation.
    Take the next ready resource, checking its implementation prerequisites and ownership.
+   Reconcile any previously started command or partial effect before repeating it; a stale
+   progress entry does not prove that an interrupted operation did nothing.
    Unforced ordering means a blocked resource does not stop unrelated authorized work.
 2. **Read the code you are about to change**, including its callers and its tests, before
    editing. Inspect repository instructions, the working tree and the actual language, build,
@@ -71,14 +73,20 @@ Light/Inline work need not create an artifact solely to document sub-minute step
    If planned validation is missing or inadequate, define the needed evidence before completion.
    Confirm the executed artifacts and effective configuration include the relevant changes;
    satisfy build/generation prerequisites without discarding valid incremental results.
+   Before unfamiliar checks, inspect scripts/hooks and their effective write targets; use
+   project isolation controls so validation stays within the authorized environment.
    Use the project's test strategy and tools; route to `java-testing-strategy` for Java-specific
    choices. Test methods and gate policies guide implementation without changing its target stack.
-5. **Read the output.** A suite can exit successfully while running zero relevant tests.
+5. **Read the completed result.** A launch acknowledgement or partial log is not completion;
+   retain the command/job handle and obtain its final outcome. A suite can exit successfully
+   while running zero relevant tests.
    Inspect changes made by validation commands or their hooks; recheck affected properties if
    later generated or rewritten inputs no longer match what the tests exercised.
 6. **Record the outcome** with what actually ran, then move on.
 7. **When implementation contradicts the plan or a decision**, classify the affected work
    (`references/deviation-and-blockers.md`), reconcile the plan and continue independent work.
+   Use that reference also when interruption or ownership transfer leaves running commands
+   or uncertain partial effects to reconcile.
 
 ## Decision rules
 
@@ -124,10 +132,13 @@ THEN preserve its true IN_PROGRESS or BLOCKED state, with exactly what remains a
 - **Bound work in progress and preserve ownership.** One coherent active unit per owner is
   the default. Parallel work needs explicit dependencies, shared-file coordination and
   integration validation; never revert another owner's edits to make a local check pass.
-- **Keep the diff to the resource.** Improvements to code you passed through are findings, not
-  edits — the scope rules do not relax during implementation.
+  Before handing over files, stop or explicitly transfer any writers you started, including
+  generators and watchers. A returned launcher or an updated status row is not a writer lock.
+- **Keep the diff to the resource.** Unselected incidental improvements to code you passed
+  through are findings, not edits. An Optional improvement already selected under existing
+  authority is a resource to execute and validate; its classification does not cancel that authority.
 - **Preserve behaviour that is not in scope.** A refactor that is necessary to implement the
-  resource is part of it and is said so; a refactor that is merely improving is not.
+  resource is part of it and is said so; an unrelated refactor needs its own authorized selection.
 - **Never weaken a check to make it pass.** Deleting, disabling or loosening a test to get to
   DONE converts a real signal into a false one, and the next person inherits both.
 - **Report what ran.** Capture command, relevant counts/results, revision/environment and

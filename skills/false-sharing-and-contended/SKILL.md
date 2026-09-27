@@ -137,7 +137,10 @@ layout type when feasible, and include upgrade tests.
 | compact layout instead             | read/locality dominates, not writer sharing               | can worsen writer density                |
 
 `LongAdder` scales hot cumulative updates using striped cells, but its sum is not an atomic snapshot.
-It is not a drop-in replacement for IDs, exact bounds or balances.
+It is not a drop-in replacement for IDs, exact bounds or balances. After writers have stopped and
+their completion is observed, `sum()` can provide an accurate total; do not call that result
+inherently approximate. Concurrent `reset()`/`sumThenReset()` do not provide an exact interval
+boundary. Require a quiescent handoff or a different aggregation protocol when that boundary matters.
 
 Compact object headers can change density/offsets and therefore both footprint/locality and sharing
 risk. Feature status/defaults vary across JDKs. Inspect exact JEP/build/layout and re-run evidence;
@@ -145,8 +148,10 @@ do not predict false sharing from header size alone.
 
 ## Benchmark design
 
-Use JMH with an explicit shared-state topology and deterministic mapping from worker role to field/
-slot. Sweep:
+Match JMH state and payload allocation to the ownership being tested, with deterministic mapping
+from worker role to field/slot. JMH can pad generated `@State` instances, masking interference
+between separate objects; a thread-scoped state with no slowdown does not rule out production
+false sharing. Inspect the actual generated state and ordinary payload layouts. Sweep:
 
 - one writer through expected concurrency/overload;
 - core, SMT sibling, socket and NUMA placement;
@@ -198,3 +203,4 @@ hypothesis with the next discriminator can complete a review. Neither is a prove
 - [JEP 142: Reduce cache contention on specified fields](https://openjdk.org/jeps/142)
 - [OpenJDK 25 `Contended`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/jdk/internal/vm/annotation/Contended.java)
 - [OpenJDK 25 Striped64](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/atomic/Striped64.java)
+- [Java 25 LongAdder contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html) — quiescent totals and concurrent sum/reset limits.

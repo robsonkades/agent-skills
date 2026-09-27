@@ -82,11 +82,33 @@ inconclusive evidence with a specified response, not clean scans.
 
 ## Baselines and proxies
 
+Choose the comparison that implements the actual policy:
+
+| Policy                    | Required comparison                                                                       | What a green result does not establish       |
+| ------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------- |
+| No new violations         | Current violation identities absent from the accepted baseline                            | Old debt was reduced                         |
+| At most N violations      | Current count against the explicit ceiling, using the agreed population and counting unit | No different violation replaced an old one   |
+| Reduce debt by a deadline | Remaining debt against the dated target, with comparable scope                            | No new violations, unless checked separately |
+
+For example, an accepted baseline contains forbidden edges A-to-B and C-to-D. A change removes
+A-to-B and adds E-to-F; the count remains two. Under a no-new policy, E-to-F is a violation.
+Under an explicitly count-only ceiling of two, that particular check passes; report the weaker
+guarantee without silently changing policy. If only historical totals exist, a no-new verdict is
+inconclusive until identities can be recovered or an authorized baseline is established.
+
+Define the identity at the policy's granularity (for example rule, origin and dependency target).
+Test a same-count replacement as well as a pure addition. A line-number shift need not introduce
+a new architectural dependency; a matcher that discards dependency targets can hide one. Review
+rule/tool upgrades, renames, changed exclusions and removed modules before interpreting a baseline
+diff. Excluding a module from observation is not evidence that its violations were fixed.
+
 [ArchUnit's freezing rules](https://www.archunit.org/userguide/html/000_Index.html#_freezing_arch_rules)
 store known violations and report new ones; with store updates enabled, resolved violations
 are removed so their return can be detected. This does not force progress by a deadline.
 Protect the store in CI and review intentional refreezes; distinguish retaining a known baseline
-from silently accepting newly introduced violations.
+from silently accepting newly introduced violations. Its default matcher ignores source line
+numbers, and its configurable violation matcher determines equivalence; verify the project's
+tool version and matcher against the agreed identity contract rather than comparing only counts.
 
 Distance from the main sequence measures a relationship between abstractness and instability,
 not cohesion. Do not require it to fall everywhere or add interfaces just to improve the number.

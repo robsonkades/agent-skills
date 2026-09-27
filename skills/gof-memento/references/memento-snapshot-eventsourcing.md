@@ -79,6 +79,41 @@ public EditorState getState();              // public type with public accessors
 Both make the capture's shape a contract. Sometimes that is what you want — then call it a DTO and
 version it — but it is no longer this pattern's guarantee.
 
+## State and history must move together
+
+A valid memento does not itself implement an undo manager. Reuse an existing history mechanism
+when it already meets the consumer contract. For a simple linear history, define these transitions
+under the same thread confinement or synchronization that protects the originator:
+
+- **Edit:** capture the pre-state and prepare any needed history storage. Record a successful
+  state-changing edit, then discard obsolete redo. A rejected or semantic no-op edit need not
+  consume an undo step or destroy redo; let the originator report whether a change occurred
+  rather than exposing snapshot internals to the caretaker.
+- **Undo:** inspect the target without removing it, retain the current state for redo, and
+  prepare the replacement and history update. Commit the restore and history transition only
+  when preparation/validation succeeds. Redo is the symmetric transition.
+- **Failure:** stage fallible allocation/validation before publication where possible. A rejected
+  restore leaves both state and the history cursor unchanged. If an edit mutates before failing,
+  require an explicit local rollback/recovery policy; only roll back effects that the originator
+  actually owns. Snapshot existence does not make external effects transactional.
+
+Do not perform `restore(undo.pop())` when restore can reject the capture: it loses the entry
+first. Nor does a thread-safe deque make state-plus-history atomic. If separate publication
+steps can fail, redesign the commit boundary or define recovery; do not claim all-or-nothing
+behavior merely because every method takes a lock. Publish callbacks after a coherent state
+and history are established, with a separate notification-failure policy.
+
+Linear redo invalidation has an established example in [Java 17 UndoManager](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/undo/UndoManager.html):
+adding an edit after undo removes the abandoned suffix. This is a consumer policy, not a
+requirement to adopt Swing or a universal Memento rule. If users must revisit alternative
+what-if branches, keep named/versioned roots with explicit selection and memory bounds instead
+of clearing them. Decide grouping (one user action versus each sub-edit) from the requested
+undo unit; operation execution belongs to gof-command.
+
+Java exceptions do not undo earlier assignments; see [JLS 17 evaluation and abrupt completion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.6).
+Preparing copies before field assignments narrows the failure window. It does not provide crash
+recovery, reverse external effects or guarantee progress after an `OutOfMemoryError`.
+
 ## Memory strategies for undo
 
 ```text

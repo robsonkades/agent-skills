@@ -123,6 +123,29 @@ unlimited. A positive sub-second remainder must not be truncated to zero. Either
 use a finer-grained supported limit, or retain an independently enforced outer deadline while
 documenting any rounded-up server/driver timeout. Check range and sentinel semantics before casts.
 
+### Shared work and caller-local timeout
+
+`orTimeout` and `completeOnTimeout` modify and return the same `CompletableFuture`. Applying
+either directly to a shared cache-load future lets one caller's deadline or fallback determine
+the result for every waiter. For a plain `CompletableFuture`, use a separate completion view:
+
+```java
+// Java 11+ fragment: shared is a plain CompletableFuture<T>.
+// budget is the positive, bounded remainder from Deadline; reject expiry first.
+CompletableFuture<T> waiter = shared.copy();
+waiter.orTimeout(budget.toNanos(), TimeUnit.NANOSECONDS);
+return waiter;
+```
+
+This isolates completion state, not the underlying computation or mutable result value.
+Timing out or cancelling this waiter leaves other callers' waits intact. The operation owner
+still needs a work deadline and resource cleanup policy; cancellation after the last waiter
+leaves requires race-safe ownership accounting, not an inference from one timeout. Exclusively
+owned child work should still receive cancellation on caller expiry. Check custom future/client
+overrides before assuming the same behavior. Test two waiters with different budgets, owner
+failure and completion racing expiry; a longer-lived waiter must still be able to receive the
+owner's eventual result after the shorter one expires.
+
 ## Verification matrix
 
 Select relevant phases and test them independently: pool acquisition, DNS/proxy, TCP/TLS, request upload,
@@ -136,7 +159,7 @@ and pool replacement rather than treating every timeout as a reusable-connection
 ## Primary references
 
 - [Spring Boot 3.5 HTTP clients](https://docs.spring.io/spring-boot/3.5/reference/io/rest-client.html) — builder and request-factory configuration.
-- [CompletableFuture](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — cancellation and timeout completion are not task interruption.
+- [CompletableFuture (Java 11)](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/CompletableFuture.html) — same-future timeout completion, defensive copies and cancellation limitations.
 - [JDBC `Connection.setNetworkTimeout`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setNetworkTimeout(java.util.concurrent.Executor,int)>) — closure, ordering and no effect on outstanding requests.
 - [JDBC `Statement.executeQuery`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Statement.html#executeQuery(java.lang.String)>) — timeout exceptions require an attempted cancellation.
 - [OpenJDK 25 `MultiExchange`](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/java.net.http/share/classes/jdk/internal/net/http/MultiExchange.java) — request timer cancelled before response-body reading in this baseline.

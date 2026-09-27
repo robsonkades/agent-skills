@@ -97,10 +97,11 @@ model card, runtime capture or held-out campaign. Use the workflow below to reso
 - Never insert a percentile of utilisation into a stationary formula. For changing load/capacity,
   use transient/fluid/simulation models or short quasi-stationary regimes only when timescale
   separation is demonstrated.
-- A bounded queue can be approximated by M/M/c/K only under Markovian arrival/service and fixed
-  FCFS capacity assumptions. Its finite state has a stationary loss distribution even for offered
-  `ρ≥1`, but retries, abandonment and state-dependent service need another model. Read loss and
-  completion latency together.
+- Use the M/M/c/K occupancy model when the count process has Poisson births below capacity and
+  departure rate `min(n,c)μ`. Homogeneous exponential service under a work-conserving discipline
+  can preserve these rates without FCFS; class waits and tails still depend on discipline.
+  Its finite state has a stationary loss distribution even for offered `ρ≥1`; retries, abandonment
+  or changed transition rates require a revised model. Read loss and completion latency together.
 - Priority conservation results require their stated Poisson, service, discipline and
   work-conserving assumptions. Priority moves risk between classes and can starve low classes;
   validate per-class SLOs and aging/admission policy.

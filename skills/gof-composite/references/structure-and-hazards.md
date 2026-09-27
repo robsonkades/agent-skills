@@ -76,6 +76,13 @@ static long size(Node root) {
 }
 ```
 
+This stack reverses sibling encounter order because each forward `push` puts the next child
+ahead of the previous one. Nonnegative byte addition is unaffected, but rendering, first-match
+rules and side effects may change. When order is part of the contract, push siblings in reverse
+order or keep iterator frames that consume each branch's children in their original order.
+Neither choice removes the existing depth/work/memory limits. See the
+[Deque stack contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Deque.html).
+
 Both size implementations reject overflow with `ArithmeticException` through
 [`Math.addExact`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Math.html#addExact(long,long)>).
 Depth and node-count limits alone do not establish a safe numeric range: two nonnegative leaves
@@ -194,12 +201,43 @@ acyclicity also holds. Then:
   visited set would suppress legitimate repeated contributions; use a path-active set for cycles.
 - "Remove this node" becomes ambiguous — from which parent?
 
-Decide explicitly. If sharing is not intended, enforce it at insertion (a node may have at most
-one parent, checked when added). If it is intended, say so and make every operation
-identity-aware.
+Decide explicitly. For a strict tree, reject a second attachment, including a duplicate occurrence
+under the same parent, and separately reject self/ancestor cycles. Merely checking that a node has
+at most one parent misses duplicate edges to that parent. For DAGs, define whether repeated edges
+are permitted as well as multiple parents; each occurrence contributes to a per-path aggregate.
+Preserve value equality when required; use identity or edge occurrence only for operations whose
+contracts need it.
 
 A compact acyclic shared graph can still have exponentially many paths. Bound the work appropriate
 to the selected semantics; node-count and depth bounds alone may not bound a per-path walk.
+
+### Mutation must select the intended child
+
+[`List.remove(Object)`](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html#remove(java.lang.Object)>)
+removes the first equal element, not necessarily the supplied instance. With the immutable `Leaf`
+record above, this local list demonstrates the distinction:
+
+```java
+var first = new Leaf("entry", 1);
+var second = new Leaf("entry", 1); // equal value, different instance
+var children = new ArrayList<Node>(List.of(first, second));
+children.remove(second);
+assert children.size() == 1 && children.get(0) == second; // first was removed
+```
+
+That behavior is correct for a remove-by-value contract. For remove-by-identity, locate the
+element with `==` and remove that position or iterator occurrence; `indexOf` also uses equality.
+If the same instance occurs twice, identity still does not identify which edge to remove: use
+the parent's occurrence/index or a stable edge identifier, with its validity across edits defined.
+Do not change public node equality merely to make a list mutation work.
+
+For a move, validate the destination's cycle, ownership, duplicate and position constraints before
+detaching. Update both child storage and any parent index as one operation under the chosen tree
+consistency policy, or publish a fully validated replacement snapshot. A rejected move should
+preserve the original structure; two individually thread-safe collection calls do not make the
+move atomic. Validation and commit must use that same consistency boundary so a concurrent edit
+cannot invalidate the check. Keep these policies in the owning mutation boundary so callers cannot bypass them
+through exposed mutable child storage.
 
 ## Lazy children and the database
 

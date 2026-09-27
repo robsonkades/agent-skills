@@ -59,6 +59,10 @@ urgent mitigation. Keep impact/start-time uncertainty explicit rather than inven
 - Coordinate interacting changes to the same affected scope, normally one material change at a
   time. Independent authorized work can proceed under named owners. When urgent impact requires
   bundled actions, record their timing and the resulting limits on causal attribution.
+- Distinguish a mitigation request being accepted from the change taking effect on the intended
+  targets and from user recovery. A command timeout does not prove the operation failed; inspect
+  its outcome and retry contract before repeating it. Use the execution-state guidance in
+  `references/war-room-and-postmortem.md` for partial or uncertain changes.
 - Use separate clocks: detection, acknowledgement, first material mitigation and sustained recovery.
   Define each metric before comparing incidents.
 - A postmortem maps contributing conditions and failed defenses, not one linear “five whys” chain.

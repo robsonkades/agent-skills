@@ -1,7 +1,8 @@
 # Password storage, peppering and randomness
 
 Every figure below carries its source and the date it was read. Guidance moves; a parameter
-without a date is a parameter nobody can audit. All web sources fetched **2026-08-27**.
+without a date is a parameter nobody can audit. Original web-source checks were **2026-08-27**;
+later checks are dated locally.
 
 ## 1. OWASP parameters
 
@@ -83,13 +84,26 @@ public interface PasswordEncoder {                                  // ...crypto
 }
 ```
 
-`upgradeEncoding` is the sanctioned rehash-on-login hook and is widely unknown. It is how a
-cost increase, an algorithm change and a pepper rotation get applied without a migration job —
-see `before-after.md`. One exception, verified by grep over the 7.1.1 sources:
+`upgradeEncoding` signals that an authenticated credential needs rehashing; the caller must
+perform and conditionally persist that rehash (see `before-after.md`). Do not assume the hook
+detects every policy change. In the 7.1.1 sources:
 `Argon2PasswordEncoder`, `BCryptPasswordEncoder`, `SCryptPasswordEncoder` and
 `DelegatingPasswordEncoder` override `upgradeEncodingNonNull`, but **`Pbkdf2PasswordEncoder`
-does not**, so it inherits the `false` default. With PBKDF2 neither an iteration raise nor a
-pepper rotation will ever trigger a rehash; that decision is yours to write.
+does not**, so a direct PBKDF2 instance inherits the `false` default.
+
+**Preserve the verifier as well as the upgrade decision.** Its bare encoding contains salt
+and derived bytes, not the iteration count, algorithm or pepper version. Replacing the encoder's
+settings in place breaks old verification; the hook cannot repair a failed login. Use distinct,
+immutable policy ids such as `{pbkdf2-policy-v1}` and `{pbkdf2-policy-v2}` mapped to their original
+encoder configurations, or equivalent trusted row metadata. `DelegatingPasswordEncoder` returns
+`true` for an old id when the write id changes, even if that delegate is PBKDF2. Keep the old
+mapping until retirement, verify first, then rehash with the new write policy using a conditional
+update. Do not repoint an existing id to new parameters or try unbounded pepper combinations.
+Unknown formats need an explicit rejection/recovery path, not a plaintext fallback.
+
+These contracts were rechecked **2026-09-27** against the pinned 7.1.1 sources:
+[PBKDF2 encoding and verification](https://github.com/spring-projects/spring-security/blob/7.1.1/crypto/src/main/java/org/springframework/security/crypto/password/Pbkdf2PasswordEncoder.java),
+[delegating format routing and upgrade decision](https://github.com/spring-projects/spring-security/blob/7.1.1/crypto/src/main/java/org/springframework/security/crypto/password/DelegatingPasswordEncoder.java).
 
 **`org.springframework.security.crypto.argon2.Argon2PasswordEncoder`** — defaults
 `saltLength=16, hashLength=32, parallelism=1, memory=1<<14 (16384 KiB), iterations=2`, i.e.
@@ -209,9 +223,9 @@ from the password database", in a secrets vault or an HSM. NIST 800-63B-4 says *
   with the new pepper, using compare-and-set so a concurrent password reset is not overwritten.
   If legacy rows require fallback, bound it to an explicit transition window and account for
   the extra KDF work. Reset inactive accounts before retiring the old key; a compromised pepper
-  cannot be made safe merely by waiting for logins. This is the `upgradeEncoding` shape — but
-  `Pbkdf2PasswordEncoder`, the one Spring encoder with a pepper, does not override it (§3), so
-  here you write the rehash yourself.
+  cannot be made safe merely by waiting for logins. A direct `Pbkdf2PasswordEncoder` does not
+  detect this change itself; versioned delegating ids or an explicit policy comparison can
+  drive the rehash while preserving the old verifier (§3).
 
 **The honest case against**: if the app server is compromised the pepper is usable through that
 server in many architectures, so the extra boundary may collapse. A known password/hash pair
@@ -256,6 +270,28 @@ with a thin entropy pool that is a real startup hang.
   guessing/collision budget and other binding requirements. `UUID.nameUUIDFromBytes` (v3/MD5) is deterministic and unsuitable for
   unguessable credentials; this is not a ban on non-secret deterministic identifiers.
 
+### High-entropy tokens and short codes are different credentials
+
+Formatting constrains entropy: six uniformly chosen decimal digits have at most one million
+possibilities, about 19.9 bits, even when generated with `SecureRandom`. A fast digest of a
+high-entropy random reset token is not a password-storage design, and does not justify the same
+offline-resistance claim for a short reset/OTP code. A public salt does not enlarge that code's
+candidate space. Hashing still avoids plaintext storage and accidental disclosure.
+
+For short codes, establish account/challenge binding, short expiry, atomic single use, bounded
+failed attempts and issuance/resend controls. Do not let requesting another code provide unlimited
+fresh guesses. NIST's out-of-band authentication flow specifically forbids resetting the failed
+attempt count merely because a new secret was generated; apply the requirements for the actual
+flow rather than claiming every OTP is a 128-bit token. If a database-only attacker must not
+recover a live code, compare a higher-entropy token where usable or a reviewed keyed verifier
+whose key is outside that datastore. Account for key custody and remaining online guessing;
+a custom HMAC alone is not a complete reset protocol.
+
+Sources checked **2026-09-25**: [OWASP OTP hashing guidance](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html#hashing-otps)
+explains the limited offline resistance; [NIST out-of-band verifiers](https://pages.nist.gov/800-63-4/sp800-63b.html#oobver)
+defines the attempt and reissuance requirements for that flow. Full MFA protocol design remains
+outside this code-level storage review.
+
 ## 6. Secrets in the running system
 
 OWASP Secrets Management Cheat Sheet, _Containers & Orchestrators_ section, verbatim:
@@ -266,9 +302,11 @@ a mounted volume, or an in-memory fetch from a secret store. This contradicts th
 habit of `SPRING_DATASOURCE_PASSWORD` in the environment, and is worth stating plainly rather
 than letting a team believe the variable is the remediation.
 
-Lifecycle: creation, rotation, revocation, expiration. For an exposed credential, revoke or
-rotate first and verify that the old value is rejected. Remove the source literal and review
-access/audit evidence. History cleanup is a separate, coordinated operation: it reduces future
+Lifecycle: creation, rotation, revocation, expiration. For an exposed credential, authorized
+incident handling prioritizes revocation/rotation and verification that the old value is rejected.
+A code review reports the location and urgency without copying or trying the secret; it does not
+grant permission to change production credentials. Remove the source literal within an authorized
+fix and review access/audit evidence. History cleanup is a separate, coordinated operation: it reduces future
 discovery but cannot invalidate copies in clones or backups. Do not delay revocation for a
 history rewrite or perform that rewrite without authorization. Secret scanning in CI helps
 detect future leaks but does not prove their absence.

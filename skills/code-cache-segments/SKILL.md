@@ -61,10 +61,17 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
 5. **Predict the pressured segment from the tier mix** before measuring: tiers 2 and 3 go to
    `profiled`, tiers 1 and 4 and native wrappers go to `non-profiled`. Cross-reference
    `PrintCompilation` or `jdk.Compilation`, and cross-reference deoptimisation events when
-   `non-profiled` is under pressure.
+   `non-profiled` is under pressure. Check capture coverage first: JFR duration thresholds can
+   exclude most short compilations. Use same-process compiler-counter deltas for total rate;
+   a filtered event count cannot establish the tier mix. See
+   [JFR capture coverage](references/diagnosing-exhaustion.md#jfr-capture-coverage).
 6. **Choose between raising the total and rebalancing** from the measured asymmetry, not from
-   the symptom. Both segments high means total capacity; one pinned at 100% while the other
-   climbs means the split. See `references/segments-and-sizing.md`.
+   utilization alone. Both segments high can motivate a capacity investigation; one pinned
+   while another climbs can reflect fallback or ordinary tier growth. Establish allocation
+   failures, GC cost, lost compilation progress or inadequate headroom for the measured
+   warm-up/growth envelope before changing sizes. Check for avoidable churn; preserve adequate
+   capacity when those constraints are satisfied. See
+   `references/segments-and-sizing.md`.
 7. **Check the arithmetic before applying manual segment sizes.** On JDK 25, with all segment
    sizes and `ReservedCodeCacheSize` explicitly set, the enabled heaps must sum to the
    reserved total after alignment. With only a partial configuration HotSpot computes the
@@ -77,9 +84,10 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
 
 ## Rules
 
-- Monitor per `CodeHeap`, not as a sum. Micrometer and JMX already break the series out by
-  `id` (`CodeHeap 'profiled nmethods'` and the rest); the fault is a dashboard adding them
-  back together.
+- Monitor per `CodeHeap`, not as a sum. Inspect JMX memory-pool names and the exporter's
+  actual labels; Micrometer commonly uses `id` (`CodeHeap 'profiled nmethods'` and the rest).
+  An aggregate dashboard can hide a pressured heap, but neither labels nor a dashboard defect
+  can be assumed from the symptom alone.
 - `profiled nmethods` holds tiers **2 and 3** only. Tier 1 — C1 without profiling — goes to
   `non-profiled` alongside tier 4 and native wrappers. A trivial method can go straight to
   `non-profiled` without ever passing through `profiled`.
@@ -114,12 +122,13 @@ JFR or source access is unavailable, state the gap and keep the diagnosis condit
   `Compiler.CodeHeap_Analytics` lists reclaimed free blocks — run `aggregate`, then `FreeSpace`.
   Its largest listed block excludes unused tail space and possible heap expansion; compare
   those and applicable fallback heaps before attributing an allocation failure to fragmentation.
-- Fragmentation grows with allocate/free/reallocate cycles, not with raw volume. Frequent
+- External fragmentation grows with allocate/free/reallocate cycles, not with raw volume. Frequent
   deoptimisation and ClassLoader churn are the factories; a heap that only ever fills does
-  not fragment.
-- The `non-nmethods` heap fails differently: `java.lang.OutOfMemoryError: Out of space in
-CodeCache for adapters` (or `for method handle intrinsic`) thrown in an application thread
-  at class link time, not a compiler warning.
+  not develop free-list holes from allocation alone. Internal alignment waste is different.
+- Failed adapter or method-handle-intrinsic allocation can surface as
+  `java.lang.OutOfMemoryError: Out of space in CodeCache for adapters` (or
+  `for method handle intrinsic`) in an application thread, in addition to compiler-stop
+  diagnostics. Inspect the entire fallback path, not only `non-nmethods`.
 - A restart clears fragmentation and discards all accumulated warm-up. It is a legitimate
   named mitigation for ClassLoader-churn fragmentation, never a reflex for any code cache
   symptom.
@@ -131,7 +140,12 @@ CodeCache for adapters` (or `for method handle intrinsic`) thrown in an applicat
 
 Deliver timestamped per-heap observations, compiler state/counter deltas, the proposed cause
 and its confirming/falsifying evidence. State expected effects and a load/GC validation bound
-for any sizing change; neither high utilization nor a restart proves fragmentation.
+for any sizing change; neither high utilization nor a restart proves fragmentation. A diagnosis
+or review can conclude with findings and a bounded next capture; applying sizing/restart changes
+depends on the requested scope. Reuse available evidence and ask only for missing facts that
+change that decision. For a broader memory or compilation bottleneck, pass the heap trends,
+compiler state, workload window and unresolved hypothesis to `jvm-memory-regions` or
+`jit-compilation`; if unavailable, report the limit without inventing a cache remedy.
 
 ## References
 

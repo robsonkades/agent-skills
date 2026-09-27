@@ -38,8 +38,10 @@ public final class ClaimDraft {
         if (!(snapshot instanceof State state) || state.owner() != owner) {
             throw new IllegalArgumentException("foreign or null snapshot");
         }
-        this.items = new ArrayList<>(state.items());
-        this.adjustments = new ArrayList<>(state.adjustments());
+        var restoredItems = new ArrayList<>(state.items());
+        var restoredAdjustments = new ArrayList<>(state.adjustments());
+        this.items = restoredItems;
+        this.adjustments = restoredAdjustments;
         this.settlement = state.settlement();
         this.notes = state.notes();
     }
@@ -50,6 +52,8 @@ The caretaker has no typed state accessors; rendering is redacted. Owner identit
 snapshot from another draft being accepted; the implementation type alone would not.
 `List.copyOf` prevents later list edits from changing the capture, but does not clone elements.
 See [List.copyOf in Java 17](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>).
+Both replacement lists are prepared before assigning either live field. Add any restore
+validation before publication too; a lock alone does not roll back a failed multi-field restore.
 
 ### A round-trip property with an independent oracle
 
@@ -76,6 +80,20 @@ For mutable leaves, restore the capture, mutate a restored leaf, then restore th
 again and compare with the independent baseline. Copying only at capture time fails this case
 if restore hands the captured mutable object back to live state. Java references can alias the
 same object; see [JLS 17 reference values](https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.3.1).
+
+### Exercise the caretaker, not only capture/restore
+
+For a linear history, start at A, edit to B, edit to C, undo to B, then successfully edit to D.
+Redo of C must now be unavailable. If the D edit is rejected without changing state, remain
+at B and retain the redo path to C. A rejected undo (for example an invalid owner or a failed
+restore precondition) must leave the live draft and both history directions unchanged.
+
+If the product instead promises named what-if branches, C can remain selectable after D, but
+both branches count against retention. This changed requirement changes the history policy,
+not snapshot opacity or alias isolation. See
+[State and history must move together](memento-snapshot-eventsourcing.md#state-and-history-must-move-together)
+for preparation, commit and failure boundaries. These are acceptance scenarios, not measured
+results or a claim that the partial originator snippets implement a caretaker.
 
 ### When the stack grew
 

@@ -141,9 +141,13 @@ Live ORM-managed/lazy graphs or independently shared mutable objects
   even if that deliberately affects all protected application routes.
 - Session state that is only ever written and never read is common and invisible; audit it
   when a session grows. So is state written by one path and read by none after a refactor.
-- Concurrency inside one session is real: two browser tabs, or a double-submit, mutate the
-  same conversation. Server and database session state need the same protection as any
-  other shared state (`offline-concurrency-control`).
+- Concurrency inside one session is real: two browser tabs, or a double-submit, can mutate the
+  same conversation. First distinguish independent conversations from concurrent editors of
+  the same one: a login session/cookie can span several tabs and drafts. Carry an explicit
+  conversation/draft identifier and authorize access when independent workflows must coexist;
+  a shared `currentDraft` pointer can select the wrong workflow even with serialized requests.
+  Then protect updates to the identified conversation (`offline-concurrency-control`). See
+  `references/session-failure-modes.md` before treating every two-tab failure as a lost update.
 - Rotation/invalidation must survive concurrent requests and replication: prevent a stale save
   from restoring an invalidated session. A version column alone does nothing without an atomic
   expected-version check. Enforce owner/tenant and expiry at access time, not only in cleanup.

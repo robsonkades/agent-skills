@@ -57,11 +57,13 @@ respect event hierarchy/local scope, and report inaccessible ancestors. Evaluate
 memory demand and host headroom before proposing a boundary change; raising the hard limit
 alone does not remove a lower high boundary.
 
-## CPU throttling
+## CPU throttling and runnable contention
 
 ```bash
 cat "$CGROUP/cpu.stat"               # nr_periods, nr_throttled, throttled_usec
-cat /proc/pressure/cpu
+grep -H . "$CGROUP/cpu.max" "$CGROUP/cpu.weight" "$CGROUP/cpu.pressure"
+cat "$CGROUP/cpuset.cpus.effective"   # when the cpuset controller is available
+cat /proc/pressure/cpu               # host view; keep separate from cgroup-local PSI
 ```
 
 Throttling can inflate observed pauses without appearing as a GC cause. Compare counter
@@ -70,6 +72,19 @@ positive. `throttled_usec` aggregates run-queue intervals across CPUs; its elaps
 can exceed 100% and is not CPU time the application would otherwise have received. Inspect
 `cpu.max`, ancestor quotas, affinity and runnable demand. Then test collector/thread ergonomics, quota and
 period; changing the period alters burst and tail behaviour and is not a generic remedy.
+
+If relevant leaf/ancestor throttle deltas are zero but tasks are runnable and CPU PSI rises,
+investigate scheduler contention and allowed CPU placement before proposing a quota increase.
+`cpu.max` is a bandwidth ceiling; `cpu.weight` is a relative share among active siblings, not
+a core reservation or a fixed CPU percentage. Compare sibling demand and ancestor allocation;
+raising weight or quota without that evidence may move contention rather than resolve it.
+
+An empty configured `cpuset.cpus` can inherit CPUs; read `cpuset.cpus.effective` for the actual
+granted set. Affinity is per thread: inspect `Cpus_allowed_list` in the relevant
+`/proc/<pid>/task/<tid>/status`, not only the JVM's main thread. In a threaded cgroup hierarchy,
+resolve that TID's cgroup membership too. Correlate utilization/runnable pressure on those CPUs;
+an idle host-wide average does not prove capacity is available to the JVM. Missing controllers,
+hidden ancestors or denied reads leave those constraints unknown, not unlimited.
 
 ## Descriptors and threads
 
@@ -157,6 +172,7 @@ Successful existing records can satisfy a check; unavailable evidence is not a n
 - [Linux 6.12 cgroup v2](https://www.kernel.org/doc/html/v6.12/admin-guide/cgroup-v2.html): hierarchy, memory.high reclaim throttling, events and controller counters; use the deployed kernel documentation.
 - [Linux stat fields](https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html): comm and fault fields.
 - [Linux 6.12 throttling accounting](https://github.com/torvalds/linux/blob/v6.12/kernel/sched/fair.c): per-run-queue intervals added to bandwidth throttled time.
+- [Linux thread affinity](https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html) and [proc status CPU masks](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html): per-thread placement; combine with cgroup effective cpusets and weights from the cgroup v2 reference.
 - [PSI documentation](https://www.kernel.org/doc/html/latest/accounting/psi.html): units, scope and CPU full caveat.
 - [Bash pipeline status](https://www.gnu.org/software/bash/manual/html_node/Pipelines.html): the last command normally determines status; producer failure needs explicit handling.
 - [systemd v257 stop signals](https://github.com/systemd/systemd/blob/v257/man/systemd.kill.xml): configurable initial signal, bounded wait and final escalation; inspect the actual unit.

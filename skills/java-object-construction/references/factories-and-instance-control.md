@@ -106,6 +106,16 @@ And it costs:
   eviction while a caller still holds the old one. If lifetime-wide `==` canonicalization is
   promised, ordinary eviction violates it; constrain the value domain or choose a reviewed
   lifetime strategy instead. Prefer value equality when identity is not essential.
+- **Concurrent winner selection is part of the promise.** Two callers can both miss a cache,
+  construct candidates and return different identities even when every map operation is safe.
+  Use an atomic selection mechanism, and return the stored winner instead of unconditionally
+  returning the candidate. For a non-null-valued `ConcurrentMap`, `putIfAbsent` returns the
+  existing value, or `null` when the candidate was inserted; inspect the actual map/API contract.
+  This can still construct multiple candidates: keep construction free of registration or
+  resource side effects, or define cleanup for discarded candidates. Test simultaneous calls
+  for the same key and the documented eviction/lifetime boundary. When only value equality is
+  promised, distinct equal results are acceptable; do not add canonicalization just to pass an
+  identity assertion. Atomic map selection does not establish exactly-once external acquisition.
 - **Cached value instances should be deeply immutable and safely published.** A deliberately
   shared mutable service instead needs an explicit thread-safety/lifecycle contract; finalizing
   only the reference does not protect its internals. See java-immutability and
@@ -189,6 +199,7 @@ and usability after successful return; `java-resource-management` owns that prot
 
 ## Authoritative references
 
+- [ConcurrentMap.putIfAbsent, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentMap.html#putIfAbsent(K,V)>) — atomic association and returned previous value; caller must select which candidate to return.
 - [JLS 21 §14.20.3: try-with-resources](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3) — cleanup also occurs on return.
 - [JLS §8.10.4: Record Members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
 - [Value-based classes, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/doc-files/ValueBased.html)

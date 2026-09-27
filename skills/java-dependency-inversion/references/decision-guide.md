@@ -2,13 +2,13 @@
 
 ## Classifying the edge
 
-| The dependency is on…   | Examples                         | Decision                                                                           |
-| ----------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
-| A mechanism you own     | persistence layer, HTTP client   | Invert when change/failure/release isolation repays a port                         |
-| A system you do not own | payment gateway SDK, mail relay  | Quarantine it at an adapter; add a policy port when policy calls it                |
-| A stable value/API type | `Instant`, `BigDecimal`, `Path`  | Usually keep it; abstract the operation (`Files`/remote I/O), not value syntax     |
-| Another piece of policy | pricing rules used by order flow | Leave it; peers may call directly                                                  |
-| An API you publish      | plugin SPI, extension points     | Preserve its extension contract; inspect actual ownership and dependency direction |
+| The dependency is on…   | Examples                         | Decision                                                                             |
+| ----------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
+| A mechanism you own     | persistence layer, HTTP client   | Invert when change/failure/release isolation repays a port                           |
+| A system you do not own | payment gateway SDK, mail relay  | Quarantine it at an adapter; add a policy port when policy calls it                  |
+| A stable value/API type | `Instant`, `BigDecimal`, `Path`  | Usually keep it; abstract the operation (`Files`/remote I/O), not value syntax       |
+| Another piece of policy | pricing rules used by order flow | Usually call directly; inspect real variation, ownership or release boundaries first |
+| An API you publish      | plugin SPI, extension points     | Preserve its extension contract; inspect actual ownership and dependency direction   |
 
 Direction matters more than layering vocabulary. The question is never "is this the
 service layer calling the repository layer" but "if this dependency changed vendor,
@@ -108,6 +108,47 @@ way:
 
 ## The testability check, made concrete
 
+### A port can outlive its method call
+
+Source isolation is necessary for a claimed source boundary, but it does not prove equivalent
+runtime behavior. Define the consumer's operation from invocation through completion and cleanup.
+Keep the synchronous notification example synchronous unless requirements call for a change.
+
+- For `CompletionStage<Receipt>`, a `try/catch` around stage creation cannot translate a failure
+  delivered later. Map both invocation-time failures and exceptional completion according to the
+  port contract; test the declared caller-visible exception/wrapper shape. `whenComplete` observes
+  an outcome and normally preserves it: if the source already failed, throwing a replacement from
+  that observer does not replace the source failure. Use a transforming stage such as `handle`
+  when changing the outcome, and do not accidentally turn a failure into normal completion.
+- Mapping a stage does not establish cancellation propagation, callback thread/context or
+  effect rollback. For example, cancelling a dependent `CompletableFuture` does not by itself
+  cancel its source. Preserve the actual provider/port contract and describe unsupported
+  guarantees rather than adding `join()` to hide asynchronous behavior.
+- For an iterator or `Stream<Order>`, fetching rows and raising a vendor error can happen during
+  consumption. Define who owns the backing cursor/connection and whether the view remains valid
+  after return. Do not return a lazy view from a resource scope that already closed it. A
+  resource-owning stream needs an effective close path on success, early exit and failure;
+  consuming it with a terminal operation is not itself a promise that the resource is closed.
+
+Keep provider failure translation at the provider operation. Catching every `RuntimeException`
+around a consumer callback or an entire traversal can mislabel a policy bug as a transport failure
+and trigger inappropriate retries. Translate recognized provider failures according to the port
+contract; preserve consumer failures and test them separately. For a scoped callback, this means
+distinguishing acquisition/fetch/close failures from failures raised by the supplied action.
+
+Choose the smallest result shape that satisfies actual consumers. A bounded materialized value
+or list can keep acquisition, translation and release inside the adapter. A large or intentionally
+short-circuited traversal may justify a lazy result with explicit ownership instead. A callback
+scoped inside the adapter is another option, but its execution, failure and re-entry semantics
+become part of the port. Do not materialize an unbounded query merely to avoid describing its lifetime.
+
+These are port obligations, not reasons to require futures, streams or new interfaces everywhere.
+For example, a port returning `Map<String, Object>` still leaks its provider if callers must know
+SDK field names and cast nested provider objects. Prefer existing stable value types or the smallest
+consumer-owned result that carries the needed meaning; do not duplicate a valid provider-owned SPI.
+
+### Check both sides of the contract
+
 After inverting, use these checks to locate remaining coupling. A failure needs explanation;
 it does not by itself prove that the port was unnecessary:
 
@@ -116,6 +157,11 @@ it does not by itself prove that the port was unnecessary:
 - The policy test constructs the subject with `new`, no framework and no reflection.
 - The test asserts on policy outcomes (what was sent, what was decided). Effect count/order
   matters when it is part of the contract; avoid asserting incidental helper-call scripts.
+- When the port permits deferred execution, use controlled completion or consumption to test
+  delayed failure and partial consumption. An immediate recording fake may establish policy
+  intent but cannot establish the adapter's delivery, cancellation or resource-release behavior.
+  Exercise the same promised outcomes against the adapter, using an isolated provider fixture
+  where available; label unavailable integration evidence instead of trusting the fake as a specification.
 - Excluding the adapter module leaves the policy module compiling from source into fresh output.
 
 ## Primary sources
@@ -129,3 +175,9 @@ it does not by itself prove that the port was unnecessary:
 - [Clock](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Clock.html)
   and [RandomGenerator](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/random/RandomGenerator.html)
   provide existing time/randomness seams; verify the target API version before choosing one.
+- [CompletionStage](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html)
+  specifies deferred outcome transformation and `whenComplete` exception precedence;
+  [CompletableFuture](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+  defines its cancellation and dependent-stage behavior.
+- [Stream](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/stream/Stream.html)
+  defines lazy traversal and closing streams backed by I/O resources.

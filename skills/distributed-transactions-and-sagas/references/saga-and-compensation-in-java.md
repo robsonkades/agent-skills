@@ -29,6 +29,46 @@ or explicitly migrate in-flight state while preserving completed effects, comman
 recovery direction. A missing definition, step or compatible context must stop advancement and
 remain discoverable for repair; never skip it and report compensation complete.
 
+## Make the forward path feasible before the pivot
+
+Classifying a step `ForwardOnly` does not make it succeed. Identify participant-owned reservations,
+expiry times and eligibility rules that the post-pivot steps depend on. Rechecking a reservation and
+then calling another service leaves a race: the hold can expire while the irreversible action is
+in flight. A caller timeout or business deadline does not revoke that remote action.
+
+For example, reserving stock for two minutes, committing an irreversible action, and only then
+confirming the reservation is unsafe if stock can be reallocated during a delayed call. Where the
+domain permits it, atomically turn the reservation into a durable allocation at its owner before
+the pivot; release this allocation on a resolved pre-pivot rejection. Keep it while the pivot is
+unknown, with a reconciliation owner and escalation deadline for overdue allocations. Merely
+choosing a larger TTL reduces one risk but does not prove the forward guarantee.
+
+If the participant cannot provide that guarantee, reorder the operation, change the accepted
+business outcome or select another boundary. Do not label permanent rejection a transient retry.
+Use an explicit forward-repair outcome when it is the business contract; manual intervention is
+not proof the original outcome remains achievable. The
+[compensating-transaction guidance](https://learn.microsoft.com/en-us/azure/architecture/patterns/compensating-transaction)
+discusses expiring reservations and checks before irreversible actions; the allocation protocol
+above is a design obligation to verify with the actual participant, not a supplied API.
+
+## Bound delayed recovery by participant retention
+
+Compare the maximum permitted saga age, queued-message redelivery, backup recovery and manual
+replay window with each participant's deduplication, effect-status and cancellation retention.
+Coordinator history can outlive the evidence at the participant. Do not delete step identities,
+effect context or old definition handlers while supported recovery still needs them.
+
+For a concrete external API example, [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests)
+permits pruning keys at least 24 hours old; reuse after pruning creates a new request. Verify the
+actual provider's contract rather than assuming a universal TTL or indefinite same-key protection.
+An old `STARTED` record plus the original key is therefore insufficient to authorize replay.
+Resolve the exact effect through an authoritative participant record, or keep the outcome unknown
+and enter repair if neither durable deduplication nor reliable reconciliation remains available.
+
+Pass the actual replay horizon, key scope, retention and status contract to `idempotency` when the
+participant protocol needs work. Require a repeat-safe resume/expiry policy; if that guidance is
+unavailable, retain this recovery gate instead of inventing a new key for the unresolved operation.
+
 ## Persist intent before the call and transition atomically
 
 ```text
@@ -199,6 +239,13 @@ Additional cases the parameterised sketch does not reach:
   durable transition; participant requests may still duplicate and must collapse by key.
 - **Pivot outcome unknown** — return a timeout after committing the pivot, query by saga/step
   identity, then prove recovery goes forward rather than compensating pre-pivot work.
+- **Reservation expires around the pivot** — delay the irreversible call beyond the original
+  hold deadline. Require a participant guarantee that preserves fulfillment or an explicit repair
+  outcome; do not release a durable allocation while the pivot outcome remains unknown. Pair this
+  with definite pre-pivot rejection, where releasing this saga's allocation is required.
+- **Recovery after deduplication expiry** — let the participant apply an operation, lose the
+  response and prune its idempotency record before replay. Recovery must resolve the original
+  effect or remain unknown/repair; neither the old key nor a new key proves retry safety.
 - **Cancel before delayed execute** — status initially says not found, cancellation commits, then
   deliver the old execute; assert no reservation or charge is resurrected.
 - **Repair notification crash** — fail after durable compensation failure but before enqueue;

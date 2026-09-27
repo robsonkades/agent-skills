@@ -55,7 +55,7 @@ f.get(2, SECONDS);                        // expose worker failure, not just sta
 ```java
 // "Start together" — a barrier, to maximise the chance of the interleaving you want
 CyclicBarrier start = new CyclicBarrier(THREADS);
-// each thread: start.await(); then the contended operation
+// each thread: start.await(2, SECONDS); then the contended operation
 ```
 
 ```java
@@ -69,6 +69,40 @@ which must come from the contract or an explicitly calibrated test budget. It do
 two-second production bound. `Thread.sleep(2000)` alone cannot establish that the effect happened.
 Keep coordination outside accesses whose missing ordering is under test: a latch between a
 payload write and read can add the very happens-before edge the product lacks.
+
+## Choose the lifecycle checkpoint before the cancellation oracle
+
+Use the application's real submission/cancellation API with an injected, manually drained
+executor when the contract includes deferred execution. Hold accepted commands in a queue,
+invoke the returned handle, then drain commands explicitly. Do not replace the application's
+handle with a separately constructed `FutureTask`: that would test the JDK instead of the
+application's cancellation bridge. A direct executor cannot expose cancellation while queued.
+
+| Checkpoint                         | What the test must distinguish                                                                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Submission fails without execution | No task took ownership; any resource acquired by the submitter is recovered and the caller receives the configured outcome.                       |
+| Accepted, not started              | If the API promises prevention, cancel and then drain; the operation must not start or cause effects. Pre-acquired resources still need recovery. |
+| Started, resource acquired         | Cancel after a positive acquisition signal; assert the specified stop or residual-work policy and release at physical completion.                 |
+| Completed before cancel            | Preserve the completed outcome and resource balance; late or repeated cancellation must not release twice.                                        |
+
+For `FutureTask`, cancellation before `run()` prevents the callable from executing, including
+its `finally`. After execution starts, cancellation can complete the Future while physical
+work remains. A completion callback or `isDone()` alone is therefore not a safe oracle for
+resource release. Test the ownership transition itself: exercise both start/cancel orderings,
+then use real competing workers when their race is material. Do not insert a checkpoint
+between the competing state updates that would serialize away a double-release or leak.
+The `cancellation-and-interruption` skill owns uncertain handle/ownership contracts; pass it
+the submission path, returned handle, acquisition/release sites and observed outcomes. Keep
+an unresolved contract explicit if that analysis is unavailable.
+
+At saturation, inspect the configured `RejectedExecutionHandler`. An exception oracle fits
+`AbortPolicy`; `CallerRunsPolicy` needs a caller-execution/backpressure oracle, and behaves
+differently after shutdown. Silent discard can leave a submitted Future unfinished. Exercise
+shutdown separately and use bounded result/cleanup checks, rather than assuming every
+rejection throws or completes a Future.
+
+Contracts: [Java 21 FutureTask](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/FutureTask.html)
+and [ThreadPoolExecutor rejection policies](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html).
 
 ## Cancellation
 

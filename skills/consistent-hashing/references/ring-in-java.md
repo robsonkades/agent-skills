@@ -95,8 +95,8 @@ public final class HashRing {
 ```
 
 This complete class uses Java 16+ records and `Stream.toList()` plus Guava on the classpath.
-Pin the project's Guava version and hash contract; compilation for this review uses Java 25
-with `--release 16` and Guava 33.4.8-jre. The snippets below are partial test/measurement
+Pin the project's Guava version and hash contract; a reproducible compatibility check can use
+`javac --release 16` with Guava 33.4.8-jre on the classpath. The snippets below are partial test/measurement
 fragments: the test uses JUnit Jupiter and AssertJ, with `ringOf` and V supplied by the fixture.
 
 Details that affect correctness:
@@ -105,8 +105,8 @@ Details that affect correctness:
   omitting the `firstEntry()` fallback throws `NullPointerException` for exactly those keys —
   a slice small enough to survive a smoke test.
 - **`distinct()` in `owners`.** Without it, walking clockwise returns the _next virtual nodes_,
-  usually belonging to a node already selected, so every replica of the key lands on one
-  machine and the replication buys nothing.
+  which can include several points of the same physical node. A list of R entries may then
+  contain fewer than R physical copies, even though some keys happen to select distinct nodes.
 - **Collision-safe ordering.** The token is a deterministic tie-breaker, so equal 64-bit
   positions coexist. `asLong()` truncation is acceptable only as part of a pinned library,
   version and byte-order contract. A collision should affect ordering, never delete topology.
@@ -150,6 +150,12 @@ ratios are inside tolerance, then stop — the ring costs `V × N` entries and
 `O(log(V × N))` per lookup. Record V and the evidence next to the constant. Heterogeneous
 hardware can be approximated with `weight`, but twice the memory does not necessarily mean
 twice the CPU, I/O or safe request rate. Validate weights under load.
+
+Treat deployed V, weight and token-format changes as reconfigurations. Increasing V adds points
+for existing nodes and can transfer ownership between them; the one-new-node monotonicity test
+below does not cover this operation. Compare old/new maps for the same representative keys,
+including bytes, request share and replica changes, and apply the membership handoff contract.
+Reject tuning whose transfer or rebuild cost exceeds the budget even if sampled balance improves.
 
 ## Testing monotonicity and sampled balance
 

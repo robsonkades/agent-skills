@@ -74,6 +74,11 @@ A span can have one parent and many links. Parent/child spans are causally relat
 not have nested lifetimes. Use a link when there are multiple causes, when representing a
 relationship across traces, or when the applicable semantic convention recommends it.
 
+At an ingress trust boundary, establish whether project policy accepts the incoming context
+or intentionally starts a new trace. A valid carrier proves neither authenticated origin nor
+causal truth. Use the [boundary decision](references/span-modelling.md#trust-boundaries)
+before repairing a disconnected trace or choosing an external parent/link.
+
 Messaging conventions use links as the generally consistent default because messages can
 batch, fan out, redeliver and run inside another ambient context. For a single-message
 process span, the reference conventions permit the message creation context as parent in defined

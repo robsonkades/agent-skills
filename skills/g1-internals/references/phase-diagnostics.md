@@ -41,25 +41,56 @@ offsetting reclamation; correlate object/candidate logs and marking before concl
 
 ## The phase breakdown — the instrument that decides the action
 
+### Keep the timing scopes separate
+
+Top-level phase durations describe elapsed time. Parallel sub-phases report a distribution over
+participating workers: `Min`, `Avg`, `Max`, `Diff` (`Max - Min`), `Sum` and `Workers`.
+`Sum` adds overlapping worker intervals, so it can exceed the pause. These timers measure elapsed
+intervals, not CPU consumption. Do not add a parent phase or `GC Worker Total` to its children,
+or sum sub-phase maxima as though one worker necessarily owned every maximum.
+
+For example, an illustrative 48 ms pause with `Object Copy` worker times
+`Min: 10.0, Avg: 12.0, Max: 14.0, Diff: 4.0, Sum: 48.0, Workers: 4`
+does not attribute all 48 ms of elapsed pause to copying. Read the enclosing phase and other work.
+With a 60 ms pause goal, this event is within the goal; changing only the goal to 40 ms makes it
+an overrun. Neither observation alone establishes application tail latency or justifies a flag change.
+
+Large worker spread warrants examining per-worker work and scheduling, not immediately adding
+threads. On JDK 25, `gc+phases+task=trace` adds worker details. For CPU attribution, correlate
+`gc+cpu=info` and system evidence: `User + Sys` can exceed `Real` with parallel execution;
+`Real` much greater than that CPU sum suggests execution delays, without proving their cause.
+Short pauses may round these seconds-based counters to zero. Keep GC duration separate from
+time entering the safepoint and end-to-end request latency; hand off unexplained time with aligned
+timestamps and the observed GC durations to `pause-attribution`, or state the unresolved gap if
+that skill is unavailable.
+
+### Map the phase to its mechanism
+
 These top-level phases describe ordinary evacuation pauses; exceptional paths and releases differ.
 `-Xlog:gc+phases=debug`
 adds the sub-phases that name the mechanism:
 
-| Dominant phase / sub-phase                                                  | What it means                                         | Where to look next                                                                |
-| --------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `Evacuate Collection Set` → `Object Copy`                                   | Live-data movement and associated execution cost      | Live bytes, worker imbalance, CPU availability, bandwidth and CSet composition    |
-| `Evacuate Collection Set` → `Scan Heap Roots`                               | Many cards to scan for the regions being collected    | `Scanned Cards`; reference fan-in into the collection set                         |
-| `Evacuate Collection Set` → `Ext Root Scanning`                             | Thread stacks, class loaders, code roots              | Thread count and stack depth; huge static structures                              |
-| `Merge Heap Roots` → `Remembered Sets`                                      | RSets of the collection set are large or coarse       | `Merged Full` / `Merged Howl Full` above zero → coarsening (`remembered-sets.md`) |
-| `Merge Heap Roots` → `Log Buffers`                                          | Pending dirty-card processing                         | Dirty cards, write bursts, pause spacing and refinement progress                  |
-| `Merge Heap Roots` → `Eager Reclaim`                                        | Candidate remembered cards prepared for eager reclaim | Later reclamation evidence in `-Xlog:gc+humongous=debug`                          |
-| `Post Evacuate Collection Set` → `Reference Processing` / `Weak Processing` | Many `Reference` objects or weak tables               | Cache design; `-Xlog:gc+ref=debug`                                                |
-| `Post Evacuate Collection Set` → `Restore Evacuation Failed Regions`        | An evacuation failure occurred in this pause          | The `(Evacuation Failure: …)` suffix; the section below                           |
-| `Pre Evacuate Collection Set`, `Other`                                      | Fixed and bookkeeping work                            | Rarely the cause on its own                                                       |
+| Dominant phase / sub-phase                                                  | What it means                                            | Where to look next                                                                    |
+| --------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `Evacuate Collection Set` → `Object Copy`                                   | Live-data movement and associated execution cost         | Live bytes, worker imbalance, CPU availability, bandwidth and CSet composition        |
+| `Evacuate Collection Set` → `Scan Heap Roots`                               | Many cards to scan for the regions being collected       | `Scanned Cards`; reference fan-in into the collection set                             |
+| `Evacuate Collection Set` → `Ext Root Scanning`                             | Thread, class-loader and VM roots                        | Trace `Thread Roots`, `CLDG Roots` and VM-root sub-phases before blaming thread count |
+| `Evacuate Collection Set` → `Code Root Scan`                                | Compiled-method roots associated with the collection set | `Scanned Nmethods`, worker spread and collection-set composition                      |
+| `Merge Heap Roots` → `Remembered Sets`                                      | RSets of the collection set are large or coarse          | `Merged Full` / `Merged Howl Full` above zero → coarsening (`remembered-sets.md`)     |
+| `Merge Heap Roots` → `Log Buffers`                                          | Pending dirty-card processing                            | Dirty cards, write bursts, pause spacing and refinement progress                      |
+| `Merge Heap Roots` → `Eager Reclaim`                                        | Candidate remembered cards prepared for eager reclaim    | Later reclamation evidence in `-Xlog:gc+humongous=debug`                              |
+| `Post Evacuate Collection Set` → `Reference Processing` / `Weak Processing` | Many `Reference` objects or weak tables                  | Cache design; `-Xlog:gc+ref=debug`                                                    |
+| `Post Evacuate Collection Set` → `Restore Evacuation Failed Regions`        | An evacuation failure occurred in this pause             | The `(Evacuation Failure: …)` suffix; the section below                               |
+| `Pre Evacuate Collection Set`, `Other`                                      | Fixed and bookkeeping work                               | Rarely the cause on its own                                                           |
 
 Use these as hypotheses, not automatic diagnoses. Merge prepares card coverage, Scan Heap Roots
 scans heap references, and copying cost also depends on execution resources. Correlate the
 sub-phase work counts and worker times before choosing a change.
+
+`gc+phases=trace` exposes the external-root sub-phases on JDK 25. Stack-reachable compiled
+methods can also be processed with thread roots; the separate `Code Root Scan` counter is not
+the entire code cache's size or evidence of excessive thread stacks. Choose the next capture
+from the phase that actually grew, and bound trace logging to the diagnostic window.
 
 ## Marking, RSet and humongous logs
 
@@ -193,6 +224,8 @@ When measuring and validating:
 - [OpenJDK 25 region-size rounding](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1HeapRegion.cpp)
 - [OpenJDK 25 collector selection](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/gcConfig.cpp)
 - [OpenJDK 25 phase logging levels](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1GCPhaseTimes.cpp)
+- [OpenJDK 25 worker-summary arithmetic](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/shared/workerDataArray.inline.hpp)
+- [OpenJDK 25 external roots and stack-reachable compiled methods](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1RootProcessor.cpp)
 - [OpenJDK 25 humongous logging and failed-region recovery](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1YoungGCPostEvacuateTasks.cpp)
 - [OpenJDK 25 retained-candidate policy](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1Policy.cpp)
 - [OpenJDK 25 copy-allocation destinations](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/g1/g1ParScanThreadState.cpp)

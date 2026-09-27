@@ -1,26 +1,30 @@
 # The comparison, dimension by dimension
 
-| Dimension                      | Virtual threads (thread-per-request)                                             | Reactive (Reactive Streams / Reactor)                                        |
-| ------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Programming model              | sequential statements; ordinary control flow                                     | operator pipeline; control flow is data flow                                 |
-| Blocking I/O                   | intended for supported blocking operations; carrier usually unmounts             | isolate from event loops; arbitrary blocking can stall one                   |
-| I/O implementation             | depends on operation and runtime; blocking style can use non-blocking machinery  | depends on client/driver; a publisher can wrap blocking I/O                  |
-| Backpressure                   | only where a bounded resource is declared                                        | demand protocol; separate bounds needed for buffers and admission            |
-| Cancellation                   | interruption when wired to task ownership; cooperative                           | `Subscription.cancel()`; cleanup/underlying work cancellation must cooperate |
-| Error propagation              | `try`/`catch`, with a stack trace that names the request                         | `onError` signals; stack traces need `onOperatorDebug`/checkpoints           |
-| Composition                    | method calls; owned fan-out with version-compatible APIs                         | operators: `zip`, `merge`, `window`, `retryWhen`, `timeout`                  |
-| Time-shaped operations         | manual (timers, buffers, schedulers)                                             | first-class (`debounce`, `sample`, `bufferTimeout`, `window`)                |
-| Debugging                      | breakpoints, stack traces, thread dump per request                               | operator debugging with real overhead; no per-request thread                 |
-| Profiling                      | stack attribution subject to profiler support; not request correlation by itself | cost attributed to loop threads and operators, not to requests               |
-| Memory per in-flight request   | continuation stack plus request state (workload-dependent)                       | subscription, operator, context and buffered state                           |
-| Memory per **idle** connection | parked stack when a thread is dedicated to it                                    | subscription/operator state; measure the concrete chain                      |
-| CPU-bound work                 | no benefit; ceiling is the core count                                            | no benefit; same ceiling                                                     |
-| Ecosystem                      | blocking libraries; verify thread-local caches and native/pinning behavior       | Netty, R2DBC, reactive Kafka/Mongo/Redis clients                             |
-| Operational complexity         | familiar control flow; downstream pools and admission still need tuning          | schedulers, prefetch, demand, operator semantics                             |
-| Where teams get it wrong       | forgetting to re-declare the limit the pool used to impose                       | a blocking call, or an operator that silently unbounds a buffer              |
+| Dimension                      | Virtual threads (thread-per-request)                                             | Reactive (Reactive Streams / Reactor)                                         |
+| ------------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Programming model              | sequential statements; ordinary control flow                                     | operator pipeline; control flow is data flow                                  |
+| Blocking I/O                   | intended for supported blocking operations; carrier usually unmounts             | isolate from event loops; arbitrary blocking can stall one                    |
+| I/O implementation             | depends on operation and runtime; blocking style can use non-blocking machinery  | depends on client/driver; a publisher can wrap blocking I/O                   |
+| Backpressure                   | only where a bounded resource is declared                                        | demand protocol; separate bounds needed for buffers and admission             |
+| Cancellation                   | interruption when wired to task ownership; cooperative                           | `Subscription.cancel()`; cleanup/underlying work cancellation must cooperate  |
+| Error propagation              | `try`/`catch`, with a stack trace that names the request                         | `onError` signals; stack traces need `onOperatorDebug`/checkpoints            |
+| Composition                    | method calls; owned fan-out with version-compatible APIs                         | operators: `zip`, `merge`, `window`, `retryWhen`, `timeout`                   |
+| Time-shaped operations         | manual (timers, buffers, schedulers)                                             | first-class (`sampleTimeout`, `sample`, `bufferTimeout`, `window` in Reactor) |
+| Debugging                      | breakpoints, stack traces, thread dump per request                               | operator debugging with real overhead; no per-request thread                  |
+| Profiling                      | stack attribution subject to profiler support; not request correlation by itself | cost attributed to loop threads and operators, not to requests                |
+| Memory per in-flight request   | continuation stack plus request state (workload-dependent)                       | subscription, operator, context and buffered state                            |
+| Memory per **idle** connection | parked stack when a thread is dedicated to it                                    | subscription/operator state; measure the concrete chain                       |
+| CPU-bound work                 | no benefit; ceiling is the core count                                            | no benefit; same ceiling                                                      |
+| Ecosystem                      | blocking libraries; verify thread-local caches and native/pinning behavior       | Netty, R2DBC, reactive Kafka/Mongo/Redis clients                              |
+| Operational complexity         | familiar control flow; downstream pools and admission still need tuning          | schedulers, prefetch, demand, operator semantics                              |
+| Where teams get it wrong       | forgetting to re-declare the limit the pool used to impose                       | a blocking call, or an operator that silently unbounds a buffer               |
 
 There is no row where one model wins on every workload, which is why the decision is per
 boundary rather than per organisation.
+
+Operator names vary by library. In Reactor 3.7.2, debounce-style quiet-period selection is
+`sampleTimeout`, using a companion publisher such as `Mono.delay`; there is no `Flux.debounce`.
+Confirm completion, cancellation and discard semantics before replacing existing timers.
 
 ## Memory accounting
 
@@ -106,4 +110,5 @@ from a demonstrated reason to change.
 - [Reactive Streams specification](https://www.reactive-streams.org/) — demand and asynchronous boundaries; boundedness must be designed across the pipeline.
 - [Reactor 3.7.2 Schedulers API](https://projectreactor.io/docs/core/3.7.2/api/reactor/core/scheduler/Schedulers.html) — virtual boundedElastic is available from Reactor 3.6.0 on Java 21+, retaining caps.
 - [Reactor 3.7.2 blocking-call FAQ](https://projectreactor.io/docs/core/3.7.2/reference/faq.html#faq.wrap-blocking) — a reactive wrapper does not make its source non-blocking; schedule blocking work away from event loops.
+- [Reactor 3.7.2 Flux API](https://projectreactor.io/docs/core/3.7.2/api/reactor/core/publisher/Flux.html#sampleTimeout-java.util.function.Function-) — `sampleTimeout` selects values using companion publishers; inspect final-value and discard behavior.
 - [JEP 444](https://openjdk.org/jeps/444) — heap stack chunks, observability limits and workload-dependent memory comparison; not a measured per-thread sizing constant.

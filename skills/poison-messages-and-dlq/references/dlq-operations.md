@@ -119,6 +119,21 @@ Scope the ID to the source's lifetime if topics can be recreated. Physical dupli
 may still occur; durable deduplication establishes one logical disposition. Producer-session
 idempotence alone does not deduplicate application replay across restarts.
 
+Externalizing payload adds a second durability boundary. Complete and verify the upload under
+an immutable object identity/version, with digest and recovery-reader access, before publishing
+its reference. An uncertain upload result requires reconciliation, not an assumption that the
+object exists. Kafka transactions do not include the blob store. If upload succeeds but DLQ
+publication has an unknown outcome, retain the blob while reconciling the quarantine identity;
+an immediate compensating delete can destroy evidence already referenced by a committed entry.
+Clean up only proven unreferenced objects under the transfer's ownership protocol.
+
+Keep the object, decryption capability and reference resolution usable throughout the required
+recovery window. Inspect object lifecycle rules separately from DLQ retention. Store stable
+protected object identity rather than relying on an expiring signed URL as the only reference;
+obtain authorized access when replay runs. An expired access URL is not proof that the object
+was deleted. Before replay, verify the referenced bytes/digest and access; missing evidence
+blocks replay or requires explicit recovery/terminal disposition, not an empty replacement.
+
 Kafka transactions cover Kafka outputs and offsets, not an external database/HTTP effect.
 For database effects, atomically record the operation ID and effect in the sink transaction;
 an outbox can persist outgoing intent with that transaction, but its relay still needs
@@ -219,6 +234,11 @@ transactions, retention or rebalances. Reuse adequate prior evidence for an unch
   redrive uses, or the test proves nothing about the tool you will actually run.
 - **Transfer ambiguity.** Apply DLQ publish then drop its acknowledgement/crash before source
   commit; restart and prove one logical quarantine entry and no source loss.
+- **Externalized evidence.** Fail or lose the upload response before publication; source work
+  must remain recoverable. Then lose the DLQ acknowledgement after a successful upload and
+  verify cleanup cannot remove a referenced blob. Exercise delayed replay with object expiry,
+  expired access links, unavailable decryption and digest mismatch; never replace missing bytes
+  with empty data or declare recovery complete from the envelope alone.
 - **Effect ambiguity and ordering.** Apply an external effect, lose its response and replay;
   assert one logical effect. Fail `A:48` while `A:49` arrives during delayed retry/rebalance;
   assert the chosen gate or documented reconciliation, not merely ordered DLQ reads.
@@ -240,4 +260,6 @@ transactions, retention or rebalances. Reuse adequate prior evidence for an unch
 - [Spring Kafka 3.3 dead-letter header growth and publication failures](https://docs.spring.io/spring-kafka/reference/3.3/kafka/annotation-error-handling.html)
 - [AWS SQS dead-letter queues](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html)
 - [AWS SQS redrive: rate, ordering and new message identity](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html)
+- [S3 object lifecycle and expiry, when S3 holds payload evidence](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html)
+- [S3 presigned URL expiry and credential lifetime](https://docs.aws.amazon.com/AmazonS3/latest/userguide/using-presigned-url.html)
 - [Google Cloud Pub/Sub dead-letter topics](https://cloud.google.com/pubsub/docs/dead-letter-topics)

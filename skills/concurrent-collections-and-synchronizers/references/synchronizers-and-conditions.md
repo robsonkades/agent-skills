@@ -38,8 +38,9 @@ signals and the other side learns.
 
 Failure modes:
 
-- **`countDown()` not in a `finally`** — a worker that throws leaves the coordinator blocked in
-  `await()` forever. This is the most common latch bug. The dump shows one thread parked in
+- **A completion signal skipped on failure** — when the count represents terminal task attempts,
+  signal in `finally`; a worker that throws otherwise leaves the coordinator blocked in
+  `await()` forever. The dump shows one thread parked in
   `CountDownLatch$Sync` / `AbstractQueuedSynchronizer.acquireSharedInterruptibly`, no progress, no
   error in the log, and a restart appears to fix it.
 - **`await()` with no timeout in a request path** — an unbounded hang. Use
@@ -67,7 +68,13 @@ if (!done.await(30, TimeUnit.SECONDS)) {                  // bounds waiting, not
 }
 ```
 
-Count zero proves the expected signals, not successful work: capture failures separately. This
+Count zero proves the expected signals, not successful work: capture failures separately before
+signalling and check them after successful `await`. A readiness gate must not admit requests
+merely because failed initializers ran their `finally`: record each outcome, wait for attempts to
+finish, then publish readiness only if its success condition holds. If the count instead denotes
+successful events, preserve that meaning and provide a separate failure/abort path; blindly
+moving its signal into `finally` changes the contract. A timed-out or interrupted wait does not
+establish the latch's successful-await publication guarantee for unfinished workers. This
 snippet also assumes a stable task list and an executor that reports rejection; queued tasks
 removed before running or silently discarded never execute their `finally`. If submission fails
 partway through, the caller still owns previously accepted work and its cleanup.

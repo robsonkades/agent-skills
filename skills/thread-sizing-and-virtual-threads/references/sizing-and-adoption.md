@@ -59,6 +59,25 @@ idle.
 
 ## Virtual-thread adoption A/B
 
+Confirm execution placement before comparing pool sizes. A virtual request thread calling static
+`CompletableFuture.supplyAsync(work)` does not pass its virtual-thread executor to `work`.
+Default async execution uses a separate policy; common-pool and low-parallelism behavior differ
+across JDK versions. Non-async continuations may run on the completing thread. Inspect the exact
+API, framework overrides and any future subclass rather than assuming an `Async` suffix means
+virtual execution or CPU isolation. An explicit executor on one stage does not propagate to later
+default-async stages.
+
+For each affected phase, record the actual executor, thread kind, admission boundary and lifecycle
+owner. A blocking call can stay directly on a virtual request thread when its lifetime fits; a
+CPU phase can use the explicit bounded executor. Preserve an adequate asynchronous API or event
+loop when that is its contract. When changing placement, test rejection, completion and shutdown
+as well as where work runs; an executor argument alone does not establish bounded admission.
+
+Use `completablefuture-composition` when the graph's execution/completion ownership needs analysis.
+Pass the creation/completion calls, explicit/default executors, JDK version and resource limits;
+request a placement and lifecycle proposal. If unavailable, inspect the matching API contracts and
+use a focused thread-kind/executor probe, keeping unverified graph behavior explicit.
+
 Compare the same task-per-request code and admission policy using current platform executor versus
 virtual thread per task. Keep client pools/timeouts and load shape controlled. Measure:
 
@@ -159,3 +178,5 @@ executor lifecycles drain safely during mixed-version deployment.
 - [Java 25 thread-local guidance](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)
 - [Java 21 Thread daemon and JVM-lifetime contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html)
 - [Java 21 ThreadPoolExecutor queues and internal dependencies](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+- [Java 21 CompletableFuture execution policy](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
+- [Java 25 CompletableFuture execution policy](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)

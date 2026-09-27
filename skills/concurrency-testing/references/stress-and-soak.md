@@ -100,9 +100,14 @@ For a specific ordering claim — "this field is safely published", "this lock-f
 linearisable" — use `jcstress` outcome tests alongside a correctness argument; it samples
 executions under stress and classifies observed outcomes, not exhaustively enumerates schedules.
 For full operation-history linearizability, use a model/history checker appropriate to the API.
-See `java-memory-model` and
-`varhandles-and-memory-ordering`; a stress test is not a substitute for it and cannot become
-one by running longer.
+Use `java-memory-model` and `varhandles-and-memory-ordering` to establish the permitted outcomes
+and their ordering argument; pass the shared accesses, access modes and competing operations.
+This skill owns turning that specification into a test. In an existing jcstress harness,
+keep actors minimal, record observed values, and classify outcomes from the specification,
+not from whichever outcomes happened in an earlier run. Avoid diagnostic synchronization
+between the accesses being tested. Record the harness/JDK/configuration and observed forbidden
+outcomes; if no compatible harness is available, supply the litmus case and expected outcomes
+as unexecuted work. Neither a longer run nor a proposed test completes the correctness argument.
 
 ## Soak: finding leaks
 

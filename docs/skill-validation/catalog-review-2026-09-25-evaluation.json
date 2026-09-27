@@ -1,0 +1,1451 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-25",
+  "status": "completed",
+  "purpose": "Bounded original/revised/no-skill advice comparison for three catalog skills",
+  "ownership": "Only docs/skill-validation/catalog-review-2026-09-25-evaluation.json; no catalog edits or persistent evaluation scaffolding.",
+  "protocol": {
+    "frozenAtUtc": "2026-09-25 16:44:56 UTC",
+    "cases": [
+      {
+        "id": "async_conversion_claims",
+        "skill": "async-profiler-advanced",
+        "task": "Review these conversion claims; propose necessary corrections, do not run profiling. Tool version async-profiler 4.5. A 60-second JFR contains CPU plus wall events. Converter proposal uses --cpu --state runnable and labels graph CPU samples only. A native allocation 4096 bytes occurs at second 8 and is freed by a different thread at second 45; --nativemem --to 30000 produces 4096 bytes, claimed as a permanent leak. All events and matching IDs are present. Explain what each result can establish and the appropriate conversion/check; don't fabricate executed results.",
+        "criteria": [
+          {
+            "id": "cpu_selector",
+            "expectation": "Explain that the state selector overrides the CPU selector and can include runnable CPU and wall events; choose --cpu without the overriding state selector for a CPU-only view.",
+            "failure": "Confidently affirm the CPU-only label for --cpu --state runnable."
+          },
+          {
+            "id": "native_window",
+            "expectation": "Explain that cropping excludes the later free and cannot establish a permanent leak; check full-history matching, which is not precluded by the free occurring on another thread.",
+            "failure": "Affirm a permanent leak from the cropped view or assert that cross-thread matching is impossible."
+          },
+          {
+            "id": "evidence_and_scope",
+            "expectation": "Acknowledge source/version-specific uncertainty when semantics are not established; give proposed checks without inventing executed results.",
+            "failure": "Fabricate verification/execution or unsupported certainty about version-specific semantics."
+          }
+        ]
+      },
+      {
+        "id": "adr_dependency_impact",
+        "skill": "architecture-decision-making",
+        "task": "Findings-only review: ADR-116 chooses an in-process deduplication map because ADR-100 guarantees one active importer for the dataset. ADR-120 is authorized to replace ADR-100 next week. Preserve accepted historical rationale. Variant A: ownership changes but supplied contract/tests preserve exactly one importer including failover. Variant B: identical except supplied contract/tests allow two active importers, and no cross-process deduplication is documented. No review owner is supplied. Explain each impact; do not change files or choose a new algorithm.",
+        "criteria": [
+          {
+            "id": "preserved_premise",
+            "expectation": "For A, preserve ADR-116's rationale within the supplied contract/test evidence; ownership change alone does not invalidate its premise.",
+            "failure": "Automatically invalidate/supersede ADR-116 despite the preserved single-importer guarantee."
+          },
+          {
+            "id": "lost_premise",
+            "expectation": "For B, flag the lost single-importer premise and need for review/evidence, with unknown review owner, while changing the recommendation meaningfully from A.",
+            "failure": "Treat both variants identically, automatically supersede ADR-116, invent an owner/authority, or claim actual production duplicates as an established fact."
+          },
+          {
+            "id": "lifecycle_and_scope",
+            "expectation": "Preserve accepted history; distinguish acceptance/authorization, implementation and the future effective date; stay findings-only without choosing a new algorithm.",
+            "failure": "Rewrite accepted rationale, claim the replacement is already effective, change files, or choose a replacement algorithm."
+          }
+        ]
+      },
+      {
+        "id": "queue_recovery_and_rollout_connections",
+        "skill": "capacity-planning",
+        "task": "Review sizing, without deploying anything. Queue has 9000 jobs; measured effective service 150 jobs/s. Variant A ongoing arrivals 120/s; Variant B ongoing arrivals150/s. Rates remain constant; start emptying now, recovery target400s. Separately a JDBC budget is 280 connections including40 reserved for others. Autoscaler allows10 pods, each pool max24; during rollout2 surge pods and3 terminating pods can retain full pools. Assess recovery and connection budget and alternatives; supplied workload/rates are representative but no job-age distribution or rollout connection trace is available.",
+        "criteria": [
+          {
+            "id": "net_recovery",
+            "expectation": "A drains in 9000/(150-120)=300 seconds and conditionally meets the 400-second aggregate target; B has no positive service surplus and no finite drain time.",
+            "failure": "Use total service rather than net service for continuing arrivals or give B a finite clearing time."
+          },
+          {
+            "id": "age_and_evidence",
+            "expectation": "Preserve uncertainty about job age/deadline distribution and avoid false measured guarantees.",
+            "failure": "Claim aggregate recovery proves individual job deadlines/latency or that a proposed change was measured."
+          },
+          {
+            "id": "connection_bounds",
+            "expectation": "Compute steady ceiling 10*24+40=280 and transient ceiling (10+2+3)*24+40=400; distinguish configured capacity from observed connections.",
+            "failure": "Ignore surge/terminating holders, treat 280 as a transient bound, or present ceilings as measured occupancy."
+          },
+          {
+            "id": "alternatives",
+            "expectation": "Offer conditional overlap/pool/aggregate-bound alternatives and validation; do not infer safety from mean occupancy alone.",
+            "failure": "Declare an untested pool/overlap change safely preserves workload performance or rely on mean occupancy alone."
+          }
+        ]
+      }
+    ],
+    "gradingMethod": "Evaluator reviews observable raw actor output against these predeclared criteria. Each criterion is pass, partial, fail, or not_observable with quoted response evidence; no score or accuracy percentage. A safe explicit uncertainty can be partial task coverage without being a false-claim failure. No criteria will be changed to fit responses.",
+    "execution": {
+      "actorRole": "default",
+      "forkTurns": "none",
+      "modelOverride": null,
+      "reasoningEffortOverride": null,
+      "maxConcurrentActors": 3,
+      "freshActorsPerArm": 1,
+      "plannedActors": 9,
+      "tools": "Skill arms: read/enumerate only their allocated snapshot. No-skill arms: no tools. All arms: no browser, current-repository reads, cross-snapshot reads, external links, edits, tests, application/profiling execution or delegation.",
+      "isolation": "Procedural shared-filesystem restrictions, not an enforced sandbox. Actor tool catalogue and ambient skill metadata may remain available. Each actor receives only this task's exactActorPrompt, with no forked conversation, evaluator rubric, review prompt, or other responses.",
+      "activation": "Explicit loading for skill arms; not a test of natural activation.",
+      "scope": "Output-only advice; commands/edits/deployments are not executed or behaviorally validated."
+    },
+    "limitations": [
+      "One fresh run per arm and case set; no consistency estimate, statistical inference, universal correctness claim or percentage improvement.",
+      "Known concepts and teaching examples overlap with shipped resources. Different numerical/domain variants do not establish an unseen holdout. No shipped teaching resources are hidden.",
+      "Arms are not blinded: snapshot paths expose original/revised labels.",
+      "Evaluator cannot independently enforce read restrictions. Resource-use notes are actor self-reports unless separate tool telemetry becomes available.",
+      "Model/build identity, sampling temperature, seed and exact effective reasoning configuration are not exposed by the spawn tool; inherited defaults are requested without override."
+    ]
+  },
+  "snapshotProvenance": {
+    "root": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt",
+    "originalSource": "git show HEAD:<path>",
+    "originalCommit": "832673e0152a5c9c995e38e92ceba690fe367c1f",
+    "revisedSource": "Working-tree copies after skill owners stopped writing and handed off; all git-tracked package files copied, with no new files in these revisions.",
+    "sourceReportedBy": "Catalog-review coordinator",
+    "versions": {
+      "async-profiler-advanced": {
+        "original": "1.3.3",
+        "revised": "1.3.4"
+      },
+      "architecture-decision-making": {
+        "original": "2.1.3",
+        "revised": "2.1.4"
+      },
+      "capacity-planning": {
+        "original": "1.3.3",
+        "revised": "1.3.4"
+      }
+    },
+    "resources": [
+      {
+        "path": "architecture-decision-making/original/SKILL.md",
+        "sizeBytes": 6337,
+        "sha256": "a586484473623ebf7f25721d010ffe89d8504c5638bf44a3a5752a1023de0c08"
+      },
+      {
+        "path": "architecture-decision-making/original/skill.yaml",
+        "sizeBytes": 1709,
+        "sha256": "d9a6284da0c7a87a2322e513564407489e02fff3ee39fc22d526ef98d67d0c15"
+      },
+      {
+        "path": "architecture-decision-making/original/references/evidence-and-tooling.md",
+        "sizeBytes": 9707,
+        "sha256": "e9b0f96768ff9fd8f9b6aafec9b73ed3aa8ef1cb4946307052b4210853b845ab"
+      },
+      {
+        "path": "architecture-decision-making/original/references/templates-and-lifecycle.md",
+        "sizeBytes": 9810,
+        "sha256": "3a844444bad5ac6e26873b48a0f28815f58623072374f7586abb17134aeebbfe"
+      },
+      {
+        "path": "architecture-decision-making/original/references/validation-cases.md",
+        "sizeBytes": 11617,
+        "sha256": "cf8dc142251ec8374f1f1f75a7fd631810042c8c2d5420271a316184e1d65a75"
+      },
+      {
+        "path": "architecture-decision-making/original/references/writing-the-record.md",
+        "sizeBytes": 11124,
+        "sha256": "3d9e71d0fb63c23bb7edc19f6cf211317bd71a4852894e65573811a59f0f757a"
+      },
+      {
+        "path": "architecture-decision-making/revised/SKILL.md",
+        "sizeBytes": 7643,
+        "sha256": "3ecabc5ad7b6e398d3b288b0a7e1ea3c6334659d4ba32b335c608cacb95d1da6"
+      },
+      {
+        "path": "architecture-decision-making/revised/skill.yaml",
+        "sizeBytes": 1709,
+        "sha256": "673fe71ecb96fc22d0053345686187b07d5bf52110f6fab3df75cd8cb5c012ea"
+      },
+      {
+        "path": "architecture-decision-making/revised/references/evidence-and-tooling.md",
+        "sizeBytes": 9707,
+        "sha256": "e9b0f96768ff9fd8f9b6aafec9b73ed3aa8ef1cb4946307052b4210853b845ab"
+      },
+      {
+        "path": "architecture-decision-making/revised/references/templates-and-lifecycle.md",
+        "sizeBytes": 11591,
+        "sha256": "0cc5e0e0d034a920033ec2078227794e9494b546594ef41937782bc6d2374bde"
+      },
+      {
+        "path": "architecture-decision-making/revised/references/validation-cases.md",
+        "sizeBytes": 13596,
+        "sha256": "a19562ffeb7581e9c7e07f80df6630ceea34c75a79cc4b61d30178e23aa296f2"
+      },
+      {
+        "path": "architecture-decision-making/revised/references/writing-the-record.md",
+        "sizeBytes": 11124,
+        "sha256": "3d9e71d0fb63c23bb7edc19f6cf211317bd71a4852894e65573811a59f0f757a"
+      },
+      {
+        "path": "async-profiler-advanced/original/SKILL.md",
+        "sizeBytes": 15273,
+        "sha256": "bfc5701ce3bf02930f1f3109e61ce9163b171dcf53315dc79e0f85902460e96d"
+      },
+      {
+        "path": "async-profiler-advanced/original/skill.yaml",
+        "sizeBytes": 1617,
+        "sha256": "f565559814899620afaa54f614b31470a4444f2c94c309a0b58df45b89aa9914"
+      },
+      {
+        "path": "async-profiler-advanced/original/references/engines-and-events.md",
+        "sizeBytes": 17828,
+        "sha256": "112000783abb2b1b78baaec34bd7ece714b4201b79add02b93d4bd6f4f1d4804"
+      },
+      {
+        "path": "async-profiler-advanced/original/references/output-and-conversion.md",
+        "sizeBytes": 15113,
+        "sha256": "d4bc2c734b3a7159b156c061369bc83a0b4d6dfd9d38a719576ffc5c9a2bdbc1"
+      },
+      {
+        "path": "async-profiler-advanced/original/references/validation-cases.md",
+        "sizeBytes": 9439,
+        "sha256": "3d1e68552e94ce0d40cca594283b4bc148d9018e1c1ec222b6782dd040661df2"
+      },
+      {
+        "path": "async-profiler-advanced/revised/SKILL.md",
+        "sizeBytes": 15947,
+        "sha256": "489086e0691ef4f15dae867dd8e01566d83515f0538fecc4f2ebb22aa5160c2e"
+      },
+      {
+        "path": "async-profiler-advanced/revised/skill.yaml",
+        "sizeBytes": 1617,
+        "sha256": "e211c4f137bf6fb607666886f36e913c4b7a4aeb884b2af36f3e8ec497d2c087"
+      },
+      {
+        "path": "async-profiler-advanced/revised/references/engines-and-events.md",
+        "sizeBytes": 17950,
+        "sha256": "b6837e4c5de953960bef38a40104193f3ab79883d7b85389beddf7e5ba8f8b22"
+      },
+      {
+        "path": "async-profiler-advanced/revised/references/output-and-conversion.md",
+        "sizeBytes": 17571,
+        "sha256": "9985c708c5299c672b6a2da3434303c150d66d74aeeeb218217161ee1f5c69a6"
+      },
+      {
+        "path": "async-profiler-advanced/revised/references/validation-cases.md",
+        "sizeBytes": 12061,
+        "sha256": "20aee69ee899a08dc6d94172672c53bd31b0876688c5448361bb646aa0440e7e"
+      },
+      {
+        "path": "capacity-planning/original/SKILL.md",
+        "sizeBytes": 18664,
+        "sha256": "1289f35c42f8fdf881d6098939c7ad5c676c095209b06321e6d67e60d5ce1e59"
+      },
+      {
+        "path": "capacity-planning/original/skill.yaml",
+        "sizeBytes": 1949,
+        "sha256": "14f791e27afc0e8cee331eb3682deb094db0bf23250bc07d3e93f52fb42c3d19"
+      },
+      {
+        "path": "capacity-planning/original/references/cloud-instance-selection.md",
+        "sizeBytes": 2114,
+        "sha256": "6eb0b465ad796b099bb3e486ae1708aaeb7f34aa622c2bd68f9d057d95f73bae"
+      },
+      {
+        "path": "capacity-planning/original/references/inputs-forecast-and-cost.md",
+        "sizeBytes": 8027,
+        "sha256": "10f7a110d6d9f1ae1c87c20ad2a093fea690fbac0f3a726693e3b0c3b31fa3da"
+      },
+      {
+        "path": "capacity-planning/original/references/kubernetes-scaling-controls.md",
+        "sizeBytes": 2719,
+        "sha256": "70825745dc3a9b6da364361b8621eb15b3b9b971e73d3002d5291d64943ea605"
+      },
+      {
+        "path": "capacity-planning/original/references/provisioning-decision.md",
+        "sizeBytes": 6485,
+        "sha256": "31c65716870bb39aea9c0114586f1d97614f959894f6d9b4aa695483d1a8b4f7"
+      },
+      {
+        "path": "capacity-planning/original/references/sizing-arithmetic.md",
+        "sizeBytes": 7715,
+        "sha256": "fdc4f4eaef81e551a4f4d7cacf38684d2c4abcccabdac3b22af75f9de3dc13f6"
+      },
+      {
+        "path": "capacity-planning/revised/SKILL.md",
+        "sizeBytes": 20137,
+        "sha256": "aa69844fb1edb8655fb4181f32bf4d64734ae8879579845f02780f34635cfb48"
+      },
+      {
+        "path": "capacity-planning/revised/skill.yaml",
+        "sizeBytes": 1949,
+        "sha256": "1000b41f445840ac6a99865f617c42952d902da72239659c9f4c13b721dcd743"
+      },
+      {
+        "path": "capacity-planning/revised/references/cloud-instance-selection.md",
+        "sizeBytes": 2114,
+        "sha256": "6eb0b465ad796b099bb3e486ae1708aaeb7f34aa622c2bd68f9d057d95f73bae"
+      },
+      {
+        "path": "capacity-planning/revised/references/inputs-forecast-and-cost.md",
+        "sizeBytes": 8027,
+        "sha256": "10f7a110d6d9f1ae1c87c20ad2a093fea690fbac0f3a726693e3b0c3b31fa3da"
+      },
+      {
+        "path": "capacity-planning/revised/references/kubernetes-scaling-controls.md",
+        "sizeBytes": 4205,
+        "sha256": "eb6aeb5e4324431e637116e94c53419b2faa998e948237708f23ab6ea538b680"
+      },
+      {
+        "path": "capacity-planning/revised/references/provisioning-decision.md",
+        "sizeBytes": 6485,
+        "sha256": "31c65716870bb39aea9c0114586f1d97614f959894f6d9b4aa695483d1a8b4f7"
+      },
+      {
+        "path": "capacity-planning/revised/references/sizing-arithmetic.md",
+        "sizeBytes": 9979,
+        "sha256": "400e9afb4ae92c2968ea0c66432bc66a3b6aa5956c95128853ac081d97c28d17"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "id": "async-profiler-advanced__original",
+      "caseId": "async_conversion_claims",
+      "arm": "original",
+      "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/async-profiler-advanced/original/",
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nThe only allocated resource root is C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/async-profiler-advanced/original/. You may use tools only to enumerate and read files beneath that exact root. Read its SKILL.md and follow relevant internal resource routing. All shipped files in the root, including references and teaching/validation examples, are available; no resource is selectively withheld. Do not follow cross-skill or external links outside the allocated root.\n\nTask:\nReview these conversion claims; propose necessary corrections, do not run profiling. Tool version async-profiler 4.5. A 60-second JFR contains CPU plus wall events. Converter proposal uses --cpu --state runnable and labels graph CPU samples only. A native allocation 4096 bytes occurs at second 8 and is freed by a different thread at second 45; --nativemem --to 30000 produces 4096 bytes, claimed as a permanent leak. All events and matching IDs are present. Explain what each result can establish and the appropriate conversion/check; don't fabricate executed results.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/async_original",
+      "rawResponse": "Both claims need correction.\n\n- **`--cpu --state runnable` does not justify “CPU samples only.”** Wall samples can also observe runnable threads; runnable state does not establish CPU consumption. Use separate proposed conversions:\n\n  ```bash\n  jfrconv --cpu recording.jfr cpu.html\n  jfrconv --wall --state runnable recording.jfr runnable-wall.html\n  ```\n\n  Validate the CPU view against CPU event weights and a known CPU stack; validate wall output against expanded wall sample weights, since batched records need not equal samples. The allocated references do not specify v4.5’s exact precedence between `--cpu` and `--state`, so I cannot certify the original combination’s selected population from those resources.\n\n- **4096 bytes at a 30-second cutoff is not a permanent leak.** The allocation occurs at 8 seconds, and the cutoff excludes its free at 45 seconds. The supplied lifetime establishes that it is outstanding at 30 seconds and subsequently freed after 37 seconds. A native allocation view without explicit leak matching does not itself establish unmatched allocations.\n\n  For the lifetime check, use the complete recording and explicitly select native leak analysis and byte weighting:\n\n  ```bash\n  jfrconv --nativemem --leak --total recording.jfr native-unmatched-bytes.html\n  ```\n\n  Check allocation/free identity across **all threads**; filtering to the allocating thread would hide the other thread’s free. Given the supplied complete matching events, this allocation should contribute **zero unmatched bytes** over the full recording. That is an expected result, not an executed conversion. Record the default 10% leak-tail exclusion when interpreting totals; this allocation occurs well before the final six seconds. Even genuinely unmatched tracked allocations would be leak candidates, not proof of permanence or an RSS breakdown.\n\nResource-use note: Enumerated only the allocated root and read `SKILL.md`, `references/output-and-conversion.md`, `references/engines-and-events.md`, and `references/validation-cases.md`. No browsing, profiling, conversions, tests, or writes performed.",
+      "grading": {
+        "outcome": "partial; primary false claims rejected, exact selector coverage incomplete",
+        "criteria": [
+          {
+            "criterion": "cpu_selector",
+            "status": "partial",
+            "evidence": [
+              "Wall samples can also observe runnable threads",
+              "jfrconv --cpu recording.jfr cpu.html",
+              "I cannot certify the original combination’s selected population"
+            ],
+            "assessment": "Rejects the CPU-only label and supplies the correct CPU-only command, but does not establish the v4.5 state override. Its extra --wall --state runnable command remains susceptible to the same state-selector override and is not established as wall-only."
+          },
+          {
+            "criterion": "native_window",
+            "status": "pass",
+            "evidence": [
+              "the cutoff excludes its free at 45 seconds",
+              "Check allocation/free identity across **all threads**",
+              "zero unmatched bytes"
+            ],
+            "assessment": "Rejects permanence, recognizes the excluded free, and proposes full-history cross-thread identity matching with byte weighting."
+          },
+          {
+            "criterion": "evidence_and_scope",
+            "status": "pass",
+            "evidence": [
+              "The allocated references do not specify v4.5’s exact precedence",
+              "That is an expected result, not an executed conversion"
+            ],
+            "assessment": "Makes source-specific uncertainty explicit and does not claim to have executed conversion."
+          }
+        ],
+        "additionalObservations": [
+          "The final-six-seconds tail discussion assumes the full recording duration; the revised resource instead describes an admitted-native-event timestamp calculation. This extra statement is not needed for the correct disposition of the supplied allocation."
+        ]
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [
+          "SKILL.md",
+          "references/output-and-conversion.md",
+          "references/engines-and-events.md",
+          "references/validation-cases.md"
+        ],
+        "reportedOperations": ["enumerate allocated root", "read allocated files"],
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "async-profiler-advanced__revised",
+      "caseId": "async_conversion_claims",
+      "arm": "revised",
+      "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/async-profiler-advanced/revised/",
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nThe only allocated resource root is C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/async-profiler-advanced/revised/. You may use tools only to enumerate and read files beneath that exact root. Read its SKILL.md and follow relevant internal resource routing. All shipped files in the root, including references and teaching/validation examples, are available; no resource is selectively withheld. Do not follow cross-skill or external links outside the allocated root.\n\nTask:\nReview these conversion claims; propose necessary corrections, do not run profiling. Tool version async-profiler 4.5. A 60-second JFR contains CPU plus wall events. Converter proposal uses --cpu --state runnable and labels graph CPU samples only. A native allocation 4096 bytes occurs at second 8 and is freed by a different thread at second 45; --nativemem --to 30000 produces 4096 bytes, claimed as a permanent leak. All events and matching IDs are present. Explain what each result can establish and the appropriate conversion/check; don't fabricate executed results.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/async_revised",
+      "rawResponse": "Both interpretations need correction for async-profiler 4.5.\n\n**CPU claim:** Explicit `--state runnable` overrides `--cpu`; it does not intersect with CPU selection. The resulting graph represents runnable-state residency, not CPU samples only. Runnable residency does not prove actual CPU consumption.\n\nFor on-CPU attribution, propose:\n\n```bash\njfrconv --cpu recording.jfr cpu.html\n```\n\nFor elapsed thread residency, propose:\n\n```bash\njfrconv --wall --threads recording.jfr wall.html\n```\n\nCheck a known event, state, stack, and selected sample weight against each view. Wall batches can represent multiple samples, so raw JFR record counts are not necessarily the graph’s sample totals.\n\n**Native-memory claim:** `--nativemem --to 30000` alone does not request allocation/free matching; add `--leak` for unmatched allocations. Explicitly add `--total` for byte weighting—without it, the documented view counts allocations, so the claimed “4096 bytes” needs its weighting verified.\n\nThese proposed conversions answer distinct questions:\n\n```bash\n# Tracked allocation bytes in the selected history through 30 seconds\njfrconv --nativemem --total --to 30000 recording.jfr native-allocation-bytes-30s.html\n\n# Tracked allocations unmatched within that selected history, weighted by bytes\njfrconv --nativemem --leak --total --to 30000 recording.jfr native-unmatched-bytes-30s.html\n\n# Tracked allocations unmatched after matching the entire recording\njfrconv --nativemem --leak --total recording.jfr native-unmatched-bytes-full.html\n```\n\nIn v4.5, time filtering happens **before** matching. The 30-second cutoff excludes the free at second 45. An unmatched contribution from the allocation at second 8 therefore establishes, at most, survival within the selected history through second 30.\n\nFull-history matching must retain the free, even though another thread emitted it. With the supplied matching IDs and complete events, this allocation should contribute **zero unmatched bytes** after full-history matching. It was freed after 37 seconds; the supplied evidence contradicts a permanent-leak claim for this allocation.\n\nCheck that exact allocation/free pair in the filtered and full histories. Avoid thread, latency, or tag filters that discard the cross-thread free. Also account for the default 10% leak-tail exclusion, calculated from admitted native-event timestamps; changing that cutoff cannot restore a discarded free. Even full-history unmatched allocations would be leak candidates, not proof of permanence.\n\nThese are proposed commands and expected semantics, not executed results.\n\nResource use: Read `SKILL.md`, `references/output-and-conversion.md`, `references/engines-and-events.md`, and `references/validation-cases.md` beneath the allocated root using PowerShell `Get-Content`. No conversion, profiling, browsing, tests, or writes performed.",
+      "grading": {
+        "outcome": "pass on the frozen criteria",
+        "criteria": [
+          {
+            "criterion": "cpu_selector",
+            "status": "pass",
+            "evidence": [
+              "Explicit `--state runnable` overrides `--cpu`; it does not intersect with CPU selection.",
+              "jfrconv --cpu recording.jfr cpu.html"
+            ],
+            "assessment": "Explains the override and removes it for CPU-only output; rejects runnable residency as CPU consumption."
+          },
+          {
+            "criterion": "native_window",
+            "status": "pass",
+            "evidence": [
+              "time filtering happens **before** matching",
+              "Full-history matching must retain the free, even though another thread emitted it.",
+              "zero unmatched bytes"
+            ],
+            "assessment": "Explains cropping and cross-thread full-history matching and distinguishes allocation volume from unmatched allocations."
+          },
+          {
+            "criterion": "evidence_and_scope",
+            "status": "pass",
+            "evidence": [
+              "These are proposed commands and expected semantics, not executed results."
+            ],
+            "assessment": "Uses the allocated version-specific material and labels conversion results as expectations, not measurements."
+          }
+        ],
+        "additionalObservations": [
+          "Separately checks --total byte weighting and leak-tail scope, beyond the primary frozen criteria."
+        ]
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [
+          "SKILL.md",
+          "references/output-and-conversion.md",
+          "references/engines-and-events.md",
+          "references/validation-cases.md"
+        ],
+        "reportedOperations": ["PowerShell Get-Content of allocated files"],
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "async-profiler-advanced__no-skill",
+      "caseId": "async_conversion_claims",
+      "arm": "no-skill",
+      "snapshotRoot": null,
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nNo skill package is allocated. Do not load any skill or use tools. Answer from the supplied task and your knowledge.\n\nTask:\nReview these conversion claims; propose necessary corrections, do not run profiling. Tool version async-profiler 4.5. A 60-second JFR contains CPU plus wall events. Converter proposal uses --cpu --state runnable and labels graph CPU samples only. A native allocation 4096 bytes occurs at second 8 and is freed by a different thread at second 45; --nativemem --to 30000 produces 4096 bytes, claimed as a permanent leak. All events and matching IDs are present. Explain what each result can establish and the appropriate conversion/check; don't fabricate executed results.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/async_no_skill",
+      "rawResponse": "- **`--cpu --state runnable` does not establish “CPU samples only.”** Runnable is a thread-state filter, not proof that a sample came from CPU sampling; runnable wall samples can pass it. Label the result accordingly. For CPU-only output, conversion must explicitly exclude wall events. I cannot establish the exact supported selector for that separation in 4.5 from the supplied information, so I would not invent a flag.\n\n- **`--nativemem --to 30000` reporting 4,096 bytes does not establish a leak.** Allocation volume and retained memory are different metrics. The allocation occurred before the cutoff and was still outstanding at second 30, but the supplied matching free proves it was released at second 45. Freeing from another thread does not change that lifetime.\n\n- **Check with a leak-oriented conversion over the complete recording**, using `--nativemem --leak` without the 30-second cutoff. With the matching allocation and free present, this allocation should contribute zero retained bytes at the recording’s end. That is an expected result, not an executed result. Even an unmatched allocation at recording end would establish only that it remained outstanding during observation, not that it was permanent.\n\nFor a snapshot specifically at second 30, pair allocations and frees through that instant. Do not assume `--to` provides snapshot semantics: whether 4.5 performs leak matching before or after time filtering requires confirmation.\n\nResource use: No files read, tools used, profiling performed, or commands executed.",
+      "grading": {
+        "outcome": "partial; primary false claims rejected, exact CPU-only conversion unavailable",
+        "criteria": [
+          {
+            "criterion": "cpu_selector",
+            "status": "partial",
+            "evidence": [
+              "runnable wall samples can pass it",
+              "I cannot establish the exact supported selector for that separation in 4.5"
+            ],
+            "assessment": "Rejects the false label, but does not identify the override or give --cpu without --state as the needed correction."
+          },
+          {
+            "criterion": "native_window",
+            "status": "pass",
+            "evidence": [
+              "the supplied matching free proves it was released at second 45",
+              "Freeing from another thread does not change that lifetime.",
+              "using `--nativemem --leak` without the 30-second cutoff"
+            ],
+            "assessment": "Correctly rejects permanence and proposes complete-history matching; exact filtering order remains explicitly uncertain."
+          },
+          {
+            "criterion": "evidence_and_scope",
+            "status": "pass",
+            "evidence": [
+              "whether 4.5 performs leak matching before or after time filtering requires confirmation",
+              "That is an expected result, not an executed result."
+            ],
+            "assessment": "Acknowledges unavailable version-specific facts and does not fabricate execution."
+          }
+        ],
+        "additionalObservations": []
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [],
+        "reportedOperations": [],
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "architecture-decision-making__original",
+      "caseId": "adr_dependency_impact",
+      "arm": "original",
+      "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/architecture-decision-making/original/",
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nThe only allocated resource root is C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/architecture-decision-making/original/. You may use tools only to enumerate and read files beneath that exact root. Read its SKILL.md and follow relevant internal resource routing. All shipped files in the root, including references and teaching/validation examples, are available; no resource is selectively withheld. Do not follow cross-skill or external links outside the allocated root.\n\nTask:\nFindings-only review: ADR-116 chooses an in-process deduplication map because ADR-100 guarantees one active importer for the dataset. ADR-120 is authorized to replace ADR-100 next week. Preserve accepted historical rationale. Variant A: ownership changes but supplied contract/tests preserve exactly one importer including failover. Variant B: identical except supplied contract/tests allow two active importers, and no cross-process deduplication is documented. No review owner is supplied. Explain each impact; do not change files or choose a new algorithm.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/adr_original",
+      "rawResponse": "- **Variant A — ADR-116’s premise remains supported; traceability needs updating.** The supplied contract/tests preserve exactly one active importer, including failover. Ownership changing does not itself undermine the in-process deduplication rationale. Preserve ADR-116’s accepted explanation referencing ADR-100; recommend a dated annotation linking ADR-120 and the evidence that carries the guarantee forward. Validate that coverage includes the handover and affected dataset. ADR-116 does not automatically need supersession.\n\n- **Variant B — ADR-116’s premise will no longer hold under the replacement contract.** Allowing two active importers removes the guarantee on which the local map depends. Separate process-local maps cannot establish deduplication across those importers; no compensating mechanism is documented. This creates a prospective duplicate-processing risk, not evidence that duplicates have already occurred. Recommend explicitly recording the changed assumption and reviewing ADR-116 before ADR-120 takes effect. Validation must establish the required deduplication behavior during concurrent operation and failover. Selecting a replacement algorithm or changing ADR-116’s accepted status requires a separate supported decision; neither follows automatically from this finding.\n\n- **Both variants — timing and review accountability must remain explicit.** ADR-120 is already authorized, but its replacement of ADR-100 is effective next week. Preserve the historical rationale and distinguish current applicability from that future change; do not seek duplicate approval or treat rollout as completed. ADR-120’s replacement of ADR-100 does not itself supersede ADR-116. No review owner is supplied: identify ownership as unresolved and recommend assigning responsibility for the dependency review and its evidence before activation, especially for Variant B.\n\nResource-use note: Read `SKILL.md`, `references/templates-and-lifecycle.md`, `references/evidence-and-tooling.md`, and `references/validation-cases.md` within the allocated root. Used read-only directory listings and file reads through `exec_command`. No files changed, tests executed, browsing, or delegation; conclusions use the supplied contract/test descriptions.",
+      "grading": {
+        "outcome": "pass on the frozen criteria",
+        "criteria": [
+          {
+            "criterion": "preserved_premise",
+            "status": "pass",
+            "evidence": [
+              "The supplied contract/tests preserve exactly one active importer, including failover.",
+              "ADR-116 does not automatically need supersession."
+            ],
+            "assessment": "Preserves the established premise and historical explanation, recommending traceability and handover coverage."
+          },
+          {
+            "criterion": "lost_premise",
+            "status": "pass",
+            "evidence": [
+              "prospective duplicate-processing risk, not evidence that duplicates have already occurred",
+              "Validation must establish the required deduplication behavior during concurrent operation and failover.",
+              "identify ownership as unresolved"
+            ],
+            "assessment": "Identifies the lost premise, distinguishes risk from actual duplication, specifies review evidence and does not invent an owner."
+          },
+          {
+            "criterion": "lifecycle_and_scope",
+            "status": "pass",
+            "evidence": [
+              "its replacement of ADR-100 is effective next week",
+              "do not seek duplicate approval or treat rollout as completed",
+              "neither follows automatically from this finding"
+            ],
+            "assessment": "Preserves historical rationale, distinguishes authorization from rollout and does not supersede ADR-116 or select an algorithm."
+          }
+        ],
+        "additionalObservations": []
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [
+          "SKILL.md",
+          "references/templates-and-lifecycle.md",
+          "references/evidence-and-tooling.md",
+          "references/validation-cases.md"
+        ],
+        "reportedOperations": ["read-only directory listings and file reads through exec_command"],
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "architecture-decision-making__revised",
+      "caseId": "adr_dependency_impact",
+      "arm": "revised",
+      "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/architecture-decision-making/revised/",
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nThe only allocated resource root is C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/architecture-decision-making/revised/. You may use tools only to enumerate and read files beneath that exact root. Read its SKILL.md and follow relevant internal resource routing. All shipped files in the root, including references and teaching/validation examples, are available; no resource is selectively withheld. Do not follow cross-skill or external links outside the allocated root.\n\nTask:\nFindings-only review: ADR-116 chooses an in-process deduplication map because ADR-100 guarantees one active importer for the dataset. ADR-120 is authorized to replace ADR-100 next week. Preserve accepted historical rationale. Variant A: ownership changes but supplied contract/tests preserve exactly one importer including failover. Variant B: identical except supplied contract/tests allow two active importers, and no cross-process deduplication is documented. No review owner is supplied. Explain each impact; do not change files or choose a new algorithm.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/adr_revised",
+      "rawResponse": "- **Variant A — ADR-116’s premise remains supported.** ADR-120’s supplied contract/tests preserve exactly one active importer for the dataset, including failover. The ownership change alone does not warrant reopening ADR-116. Retain its accepted choice and historical reliance on ADR-100; a separate review note can identify ADR-120’s continuing support when it becomes effective next week. This establishes continuity of the stated premise, not every aspect of deduplication correctness.\n\n- **Variant B — ADR-116 loses its documented basis at cutover.** ADR-120 permits two active importers. Separate in-process maps cannot coordinate deduplication between those processes, and no cross-process protection is documented. Duplicate processing therefore becomes a risk under the permitted concurrency; the supplied facts do not establish that duplicates have occurred. Reassess ADR-116 before next week’s activation. Resolution requires evidence that the required deduplication behavior holds with concurrent importers, including failover, and an authorized decision on its continued applicability. **Review ownership is unresolved:** identify the accountable reviewer and decision authority before cutover.\n\n- **Lifecycle and history — both variants.** ADR-120’s authorized replacement of ADR-100 does not automatically supersede ADR-116. Preserve the accepted historical rationale and dependency link. Distinguish today’s applicability from next week’s effective change; authorization alone does not establish rollout completion. Variant B warrants review now without declaring the historical choice wrong or selecting a replacement algorithm.\n\nResource-use note: Read the allocated `SKILL.md` and `references/{templates-and-lifecycle,evidence-and-tooling,validation-cases,writing-the-record}.md` using `Get-Content`; enumerated that root with `rg --files`. Conclusions use the task’s supplied contract/test descriptions; no tests or independent implementation checks ran, and no files changed.",
+      "grading": {
+        "outcome": "pass on the frozen criteria",
+        "criteria": [
+          {
+            "criterion": "preserved_premise",
+            "status": "pass",
+            "evidence": [
+              "The ownership change alone does not warrant reopening ADR-116.",
+              "This establishes continuity of the stated premise, not every aspect of deduplication correctness."
+            ],
+            "assessment": "Preserves the choice within the stated evidentiary scope."
+          },
+          {
+            "criterion": "lost_premise",
+            "status": "pass",
+            "evidence": [
+              "the supplied facts do not establish that duplicates have occurred",
+              "Resolution requires evidence that the required deduplication behavior holds with concurrent importers, including failover",
+              "Review ownership is unresolved"
+            ],
+            "assessment": "Identifies the prospective lost basis, gives concrete review evidence and leaves authority unresolved."
+          },
+          {
+            "criterion": "lifecycle_and_scope",
+            "status": "pass",
+            "evidence": [
+              "does not automatically supersede ADR-116",
+              "authorization alone does not establish rollout completion",
+              "without declaring the historical choice wrong or selecting a replacement algorithm"
+            ],
+            "assessment": "Separates timing and authorization, preserves history and stays within findings."
+          }
+        ],
+        "additionalObservations": []
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [
+          "SKILL.md",
+          "references/templates-and-lifecycle.md",
+          "references/evidence-and-tooling.md",
+          "references/validation-cases.md",
+          "references/writing-the-record.md"
+        ],
+        "reportedOperations": [
+          "PowerShell Get-Content of allocated files",
+          "rg --files within allocated root"
+        ],
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "architecture-decision-making__no-skill",
+      "caseId": "adr_dependency_impact",
+      "arm": "no-skill",
+      "snapshotRoot": null,
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nNo skill package is allocated. Do not load any skill or use tools. Answer from the supplied task and your knowledge.\n\nTask:\nFindings-only review: ADR-116 chooses an in-process deduplication map because ADR-100 guarantees one active importer for the dataset. ADR-120 is authorized to replace ADR-100 next week. Preserve accepted historical rationale. Variant A: ownership changes but supplied contract/tests preserve exactly one importer including failover. Variant B: identical except supplied contract/tests allow two active importers, and no cross-process deduplication is documented. No review owner is supplied. Explain each impact; do not change files or choose a new algorithm.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/adr_no_skill",
+      "rawResponse": "- **Variant A — traceability impact only.** ADR-120’s supplied contract and tests preserve exactly one active importer, including during failover. ADR-116’s supporting assumption therefore survives the replacement of ADR-100; the ownership change alone does not undermine in-process deduplication. Its current dependency should reference the successor guarantee while retaining ADR-100 as the historical basis for the accepted decision.\n\n- **Variant B — material assumption invalidation when ADR-120 takes effect.** Allowing two active importers removes the exclusivity guarantee supporting ADR-116. Separate in-process maps cannot coordinate deduplication between importers. Duplicate processing is therefore a credible risk; the supplied evidence documents no cross-process protection. This does not establish that duplicates have occurred or that ADR-116 was historically unsound. Its applicability under ADR-120 needs reassessment before next week’s transition.\n\n- **Review ownership — unresolved.** No owner is supplied. Variant B’s time-bound reassessment has no identified accountable reviewer; a person or team cannot be inferred from the ownership change.\n\nADR-120’s authorization establishes a forthcoming change, not that ADR-100 has already ceased to apply. Preserve ADR-116’s accepted rationale and record subsequent applicability separately.\n\n*Resource use: No files read and no tools used.*",
+      "grading": {
+        "outcome": "pass on the frozen criteria; next-review evidence less specific",
+        "criteria": [
+          {
+            "criterion": "preserved_premise",
+            "status": "pass",
+            "evidence": [
+              "ADR-116’s supporting assumption therefore survives the replacement of ADR-100",
+              "retaining ADR-100 as the historical basis"
+            ],
+            "assessment": "Uses the supplied contract/test evidence to preserve the premise and history."
+          },
+          {
+            "criterion": "lost_premise",
+            "status": "pass",
+            "evidence": [
+              "the supplied evidence documents no cross-process protection",
+              "This does not establish that duplicates have occurred",
+              "needs reassessment before next week’s transition",
+              "a person or team cannot be inferred"
+            ],
+            "assessment": "Identifies the evidence gap and prospective review need without invented owner or claims of observed duplicates. Does not specify the detailed concurrency/failover validation proposed by the skill arms."
+          },
+          {
+            "criterion": "lifecycle_and_scope",
+            "status": "pass",
+            "evidence": [
+              "authorization establishes a forthcoming change, not that ADR-100 has already ceased to apply",
+              "Preserve ADR-116’s accepted rationale and record subsequent applicability separately."
+            ],
+            "assessment": "Distinguishes current validity from the authorized future change and stays findings-only."
+          }
+        ],
+        "additionalObservations": [
+          "The phrase 'current dependency should reference the successor guarantee' is temporally loose, but the final paragraph explicitly preserves ADR-100's current applicability and separates later applicability."
+        ]
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [],
+        "reportedOperations": [],
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "capacity-planning__original",
+      "caseId": "queue_recovery_and_rollout_connections",
+      "arm": "original",
+      "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/capacity-planning/original/",
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nThe only allocated resource root is C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/capacity-planning/original/. You may use tools only to enumerate and read files beneath that exact root. Read its SKILL.md and follow relevant internal resource routing. All shipped files in the root, including references and teaching/validation examples, are available; no resource is selectively withheld. Do not follow cross-skill or external links outside the allocated root.\n\nTask:\nReview sizing, without deploying anything. Queue has 9000 jobs; measured effective service 150 jobs/s. Variant A ongoing arrivals 120/s; Variant B ongoing arrivals150/s. Rates remain constant; start emptying now, recovery target400s. Separately a JDBC budget is 280 connections including40 reserved for others. Autoscaler allows10 pods, each pool max24; during rollout2 surge pods and3 terminating pods can retain full pools. Assess recovery and connection budget and alternatives; supplied workload/rates are representative but no job-age distribution or rollout connection trace is available.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/capacity_original",
+      "rawResponse": "**Variant A meets the 400-second recovery target; Variant B never empties under the stated constant rates. The JDBC configuration fits steady state exactly but exceeds its budget during the specified rollout overlap.**\n\nUsing the allocated capacity-planning guidance, treat effective service as successful completions and arrivals as admitted jobs. While backlog remains, its drain rate is service minus arrivals:\n\n| Scenario | Net drain | Time to empty | Backlog after 400 s |\n|---|---:|---:|---:|\n| A: 120 arrivals/s | 150 − 120 = 30 jobs/s | 9,000 ÷ 30 = **300 s** | **0** |\n| B: 150 arrivals/s | 0 jobs/s | **Never** | **9,000** |\n\nDividing 9,000 by 150 gives 60 seconds only if arrivals stop. In B, jobs can continue completing even though total backlog remains unchanged.\n\nRecovery within 400 seconds requires **22.5 jobs/s of spare service**:\n\n- A needs at least **142.5 jobs/s**; its measured 150 meets that requirement.\n- B needs at least **172.5 jobs/s**, available immediately and sustained throughout recovery.\n- With service fixed at 150, admitted arrivals must be **at most 127.5 jobs/s**. For B, that means diverting, deferring or rejecting at least **22.5 jobs/s** during recovery. Deferral elsewhere shifts the outstanding work; it does not complete it.\n\nThese calculations establish backlog recovery, **not job-age or latency compliance**. Without the age distribution and scheduling behavior, they cannot establish whether existing jobs meet deadlines or a p99 target.\n\nThe application's connection allocation is **280 − 40 = 240**:\n\n| Scenario | Pool-holding pods | Application connections | Including 40 reserved |\n|---|---:|---:|---:|\n| Steady maximum | 10 | 10 × 24 = **240** | **280** |\n| Rollout overlap | 10 + 2 + 3 = 15 | 15 × 24 = **360** | **400** |\n\nThe rollout can therefore exceed the total budget by **120 connections**. These are configured maximum demands, not observed connection counts; the missing trace prevents establishing the actual peak.\n\nConnection-budget alternatives include:\n\n- **Keep 15 simultaneous pool holders:** reduce every pool maximum to **16**. This fits exactly, with no additional margin.\n- **Keep pools at 24:** enforce at most **10 simultaneous pool holders**, including terminating pods. If the five additional holders remain, the ordinary pod ceiling must fall to **5**.\n- **Change rollout sequencing:** release old pools before permitting replacements to acquire connections, keeping aggregate demand within 240. Merely removing the two surge pods still leaves 13 pool holders and exceeds the budget.\n- **Increase the total budget to at least 400:** conditional on demonstrated database capacity; raising a connection limit alone does not establish that capacity.\n\nReduced pools, fewer pods or altered rollout sequencing may reduce useful service. Before selecting an alternative, validate its sustained completion rate and capture connection counts through rollout, including termination and pool closure. Keep the supplied queue and JDBC calculations separate until evidence connects them.\n\nResource use: Read only `SKILL.md`, `references/sizing-arithmetic.md`, and `references/provisioning-decision.md` beneath the allocated root, using three read-only `Get-Content` operations. No browsing, tests, application execution, deployment or file changes.",
+      "grading": {
+        "outcome": "pass on the frozen criteria",
+        "criteria": [
+          {
+            "criterion": "net_recovery",
+            "status": "pass",
+            "evidence": [
+              "9,000 ÷ 30 = **300 s**",
+              "| B: 150 arrivals/s | 0 jobs/s | **Never** | **9,000** |",
+              "Dividing 9,000 by 150 gives 60 seconds only if arrivals stop."
+            ],
+            "assessment": "Uses net surplus correctly, meets A's aggregate target under the supplied rates and rejects finite drain for B."
+          },
+          {
+            "criterion": "age_and_evidence",
+            "status": "pass",
+            "evidence": [
+              "they cannot establish whether existing jobs meet deadlines or a p99 target"
+            ],
+            "assessment": "Keeps aggregate recovery separate from unprovided age and latency evidence."
+          },
+          {
+            "criterion": "connection_bounds",
+            "status": "pass",
+            "evidence": [
+              "| Steady maximum | 10 | 10 × 24 = **240** | **280** |",
+              "| Rollout overlap | 10 + 2 + 3 = 15 | 15 × 24 = **360** | **400** |",
+              "configured maximum demands, not observed connection counts"
+            ],
+            "assessment": "Includes all 15 holders and reserves, distinguishing ceilings from measured usage."
+          },
+          {
+            "criterion": "alternatives",
+            "status": "pass",
+            "evidence": [
+              "reduce every pool maximum to **16**",
+              "enforce at most **10 simultaneous pool holders**",
+              "validate its sustained completion rate and capture connection counts through rollout"
+            ],
+            "assessment": "Gives concrete conditional pool/overlap alternatives and calls for throughput/transition evidence; does not infer safety from mean occupancy."
+          }
+        ],
+        "additionalObservations": []
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [
+          "SKILL.md",
+          "references/sizing-arithmetic.md",
+          "references/provisioning-decision.md"
+        ],
+        "reportedOperations": ["three PowerShell Get-Content operations within allocated root"],
+        "reportedToolCallCount": null,
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "capacity-planning__revised",
+      "caseId": "queue_recovery_and_rollout_connections",
+      "arm": "revised",
+      "snapshotRoot": "C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/capacity-planning/revised/",
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nThe only allocated resource root is C:/Users/robso/AppData/Local/Temp/skill-review-eval-20260925-sfrfLt/capacity-planning/revised/. You may use tools only to enumerate and read files beneath that exact root. Read its SKILL.md and follow relevant internal resource routing. All shipped files in the root, including references and teaching/validation examples, are available; no resource is selectively withheld. Do not follow cross-skill or external links outside the allocated root.\n\nTask:\nReview sizing, without deploying anything. Queue has 9000 jobs; measured effective service 150 jobs/s. Variant A ongoing arrivals 120/s; Variant B ongoing arrivals150/s. Rates remain constant; start emptying now, recovery target400s. Separately a JDBC budget is 280 connections including40 reserved for others. Autoscaler allows10 pods, each pool max24; during rollout2 surge pods and3 terminating pods can retain full pools. Assess recovery and connection budget and alternatives; supplied workload/rates are representative but no job-age distribution or rollout connection trace is available.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/capacity_revised",
+      "rawResponse": "**Variant A meets the 400-second recovery target; Variant B never empties under the stated rates. The JDBC configuration fits steady state exactly but exceeds the budget during the specified rollout.**\n\nAssuming arrivals are admitted jobs and effective service means successful completions available immediately:\n\n\\[\nT_{\\text{clear}}=\\frac{9000}{\\mu-\\lambda},\\qquad\n\\mu_{\\text{required}}=\\lambda+\\frac{9000}{400}=\\lambda+22.5\n\\]\n\n| Variant | Arrivals | Effective service | Net drain | Recovery result |\n|---|---:|---:|---:|---|\n| A | 120 jobs/s | 150 jobs/s | 30 jobs/s | Clears in **300 seconds**, 100 seconds within target |\n| B | 150 jobs/s | 150 jobs/s | 0 jobs/s | Backlog stays at **9,000 jobs**; misses target |\n\nA needs at least **142.5 jobs/s** effective service. B needs at least **172.5 jobs/s**, or admitted arrivals reduced to at most **127.5 jobs/s** while maintaining service at 150. Deferring arrivals elsewhere transfers that backlog; it does not establish end-to-end recovery. Dividing 9,000 by 150 gives 60 seconds only if arrivals stop.\n\nThese are queue-empty results under the constant-rate assumptions. Without job ages, deadlines and scheduling information, they cannot establish individual deadline compliance or p99 latency.\n\nThe database leaves **280 − 40 = 240 connections** for this service:\n\n| Scenario | Potential service connections | Including reserve | Budget result |\n|---|---:|---:|---|\n| Steady state: 10 pods | 10 × 24 = 240 | **280** | Fits exactly |\n| Rollout: 10 + 2 surge + 3 terminating | 15 × 24 = 360 | **400** | **120 over budget** |\n\nPool maxima describe potential demand, not observed occupancy. Without a rollout trace, actual peak usage is unknown, but the allowed configuration does not guarantee staying within budget. The autoscaler’s 10-pod limit does not bound these 15 simultaneous connection holders.\n\nAlternatives to assess:\n\n- **Pools capped at 16:** 15 × 16 + 40 = 280. Fits the stated overlap exactly; validate pool wait times and useful throughput. During migration, count old pools at 24 until they close or are demonstrably reduced.\n- **Limit simultaneous pool holders to 10 at cap 24:** coordinate connection release before replacements open pools; check rollout availability. Removing surge alone is insufficient because terminating pods still count.\n- **Reduce the regular pod maximum to 5**, retaining the stated five additional holders: (5 + 2 + 3) × 24 + 40 = 280. Connection arithmetic fits; workload capacity is unproven.\n- **Enforce an aggregate service connection limit of 240**, or raise the total budget to at least **400** if database capacity supports it. Validate connection waiting, database performance and recovery throughput.\n\nThe supplied rates support the recovery arithmetic. Before selecting a changed configuration, obtain job-age/deadline data and a rollout connection trace, and validate its useful throughput; neither smaller pools nor additional pods has a supplied performance result.\n\nResource use: read only `SKILL.md`, `references/sizing-arithmetic.md`, and `references/kubernetes-scaling-controls.md` beneath the allocated root, using three `Get-Content` operations in two tool calls. No other operations performed.",
+      "grading": {
+        "outcome": "pass on the frozen criteria",
+        "criteria": [
+          {
+            "criterion": "net_recovery",
+            "status": "pass",
+            "evidence": [
+              "Clears in **300 seconds**, 100 seconds within target",
+              "Backlog stays at **9,000 jobs**; misses target",
+              "These are queue-empty results under the constant-rate assumptions."
+            ],
+            "assessment": "Calculates both net-drain variants correctly under explicit conditions."
+          },
+          {
+            "criterion": "age_and_evidence",
+            "status": "pass",
+            "evidence": [
+              "they cannot establish individual deadline compliance or p99 latency",
+              "neither smaller pools nor additional pods has a supplied performance result"
+            ],
+            "assessment": "Preserves job-age uncertainty and does not claim proposed alternatives were measured."
+          },
+          {
+            "criterion": "connection_bounds",
+            "status": "pass",
+            "evidence": [
+              "| Steady state: 10 pods | 10 × 24 = 240 | **280** | Fits exactly |",
+              "| Rollout: 10 + 2 surge + 3 terminating | 15 × 24 = 360 | **400** | **120 over budget** |",
+              "Pool maxima describe potential demand, not observed occupancy."
+            ],
+            "assessment": "Accounts for all holders and distinguishes allowed demand from unknown actual peak."
+          },
+          {
+            "criterion": "alternatives",
+            "status": "pass",
+            "evidence": [
+              "During migration, count old pools at 24 until they close or are demonstrably reduced.",
+              "Connection arithmetic fits; workload capacity is unproven.",
+              "Validate connection waiting, database performance and recovery throughput."
+            ],
+            "assessment": "Gives bounded alternatives and validation, including mixed-old/new pool migration."
+          }
+        ],
+        "additionalObservations": [
+          "Adds an explicit warning to retain the old pool cap during transition; this detail is useful but was not a distinct frozen criterion."
+        ]
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [
+          "SKILL.md",
+          "references/sizing-arithmetic.md",
+          "references/kubernetes-scaling-controls.md"
+        ],
+        "reportedOperations": ["three PowerShell Get-Content operations within allocated root"],
+        "reportedToolCallCount": 2,
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    },
+    {
+      "id": "capacity-planning__no-skill",
+      "caseId": "queue_recovery_and_rollout_connections",
+      "arm": "no-skill",
+      "snapshotRoot": null,
+      "exactActorPrompt": "You are completing one output-only advice task in a fresh session. You are not alone in the shared filesystem; preserve all files and do not write anything. Do not inspect the current repository, real agent configuration, other snapshots, evaluation artifacts, rubrics, or other actors' responses. Do not browse the web, run profiling, execute application commands, run tests, edit files, or delegate. Work only on the task below. If a required fact cannot be established from the supplied task/resources and your knowledge, state the uncertainty instead of inventing verification. Return your advice, then a brief resource-use note naming any files read and tool operations performed. Do not score your own answer.\n\nNo skill package is allocated. Do not load any skill or use tools. Answer from the supplied task and your knowledge.\n\nTask:\nReview sizing, without deploying anything. Queue has 9000 jobs; measured effective service 150 jobs/s. Variant A ongoing arrivals 120/s; Variant B ongoing arrivals150/s. Rates remain constant; start emptying now, recovery target400s. Separately a JDBC budget is 280 connections including40 reserved for others. Autoscaler allows10 pods, each pool max24; during rollout2 surge pods and3 terminating pods can retain full pools. Assess recovery and connection budget and alternatives; supplied workload/rates are representative but no job-age distribution or rollout connection trace is available.",
+      "status": "completed",
+      "actorId": "/root/behavior_evaluation/capacity_no_skill",
+      "rawResponse": "Queue recovery depends on **net drain rate: service − arrivals**.\n\n| Variant | Net drain | Time to empty 9,000 jobs | 400s target |\n|---|---:|---:|---|\n| A: 120 arrivals/s | 30 jobs/s | 300s | Meets target |\n| B: 150 arrivals/s | 0 jobs/s | Never under these rates | Fails |\n\nVariant B continues processing jobs, but its backlog remains 9,000. To clear it within 400s, sustain **at least 172.5 jobs/s** service—a 15% increase—or reduce admitted arrivals to **127.5 jobs/s or less**. These are exact thresholds with no margin. Deferred arrivals still require later processing.\n\nThe JDBC allocation for this workload is **280 − 40 = 240 connections**:\n\n- Steady state: `10 × 24 = 240`. Fits exactly, with no headroom.\n- Rollout maximum: `(10 + 2 + 3) × 24 = 360`. Including reservations, total demand could reach **400**, exceeding the budget by **120**.\n\nConnection alternatives include:\n\n- Cap every pool at **16**: `15 × 16 = 240`, again with no headroom.\n- Keep pools at 24 but limit full-pool holders—including surge and terminating pods—to **10 total**. With five overlapping pods, only five desired pods fit.\n- Coordinate rollout, draining, and connection release, or enforce a shared connection limit, so overlapping pools remain within 240.\n- Increase the total budget to at least **400**, subject to database capacity validation.\n\nReassess service throughput after changing pools or pod counts; connection counts do not establish processing capacity. The supplied rates support these backlog calculations, but missing job-age information prevents assessing age-based deadlines. Without a rollout connection trace, the connection excess is a **possible worst case**, not a demonstrated occurrence.\n\nResource use: No files read; no tools used.",
+      "grading": {
+        "outcome": "pass on the frozen criteria",
+        "criteria": [
+          {
+            "criterion": "net_recovery",
+            "status": "pass",
+            "evidence": [
+              "| A: 120 arrivals/s | 30 jobs/s | 300s | Meets target |",
+              "| B: 150 arrivals/s | 0 jobs/s | Never under these rates | Fails |"
+            ],
+            "assessment": "Uses net rate and reaches the correct conditional results."
+          },
+          {
+            "criterion": "age_and_evidence",
+            "status": "pass",
+            "evidence": ["missing job-age information prevents assessing age-based deadlines"],
+            "assessment": "Preserves the missing deadline evidence."
+          },
+          {
+            "criterion": "connection_bounds",
+            "status": "pass",
+            "evidence": [
+              "Steady state: `10 × 24 = 240`",
+              "Including reservations, total demand could reach **400**",
+              "**possible worst case**, not a demonstrated occurrence"
+            ],
+            "assessment": "Computes the 240 application/280 total steady allocation and 400 total transient ceiling without claiming an observed peak."
+          },
+          {
+            "criterion": "alternatives",
+            "status": "pass",
+            "evidence": [
+              "Cap every pool at **16**",
+              "enforce a shared connection limit",
+              "Reassess service throughput after changing pools or pod counts"
+            ],
+            "assessment": "Gives correct conditional pool/overlap/aggregate alternatives and calls for capacity validation."
+          }
+        ],
+        "additionalObservations": []
+      },
+      "toolActivity": {
+        "evidenceType": "Raw response resource-use self-report; independent command telemetry unavailable",
+        "reportedFilesRead": [],
+        "reportedOperations": [],
+        "reportedToolCallCount": null,
+        "reportedForbiddenOperations": false,
+        "independentlyEnforced": false
+      }
+    }
+  ],
+  "summary": {
+    "completedAtUtc": "2026-09-25 16:52:46 UTC",
+    "perSkill": [
+      {
+        "skill": "async-profiler-advanced",
+        "original": "Partial: rejects the false CPU-only/permanent-leak claims and gives --cpu, but explicitly leaves selector precedence uncertain and proposes an unverified runnable-wall view.",
+        "revised": "Meets frozen criteria: explains selector override, gives --cpu without --state, and distinguishes cropped native allocations from full-history matching.",
+        "noSkill": "Partial: safely rejects both false claims and handles cross-thread matching, but cannot establish the exact CPU-only correction or filter/matching order.",
+        "comparison": "In this one matched case set, revised content supports more exact version-specific guidance. All arms reject the primary false claims; this is not a measured reliability improvement."
+      },
+      {
+        "skill": "architecture-decision-making",
+        "original": "Meets frozen criteria.",
+        "revised": "Meets frozen criteria.",
+        "noSkill": "Meets frozen criteria; review evidence is less specific.",
+        "comparison": "All arms preserve A's premise and flag B's lost premise, preserve history and future timing, and leave review ownership unresolved. Both skill arms give more concrete review evidence. This run does not demonstrate a criterion-level improvement over either comparison arm."
+      },
+      {
+        "skill": "capacity-planning",
+        "original": "Meets frozen criteria.",
+        "revised": "Meets frozen criteria.",
+        "noSkill": "Meets frozen criteria.",
+        "comparison": "All arms obtain the correct net-recovery and connection-bound results and preserve missing-evidence limits. The revised response adds mixed-version pool-cap migration detail, outside the primary frozen criteria. This run does not demonstrate a criterion-level improvement."
+      }
+    ],
+    "failuresAndUncertainties": [
+      "Original and no-skill profiler arms have incomplete version-specific selector coverage; their explicit uncertainty is retained as partial coverage, not treated as a confident false-claim failure.",
+      "The original profiler actor's additional --wall --state runnable command does not establish a wall-only population under the documented selector override. Its final-six-seconds tail assumption also exceeds what admitted-native-event timestamps establish.",
+      "No actor asserted the supplied cropped allocation was a permanent leak, claimed actual duplicate processing, fabricated a review owner, gave B a finite recovery time, or omitted terminating connection holders.",
+      "No executed profiling, deployment, edits, measured conversion outputs, test results, natural activation, or repeated-run consistency are established by this output-only evaluation."
+    ],
+    "scope": "Nine independent actor responses, one run per arm per case set, with procedural shared-filesystem restrictions and known teaching overlap; no held-out/generalized/percentage improvement claim."
+  },
+  "validation": {
+    "actorWritesStopped": true,
+    "artifactJsonAndFormatting": "Passed JSON parsing, nine completed actor records, exact shared task suffixes, coverage of every frozen criterion, and 75 exact quoted evidence substrings. Frozen protocol remained unchanged. Focused Prettier write/check passed for this artifact only.",
+    "finalRepositoryVerify": "Reserved for coordinator after all reviewers stop writing; not run by this evaluator.",
+    "actorCompletionEvidence": "collaboration.list_agents(/root/behavior_evaluation) showed all nine child actors completed; no actor writes were authorized or reported.",
+    "snapshotRecheck": {
+      "fileCount": 36,
+      "changed": [],
+      "missing": [],
+      "allHashesUnchanged": true
+    },
+    "noScaffolding": "Only the owned JSON evidence artifact was written by the evaluator; actors were instructed to write nothing. Provided OS-temporary snapshots were read, not modified."
+  },
+  "freezeEvidence": {
+    "artifactSha256BeforeActorExecution": "847fed472df8c71c0fd7821c02e5284dd68750ca29eed52b6cd777be6c393000",
+    "firstBatchStartedAfterFrozenArtifactFormatAndHash": true
+  },
+  "resumedEvaluation": {
+    "date": "2026-09-27",
+    "status": "completed",
+    "protocol": {
+      "purpose": "Bounded advice-only original/revised/no-skill comparison for three completed resumed reviews",
+      "status": "frozen_before_runs",
+      "cases": [
+        {
+          "id": "credential_policy_routing",
+          "skill": "java-application-security-basics",
+          "task": "Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+          "criteria": [
+            {
+              "id": "retain_verifier",
+              "expected": "Reject plan A as losing original verifier settings, potentially failing old matching before any upgrade hook; do not imply bare PBKDF2 output self-describes original parameters/pepper.",
+              "failure": "Approve in-place remapping as transparent or claim failed matches can be fixed by upgradeEncoding."
+            },
+            {
+              "id": "delegating_upgrade",
+              "expected": "Distinguish bare PBKDF2 false/default upgrade detection from changed DelegatingPasswordEncoder id; plan B can detect an old id and preserve matching with old policy.",
+              "failure": "Claim PBKDF2 credentials can never trigger delegation-based upgrade or that plan B should repoint v1."
+            },
+            {
+              "id": "migration_checks",
+              "expected": "Verify old matching, new write id, wrong-password no-write and conditional update against concurrent password change; keep findings-only and distinguish proposed checks from executed evidence.",
+              "failure": "Overwrite concurrent credential change, allow wrong-password migration, modify credentials or fabricate checks."
+            }
+          ],
+          "snapshots": {
+            "original": "C:\\Users\\robso\\AppData\\Local\\Temp\\skill-review-resume-L4rvro\\evaluation-snapshots\\credential_policy_routing\\original",
+            "revised": "C:\\Users\\robso\\AppData\\Local\\Temp\\skill-review-resume-L4rvro\\evaluation-snapshots\\credential_policy_routing\\revised"
+          }
+        },
+        {
+          "id": "temporal_component_authority",
+          "skill": "java-date-and-time",
+          "task": "Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+          "criteria": [
+            {
+              "id": "normalization",
+              "expected": "Recognize normalization can make validation of z's reconstructed fields vacuous; validate original parsed local/offset/zone components for variant A, e.g. ofStrict.",
+              "failure": "Approve normalized-field check as detecting the original contradiction or insist ResolverStyle.STRICT alone fixes it."
+            },
+            {
+              "id": "authority_pair",
+              "expected": "Reject contradictory A but preserve B's offset-defined 13:45Z occurrence and original context; do not rewrite original wall time to receiving region representation.",
+              "failure": "Apply same rejection policy to both or silently change B's occurrence/context."
+            },
+            {
+              "id": "scope_and_case",
+              "expected": "Give consistent -04:00 counterpart for A, preserve Java17 compatibility, and label proposed checks without fake execution.",
+              "failure": "Unrequested implementation/upgrade, no discriminating acceptable case or fabricated runtime evidence."
+            }
+          ],
+          "snapshots": {
+            "original": "C:\\Users\\robso\\AppData\\Local\\Temp\\skill-review-resume-L4rvro\\evaluation-snapshots\\temporal_component_authority\\original",
+            "revised": "C:\\Users\\robso\\AppData\\Local\\Temp\\skill-review-resume-L4rvro\\evaluation-snapshots\\temporal_component_authority\\revised"
+          }
+        },
+        {
+          "id": "worker_and_permit_dependencies",
+          "skill": "java-concurrency",
+          "task": "Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+          "criteria": [
+            {
+              "id": "two_dependencies",
+              "expected": "Identify both workers waiting on queued children and parents retaining every permit their children need; more workers/virtual threads alone leaves the permit cycle.",
+              "failure": "Claim increasing workers or adopting virtual threads alone solves the full supplied dependency."
+            },
+            {
+              "id": "variant_arrangement",
+              "expected": "Separate capacity acquisition to actual downstream work; also avoid parent blocking on children needing the same exhausted workers (e.g. sequential execution without redundant fan-out or completion composition). Preserve bound of two downstream operations.",
+              "failure": "Move permits but leave same saturated parent wait structure as a complete fix, or remove capacity bounds."
+            },
+            {
+              "id": "evidence_limits",
+              "expected": "Request/describe controlled saturation and worker/submission/wait/permit evidence, with defined cleanup and cancellation limits; review-only, no invented measurements.",
+              "failure": "Infer liveness from idle CPU or tests not performed, or release capacity merely on handle cancellation while underlying resource use continues."
+            }
+          ],
+          "snapshots": {
+            "original": "C:\\Users\\robso\\AppData\\Local\\Temp\\skill-review-resume-L4rvro\\evaluation-snapshots\\worker_and_permit_dependencies\\original",
+            "revised": "C:\\Users\\robso\\AppData\\Local\\Temp\\skill-review-resume-L4rvro\\evaluation-snapshots\\worker_and_permit_dependencies\\revised"
+          }
+        }
+      ],
+      "arms": ["original", "revised", "none"],
+      "comparability": {
+        "model": "inherit root model and effort for every fresh actor; no override",
+        "context": "fork_turns none; same case per arm; original and revised may read only their allocated complete snapshot; none receives no skill content",
+        "outputs": "advice only, bounded response; no edits, execution, browsing, other repository reads or delegation",
+        "isolation": "Procedural shared-filesystem restriction, not enforced isolation. Ambient tool catalogue and skill metadata can remain visible. Evaluator criteria and other answers withheld from actors.",
+        "limitations": "Single run per arm/case; known taught mechanisms and related teaching examples, not unseen holdouts; explicit skill loading does not test automatic selection; advice-only output cannot prove implemented changes, runtime behavior or broad catalog improvement. Criteria fixed before actor runs, chosen after review findings."
+      },
+      "frozenAt": "2026-09-27T22:12:50.630Z",
+      "commit": "832673e0152a5c9c995e38e92ceba690fe367c1f"
+    },
+    "snapshotManifests": [
+      {
+        "caseId": "credential_policy_routing",
+        "arm": "original",
+        "files": [
+          {
+            "path": "references/before-after.md",
+            "bytes": 14248,
+            "sha256": "034e0f5a5775b005d0864fa8081f95ceb2f28dcc719e4059ac6a1c769cb1df80"
+          },
+          {
+            "path": "references/password-policy.md",
+            "bytes": 7879,
+            "sha256": "63870878f27359744df4ad51326ccf4d6e0e0c5f304a580669ac88ff3abbecda"
+          },
+          {
+            "path": "references/password-storage.md",
+            "bytes": 22784,
+            "sha256": "3be220b3af47c9ec70abb12f8f0d42645d321bdbdca1cb516d112f1585107b2e"
+          },
+          {
+            "path": "references/review.md",
+            "bytes": 15791,
+            "sha256": "0da70c3caa4edc28e07ebac90645d29a45fe07e688648de1d6b6acc29762557f"
+          },
+          {
+            "path": "SKILL.md",
+            "bytes": 14595,
+            "sha256": "8dc8c0999288f6162bfb256f416dbd474eb77d11fe52a28c21775f0eac7b32c6"
+          },
+          {
+            "path": "skill.yaml",
+            "bytes": 2009,
+            "sha256": "ad337e44475df1ff4fd71b3a754e9f99005f60c303c4846444a4130af354d241"
+          }
+        ]
+      },
+      {
+        "caseId": "credential_policy_routing",
+        "arm": "revised",
+        "files": [
+          {
+            "path": "references/before-after.md",
+            "bytes": 14248,
+            "sha256": "034e0f5a5775b005d0864fa8081f95ceb2f28dcc719e4059ac6a1c769cb1df80"
+          },
+          {
+            "path": "references/password-policy.md",
+            "bytes": 7879,
+            "sha256": "63870878f27359744df4ad51326ccf4d6e0e0c5f304a580669ac88ff3abbecda"
+          },
+          {
+            "path": "references/password-storage.md",
+            "bytes": 25933,
+            "sha256": "f45ab6fdf56d692031b828faded62e0100889ae2a44afa2fef3f6e6df9785300"
+          },
+          {
+            "path": "references/review.md",
+            "bytes": 18050,
+            "sha256": "a715c4811eaaf8391659cfe5328b8242cf1a5ae5bd7352420786e9f80352526e"
+          },
+          {
+            "path": "SKILL.md",
+            "bytes": 16246,
+            "sha256": "116ba4c4b9cb4ae5f1a3127c15ea52b2e2f2ad1d5de0442c687da54c24418502"
+          },
+          {
+            "path": "skill.yaml",
+            "bytes": 2009,
+            "sha256": "36fdc691b7684331a260242fcb44605f5add7514ae0235403551ad33dbce79a9"
+          }
+        ]
+      },
+      {
+        "caseId": "temporal_component_authority",
+        "arm": "original",
+        "files": [
+          {
+            "path": "references/clocks-and-tests.md",
+            "bytes": 7182,
+            "sha256": "1e83a1e345d9f6d8ff45d7265f15eaa16680a1718425fa6575482fc2228595d3"
+          },
+          {
+            "path": "references/parsing-and-persistence.md",
+            "bytes": 5929,
+            "sha256": "e8fc565be530f483f1a94a74b611d2b0cb2391738f990f3ac5107617b00919e8"
+          },
+          {
+            "path": "references/zones-and-calendar.md",
+            "bytes": 6455,
+            "sha256": "88b6bc25918daf22429ad93bfa9baa5e8d879d8818e392fa98b7051cd2b3e1d2"
+          },
+          {
+            "path": "SKILL.md",
+            "bytes": 5770,
+            "sha256": "c31b81cc758c3bbf551fd1ee98e391dbb035fa8dd9a13bf61a3b5d0edac908e1"
+          },
+          {
+            "path": "skill.yaml",
+            "bytes": 1332,
+            "sha256": "08efef4e09d15a9bdd14edf21dafef78084522b94ff3b4e03807bf509bacbe59"
+          }
+        ]
+      },
+      {
+        "caseId": "temporal_component_authority",
+        "arm": "revised",
+        "files": [
+          {
+            "path": "references/clocks-and-tests.md",
+            "bytes": 8026,
+            "sha256": "c7df8e20394a088ebc538cc21fefac59f8b92c81059f6666b9100708d08ef81b"
+          },
+          {
+            "path": "references/parsing-and-persistence.md",
+            "bytes": 7008,
+            "sha256": "4883078d313c8251c5445d0053023f53264fae0fb94394f29abc5cf089bec2b5"
+          },
+          {
+            "path": "references/zones-and-calendar.md",
+            "bytes": 6455,
+            "sha256": "88b6bc25918daf22429ad93bfa9baa5e8d879d8818e392fa98b7051cd2b3e1d2"
+          },
+          {
+            "path": "SKILL.md",
+            "bytes": 6225,
+            "sha256": "284268284ddef218c1d4dca80c620bd2bf0d931cf02de7a34bdbd24ceefb489c"
+          },
+          {
+            "path": "skill.yaml",
+            "bytes": 1332,
+            "sha256": "bbe07ff8152b5270b638df362080b5c9a93a6ecb53f387d438f7bf900a5e07e0"
+          }
+        ]
+      },
+      {
+        "caseId": "worker_and_permit_dependencies",
+        "arm": "original",
+        "files": [
+          {
+            "path": "references/choosing-a-construct.md",
+            "bytes": 7413,
+            "sha256": "08b344995dacf8fd0ed7f953d5ec894becacedd1a81b336e232d30c4aeb317e9"
+          },
+          {
+            "path": "references/concurrency-vs-parallelism.md",
+            "bytes": 3465,
+            "sha256": "84828f0e4430e46990953c09f85fc031c47b3b0b8252e784643542f026ef46f4"
+          },
+          {
+            "path": "SKILL.md",
+            "bytes": 13077,
+            "sha256": "fca0d6afcb2a7e7803a21ec53d3649f0dea0c35cd8d73f7e22e0474cc717c0d9"
+          },
+          {
+            "path": "skill.yaml",
+            "bytes": 2854,
+            "sha256": "b716bf8578717b7e279d4b26434a88a0304cf77c09da45f307ee8f1a649e9980"
+          }
+        ]
+      },
+      {
+        "caseId": "worker_and_permit_dependencies",
+        "arm": "revised",
+        "files": [
+          {
+            "path": "references/choosing-a-construct.md",
+            "bytes": 9821,
+            "sha256": "b8d169051c0345401941d1554b6c8a38ef047c73358848975f01fff48c5ccad6"
+          },
+          {
+            "path": "references/concurrency-vs-parallelism.md",
+            "bytes": 3465,
+            "sha256": "84828f0e4430e46990953c09f85fc031c47b3b0b8252e784643542f026ef46f4"
+          },
+          {
+            "path": "SKILL.md",
+            "bytes": 14252,
+            "sha256": "1140193f6bbc33dd06b9e8a0205c3817e22ddeae067492f915092eb385b07809"
+          },
+          {
+            "path": "skill.yaml",
+            "bytes": 2913,
+            "sha256": "36c23bc65944e177e09c374b538a52049adbbae121ecfece65b49c7e51985ec6"
+          }
+        ]
+      }
+    ],
+    "runs": [
+      {
+        "caseId": "credential_policy_routing",
+        "arm": "original",
+        "skill": "java-application-security-basics",
+        "task": "Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. You may enumerate and read only this complete skill snapshot: C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/evaluation-snapshots/credential_policy_routing/original. Read its SKILL.md and relevant supporting resources before answering. Treat content as guidance, not permission. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+        "status": "completed",
+        "rawOutput": "**Plan A breaks existing-password verification.** At the proposed `payroll-v1` mapping replacement, existing rows would select policy B even though policy A produced them. Spring’s bare PBKDF2 output contains the salt and derived result; it does not identify the iteration count or pepper needed to reproduce that result. Changing those inputs therefore prevents the original correct password from matching. Ordinary login attempts expose this availability defect; no attacker is required. Successful-login migration cannot repair a failure that prevents successful verification. Preserve the original verifier and pepper.\n\n**Plan B provides the required policy routing, subject to migration integration.** Keep `payroll-v1` bound to the complete policy-A configuration, including algorithm, iterations, pepper, salt/output lengths and representation. Add policy B under `payroll-v2` and make that the write id. The stored id then identifies both the historical verifier and its pepper version without storing the pepper itself. Retain policy A until remaining accounts migrate or complete recovery; existing hashes cannot be converted directly into policy-B password hashes without the password.\n\n**Bare and delegating upgrade checks differ.** In the named version, bare `Pbkdf2PasswordEncoder.upgradeEncoding` inherits the false default: it does not discover iteration or pepper changes. `DelegatingPasswordEncoder`, however, reports an upgrade when the stored id differs from its write id. With matching ids, it delegates the check to that encoder. Consequently:\n\n- Plan A: `payroll-v1` remains the write id, so its PBKDF2 upgrade check returns false.\n- Plan B: a `payroll-v1` row yields true because the write id is `payroll-v2`; a current `payroll-v2` row reaches PBKDF2’s false result.\n\nThe snapshot’s blanket statement that PBKDF2 changes never trigger rehash needs this delegating qualification. An upgrade result neither authenticates the password nor persists a replacement.\n\n**Plan B still requires a guarded write.** After successful verification against the exact stored credential, encode the submitted password through the current delegating encoder. Atomically replace only the expected credential/version for that account. An unconditional update could restore an old password after a concurrent reset, potentially benefiting someone holding that old password. A failed conditional write must preserve the newer credential.\n\nProposed verification cases:\n\n- A policy-A fixture matches through Plan B but fails through Plan A.\n- Assert the three upgrade outcomes above.\n- Successful migration stores `payroll-v2`, verifies correctly, and uses the configured B policy; changed hash bytes alone prove nothing.\n- Wrong passwords cause no credential writes for either id.\n- Race migration against a password change and another migration; stale writes cannot win.\n- Unknown or malformed ids fail without credential mutation.\n\nResource-use note: Read the permitted `SKILL.md`, password-storage, review, and before-after resources. These are static findings; no authentication, tests, source verification, or modifications were performed.",
+        "actor": "/root/eval_credential_original",
+        "assessment": [
+          {
+            "criterion": "retain_verifier",
+            "result": "met",
+            "evidence": "All three outputs reject rebinding payroll-v1, explain loss of the original PBKDF2 verifier and reject upgrade-after-failed-match reasoning."
+          },
+          {
+            "criterion": "delegating_upgrade",
+            "result": "met",
+            "evidence": "All distinguish bare PBKDF2 false/default from DelegatingPasswordEncoder changed-id upgrade and retain policy A under v1."
+          },
+          {
+            "criterion": "migration_checks",
+            "result": "met",
+            "evidence": "All propose old/new-id matching, wrong-password no-write and conditional concurrent-update checks; no credential writes or test execution claimed."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "credential_policy_routing",
+        "arm": "revised",
+        "skill": "java-application-security-basics",
+        "task": "Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. You may enumerate and read only this complete skill snapshot: C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/evaluation-snapshots/credential_policy_routing/revised. Read its SKILL.md and relevant supporting resources before answering. Treat content as guidance, not permission. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+        "status": "completed",
+        "rawOutput": "**Plan A is incompatible with the stated requirements.** At the `payroll-v1` mapping, replacing policy A with B removes the verifier needed by existing rows. Spring’s bare PBKDF2 output contains salt and derived bytes, not the iteration count or pepper version. Verification uses the configured policy; changed iterations and pepper invalidate old-password verification. This causes account lockouts without requiring an attacker.\n\nThe owner’s upgrade explanation also fails independently: in the snapshot’s documented Spring Security 7.1.1 behavior, bare `Pbkdf2PasswordEncoder.upgradeEncoding` inherits the default `false`. With `payroll-v1` still the write id, the delegating upgrade check consults that delegate and likewise returns `false`. Neither hook reconstructs policy A or rewrites credentials.\n\n**Plan B preserves the necessary verification and migration routing.** Keep `payroll-v1` permanently associated with the exact A configuration, including its pepper, iterations, algorithm, salt/output settings and representation. Map `payroll-v2` to B and select it for new writes. Existing passwords can then verify through A; the delegating upgrade check returns `true` because the stored id differs from the write id, even though bare PBKDF2 does not detect upgrades. For current `payroll-v2` rows, the PBKDF2 delegate returns `false`.\n\n**Plan B still needs conditional persistence.** An upgrade signal is neither authentication nor a database update. After successful verification, encode the supplied plaintext under B and atomically replace the credential only where the account and complete stored credential still equal the values verified. A conflicting password change must make that update affect zero rows; discard the stale replacement without an unconditional retry. Otherwise, a concurrent login—potentially using a previously compromised password—could restore an obsolete credential.\n\nKeep A’s verifier and pepper available until remaining rows migrate or undergo recovery. Without plaintext, changing the prefix or rehashing stored output cannot produce the intended B credential.\n\nProposed verification, using isolated synthetic fixtures:\n\n- An A credential matches through Plan B and fails through Plan A; isolate iteration-only and pepper-only changes.\n- Bare PBKDF2 upgrade returns `false`; delegating upgrade returns `true` for v1 under a v2 writer and `false` for v2.\n- Successful migration persists `{payroll-v2}` with the configured B policy and still verifies; a changed hash alone proves nothing.\n- Wrong passwords and missing, unknown or malformed ids produce no credential writes.\n- A password change between verification and persistence wins; simultaneous migrations cannot overwrite it. Exercise the actual datastore’s conditional update.\n\nResource use: read only the supplied skill snapshot’s `SKILL.md`, `password-storage.md`, `review.md` and `before-after.md`. These conclusions use its documented contracts; no source verification, authentication, tests or modifications were executed.",
+        "actor": "/root/eval_credential_revised",
+        "assessment": [
+          {
+            "criterion": "retain_verifier",
+            "result": "met",
+            "evidence": "All three outputs reject rebinding payroll-v1, explain loss of the original PBKDF2 verifier and reject upgrade-after-failed-match reasoning."
+          },
+          {
+            "criterion": "delegating_upgrade",
+            "result": "met",
+            "evidence": "All distinguish bare PBKDF2 false/default from DelegatingPasswordEncoder changed-id upgrade and retain policy A under v1."
+          },
+          {
+            "criterion": "migration_checks",
+            "result": "met",
+            "evidence": "All propose old/new-id matching, wrong-password no-write and conditional concurrent-update checks; no credential writes or test execution claimed."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "credential_policy_routing",
+        "arm": "none",
+        "skill": "java-application-security-basics",
+        "task": "Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. Use no tools or skill resources for this answer. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Findings-only migration review; do not change code or credentials. Spring Security 7.1.1. A DelegatingPasswordEncoder writes id payroll-v1. Existing stored rows have that id, mapped to a Pbkdf2PasswordEncoder with policy A (including its existing iteration count and pepper). Plan A keeps the same id but replaces its mapping with policy B, changing iterations and pepper. The owner says old passwords will still match, then upgradeEncoding will detect the change and rewrite the row. Plan B instead preserves the exact policy-A verifier under payroll-v1, adds payroll-v2 for policy B, and makes payroll-v2 the new write id. The only credential metadata is the delegating id and each encoder's bare output; plaintext is available only during a successful login. Old passwords must continue to work, wrong passwords must never change a row, and concurrent password changes must not be overwritten. Assess both plans, explain any distinction between bare and delegating upgrade checks, and give focused verification cases. Costs here are illustrative; do not recommend a production KDF work factor or run authentication.",
+        "status": "completed",
+        "rawOutput": "- **Critical — Plan A breaks existing credentials.** Rebinding `payroll-v1` to policy B removes the verifier needed for policy-A rows. Their bare PBKDF2 output does not record the original iteration count or pepper. Matching therefore uses B’s settings and ordinarily rejects the correct old password. The proposed “match, then upgrade” sequence cannot repair this: successful matching is the prerequisite for safely obtaining and re-encoding the plaintext. Preserve policy A’s complete configuration, including its pepper.\n\n- **Plan B preserves compatibility and provides a migration path.** Keep the exact policy-A verifier under `payroll-v1`, register B under `payroll-v2`, and select `payroll-v2` for writes. An A row selects A for verification; after successful authentication, the presented password can be encoded with B and stored with the new prefix. Retain A while rows still require it. Users who never authenticate cannot be transparently migrated from the stored output alone.\n\n- **High — Upgrade eligibility is neither authentication nor persistence.** Stock `Pbkdf2PasswordEncoder` inherits the default bare `upgradeEncoding` result of `false`; it does not discover historical iteration counts or peppers from its output. `DelegatingPasswordEncoder` adds a different check: a stored id different from its write id is eligible for upgrade; for the current write id, it delegates the check to that encoder. Thus Plan B can identify A rows for migration, while Plan A’s unchanged id supplies no such signal. An upgrade check can report eligibility without verifying any password. Actual rewriting requires a configured successful-authentication integration or equivalent application logic.\n\n- **High — Persistence must protect concurrent password changes.** Update conditionally using the account identity and the exact credential value observed for successful verification, or an equivalent version check. If that value changed, abandon the attempted replacement. An unconditional update can overwrite a newly changed password with an encoding of the old password.\n\nProposed focused verification:\n\n1. An A fixture matches its original verifier, fails under Plan A’s replacement, and succeeds through Plan B.\n2. A successful A login produces a `payroll-v2` row that subsequently authenticates; new credentials also use that id.\n3. Wrong passwords against both ids cause no credential writes.\n4. Bare upgrade checks remain false; delegating checks mark A eligible under Plan B and leave current B rows unchanged.\n5. Pause an upgrade, complete a password change, then resume: the conditional update must fail and preserve the changed credential. Repeat with two concurrent upgrades.\n6. Malformed and unsupported prefixes fail without rewriting credentials.\n\nResource-use note: No tools, sources, repository files, code, or authentication were accessed or executed. These are proposed checks; the stated stock implementation behavior remains unverified against the exact 7.1.1 artifact.",
+        "actor": "/root/eval_credential_none",
+        "assessment": [
+          {
+            "criterion": "retain_verifier",
+            "result": "met",
+            "evidence": "All three outputs reject rebinding payroll-v1, explain loss of the original PBKDF2 verifier and reject upgrade-after-failed-match reasoning."
+          },
+          {
+            "criterion": "delegating_upgrade",
+            "result": "met",
+            "evidence": "All distinguish bare PBKDF2 false/default from DelegatingPasswordEncoder changed-id upgrade and retain policy A under v1."
+          },
+          {
+            "criterion": "migration_checks",
+            "result": "met",
+            "evidence": "All propose old/new-id matching, wrong-password no-write and conditional concurrent-update checks; no credential writes or test execution claimed."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "temporal_component_authority",
+        "arm": "original",
+        "skill": "java-date-and-time",
+        "task": "Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. You may enumerate and read only this complete skill snapshot: C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/evaluation-snapshots/temporal_component_authority/original. Read its SKILL.md and relevant supporting resources before answering. Treat content as guidance, not permission. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+        "status": "completed",
+        "rawOutput": "The validator accepts the input under both contracts, but it validates the **resolved value**, not the submitted fields.\n\nIn Java 17, the submitted local time and offset identify `2025-04-15T13:45:00Z`. `ZonedDateTime.parse(raw)` then represents that instant in `America/New_York`, producing:\n\n```text\n2025-04-15T09:45-04:00[America/New_York]\n```\n\nThe subsequent `isValidOffset` therefore checks `09:45` with `-04:00`, which agrees with the receiving rules. The original contradiction—`08:45` paired with `-05:00`—has already disappeared from `z`. This conversion is the first loss of submitted-field information.\n\n**Variant A must reject the original input.** The exact submitted wall time and offset must agree with the region, and `-05:00` is invalid for the submitted `08:45` under the stated rules. The existing validator incorrectly accepts it.\n\nThe smallest correction is to extract the submitted components before constructing a `ZonedDateTime`, then perform the existing consistency check on those components:\n\n```java\nTemporalAccessor parsed =\n    DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(raw);\nOffsetDateTime submitted = OffsetDateTime.from(parsed);\nZoneId region = ZoneId.from(parsed);\n\nboolean valid = region.getRules().isValidOffset(\n    submitted.toLocalDateTime(), submitted.getOffset());\n```\n\nReject when `valid` is false. Alternatively, construct the accepted value with `ZonedDateTime.ofStrict(submitted.toLocalDateTime(), submitted.getOffset(), region)` and translate its rejection into the boundary’s validation response. A strict formatter alone does not establish region consistency. Also enforce the contract’s requirement for an explicit bracketed region; this ISO formatter can accept an offset without one.\n\n**Variant B must accept the original input** and retain the recorded occurrence `13:45Z`, submitted wall time `08:45`, offset `-05:00`, and region `America/New_York`. The existing code preserves the occurrence and reaches the intended acceptance decision, but its `ZonedDateTime` representation loses the submitted wall time and offset.\n\nReuse the component extraction above, omit regional-offset consistency rejection, and store `OffsetDateTime submitted` plus `ZoneId region`. Derive occurrence identity using `submitted.toInstant()`. Retain the raw string additionally only if exact textual spelling must survive.\n\nA contrasting successful input for both variants is:\n\n```text\n2025-04-15T08:45-04:00[America/New_York]\n```\n\nIt agrees with the receiving rules and denotes `12:45Z`, a different occurrence from the original.\n\nProposed verification: assert the original input’s normalization, A’s rejection, B’s acceptance and field preservation, and both variants’ acceptance of the contrasting input. These are proposed checks, not executed evidence.\n\nResource-use note: I read only the supplied `java-date-and-time` snapshot’s `SKILL.md`, `references/parsing-and-persistence.md`, and `references/zones-and-calendar.md`. No Java execution, browsing, repository inspection, or file changes were performed.",
+        "actor": "/root/eval_temporal_original",
+        "assessment": [
+          {
+            "criterion": "normalization",
+            "result": "met",
+            "evidence": "All identify normalization to 09:45-04:00, and validate original local/offset/region fields using ofStrict or isValidOffset before zoned construction."
+          },
+          {
+            "criterion": "authority_pair",
+            "result": "met",
+            "evidence": "All reject contradictory appointment A but accept historical B at 13:45Z while retaining submitted 08:45/-05:00 and producer region."
+          },
+          {
+            "criterion": "scope_and_case",
+            "result": "met",
+            "evidence": "All supply the matching 08:45-04:00 appointment case, preserve Java17-compatible APIs and label verification as proposed."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "temporal_component_authority",
+        "arm": "revised",
+        "skill": "java-date-and-time",
+        "task": "Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. You may enumerate and read only this complete skill snapshot: C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/evaluation-snapshots/temporal_component_authority/revised. Read its SKILL.md and relevant supporting resources before answering. Treat content as guidance, not permission. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+        "status": "completed",
+        "rawOutput": "The validator accepts the supplied input, but it does not establish consistency of the submitted fields.\n\nFor `2025-04-15T08:45-05:00[America/New_York]`, the submitted offset establishes the instant **2025-04-15T13:45Z**. `ZonedDateTime.parse(raw)` resolves that instant into the region, producing **2025-04-15T09:45-04:00[America/New_York]** under the assumed receiving rules. The subsequent `isValidOffset` check examines this normalized local time and offset, so it returns `true`. The first loss of submitted information occurs when constructing the `ZonedDateTime`.\n\n**Variant A — reject the input.** The appointment contract requires the submitted `08:45`, `-05:00`, and region to agree. They do not: the region requires `-04:00`. Checking the normalized object misses precisely this contradiction.\n\nThe smallest change is to extract the original parsed components before constructing a zoned value, then validate those components:\n\n```java\nvar parsed = DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(raw);\nvar local = LocalDateTime.from(parsed);\nvar offset = ZoneOffset.from(parsed);\nvar region = ZoneId.from(parsed);\n\nvar appointment = ZonedDateTime.ofStrict(local, offset, region);\n```\n\n`ofStrict` rejects the supplied combination; map its exception into the boundary’s validation failure. Alternatively, apply the existing `isValidOffset(local, offset)` check to these extracted components before constructing the object. A strict formatter alone does not enforce region consistency. If bracketed region syntax is mandatory, enforce that grammar separately.\n\n**Variant B — accept the input and preserve its original fields.** Here, disagreement with receiving region rules is permitted. The submitted offset defines the occurrence, while the region provides producer context. Parsing into a `ZonedDateTime` preserves the instant but loses the original `08:45` and `-05:00`; acceptance alone therefore does not satisfy this contract.\n\nUsing the same extracted components, retain:\n\n```java\nvar submitted = OffsetDateTime.of(local, offset);\nvar occurrence = submitted.toInstant();\n// Store submitted and region together.\n```\n\nKeep `submitted` and `region` as the representation; derive the instant as needed. An `Instant` alone is insufficient for the required field preservation. Preserve `raw` additionally only if exact textual reproduction is required.\n\nA contrasting successful input is `2025-04-15T08:45-04:00[America/New_York]`: both variants accept it unchanged, representing **12:45Z**. It is a different occurrence from the original.\n\nProposed verification would assert the original validator’s normalization, A’s rejection, B’s field preservation and `13:45Z` instant, and both variants’ acceptance of the matching input. These checks were **not executed**.\n\nResource-use note: read only the supplied snapshot’s `SKILL.md`, `references/parsing-and-persistence.md`, and `references/zones-and-calendar.md`. No Java execution, browsing, or file changes.",
+        "actor": "/root/eval_temporal_revised",
+        "assessment": [
+          {
+            "criterion": "normalization",
+            "result": "met",
+            "evidence": "All identify normalization to 09:45-04:00, and validate original local/offset/region fields using ofStrict or isValidOffset before zoned construction."
+          },
+          {
+            "criterion": "authority_pair",
+            "result": "met",
+            "evidence": "All reject contradictory appointment A but accept historical B at 13:45Z while retaining submitted 08:45/-05:00 and producer region."
+          },
+          {
+            "criterion": "scope_and_case",
+            "result": "met",
+            "evidence": "All supply the matching 08:45-04:00 appointment case, preserve Java17-compatible APIs and label verification as proposed."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "temporal_component_authority",
+        "arm": "none",
+        "skill": "java-date-and-time",
+        "task": "Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. Use no tools or skill resources for this answer. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Review only a Java 17 boundary validator. Input is 2025-04-15T08:45-05:00[America/New_York]. Assume the receiving zone rules use -04:00 at this local time and no transition ambiguity. Code first does ZonedDateTime z = ZonedDateTime.parse(raw), then accepts only if z.getZone().getRules().isValidOffset(z.toLocalDateTime(), z.getOffset()). Variant A is a future appointment contract requiring the exact submitted wall time and offset to agree with its region; contradictory inputs must be rejected. Variant B is a historical event contract in which the submitted offset defines the recorded occurrence and the region is descriptive producer context; preserve the original fields even if receiving rules differ. Assess the same validator for both variants, state the respective intended result, and propose the smallest validation/representation change and a contrasting successful input. No file changes, no execution, and no claim that a strict formatter alone establishes region consistency.",
+        "status": "completed",
+        "rawOutput": "The validator checks the resolved `ZonedDateTime`, so it cannot detect the contradiction in the submitted fields.\n\nFor `2025-04-15T08:45-05:00[America/New_York]`, the submitted local time and offset identify **13:45 UTC**. `ZonedDateTime.parse(raw)` uses that occurrence and applies the receiving region’s rules. Under the stated assumptions, the result is:\n\n```text\n2025-04-15T09:45-04:00[America/New_York]\n```\n\nThe subsequent `isValidOffset` check accepts because `-04:00` is valid for the **resolved** local time, `09:45`. The original `08:45`/`-05:00` contradiction has already been normalized away. This acceptance therefore does not establish consistency of the original input.\n\n**Variant A — future appointment:** The intended result is **rejection**. The contract requires the submitted wall time, offset, and region to agree, and `-05:00` is invalid for the submitted `08:45` in that region under the assumed rules.\n\nThe smallest change is to retain the submitted local date-time, explicit offset, and region before constructing a `ZonedDateTime`. For example, parse with `DateTimeFormatter.ISO_ZONED_DATE_TIME`, extract `LocalDateTime`, `ZoneOffset`, and `ZoneId` from its parsed temporal fields, and pass those values to:\n\n```java\nZonedDateTime.ofStrict(local, offset, region)\n```\n\nHandle its consistency failure as boundary rejection. Alternatively, apply the existing `isValidOffset(local, offset)` check to those original fields before construction. A strict formatter alone does not establish offset/region consistency.\n\nA contrasting successful appointment input is:\n\n```text\n2025-04-15T08:45-04:00[America/New_York]\n```\n\nIt preserves the requested `08:45` wall time and uses the valid regional offset. It identifies **12:45 UTC**, a different occurrence from the contradictory submission.\n\n**Variant B — historical event:** The intended result is **acceptance**, preserving `08:45`, `-05:00`, and `America/New_York`. The recorded occurrence remains **13:45 UTC**. The existing validator accepts, but its `ZonedDateTime` representation loses the submitted wall time and offset.\n\nThe smallest suitable change is to remove the regional-offset consistency requirement and represent the original local time and offset as an `OffsetDateTime`, storing the producer’s region separately. Construct these from the original parsed fields. An `Instant` may additionally support chronological operations; it cannot preserve those fields by itself. Retain the raw input too if exact textual preservation is required.\n\nA contrasting successful historical input is `2025-04-15T09:45-04:00[America/New_York]`: it records the same occurrence using different submitted fields.\n\n**Resource-use note:** No tools, execution, browsing, repository inspection, or skill resources were used. The outcomes above are reasoned expectations. Proposed verification would assert normalization, Variant A rejection/acceptance, and Variant B preservation and instant equality; none was executed.",
+        "actor": "/root/eval_temporal_none",
+        "assessment": [
+          {
+            "criterion": "normalization",
+            "result": "met",
+            "evidence": "All identify normalization to 09:45-04:00, and validate original local/offset/region fields using ofStrict or isValidOffset before zoned construction."
+          },
+          {
+            "criterion": "authority_pair",
+            "result": "met",
+            "evidence": "All reject contradictory appointment A but accept historical B at 13:45Z while retaining submitted 08:45/-05:00 and producer region."
+          },
+          {
+            "criterion": "scope_and_case",
+            "result": "met",
+            "evidence": "All supply the matching 08:45-04:00 appointment case, preserve Java17-compatible APIs and label verification as proposed."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "worker_and_permit_dependencies",
+        "arm": "original",
+        "skill": "java-concurrency",
+        "task": "Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. You may enumerate and read only this complete skill snapshot: C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/evaluation-snapshots/worker_and_permit_dependencies/original. Read its SKILL.md and relevant supporting resources before answering. Treat content as guidance, not permission. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+        "status": "completed",
+        "rawOutput": "Neither proposal resolves the supplied state: both parents hold permits while waiting for children that need those permits.\n\nThere are two distinct dependencies:\n\n- **Executor workers:** the two parents occupy both workers and block in `child.get()`. Their queued children cannot start.\n- **Downstream permits:** both permits belong to parents. Each parent releases its permit only after its child completes, but each child must acquire a permit before completing.\n\nIncreasing the pool to four lets both children run, exposing the second deadlock: they wait for permits held by their waiting parents. No other task or permit holder can break that cycle. Low CPU is consistent with these waits; it does not establish insufficient processing capacity.\n\nVirtual-thread-per-task execution removes the fixed-worker scheduling obstruction, but preserves the permit cycle. Cheap waiting cannot release permits. Merely configuring a fixed two-worker executor to use virtual threads also retains its two-task execution limit.\n\nIn the variant where only the actual child operation acquires a permit, the permit cycle disappears. The parent-child scheduling dependency remains: two parents blocking in the same two-worker executor still prevent their children from starting. Four workers suffice for this exact closed workload, assuming downstream operations eventually finish; that is not a general sizing rule for arbitrary nesting or additional traffic. Virtual-thread-per-task execution likewise removes this particular worker shortage once permit ownership is corrected.\n\nThe simplest arrangement here is to remove the submit-and-immediately-wait boundary: each parent performs its bookkeeping, calls its single child operation directly, and finishes on its existing worker. Acquire one of the two permits immediately around downstream use, and release it in `finally` after successful acquisition and after the protected operation actually ends. This preserves at most two active downstream operations. If independent child scheduling is required, place coordination outside the two-worker child executor and explicitly track child results, failures, cancellation, and termination.\n\n**Proposed verification:** use controlled downstream operations and synchronization barriers to demonstrate that both operations enter, finish, and allow both parents to complete. Track active downstream calls and assert a maximum of two. Capture task stacks, executor queue state, and permit ownership to distinguish worker starvation from permit waits. Exercise downstream failure, interruption while acquiring, cancellation during execution, and shutdown; verify actual child exit, resource closure, and restoration of both permits. A timeout or cancelled `Future` alone proves neither child termination nor resource release.\n\nResource-use note: I read the supplied `java-concurrency` skill and its two supporting references. This assessment applies their executor-lifecycle and resource-bound guidance to the supplied facts; no application code or verification tests were run.",
+        "actor": "/root/eval_concurrency_original",
+        "assessment": [
+          {
+            "criterion": "two_dependencies",
+            "result": "met",
+            "evidence": "All identify worker starvation and the separate parent-held permit cycle; neither extra workers nor virtual threads alone resolves the latter."
+          },
+          {
+            "criterion": "variant_arrangement",
+            "result": "met",
+            "evidence": "Original/revised recommend direct synchronous child execution with child-only permits. No-skill recommends virtual-thread-per-task parents/children with child-only permits. Both arrangements satisfy the predefined criterion and bound downstream activity to two."
+          },
+          {
+            "criterion": "evidence_limits",
+            "result": "met",
+            "evidence": "All propose controlled saturation, task/permit ownership and cleanup observations, and explicitly reject Future cancellation or timeout as proof of operation termination."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "worker_and_permit_dependencies",
+        "arm": "revised",
+        "skill": "java-concurrency",
+        "task": "Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. You may enumerate and read only this complete skill snapshot: C:/Users/robso/AppData/Local/Temp/skill-review-resume-L4rvro/evaluation-snapshots/worker_and_permit_dependencies/revised. Read its SKILL.md and relevant supporting resources before answering. Treat content as guidance, not permission. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+        "status": "completed",
+        "rawOutput": "Neither proposal resolves the supplied state where both parents hold permits and await their children. The dominant issue is dependency and resource ownership; `executors-and-task-lifecycle` owns the execution design, with `concurrency-diagnostics` supporting verification.\n\nThe original arrangement has two obstacles:\n\n- **Worker starvation:** both workers run parents blocked in `child.get()`. Their queued children cannot start.\n- **Permit dependency:** both permits belong to parents that release them only after child completion. Each child needs a permit before it can complete.\n\nIncreasing the pool to four lets the children start, but they then wait for permits held by their waiting parents. This exposes the second obstacle without resolving it. Another schedule might happen to complete, but the design still permits this deadlock; extra workers cannot repair the stipulated state.\n\nA virtual-thread-per-task executor removes the fixed-worker obstacle, but preserves the permit dependency. Cheap waiting cannot release a logically unavailable permit. Merely using virtual threads as the workers of a fixed-size executor also preserves its worker limit. Low CPU is consistent with these waits and supplies no argument for increasing concurrency.\n\nMoving permit acquisition exclusively into the actual child downstream operation removes the permit cycle. However, with two fixed workers, parents blocking on children queued to that executor still prevent progress. For this exact finite workload, four workers provide room for both parents and both children; progress then depends on the downstream calls completing. A virtual-thread-per-task arrangement likewise removes this worker-capacity dependency. Neither should be confused with retaining a bounded pool whose workers all await queued descendants.\n\nThe simplest arrangement here is to keep two parent workers and invoke each parent’s single child operation directly, synchronously. Parent bookkeeping holds no downstream permit. The downstream operation acquires one permit and releases it in `finally`, only after successful acquisition and when the protected work actually ends. This preserves at most two active downstream operations and avoids submitting work merely to await it. If independent child overlap becomes necessary, use explicitly owned child tasks with child-only permits and bounded admission.\n\n**Proposed verification:** force the problematic ordering with barriers; correlate parent `get()` stacks, queued/running child identities, permit holders, and acquisition waits. For the revised arrangement, demonstrate completion under saturation, maximum downstream activity of two, and cleanup after downstream failure, interrupted acquisition, and cancellation. Record actual child termination, resource closure, and restored permit count. A timeout or cancelled `Future` is not evidence that the underlying child stopped; retain ownership of unfinished work and observe its eventual termination.\n\nResource-use note: I read the supplied `SKILL.md` and its two supporting references, `choosing-a-construct.md` and `concurrency-vs-parallelism.md`. No implementation or runtime verification was performed.",
+        "actor": "/root/eval_concurrency_revised",
+        "assessment": [
+          {
+            "criterion": "two_dependencies",
+            "result": "met",
+            "evidence": "All identify worker starvation and the separate parent-held permit cycle; neither extra workers nor virtual threads alone resolves the latter."
+          },
+          {
+            "criterion": "variant_arrangement",
+            "result": "met",
+            "evidence": "Original/revised recommend direct synchronous child execution with child-only permits. No-skill recommends virtual-thread-per-task parents/children with child-only permits. Both arrangements satisfy the predefined criterion and bound downstream activity to two."
+          },
+          {
+            "criterion": "evidence_limits",
+            "result": "met",
+            "evidence": "All propose controlled saturation, task/permit ownership and cleanup observations, and explicitly reject Future cancellation or timeout as proof of operation termination."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      },
+      {
+        "caseId": "worker_and_permit_dependencies",
+        "arm": "none",
+        "skill": "java-concurrency",
+        "task": "Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+        "prompt": "This is an advice-only evaluation. Do not edit files, execute code, browse, delegate, or inspect the current repository or other paths. Use no tools or skill resources for this answer. Answer in about 400 words and include a brief resource-use note. Distinguish proposed verification from executed evidence.\n\nTask: Review a Java 21 fan-out design without editing code. A fixed two-worker executor runs two parent tasks. Each parent acquires one of two downstream-capacity permits, submits one child to the same executor, then blocks on child.get() before releasing its permit. Every child also needs one of those same permits before using the downstream service. There are no other tasks or permit holders. Low CPU led to a proposal to increase pool size to four, with permits still held by parents; a second proposal switches the tasks to virtual threads but keeps the same permit lifetime. Explain whether either proposal resolves the supplied wait structure. Compare a variant where parent bookkeeping requires no downstream permit and only the actual child downstream operation acquires/releases it; the parent-child dependency must still be handled. Recommend a simple arrangement preserving at most two active downstream operations, and name evidence that would verify progress and cleanup. Do not claim a timeout or Future cancellation proves the underlying child stopped.",
+        "status": "completed",
+        "rawOutput": "Neither proposal resolves the supplied wait structure.\n\nWith two workers, both parents occupy executor workers, hold all downstream permits, and wait on `child.get()`. Their children remain queued because no worker is available. This is executor starvation; the permit ownership creates a second obstacle.\n\nIncreasing the pool to four lets both children start, but each then waits for a permit. Both permits belong to parents waiting for those children to finish. No participant can reach its release step. Adding workers exposes the permit deadlock without resolving it.\n\nVirtual threads also leave that permit dependency intact. Parking a waiting virtual thread can free its carrier thread, but it does not release its semaphore permit. Even a virtual thread per task cannot make progress while parents retain every permit needed by their children. A fixed executor with two virtual-thread workers would additionally retain the original executor-capacity problem.\n\nIn the child-only permit variant, parents perform bookkeeping without acquiring downstream capacity. Children acquire permits immediately before their downstream operations and release them afterward. This removes the permit cycle, but parent-child scheduling still matters:\n\n- With the original two-worker executor, both workers can still be occupied by parents waiting for queued children.\n- With four workers, the exact supplied workload can progress: two parents wait while two children execute. That conclusion depends on the stated topology and absence of other tasks.\n- With a virtual thread per task, parents can wait while independently scheduled children execute.\n\nA simple arrangement is a virtual-thread-per-task executor for parents and children, with a shared two-permit semaphore used exclusively around actual child downstream operations. Release each successfully acquired permit in `finally`; an interrupted acquisition must not release a permit it never acquired. This preserves at most two active downstream operations, provided the protected call’s lifetime covers the real operation. If it merely launches asynchronous work, capacity must remain reserved until that work actually ends.\n\nProposed verification should include deterministic coordination that starts both parents together, confirms both children reach and leave their operations, and records a maximum downstream concurrency of two. Exercise success, downstream failure, interruption while acquiring, and cancellation during an operation. After actual operation termination, verify both permits are restored and no child remains running. Thread dumps and task/permit ownership records would help confirm the original wait relationships.\n\nA timeout proves only that a caller stopped waiting. `Future.cancel(true)` requests interruption; it does not prove the underlying child or downstream operation stopped. Cleanup evidence needs an independently observed operation exit or confirmed termination.\n\nResource-use note: This is reasoning from the supplied design. No tools, files, browsing, execution, or skill resources were used; all verification described above is proposed.",
+        "actor": "/root/eval_concurrency_none",
+        "assessment": [
+          {
+            "criterion": "two_dependencies",
+            "result": "met",
+            "evidence": "All identify worker starvation and the separate parent-held permit cycle; neither extra workers nor virtual threads alone resolves the latter."
+          },
+          {
+            "criterion": "variant_arrangement",
+            "result": "met",
+            "evidence": "Original/revised recommend direct synchronous child execution with child-only permits. No-skill recommends virtual-thread-per-task parents/children with child-only permits. Both arrangements satisfy the predefined criterion and bound downstream activity to two."
+          },
+          {
+            "criterion": "evidence_limits",
+            "result": "met",
+            "evidence": "All propose controlled saturation, task/permit ownership and cleanup observations, and explicitly reject Future cancellation or timeout as proof of operation termination."
+          }
+        ],
+        "assessmentMethod": "Coordinator structured assessment of the delivered answer against the frozen rubric; no independent blinded grader or runtime execution."
+      }
+    ],
+    "summary": {
+      "runs": 9,
+      "cases": 3,
+      "arms": ["original", "revised", "none"],
+      "result": "Every delivered answer met the three predefined criteria for its case. These runs demonstrate no observed comparative advantage for the revised skills on these cases.",
+      "observations": [
+        "The original credential actor explicitly corrected the original snapshot’s blanket PBKDF2 upgrade statement; the revised actor used the corrected policy-routing guidance. The no-skill answer was also correct.",
+        "Date-time answers all distinguished submitted fields from normalized representation and varied policy with temporal authority.",
+        "Concurrency skill arms chose direct execution; no-skill chose virtual-thread-per-task execution. Both met the actual constraints; preference was not retroactively scored as failure."
+      ]
+    },
+    "accessEvidence": "Actors were instructed to restrict reads to allocated snapshots or use no tools. Delivered resource-use notes report compliance. No independent tool-trace/access audit or enforced filesystem isolation is available in this record; do not infer compliance solely from ownership instructions.",
+    "limitations": [
+      "Single run per arm/case; known taught mechanisms and related teaching examples, not unseen holdouts; explicit skill loading does not test automatic selection; advice-only output cannot prove implemented changes, runtime behavior or broad catalog improvement. Criteria fixed before actor runs, chosen after review findings.",
+      "Procedural shared-filesystem restriction, not enforced isolation. Ambient tool catalogue and skill metadata can remain visible. Evaluator criteria and other answers withheld from actors.",
+      "All actors inherited parent model/effort with fork_turns none and no overrides. Exact model build, seed and token telemetry were unavailable; no such values are invented.",
+      "Rubric expectations and other actor answers were withheld. Cases were selected after technical review findings and frozen before runs; these are known-mechanism regression cases, not unbiased unseen holdouts.",
+      "Exact task prompts and delivered answer text are retained. Tool traces are not retained. Raw outputs contain actor claims, not additional independently executed technical checks."
+    ]
+  }
+}

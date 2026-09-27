@@ -21,6 +21,32 @@ Blanks that fail the test — and mean the products should be injected independe
 - "…because the config says so." (Name the requirement and actual wiring checks; configuration
   alone does not prove compatibility.)
 
+## Choose what enforces the invariant
+
+Select the least complex boundary that meets the consumer contract; these mechanisms can combine.
+
+| Boundary                                     | Choose when                                                                                                     | Limit and verification                                                                                                                                                                                                                                    |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trusted assembly plus contract tests         | The composition root controls construction and callers are trusted to keep the bundle together                  | A public constructor still accepts mixed products. Exercise each supported assembly; do not promise runtime rejection.                                                                                                                                    |
+| Runtime identity validation                  | Products remain independently usable, but incompatible combinations must fail before work starts                | Validate the actual format, protocol or owner identity needed by the invariant before side effects. Test mixed identities and valid combinations; an enum naming a vendor does not identify a session.                                                    |
+| A shared type parameter through product APIs | Compatibility is represented by distinct static types and consumers retain that type information                | For example, `Renderer<Pdf>` consumes `Pages<Pdf>`. Compile a misuse with `Pages<Html>` and require rejection. Raw types, unchecked casts or an API that discards the parameter weaken this protection; it proves neither instance identity nor lifetime. |
+| Encapsulated operation on an owned family    | Callers need the completed operation rather than separately reusable products, especially for session ownership | Construct and use products inside the boundary. Test compatible behavior and failure cleanup; accepting arbitrary caller products through another method would reopen the mixing path.                                                                    |
+
+For the same export family, trusted internal assembly can justify the public record shown in the
+worked example. If the API must reject consumers constructing a PDF/HTML mixture, that record's
+null checks and happy-path tests no longer satisfy the requirement: strengthen validation or
+encapsulation at the entry point. Renaming it `Factory` changes no guarantee.
+
+For a repository and unit of work, `Repository<Vendor>` and `UnitOfWork<Vendor>` can both type-check
+while referring to different sessions. Retain one session owner, validate its identity where products
+can be combined, or expose an operation that keeps the products inside that owner. Do not add
+generic markers merely to simulate a guarantee about runtime instances.
+
+The static distinction follows Java's
+[parameterized-type rules](https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.5);
+[unchecked conversion](https://docs.oracle.com/javase/specs/jls/se17/html/jls-5.html#jls-5.1.9)
+explains why raw interoperability is not the same guarantee.
+
 ## Alternatives, by what they resolve
 
 | Alternative                              | Resolves                                                       | Fails to resolve                                                           |
@@ -51,7 +77,7 @@ registry rather than letting discovery order choose it. The loader itself is not
 | Question                                                       | Answer                                                        |
 | -------------------------------------------------------------- | ------------------------------------------------------------- |
 | One product, inherited algorithm uses a subclass creation hook | Factory Method                                                |
-| One product, many parameters, staged or optional               | Builder                                                       |
+| One product with construction or validation sequencing needs   | Consider Builder against a constructor or named factory       |
 | Many products, one family, family varies                       | Abstract Factory                                              |
 | New object built from an existing instance's state             | Prototype                                                     |
 | One instance, global access                                    | Singleton (and reconsider)                                    |
@@ -60,6 +86,8 @@ registry rather than letting discovery order choose it. The loader itself is not
 Abstract Factory can be built from GoF Factory Methods when a base algorithm delegates creation
 to subclass hooks; a `newX()` method alone is not that pattern. A family can also return Builders.
 Those are possible compositions, not requirements.
+Parameter count or optional fields alone do not justify a builder; show the consumer friction or
+invalid-state risk that it resolves. This is single-object construction, not a family invariant.
 
 ## The three ways this pattern goes wrong
 

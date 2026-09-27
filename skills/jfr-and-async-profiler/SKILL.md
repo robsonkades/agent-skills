@@ -31,6 +31,7 @@ that separates hypotheses.
 - `jfr-advanced` owns JFC/event/schema/API details.
 - `async-profiler-advanced` owns engine/stack/access/conversion details.
 - `flame-graph-analysis` owns aggregate stack interpretation.
+- `heap-dump-analysis` owns retaining reference paths and dominator interpretation.
 - `continuous-profiling` owns always-on fleet storage/query operations.
 - `incident-evidence-capture` owns live-incident ordering and recovery budget.
 - `performance-methodology` owns causal investigation and validation.
@@ -106,8 +107,9 @@ directly to request latency without scope/correlation.
 Allocation sampling attributes creation under its sampling/weight mechanism. Use weights when
 the event provides them; event count alone may mis-rank sites. Allocation does not prove
 retention or leak. GC logs/JFR establish allocation pressure, occupancy, collector phases,
-pause/concurrent CPU, promotion/humongous/reference work; object statistics/heap dump establish
-retained paths.
+pause/concurrent CPU, promotion/humongous/reference work. Class counts and shallow-byte histograms
+describe object populations, not their retaining owners. Retaining paths require reference-graph
+evidence, such as a heap dump with root/dominator analysis.
 
 Allocation changes can affect GC frequency and collection work/duration. Do not infer “small
 CPU frame + large allocation frame = GC is the cause” until GC/resource and user-impact

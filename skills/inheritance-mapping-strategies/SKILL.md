@@ -66,8 +66,10 @@ continue inspecting SQL and mappings while those answers are pending.
    paths and incoming references. Compare a projection or index within the existing mapping
    with changing storage; polymorphic entity reads often favour single table, while joined
    can simplify subtype-local constraints. Check the actual provider SQL and database plan.
-4. **Establish whether the database must enforce the subtype's required fields.** If yes,
-   single table is out unless you are prepared to write check constraints.
+4. **Establish the database-enforced invariants.** Include required subtype fields and whether
+   business keys are unique per subtype or across the hierarchy. Single table may need conditional
+   checks; concrete tables may need shared uniqueness enforcement. Price those mechanisms before
+   choosing a mapping, independently of generated primary-key uniqueness.
 5. **Establish the evolution rate.** A hierarchy that gains a subtype every quarter pays a
    migration per subtype under joined and concrete table, and may require columns, discriminator checks and indexes under single table.
 6. **Decide or retain the mapping, and pin discriminator values** where used, so a class

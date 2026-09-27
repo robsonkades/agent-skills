@@ -197,6 +197,8 @@ permissions and transfer receipts required by the main contract.
 Regularly test:
 
 - dump rolling JFR for a known historical marker and read it;
+- overlap a bounded temporary JFR recording with a baseline; verify event coverage, combined
+  cost/retention and cleanup that preserves the baseline;
 - trigger supported OOM/crash modes and verify artifact completion/upload;
 - fill or remove backend/disk and verify bounded failure;
 - replace pod and node and verify intended survival;

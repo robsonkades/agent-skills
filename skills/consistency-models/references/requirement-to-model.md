@@ -8,22 +8,31 @@ from the model name.
 | "Two users must never both be assigned seat 14C."                                                                                | One authoritative atomic conditional write; linearizable register/CAS when distributed | Coordination with the write authority; partitioned contenders may be rejected or unavailable                             | Two winners when stale reads are followed by unconditional writes. Seats, idempotency keys, uniqueness and leases share this shape |
 | "A successful debit must never make the authoritative balance negative."                                                         | Atomic invariant-preserving write/transaction; recency model alone is insufficient     | Contention/serialization or conditional-update failures at the authority                                                 | A linearizable read followed by an unconditional write still races; validity and read freshness are different requirements         |
 | "Operations must fit one legal sequential history preserving each client's program order; real-time precedence is not required." | Sequential consistency                                                                 | Ordering across all objects in the specified history; implementation determines coordination cost                        | Individually plausible object histories can form a cycle when combined with client program order                                   |
-| "A reply must never appear before the message it replies to."                                                                    | Causal consistency                                                                     | Metadata carried with each operation (vector clocks, dependency stamps) and the storage for it                           | Out-of-order rendering. The classic symptom is a threaded UI where a reply is orphaned until a refresh                             |
+| "A replica must expose a reply's creation only after the parent creation it depends on."                                         | Causal consistency with captured/enforced dependencies                                 | Dependency metadata and visibility checks; a combined UI view needs the separate checks below                            | A reply write is exposed before its dependency; causal store ordering alone does not coordinate separate UI reads                  |
 | "A session must never read a state that predates its own committed write."                                                       | Read-your-writes (session guarantee)                                                   | Select a path proven to include the write for the guarantee's lifetime; wait or reject when none is available            | A bounded primary window expires while the replica still lags; a reload loses the comment and prompts a duplicate post             |
 | "A session must never read an older state than one it already read."                                                             | Monotonic reads (session guarantee)                                                    | Preserve a read watermark across routing/failover; stickiness helps only while the replica does not regress              | A refresh returns an older version from another replica; legitimate deletes or lower numeric values do not alone prove a violation |
 | "Writes ordered within one session must be applied and exposed in that order at relevant replicas."                              | Monotonic writes (session guarantee)                                                   | Preserve session dependencies through acceptance, replication and application; one ordered ingress alone is insufficient | A replica exposes the second write before its predecessor even though the primary accepted both in order                           |
+| "A write based on a value I read must be exposed after that observed write."                                                     | Writes-follow-reads (session guarantee)                                                | Carry the read dependency into the write and preserve its ordering/visibility across replicas                            | A reaction is visible where the write it reacts to is not; ordering only this session's own writes misses the read dependency      |
 | "The report may be up to 60 seconds behind, including during deploy/rebalance."                                                  | Bounded-staleness contract implemented over replication/projection                     | Capacity, monitoring, fallback/rejection when the bound cannot be met                                                    | Plain eventual convergence permits four hours of lag and does not satisfy the number                                               |
 | "The count may lag and may be approximate within ±1%."                                                                           | Two separate contracts: convergence/recency plus approximation error                   | Reconciliation and error-bound measurement; async writes still consume resources                                         | Eventual consistency alone says nothing about numerical approximation, and an approximate algorithm says nothing about staleness   |
 
 ## Two rules for reading this table
 
-**Session guarantees are often sufficient, but not free.** Three rows above are session-shaped.
-They may use sticky routing or a per-session watermark rather than a quorum on every read, while
-still needing durable session identity, failover behavior and bounded metadata. “The user who
-just…” is a prompt to investigate, not proof of scope.
+**Session guarantees are often sufficient, but not free.** Four rows above are session-shaped.
+Read guarantees may use sticky routing or a per-session watermark rather than a quorum on
+every read, while still needing durable session identity, failover behavior and bounded metadata.
+Write-order guarantees also require propagation/application to preserve the dependencies;
+stickiness alone does not establish that. “The user who just…” is a prompt to investigate,
+not proof of scope.
 
 Define which operations share a session and how their order is established. Concurrent requests
 from two devices using the same user ID do not acquire a program order from that identity alone.
+When a read in one service/session informs a write in another, inspect how the datastore's
+dependency context is transferred. User identity, wall-clock order or a tracing header is not
+automatically that context. Without transfer/enforcement evidence, keep the causal guarantee
+conditional; use the product's documented mechanism rather than inventing a universal token.
+See [Terry et al., section 3.3](https://www.cs.cornell.edu/courses/cs734/2000FA/cached%20papers/SessionGuaranteesPDIS_1.html)
+for the distinction between writes-follow-reads and ordering a session's own writes.
 
 **Scope is explicit.** Linearizability composes across objects for individual operations, but it
 does not make a sequence of operations atomically update an order and payment. Multi-object
@@ -35,6 +44,55 @@ Sequential consistency does **not** compose per object. With registers initially
 client A executes `write(x,1); read(y)->0`, while B executes `write(y,1); read(x)->0`.
 Each object's history can be sequentially consistent separately. Together, program order and
 the returned zeros require `Wx < Ry < Wy < Rx < Wx`, an impossible global order.
+
+## Causal order and a coherent response
+
+Consider this interleaving: a reader finds no parent; a writer creates the parent, then a
+dependent reply; the reader fetches the reply and combines it with its earlier parent result.
+Every read can be linearizable and every write causally ordered, yet the assembled view has
+an orphan. Stronger per-key recency alone does not fix the read boundary.
+
+If the contract requires one coherent multi-key state, prefer an existing read transaction or
+read API with the required snapshot guarantee; verify its scope and freshness separately.
+If only no-orphan rendering is required, fetch the parent after observing the reply with
+the required dependency context, and publish the pair only after validating it. Suppressing
+the reply while its parent is unavailable can also satisfy that narrower contract.
+Neither approach proves a snapshot for other fields. Respect the deadline when dependencies are
+unavailable; return the allowed incomplete result or refuse, rather than stale success.
+
+A later legitimate deletion, authorization change or conflict resolution can also hide the
+parent. Define whether the endpoint hides the reply, shows a tombstone or rejects; causal
+ordering does not promise that the parent's original value remains readable forever.
+For transaction implementation, pass the read set, freshness requirement and failing
+interleaving to `enterprise-transactions`; if unavailable, specify those checks and leave
+the implementation conditional. Preserve an adequate existing read boundary.
+
+[Lloyd et al., COPS/COPS-GT](https://www.cs.princeton.edu/~wlloyd/papers/cops-sosp11.pdf)
+distinguishes per-item causal consistency from consistent multi-key get transactions.
+The UI alternatives here follow the narrower stated requirement; they are not equivalent
+transaction mechanisms. Sources in this section were checked 2026-09-25.
+
+### Worked decision pair
+
+**Input A:** A moderation dashboard must display a parent and its reply together. Separate
+GETs return an absent parent, then a reply created after that first GET. Both endpoints claim
+linearizable reads. The proposed fix is stronger replica consistency.
+
+**Expected:** Trace the interleaving above; identify the assembled-read boundary and compare
+a coherent read with dependency-aware rendering. Do not diagnose this history as a violated
+linearizable read or prescribe a global isolation upgrade.
+
+**Decisive change B:** The same dashboard obtains the full parent/reply read set from one
+documented consistent snapshot. Tested rendering uses that response; there is no later
+deletion or authorization change, and the contract permits its stated staleness.
+
+**Expected:** Preserve that boundary and its scoped evidence; no added global linearizability
+or causal-token machinery is required by this requirement. A new recency requirement would
+need a separate check.
+
+**Failure:** Same recommendation for A and B without accounting for the read boundary;
+claiming a model name guarantees rendered output; treating an unavailable parent as permission
+to violate the endpoint contract; or inventing executed tests.
 
 ## Failure modes of the surrounding system, not the store
 

@@ -87,8 +87,20 @@ representable. Generated shapes:
 | `repeated string t = 1;`      | `getTList()`, `getTCount()`, `getT(i)`, `addT()`, …            | n/a (`getTCount() == 0`) |
 | `Status s = 1;` (proto3 enum) | `getS()` — may be `UNRECOGNIZED` — and **`getSValue()`** → int | no                       |
 
-Adding `optional` to an existing implicit field only adds `hasN()` for readers and is wire-identical
-for every non-zero value. It changes serialisation of the zero value, which is the point.
+Adding `optional` to an existing implicit scalar is binary-compatible, but default-value presence
+can disappear through an old parser/reserializer. For example, an explicit `n=0` passes through an
+old `int32 n` reader as a known field, then is omitted on output; a new reader sees absent. Unknown
+field retention does not help. Non-default values do not expose this loss.
+
+If absence and default have distinct meaning, test new writer → actual intermediaries → new reader
+with absent, explicit default and non-default values, asserting presence and values. Upgrade the
+relevant intermediaries or verify a payload-preserving route before enabling that distinction.
+Keep an adequate mixed-version path when the application intentionally treats those states alike.
+Also test merge-based updates: implicit default values are skipped by message `mergeFrom`, while
+explicitly present defaults participate. A PATCH protocol may instead use an explicit update mask;
+that mask's application semantics need their own check.
+
+See the [Protobuf field-presence compatibility and merging contracts](https://protobuf.dev/programming-guides/field_presence/).
 
 ## Type changes that corrupt, and how quietly — verified
 

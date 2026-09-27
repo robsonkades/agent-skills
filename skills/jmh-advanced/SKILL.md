@@ -91,14 +91,25 @@ dead-code elimination but are not automatically counted as successes/misses. Add
 outcome counters to observe the realized mix. With a four-thread group, eight total workers
 normally form two independent groups; `Scope.Group` does not become one eight-worker object.
 
+Group invocations are not paired at iteration end. A role waiting for its peer can remain
+inside a spin loop or blocking call after that peer exits. Require a tested termination
+path; nonblocking operations may already provide one. Read the group-termination recipe in
+`references/configuration-recipes.md` before introducing partner-dependent waits.
+An iteration timeout or interrupt-assisted exit is a diagnostic outcome, not evidence of
+normal operation completion, even if the harness prints a score.
+
 ## Parameters and experimental matrices
 
 `@Param` expands combinations. Estimate run cost before launching:
 
 ```text
-cells = product(parameter cardinalities) * benchmark methods * modes * JVM variants
+cells = sum over selected cases of their planned parameter/thread/mode/JVM combinations
 approximate time = cells * forks * (warm-up + measurement + lifecycle overhead)
 ```
+
+Count emitted benchmark cases: a group is one case with role-specific secondary results,
+not one independent case per annotated group method. Count only parameters that apply to
+each case. Confirm discovery and include any warm-up forks or external resets in the budget.
 
 Avoid a full Cartesian product when impossible combinations, redundant dimensions, or insufficient
 replication make it wasteful. Split experiments, generate a justified design, or use command-line

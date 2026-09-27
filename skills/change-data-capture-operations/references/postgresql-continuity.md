@@ -13,6 +13,21 @@ create or delete a MySQL-style history topic to repair it. The version-pinned
 uses `RelationalDatabaseSchema`, refreshes database schema and applies relation metadata without
 the historized schema implementation.
 
+For missing updates/deletes, inspect both publication operations and replica identity. A published
+table needs suitable replica identity for `UPDATE`/`DELETE`; a Kafka message-key override alone
+does not change the old-row information PostgreSQL logs. Keep the existing primary-key identity
+when it supplies the required contract; do not apply `REPLICA IDENTITY FULL` indiscriminately.
+[PostgreSQL publication rules](https://www.postgresql.org/docs/17/logical-replication-publication.html)
+describe the identity requirement.
+
+An unchanged TOAST value outside replica identity can be unavailable in an update event. Debezium
+uses `unavailable.value.placeholder`; it is not SQL NULL or a replacement business value. For
+current-state sinks, verify that partial updates preserve the known column and that a baseline
+exists. If complete before/after images are required, evaluate `REPLICA IDENTITY FULL` and its
+WAL/load cost; a later database lookup cannot reliably reconstruct the event-time value. Validate
+with a large unchanged column plus a changed small column through the actual transform/sink path.
+See [Debezium TOAST handling](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html#postgresql-toasted-values).
+
 ## Observe retention before reclaiming it
 
 Read-only SQL for an authorized monitoring connection to a PostgreSQL 17 **primary**; replace

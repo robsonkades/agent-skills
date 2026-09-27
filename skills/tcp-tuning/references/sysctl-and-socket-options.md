@@ -13,6 +13,7 @@
 | `net.core.rmem_max` / `wmem_max`  | Varies by distribution                 | Ceiling on unprivileged application-requested `SO_RCVBUF`/`SO_SNDBUF`          |
 | `net.ipv4.tcp_rmem` / `tcp_wmem`  | `min default max`; read each on target | TCP automatic buffer sizing bounds; explicit socket settings change this path  |
 | `net.ipv4.tcp_moderate_rcvbuf`    | Mainline default 1                     | Receive autotuning; verify it is enabled on the target                         |
+| `net.ipv4.tcp_mtu_probing`        | Read target value and kernel behavior  | TCP packetization-layer MTU discovery; not a blanket interface MTU setting     |
 | `net.ipv4.tcp_congestion_control` | Kernel/config dependent, often `cubic` | Default for new connections; listener inheritance/socket overrides can differ  |
 | `net.ipv4.tcp_keepalive_time`     | 7200 s (2 h)                           | Idle time before the first keepalive probe                                     |
 
@@ -23,6 +24,14 @@ checks; an enabled mode does not guarantee an available tuple or successful conn
 Check the deployed kernel and namespace before interpreting the value. This distinction is
 not a reason by itself to switch to `1`; establish the limiting tuples and compare connection
 reuse before proposing a scoped change.
+
+In Linux 6.12, `tcp_mtu_probing=0` disables TCP MTU probing, `1` enables it after black-hole
+detection, and `2` enables it unconditionally with `tcp_base_mss` as the initial MSS. These
+are mechanism choices, not recommended values. Use the diagnosis reference to distinguish
+path-size failure from receiver/application stalls first. A probing workaround can trade
+recovery time and smaller segments against packet-processing cost; measure the deployed
+implementation, affected namespace and workload. It does not repair a tunnel or ICMP policy,
+and changing it is not authorized merely because the parameter exists.
 
 ## Worked example: the buffer ceiling against BDP
 

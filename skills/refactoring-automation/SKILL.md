@@ -27,11 +27,18 @@ preconditions, representative match categories, exceptions and compatibility evi
 
 ## Workflow
 
+Establish whether the request is tool selection, review, a plan or an authorized transformation.
+For advice/review, provide the proposed scope, mechanism and verification without applying it.
+Resolve consequential unknowns from build configuration, generation tasks and repository history;
+ask only when missing ownership or compatibility information would change the safe action.
+
 1. **Establish the safety net and pick the technique first.** Automation chooses _how_ to
    apply a step, never _which_ step. The refactoring, its preconditions and its risk class
    come from java-refactoring before any tool runs. Inspect working-tree changes, owned paths,
    Java/build/framework versions and existing gates. Preserve user work; use an isolated copy
    of the actual input state when a broad transformation would overlap unrelated changes.
+   Identify maintained sources versus generated outputs and their authoritative inputs before
+   choosing files to edit; a tracked Java file can still be generated.
 2. **Choose the tool by what the change depends on** — the decision rules below, then
    `references/tool-capabilities.md` for what each one actually sees.
 3. **Preview and inspect the resulting patch.** Use a dry run, or an isolated copy when the
@@ -65,6 +72,9 @@ THEN prefer a versioned, testable transformation such as OpenRewrite; inspect av
 
 IF a published migration recipe exists for it (javax→jakarta, JUnit 4→5, a Spring Boot upgrade)
 THEN inspect its version, prerequisites and complete recipe list, then preview only within the authorized migration scope.
+
+IF matching code is regenerated from a schema, template, annotation processor or another project
+THEN change the owned authoritative input and regenerate, or use an explicit tested post-generation step. Do not repair generated output alone or force excluded files into scope to increase the match count.
 
 IF the edit is genuinely textual and bounded — a known licence header or literal documentation typo
 THEN a manual or scripted literal edit can suffice, including in Java comments. Inspect exact matches; this does not authorize a textual symbol rename.
@@ -102,8 +112,9 @@ THEN investigate differing inputs/tool versions and review unexplained edits dir
 
 - [Tool capabilities and blind spots](references/tool-capabilities.md) — what an IDE,
   OpenRewrite, structural search, Error Prone/Refaster, an AST library and a regex each
-  see and each miss, and where rename coverage needs verification. Read when choosing a
-  tool, and before any rename of something a framework might resolve by name.
+  see and each miss, generated-source ownership, and where rename coverage needs verification.
+  Read when choosing a tool, when outputs are regenerated, and before any rename of something
+  a framework might resolve by name.
 - [OpenRewrite recipes](references/openrewrite-recipes.md) — running published recipes,
   composing declarative ones, writing and testing a visitor, and the failure modes that
   produce a silent no-op. Read before authoring or running a recipe.

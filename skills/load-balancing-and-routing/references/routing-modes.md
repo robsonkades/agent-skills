@@ -29,6 +29,27 @@ gives strong theoretical balance under assumptions of homogeneous servers and in
 arrivals. Real implementations need weighting, locality, circuit state and a meaningful local
 load signal; it is a candidate default, not universally best.
 
+### Newly ready endpoints and warm capacity
+
+A new endpoint's zero outstanding requests do not establish that it can handle its full share.
+If measured capacity rises after readiness, compare a supported slow-start/weight ramp with
+prewarming before routing eligibility. Keep full weight when the endpoint already meets the
+required latency and throughput; do not add a ramp merely because a process is new. If it
+cannot yet serve correct responses, keep it ineligible instead of disguising that failure with
+a small routing weight; lifecycle readiness belongs to `kubernetes-service-lifecycle`.
+
+Envoy 1.35.0 supports slow start for round-robin and least-request policies. Verify the deployed
+algorithm, effective window, minimum weight and entry/re-entry conditions. A timer expiring is
+not evidence that caches or code paths warmed, especially with sparse traffic. Low weights can
+starve an endpoint of the work it needs to warm up.
+
+A weight ramp redistributes traffic; it does not reduce offered load. The remaining endpoints
+must carry the displaced work while added capacity ramps. Equal ramps for an entirely new pool
+provide little relative protection, and a single eligible endpoint still receives that pool's
+traffic. During a demand surge, compare earlier scale-out, prewarming or admission control when
+a longer ramp would overload the old pool. Measure time to usable capacity as well as the new
+endpoint's latency; no universal warm-up duration follows from a successful health check.
+
 ## Health checking and outlier ejection
 
 Two different mechanisms; keep them distinct.
@@ -153,6 +174,10 @@ coverage limits before interpreting a test as success.
 - **Scale-up test.** Add a replica under load and watch how long it takes to reach its share.
   Existing flows do not move; new connections may use the replica. If the workload creates
   no new eligible flows, the added capacity may receive no work during the test window.
+- **Cold endpoint test**, when introducing or changing a ramp. Compare cold and prewarmed joins
+  under the same offered workload. Track per-endpoint work, errors/latency, existing endpoints'
+  saturation and time to usable capacity. Include an all-new or single-endpoint eligible pool
+  when that rollout/failover is supported; reduced weights alone cannot reduce its offered load.
 - **Rollout test.** Exercise the relevant deployment transition using the actual workload
   model. For independent arrivals, keep an open schedule and reconcile offered versus
   started work, start delay and dropped starts; a closed loop suppresses arrivals during
@@ -171,6 +196,7 @@ coverage limits before interpreting a test as success.
 ## Primary references
 
 - [Envoy load-balancing architecture](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/overview)
+- [Envoy 1.35.0 slow start](https://github.com/envoyproxy/envoy/blob/v1.35.0/docs/root/intro/arch_overview/upstream/load_balancing/slow_start.rst) — supported policies, ramp entry and sparse-traffic/all-new-pool limitations.
 - [Envoy outlier detection](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
 - [Envoy 1.35.0 outlier configuration](https://github.com/envoyproxy/envoy/blob/v1.35.0/api/envoy/config/cluster/v3/outlier_detection.proto) — enforcement defaults, statistical prerequisites and active-check unejection option.
 - [Envoy 1.35.0 outlier implementation](https://github.com/envoyproxy/envoy/blob/v1.35.0/source/common/upstream/outlier_detection_impl.cc) — detected versus enforced counters and active-health recovery precedence.

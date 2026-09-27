@@ -30,8 +30,9 @@ instead of a promise, and subtype overrides that quietly change the deal.
   necessarily a programmer bug.
 - **Postcondition** — what holds when it returns normally; the _implementation's_
   obligation. Violation is the implementation's bug.
-- **Invariant** — what holds about an object between every public operation; established
-  by constructors, preserved by every method.
+- **Invariant** — what holds at the object's observable boundaries; established by successful
+  construction and restored before returning or exposing the object to other code. A private
+  transition may temporarily break it only while that state cannot be observed.
 
 Who can control the condition helps choose the mechanism. The callee checks enforceable
 preconditions and reports a stable failure; state conflicts the caller cannot know are explicit
@@ -40,6 +41,12 @@ when corruption must not continue — unconditional internal checks, not only di
 
 ## Workflow
 
+Match the request: review produces findings and proposed contract clauses; design compares
+permitted outcomes and enforcement; implementation changes code when authorized. Inspect
+Javadoc, representative callers, tests and prior decisions before treating behavior as policy.
+Clarify a missing requirement only when it changes the contract; continue independent,
+contract-preserving work without blocking on low-impact choices.
+
 Java 25 is the authoring baseline, not permission to upgrade a consuming project. Inspect
 compiler release/toolchains, runtime, dependencies, mapper behavior and existing caller
 contracts first. Records require Java 16+, sealed types Java 17+, pattern switches Java 21+
@@ -47,9 +54,10 @@ and flexible constructor bodies Java 25 without preview. Use target-compatible a
 do not add dependencies, upgrade or enable preview for this skill. If evidence is missing,
 state the assumed contract and what must be verified before changing it.
 
-1. **Write the contract before touching code**: for the method or class, the
-   preconditions, postconditions and invariants in one sentence each. What you cannot
-   state, callers are currently guessing.
+1. **State the contract before choosing a change**: preconditions, normal postconditions,
+   invariants, and any exceptional outcomes with their state/effect guarantees. Separate
+   existing promises from proposed ones; an unknown contract is a discovery task, not permission
+   to invent one.
 2. **Use a type when its invariant travels or prevents meaningful misuse**: a validating record
    (`Quantity` that cannot be zero or negative) removes the shape precondition from every
    ordinary construction path. An existing stable entry check may be adequate; weigh consumer
@@ -103,17 +111,35 @@ returned mutable data; and what happens on timeout or partial failure. These are
 when Java's type system cannot express them. State only guarantees the implementation and its
 datastore/protocol can actually preserve.
 
-## References
+For each anticipated failure, distinguish unchanged state from permitted partial progress
+that still preserves the invariant, or a documented unusable state requiring disposal.
+An exception does not itself undo earlier writes. If unchanged state is promised, prepare and
+validate the replacement before committing it; inspect effects outside the object separately.
+Callbacks and overridable calls are observation points: restore the invariant before calling
+out. `synchronized` alone cannot prevent same-thread reentry through an alias.
+
+## Outcome and verification
 
 Deliver the affected contract clauses, caller/subtype evidence, chosen enforcement and
 executed checks. Test accepted/rejected boundaries and failure-state preservation through
 the supertype as well as concrete types; distinguish type checking, runtime checks and
-persistence tests. Do not label an unexecuted test plan as proof of correctness.
+persistence tests. Inject anticipated failures and inspect observable state afterward; include
+reentrant callbacks when the API invokes user code. Do not label an unexecuted test plan as
+proof of correctness. Finish when the requested clauses and relevant boundaries have evidence,
+or state the precise missing evidence and keep the affected conclusion conditional.
+
+For boundary placement, exception/recovery design or public migration, pass the relevant
+clauses, failure effects and caller evidence to java-defensive-programming,
+java-exception-design or java-api-design respectively. Request a boundary map, failure policy
+or compatibility plan as appropriate; if unavailable, report the unresolved decision and retain
+the existing contract rather than assuming a redesign is safe.
+
+## References
 
 - [Contracts in Java 25](references/contracts-in-java.md) — the contract-element →
   language-mechanism mapping table, Javadoc conventions, behavioural-subtyping
-  violations in concrete Java, detection heuristics and false positives. Read when
-  reviewing an API or an override.
+  violations in concrete Java, exceptional state guarantees, detection heuristics and false
+  positives. Read when reviewing an API, failure path or override.
 - [Worked example: from implicit to explicit](references/explicit-contract-example.md)
   — a stock-reservation class whose invariants lived in callers' heads, made explicit
   via types, checks and documented contract. Read when applying the workflow.

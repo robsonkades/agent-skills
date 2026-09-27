@@ -37,11 +37,12 @@ search, because JPA field access, Jackson and anything binding by field name rea
 accessor.
 
 This is the enabler for Replace Derived Variable with Query, Encapsulate Collection
-(`techniques.md`) and Replace Primitive with Object. For mutable shared data it is also a
-prerequisite for synchronisation work, since there must be one place to synchronise — but
-the step creates the access point, not thread safety. `synchronized` accessors make each
-access atomic and leave every `get`/modify/`set` a race; java-memory-model owns what
-actually has to be atomic.
+(`techniques.md`) and Replace Primitive with Object. For mutable shared data it can make the
+access protocol easier to enforce, but accessors are not a prerequisite for synchronization
+and do not create thread safety. Guard the whole required compound operation under the same
+lock or another suitable atomic protocol; separately synchronized getters and setters alone
+do not protect a `get`/modify/`set` sequence. Retain an already adequate lock boundary rather
+than adding indirection merely to synchronize; java-memory-model owns that argument.
 
 ## Separate Query from Modifier
 
@@ -57,9 +58,15 @@ effect, or both, and convert each in the same commit. A site whose intent you ca
 gets a characterisation test first — splitting it blind silently deletes the mutation for
 that caller.
 
-**Where it does not apply:** genuinely atomic test-and-set operations. `Map.putIfAbsent`,
-`AtomicInteger.getAndIncrement` and `Queue.poll` return-and-modify by design, and splitting
-them introduces a race. Concurrency beats this rule.
+**Where it does not apply:** operations whose return and update form one required contract.
+`ConcurrentMap.putIfAbsent` and `AtomicInteger.getAndIncrement` provide atomic operations;
+splitting them into a query followed by a mutation can introduce a race. The default
+`Map.putIfAbsent` has no atomicity guarantee, and `Queue.poll`'s concurrency guarantees depend
+on the implementation. Inspect the concrete collection and surrounding synchronization rather
+than inferring thread safety from the method name. Even under confinement, a `poll` that returns
+the removed element is a cohesive operation and need not be split for style.
+See the [Map default-method contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html)
+and [ConcurrentMap atomic contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentMap.html).
 
 ## Parameterize Function
 
@@ -134,10 +141,15 @@ what a `synchronized (obj)` block locks. Introduce the factory in one commit; ch
 returns in another.
 
 **Cost:** unless the constructor's visibility can be reduced afterwards, both forms exist
-indefinitely and new call sites must be steered by review. On a type JPA or Jackson
-constructs, the constructor stays and the two forms coexist by necessity. Reducing
-visibility is source- and binary-breaking for external callers, so on a published type it is
-a migration with a deprecation window, not a step.
+and new call sites must be steered by review. Check the actual construction contract:
+a portable JPA entity retains its public or protected no-arg constructor, but that does not
+require every application constructor to remain public. Jackson can use a static factory marked
+with `@JsonCreator`; it does not universally require a public constructor or a no-arg one.
+Preserve creator mode, property names, defaults and failure behavior under the deployed mapper
+configuration, and exercise deserialization before retiring a construction path. See
+[Jackson's creator contract](https://github.com/FasterXML/jackson-annotations/blob/2.20/src/main/java/com/fasterxml/jackson/annotation/JsonCreator.java).
+Reducing visibility is source- and binary-breaking for external callers, so on a published type
+it remains a migration governed by the compatibility policy.
 
 ## Replace Command with Function
 

@@ -41,20 +41,20 @@ the GC log, and no warning at all).
 
 ## Symptom to cause
 
-| Symptom                                                                                                                           | Most likely cause                                                                                    | Confirm with                                                                                                              |
-| --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `CodeHeap 'profiled nmethods' is full. Compiler has been disabled.` in stdout or the JVM log                                      | Allocation failed after applicable fallback; capacity, fragmentation or expansion failure            | Per-heap free/committed bounds, largest free block, requested size and `jdk.CodeCacheFull.codeBlobType`                   |
-| `CodeCache is full. Compiler has been disabled.` (no heap name)                                                                   | Unsegmented cache; a sub-240 MB explicit reserve without `+SegmentedCodeCache` is one possible cause | One unnamed heap in `Compiler.codecache`; flags and `jdk.CodeCacheConfiguration` sizes                                    |
-| GC log: `Pause Full (CodeCache GC Threshold)` on Parallel/Serial, `Pause Young (Concurrent Start) (CodeCache GC Threshold)` on G1 | Allocation crossed `SweeperThreshold`; the code cache requested the GC                               | `-Xlog:codecache=info` `Triggering threshold … GC` lines; rate of `jdk.Compilation`; `unloading-and-gc.md`                |
-| GC log: `(CodeCache GC Aggressive)`                                                                                               | Under 10% free in aggregate                                                                          | `Compiler.codecache` totals; expect `stopped_count` to follow if it persists                                              |
-| CPU up, no load change, dashboard "Code Cache" at ~70%                                                                            | One heap pinned at 100%, other absorbing the spill; or compiler stopped and restarted repeatedly     | Per-heap series; `stopped_count`/`restarted_count` delta between two samples                                              |
-| Per-heap `used` oscillating by tens of MB with the compiler never disabled                                                        | Possible cold-code flushing/recompilation or class unloading churn                                   | Cold-code/unloading logs, class lifecycle and compilation rate; `jdk.JITRestart` is not expected without a compiler stop  |
-| `java.lang.OutOfMemoryError: Out of space in CodeCache for adapters` in an application thread                                     | Adapter allocation failed through all available fallback heaps                                       | Every heap, contiguous capacity, `adapters=` count and compiler-buffer demand                                             |
-| `… Out of space in CodeCache for method handle intrinsic`                                                                         | Same heap, minted by `MethodHandle` / `invokedynamic` traffic (`systemDictionary.cpp`)               | Same; count of `LambdaForm` / `Invokers` blobs in `Compiler.CodeHeap_Analytics MethodNames`                               |
-| `Compilation: disabled` for minutes, `restarted_count=0`                                                                          | Recoverable stop without reclamation, disabled flushing/unloading, or permanent compiler shutdown    | `jcmd <pid> VM.flags -all`, including `UseCompiler`; preceding errors, analytics, unloading logs and later samples        |
-| Long-running service degrades, cache "not full", `free` in the tens of MB                                                         | External fragmentation: no free block large enough for a big C2 method                               | `CodeHeap_Analytics FreeSpace` — largest free block versus the size of the methods now failing (`jdk.CompilationFailure`) |
-| Allocation failing only for one large method                                                                                      | Same, or its generated nmethod is larger than any available block                                    | `jdk.CompilationFailure`, compiler logs, and analytics; `PrintCompilation` shows bytecode size, not nmethod size          |
-| Java heap fine, reserve large, code-cache usage high, no warnings, latency creeping                                               | Evidence insufficient to attribute or exclude code-cache cost                                        | Per-heap trends, GC causes, compilation/tier history, `jdk.Deoptimization` and application CPU profiles                   |
+| Symptom                                                                                                                           | Candidate explanation                                                                                | Confirm or distinguish with                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `CodeHeap 'profiled nmethods' is full. Compiler has been disabled.` in stdout or the JVM log                                      | Allocation failed after applicable fallback; capacity, fragmentation or expansion failure            | Per-heap free/committed bounds, largest free block, requested size and `jdk.CodeCacheFull.codeBlobType`                  |
+| `CodeCache is full. Compiler has been disabled.` (no heap name)                                                                   | Unsegmented cache; a sub-240 MB explicit reserve without `+SegmentedCodeCache` is one possible cause | One unnamed heap in `Compiler.codecache`; flags and `jdk.CodeCacheConfiguration` sizes                                   |
+| GC log: `Pause Full (CodeCache GC Threshold)` on Parallel/Serial, `Pause Young (Concurrent Start) (CodeCache GC Threshold)` on G1 | Allocation crossed `SweeperThreshold`; the code cache requested the GC                               | `-Xlog:codecache=info` trigger lines; compiler-counter deltas; `unloading-and-gc.md`                                     |
+| GC log: `(CodeCache GC Aggressive)`                                                                                               | Free ratio at or below the effective `StartAggressiveSweepingAt` threshold                           | Effective flag, time-aligned totals and reclaimed bytes; successful reclamation can avoid a compiler stop                |
+| CPU up, no load change, dashboard "Code Cache" at ~70%                                                                            | Cache pressure is one possibility; ordinary compilation, GC or application work may explain CPU      | Per-heap trends, stop/restart deltas and CPU attribution; a healthy cache redirects diagnosis                            |
+| Per-heap `used` oscillating by tens of MB with the compiler never disabled                                                        | Possible cold-code flushing/recompilation or class unloading churn                                   | Cold-code/unloading logs, class lifecycle and compilation rate; `jdk.JITRestart` is not expected without a compiler stop |
+| `java.lang.OutOfMemoryError: Out of space in CodeCache for adapters` in an application thread                                     | Adapter allocation failed through all available fallback heaps                                       | Every heap, contiguous capacity, `adapters=` count and compiler-buffer demand                                            |
+| `… Out of space in CodeCache for method handle intrinsic`                                                                         | Same heap, minted by `MethodHandle` / `invokedynamic` traffic (`systemDictionary.cpp`)               | Same; count of `LambdaForm` / `Invokers` blobs in `Compiler.CodeHeap_Analytics MethodNames`                              |
+| `Compilation: disabled` for minutes, `restarted_count=0`                                                                          | Recoverable stop without reclamation, disabled flushing/unloading, or permanent compiler shutdown    | `jcmd <pid> VM.flags -all`, including `UseCompiler`; preceding errors, analytics, unloading logs and later samples       |
+| Long-running service degrades, cache "not full", `free` in the tens of MB                                                         | Fragmentation may prevent an allocation from fitting; non-cache causes also remain possible          | Failure reason/size, free blocks plus unused tail, expansion and fallback; CPU evidence for the service regression       |
+| Allocation failing only for one large method                                                                                      | Same, or its generated nmethod is larger than any available block                                    | `jdk.CompilationFailure`, compiler logs, and analytics; `PrintCompilation` shows bytecode size, not nmethod size         |
+| Java heap fine, reserve large, code-cache usage high, no warnings, latency creeping                                               | Evidence insufficient to attribute or exclude code-cache cost                                        | Per-heap trends, GC causes, compilation/tier history, `jdk.Deoptimization` and application CPU profiles                  |
 
 ## jstat -compiler
 
@@ -129,8 +129,10 @@ What each section gives, per heap:
   huge C2 method (a generated dispatcher, a giant `switch`) is what keeps failing to fit.
 - **Space usage & fragmentation** — a granule map of the heap, where a scattered pattern of
   `not entrant` and free granules is fragmentation made visible.
-- **Method age by CompileID** — relative age from compilation id (no timestamps exist);
-  a heap full of young code is churn, a heap full of old code is a large working set.
+- **Method age by CompileID** — relative compilation order, not elapsed time, last execution
+  or execution frequency. Young code can be normal warm-up or first-time compilation; old
+  code can be retained but cold. Establish churn from repeated method identities and
+  replacement/unloading over time, and establish a hot working set with execution evidence.
 - **Method names** — every nmethod with its tier and state, for counting `LambdaForm`,
   proxy, or generated-class methods when class generation is the suspected factory.
 
@@ -167,17 +169,18 @@ than continuous high-volume diagnostics.
 
 ## JFR events
 
-Confirmed against `jfr metadata` on 25.0.3:
+Event fields were checked against `jfr metadata` on 25.0.3; enablement and thresholds below
+come from the 25.0.3+9 `default.jfc`, not from event metadata:
 
-| Event                        | Default period (`default.jfc`) | Use                                                                                                                                                                                                      |
-| ---------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `jdk.CodeCacheStatistics`    | `everyChunk`                   | One sample per heap (`codeBlobType`, `unallocatedCapacity`, `entryCount`, `methodCount`, `adaptorCount`, `fullCount`) per chunk — a coarse series unless the period is set explicitly                    |
-| `jdk.CodeCacheFull`          | on full                        | Fires when a heap is full **after** the fallback failed; `codeBlobType` names the heap originally requested, `fullCount` how many times                                                                  |
-| `jdk.CodeCacheConfiguration` | `beginChunk`                   | Settled sizes: `reservedSize`, `nonNMethodSize`, `profiledSize`, `nonProfiledSize`, `expansionSize`, `minBlockLength`; zero profiled size also occurs in modes without profiling, so inspect flags/heaps |
-| `jdk.JITRestart`             | on restart attempt             | `freedMemory`, `codeCacheMaxCapacity`; on 25.0.3+9 this event alone does not prove the compiler resumed — correlate state and counters                                                                   |
-| `jdk.CompilerStatistics`     | periodic                       | `bailoutCount`, `invalidatedCount`, `nmethodsSize`, `nmethodCodeSize` — the `jstat -compiler` columns as a series                                                                                        |
-| `jdk.CompilationFailure`     | per failure                    | `failureMessage`, `compileId` — what the compiler said when a method did not fit or bailed out                                                                                                           |
-| `jdk.Compilation`            | per compilation                | Tier and size per method; correlates CPU peaks with the tier being compiled and predicts the heap                                                                                                        |
+| Event                        | Default setting (`default.jfc`) | Use                                                                                                                                                                                                      |
+| ---------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jdk.CodeCacheStatistics`    | `everyChunk`                    | One sample per heap (`codeBlobType`, `unallocatedCapacity`, `entryCount`, `methodCount`, `adaptorCount`, `fullCount`) per chunk — a coarse series unless the period is set explicitly                    |
+| `jdk.CodeCacheFull`          | on full                         | Fires when a heap is full **after** the fallback failed; `codeBlobType` names the heap originally requested, `fullCount` how many times                                                                  |
+| `jdk.CodeCacheConfiguration` | `beginChunk`                    | Settled sizes: `reservedSize`, `nonNMethodSize`, `profiledSize`, `nonProfiledSize`, `expansionSize`, `minBlockLength`; zero profiled size also occurs in modes without profiling, so inspect flags/heaps |
+| `jdk.JITRestart`             | on restart attempt              | `freedMemory`, `codeCacheMaxCapacity`; on 25.0.3+9 this event alone does not prove the compiler resumed — correlate state and counters                                                                   |
+| `jdk.CompilerStatistics`     | periodic                        | `bailoutCount`, `invalidatedCount`, `nmethodsSize`, `nmethodCodeSize` — the `jstat -compiler` columns as a series                                                                                        |
+| `jdk.CompilationFailure`     | disabled                        | When enabled: `failureMessage`, `compileId` — what the compiler said when a method did not fit or bailed out                                                                                             |
+| `jdk.Compilation`            | threshold 1000 ms               | Tier and size for captured compilations only; `profile.jfc` uses 100 ms. Inspect effective threshold before estimating tier mix or rate                                                                  |
 
 ```bash
 jcmd <pid> JFR.start settings=profile duration=300s filename=codecache.jfr
@@ -186,6 +189,28 @@ jfr print --events jdk.CodeCacheStatistics,jdk.CodeCacheFull,jdk.CodeCacheConfig
 
 For a real time series, set `jdk.CodeCacheStatistics#period=10 s` in a custom `.jfc` — the
 default `everyChunk` is one sample per chunk rotation.
+
+### JFR capture coverage
+
+On the matching 25.0.3+9 templates, `profile.jfc` enables `jdk.Compilation` with a **100 ms**
+duration threshold; `default.jfc` uses **1000 ms** and disables `jdk.CompilationFailure`.
+Thus the profile command above captures slow compilations, not every compilation. Absence
+of C1 events does not establish absence of C1 activity, and a recording with no failure events
+does not exclude failures when that event was disabled. Inspect actual recording settings,
+including overrides and overlapping recordings; the template alone records only the defaults.
+
+For total rate, use timed deltas of `jdk.CompilerStatistics.compileCount` or `jstat -compiler`
+from the same JVM and interval, allowing for sample boundaries. For tier mix, repeated-method
+churn or compilation after a recovery transition, use adequate existing compilation logs or
+a short capture with `jdk.Compilation` enabled and its threshold set to `0 ms`. Enable
+`jdk.CompilationFailure` when failure reasons matter. Check coverage, data loss and capture
+cost; neither an event count nor a lifetime counter is automatically an interval total.
+Changing a capture's threshold changes its population, so do not compare raw event rates
+across differently configured recordings as if the workload changed.
+
+If complete capture is unavailable, preserve the tier/fallback hypothesis and use the
+available aggregate rate and heap evidence; do not choose a segment split from sampled
+long-running compilations alone.
 
 ## Continuous metrics
 
@@ -277,7 +302,35 @@ fragmentation risk, but a spill or a restart alone does not prove fragmentation 
       `jdk.CodeCacheConfiguration`
 - [ ] After the fix: growth fits the measured warm-up/restart envelope with explicit headroom,
       code-cache GC cost meets the SLO, and `Compilation:` remains enabled across a sustained window
-- [ ] If the fix was a restart, recorded explicitly as fragmentation mitigation, not a cure
+- [ ] If a restart was used, record the actual mitigation target and lost warm-up; recovery
+      alone does not establish fragmentation or a durable capacity fix
+
+## Decision rehearsals
+
+These are structured review cases, not executed agent evaluations. Use them when checking
+whether a diagnosis follows from the available evidence.
+
+- **Filtered tier evidence:** a five-minute profile recording has four tier-4 events and
+  no tier-3 events, but compiler counters rise by 5,000. Expected: inspect the effective
+  threshold and obtain adequate tier coverage before proposing a split. Failure: treating
+  the four slow events as the entire workload or claiming profiling-tier code is absent.
+- **Contiguous-space pair:** an illustrative allocation needs 45 segments; free-list blocks
+  total 55, largest 40. In both cases expansion is impossible and fallback heaps cannot fit.
+  With a usable 64-segment committed tail, the free-list holes do not prevent this allocation.
+  Change only that tail to unavailable: the allocation now cannot fit despite aggregate
+  free space. Failure: ignoring the tail in the first case or recommending a sum-only fix
+  without checking allocation shape and capacity in the second.
+- **Restraint and boundary:** stable heap headroom across representative warm-up, no failures,
+  no material code-cache GC cost, and CPU samples dominated by application parsing. Expected:
+  keep the cache sizes and investigate that workload; do not force analytics, resizing or a
+  restart merely because the dashboard says 70%. Compilation-specific uncertainty goes to
+  `jit-compilation`; overall native-memory budget goes to `jvm-memory-regions`.
+- **Version and missing evidence:** a JDK 17 service has only an aggregate chart and a request
+  to disable flushing using JDK 25 GC reasoning. Expected: preserve the target version,
+  inspect actual heap shape, compiler state and capture availability, and reject the claimed
+  lifecycle equivalence. Without attach/logs, give a conditional diagnosis and the smallest
+  discriminating capture, not a deployable remedy. Failure: inventing three heaps, a root
+  cause, or observed recovery.
 
 ## Authoritative sources
 
@@ -287,3 +340,6 @@ fragmentation risk, but a spill or a restart alone does not prove fragmentation 
 - [JDK 25 HotSpot `codeHeapState.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/codeHeapState.cpp)
 - [JDK 25 HotSpot `heap.cpp`: free-list and tail allocation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/memory/heap.cpp)
 - [JDK 25.0.3+9 HotSpot `compileBroker.cpp`: shutdown and statistics accounting](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
+- [JDK 25.0.3+9 `profile.jfc`: event thresholds and enablement](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/conf/jfr/profile.jfc)
+- [JDK 25.0.3+9 `default.jfc`: different compilation coverage](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/conf/jfr/default.jfc)
+- [JDK 25.0.3+9 `codeHeapState.cpp`: `print_age` uses compilation IDs](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/code/codeHeapState.cpp)

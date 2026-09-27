@@ -151,6 +151,12 @@ THEN make lifetime and concurrency requirements explicit. Either normalize them 
   including close responsibility on failure or cancellation. A borrowed shared backend is not
   closed per call; a stream may outlive the method that returns it. Preserve affinity and the
   actual operation's lifetime rather than inferring cleanup from a caller timeout.
+- **Binding.** Distinguish selecting a backend for a new abstraction or operation from replacing
+  one during a live session. A common interface does not make handles, stored data or deduplication
+  state portable. Keep provider-bound work and cleanup with its owner unless the contract supports
+  transfer; an atomic field swap does not protect outstanding users. Read
+  [Backend binding and replacement](references/decision-and-alternatives.md#backend-binding-and-replacement)
+  when replacement or failover is required.
 - **Distribution.** A bridge is the standard place a remote implementation hides behind a local
   interface. The interface must then carry what remoteness implies: bounded time, a failure
   channel that is not `null`, and enough granularity that callers do not issue one remote call
@@ -175,6 +181,7 @@ THEN make lifetime and concurrency requirements explicit. Either normalize them 
 - [ ] Common operations and optional capabilities have truthful consumer contracts
 - [ ] Illegal combinations are prevented or rejected at a documented construction boundary
 - [ ] Sharing, confinement and thread-safety requirements are explicit for every backend
+- [ ] Required backend replacement respects state provenance and outstanding resource lifetimes
 - [ ] The interface's granularity is acceptable for the most expensive backend
 - [ ] Failure and timeout semantics are in the contract when any backend is remote
 - [ ] A shared contract test runs against every backend

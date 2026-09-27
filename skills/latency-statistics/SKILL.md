@@ -51,7 +51,9 @@ Latency is a distribution. Every rule here follows from that one fact.
    controls future issue times. See `references/coordinated-omission.md`.
 8. **Compare treatments at the independent level.** Define practical effect, experimental
    unit and pairing/blocking; estimate the treatment contrast with uncertainty. Requests inside
-   one run are not automatically independent replications. See
+   one run are not automatically independent replications. Separate changes in cohort latency
+   from changes in traffic mix; actual fleet experience and a comparison at a common mix answer
+   different questions. See
    `references/comparing-two-measurements.md`.
 
 ## Rules

@@ -128,6 +128,12 @@ prevents overlap—often TID plus request/pointer/operation—and handle nesting
 exit, cancellation, timeout, and key reuse. Maps can overflow or evict; a missing start must
 increment a counter rather than silently disappear.
 
+Separate aggregation from correlation state. Per-CPU counters can be reduced across CPUs;
+per-CPU start timestamps do not automatically follow a task or request to its completion
+CPU. Use shared keyed state for cross-CPU pairing unless an explicit ownership protocol proves
+otherwise. Shared counter read-modify-write also needs atomicity: a racy loss counter cannot
+establish capture coverage. See the map choices and controls in the program-pattern reference.
+
 Track:
 
 - entry, exit, unmatched-entry, unmatched-exit counts;

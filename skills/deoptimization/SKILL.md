@@ -49,7 +49,10 @@ the JVM takes longer to give up on a method whose underlying assumption keeps ch
    `-Xlog:dependencies=debug` for class loading, or `-Xlog:redefine+class+nmethod=debug`
    for redefinition scope, within the budget. See
    `references/deopt-tooling.md`.
-3. **Group by method and bci, reason and action, over a stated window.** The criterion is
+3. **Group by method and bci, reason and action, over a stated window.** Preserve the compile id
+   and enclosing compilation too: the trap method may be an inlined callee, while the id belongs
+   to its compiled caller. Join within the same JVM; do not require the two method names to match.
+   The criterion is
    the rate per site and its decay, not presence: a site trapping once, or up to four times
    with `maybe_recompile`, then going quiet under comparable demand suggests convergence.
    Silence after traffic stops is not evidence of readiness. A site emitting `none` at a

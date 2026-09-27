@@ -161,6 +161,14 @@ _already waiting_ consumer and returns `false` otherwise; `tryTransfer(e, timeou
 `SynchronousQueue` semantics with buffering behind it, and it is the only reason to choose the
 class.
 
+Receipt is not processing completion. After a successful `transfer`, the consumer may still be
+using the object: do not return a mutable buffer to its pool or overwrite it until an explicit
+completion/return protocol transfers ownership back. `BlockingQueue` publishes actions before
+insertion to the consumer's later access/removal; it neither copies the element nor makes
+post-enqueue mutation safe. Prefer immutable messages or an exclusive ownership handoff. If
+the caller needs a result or a reusable-buffer acknowledgement, define that separate channel;
+pass the ownership and cancellation paths to `java-thread-safety-contracts` when unclear.
+
 **JDK-8371740, "LinkedTransferQueue.poll() returns null even though queue is not empty".**
 The prior review recorded affected versions 21–25 and fix version 26. The OpenJDK fix is
 [PR 28479](https://github.com/openjdk/jdk/pull/28479); its discussion also contains a 25u backport
@@ -247,6 +255,7 @@ failed offers/removals and drift.
 - [Java 25 `BlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html)
 - [Java 25 `LinkedBlockingQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/LinkedBlockingQueue.html)
 - [Java 25 `LinkedTransferQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/LinkedTransferQueue.html)
+- [Java 25 `TransferQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/TransferQueue.html)
 - [Java 25 `DelayQueue`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/DelayQueue.html)
 - [OpenJDK JDK-8371740](https://bugs.openjdk.org/browse/JDK-8371740)
 - [OpenJDK JDK-8301341](https://bugs.openjdk.org/browse/JDK-8301341)

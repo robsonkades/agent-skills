@@ -55,6 +55,9 @@ lock-wait and cleanup bounds. Rollback does not restore every sequence or extern
    determinism/immutability declarations to bypass a restriction.
 3. Evaluate the candidates against the workload, not one query. Prefer extending or consolidating
    an existing prefix when that preserves important orderings and does not create harmful width.
+   Preserve constraint semantics first: appending columns to a unique key can weaken uniqueness.
+   On partitioned tables, establish whether uniqueness is global or scoped to the partition key;
+   do not change that contract merely to make an index definition legal.
 4. Decide which columns belong in the key and which only cover the result. Account for the engine's
    physical representation and visibility rules.
 5. Quantify benefit and cost: rows/pages avoided times execution frequency versus bytes, write
@@ -119,7 +122,7 @@ confidence and missing evidence:
 - [Composite index derivation](references/composite-index-derivation.md) — read when choosing key
   order, resolving range versus ordering, or estimating amplification.
 - [Engine differences](references/engine-differences.md) — read before emitting DDL or asserting
-  coverage, partial-index, uniqueness, FK, or specialized-index semantics.
+  coverage, partial-index, uniqueness (including partitioned tables), FK, or specialized-index semantics.
 - [Portfolio lifecycle](references/portfolio-lifecycle.md) — read when consolidating, deploying, or
   removing indexes in production.
 - [PostgreSQL EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html) and

@@ -120,10 +120,12 @@ Both numbers identify the version mismatch; locate the producer (compiler, depen
 transformer) before choosing a fix. Below 45 gives a different message
 (`was compiled with an invalid major version`): inspect the header and producer.
 
-`minor_version` is 0 for almost every class file. The exception is `0xFFFF` (65535), reserved
-to mean "this file depends on preview features of the feature release named by
-`major_version`". Such a file loads only on exactly that release, and only with
-`--enable-preview` at runtime too:
+For `major_version >= 56` (Java 12+), `minor_version` must be 0 or `0xFFFF` (65535). The latter
+means dependence on preview features of the feature release named by `major_version`:
+it loads only on that exact release with preview enabled. For historical majors 45–55,
+JVMS 25 permits any minor value; `52.65535` does not require preview. Classify the pair before
+suggesting a flag or target change. Editing a header is not a compatibility migration.
+For a Java 25 preview-dependent class:
 
 ```bash
 javac --release 25 --enable-preview Main.java
@@ -430,6 +432,14 @@ and loaders. A successful parse or frame computation does not prove linkage or b
   required attribute. Blind copying and indiscriminate dropping can both break consumers.
 - Make transformation idempotent or distinguish initial load, retransformation and
   redefinition; retransformation-incapable outputs are reapplied by the instrumentation API.
+- Check operation support and class modifiability, then compare the proposed changes with the
+  lifecycle contract. On JDK 25, redefinition/retransformation can change method bodies, constant
+  pools and permitted attributes, but cannot add/remove/rename fields or methods, change method
+  signatures, modifiers or inheritance, or change `NestHost`, `NestMembers`, `Record` or
+  `PermittedSubclasses`. A helper inserted before first definition can therefore be legal while
+  adding it to an already loaded class is rejected. Recomputing frames does not fix that failure.
+  Prefer body-only instrumentation or another supported design; an initial-load-only design
+  needs explicit lifecycle and deployment constraints, not an unplanned production restart.
 - Avoid loading the class being transformed or dependencies through the wrong loader while
   computing hierarchy; this can create circularity or permanently failed resolutions.
 - Test bootstrap, platform and application loaders, named modules, records, sealed
@@ -450,3 +460,6 @@ and loaders. A successful parse or frame computation does not prove linkage or b
 - [JEP 484: Class-File API](https://openjdk.org/jeps/484)
 - [ASM ClassWriter: frame computation and direct-copy optimisation](https://asm.ow2.io/javadoc/org/objectweb/asm/ClassWriter.html)
 - [Java 25 Instrumentation: modifiable classes](<https://docs.oracle.com/en/java/javase/25/docs/api/java.instrument/java/lang/instrument/Instrumentation.html#isModifiableClass(java.lang.Class)>)
+- [JVM TI 25 retransformation restrictions](https://docs.oracle.com/en/java/javase/25/docs/specs/jvmti.html#RetransformClasses)
+  and [redefinition restrictions](https://docs.oracle.com/en/java/javase/25/docs/specs/jvmti.html#RedefineClasses)
+  define the supported changes separately from class-file verification.

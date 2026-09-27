@@ -110,6 +110,44 @@ state. Reconstitution must reject corrupt combinations or translate known legacy
 explicitly; it is not permission to bypass all validation. Use an appropriately accessible
 factory without weakening creation invariants.
 
+## Read shape and write intent
+
+A mapper may return a deliberately lossy read projection. That does not make the projection
+a safely reconstituted aggregate. For example, an invoice summary containing ID, label and
+version has no evidence about its outstanding balance, currency or lines. Filling those gaps
+with nulls, zero money or an empty collection creates asserted state, not loaded state.
+Even a matching version cannot detect that the application supplied an incomplete state.
+
+Choose the write contract deliberately:
+
+- For a command whose invariant needs existing state, load that state and apply the command
+  within the chosen concurrency/transaction boundary. This need not load every relationship;
+  load what the invariant actually depends on. Preserve the caller's expected version when
+  stale decisions must be rejected, rather than refreshing it to authorize the write.
+- For a narrow change such as replacing an independent label, a gateway or mapper operation
+  may update only that field with the required identity, tenant and version predicates. Keep
+  policy validation and affected-row handling explicit. Do not invent a second full object
+  model or load unrelated state solely to perform an adequate conditional update.
+- Where a partial-update interface is required, distinguish omitted fields from explicit null
+  or empty values. Define whether a supplied collection replaces, adds or removes members;
+  do not let a general property copier decide this contract accidentally.
+
+In Jakarta Persistence 3.1, `merge` transfers detached entity state to a managed instance; it
+does not provide a general “update only supplied DTO fields” contract. The specification's
+exception for unfetched LAZY fields concerns provider-tracked loading state, not arbitrary
+fields omitted from an application-created object. Inspect cascade and managed-state behavior
+before adapting a partial model; see section 3.2.7.1,
+[merging detached entity state](https://jakarta.ee/specifications/persistence/3.1/jakarta-persistence-spec-3.1).
+Use `orm-behavioral-patterns` for the runtime details, carrying the read shape, supplied fields,
+expected version and required write semantics. If the runtime behavior cannot be established,
+keep the read projection read-only and report which write contract still needs verification.
+
+Validate against a row with non-default values in omitted fields and related rows. Exercise the
+intended update, explicit clearing where allowed, stale versions and rollback; assert that
+unowned/omitted state remains intact. A round trip that starts from all-null or empty fixtures
+can miss accidental erasure. The unit-tested domain rule and this persistence check establish
+different properties; neither replaces the other.
+
 ## Where JPA actually sits
 
 JPA defines persistence APIs/mapping rules implemented by providers such as Hibernate.
@@ -172,6 +210,31 @@ transitioning, and test round-trip identity/version, rollback and concurrent upd
 
 Stop when the pain stops. A partial migration where the complex aggregates use a mapper and
 the CRUD modules stay Active Record is a good final state, not an unfinished one.
+
+## Worked boundary cases
+
+These cases explain decisions, not measured agent performance. For independent evaluation,
+provide the request/context separately from the expected behavior below.
+
+**Decisive pair.** A legacy invoice table has ID, label, balance, currency, version and related
+line rows. An existing query returns only ID, label and version.
+
+- Request A: “Use these results for a read-only export.” Expected: retain an adequate
+  projection/gateway; do not hydrate the write model without a consumer requirement. Failure:
+  imposing a separate rich domain model merely because the table is externally owned.
+- Request B: “Reuse those results to rename invoices, filling other entity fields with
+  null/empty values and merging them. Versions have not changed.” Expected: reject assumed
+  patch semantics; compare a targeted conditional label update with applying a command to
+  sufficient loaded state. Preserve unrelated fields/lines, authorization and version checks.
+  Failure: accepting partial-entity merge because the version matches, or requiring a full
+  aggregate load even when a scoped update demonstrably satisfies all invariants.
+
+**Preserve an adequate mapper.** A JPA entity has pure rule methods, no persistence methods,
+valid value-object mappings and no observed independence problem. The request proposes a second
+domain representation solely to make rule tests database-free. Expected: demonstrate a pure
+rule test and retain the current Data Mapper-style approach unless a concrete mapping constraint
+changes the choice. Failure: classifying it as Active Record from annotations or table shape,
+or creating a redundant mapper without a supported benefit.
 
 ## Sources
 

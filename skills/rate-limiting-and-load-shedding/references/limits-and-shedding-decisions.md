@@ -51,6 +51,16 @@ need not over-admit. In eventually reconciled independent buckets, overage depen
 bucket's initial/refill allowance and partition duration. Prove allocator failover does not
 double-issue an epoch. Contractual limits need precise window/burst/error semantics.
 
+For a 100-unit window, reserving 40 units for each of two replicas leaves 20 unallocated;
+spending both grants during a partition stays within 100. Those 80 units are reserved credit,
+not an 80-unit overage allowance. Cutting the window budget to 50 cannot take immediate effect
+while both old grants remain spendable. Define whether policy changes apply next window or
+require enforced revocation/expiry, and never reissue still-spendable credit to another replica.
+Expiry alone does not reveal how much was spent: reconcile usage before returning unused
+credit to the same window, or conservatively keep the unknown portion charged to that window.
+Test these as different properties: conservation under the original policy, and the delay or
+extra admissions permitted after a policy change. A partition test alone does not prove both.
+
 For example, a weighted counter at halfway through a window estimates half of the previous
 count. If all 100 previous arrivals occurred near its end, the rolling window can still contain
 all 100 while the estimate counts only 50. Do not advertise an exact rolling quota from this model.
@@ -173,6 +183,11 @@ Keep eligible offered traffic in the availability denominator and show admitted-
 separately. For 100 eligible requests, 80 fast successes and 20 shed requests yield 80% success,
 not 100%; planned quota exclusions must precede the observation. Invalid generator/measurement
 results are inconclusive, not evidence that overload handling passed.
+
+For HTTP deployments, exercise the real gateway/cache path: an exhausted tenant's 429 must
+not become a cached response for an eligible tenant at the same URL, nor be replayed after
+the exhausted tenant's allowance recovers. RFC 6585 §4 prohibits storing 429 responses; check
+generic error-cache configuration as well as application headers.
 
 ## Primary references
 

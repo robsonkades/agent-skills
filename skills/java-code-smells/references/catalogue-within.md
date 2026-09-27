@@ -142,9 +142,10 @@ zip` recurring together across signatures.
   codebase for one concept.
 - **Not it when:** an established domain term that outsiders find opaque is exactly right
   (`settlement`, `netting`, `dunning`). Short names in a two-line scope are fine.
-- **Fix:** Rename — the highest value per unit of risk in the catalogue. If no name fits,
-  that is the finding: the thing has more than one responsibility, so Extract first and
-  name the pieces.
+- **Fix:** Rename when the responsibility is clear; names reached through reflection,
+  serialization or published callers need a compatibility check even if the edit is small.
+  If no name fits, investigate mixed responsibilities before extracting and naming the pieces;
+  unfamiliar domain terminology alone does not prove that structure is wrong.
 
 ## Long Parameter List
 
@@ -185,8 +186,13 @@ zip` recurring together across signatures.
   source, or sits on a measured hot path. **This is the most over-applied entry in the
   catalogue** — a `for` loop is not a defect, and a pipeline that needs three lambdas and
   a custom collector is worse than the loop it replaced.
-- **Fix:** Split Loop first, so each half has one shape; then convert the halves that
-  genuinely read better as pipelines and leave the rest.
+- **Fix:** Consider Split Loop only when the loop mixes independent computations and separating
+  them preserves dependencies, observable effect order and failure behavior. For example,
+  validating then writing each item is not equivalent to validating all items before any write
+  when a later item can fail. Java executes block statements in order
+  ([JLS 21 §14.2](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.2)).
+  A cohesive loop needs no split. Recommend a pipeline only when it improves comprehension and
+  preserves the contract; leave the loop when those benefits are not established.
 
 ## Lazy Element
 

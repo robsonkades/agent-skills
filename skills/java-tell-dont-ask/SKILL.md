@@ -48,8 +48,10 @@ them.
    outcome. Queries must be observationally side-effect-free. Private, thread-safe memoization
    may preserve that contract; touching externally visible state on read does not.
 5. **Verify** the supported mutation/construction paths enforce the owned rule, including
-   persistence/binders and concurrency boundaries. Test the domain decision and caller outcome
-   mapping; duplicated enforcement at independent trust boundaries may still be required.
+   persistence/binders, mutable aliases retained from inputs or exposed by queries, and concurrency
+   boundaries. A side-effect-free getter can still return a mutation bypass. Test the domain
+   decision and caller outcome mapping; duplicated enforcement at independent trust boundaries
+   may still be required.
 
 ## Rules
 
@@ -87,7 +89,8 @@ missing decision rather than silently choosing it or prolonging unrelated invest
 
 - [Placement decision](references/placement-decision.md) — read when it is unclear whether
   a decision belongs in the object, or the code pattern-matches ask–decide–mutate but is
-  correct as it stands: heuristics, false positives, and the costs of moving.
+  correct as it stands, or queries expose mutable state: heuristics, false positives, alias
+  protection and the costs of moving.
 - [Worked example: withdrawal against a limit](references/worked-example.md) — read before
   moving an invariant-bearing decision out of a service: before, analysis, after, what
   stays in the service, trade-offs, verification.

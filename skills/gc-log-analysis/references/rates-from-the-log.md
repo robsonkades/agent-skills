@@ -108,7 +108,7 @@ BEGIN {
     if (!have_e[id] || !have_o[id] || seen[id]++) { bad=1; next }
     if (!match($0,/\[[0-9]+([.][0-9]+)?s\]/)) { bad=1; next }
     uptime=substr($0,RSTART+1,RLENGTH-3)+0
-    if (n && uptime<=last_t) { bad=1; next }
+    if (n && uptime<last_t) { bad=1; next }
     if (n) {
       eden_mb+=eden[id]*region_mb
       if (growth[id]>0) old_growth_mb+=growth[id]*region_mb
@@ -132,6 +132,14 @@ END {
 The script exits non-zero and says why when it cannot compute — the failure mode to design
 against is a plausible rate printed from malformed input. It ignores optional per-NUMA-node
 detail after the validated Eden counts; it does not validate that detail or infer JVM identity.
+
+Distinct events can have equal `uptime` timestamps: the seconds decorator has millisecond
+precision, so a busy JVM can complete multiple young collections within one displayed tick.
+Keep those events in their established log order; ties are not duplicates or evidence of time
+running backwards. The recipe still rejects decreasing time and a zero overall span. Widen
+the window when endpoint precision is material to the rate, or adapt the parser to a captured
+higher-resolution uptime decorator; do not invent sub-millisecond timestamps. See the
+[Java 25 decorator contract](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#decorations).
 
 Cross-checks when the number looks wrong: sample `jstat -gc <pid> 1000` and account for
 Eden resets across young collections rather than treating one `EU` delta as a rate. JFR

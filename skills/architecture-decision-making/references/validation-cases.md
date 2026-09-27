@@ -187,6 +187,36 @@ and avoid inventing an unrecorded supersession edge.
 **Failure:** Latest-number/date wins without local policy, a passing linter claimed to prove
 unambiguous guidance, or silently rejecting/retiring one authorized decision.
 
+## 10. Supporting decision changes: a decisive pair
+
+**Shared request/context:** “Review the impact on ADR-063, which permits retaining daily
+audit exports for 48 hours because accepted ADR-050 guarantees that the archive retains
+the complete export history for one year. The supplied requirement still needs one year
+of history. ADR-071 has been authorized to replace ADR-050 next month. The records link to
+each other for context. Update the review findings only; do not change decisions or systems.”
+
+**Case A:** ADR-071 changes the archive operator and explicitly retains the same one-year
+complete-history obligation. Supplied migration checks cover the relevant export scope,
+retention and continuity across cutover, with no remaining coverage gap.
+
+**Case B:** All inputs are the same except ADR-071's supplied retention contract and migration
+checks preserve only 30 days of export history; no other archive is documented.
+
+**Expected behavior:** Identify the premise ADR-063 relies on and the activation date. In A,
+retain the choice with a scoped finding that the supplied evidence preserves its basis. In B,
+flag that the future replacement removes the documented basis for the one-year requirement;
+identify the review owner or leave ownership unresolved, and the evidence/decision needed
+before cutover. Existing operational behavior before cutover is a separate observation.
+
+**Required result:** The recommendation changes with the retention guarantee, not the newer
+record number. Keep historical rationale and links; distinguish dependence from supersession
+and respect the review-only request. State the limits of supplied checks rather than claiming
+independent production validation.
+
+**Failure:** Automatically superseding ADR-063 in either case, reopening it solely because
+the archive operator changed in A, overlooking the lost premise in B, inventing a replacement
+archive or approval, or reporting reciprocal context links as a supersession cycle.
+
 ## Validation boundary
 
 Repository verification checks packaging, descriptions, dependency references, versioning,

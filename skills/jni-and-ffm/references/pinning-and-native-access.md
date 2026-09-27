@@ -70,6 +70,10 @@ process isolation, shorter bounded batches or a Java implementation. Size the po
 measured latency/concurrency, native resource capacity and explicit queue/load-shedding—not
 Little's Law alone:
 
+The example assumes each compression call has independent state or a native contract allowing
+any worker. For state retained on an OS thread across calls, first establish the affinity
+protocol in [Arenas and native thread ownership](arenas-upcalls-and-gc.md#native-thread-affinity-is-not-arena-confinement).
+
 ```java
 // Partial application example; N and queueCapacity are positive configured bounds.
 // The service owns this pool across requests and shuts it down during its lifecycle.

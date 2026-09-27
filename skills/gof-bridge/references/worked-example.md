@@ -83,6 +83,11 @@ Three notification kinds plus three channels: six variation types instead of nin
 variants, plus the shared interfaces and wiring. Variation grows by addition; digest windowing
 exists once. Total type count alone is not the benefit.
 
+The final channel field binds each `Notifier` at construction; a later preference can select a
+new notifier for a new send. This example does not implement live replacement, and a receipt's
+provider message ID is not automatically valid on another provider. An ambiguous send requires
+its original outcome/retry contract, even if configuration now selects a different channel.
+
 ## What the remote channel forced into the interface
 
 In this illustrative scenario, email and SMS were HTTP-backed from the start, so `deliver` carries a

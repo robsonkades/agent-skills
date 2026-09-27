@@ -106,6 +106,28 @@ without a Java park or scheduler compensation. JFR file-read and pinning events 
 not expose this; correlate OS major-fault counters and native/wall profiles. Mapping is
 not evidence that storage waits disappeared.
 
+## Asynchronous file APIs: follow the work, not the return type
+
+`AsynchronousFileChannel` exposes asynchronous reads/writes; it does not promise a
+non-blocking syscall. For example, OpenJDK 25's Unix provider selects
+`SimpleAsynchronousFileChannelImpl`, whose executor tasks perform the reads/writes.
+The waiting caller and the I/O worker therefore need separate classifications. Other
+providers can implement completion differently; inspect the deployed one before making
+claims about worker occupancy or io_uring. `FileChannel` itself is not selectable and
+cannot be made non-blocking with `configureBlocking(false)`.
+
+Keep a satisfactory synchronous path when its measured cost and limits meet the need.
+An async-file API may fit an existing completion pipeline, but compare its actual worker,
+queue and buffer costs with bounded synchronous offload; the API name proves no speedup.
+Measure submission-to-completion latency, active I/O, retained buffers and worker occupancy.
+
+For a custom `AsynchronousFileChannel` executor, the API specifies an unbounded work queue
+and no execution on the submitting thread. Bound application admission **before submission**
+instead of substituting a bounded queue or caller-runs rejection policy inside that executor.
+On an event loop, use non-waiting admission with explicit rejection or an already bounded
+async queue, not a blocking semaphore acquisition. Keep handlers short; the channel's pool
+also dispatches completions. Close owned channels before shutting down their executor.
+
 ## Completion and resource ownership
 
 A blocking socket read can return a short count; a non-blocking channel can return zero.
@@ -118,6 +140,14 @@ offloading only `send` leaves later reads on whichever thread consumes it. An as
 response stage can likewise finish before a streaming body. Keep stream/connection ownership
 and limits through the actual consumption/close boundary, and classify consumer callbacks too.
 Neither local completion nor cancellation establishes that a remote operation stopped.
+
+With `AsynchronousFileChannel`, give each outstanding operation exclusive buffer ownership;
+do not assume completion order matches submission order. A timed-out wait does not complete
+the I/O. `AsynchronousChannel` cancellation is implementation-dependent: a cancelled Future
+does not prove the buffer is idle. Follow its recommendation to discard the buffer or avoid
+access while the channel remains open; cancellation can also close or invalidate the channel.
+Account for other outstanding operations before choosing closure as recovery. Test ownership
+with delayed completion and cancellation, not only an immediately completing cached-file read.
 
 ## Verifying a third-party client
 
@@ -169,6 +199,14 @@ deadlock; warming them at startup does not repair the dependency cycle.
 
 ## Sources
 
+- [Java 25 AsynchronousFileChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/AsynchronousFileChannel.html)
+  and [AsynchronousChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/AsynchronousChannel.html):
+  executor constraints, completion ordering, buffer ownership and cancellation semantics.
+- [OpenJDK 25 UnixChannelFactory](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/unix/classes/sun/nio/fs/UnixChannelFactory.java)
+  and [SimpleAsynchronousFileChannelImpl](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/sun/nio/ch/SimpleAsynchronousFileChannelImpl.java):
+  the Unix provider's executor-based file operations; this is not a portable API guarantee.
+- [Java 25 FileChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/FileChannel.html):
+  channel hierarchy and supported operations; no selectable/non-blocking mode.
 - [Java 25 InputStream](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/InputStream.html),
   [SocketChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/SocketChannel.html)
   and [streaming HTTP body handlers](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpResponse.BodyHandlers.html):

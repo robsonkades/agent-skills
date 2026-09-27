@@ -96,6 +96,10 @@ card. Missing evidence limits the conclusions that depend on it, not every suppo
   invariants and prediction uncertainty remain defensible; label scenario sensitivity outside it.
 - R² does not test coefficient sign, independence, heteroscedasticity, extrapolation or causal
   interpretation. Use residuals, intervals, held-out predictions and repeated-run error.
+- Name the interval's target: uncertainty in the mean USL curve or throughput in a future run.
+  Parameter samples alone describe the former; the latter also needs run-to-run variation under
+  the declared error model at that N. Do not present a mean-curve band as a future-run guarantee,
+  or add future-run noise when the question concerns only a mean-capacity contrast.
 - `α` and `β` are not additive fractions of lock time, GC pause or network bytes. Their denominator
   contributions at operating `N` are model terms; map them to mechanisms only with profiles,
   wait/traffic metrics and intervention evidence.
@@ -121,7 +125,8 @@ Invariants:      hardware per unit, workload/data/mix, topology/routing, state
 Throughput:      useful-completion definition; offered/admitted/error/drop guardrails
 Design:          N points, randomisation/blocking, independent run unit, state criterion
 Fit:             γ, α, β intervals/covariance; error model; residuals; held-out results
-Peak/marginal:   integer candidates and prediction interval; cost/guardrail context
+Uncertainty:     mean curve or future run; interval method and target population
+Peak/marginal:   integer candidates and relevant uncertainty interval; cost/guardrail context
 Attribution:     direct evidence if a contention/coordination mechanism is claimed
 Limits:          supported range, regime changes, sensitivity and re-fit triggers
 ```

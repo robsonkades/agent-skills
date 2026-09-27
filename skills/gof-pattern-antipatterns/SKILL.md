@@ -31,6 +31,9 @@ contracts. Inspect missing intent or runtime wiring before asking a material que
 rationale is not proof that no benefit exists. Report supported defects and concrete maintenance
 costs separately from preferences or hypotheses. No supported findings, or retaining an adequate
 pattern, is a valid result; a review does not require a rewrite.
+For a findings-only request, report the correction and its validation without editing the design.
+When fixes or removal are requested, implement the supported correction within that scope; naming
+an anti-pattern does not authorize unrelated simplification.
 
 ## Detection first
 

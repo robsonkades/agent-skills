@@ -31,9 +31,10 @@ link and is often worse than the chain.
    reference requires Java 21+. Adapt examples without upgrading or enabling preview. If only
    source is available, separate observed navigation from hypotheses about runtime I/O.
 1. **Classify the chain.** Fluent calls on one conceptual receiver and Stream/Optional dataflow
-   are not structural navigation by themselves (callbacks still may navigate). Records/DTOs
-   expose structure as contract, so walking them is intentional schema coupling rather than
-   encapsulation leakage. The suspect case walks _distinct collaborators' private composition_. Read
+   are not structural navigation by themselves (callbacks still may navigate). Walking an
+   intentional record/DTO value schema is schema coupling; a data carrier can also contain a
+   live entity or client, so classify each hop's contract. The suspect case walks
+   _distinct collaborators' private composition_. Read
    `references/detection.md` when the classification is not obvious.
 2. **Ask what the caller does with the result.** If it decides or mutates, check whether it already
    owns that policy and authorized operation. Move only a misplaced decision to its actual owner,
@@ -51,12 +52,13 @@ link and is often worse than the chain.
 
 ## Rules
 
-- Judge chains by exposure, not length: `list.stream().filter(p).toList()` has three dots
-  and zero structural coupling; `a.getB().getC()` has two and couples the caller to both
-  shapes.
+- Judge chains by exposure, not length: `list.stream().filter(p).toList()` is dataflow;
+  inspect `p` separately for navigation. `a.getB().getC()` couples the caller to both shapes.
+  Splitting it into local variables or passing `getB()` into a helper does not by itself
+  remove that knowledge. Trace where each receiver came from and which caller still assembles it.
 - A chain is coupling when the caller could not do its job without knowing how the
-  intermediate objects are composed; it is data access when the objects are records or DTOs
-  whose shape is the published contract.
+  intermediate objects are composed. Intentional access to a published data schema is a
+  different review question; the `record` keyword or a DTO name alone cannot establish that role.
 - Fix priority: place behavior with the module that owns its policy and required data; otherwise pass the
   needed value instead of its container; wrap only when a real abstraction boundary exists,
   never to launder a chain.
@@ -66,8 +68,9 @@ link and is often worse than the chain.
 - Navigation at an orchestration point can be appropriate when that point owns assembly and
   honors aggregate/consistency boundaries. Repetition raises change cost; one occurrence can
   still leak an invariant or trigger unwanted I/O.
-- Getters on a record you own, read locally for data, are not violations. Query, reporting
-  and mapping code navigates structure legitimately.
+- Accessors over a record's published data schema are not violations merely because they
+  form a chain. Query, reporting and mapping code can navigate structure legitimately;
+  navigation from a record component into a live collaborator still needs its own assessment.
 - Chains that mix navigation with mutation (`getX().getY().setZ(...)`) warrant checking both
   exposed composition and invariant enforcement. A published collaborator's authorized command
   may be legitimate; a raw setter bypassing the owner is a different contract. Hand misplaced
@@ -97,6 +100,9 @@ Identify the exposed composition or intentional schema, observed consequence, ow
 smallest useful correction (including keeping the chain). State which internal change should
 become local and which contract remains coupled. Report exact checks performed; do not claim
 behavior preservation, snapshot consistency or fewer queries from shorter source alone.
+For a findings-only review, report the correction without applying it. Implement within the
+requested scope and stop when the exposed dependency and affected caller contracts are verified,
+or state the specific missing ownership, compatibility or runtime evidence.
 
 ## References
 

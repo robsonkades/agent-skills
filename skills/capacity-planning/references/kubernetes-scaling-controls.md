@@ -30,6 +30,27 @@ sizes remain fixed. Verify the exact JDK and effective runtime values; choose po
 those ergonomics must be recomputed. Test controller delay, metric delay, scheduling delay, warm-up,
 rollout overlap, downscale and dependency capacity as one control loop.
 
+## Transient dependency budgets
+
+Check resource use at maximum scale during rollout, not just steady state. Starting pods
+may open pools before readiness, and terminating pods may retain connections until cleanup.
+[Kubernetes Deployment semantics](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment)
+allow resource consumption beyond `replicas + maxSurge` while old pods terminate. Inspect
+the deployed controller behavior, rollout policy and observed termination duration.
+
+For each database endpoint, budget the sum of pool caps for all simultaneous connection
+holders plus other services, jobs and administrative/failover reserves. Use different caps
+for old/new versions when necessary. Pool caps are potential demand, not measured occupancy;
+if relying on a smaller total, identify and test the enforced aggregate bound. Observing
+mostly idle pools is insufficient protection against simultaneous growth.
+
+Illustrative bound: ten pods with a cap of 20 plus 20 reserved connections require 220 in
+steady state. If a transition allows two additional starting/surge pods and two terminating
+holders, the bound becomes 300. Those overlap counts are scenario inputs, not Kubernetes
+defaults or universal maxima. If the budget fails, compare lower overlap, smaller pools or
+an enforced shared bound; recheck rollout availability and pool wait latency before choosing.
+Pass pool tuning and transaction-hold diagnosis to `connection-pool-sizing`.
+
 Primary references: versioned Kubernetes documentation for
 [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/),
 [VPA](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler), and

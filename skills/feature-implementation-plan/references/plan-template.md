@@ -29,6 +29,10 @@ Out of scope: <each item, its reason, and who excluded it>
 | ID  | Decision | Provenance | Owner | Status | Record |
 | --- | -------- | ---------- | ----- | ------ | ------ |
 
+<Link the accepted record and revision when accessible to the executor. If the source exists only
+in the current session, capture its accepted rationale and decisive constraint here with provenance.
+Identify conflicts or missing rationale explicitly; do not silently substitute a newer proposal.>
+
 ## Architecture
 
 <The shape of the change in five lines. What is new, what it plugs into, the direction
@@ -81,8 +85,12 @@ work or an explicitly accepted gap; do not invent an alert or imply coverage is 
 
 ## Testing strategy
 
-| Resource | Level | Against | Must establish |
-| -------- | ----- | ------- | -------------- |
+| Resource | Level | Against | Check and prerequisites | Must establish |
+| -------- | ----- | ------- | ----------------------- | -------------- |
+
+<Name the command/working context or manual procedure, required fixtures/environment, and expected
+observable result. A planned test or fixture links the resource that creates it; planned EV-* is
+not a claim that the check ran. Reuse the project's existing check entrypoint where adequate.>
 
 ## Migration strategy
 

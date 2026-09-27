@@ -80,6 +80,12 @@ Factory methods such as fixed/single pools commonly use unbounded queues; cached
 many platform threads. They are conveniences, not safe network-ingress defaults. Inspect the exact
 implementation/JDK rather than depending on wrapper internals.
 
+Before treating a stalled queue as a capacity shortage, trace task dependencies. Workers waiting
+for children queued to that same exhausted pool cannot free capacity for them. Pass the wait graph,
+queue/grow policy and held resource permits to `thread-sizing-and-virtual-threads` before resizing;
+expect a progress-preserving execution plan, not a worker-count guess. If unavailable, first assess
+whether removing the same-pool wait preserves the task contract; keep uncertain capacity claims conditional.
+
 ## Failure observation
 
 - `execute(Runnable)` allows an uncaught RuntimeException/Error to escape task execution and reach
@@ -91,6 +97,9 @@ implementation/JDK rather than depending on wrapper internals.
 - A throwing `beforeExecute` can prevent the body and `afterExecute` from running, leaving a
   submitted Future pending. Replacing the worker does not settle that result; preserve the
   task-to-result mapping and handle setup failure explicitly.
+- Stock `CallerRunsPolicy` bypasses worker hooks. Required context and failure observation must
+  cover this execution path too, through a task wrapper or a different rejection policy. See
+  `references/shutdown-and-rejection.md` before relying on hooks for every accepted task.
 
 Define one observation path: join/get by owner, completion callback, supervised wrapper, or executor
 hook. Logs alone do not deliver failure semantics. Track task identity with bounded labels and avoid
@@ -188,6 +197,8 @@ transitions when decisions need accuracy. Metrics are not “free.”
 - periodic long run, exception, clock jump, replica overlap and restart;
 - virtual-thread migration with connection/memory/downstream bounds;
 - worker creation fails, or a hook/wrapper throws or blocks; check body execution and result settlement.
+- saturation switches from worker execution to caller-runs; check hook coverage, context restoration
+  and both `execute`/`submit` failure surfaces.
 
 ## Anti-patterns
 
@@ -218,7 +229,7 @@ complete the task without a capacity experiment or a full lifecycle redesign.
 ## References
 
 - [Shutdown, rejection and drain](references/shutdown-and-rejection.md) — read when designing
-  overload, task wrappers or interrupted shutdown/drain ownership.
+  overload, task wrappers, hook coverage or interrupted shutdown/drain ownership.
 - [Scheduled and periodic tasks](references/scheduled-and-periodic.md) — read for periodic
   failures, scheduler-to-worker dispatch, cancellation retention or replica execution.
 - [`ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)

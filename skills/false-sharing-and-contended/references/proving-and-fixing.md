@@ -45,9 +45,19 @@ sharing experiment; report the semantic factor.
 
 ## JMH shape
 
-Use shared benchmark state and per-thread role state so each worker deterministically targets its
-assigned logical variable. Include an invariant/result so updates are not eliminated. Avoid
-`@Group` configurations whose actor ratios/slot mapping differ from production.
+For distinct fields/slots in one shared object/array, use shared payload state and per-thread role
+state so each worker deterministically targets its assigned logical variable. For interference
+between separately allocated objects, also reproduce the payload allocation and placement being
+investigated. Include an invariant/result so updates are not eliminated. Avoid `@Group`
+configurations whose actor ratios/slot mapping differ from production.
+
+JMH 1.37's false-sharing sample documents automatic padding of `@State` objects, without isolating
+the fields inside them. Record the JMH version and inspect generated state classes as well as the
+user-declared class. Per-thread state counters can therefore remove the very adjacency under test.
+Where ordinary production objects are the subject, keep those payload objects distinct from the
+harness state wrappers; verify their placement instead of assuming that wrapper padding extends
+through references. A shared array is a useful controlled experiment for element interference,
+but replacing separate objects with it does not prove their production placement.
 
 Keep accesses observable during measurement: a plain increment repeatedly written back only
 at the end can hide the coherence traffic being studied. Inspect generated code when needed;
@@ -66,6 +76,9 @@ container cpuset/quota configuration
 ```
 
 Not every environment permits reliable pinning. Record actual placement and report uncertainty.
+
+Retain per-role results in reader/writer experiments. An aggregate operations/s score can hide a
+regression in the production-critical role; changing actor ratios also changes the experiment.
 
 ## Result criteria
 
@@ -104,4 +117,7 @@ padding causes GC/cache regression
 - [Linux perf security](https://docs.kernel.org/admin-guide/perf-security.html)
 - [Linux perf list/stat documentation](https://man7.org/linux/man-pages/man1/perf-stat.1.html)
 - [OpenJDK JMH](https://github.com/openjdk/jmh)
+- [JMH 1.37 false-sharing sample](https://github.com/openjdk/jmh/blob/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_22_FalseSharing.java)
+  — harness state padding and reader/writer topology; its commented JDK 8 annotation is not a
+  current-JDK compilation recipe.
 - [OpenJDK JOL](https://github.com/openjdk/jol)

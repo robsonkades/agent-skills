@@ -1,7 +1,8 @@
 # Writing acceptance criteria
 
-A criterion is useful when two people would agree on whether it is met, without discussing the
-implementation. Everything below serves that one property.
+A criterion needs an observable pass condition that two people can interpret consistently.
+The set must also cover the intended need: agreement that a check passed does not establish
+that the right behavior was specified.
 
 ## The level of abstraction
 
@@ -24,7 +25,7 @@ future readers cannot tell a constraint from an accident.
 ```
 Given a customer with 3 orders, one of them cancelled
 When they export their orders
-Then the file contains 3 data records (plus the agreed header),
+Then the file contains exactly those 3 orders, each once (plus the agreed header),
 and the cancelled order shows status "CANCELLED"
 ```
 
@@ -39,6 +40,26 @@ hides. Two ways it goes wrong:
 
 The form is optional. A plain sentence naming the condition and the observable outcome is
 equally good, and better when the Given is trivial.
+
+## Check coverage against the intended use
+
+**Verification** checks conformance to the stated criteria; **validation** checks whether
+the result serves the intended purpose in its intended environment. Use a representative
+consumer workflow to check the connection before declaring the criteria ready. These are
+different questions, not a requirement for two separate test suites or a new approval gate.
+
+For example, if the known need is to reconcile every selected order, a check for three CSV
+records accepts both `A,B,C` and `A,A,C`. It cannot detect the missing order. The criterion
+must cover each selected order exactly once; field fidelity and selection rules need their
+own relevant checks. A count can remain useful evidence, but cannot substitute for identity.
+Conversely, a consumer that only needs aggregate totals has a different contract; do not add
+individual-order export merely to satisfy this example.
+
+Link consequential criteria to the stated need or binding constraint and explain any proxy.
+If the intended workflow is unknown and changes the contract, inspect usage first, then ask
+the focused question. For a business outcome observable only after release, distinguish the
+delivery checks from that still-unverified outcome; do not invent a target, run an experiment
+outside the request, or impose a new release gate.
 
 ## Cover the unhappy paths explicitly
 
@@ -115,6 +136,14 @@ Choose the level per the risk each criterion carries (java-testing-strategy). A 
 no derivable automated test may need manual observation or review. State that method and
 its evidence; rewrite the criterion only if its outcome remains unobservable.
 
+When a requirement changes, trace the effect through the relevant criteria, tests and other
+evidence. For example, changing an export from all orders to only settled orders changes the
+expected selection; an earlier all-orders test pass does not establish the new criterion. Reuse
+evidence whose conditions and claims still apply, and rerun or replace affected checks.
+Record the authorized change in the existing ticket/PR or requested output; a new traceability
+system is unnecessary for a small task. A failed check alone is not authority to change the
+requirement, and an old check alone is not authority to reject an authorized new contract.
+
 ## Definition of done
 
 The standing policy that defines default expectations, with explicit applicability rules so a
@@ -135,3 +164,12 @@ A load test demonstrates its workload and window, not a month's future availabil
 single two-user fixture does not establish authorization for every role and resource; add
 cases for the changed access rules. Keep acceptance evidence separate from a claim of
 exhaustive correctness.
+
+## Supporting sources
+
+- [NASA Systems Engineering Handbook, section 2.4](https://www.nasa.gov/reference/2-0-fundamentals-of-systems-engineering/)
+  distinguishes conformance verification from validation of intended use.
+- [NASA Systems Engineering Handbook, section 6.2](https://www.nasa.gov/reference/6-2-requirements-management/)
+  describes requirement sources, traceability and change-impact analysis. Apply those
+  reasoning principles proportionately; its NASA-specific approval machinery is not project
+  policy.

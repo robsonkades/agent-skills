@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-refactoring-paths
-version: 1.4.2
+version: 1.4.3
 description: >-
   Sequence a chosen enterprise architecture change into compatible, testable checkpoints:
   domain and persistence refactoring, remote boundaries, session state, locking or events.
@@ -47,6 +47,7 @@ suggests:
   - inheritance-mapping-strategies
   - legacy-enterprise-modernization
   - offline-concurrency-control
+  - postgresql-performance
   - remote-facade-and-dto
   - repository-pattern
   - rpc-and-api-contracts

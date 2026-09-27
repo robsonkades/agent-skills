@@ -160,6 +160,43 @@ Carry source versions/freshness budgets through both layers. Publish only after 
 staleness policy, an `AFTER_COMMIT` listener is insufficient—use transactional outbox/CDC or
 version-checked cache reads.
 
+## Query results and invalidation
+
+Use this when an entry is a list, page, count, aggregate or joined projection. Record its source
+dependencies and all result-affecting key dimensions, including stable ordering and pagination.
+An entity's version is not a version of a query's membership.
+
+Consider a cached empty query `available products in tenant A/category C`. Inserting an available
+product into C changes that result, but evicting only `product:<id>` leaves the empty query intact.
+A move from category B to C affects both categories; deleting an item can shift subsequent pages.
+Tracking only IDs already in a result misses newly qualifying rows and empty results.
+
+Choose the smallest mechanism satisfying the read contract:
+
+- With an accepted stale window, bounded TTL may be sufficient; include upstream lag and avoid
+  presenting it as immediate post-commit visibility. If query reuse is low, skip this cache.
+- When affected keys can be identified cheaply, invalidate those dependencies after commit,
+  including inserts/deletes, with the delivery and concurrent-fill protections described above.
+- A per-tenant/category generation can make older query keys unreachable without enumerating
+  pages, but generation observation, source reads and fills need an ordering protocol. Broader
+  invalidation reduces bookkeeping while increasing misses and origin work. Budget obsolete
+  generations for eviction; changing a namespace does not reclaim them automatically.
+- For strict post-commit visibility without such a protocol, read an authoritative source that
+  meets the required isolation/replica guarantees. Adding an outbox alone does not eliminate the
+  interval before its event is applied.
+
+Exercise this adversarial schedule: pause an old query after reading its source snapshot, commit
+a qualifying insert, deliver invalidation, then release the old fill and start a new reader.
+The new reader must not receive the old result outside the declared stale window. A generation
+scheme must not label that old snapshot with a freshly observed generation after the load. Also
+test empty-to-nonempty, delete/page shift and a row moving between predicates. These are design
+counterexamples and proposed tests, not evidence that a particular application passes them.
+
+The [Spring default key implementation](https://github.com/spring-projects/spring-framework/blob/v6.2.11/spring-context/src/main/java/org/springframework/cache/interceptor/SimpleKeyGenerator.java)
+also establishes that operation identity must be supplied separately when sharing a cache:
+`getProduct(7L)` and `getStock(7L)` otherwise use equal default keys. Keep cache names/key namespaces
+aligned across reads, writes and evictions, and test collisions before testing hit-rate gains.
+
 ## Before implementing
 
 - [ ] Source latency distribution, origin work and sustainable capacity measured
@@ -173,6 +210,7 @@ version-checked cache reads.
 - [ ] Values are immutable/versioned projections; entity-cache semantics are explicit
 - [ ] `recordStats()` enabled
 - [ ] Invalidation strategy defined **and** tested where the freshness contract requires it
+- [ ] Query dependencies cover inserts, deletes, membership/order changes and empty results
 - [ ] Cache key includes every tenant/authorization/locale dimension affecting the value
 - [ ] Authorization/revocation works on warm hits, including hostile tenant input
 - [ ] Distinct-key misses, refresh and warm-up share a measured origin admission budget

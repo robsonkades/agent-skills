@@ -1,7 +1,9 @@
 # Scope creep catalogue
 
-Additions that arrive without a requirement behind them. Each entry gives the shape, the reason
-it feels justified, and the test that settles it.
+Additions that can arrive without a justified delivery selection. Each entry gives the shape,
+the reason it feels justified, and a test for necessity or benefit. Failure to establish necessity
+does not exclude an addition already selected within delegated discretion; record its actual
+benefit and authority instead of inventing a requirement.
 
 ## The catalogue
 
@@ -32,13 +34,34 @@ Two cases need particular care when assessing prerequisites:
 
 ## The "while we are in there" rule
 
-The instinct is correct — the cost of coming back is real. The answer is not to fold the work
-in, because it makes the change harder to review and harder to revert, and it hides the feature
-inside a diff of unrelated edits.
+The cost of coming back can be real, but proximity alone does not select the work. Without
+authorization, folding it in can make the change harder to review and revert, and hide the
+feature inside a diff of unrelated edits.
 
-Instead record its location and consequence as Out of scope, or Future work when it depends on
-this feature. A separate commit does not authorize incidental work. Execute only within existing
-authorization; do not create commits merely because this catalogue suggests separation.
+Record unselected cleanup and its consequence as Out of scope, or Future work when it depends
+on this feature. If the user has delegated relevant cleanup, assess its benefit and impact within
+that delegation, identify any selected Optional or Recommended work, and keep it distinguishable
+from necessary feature work. Explicit exclusions still apply. A separate commit does not
+authorize incidental work; do not create commits merely because this catalogue suggests separation.
+
+## Checking dependent scope
+
+An optional attachment feature illustrates why selection and supporting work must be checked
+together. If attachments are selected, applicable access checks and validation of attachment
+behavior belong in that delivery. Calling the enhancement Optional cannot justify omitting
+those checks. If attachments are not selected, attachment-only storage and cleanup work do not
+become Required for the base feature. Existing shared access-control obligations still stand.
+
+Similarly, a proposed asynchronous design may need a queue and worker lifecycle while an
+established synchronous path may satisfy the same accepted outcome without them. Establish
+feasibility from the actual deadline, workload and failure requirements. Keep the queue's scope
+conditional until the choice is resolved; if asynchronous processing is itself mandated, that
+constraint changes the option set. Do not classify a preferred design's cost as unavoidable.
+
+This distinction follows the separation between source requirements and constraints derived
+from design choices in [NASA's requirements-management guidance](https://www.nasa.gov/reference/6-2-requirements-management/),
+especially sections 6.2.1.2.3–4 on traceability and change impact. Use that reasoning here;
+the project's existing authority and proportional records govern the process.
 
 ## Detecting creep after the plan exists
 

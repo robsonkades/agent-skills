@@ -93,7 +93,10 @@ extension and lifecycle contracts permit it.
 Two smaller but real ones: **records** remove the boilerplate that made Builder, Memento and
 Prototype heavy, but records are only shallowly immutable. Preserve equality, hashing and rendering
 contracts when replacing classes; array components use identity in generated equality, even with
-defensive copies (`java-object-contracts`). **Virtual threads** can simplify
+defensive copies (`java-object-contracts`). Class-to-record conversion must also preserve supported
+construction, accessor and extension contracts; a public record exposes its canonical constructor,
+so a named factory alone cannot enforce invariants. Read the records section of
+`references/feature-to-pattern.md` before such a conversion. **Virtual threads** can simplify
 blocking I/O orchestration; they do not remove requests represented as Commands, durable work,
 admission control, cancellation or downstream capacity limits (`thread-sizing-and-virtual-threads`).
 
@@ -118,7 +121,8 @@ THEN preserve an extension interface. Classic Visitor also couples visitors to
 
 IF a lambda would express the pattern
 THEN compare a function with a named implementation for state, metadata,
-     checked failures and diagnostics; name the intent whichever form is chosen.
+     checked failures and diagnostics; preserve receiver/capture semantics rather than mechanically
+     converting an anonymous class. Name the intent whichever form is chosen.
 
 IF diagnosability matters (a hot path, a production stack trace)
 THEN inspect actual traces/profiles; named methods/classes can help, but a lambda

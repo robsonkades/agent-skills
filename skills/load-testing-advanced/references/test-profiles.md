@@ -36,9 +36,16 @@ Procedure:
 3. if both endpoints exist, refine the bracket using steps selected for the needed resolution;
 4. hold each point long enough to cover stabilization and the SLO window;
 5. repeat boundary points as independent runs, randomized/blocked where possible;
-6. report \([\lambda_{pass},\lambda_{fail})\) only when a reproducible monotone bracket is
-   supported; otherwise report the tested points and any conditional lower bound, with run
-   variability and the reason for any observed failure.
+6. report the observed passing and failing endpoint statuses. When a reproducible monotone
+   bracket is supported, \([\lambda_{pass},\lambda_{fail}]\) contains the inferred boundary
+   (the supremum of passing rates); it does not assert every rate in that interval passes.
+   Otherwise report the tested points and any conditional lower bound, with run variability
+   and the reason for any observed failure.
+
+A failing endpoint need not lie strictly above that supremum: under a strict acceptance
+rule, the boundary itself can fail. For a model passing exactly when \(\lambda < 100\),
+the boundary is 100 even though 100 fails. Observing only a pass at 90 and failure at 100
+does not locate the boundary exactly or justify excluding 100 from its containing interval.
 
 If only discrete points were tested and monotonicity is uncertain, report the points rather
 than an interval. A passing point does not establish that all lower loads pass under every

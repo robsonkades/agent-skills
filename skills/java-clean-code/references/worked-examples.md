@@ -163,6 +163,15 @@ The method names narrate plumbing ("addToTotal"), not domain.
 
 ### After: localised batch state
 
+This version assumes `amount()` returns a stable value without observable side effects
+or failures on valid inputs. The original reads an accepted payout's amount twice:
+once to test the limit, then again after adding it to `approved`. The version below reads
+it once and reuses `candidate`. For example, if the first payout reports 100000 then
+200000, followed by a stable 100000 payout, the original rejects the second payout while
+this version accepts it. A second-read exception or audit effect would also disappear.
+If the accessor contract is unknown, keep the original reads and their placement when
+localising state, or evaluate a snapshot as a separate behaviour change.
+
 ```java
 final class PayoutBatchProcessor {
     private static final BigDecimal DAILY_LIMIT = new BigDecimal("250000");
@@ -207,7 +216,10 @@ _then_, with the policy as a parameter-taking function, not fields.
 ### Verification of the batch refactoring
 
 Compare both versions for empty input, exact limit, an oversized item followed by one
-that fits, and order-sensitive acceptance. Sequential reuse already works in the original
+that fits, and order-sensitive acceptance. Establish the accessor contract before removing
+the second read. With a changing or throwing accessor, compare accepted items, read/effect
+counts and first failure; fixed-value fixtures alone cannot establish equivalence.
+Sequential reuse already works in the original
 because it calls `resetState`; do not claim otherwise. Check overlapping calls with
 independent stable inputs against serial expected results to expose shared accumulator
 interference, and verify returned-list structure cannot be mutated. A passing concurrency

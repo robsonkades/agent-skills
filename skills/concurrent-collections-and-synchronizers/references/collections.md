@@ -42,9 +42,13 @@ is telemetry, not an exact quota or balance. Likewise `compute` serializes mappi
 not arbitrary mutations through leaked value references: prefer immutable replacement values
 or give the mutable value its own synchronization contract.
 
-**Not atomic, whatever the map:** `putAll` and `clear` ("may reflect insertion or removal of only
-some entries"), and the bulk `forEach`/`search`/`reduce` family, whose result "is not necessarily
-atomic with respect to the map as a whole unless it is somehow known to be quiescent".
+**Not whole-map atomic on `ConcurrentHashMap`:** readers may observe only part of `putAll` or
+`clear`, and bulk `forEach`/`search`/`reduce` results need not describe one instant. Do not extend
+that statement to every map: a synchronized wrapper serializes its methods under the wrapper's
+monitor. An invariant spanning multiple calls still requires that same monitor around the
+entire sequence, including readers, and all access must follow the wrapper protocol. This gives
+mutual exclusion, not rollback if a bulk operation fails. See the synchronized-wrapper section
+before replacing a whole-map critical section with independently atomic CHM calls.
 
 ## Internal coordination and recursive-update limits
 
@@ -315,6 +319,7 @@ it; profile the deployed JDK if collection-size telemetry itself is suspected. I
 ## Authoritative references
 
 - [Java 25 `ConcurrentHashMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
+- [Java 25 `Collections.synchronizedMap`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collections.html#synchronizedMap(java.util.Map)>)
 - [Java 25 `ConcurrentSkipListMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentSkipListMap.html)
 - [Java 25 `CopyOnWriteArrayList`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html)
 - [Java 25 `List.copyOf`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)

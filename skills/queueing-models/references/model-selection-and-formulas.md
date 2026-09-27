@@ -186,6 +186,14 @@ L = Σ n p_n
 W = L/λ_eff
 ```
 
+These aggregate results follow from the count process's transition rates, not FCFS alone
+(Whitt, section 4 below). For example, nonpreemptive priority with independent Poisson classes,
+identical exponential service laws, work-conserving service and the same full-only admission
+rule retains these rates. Its total occupancy, blocking and aggregate mean residence match the
+FCFS count model, while per-class waits can differ. Record the actual discipline in the model;
+do not transfer FCFS wait-tail formulas to priority classes. Class-dependent service rates,
+reserved slots or class-dependent admission can invalidate this reduction.
+
 Finite state makes a stationary distribution possible even when offered `λ≥cμ`, but high load is
 paid as blocking/loss. Completion-latency improvement while loss rises is not an SLO win.
 Abandonment/deadlines require Erlang-A or another patience model; treating timed-out waiters as
@@ -194,7 +202,7 @@ instant blocking changes occupancy and retry traffic.
 ## Classes, batches, priorities and networks
 
 - Batch arrivals need batch-size distribution and within-batch order; `C_a` alone is insufficient.
-- Non-preemptive priority formulas require Poisson classes, IID services, one server and a
+- Classical single-server non-preemptive priority formulas require Poisson classes, IID services and a
   work-conserving discipline. Validate conservation and per-class starvation; do not generalise a
   two-class formula to executor priorities without checking cancellation/aging.
 - Sequential stage **means** add for the same cohort, but tail quantiles do not. Blocking-before-
@@ -220,4 +228,4 @@ observable and its predictions falsifiable.
 - Denning and Buzen, [“The Operational Analysis of Queueing Network Models”](https://www.columbia.edu/~ww2040/8100S12/DenningBuzen1978.pdf)
 - Halfin and Whitt, [“Heavy-Traffic Limits for Queues with Many Exponential Servers”](https://doi.org/10.1287/opre.29.3.567)
 - Whitt, [“Approximations for the GI/G/m Queue”](https://doi.org/10.1080/15326349308807207)
-- Whitt, [“Continuous-Time Markov Chains,” section 9.3](https://www.columbia.edu/~ww2040/6711F13/CTMCnotes120413.pdf)
+- Whitt, [“Continuous-Time Markov Chains,” sections 4 and 9.3](https://www.columbia.edu/~ww2040/6711F13/CTMCnotes120413.pdf)

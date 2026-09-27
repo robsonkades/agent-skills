@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: stream-processing-runtime-performance
-version: 1.0.3
+version: 1.0.4
 description: >-
   Operating Kafka Streams and Apache Flink for predictable throughput, state and recovery:
   separating their execution models, sizing partitions or operator parallelism, diagnosing
@@ -24,6 +24,7 @@ dependencies:
   - name: streaming-pipeline-topologies
     version: ^1.0.0
 suggests:
+  - capacity-planning
   - kafka-consumers-in-java
   - delivery-semantics
   - off-heap-memory

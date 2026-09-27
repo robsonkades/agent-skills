@@ -20,6 +20,9 @@ Reading Path to GC Roots: how many distinct strong paths reach the object after 
 the reference strengths you intentionally chose? A static field can name a cache or
 singleton. JVM/framework roots and MAT pseudo-roots need version-specific interpretation;
 do not convert their display label directly into ownership.
+Treat a shortest path as one witness, not an exhaustive inventory of owners. Inspect incoming
+references and alternate/merged root paths for the suspect population; record exclusions and
+result limits. Removing one displayed reference can leave another strong path intact.
 
 Record the **parsed population**, not just the capture's live/`-all` filter. MAT normally
 discards unreachable objects while indexing and retains their class/count/size summary in
@@ -45,6 +48,21 @@ Dominance is strict: Y dominates X only if **every** path from any GC root to X 
 through Y. If two subsystems share an object, neither subsystem need dominate it, but
 their common application owner can. Only when no real object dominates it does its
 immediate dominator become the synthetic super-root.
+
+The [MAT dominator-tree contract](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/dominatortree.html)
+also distinguishes tree edges from real object references. For example, this is the reference
+graph, with two distinct paths to one payload:
+
+```text
+GC root -> Owner -> Cache   -> Payload
+                 -> Pending -> Payload
+```
+
+`Owner` immediately dominates `Payload` even though it has no field directly pointing to it.
+Removing `Cache`'s reference leaves the path through `Pending`; removing both eliminates the
+shown retaining paths. Check other roots and reference strengths before predicting reclamation.
+Whether `Pending` should release it depends on the work's lifecycle. Use the dominator to locate
+responsibility, then actual references and lifecycle evidence to identify a correction.
 
 Direct dominator-tree children represent disjoint dominated branches in the underlying
 graph, but MAT grouping/report views may aggregate or repeat data differently. Before

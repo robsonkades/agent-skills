@@ -160,6 +160,31 @@ readiness transition after its configured thresholds. A login redirect or HTTP 2
 unhealthy body must fail this validation even if kubelet reports success. This checks the
 probe contract, not the rollout's complete availability SLO.
 
+## Deployment rollout decisions
+
+`maxUnavailable` limits the permitted unavailable replicas during a rolling update;
+`maxSurge` permits extra replicas. Choose them against the required serving capacity and
+actual scheduling headroom, including quota and placement constraints. Terminating pods can
+still consume resources beyond `replicas + maxSurge`; a long drain is also a capacity cost.
+
+**Single-replica rollout:** with one healthy replica, `maxUnavailable: 0` and `maxSurge: 1` let the old
+pod serve until the new pod becomes available. With no place to schedule that extra pod, the
+same rollout can stall. Add capacity or resolve placement constraints when uninterrupted
+service is required. Changing to `maxUnavailable: 1`, `maxSurge: 0` permits an availability gap;
+it is an explicit tradeoff, not a timeout fix. A PDB does not enforce the Deployment's budget.
+
+`minReadySeconds` requires a new pod to remain ready without crashing before the Deployment
+counts it as available. It does not hold the pod out of Service routing; keep readiness false
+until actual warmup completes. `progressDeadlineSeconds` must exceed `minReadySeconds` and
+should accommodate the intended progress window. Exceeding it records
+`ProgressDeadlineExceeded`; the Deployment controller does not automatically roll back.
+Inspect any higher-level rollout automation before promising recovery.
+
+Check Pod scheduling events, ready timestamps, `availableReplicas`, terminating pods and
+Deployment conditions alongside request outcomes. Distinguish no capacity, startup failure,
+readiness instability and slow draining before changing a timer. These are controller and
+configuration checks; an availability claim still needs the workload validation in the main skill.
+
 ## Resources and disruption
 
 - `requests` influence scheduling and QoS; memory limits can trigger kills and CPU limits
@@ -181,6 +206,10 @@ probe contract, not the rollout's complete availability SLO.
 
 ## Sources
 
+- [Kubernetes 1.34 Deployment behavior](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+  and [apps/v1 API contracts](https://github.com/kubernetes/kubernetes/blob/v1.34.0/staging/src/k8s.io/api/apps/v1/types.go):
+  rollout budgets, readiness versus availability, terminating resources and progress conditions;
+  checked 2026-09-27. Readiness routing follows the Pod/Service contract, not `minReadySeconds`.
 - [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/): scheduling, thresholds and probe-level grace.
 - [Kubernetes 1.34 HTTP probe implementation](https://github.com/kubernetes/kubernetes/blob/v1.34.0/pkg/probe/http/http.go): response-status interpretation and redirect handling.
 - [Kubernetes 1.34 feature gates](https://v1-34.docs.kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/): sleep-action and native-sidecar release/gate conditions.

@@ -51,6 +51,17 @@ For completion callbacks, capture at registration in the originating operation, 
 an unrelated thread that later completes the future. Keep Context as data across threads;
 open and close each Scope on its own executing thread.
 OpenTelemetry Java also exposes wrappers for Runnable, Callable, Executor and functions.
+For a reusable executor, `Context.taskWrapping(executor)` captures the current Context on each
+submission. In contrast, `captured.wrap(executor)` runs every submitted task under that one
+captured Context; it is appropriate only when that fixed relationship is intended. Creating the
+latter once during initialization or under request A does not propagate later request B.
+Keep the per-task `submitted.wrap(...)` example when the task belongs to that submission.
+
+In Java 1.62.0, `Context.taskWrapping(ScheduledExecutorService)` propagates one-shot submissions,
+but explicitly does not propagate `scheduleAtFixedRate` or `scheduleWithFixedDelay`. For recurring
+jobs, choose parentage for each run deliberately and test it; do not assume the registering request
+remains the correct parent indefinitely, or that this wrapper supplies periodic propagation.
+
 For a changed async boundary, select relevant cancellation, rejection, delayed-execution
 and executor-reuse checks; adequate existing tests can suffice. A scope leak can attach
 later unrelated tasks to the wrong trace.

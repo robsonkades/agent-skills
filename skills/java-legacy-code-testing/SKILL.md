@@ -20,8 +20,8 @@ description: >
 
 ## Purpose
 
-`java-refactoring` step 1 states "no net, no refactoring" and asks for characterisation tests
-first. This skill exists for the situation where you cannot: `new OrderProcessor()` opens a
+`java-refactoring` asks for meaningful coverage before behavior-sensitive restructuring.
+This skill exists for the situation where you cannot reach that coverage: `new OrderProcessor()` opens a
 database connection, the method you must change reads `LocalDate.now()` and a static singleton,
 and the class is `final`. There is no test to write yet, and the change that would make one
 possible is itself untested.
@@ -62,6 +62,10 @@ Use existing caller tests, incidents and the requested assurance objective; ask 
 material unresolved behavior or ownership contract. No new seam is needed when current access
 already supports the required check.
 
+For a findings-only review, identify the obstacle, candidate enabling point, preservation risks
+and first useful check without editing code. For an implementation request, stop at the requested
+testability change unless behavior changes or further refactoring are also authorized.
+
 Use Feathers's Legacy Code Change Algorithm (ch. 2, p. 18), adapted here to include an explicit
 assurance objective:
 
@@ -74,7 +78,9 @@ assurance objective:
 3. **Break dependencies.** Only enough to reach step 4. This is the catalogue below.
 4. **Write the tests.** Characterisation, by running the code and recording what it does —
    mechanics in `java-refactoring/references/safety-workflow.md`.
-5. **Make the change and refactor.** Now the net exists; `java-refactoring` takes over.
+5. **Hand off the reachable test point.** Report the enabling point, first meaningful assertion
+   and effects still untested. If the request includes the subsequent change, `java-refactoring`
+   takes over; otherwise reaching the requested test point completes this task.
 
 Steps 3 and 4 are the ones people invert, and inverting them is the deadlock this skill resolves.
 
@@ -131,8 +137,8 @@ existing time abstraction, especially for monotonic elapsed time or business-cal
 
 ## What you may change before a test exists
 
-This is where the repo's own rule needs qualifying rather than repeating. `java-refactoring`'s
-"no net, no refactoring" is correct for **category 2** below and is a deadlock for **category 1**.
+Requiring the unreachable narrow test before every edit would create a deadlock. Distinguish
+the minimal seam step from the behavior-sensitive restructuring that needs coverage first:
 
 1. **Small changes with a reviewable preservation argument**, applied only to create a seam: Parameterize
    Constructor with a delegating old constructor, Extract Interface, Extract Method, Rename —
@@ -146,8 +152,10 @@ For category 1, Feathers's four disciplines (ch. 23) substitute for the test you
 
 - **Preserve Signatures.** Change no signature during the step. If nothing a caller can see
   changed, cut-and-paste is verifiable by eye. This is why the delegating old constructor matters.
-- **Lean on the Compiler.** Make the change that _forces_ a compile error at every site that must
-  move, then fix them. Deliberately breaking compilation is a search tool, not an accident.
+- **Lean on the Compiler.** A temporary signature/name change can expose callers through compile
+  errors. Treat this as a search aid, not a complete inventory: overload or inherited-member
+  fallback can still compile while selecting different behavior. Inspect resolved targets and
+  reflective/configured/external callers before calling the step preserved.
 - **Single-Goal Editing.** One goal per editing session. "While I'm in here" is how a category-1
   step becomes a category-2 change with no net.
 - **Hyperaware Editing.** Know why every keystroke is safe. If you cannot say why, stop.
@@ -235,8 +243,11 @@ shapes. They answer "I have two days"; they do not answer "how do we fix this".
 
 ## Rules
 
-- Break dependencies only as far as step 4 needs. The refactoring you want to do is a separate
-  commit, after the tests exist.
+- Break dependencies only as far as step 4 needs. Further refactoring is a separate change after
+  the tests exist, within the requested scope. Commit only when explicitly requested.
+- Preserve resource acquisition and ownership at the seam. An injected shared resource is not
+  equivalent to one opened and closed per operation; use an acquisition seam when that lifetime
+  must remain. The constructor/parameter catalogue covers choosing between an instance and factory.
 - Preserve existing caller signatures where possible through overloads/delegation. Techniques
   that deliberately change a signature or class identity need a caller/compatibility inventory
   and the narrowest reachable checks; the compiler cannot find reflective or external callers.

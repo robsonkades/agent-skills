@@ -120,13 +120,42 @@ a stream has the same lifetime issue; method return alone does not establish res
 
 ## Weighted admission
 
-Java `Semaphore.acquire(int)` can model coarse units such as memory MiB. Define rounding and maximum
-weight; reject one request whose weight exceeds total capacity instead of waiting forever. Large
-multi-permit acquisition can block behind fragmented availability and interact with fairness.
+Java `Semaphore.acquire(int)` can model coarse units such as memory MiB. Define units and round up
+without arithmetic overflow; nonzero protected work must not round down to zero permits. Validate
+the weight before converting to `int`; reject negative or over-capacity work rather than waiting
+forever. Define whether genuinely zero-cost work is allowed. Acquire the whole weight in one call,
+not a loop of single acquisitions: the bulk operation acquires atomically, while partial holdings
+can prevent all contenders from obtaining their remainder. Large requests still interact with
+fairness and head-of-line blocking.
 
 For actual memory, validate weight estimates against retained/native allocation and concurrent
-phases. A body that grows after admission breaks the bound; stream/chunk it or acquire additional
-weight through a deadlock-safe protocol.
+phases. A body that grows after admission breaks the bound. Reserve a known maximum up front, or
+process bounded chunks whose memory is actually released before reserving the next chunk. Retaining
+all earlier chunks defeats the bound. If holders all need extra weight before any can finish,
+blocking top-ups can deadlock even with one shared semaphore. An immediate failed top-up should
+reject/abort with cleanup, or use an explicit protocol that guarantees progress; do not release
+memory permits while their memory remains retained.
+
+## Attempts, retries and fan-out
+
+Choose the nesting by the resource lifetime, not annotation/decorator order folklore. In conceptual
+`Retry(ResourceGate(attempt))`, each attempt reacquires capacity and releases after its real cleanup;
+backoff holds no attempt permit. `RequestGate(Retry(attempt))` instead bounds logical requests,
+including backoff, and can deliberately protect their retained state. They solve different problems
+and may coexist. Inspect framework/proxy ordering and instrument actual attempt entry/exit before
+claiming that configuration implements either arrangement.
+
+Parallel fan-out and hedged attempts must each acquire resource capacity, or consume an equivalent
+reserved parent weight with a checked maximum. Never let a parent take the last permit and then wait
+for a child that needs another permit from the same gate. A losing hedge keeps its charge until its
+protected work ends; cancelling the observer is insufficient. If that work continues remotely after
+local cleanup, include it as late-server exposure rather than claiming a server-side hard cap.
+
+Treat local admission refusal separately from a downstream attempt failure. Blind immediate retry
+just re-enters the saturated gate; a retry policy needs an explicit deadline/budget and a reason that
+capacity may become available. Pass attempt scope, rejection type, cancellation behavior and the
+remaining deadline to `retries-and-backoff` for retry-safety/policy decisions. If unavailable, keep
+admission failure explicit and preserve existing retry semantics until their safety is established.
 
 ## Hierarchical acquisition
 
@@ -165,6 +194,12 @@ Test removal and reactivation while old work or an admission attempt still holds
 - interruption while waiting and after acquiring;
 - double close and forgotten close detection;
 - zero/negative/overflowing duration and weight greater than capacity;
+- nonzero work rounding to zero, weight-conversion overflow, and contenders retaining partial
+  weights while each requests more; verify rejection/cleanup or a progress-preserving alternative;
+- executor workers and queue saturated: rejection must not run extra protected work on callers;
+  submitted async launch tasks must not be mistaken for completed resource operations;
+- retry backoff versus ingress lifetime, parallel hedges/fan-out, and a late cancelled loser:
+  reconcile resource-attempt occupancy separately from logical-request occupancy;
 - slow dependency and caller timeout with residual provider work;
 - response future completes while its streaming body remains active: retain the permit through
   body use/cleanup, including failed consumption or ownership handoff;
@@ -177,6 +212,8 @@ Test removal and reactivation while old work or an admission attempt still holds
 
 ## References
 
+- [Java 11 `Semaphore`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/Semaphore.html)
+  — timed fairness, ownership and atomic multi-permit acquisition on the example's baseline.
 - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [Java 25 `Duration`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html)
 - [Java 25 virtual threads: do not pool to limit concurrency](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html#GUID-704A6A35-6A18-47C9-A272-1A3BC4972391)

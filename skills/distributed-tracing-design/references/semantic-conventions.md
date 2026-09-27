@@ -22,12 +22,14 @@ are stable unless a section says otherwise:
 - normally leave 4xx unset on SERVER and set Error on CLIENT, with application context able
   to classify more precisely;
 - set Error for relevant 5xx or transport failures;
-- leave status unset and omit `error.type` for detected intentional caller cancellation;
+- leave status unset and omit `error.type` on CLIENT spans for detected intentional caller cancellation;
 - do not add redundant status descriptions inferable from status code.
 
 Do not infer caller intent from a cancellation-shaped exception alone. A deadline or
 transport failure may use cancellation internally; inspect the cause rather than exempting
 every timeout from error reporting. If the cause is unknown, retain that uncertainty.
+This CLIENT exemption does not prescribe SERVER status; classify the server's own operation
+outcome under the applicable HTTP rules.
 
 Consult the pinned document for required attributes and resend modeling.
 

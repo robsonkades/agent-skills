@@ -82,13 +82,18 @@ Return the supported change or no-change, evidence limits, and checks run versus
 - `numastat` without `-p` gives system-wide kernel page-allocation counters such as
   `numa_hit`/`numa_miss`/`numa_foreign`; these are not hardware remote-access counts and are
   not process-specific. `numastat -p <pid>` gives page residence by node and no hit/miss
-  counters. Neither supports a universal 20–30% "remote heap" threshold.
+  counters. Use matched interval deltas of the system counters for current allocation
+  pressure; a historical total or unchanged counters do not establish current accesses.
+  Neither supports a universal 20–30% "remote heap" threshold.
 - async-profiler can sample supported Linux perf/PMU events; a portable built-in NUMA ratio
   should not be assumed. Hardware watchpoints target accesses to addresses and do not alone
   prove false sharing or remote memory access. Validate event semantics and attribution.
 - Binding a whole JVM to few CPUs is sometimes the intended tenancy/isolation policy. The
   required set is determined by measured runnable demand, GC/JIT pause goals and quota — not
   by summing thread counts, because threads time-share and are not all runnable together.
+  Affinity restricts where this JVM runs; it does not reserve those CPUs against other
+  tenants. An isolation claim also needs evidence of exclusive placement and interference,
+  including SMT siblings; see the placement reference before recommending host changes.
   Use `ActiveProcessorCount` when affinity/container detection does not yield the ergonomics
   you intend, then validate GC and compiler parallelism.
 - An unbound JVM can inherit task memory policy or have mapping/collector-specific allocation

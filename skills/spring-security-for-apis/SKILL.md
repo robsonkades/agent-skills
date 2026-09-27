@@ -46,10 +46,13 @@ the user, not a substitute API access token.
 2. **Write the credential contract before configuring it.** Establish trusted issuer,
    intended API audience, access-token profile, accepted algorithms and keys or
    introspection service, token lifetime, revocation needs and authority vocabulary.
+   Establish accepted credential transport and TLS/proxy boundaries too. Do not enable
+   access tokens in query strings to work around a client's inability to send a header;
+   signature validation does not prevent disclosure or replay of a bearer token.
    Inspect sanitized issuer metadata and actual configuration; never infer a trust root
    from an incoming token's `iss`, `jku` or `x5u`. If these facts are missing, identify the
    gap and keep the dependent configuration conditional. Read
-   [token validation](references/token-validation.md) for JWT/opaque selection or changes.
+   [token validation](references/token-validation.md) for transport, JWT/opaque selection or changes.
 3. **Keep authentication and permissions separate.** Preserve framework validation while
    adding audience/profile checks. Map only the agreed claim schema; `SCOPE_orders.read`
    and `ROLE_ADMIN` are different authorities. A route requiring `authenticated()` accepts

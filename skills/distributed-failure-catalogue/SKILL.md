@@ -3,7 +3,7 @@ name: distributed-failure-catalogue
 description: >
   Evidence-oriented recognition index for recurring distributed failure shapes: overload
   amplification, gray and asymmetric failure, split ownership, stale work, mixed versions,
-  correlated faults, silent stagnation and destructive automation. Use to turn incident
+  correlated faults, silent stagnation, missing effects and destructive automation. Use to turn incident
   observations into discriminable hypotheses and route each to the skill owning diagnosis
   and remediation. It is not a substitute for the owner skill or causal evidence.
 ---
@@ -48,6 +48,8 @@ walk. Carry the evidence, unresolved discriminator and remaining time into that 
 5. **Go to the owner skill for the fix.** Do not improvise a remedy from the entry — the
    entries are deliberately too short to implement from. Match any intervention to existing
    authority, affected scope and recovery/stop conditions; naming a pattern grants none.
+   Pass the affected operation, contract, evidence and unresolved discriminator. If that owner
+   is unavailable, return the bounded evidence request and limitation rather than inventing a fix.
 6. **In a design review, walk the index as a checklist** and require an answer for each
    pattern the design can exhibit. "That cannot happen here" is an acceptable answer only with
    the reason.
@@ -82,6 +84,7 @@ Prefer instead when:
 | Node is up, health check green, answering ten times slower         | Gray failure / slow node       | `failure-models`                                         |
 | Only some callers/regions can reach a dependency                   | Asymmetric partition           | `failure-models`                                         |
 | Two records for one intent; a side effect applied twice            | Duplicate processing           | `delivery-semantics`, `idempotency`                      |
+| Work was acknowledged but its required effect cannot be found      | Missing effect / loss window   | `delivery-semantics`                                     |
 | Two instances both believe they hold the lock or the leadership    | Split-brain                    | `distributed-locks-and-leases`                           |
 | Negative durations, leases expiring early, out-of-order timestamps | Clock skew                     | `timeouts-and-deadlines`, `distributed-locks-and-leases` |
 | Errors only while a rollout is in progress, then they stop         | Version skew                   | `rpc-and-api-contracts`                                  |
@@ -112,6 +115,11 @@ Prefer instead when:
   dependency failure, server defect and business outcome, while retaining a bounded status
   class/reason dimension. Whether a 4xx is expected depends on the contract; authentication
   outages and rate-limit saturation can be service incidents too.
+- **Name what was acknowledged.** Admission, broker acceptance, consumer progress and durable
+  business completion are different boundaries. A missing result can be pending, hidden by
+  the read path, lost, or unknown; an acknowledgement alone does not choose between them.
+  Retain uncertainty for each effect and route recovery to `delivery-semantics`/`idempotency`;
+  matching a loss pattern is not justification to replay potentially completed work.
 - **Every rolling deploy is a mixed-version window.** Compatibility direction depends on who
   produces/consumes first, rollback requirements, persisted messages and database migration
   order. Build a version-interoperability matrix and use expand/migrate/contract rather than
@@ -146,7 +154,7 @@ adequate existing controls. A supported no-change conclusion is a valid result.
   mechanism, where it hides, and owner. Read when the incident involves load, latency,
   saturation or repeated effects.
 - [Silent, temporal and operational patterns](references/silent-and-operational.md) — absence
-  of errors, expected versus unexpected errors, version skew, stale work, destructive cleanup,
+  of errors, missing effects/loss windows, expected versus unexpected errors, version skew, stale work, destructive cleanup,
   the optional-dependency assumption, the second-system effect, split-brain and clock skew.
   Read when nothing is obviously overloaded, when the incident is tied to a deploy, a schedule
   or a clock, or when the evidence is something that failed to happen.

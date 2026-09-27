@@ -155,6 +155,25 @@ The parts a production measurement cannot skip:
 - **Allocation, randomisation and blocking.** Randomise treatment order or traffic assignment
   when feasible. If time drift is expected, block comparable A/B observations within time
   windows; deterministic ABAB is vulnerable to periodicity and carry-over. Record the scheme.
+- **Treatment exposure and interference.** Inspect routing, cache ownership and shared queues,
+  databases or quotas before treating requests or pods as independent assignments. A change
+  that lowers shared backend demand can improve control latency too; cache eviction or extra
+  work can harm both arms. The measured contrast at that rollout fraction can therefore differ
+  from the effect of moving the whole workload to the treatment. More requests or a longer run
+  do not remove this interference.
+  If it matters to the decision, compare independently assigned resource groups with comparable
+  load and capacity, checking that no relevant shared bottleneck remains. Assigning whole groups
+  reduces the number of independent units; copying infrastructure must not give one arm more
+  capacity per request. Request allocation remains useful when spillovers are negligible for
+  the stated question, or when the mixed-rollout effect is itself the target.
+- **Switching a shared system over time.** When isolation is impractical and a treatment is
+  safely reversible, randomised time blocks on the whole affected system may answer the
+  question. Design for carry-over: queued work, warmed caches or persistent state can retain the
+  previous treatment's effect. Justify transition handling and block duration from state
+  evolution; analyse blocks with their temporal dependence. Do not assume a flag makes a change
+  reversible, discard transitions users experience, or force a production switchback without a
+  safe exposure budget. If neither design is credible, report the limited contrast and what
+  would resolve it rather than claiming a full-rollout effect.
 - **Warm-up and state evolution.** Tiered-compilation decisions depend on counters, profiles,
   code-cache pressure and policy; one invocation threshold is not a portable warm-up clock.
   Define the state being studied—cold start, ramp, or sustained service—and use observable
@@ -308,6 +327,10 @@ rather than a change. Sizing the capacity option is `capacity-planning`; the rep
   — `default.jfc`, `profile.jfc`, event settings and recording controls.
 - [NIST/SEMATECH: choosing an experimental design](https://www.itl.nist.gov/div898/handbook/pri/section3/pri3.htm)
   — randomisation, blocking, factorial designs and design selection.
+- [Microsoft ExP: pre-experiment engineering design](https://www.microsoft.com/en-us/research/articles/patterns-of-trustworthy-experimentation-pre-experiment-stage/)
+  — shared infrastructure and cache choices can leak treatment effects into control.
+- [Bojinov, Simchi-Levi and Zhao: Design and Analysis of Switchback Experiments](https://arxiv.org/abs/2009.00148)
+  — randomised time treatments and the importance of carry-over assumptions.
 - [Amdahl, “Validity of the Single Processor Approach…”, AFIPS 1967](https://doi.org/10.1145/1465482.1465560)
   — fixed-work speedup bound.
 - [Gustafson, “Reevaluating Amdahl's Law”, CACM 1988](https://doi.org/10.1145/42411.42415)

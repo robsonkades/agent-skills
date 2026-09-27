@@ -24,13 +24,17 @@ different restart consequences; name the actual update mechanism before promisin
 
 ## Workflow
 
-1. **Establish the evidence.** Obtain the outbound call path, protocols on both hops,
-   proxy/mesh and client versions, effective routes and retry settings, deadline semantics,
+1. **Establish the evidence.** Inspect available client code, deployment/configuration,
+   tests and prior decisions before requesting missing evidence. Obtain the outbound call path,
+   protocols on both hops, connection/stream lifetimes, proxy/mesh and client versions,
+   effective routes and retry settings, deadline semantics,
    upstream operation contracts, replica count and relevant latency/load limits. For a
    diagnosis, request correlated app/proxy/upstream traces, attempt counts and queue metrics.
    Configuration shows intent; runtime counters and fault tests show behavior. If evidence
-   is missing, name the gap and proceed only with conditional options, not deployable settings
-   or a claimed root cause.
+   is missing, ask only for facts that would change the decision; continue independent work
+   and label consequential assumptions. Keep unsupported settings conditional and do not
+   claim a root cause. An existing setting records current configuration, not necessarily
+   a requirement to preserve it.
    For Java client or deadline changes, apply the compatibility checks in
    [Failure and policy composition](references/failure-and-policy-composition.md#java-client-compatibility).
 2. **Choose what moves.** Inventory discovery, shard maps, retries, timeouts, pools and TLS,
@@ -51,8 +55,8 @@ different restart consequences; name the actual update mechanism before promisin
    concurrency and payloads; no service-count or millisecond threshold alone decides adoption.
    For policy migration, configuration or incidents, read
    [Failure and policy composition](references/failure-and-policy-composition.md).
-5. **Validate the selected route.** For shards, canaries, A/B or mirroring, read
-   [Routing and experiments](references/routing-and-experiments.md). Before shipping, exercise
+5. **Validate the selected route.** For shards, canaries, A/B, mirroring or long-lived traffic,
+   read [Routing and experiments](references/routing-and-experiments.md). Before shipping, exercise
    the real proxy version's attempt bounds, deadline expiry, failure and config rollback in an
    isolated environment. Report unexecuted checks explicitly.
 
@@ -79,14 +83,23 @@ different restart consequences; name the actual update mechanism before promisin
 - Prefer validated, observable hot reload for frequent routing changes when supported.
   Controlled rollouts can suit rare changes. Both need config-version visibility, convergence
   checks and rollback; config acceptance is not proof that a route serves traffic correctly.
+- Identify whether selection occurs per connection, HTTP request or RPC stream. A TCP split
+  is not a per-operation split, and a new route does not migrate an established stream.
+  A cutover deadline needs an explicit drain/reconnect and application recovery contract;
+  do not promise uninterrupted migration from a configuration update alone.
 
 ## Minimum deliverable
 
 For a small review, provide the decision or finding, evidence and consequence, proposed
 adjustment and the check that would confirm or refute it. For a design/configuration change,
 also record the local/upstream contract, policy owners, attempt/deadline bounds and failure/
-rollback behavior. Separate observed facts from hypotheses; do not label a plausible proxy
-bottleneck a confirmed cause without measurements from both sides of the hop.
+rollback behavior, including existing connections or streams when relevant. Preserve the
+requested role: a review produces findings; apply configuration/code changes only when requested.
+For container startup/shutdown work, pass the listener dependency and drain requirements to
+`sidecar-pattern` and obtain a lifecycle contract; if unavailable, state the unresolved lifecycle
+assumptions while completing the routing analysis. Separate observed facts from hypotheses;
+do not label a plausible proxy bottleneck a confirmed cause without measurements from both
+sides of the hop.
 
 When evaluating this skill or rehearsing difficult decisions, use
 [Validation cases](references/validation-cases.md). These are agent behavior cases, separate

@@ -51,9 +51,14 @@ run only on main cannot block the original merge. Review exclusion files like co
 rules that encode a decision the team actually made — a default rule set produces exactly the
 comment-noise that trains people to ignore the tool.
 
-Formatting is not a static-analysis question: enforce it with a formatter (Spotless with
-google-java-format or palantir-java-format) so that the only possible outcome is "reformatted",
-never a discussion.
+Enforce the agreed formatting with the project's formatter, such as Spotless configured with
+google-java-format or palantir-java-format. For CI enforcement, use its check mode against the
+submitted revision. With Spotless Maven, `spotless:check` reports violations; `spotless:apply`
+repairs files and can succeed even when the input violated the rules. Use the repair goal for
+authorized edits, review the resulting diff, then check again. Running apply followed by check
+only establishes that the repaired workspace passes; it does not establish that the submitted
+files passed. Keep those edits reviewable rather than letting a gate silently repair its own
+input. See the [Spotless Maven check/apply contract](https://github.com/diffplug/spotless/tree/main/plugin-maven#readme).
 
 ## Test gates
 

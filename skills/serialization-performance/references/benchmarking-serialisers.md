@@ -45,6 +45,32 @@ Measure dimensions independently enough to localize cost:
 Do not compare one library's streaming API to another's new-array convenience API without calling
 that boundary difference the experimental factor.
 
+### Message boundaries and complete frames
+
+Raw Protocol Buffers messages are not self-delimiting. Concatenating two encodings can parse as one
+merged message; repeated singular scalars use the later value. A successful decode can therefore
+hide lost business messages. Test count, order and values across multiple records.
+
+For a byte stream, agree on framing and include its bytes/work in the measured boundary. Java's
+`writeDelimitedTo` and `parseDelimitedFrom` use a varint length prefix. If a transport already
+provides one complete bounded payload, reuse that boundary; do not assume these helper APIs are
+required or compatible with its envelope.
+
+Validate declared length against the message budget before allocation, then establish that all
+declared bytes arrived. One simple baseline is reading the bounded payload, checking its actual
+length and parsing that slice. A limited streaming parser can avoid this materialization only if
+its surrounding frame reader establishes equivalent completion and ownership guarantees.
+
+Do not infer exact frame completeness from helper success: in `protobuf-java` 4.36.2,
+`parseDelimitedFrom` accepts bytes `03 08 07` for an `Int32Value` despite the length prefix claiming
+three payload bytes and only two arriving. Its limited stream bounds reads but does not by itself
+prove that the advertised length was received. Verify the resolved implementation; this is not a
+claim that every Protobuf parser has the same behavior.
+
+Exercise split reads, coalesced frames, truncation at a valid field boundary, oversize declarations
+and clean end-of-stream. A zero-length payload can be a valid default message; distinguish it from
+no next frame. Keep malformed-input results separate from successful-message throughput.
+
 ### Complete compressed output
 
 Define whether the measured operation produces a complete compressed message, a batch, or a chunk
@@ -211,6 +237,10 @@ selected candidate, rejected alternatives and residual risks:
 - [Java 25 JFR recording API and settings](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/package-summary.html)
 - [async-profiler](https://github.com/async-profiler/async-profiler)
 - [Protocol Buffers Java generated code](https://protobuf.dev/reference/java/java-generated/)
+- [Protocol Buffers streaming multiple messages](https://protobuf.dev/programming-guides/techniques/#streaming-multiple-messages)
+- [Protocol Buffers concatenation and merge rules](https://protobuf.dev/programming-guides/encoding/#last-one-wins)
+- [Protocol Buffers Java parser contracts](https://protobuf.dev/reference/java/api-docs/com/google/protobuf/Parser.html)
+- [Protobuf 4.36.2 delimited parser implementation](https://github.com/protocolbuffers/protobuf/blob/v36.2/java/core/src/main/java/com/google/protobuf/AbstractParser.java)
 - [Apache Avro 1.12.0 Java API](https://avro.apache.org/docs/1.12.0/api/java/)
 - [Kryo 5.6.2 reset](https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/Kryo.java)
 - [Kryo 5.6.2 Output](https://github.com/EsotericSoftware/kryo/blob/kryo-parent-5.6.2/src/com/esotericsoftware/kryo/io/Output.java)

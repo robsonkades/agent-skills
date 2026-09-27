@@ -25,6 +25,13 @@ nobody knows where validation actually happened.
 
 ## Workflow
 
+Match the action to the request: a findings-only review identifies the owning boundary,
+consequence and verification without changing code; an implementation request applies justified
+fixes. Read input/error contracts, representative callers and tests before treating an existing
+check or coercion as policy. Distinguish documented guarantees from incidental behavior. If the
+accepted input or failure policy remains consequentially unclear, ask one focused question and
+continue independent work; do not invent a policy or block reversible, contract-preserving work.
+
 Inspect the target compiler release/toolchain, framework/mapper versions and configuration,
 construction paths and published failure contracts before editing validation. No single
 authoring baseline is declared; references use Java SE 25, records require Java 16+ and
@@ -46,6 +53,8 @@ means check removal remains conditional, not proven safe.
    API migration. A non-null `CustomerId` can carry its component's
    format invariant across trusted calls. The variable holding that record can still be
    null; mutable components and unverified construction paths need separate evidence.
+   For mutable input, validate the stable owned value that will be used, not the caller's
+   object followed by a later copy or reread. Establish the source's snapshot/ownership policy.
 4. **Delete only proven-redundant checks.** Keep constructor invariants, authorization,
    concurrency/transaction rechecks and checks protecting a different state transition.
 5. **Use assertions diagnostically, never as required enforcement.** If disabling a check could
@@ -82,6 +91,9 @@ means check removal remains conditional, not proven safe.
   decompression ratios, regex/parser work, numeric ranges and per-request concurrency before
   allocating proportional state. Apply deadlines/cancellation at blocking boundaries. A syntactically
   valid payload can still be a resource-exhaustion attack.
+- Check the guard's arithmetic: ordered floating-point comparisons can admit NaN, and integer
+  sums/products can overflow before a range check runs. Use the contract's finite/range policy
+  and overflow-safe checks; see the numeric cases in `references/trust-boundaries.md`.
 - Validation is not authorization and escaping is sink-specific. Revalidate tenant/resource access
   at the operation, and parameterize/escape where data enters SQL, HTML, shells, paths or logs;
   java-application-security-basics and java-strings-and-text own those controls.

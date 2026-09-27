@@ -50,6 +50,10 @@ Consequences to accept before shipping it:
   lives; distinct keys can share a shard, and a suffix ignored by the routing key adds no
   distribution. Verify placement or observed load against capacity before crediting salting
   with extra headroom. S is not a promise of S-fold throughput.
+- **Derived writes must also fit.** Inspect secondary-index keys and capacity for each affected
+  write path. A salted base-table key can still feed the same unsalted index hotspot. Index
+  sharding has its own query fan-out, ordering/uniqueness and migration costs; confirm the
+  constrained resource using [the detection guidance](detecting-skew.md) before changing layouts.
 - **Enabling or disabling salting also changes the layout.** Version the routing metadata
   for each affected key, including its salted/unsalted mode and S. Migrate with a safe cutover,
   or explicitly read all coexisting layouts while preserving the required merge semantics;

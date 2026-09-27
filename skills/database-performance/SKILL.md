@@ -39,8 +39,9 @@ operation/query/job and representative parameters/data distribution:
 offered/completed rate, concurrency, errors/timeouts, and transaction p50/p99:
 application statement count, pool acquire/usage/pending, and connection count:
 timer boundaries, execute/first-row/full-consumption timing, result rows/bytes, and mapping work:
-database CPU, I/O, waits/locks, active sessions, log/WAL/redo, and replica lag:
+database CPU, I/O, waits/locks, session state and query/transaction age, log/WAL/redo, and replica lag:
 plan identity plus estimated/actual rows, loops, reads/buffers, spills, and cache state:
+capture coverage: completed/failed/in-flight work, sampling/thresholds, and counter resets:
 affected cohort and comparable healthy control:
 evidence gaps, collection risk, rollback window, and success measure:
 ```
@@ -48,6 +49,10 @@ evidence gaps, collection risk, rollback window, and success measure:
 Do not infer an engine mechanism from an application symptom. Align clocks and workload before
 correlating layers. Identify metric boundaries: pool usage is connection checkout-to-return,
 not SQL execution, and cumulative engine counters need interval deltas with resets accounted for.
+Check which executions each summary includes before treating an absent slow query as evidence.
+Means do not establish tail latency, and total execution time can grow from call count, per-call
+cost or a changed workload mix. Rank by the stated latency, throughput or resource goal and the
+affected cohort; the query with the largest cumulative total need not explain that cohort's delay.
 An application "DB duration" may cover driver fetching and application work as well as server
 execution. Match the measured operations and result consumption before comparing durations;
 moving work between `executeQuery()` and result iteration is not an end-to-end improvement.
@@ -85,6 +90,16 @@ use `online-database-schema-migrations` with the project's migration conventions
   long active borrows or leaks that have not returned. Route pool admission to `connection-pool-sizing`
   and follow evidence of long holds into the owning transaction/statement; do not enlarge the pool
   from acquire latency alone.
+- If timeouts rise while completed-query summaries look healthy, inspect collection coverage,
+  failed/canceled requests and work still in flight before excluding the database. PostgreSQL 18
+  `pg_stat_statements`, for example, updates execution statistics at the end of successful
+  executions; it is not a live inventory of every attempted call. Collect a bounded current-session
+  and blocking snapshot when that could distinguish waiting from execution, and route engine wait
+  interpretation to its owner. Read state and transaction age with the SQL text: PostgreSQL
+  `pg_stat_activity.query` and `query_start` describe the last query when the session is not active.
+  An idle-in-transaction session may matter through its open transaction; its displayed SQL is not
+  proof that the statement is still running. An active session can itself be waiting, so state alone
+  does not establish CPU work or identify the blocker.
 - If statement count scales with rows, attribute repeated calls to ORM loading, handwritten loops,
   retries or intended per-row work. Route confirmed ORM amplification to
   `orm-fetch-and-batching-performance`, handwritten request loops to `architecture-and-performance`,
@@ -144,6 +159,8 @@ a vendor default, a folklore threshold, or a lab result into a production prescr
 
 ## Sources for collection boundaries
 
+- [PostgreSQL 18 pg_stat_statements](https://www.postgresql.org/docs/18/pgstatstatements.html) — execution-summary coverage and update timing; failed or unfinished execution is not represented as a successful completed call.
+- [PostgreSQL 18 activity statistics](https://www.postgresql.org/docs/18/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW) — session state, transaction/query start, current versus last SQL, and wait events.
 - [PostgreSQL 18 EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html) — ANALYZE executes the statement, adds overhead and excludes client network transfer costs.
 - [pgJDBC result processing](https://jdbc.postgresql.org/documentation/query/) — eager result collection versus cursor fetching; verify the installed driver and cursor prerequisites.
 - [PostgreSQL 18 PREPARE](https://www.postgresql.org/docs/18/sql-prepare.html) — generic/custom plan choice and prepared-statement lifecycle.

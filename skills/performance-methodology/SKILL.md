@@ -60,6 +60,9 @@ Use the steps relevant to the decision; a small investigation need not become a 
    block when possible; alternate only when it is the justified blocking scheme. Choose sample
    size from variance and desired precision or power. Use factorial designs for interactions;
    do not hide several changes in one treatment.
+   Check whether the treatment changes a resource shared with controls: randomising requests
+   does not prevent cache, queue or dependency interference. Choose the assignment unit and
+   interpretation accordingly; a mixed-rollout contrast need not estimate a full rollout.
 7. **Validate effect and mechanism separately.** A controlled comparison can support an effect
    before its exact mechanism is known. Label that uncertainty; assess whether the proposed
    mechanism accounts for the effect's size and challenge plausible alternative causes. A reversible feature flag can support

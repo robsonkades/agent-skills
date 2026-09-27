@@ -123,6 +123,30 @@ old reasons.
 “Revisit the decision” means reconsider it. It does not mean changing the accepted record's
 original rationale while pretending the team always held the new position.
 
+## Decisions that depend on other decisions
+
+Nygard's original account explains that one decision's consequences can become the context
+for later decisions. For change-impact review, distinguish **relies on**, **supersedes** and
+**related to** links. The labels are a practical convention, not a required template schema.
+State the property relied on, its affected scope and the supporting record or evidence
+revision; preserve enough of the premise to understand it if the linked material changes.
+An issue, contract or configuration may be the evidence instead of another ADR.
+
+When that premise changes, inspect known dependent records and relevant incoming references.
+Follow only dependencies whose relied-on property could be affected; an unrelated rationale
+link does not justify reopening every decision. If the property is preserved with supporting
+evidence, retain the dependent choice and record a review note only where useful or required.
+If the premise is removed or unknown, identify the affected rationale, current applicability,
+review owner and evidence needed to decide what remains valid. Do not silently replace the
+historical link with a newer ADR as though the original decision used evidence from the future.
+
+A changed premise warrants reassessment; it neither proves the dependent choice is wrong nor
+authorizes its replacement. Preserve the authorized status unless local policy supports a
+transition, while making the unresolved premise visible. If the finding affects an imminent
+rollout, flag the affected gate and responsible decision-maker; a records-only task does not
+authorize changing deployments. Validate supersession cycles on replacement edges: reciprocal
+context links can be legitimate and do not by themselves form a supersession cycle.
+
 ## Standards and evidence limits
 
 The [official ISO/IEC/IEEE 42010:2022 overview](https://www.iso.org/standard/74393.html)

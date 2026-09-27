@@ -180,6 +180,17 @@ limit the inference. Producer `--live` is Java live-object profiling, not native
 Keep the window, GC/free timing, and workload context; unmatched allocations are candidates,
 not proof of a leak. See [v4.5 profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilingModes.md).
 
+Preserve the matching horizon. In v4.5, conversion time/latency/tag filters run before native
+allocation/free matching. A free outside the selected interval or same-thread span can be
+discarded even when present in the original. To ask what remains unmatched at recording end,
+match the full recording first; do not apply a request-span filter that drops a later or
+cross-thread free. If an earlier horizon is intentional, label the result as unmatched within
+that selected history, not as a leak persisting to recording end. The default tail cutoff uses
+the earliest/latest native events admitted to the matcher, not necessarily file start/end.
+Inspect both filtered and full-history results for a known allocation/free pair. See the
+[selection order](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/JfrConverter.java)
+and [native matcher](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/jfr/event/MallocLeakAggregator.java).
+
 ## Conversion
 
 Use the converter shipped with or explicitly tested against the profiler recording. Before a
@@ -196,6 +207,7 @@ bulk conversion:
 For a v4.5 multi-event JFR, select the intended view rather than accepting a default:
 
 ```bash
+jfrconv --cpu recording.jfr cpu.html
 jfrconv --wall --threads recording.jfr wall.html
 jfrconv --lock --total recording.jfr lock-duration.html
 jfrconv --live --total recording.jfr live-sampled-bytes.html
@@ -204,6 +216,24 @@ jfrconv --live --total recording.jfr live-sampled-bytes.html
 Inputs must actually contain the selected events. Batched wall record counts need not equal
 expanded sample totals. A lock duration view is accumulated sampled wait time, not the
 number of requests delayed. Verify a known thread/stack and weight before interpreting.
+
+For an async-profiler v4.5 CPU+wall recording, omitting both selectors combines execution
+sample populations. `--cpu` selects the profiler's `STATE_DEFAULT` samples; `--wall` selects
+its other states. Explicit `--state` takes precedence over these selectors: adding
+`--state runnable` to `--cpu` selects runnable-state residency rather than refining CPU
+samples. Use one event selector per view; combining allocation/lock/live selectors is not a
+union. These rules come from the tagged
+[converter](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/convert/JfrConverter.java),
+not a general rule for arbitrary JDK-produced JFR. Verify the producer/schema before reuse.
+
+For narrow incident windows, check batching as well as the sampling interval. The v4.5
+[reader](https://github.com/async-profiler/async-profiler/blob/v4.5/src/converter/one/jfr/JfrReader.java)
+retains a wall batch's sample count but ignores its `timeSpan`; conversion filters admit or
+reject it using its single timestamp. A batch crossing the requested boundary is not split
+proportionally. Treat such a slice as coarse evidence. If precise attribution changes the
+decision, use suitable existing duration/context events, a converter verified to handle the
+span, or a bounded `--nobatch` recapture after measuring its cost. Otherwise keep the current
+capture and report its temporal limit; do not invent individual sample times.
 
 The live conversion requires `profiler.LiveObject` events captured with producer `--live`;
 it cannot reconstruct liveness from an ordinary allocation recording. Its byte total is

@@ -35,6 +35,33 @@ Coordinated omission is the diagnosis when slow/in-flight work governed missed o
 target arrival model. There is no universal 2% threshold: one missed start can matter for a tiny
 safety test, while an explicitly modelled shed fraction can be acceptable if reported.
 
+## Audit the source of the schedule
+
+For an open target, due times must come from its independent arrival plan, not be assigned
+from actual starts after the fact. An ID or "offered" counter created only when a worker
+is available makes scheduled and started counts agree by construction. Inspect the scheduler
+and recorder: does a late callback retain the original due time, and are skipped slots
+enumerated even when nothing runs? A timer configured with a period is not sufficient evidence.
+
+For a regular plan at 500/s with due times `0, 2 ms, ... < 60 s`, there are 30,000 due slots.
+If only 20,000 starts generated records labelled "scheduled", zero difference between those
+records and starts conceals 10,000 missing starts. It establishes a schedule mismatch, not
+whether the cause was response coupling. Reconstruct due slots from the independent epoch,
+rate and active window where possible, including ramp and warm-up boundaries. For a stochastic
+plan, preserve its realised schedule or reproducible generation inputs. With constant-rate
+Poisson arrivals, `rate × duration` is an expected count; randomizing spacing in a fixed-count
+plan does not make its total random. An entire schedule need not be stored in memory.
+
+After a generator pause, the recovery policy changes the experiment. Catching up overdue slots
+can create a burst the target arrival process did not contain; dropping them changes the offered
+population; resetting the next due time to "now plus interval" shifts the original plan. Choose
+the policy that represents the intended client behavior, retain original due times and account
+for late/dropped slots. Do not silently burst beyond the declared load cap to make counts match.
+These choices can all yield honest, differently scoped results; none reconstructs the queue
+that would have existed without the generator pause. The pinned
+[wrk2 intended-start model](https://github.com/giltene/wrk2/blob/44a94c17d8e6a0bac8559b53da76848e430cb7a7/README.md)
+illustrates why a separately defined arrival plan is needed for its latency clock.
+
 ## Use timestamp evidence, not MAX heuristics
 
 For every scheduled item retain:
@@ -150,6 +177,20 @@ and drain policy; generator validation is not permission to increase load withou
    not silently extend the run until counts happen to match.
 7. Compare actual inter-arrival distribution and burstiness with the target, not only average RPS.
 8. Archive configuration, seed/schedule, generator telemetry and raw timestamps/histograms.
+
+## Decision cases
+
+These are synthetic teaching cases, not executed agent evaluations. Give the request/context
+separately from the expected decision when evaluating; record tool use and missing evidence.
+
+| Request/context                                                                                                                                                                                                               | Expected decision                                                                                                                                                         | Failure condition                                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Target: regular 500/s for due times in `[0,60s)`. The send callback emitted 20,000 "scheduled" records and 20,000 starts. Certify no omission from equal counts.                                                              | Reconstruct 30,000 target slots; reject the circular evidence and investigate the 10,000-start deficit with response/generator telemetry.                                 | Certify fidelity, invent missing latencies, or declare response coupling proven from counts alone.                            |
+| Fixed-rate audit A retains independent original due times; its complete start trace matches them within the declared timing tolerance. In B the recorder overwrites each due time with actual send time and reports zero lag. | A supports schedule fidelity within its observed window; B's zero lag cannot establish it. Recover the original plan if possible before concluding.                       | Treat both zero/low-lag reports alike or require Hdr correction for A's complete observations.                                |
+| A one-second generator pause is followed by a catch-up burst. Every due ID eventually starts. The target workload was evenly spaced.                                                                                          | Preserve the late timestamps and identify a changed arrival pattern; select a bounded rerun or report a generator-distorted result.                                       | Approve from final counts alone, hide lag by rebasing due times, or increase burst limits without authority.                  |
+| The real workload is one serial batch worker that starts the next item after the previous one completes; complete raw item-time data exist.                                                                                   | Keep the closed model and report raw item-time statistics; correction is unnecessary for this claim.                                                                      | Force an open arrival model or synthesize additional users.                                                                   |
+| Legacy omission-prone raw data cannot be rerun; a regular 10 ms per-stream interval is justified and a 100 ms value is recorded. The same data may already have been corrected.                                               | Establish correction provenance first; once-only correction produces ten entries for the raw value, labelled sensitivity rather than ten independent users.               | Correct already compensated data again, use an aggregate interval for each stream, or treat synthetic count as evidence size. |
+| Only a success p99 and an "open" executor setting are available; no schedule, starts or terminal-outcome records were kept.                                                                                                   | Report the omission diagnosis as unresolved and identify the minimum configuration/timing/outcome evidence needed; hand generic censoring analysis to latency-statistics. | Diagnose omission from the percentile alone or claim the open setting proves complete observation.                            |
 
 ## Sources
 

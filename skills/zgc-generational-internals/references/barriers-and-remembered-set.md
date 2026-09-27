@@ -78,8 +78,10 @@ updates prevent losing concurrent sets in shared words.
 
 ## The remembered set is a bitmap, not a card table
 
-`ZBitMap`, in `zRememberedSet.hpp`: **one bit per potential object-field address** inside the
-page. There is no card — no fixed-size memory slice — in the real structure. G1's one byte per
+`ZRememberedSet`, in `zRememberedSet.hpp`: **one bit per potential object-field address** inside
+the page. JDK 25 stores two `ZMovableBitMap` instances in `_bitmap[2]`, with `CHeapBitMap`
+accessors; `ZBitMap::ReverseIterator` is an iteration helper, not the backing storage type.
+There is no card — no fixed-size memory slice — in the real structure. G1's one byte per
 512-byte card is a different granularity of tracked datum, not merely a different processing
 schedule. The exact bit-to-address mapping and the size of `_bitmap[2]` should be checked
 against `zRememberedSet.hpp` / `zRememberedSet.inline.hpp` on the build in use before citing.
@@ -169,5 +171,6 @@ Sources: [JEP 439](https://openjdk.org/jeps/439),
 [x86 generated barriers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/gc/z/zBarrierSetAssembler_x86.cpp),
 [JDK 25 store ordering](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zBarrierSet.inline.hpp),
 [barrier work](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zBarrier.inline.hpp),
+[remembered-set storage](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.hpp),
 [remembered-set mapping](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.inline.hpp),
 [remembered-set roles](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/gc/z/zRememberedSet.cpp).

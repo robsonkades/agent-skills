@@ -45,6 +45,40 @@ bound receiver may retain its enclosing instance even if the lambda body never n
 Source and compiler output can identify capture paths; actual retention/collection conclusions
 need the holder's lifetime and target-runtime evidence, not a syntax-only rule.
 
+## Capturing a resource versus owning its use
+
+An effectively final reader, connection or native handle can still be closed before the callback
+runs. Returning or queuing a lambda from a try-with-resources block does not extend that block's
+resource lifetime. Borrowing can be valid when invocation finishes before the owner closes the
+resource, under its thread/access contract; establish this from the actual callback API, not an
+assumption that every `Executor` runs inline.
+
+When each invocation should read the file as it exists then, acquire and close within the callback.
+This partial Java 8+ method uses `Callable` to retain both the result and checked failure contract:
+
+```java
+static Callable<String> firstLine(Path path) {
+    return () -> {
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
+            return reader.readLine();
+        }
+    };
+}
+```
+
+Each call reopens the path; a file replacement between task creation and execution changes what
+is read. For submission-time content, materialize bounded immutable data before scheduling, or
+use an explicitly stable resource with a managed lifetime. Do not return a lazy iterator/stream
+whose backing resource has already been closed. Reopening is not equivalent to preserving an
+existing transaction, file generation or thread-confined handle.
+
+If ownership is transferred to deferred work, cover rejection, never-started tasks and running
+tasks separately. Cancellation alone does not prove that a running callback stopped using the
+resource. Pass the executor's invocation/cancellation contract and resource owner to
+`executors-and-task-lifecycle` for a cleanup/termination plan; if unavailable, resolve those paths
+before transferring ownership. Acquisition inside the callback avoids allocating that resource
+for work which never starts, but does not itself define the surrounding cancellation policy.
+
 ## Lambda `this` versus anonymous-class `this`
 
 ```java
@@ -172,3 +206,6 @@ Two related points:
 Primary reference for receiver evaluation and null timing:
 [JLS method-reference evaluation](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.3).
 For composition failure, see [Consumer.andThen](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Consumer.html#andThen(java.util.function.Consumer)>).
+For captured resources, see [try-with-resources closure](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.20.3),
+[Callable result and exception contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Callable.html)
+and [Future cancellation attempts](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean)>).

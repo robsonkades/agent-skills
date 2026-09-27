@@ -24,6 +24,16 @@ prove reclamation or authorize releasing a still-used resource. For usable refer
 `get()` once and check that local; it creates a strong reference. `refersTo` (Java 16+) can
 test referent identity or clearing without strengthening reachability.
 
+The tracking collection is itself an owner: keep metadata from strongly reaching the referent
+when collection is meant to trigger processing. After terminal handling, remove the wrapper and
+metadata no longer needed. An undrained queue or permanent tracking set can retain wrappers
+and their attached graphs after referents disappear. Define who drains it, how failures retain
+or transfer pending work, and when that consumer stops. Check pending-count/age growth against
+the workload and cleanup capacity. For explicit close/cancellation, retire tracking without
+waiting for `clear()` to produce a notification; already-racing GC enqueueing is still possible,
+so coordinate both paths and make terminal handling safe to repeat. Do not discard required
+cleanup state merely to make the tracking count small.
+
 HotSpot's `-XX:SoftRefLRUPolicyMSPerMB` is a heuristic, not an entry TTL or minimum survival
 time. The [25.0.3 policy source](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/referencePolicy.cpp)
 uses GC-related timestamps and heap state from the last collection; its policies distinguish

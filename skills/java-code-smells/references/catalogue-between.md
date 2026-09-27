@@ -21,7 +21,10 @@ live relative to the data they concern.
 - **Looks like:** one conceptual change — "add a payment method" — edits seven files
   every time.
 - **Detect:** change history, not code shape: recurring co-change sets in `git log`.
-  Ask "what did the last three such changes touch?"
+  Ask "what did the last three such changes touch?" Inspect the semantic edits: repeated
+  changes to one policy in several independently maintained places support the finding;
+  repeated formatting commits touching those same files do not. Generated outputs following
+  one source-of-truth change are not independent copies of that decision.
 - **Not it when:** the fan-out is intentional registration per layer and each edit is
   adequately checked. Variant-enumerating switches without catch-alls expose missing cases
   on recompilation; sealing alone does not verify registrations, old binaries or runtime wiring.
@@ -106,11 +109,20 @@ live relative to the data they concern.
   meaning "default", callers wrapped in `if (x != null)` pyramids; `Map<String,Object>`
   payloads where half the values may be null.
 - **Detect:** grep call sites for immediate null checks; a return type whose absence
-  case is undocumented.
-- **Not it when:** internal hot paths with a documented non-null contract
-  (`@NullMarked` scope), or platform APIs you merely consume.
-- **Fix:** detection only here — contracts and fixes are java-null-safety's; Optional as
-  a return type is java-optional's.
+  case is undocumented. Compare the declared nullness, reachable producer paths and consumer
+  handling. A returned null that violates a non-null contract is a correctness defect, not
+  merely a request for a tidier return type.
+- **Not it when:** absence is intentional, documented and handled by the supported callers,
+  including an explicit nullable return or a platform API's existing contract. Neither hot-path
+  status nor a `@NullMarked` annotation establishes runtime safety; inspect its actual scope,
+  explicit nullable exceptions and configured enforcement. JSpecify annotations describe
+  nullness; they do not themselves add runtime guards
+  ([JSpecify user guide](https://jspecify.dev/docs/user-guide/)).
+- **Fix:** detection only here — pass the producer declaration, null meaning, consumer paths and
+  checker/runtime evidence to java-null-safety for a compatible contract correction. If unavailable,
+  report the unresolved path and appropriate boundary test without prescribing a new representation.
+  Optional as a return type is java-optional's; consuming a platform API does not excuse incorrect
+  handling of its permitted null result.
 
 ## Excessive / leaky abstraction
 

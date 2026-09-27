@@ -20,14 +20,18 @@ of the only requirements the system must satisfy.
 
 1. **Establish scope and evidence.** Obtain the business operation/domain, affected users,
    critical failure/change situations, requirements and stakeholder concerns. Identify
-   decision owners and known constraints. For an existing system, inspect relevant incidents,
-   traffic, deployment/change history and dependency diagrams. For greenfield, label forecasts
+   decision owners and known constraints. Reuse approved scenarios, contracts and prior decisions;
+   distinguish their authority from observed conventions and new assumptions. Reopen only the
+   affected scenarios when scope, obligations or evidence have changed. For an existing system,
+   inspect relevant incidents, traffic, deployment/change history and dependency diagrams. For greenfield, label forecasts
    and assumptions; do not invent baseline measurements.
 2. **Elicit candidates before ranking.** Read
    [eliciting-and-capping.md](references/eliciting-and-capping.md) when creating or revising a
    list or resolving stakeholder priorities. Link each candidate to an explicit requirement,
-   a stakeholder concern or an inference from domain evidence. Confirm inferred needs with the
-   responsible stakeholder; a plausible inference is not an approved requirement.
+   a stakeholder concern or an inference from domain evidence. Check available evidence before
+   asking for confirmation. Ask the responsible stakeholder only about unresolved meaning or
+   priority that could change the result; continue with labeled provisional candidates meanwhile.
+   A plausible inference is not an approved requirement.
 3. **Test architectural relevance.** Ask what success condition the quality expresses, why
    it matters here, and what structural choice or risk it could influence. Keep domain rules
    and constraints visible even when they are not quality labels. A concern need not require
@@ -38,6 +42,8 @@ of the only requirements the system must satisfy.
    stimulus, operating/failure conditions, affected operation and expected response with a
    measure or explicit unresolved target. A number alone does not define acceptance: preserve
    the observation boundary, eligible workload and relevant timing/statistical interpretation.
+   Distinguish normal, surge and failure conditions when their obligations differ; a degraded
+   response satisfies an obligation only within its agreed acceptance rules or authorized exception.
    Use the refinement checks in [eliciting-and-capping.md](references/eliciting-and-capping.md)
    when those details or priorities among scenarios are unclear. Read
    [definitions-and-composites.md](references/definitions-and-composites.md) for ambiguous
@@ -82,9 +88,19 @@ other retained drivers, baseline constraints, and Others Considered with reasons
 triggers. State who confirmed the priorities; label an unconfirmed list provisional.
 
 Use `architecture-decision-making` for a durable decision record,
-`architecture-fitness-functions` for implementing checks, and `slo-and-alerting` for operational
+`architecture-fitness-functions` for defining checks, and `slo-and-alerting` for operational
 targets. This skill supplies enough scenario detail to validate the selection, not a full test
 harness or architecture evaluation.
+
+For a handoff, pass the scoped scenarios, evidence, mandatory constraints, priority status and
+unresolved questions. Request the specific missing result: boundary analysis, option comparison,
+acceptance clarification or verification design. If the specialist is unavailable, provide this
+context and the next evidence needed without claiming its analysis is complete. An already
+approved list with no relevant change can be retained and handed off without another workshop.
+
+Stop when the requested scope has traceable, distinguishable scenarios and justified dispositions,
+or a provisional result identifies the consequential gaps, their owners and next checks. Agreement
+on desired qualities is not evidence that the implementation satisfies them.
 
 When evaluating the skill itself, use
 [validation-cases.md](references/validation-cases.md). Written cases are not executed evidence.

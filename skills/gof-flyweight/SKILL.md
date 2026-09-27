@@ -115,6 +115,12 @@ THEN preserve immutable intrinsic state and safe use of its reachable graph. For
      use defensive copies and prevent mutation through aliases; final fields alone are insufficient.
      For library objects, verify the documented immutability/thread-safety contract.
 
+IF a canonical key is chosen
+THEN equal keys must imply interchangeable intrinsic behavior for the supported consumers.
+     Include relevant options/version/scope, keep equality and hashing stable while stored,
+     and resolve hash collisions with actual key equality. A hash alone is not a value identity.
+     Do not normalize input merely to increase the hit rate unless the domain permits it.
+
 IF the cache is unbounded and keyed by data from requests
 THEN inspect cardinality and lifetime: long-lived retention of arbitrary keys can grow without
      limit. Bound admission/bytes, use eviction where appropriate, or validate a closed domain;
@@ -134,6 +140,11 @@ IF any code compares flyweights with ==
 THEN require a documented identity scope (such as enums); otherwise compare semantic values/keys.
      equals is sufficient only when that type defines the required value equality.
      Integer.valueOf guarantees caching -128..127 but may cache more; 128 is not a portable miss.
+
+IF existing consumers use occurrence identity (identity collections, monitors or wait/notify)
+THEN merging their objects can change behavior even when their fields are immutable and equal.
+     Preserve the required occurrence/lock identity and share only the payload, or retain the
+     current design; do not silently replace an intentional identity contract with value equality.
 
 IF the "flyweight" must be seen by other processes
 THEN distinguish protocol value identity from process-local object identity. A receiver may
@@ -163,9 +174,14 @@ THEN distinguish protocol value identity from process-local object identity. A r
   measured before and after (`gc-log-analysis`). Watch for the second-order effect that motivates
   it honestly: a smaller live set may reduce marking/copying work, but GC phase times also depend
   on graph shape, collector and workload; verify rather than promise shorter pauses.
+  To avoid expensive construction, look up a suitable cheap key before constructing on a miss.
+  Interning an already-built candidate may reduce retained duplicates while leaving construction
+  work unchanged; account for key creation and miss/bypass costs too.
 - **Testing.** Application behavior must use semantic equality/keys unless identity is a documented
   contract (enums). Implementation tests may verify reuse itself. Exercise eviction or admission
   bypass according to the bound policy, and separate pools; all must preserve application results.
+  Include unequal keys with colliding hashes and inputs differing in one behavior-changing option;
+  neither may be merged. Preserve any intentional occurrence identity outside the shared payload.
 
 ## Review checklist
 

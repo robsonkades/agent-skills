@@ -34,6 +34,9 @@ result; persist an exact body only when it is bounded, non-secret and valid to r
 For external calls, also retain evidence of unresolved earlier attempts across takeover,
 in the operation state or an attempt history. This schema sketch omits that evidence tracking;
 replacing it with only the latest attempt's outcome loses the operation's uncertainty.
+Its single `downstreamOperationId` models one external effect. Several effects require their
+own identities, fingerprints and recovery states, linked to the parent operation; see
+[key selection](key-selection.md#one-incoming-intent-several-downstream-effects).
 
 ## Case 1: local mutation in the same database
 
@@ -86,11 +89,15 @@ durable operation state machine:
 4. on a definite pre-dispatch rejection, record this attempt's failure; choose `REJECTED`
    or `RETRYABLE` only if all earlier attempts are also known not to have applied and cannot
    subsequently apply. Otherwise retain `UNKNOWN` and recovery;
-5. on timeout, disconnect, cancellation or crash, persist/retain `UNKNOWN` and query or
-   reconcile downstream by operation ID;
+5. on timeout, disconnect, cancellation, crash or an indeterminate provider response,
+   persist/retain `UNKNOWN` and query or reconcile downstream by operation ID;
 6. only retry an unknown call when downstream deduplicates that same operation ID throughout
    the retry window, or reconciliation proves both non-application and that the prior attempt
    cannot subsequently apply. An eventually consistent or point-in-time "not found" is insufficient.
+
+In this application pseudocode, `payments.charge` returns only confirmed success. The adapter
+maps provider responses/SDK exceptions with unresolved effects to the application-specific
+`IndeterminateProviderFailure`; determine that mapping from the real endpoint and SDK contract.
 
 ```java
 try {
@@ -98,7 +105,7 @@ try {
     records.completeIfOwner(key, attemptEpoch, stableResult(result));
 } catch (DefinitePreDispatchFailure e) {
     records.recordPreDispatchFailureIfOwner(key, attemptEpoch, evidence(e));
-} catch (TimeoutException | IOException | CancellationException e) {
+} catch (IndeterminateProviderFailure | TimeoutException | IOException | CancellationException e) {
     records.markUnknownIfOwner(key, attemptEpoch, evidence(e));
     reconciliation.enqueue(key);
 }
@@ -117,6 +124,29 @@ charge on the next retry.
 Persisted `PENDING`/`UNKNOWN` records must drive recovery even if updating state or enqueueing
 reconciliation fails; use a durable scanner/outbox or equivalent recovery path. Handle an epoch
 comparison that affects zero rows as loss of ownership and reload state, not successful completion.
+
+### Response replay is separate from effect resolution
+
+[Stripe](https://docs.stripe.com/api/idempotent_requests) stores the first executed request's
+status/body, including `500`. Its [error-handling contract](https://docs.stripe.com/error-low-level#server-errors)
+treats those server errors as indeterminate: replaying that same error does not prove that no
+effect occurred. Keep recovery active through supported status/webhook/reconciliation paths;
+do not issue a fresh key merely to escape a cached error. A stored protocol response and the
+operation's unresolved effect state may need separate fields.
+
+[PayPal](https://developer.paypal.com/api/rest/reference/idempotency/) instead describes returning
+the request's current status, not its original status, and may reject a simultaneous duplicate.
+These differences do not by themselves indicate a repeated effect. If your API promises an
+original response, retain sufficient local outcome data rather than relying on every provider
+to replay bytes or return the same status. Do not promise exact original replay if that response
+cannot be recovered after a crash. Check the concrete endpoint/version before applying either example.
+
+For multi-effect workflows, track and reconcile each effect separately while respecting workflow
+prerequisites; one completed charge does not prove a later entitlement/email completed.
+Pass the effect identities, partial outcomes and business recovery requirements to
+`distributed-transactions-and-sagas` when sequencing or
+compensation needs design. If unavailable, document the partial state and required decision;
+do not mark the parent complete or redispatch resolved effects to hide the gap.
 
 ## Concurrent duplicates
 
@@ -188,6 +218,12 @@ effects committed in that same transaction. Name the guarantee actually provided
   the earlier attempt to complete; assert `UNKNOWN` survives the later rejection and restart,
   recovery discovers the result, and neither a terminal rejection nor a fresh operation key
   is inferred from that later failure. Also test a first attempt proven never dispatched;
+- replay a provider's cached `500` after it applied an effect; assert reconciliation remains
+  active and no fresh key is issued. Separately verify a provider that returns current status
+  still refers to the original effect;
+- give one parent two distinct effects with identical payloads, interrupt between them, and
+  resume its persisted plan after input enumeration order changes. Assert distinct stable effect
+  IDs, reuse on retries and no suppression of the second effect or repetition of the first;
 - test expiry, DLQ/operator replay beyond expiry, rolling-version fingerprint compatibility,
   dedup-store failover and cleanup competing with live claims;
 - test a status lookup returning absent while an old request is still capable of applying,
@@ -205,6 +241,7 @@ proxy or test dependency that applies the operation and then drops the acknowled
 - [Stripe API: idempotent requests](https://docs.stripe.com/api/idempotent_requests)
 - [Stripe advanced error handling](https://docs.stripe.com/error-low-level) — authentication
   and rate-limit failures can precede idempotency lookup; network errors leave outcomes unknown.
+- [PayPal idempotency](https://developer.paypal.com/api/rest/reference/idempotency/) — endpoint-specific support/retention, request identity and current-status replay.
 - [PostgreSQL unique constraints](https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS)
 - [PostgreSQL 17 conflict handling](https://www.postgresql.org/docs/17/sql-insert.html)
 - [PostgreSQL 17 transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html)

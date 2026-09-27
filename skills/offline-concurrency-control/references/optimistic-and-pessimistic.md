@@ -21,6 +21,35 @@ and protected writes must be one atomic operation/transaction; a separate prelim
 is insufficient. Related writes and invariant validation need the same authoritative
 coordination, and a conflict must roll back the affected unit of work.
 
+### Deletes and entity lifetime
+
+When deletion means "delete the revision I reviewed", carry that original version too:
+
+```sql
+DELETE FROM customer_order
+ WHERE id = :id
+   AND version = :expectedVersion;
+-- require one affected row; zero is not proof that this request deleted anything
+```
+
+Apply the same conflict/missing-row contract and transactional protection to related
+changes. A separately authorized "delete whatever exists now" command is a different
+intent; do not silently substitute it for a snapshot-protected delete. JPA checks the
+version of a versioned entity when removing it, but loading the latest entity first still
+requires comparing the editor's original version, just as for an update
+([Jakarta Persistence 3.2, section 3.5.1](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)).
+
+Check token lifetime when identifiers can be reused or old state restored. If an editor
+read `(id=42, version=0)`, then that row is deleted and a replacement is inserted with
+the same pair, the old update or delete predicate matches the replacement. A version
+column alone cannot distinguish these lifetimes. Preserve a non-reused entity identity,
+or carry and atomically check a generation as well as the per-generation version; a
+natural/business key need not be that identity. Soft delete and restore must participate
+in invalidating stale snapshots rather than resetting the token. Existing non-reused
+identities and advancing versions need no additional generation scheme. Test the actual
+recreation/restore paths when they exist; do not infer their behavior from ordinary ORM
+updates.
+
 ### In JPA
 
 ```java
@@ -207,6 +236,10 @@ require all recipes. These are integration-test recipes, not an already executed
    membership changes and bulk/native paths.
 5. **Expired lease:** acquire token A, expire it, acquire B, then attempt A's renewal,
    release and save. All must fail without changing B's ownership or protected data.
+6. **Delete and recreation:** after B commits an update, A's delete carrying the old
+   version must leave B's revision intact. Where deletion/recreation or restore exists,
+   retain an old client's token across that lifecycle and prove that both its update and
+   delete are rejected. A fresh token for the replacement must remain usable.
 
 Bound waits and database lock/statement timeouts. On failure, release barriers, roll back
 transactions and stop owned executors so a broken locking protocol cannot hang the suite.

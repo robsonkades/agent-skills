@@ -56,6 +56,10 @@ meets the relevant budget. A native frame alone is not a reason to redesign it.
    profiles, call duration and carrier capacity; collect only what resolves a material gap.
 5. **When occupancy or failure isolation warrants a change, compare:** a bounded dedicated platform-thread
    pool, an asynchronous/non-blocking native API, process isolation or a Java alternative.
+   Check whether a native session must stay on one OS thread: a virtual thread may change
+   carriers between calls, and a multi-worker pool does not preserve affinity across tasks.
+   Keep the session's open/use/close operations on an explicit owner; arena confinement
+   and Java context propagation do not establish native-thread affinity.
    Size/admit the pool from latency, concurrency, resource limits and overload policy, then
    let the virtual thread await the `Future`.
    Waiting on a `Future` is ordinary Java and unmounts normally. Allocate the call's
@@ -150,6 +154,7 @@ change alone does not establish service benefit.
   variadic promotions, what a critical region does to each collector, and the testing
   levers. Read when a downcall fails with `WrongThreadException` or `Already closed`,
   when moving JNI work between threads or designing a callback API,
+  when native state or handles must stay on one OS thread across calls,
   when a native function sets `errno` or is variadic, or
   when `GCLocker Initiated GC` appears in a GC log.
 - [Detecting and mitigating native pinning](references/pinning-and-native-access.md) — the JFR

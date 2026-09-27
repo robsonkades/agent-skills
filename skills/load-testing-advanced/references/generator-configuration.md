@@ -2,7 +2,8 @@
 
 ## Arrival-executor concurrency
 
-For iteration arrival rate \(\lambda_i\) and mean iteration duration \(E[W_i]\):
+For a stable iteration population with consistently measured arrival rate \(\lambda_i\)
+and mean iteration duration \(E[W_i]\):
 
 \[
 E[L_i]=\lambda_i E[W_i]
@@ -12,6 +13,14 @@ This estimates mean busy virtual users, not a safe maximum. Duration variability
 multi-request workflows, client work and generator scheduling require a pilot. Choose
 preallocation from the observed concurrency distribution plus explicit headroom, and prove
 generator CPU, memory, network, sockets and metrics output remain below their limits.
+
+Keep the same iteration population and measurement boundary in all terms. A spike/ramp's
+whole-run arrival average multiplied by the duration of only its completed iterations can
+miss both peak occupancy and slow unfinished work. Inspect the time series of in-flight
+iterations, account for work crossing phase boundaries and allow a declared drain/timeout
+window. For example, if 100 iterations start together and 90 remain active at the cutoff,
+the ten fast completions cannot size concurrency for that burst. A mean is not a peak even
+when all iterations eventually complete.
 
 In current k6 arrival-rate executors, each iteration needs an available VU. Insufficient
 allocation causes dropped iterations, including when target slowdown holds VUs longer;
@@ -147,6 +156,8 @@ so inspect the effective implementation and metrics before attributing a plateau
 
 - [k6 constant arrival rate](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
 - [k6 arrival-rate VU allocation](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/arrival-rate-vu-allocation/)
+- [k6 dropped iterations and their causes](https://grafana.com/docs/k6/latest/using-k6/scenarios/concepts/dropped-iterations/)
+- [Karl Sigman: Little's law and finite-window boundary work](https://www.columbia.edu/~ks20/stochastic-I/stochastic-I-LL.pdf)
 - [k6 built-in metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/reference/)
 - [k6 thresholds](https://grafana.com/docs/k6/latest/using-k6/thresholds/)
 - [k6 summary trend statistics options](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#summary-trend-stats)

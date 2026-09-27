@@ -48,11 +48,15 @@ for a seam nothing ever uses.
    demonstrated change, ownership, failure or test seam means no interface.
 4. **Invert when the benefit justifies it.** Define the port next to the policy, named in the policy's vocabulary;
    implement it in an adapter beside the mechanism; construct and connect both in
-   the composition root; hand the port in through the constructor.
+   the composition root; hand the port in through the constructor. Inspect the whole contract:
+   inherited methods, generic bounds, nested data, callbacks and failures can still expose vendor
+   dependencies. `Object` or a map that requires vendor-specific casts/keys merely conceals one.
 5. **Verify.** Compile policy into a fresh output directory with the mechanism absent and no
    cached classes or generated outputs masking the dependency. Inspect full module readability
    (including transitive edges), and exercise policy outcomes with a small double. A container
-   is unnecessary for that check; separately test adapter translation and runtime wiring.
+   is unnecessary for that check; separately test adapter translation and runtime wiring. For
+   asynchronous or lazy ports, also exercise failure after the call returns and the consumer's
+   completion/cleanup path; immediate-success doubles cannot verify those contracts.
 
 ## Rules
 
@@ -84,7 +88,11 @@ for a seam nothing ever uses.
 - Quarantine failure and lifecycle contracts as well as request types. Decide which failures
   cross the port, whether completion means accepted or completed, and who closes resources.
   Translate vendor errors in the adapter; do not move transport exceptions into policy or
-  introduce retries merely because the call is now behind an interface.
+  introduce retries merely because the call is now behind an interface. A returned future,
+  iterator or stream can execute after the adapter method returns; translation and resource
+  ownership must extend through that use. Preserve the promised blocking/cancellation behavior
+  rather than silently blocking or eagerly materializing data to simplify the adapter.
+  Preserve failure provenance: a consumer callback bug must not become a retryable provider outage.
 - Changing an exported constructor or port signature is an API migration. Inspect old
   callers, external implementors and framework wiring; successful policy isolation does
   not prove those consumers remain compatible.
@@ -102,8 +110,8 @@ integration/migration work without reporting it as implemented.
 ## References
 
 - [Decision guide](references/decision-guide.md) — when to invert an edge, when to
-  leave it, and how JPMS makes the decision physical. Read when deciding whether a
-  dependency deserves a port.
+  leave it, how JPMS makes the decision physical, and contracts that continue through deferred
+  results. Read when deciding whether a dependency deserves a port or when a port is lazy/asynchronous.
 - [Worked example: notification dispatch](references/worked-example.md) — a policy
   class decoupled from SMTP, with a plain-Java composition root and the test double
   that proves the seam. Read when performing an inversion.

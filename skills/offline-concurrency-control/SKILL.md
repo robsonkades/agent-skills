@@ -129,6 +129,11 @@ The mechanism can be forgotten on a new write path
   affected-row count must be tested. Normal versioned entity writes get this from the ORM; hand-written SQL and bulk
   updates need explicit participation. Incrementing the version invalidates old snapshots,
   but does not replace a predicate protecting the bulk operation's own expected state (`orm-behavioral-patterns`).
+- Include snapshot-protected deletes and lifecycle transitions in that contract. Loading
+  the latest entity before deleting it does not validate the editor's original revision.
+  If identifiers or versions can be reused after deletion, recreation or restore, ensure
+  an old token cannot match a replacement; preserve a non-reused identity or include its
+  generation in the checked token. Add this machinery only where such reuse is possible.
 - Pessimistic offline locks need ownership and abandonment recovery. A lease uses acquisition time,
   expiry and safe renewal; a durable checkout may instead require explicit release plus an audited
   administrative recovery procedure. Expiry is valuable but unsafe if work can outlive it without

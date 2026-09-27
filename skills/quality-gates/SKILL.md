@@ -51,6 +51,9 @@ and recovery can be harder.
 7. **Verify a changed gate itself.** Use a known passing change, a representative violating
    fixture and a failed/missing-evidence run. Check selection, process exit status and final CI
    status, including any wrapper or report upload; expected failures must not turn into success.
+   A successful repair command does not prove the submitted revision passed. Likewise, a
+   tolerated checker failure is not a passing required gate; inspect the underlying result
+   before any failure-ignoring wrapper or CI option changes it.
 
 ## Rules
 

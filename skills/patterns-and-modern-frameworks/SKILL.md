@@ -135,6 +135,10 @@ A pattern appears obsolete
 - `@Version` implements managed-entity conflict detection. The client's original version,
   conflict presentation, valid retry and bulk SQL participation remain application concerns
   (`offline-concurrency-control`).
+- **Framework mechanisms do not automatically compose into a stronger guarantee.** A successful
+  `@CacheEvict` method can return before its surrounding transaction commits. Inspect the
+  transaction boundary, advice order and cache integration before promising commit-aware
+  publication; check both commit and rollback paths (`caching-strategies`, `enterprise-transactions`).
 - **JPA does not require public JavaBean setters.** Portable entities need a public/protected
   no-arg constructor and a valid field or property access strategy. Field access supports
   mutation through domain methods; persistent fields must not be final (`domain-logic-organization`).

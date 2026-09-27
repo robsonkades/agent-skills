@@ -22,16 +22,19 @@ precede the flag on the command line.
 
 ## Three behaviours that change the experiment
 
-**The process exits on OOM; a `catch` never runs.** `EpsilonArguments::initialize`
+**VM-reported heap exhaustion exits the process by default.** `EpsilonArguments::initialize`
 [`epsilonArguments.cpp`] sets `ExitOnOutOfMemoryError=true` unless the flag was given
 explicitly — `PrintFlagsFinal` under Epsilon shows it `{product} {default}` but `true`.
-Verified: a `try { … } catch (OutOfMemoryError e)` around the allocating loop never reaches
+Verified: a `try { … } catch (OutOfMemoryError e)` around a heap-allocating loop never reaches
 the handler; the VM prints `Terminating due to java.lang.OutOfMemoryError: Java heap space`
 and exits with status 3; `finally` blocks and shutdown hooks do not run either (verified). A
 harness that expects to observe the error in-process, or a test that asserts on it, needs
 `-XX:-ExitOnOutOfMemoryError`; with that the handler runs and the process continues
-(verified). `-XX:+HeapDumpOnOutOfMemoryError` still writes the dump before the exit
-(verified: 69 MB `.hprof` for `-Xmx64m`).
+(verified). `-XX:+HeapDumpOnOutOfMemoryError` attempts the dump before the exit
+(verified successful capture: 69 MB `.hprof` for `-Xmx64m`). This is the VM's
+`report_java_out_of_memory` path, not a handler for every `OutOfMemoryError` thrown in Java.
+For example, `Bits.reserveMemory` throws a catchable error when the direct-buffer limit is
+exhausted; it does not enter that VM reporting path or trigger its automatic heap dump.
 
 **Committing is lazy unless `-Xms` equals `-Xmx`.** Epsilon commits in steps of
 `EpsilonMinHeapExpand` (128 MB, experimental) and prints `Consider setting -Xms equal to
@@ -48,6 +51,36 @@ grow a thread's TLAB while it allocates steadily and shrink it after a pause. Th
 `gc+init` line `TLAB Size Max: 4M` confirms the ceiling. This only matters when reading the
 `used` figure at fine granularity: heap "used" advances by whole TLABs, not by objects.
 
+## GC-dependent resource cleanup changes the experiment
+
+Dropping a direct `ByteBuffer` reference normally lets a collecting runtime eventually
+discover that it is unreachable and run its cleaner. Epsilon never performs that collection.
+In JDK 25, `Bits.reserveMemory` waits for reference processing, requests `System.gc()` and
+retries before throwing `OutOfMemoryError: Cannot reserve … bytes of direct buffer memory`.
+Epsilon ignores that collection request; waiting longer cannot provide the missing GC.
+The separate `MaxDirectMemorySize` budget can therefore fail while Java heap space remains.
+
+Inspect the actual exception, effective direct-memory limit, buffer-pool usage and ownership
+before increasing heap size or blaming hidden heap allocation. Explicit supported release
+or bounded reuse can change resource lifetime; do not introduce internal cleaner calls just
+to make the experiment pass. If the workload relies on reachability-triggered cleanup,
+retain a collecting baseline and decide whether Epsilon still answers the question. A
+bounded job must budget unreclaimed direct memory and other resources as well as heap.
+
+A bounded reproduction on Temurin 25.0.3+9 (Windows), with compiled helper methods and
+`-Xms64m -Xmx64m -XX:-HeapDumpOnOutOfMemoryError`, distinguished the paths:
+
+| Case                     | Workload and decisive configuration                                                                                            | Observed result                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Heap exhaustion          | Repeated 1 MiB byte arrays under Epsilon; replace one retained reference; default exit flag                                    | Exit 3, no catch or finally output                                                        |
+| Direct-memory exhaustion | Allocate and discard sixteen 1 MiB direct buffers in a helper method; Epsilon, `-XX:MaxDirectMemorySize=4m`, default exit flag | Catch after four successful allocations, `Cannot reserve` message, finally output, exit 0 |
+| Collecting comparison    | Same direct-buffer helper, heap and direct limit; `-XX:+UseG1GC`                                                               | Sixteen allocations completed, finally output, exit 0                                     |
+
+Epsilon cases require `-XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC`. These results
+demonstrate failure-path and cleanup differences on that build, not a performance advantage
+or a universal guarantee that collecting runtimes satisfy any direct-memory workload.
+Keep the attempts bounded and dump creation disabled when reproducing only this distinction.
+
 ## The arithmetic
 
 ```
@@ -59,6 +92,8 @@ Use a measured baseline after warm-up for a steady-state window; it includes all
 allocation, not just live objects. Account for alignment, TLAB tails, allocation size and
 native/container headroom. Varying rates require cumulative allocation, not a constant-rate
 prediction. Native exhaustion or an oversized allocation can fail before this estimate.
+Apply the formula only to heap consumption; a direct-memory failure cannot supply `T_oom`
+for a heap-rate estimate.
 
 Used in both directions:
 
@@ -182,7 +217,7 @@ change is warranted and verify its correctness separately.
 - A long-lived process needs a bounded total lifetime allocation budget, including background
   work, or recycling before conservative exhaustion. An allocation-free hot path alone is
   insufficient. "GC-free performance" can be
-  an OOM with a countdown — and, by default, an exit with status 3 that no handler sees.
+  heap exhaustion with a countdown — and, by default, an exit with status 3 that no handler sees.
 - Have an answer for what happens at `T_oom` before starting: recycle, alert, or "that is the
   expected result of the experiment".
 - Epsilon says how much is allocated, never by whom. Attributing allocation to code is a
@@ -199,3 +234,6 @@ change is warranted and verify its correctness separately.
 - [JEP 318](https://openjdk.org/jeps/318) — intended uses and finite heap constraints.
 - [Epsilon initialization, JDK 25 update sources](https://github.com/openjdk/jdk25u/blob/master/src/hotspot/share/gc/epsilon/epsilonArguments.cpp) — OOM exit default and non-GC safepoint support; use the target build tag.
 - [25.0.3 Epsilon startup logger](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/epsilon/epsilonInitLogger.cpp) — conditions for heap-size and pre-touch hints.
+- [25.0.3 VM OOM reporting](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/utilities/debug.cpp) — `report_java_out_of_memory`: dump attempt and exit ordering for VM-reported errors.
+- [25.0.3 direct-buffer reservation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/nio/Bits.java) — `reserveMemory`: reference-processing waits, collection request and Java-thrown OOM at the direct-memory limit.
+- [25.0.3 Epsilon collection requests](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/epsilon/epsilonHeap.cpp) — `collect`: explicit collection requests are ignored; no reclamation.

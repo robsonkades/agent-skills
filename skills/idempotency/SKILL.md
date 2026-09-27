@@ -28,6 +28,21 @@ condition it exists for — two copies of the same request in flight at the same
 second failure is the handler that detects the duplicate correctly and then returns an
 error, so a client that retried after a timeout is told its request conflicts with itself.
 
+## Establish the contract first
+
+Inspect the handler, business uniqueness constraints, actual transaction boundaries, retry/SDK
+configuration, retention jobs, tests and documented API/provider contracts. Trace one intent
+from caller through every durable mutation and external effect. Establish the target
+Java/framework and database/isolation versions from build/runtime evidence; the reference's
+Java 17 schema sketch does not authorize an upgrade or prove transaction behavior.
+
+Separate the requested guarantee and documented contract from incidental code patterns. If
+identity, acceptable duplicate effects, replay horizon or provider recovery guarantees remain
+unknown, ask only about the gap that changes the decision. State provisional assumptions and
+the evidence needed to confirm them; continue independent review or reversible local work.
+Respect the task: design alternatives for a design request, evidence-backed findings for a
+review, and changes only when implementation or fixes are requested.
+
 ## Workflow
 
 1. **Define the equivalence contract.** Separate final business state, external effects and
@@ -47,8 +62,10 @@ error, so a client that retried after a timeout is told its request conflicts wi
 4. **Make the claim and local mutation one atomic state transition.** A conditional insert
    or compare-and-set chooses one owner under concurrency. When the business mutation is in
    the same database, commit claim, mutation and response atomically. For an external effect,
-   persist intent first and call downstream with the same idempotency key; otherwise a crash
-   necessarily leaves an ambiguous state that requires status lookup/reconciliation.
+   persist intent first and reuse that effect's downstream key across retries. If one command
+   produces several effects, give each a distinct stable identity and recovery state; do not
+   copy one parent key onto different downstream operations. A crash can still leave an
+   ambiguous outcome requiring status lookup/reconciliation.
 5. **Persist the stable outcome needed by the contract.** It may be the exact status/body,
    a resource identifier and version from which a response is rebuilt, or a terminal
    business rejection. Do not persist secrets, one-time credentials or unbounded bodies.
@@ -94,7 +111,8 @@ error, so a client that retried after a timeout is told its request conflicts wi
   archival/DLQ replay limits and legal retention explicitly.
 - Increment and append are not naturally idempotent, but an atomic dedup record plus mutation
   can make an operation keyed by intent idempotent. Alternatives are a uniquely keyed delta,
-  conditional version transition or absolute target write.
+  conditional version transition or absolute target write when it preserves the intended
+  business operation; replacing independent increments with a stale target can lose work.
 - **Deduplication memory must survive the failures covered by the contract.** An evictable
   cache alone cannot prevent a forbidden repeated effect across eviction/restart. Natural
   repeat-safety may need no separate record; process-local suppression is also valid when
@@ -105,15 +123,21 @@ error, so a client that retried after a timeout is told its request conflicts wi
 
 ```text
 ABSENT --atomic claim--> PENDING(attempt, fingerprint)
-PENDING --downstream confirms same operation key--> COMPLETED(outcome)
+PENDING --downstream confirms terminal effect outcome--> COMPLETED/REJECTED
 PENDING --pre-dispatch rejection; no unresolved earlier attempts--> RETRYABLE/REJECTED
-PENDING --timeout/disconnect/crash--> UNKNOWN --status lookup/reconcile--> COMPLETED/RETRYABLE
+PENDING --timeout/disconnect/crash--> UNKNOWN --status lookup/reconcile--> COMPLETED/RETRYABLE/REJECTED
+PENDING --response with indeterminate effect outcome--> UNKNOWN
 UNKNOWN --later attempt rejected before dispatch--> UNKNOWN
 ```
 
 Track uncertainty for the whole operation, including earlier SDK/proxy attempts. A new
 attempt epoch must retain that evidence: proving the latest attempt was not dispatched does
 not prove that an earlier attempt never applied or cannot still apply.
+
+A repeatable HTTP response is not necessarily a resolved business effect. For example, a
+provider may replay an original `500` while the effect remains indeterminate. Preserve that
+uncertainty and reconciliation; neither terminal rejection nor a fresh key follows from the
+status code alone. Provider response replay policies differ; inspect the actual API contract.
 
 Never delete or reopen `PENDING` merely because the caller received an exception. Cancellation
 and timeout describe the caller, not the effect. If a lease allows a new worker to take over,
@@ -125,9 +149,19 @@ provider also guarantees that the prior attempt cannot subsequently apply; other
 `UNKNOWN` and reconcile. Compensation is a weaker business recovery contract, not proof of
 at-most-once effects.
 
+If an irreversible peer offers neither repeat safety nor authoritative recovery evidence,
+stop automatic redispatch of an unknown operation. Preserve its identity and escalate the
+unresolved business outcome; a local dedup table cannot make that remote retry safe.
+
 For implementation work, record the target Java/framework, database/isolation and downstream
 API version. Report the key/fingerprint scope, effect boundary, retention/recovery contract and
 checks actually run; do not claim exactly-once behavior from a mock or a successful local claim.
+
+Finish with the guarantee supported by the available evidence, the decisive alternative or
+finding, and remaining uncertainty. For changes, exercise concurrency, crash/replay and
+fingerprint/tenant boundaries relevant to that guarantee; if the real store/provider cannot be
+tested, name the unverified boundary and the next discriminating check. An unresolved external
+outcome is a recovery obligation, not evidence that the operation failed without effects.
 
 ## Security and abuse controls
 
@@ -141,8 +175,8 @@ checks actually run; do not claim exactly-once behavior from a mock or a success
 
 ## References
 
-- [The idempotency-key filter](references/idempotency-key-filter.md) — a Java
-  implementation for an HTTP API: the conditional-insert claim, the in-flight duplicate,
+- [The idempotency-key filter](references/idempotency-key-filter.md) — a Java schema sketch
+  and application pseudocode for an HTTP API: the conditional-insert claim, the in-flight duplicate,
   response replay, retention, and an explicit fail-closed/fail-open decision for when the
   dedup store is unavailable. Read when implementing or reviewing an idempotent endpoint or
   message handler.

@@ -35,8 +35,10 @@ observe goodput and resource recovery, then retain guardrails until recovery is 
    resources; pair it with verified timeout/cancellation and observe in-flight drain. Cost: everything with
    no fallback now errors fast instead of slowly. Mechanism: `circuit-breakers`.
 2. **Cut retries.** Set attempts to 1 at the layer that retries, or empty the retry budget.
-   This is usually the largest single reduction because the multiplier is compounding across
-   layers. Policy: `retries-and-backoff`.
+   Prioritize this when measured retry traffic contributes materially to the saturated resource;
+   layered retries can multiply attempts, but a one-attempt workload has no such reduction to gain.
+   Preserve accepted durable work for later reconciliation or controlled retry rather than treating
+   retry suppression as permission to discard it. Policy: `retries-and-backoff`.
 3. **Shed at the entry point, non-uniformly.** Reject the lowest-priority classes first and
    expired disposable requests first. Age is not a substitute for remaining deadline or durable
    acceptance obligations; preserve required writes and ordered jobs. Mechanism and priority
@@ -52,6 +54,22 @@ observe goodput and resource recovery, then retain guardrails until recovery is 
 6. **Disable non-critical work on the request path** — enrichment calls, recommendation
    fetches, or audit writes only when policy permits and durable capture remains. This is only available if criticality was decided in
    advance; see `cutting-the-loop.md`.
+
+## Contain transferred load
+
+Failover moves demand; it does not create capacity. Before redirecting a region, tenant or shard,
+check the destination's existing load, usable headroom for this operation mix, shared dependencies
+and data/authorization constraints. Include the original work still running and any retries or
+cache fills triggered by the move. A healthy destination is not evidence that it can absorb the
+source's traffic. Bound the transfer and observe destination goodput, queue age and saturation;
+stop or reverse the ramp if those bounds fail. When capacity is insufficient, retain isolation and
+reject excess work instead of successively evacuating overloaded destinations. Routing mechanics
+belong to `load-balancing-and-routing`.
+
+Cache bypass is the same risk at a different boundary: calls formerly served cheaply can now all
+hit the origin. A tested origin admission cap, permitted stale value or omission may preserve
+service; a fallback branch alone establishes none of these. See `cutting-the-loop.md` for the
+failure-mode test and `caching-strategies` for cache semantics.
 
 ## What deepens it
 

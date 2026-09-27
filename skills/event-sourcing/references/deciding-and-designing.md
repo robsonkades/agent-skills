@@ -274,9 +274,14 @@ reads; some databases/event stores provide all three. Evaluate semantics and acc
 the product label. An append-only table needs a unique `(streamId, version)` constraint and a
 commit-order-safe subscription strategy (`message-ordering-and-partitioning`).
 
-**The payload format** is a schema commitment on the same horizon. Choose one that tolerates
-unknown and missing fields, so an additive change stays the cheap change: JSON with lenient
-deserialisation, or Avro/Protobuf with compatible schemas/defaults. Avoid Java native
+**The payload format** is a schema commitment on the same horizon. Distinguish unknown additive
+fields from missing required facts: ignoring an unknown field may be compatible, but silently
+defaulting a missing amount or identity can invent history. Preserve required-field validation
+after decoding/upcasting. Use JSON binding or Avro/Protobuf reader/writer rules with explicit,
+historically justified defaults; test archived bytes rather than relying on lenient decoding.
+For example, [Avro 1.12 schema resolution](https://avro.apache.org/docs/1.12.0/specification/#schema-resolution)
+requires a reader default for a field absent from the writer schema, otherwise resolution fails;
+format-level compatibility still does not prove the default's business meaning. Avoid Java native
 serialization for long-lived events due to class coupling, security and interoperability
 costs; not every class refactor is inherently incompatible (`serialization-performance`).
 

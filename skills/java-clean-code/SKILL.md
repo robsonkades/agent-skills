@@ -27,10 +27,16 @@ comment only when a future maintainer could reasonably "simplify" a still-measur
 
 ## Workflow
 
+Match the requested mode: a findings-only review reports evidence and proposed corrections;
+an authorized refactor applies and verifies them. The readability criteria are the same in
+both modes; selecting this skill does not expand the requested change scope.
+
 Before changing structure, identify the reader's task or recurring change that is difficult;
 inspect project conventions, the compiler release/toolchain, framework lifecycle,
-affected callers and existing tests. Use Java 25 as the authoring default when the project
-has no declared target. `Clock` needs Java 8+, `List.copyOf` Java 10+, records
+affected callers and existing tests. Java 25 is this skill's authoring baseline, not a
+fallback target for an unknown project. If the target cannot be established, keep
+version-sensitive changes conditional and continue with compatible structural reasoning.
+`Clock` needs Java 8+, `List.copyOf` Java 10+, records
 Java 16+, and `RandomGenerator` Java 17+. Use the project's supported alternatives;
 this skill does not authorize upgrades, preview features or new dependencies.
 When caller contracts or tests are missing, identify the gap and characterize observable
@@ -89,7 +95,11 @@ hypothesis. No findings is valid when the code already supports its readers and 
 - For accidental internal call order, if `b()` is only valid after `a()`, merge them,
   pass what `b` needs as the return of `a`, or encode the order in a type. Preserve
   framework/protocol lifecycles and published APIs; documented state checks may be
-  appropriate there. A new phase type is not automatically safer or clearer.
+  appropriate there. A phase type only certifies an invariant when construction enforces
+  it and later mutation cannot invalidate it; a record wrapping mutable state does not
+  suffice. Keep checks for facts that can change before use. Load the temporal-coupling
+  reference before introducing phase types; choose them only when caller clarity or
+  misuse prevention repays the additional API.
 - Expose ambient inputs when outcomes, reproducibility or isolation require control:
   pass a `Clock`, `Locale` or config value at a suitable boundary. Preserve intentional
   repeated reads and time zones. An irrelevant generated identifier or an already adequate
@@ -119,6 +129,12 @@ the code, and the checks executed for behaviour preservation. Report untested as
 passing tests alone neither proves equivalence nor measures reader comprehension.
 Stop when the identified reader task is supported and affected contracts have been checked;
 record separate defects or unresolved questions without expanding into a general cleanup.
+When the necessary change reaches a published API, use `java-api-design`; for a broader
+behaviour-preserving move, use `java-refactoring`. Pass the reader problem, affected callers,
+compatibility constraints and observed effects/tests so the next decision can address
+compatibility or the safe sequence of changes. If that skill is unavailable, report the
+needed decision and supporting evidence; finish independent local work without assuming
+the wider change is safe.
 
 - [Worked examples](references/worked-examples.md) — an under-factored settlement
   method split by abstraction level, and an over-fragmented batch processor merged

@@ -104,6 +104,12 @@ THEN it is a boundary. Enforce it (package-private types, module
      (architecture-testing). Check the actual caller scope and deployment:
      package names alone do not hide public types, and JPMS requires named-module use.
 
+IF callers must remain independent of subsystem details
+THEN inspect parameter, result and exception types as well as imports in the implementation.
+     A facade returning vendor sessions or mutable internals may preserve the coupling or bypass.
+     Reuse suitable public value types; introduce translation only for the boundary actually required.
+     A convenience facade may deliberately expose supported subsystem types.
+
 IF collaborators change for unrelated reasons or tests require unrelated setup
 THEN consider splitting by use case, capability, or subdomain. A stable public facade
      may delegate to those implementations; preserve caller compatibility.
@@ -131,6 +137,14 @@ THEN distinguish two intentions (preview versus publish) from options of one
 
 ## Cross-cutting checks
 
+- **Failure vocabulary.** Preserve distinctions callers act on: absence, rejected input,
+  authorization failure, conflict, temporary unavailability and an unknown operation outcome.
+  Use the project's existing result/exception conventions; a new hierarchy is not mandatory.
+  Do not collapse these into `null`, an empty result or a generic success-shaped fallback.
+  Translate known failures narrowly, preserve diagnostic causes, and retain interruption and
+  cancellation behavior. At a transaction boundary, changing an exception type or converting it
+  into an ordinary result can change rollback; inspect the configured rules and test the real
+  invocation path (`enterprise-transactions`).
 - **Concurrency.** A facade is often stateless and shareable. State such as a cache or in-flight
   map gives it lifecycle and thread-safety responsibilities, but does not by itself make it a
   Mediator; classify by whether peer objects communicate through it.
@@ -164,6 +178,7 @@ THEN distinguish two intentions (preview versus publish) from options of one
 - [ ] Whether the subsystem remains accessible is a stated choice, and enforced if closed
 - [ ] Collaborators share a coherent change/use-case reason; unrelated setup is not accumulated
 - [ ] Options express one operation; distinct effects are discoverable to callers
+- [ ] Public types and failure outcomes preserve the promised boundary and caller decisions
 - [ ] The transaction boundary is deliberate and its span is justified
 - [ ] Remote fan-out has an overall deadline and a defined partial-failure result
 - [ ] Facade simplification is distinguished from gateway/BFF deployment or mediator coordination roles
@@ -171,6 +186,11 @@ THEN distinguish two intentions (preview versus publish) from options of one
 Report the caller simplification, access policy, invariant/resource owners and relevant failure
 contract with evidence and checks. State unresolved transaction/client behavior rather than
 assuming that one method call creates atomicity, safety or a strict latency bound.
+For a findings-only review, report concrete caller friction or contract violations and proposed
+corrections without changing code. For authorized implementation, validate representative consumer
+calls and affected failure/resource behavior on the target baseline. Stop when the requested
+contract is supported, or name the specific missing evidence and next check; an adequate facade
+or direct call can remain unchanged.
 
 ## References
 
@@ -179,7 +199,8 @@ assuming that one method call creates atomicity, safety or a strict latency boun
   god-facade drift early and how to split one; the access-policy decision (simplify or forbid)
   and how to enforce it. Read when classifying or splitting a coordinating class.
 - [Worked example](references/worked-example.md) — a checkout facade over seven collaborators: the
-  repeated sequence it replaced, where the transaction boundary went, the split when a second
+  repeated sequence it replaced, where the transaction boundary went, how failure translation
+  affects that contract, the split when a second
   use case arrived, a streamed-result ownership example, and the remote fan-out version with its
   deadline and partial-failure result.
-  Read when implementing.
+  Read when implementing or reviewing failure, transaction or resource contracts.

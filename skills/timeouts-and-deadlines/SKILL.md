@@ -108,11 +108,15 @@ remaining server work separately.
   assume that change on older targets or custom implementations. Bound body consumption and
   cancellation explicitly where needed; DNS and streaming behavior still require fault testing.
 - An unbounded `future.get()`/`join()` is acceptable only when a stronger task/request lifetime
-  is guaranteed. Catching `TimeoutException` should normally initiate cancellation and preserve
-  interrupt status where applicable, but cancellation does not prove the effect stopped. On a
+  is guaranteed. Catching `TimeoutException` should normally initiate cancellation of owned work
+  and preserve interrupt status where applicable, but cancellation does not prove the effect stopped. On a
   platform thread a traditional `java.net.Socket` read without an associated interruptible
   SocketChannel does not respond to `Thread.interrupt()`; closing the socket is what
   unblocks it, so a cancellation path built only on interruption does nothing there.
+- Cancellation follows ownership. When callers share work, such as a coalesced cache load,
+  one caller's expiry ends its wait; it must not cancel or exceptionally complete the shared
+  result still needed by others. Give each waiter an isolated completion view and the shared
+  operation its own bounded lifetime and explicit cancellation owner.
 - For sequential fixed maxima, `Σ phase/attempt bounds + Σ backoff` must be clipped by the
   shrinking deadline. Attempts beyond it are unreachable. Use overflow-safe duration arithmetic;
   parallel hedges require a concurrency/resource budget rather than the same sum.

@@ -76,6 +76,28 @@ the holder idiom instead defers creation until `Holder` is actively used. Inspec
 [initialization triggers](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4.1)
 before changing timing. Both idioms remain subject to the initialization dependencies below.
 
+## Constructor escape and reentrant access
+
+The publication guarantees above apply to the completed instance reached through the shown access
+path. A constructor that registers `this`, invokes a consumer callback with it or starts work using
+it can expose incomplete state through another path. Even a synchronous callback can observe fields
+before their assignments; an asynchronous escape also needs a safe handoff. `final` fields and a
+later volatile assignment do not make that earlier observation safe. Inspect superclass constructors
+and callbacks as well as the singleton's own constructor. Complete invariants before registration or
+startup, with an explicit owner for failure/cleanup; do not merely swap singleton idioms.
+
+For example, if constructing the holder's instance calls a listener that immediately calls
+`getInstance()`, the same thread may read the holder field's default `null`: recursive initialization
+by that thread proceeds without waiting for its own initializer to finish. Replacing this with the
+shown DCL does not solve the dependency cycle. Its monitor is reentrant and `instance` is still null
+until construction returns, so the recursive call attempts construction again. Break the cycle or
+pass already constructed dependencies explicitly. A callback invoked only after construction through
+a valid handoff does not have this defect. Verify constructor-callback ordering separately from
+concurrent first-access tests; the latter alone cannot prove that no early escape exists.
+
+These distinctions follow from [JLS 17 class initialization](https://docs.oracle.com/javase/specs/jls/se17/html/jls-12.html#jls-12.4.2)
+and [final-field semantics and monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html).
+
 ## The class-initialisation deadlock
 
 Class initialization coordinates per Class object. Two initializing threads can deadlock when

@@ -115,6 +115,9 @@ Review firings by precision, recall, time-to-detect, time-to-action and user imp
 correlated pages, automate repeatable remediation, and downgrade or remove alerts that
 cannot drive action. “Never fired” can mean rare critical coverage, not automatic deletion;
 exercise it and verify assumptions.
+For inhibition, verify that the source alert covers the target's impact and required action;
+shared severity or timing alone does not establish that. Preserve distinct urgent actions
+and test scope labels, including missing labels, using [Alerting design](references/alerting-design.md).
 
 ## Error-budget arithmetic
 

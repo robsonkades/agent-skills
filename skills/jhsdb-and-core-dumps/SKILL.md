@@ -84,6 +84,10 @@ every tool step or configure future capture during the incident.
   internals by binary offset via `VMStructs`, not through a stable API, so a different
   build of the same major version can misread offsets, throw
   `sun.jvm.hotspot.debugger.DebuggerException`, or exit quietly without naming the cause.
+- Verify support for the requested mode and target collector as well as the build. A readable
+  heap summary does not imply that SA can traverse objects or export HPROF. Check command
+  diagnostics and recovered coverage before treating absent objects as evidence; successful
+  export/import alone does not establish a complete heap. See the command reference.
 - `jcmd <pid> VM.native_memory summary` produces no core dump. It prints an NMT text report
   and requires `-XX:NativeMemoryTracking` on the target. There is no NMT path to a core
   dump.

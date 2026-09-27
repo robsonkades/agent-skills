@@ -110,7 +110,7 @@ Things this shows that are easy to get wrong:
 | Stack/thread comparison with `{poll_return}`                                       | Return poll in this JDK/port                                   | —                          |
 | No allocation sequence after confirming inlining and every path                    | Candidate eliminated allocation; corroborate with profile/IR   | —                          |
 | `lock cmpxchg`                                                                     | A CAS: monitor fast path, inflated monitor, or `AtomicX`       | see `pattern-catalogue.md` |
-| `call` inside a hot loop with a `{static_call}`/`{optimized virtual_call}` comment | A callee that did not inline                                   | —                          |
+| `call` inside a hot loop with a `{static_call}`/`{optimized virtual_call}` comment | Residual call path; another guarded path may have inlined      | —                          |
 
 ```
 add    0x10(%rsi,%rdx,4),%ebx        ; iteration 1   — scalar, 8-way unrolled:
@@ -131,6 +131,11 @@ judge it.
 A constant return may come from literal source, javac constant-expression evaluation or JIT
 optimization. Inspect the source/bytecode and relevant inlining/compiler evidence before
 claiming a folding transformation; the final instruction sequence alone does not identify it.
+
+A residual call is evidence about that path, not proof that the callee never inlined. C2 can
+generate a predicted-receiver fast path and a distinct fallback. Follow the receiver guards,
+scope/bytecode mappings and inlining log; use matching dynamic evidence before calling the
+fallback hot merely because it is printed inside a loop's compiled region.
 
 ## Null checks: three cases, not two
 
@@ -181,6 +186,27 @@ safepoints, unsafe/native access and collector mechanisms also require context. 
 inside compiled code is neither automatically benign nor automatically a VM defect; inspect
 HotSpot's fatal-error classification, faulting PC and code-range annotations.
 
+## Memory ordering is not a fence count
+
+Distinguish GC barriers from Java synchronization ordering. Start with the source access mode
+(plain, volatile, or the specific VarHandle operation), required happens-before relationship,
+compiler and ISA. A plain read and a volatile read can both look like an ordinary load on one
+target without having interchangeable Java contracts.
+
+The pinned JDK 25 x86 C2 backend has empty encodings for acquire/release memory-barrier nodes;
+its volatile barrier can emit a StoreLoad operation or be omitted when the backend's predicate
+finds it unnecessary. The ordering constraint can matter to compilation even when it adds no
+machine instruction. Inspect the full ordered path and target lowering, not only a local
+`mfence`/`lock` count. Do not transfer an x86 observation to another ISA or infer thread safety
+from identical emitted instructions.
+
+For a request to remove `volatile`, weaken a VarHandle mode or prove publication, pass the source
+accesses, synchronization edges and required outcomes to `java-memory-model` or
+`varhandles-and-memory-ordering`. Establish the source-level proof first; assembly checks a
+particular lowering, and dynamic tests have their own coverage limits. If those skills are
+unavailable, retain the current synchronization contract and state the missing proof rather than
+using a listing as permission to weaken it.
+
 ## From instruction to performance claim
 
 Do not convert mnemonic counts into cycles. The same instruction changes cost with
@@ -207,5 +233,8 @@ does not need a new profile or a source change:
 - [JDK 25 disassembler implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/disassembler.cpp)
 - [JDK 25 nmethod comments and implicit-exception metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/code/nmethod.cpp)
 - [JDK 25 x86 assembler sources](https://github.com/openjdk/jdk/tree/jdk-25-ga/src/hotspot/cpu/x86)
+- [JDK 25 x86 C2 memory-barrier encodings](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/cpu/x86/x86_64.ad) — acquire/release empty encodings and conditional volatile barriers.
+- [JDK 25 C2 predicted-call generation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/opto/callGenerator.cpp) — separate receiver hit and miss paths.
+- [JLS 25 happens-before contract](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5) — source-level synchronization semantics are not an opcode pattern.
 - [JEP 312: Thread-Local Handshakes](https://openjdk.org/jeps/312)
 - [JMH 1.37 perfasm implementation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/profile/AbstractPerfAsmProfiler.java)

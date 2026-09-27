@@ -73,6 +73,10 @@ reactive/messaging boundary relevant to the question, reuse adequate existing ev
 3. if missing, capture Context at submission and wrap/restore at execution;
 4. verify restoration and avoid unnecessary wrapping and scope leaks.
 
+For a reusable executor serving unrelated requests, distinguish per-submission capture from a
+wrapper bound to one captured Context; otherwise later requests can inherit the wrong parent.
+The instrumentation reference covers this API choice and periodic-task exceptions.
+
 Wrapping Context alone does not create a span. Redundant scope wrapping can add work, while
 duplicate spans require span-creating instrumentation; inspect the actual boundary before
 removing a correct wrapper.

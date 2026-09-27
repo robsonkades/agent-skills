@@ -34,12 +34,37 @@ others.
 
 ## OpenRewrite
 
-The default for anything repeated, repo-wide, or worth reviewing as a recipe. Its model is
-a lossless LST, so it preserves formatting and comments, which is what makes its diffs
-readable when recipes preserve them. `openrewrite-recipes.md` covers running and authoring.
+Useful when a repeatable semantic transformation earns the setup and test cost. Its LST
+carries formatting and comments, which helps make diffs readable when recipes preserve them.
+Repository size alone does not justify it over a bounded literal edit or an existing indexed
+IDE refactoring. `openrewrite-recipes.md` covers running and authoring.
 
-Choose it over the IDE when the change spans modules or repositories, must be re-runnable
-in CI, or is complex enough that the _rule_ deserves a test.
+Compare it with the existing IDE's actual scope and replay support when a change spans modules
+or repositories, must run in CI, or is complex enough that the _rule_ deserves a test.
+
+## Generated sources and authoritative inputs
+
+Inspect generation tasks, headers, processor configuration and build source roots. A checked-in
+file is not necessarily maintained by hand, and a directory name alone does not establish ownership.
+Trace a generated match back to its schema, template, processor, generator options or upstream
+artifact. Fix the owned input that controls the change, then regenerate with recorded versions
+and configuration. Changing a schema can also change a wire contract; prefer an appropriate
+generator naming option or template when only the Java representation should change.
+
+For example, renaming a method in a generated client and all its callers can compile today;
+the next generation restores the old method and breaks those callers. Re-running a recipe on
+that edited output tests the recipe's idempotence, not the generation pipeline's durability.
+Validate from a fresh isolated output directory: generate, apply any declared post-generation
+step, compile the consumers and check affected contracts. Repeat from the same inputs and
+explain output drift, including generator timestamps, rather than claiming reproducibility.
+
+Prefer supported generator configuration or templates over an output patch. A versioned,
+tested post-generation transformation can be appropriate when those inputs cannot express the
+required change, provided every relevant generation path runs it before consuming the output.
+Include that ordering and the supported generator version in its tests. If the generator/input
+is externally owned or unavailable, record the owner, affected symbols and required output
+contract for a handoff; a compatible adapter or retaining the current API may allow local work
+to proceed. Do not report the generated portion migrated merely because it was excluded.
 
 ## Error Prone and Refaster
 
@@ -101,4 +126,6 @@ and external consumers: they may have no literal occurrence in this repository.
 
 Primary references: [Error Prone Refaster patch generation and application](https://errorprone.info/docs/refaster),
 [IntelliJ rename scope, options and preview](https://www.jetbrains.com/help/idea/rename-refactorings.html),
-[google-java-format parser and language requirements](https://github.com/google/google-java-format).
+[google-java-format parser and language requirements](https://github.com/google/google-java-format),
+[Maven compiler annotation-processing output](https://maven.apache.org/plugins/maven-compiler-plugin/compile-mojo.html#generatedSourcesDirectory),
+[OpenAPI Generator configuration and template customization](https://openapi-generator.tech/docs/customization/).

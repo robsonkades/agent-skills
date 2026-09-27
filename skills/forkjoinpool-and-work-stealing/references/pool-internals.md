@@ -14,12 +14,35 @@ and locality. Other workers steal older work, which often represents a larger re
 External submissions are not identical to locally forked child tasks, so a benchmark that submits all
 leaves from one outside thread does not model recursive work stealing.
 
+Local FIFO is not global start/completion order: a later event can finish while an earlier event
+blocks on another worker. Choose explicit dependencies or serial per-key dispatch when ordering is
+part of correctness; changing `asyncMode` alone cannot implement that contract.
+
 ## Fork, join and help
 
 `fork()` schedules a task in the current fork/join pool when called from one, or the common pool when
 called outside such a computation. Re-forking a task before completion/reinitialization is a usage
 error. `join()` waits for completion and reports unchecked failure; the implementation may execute or
 help tasks rather than passively blocking.
+
+Distinguish the receiver and caller when tracing execution:
+
+| Entry from an ordinary non-worker thread         | Execution consequence                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `pool.invoke(root)` or `pool.submit(root)`       | submits the root to the named pool                                                            |
+| `root.invoke()`                                  | attempts to execute the root on the calling thread; it does not select a nearby pool variable |
+| `child.fork()` inside that directly invoked root | routes to the common pool because the caller is not a fork/join worker                        |
+
+By contrast, direct invocation within a worker retains that worker's pool context, and children
+fork into that pool. Record `ForkJoinTask.getPool()` and thread identity at representative task entry
+when testing a claimed isolation boundary; thread names alone are only a convention.
+
+`join()` ignores interruption as a reason to stop waiting. At an ordinary external owner, use
+`pool.submit(root).get(timeout, unit)` when the waiting policy needs interruption/a time budget,
+then handle the unfinished task separately on timeout or interruption. This is not a task deadline.
+In the examined OpenJDK 25 source, timed `get` enters helping before its timed blocking phase;
+an inline task body can exceed the wait budget. Test the actual caller/submission path when prompt
+return matters, and pass cooperative deadlines into long-running work where appropriate.
 
 Join assistance improves liveness for well-formed task DAGs but does not make arbitrary cyclic waits
 safe. A child waiting for an unrelated future, lock, socket or another pool can still deadlock or
@@ -78,6 +101,13 @@ Safe pattern:
 
 Do not mutate task inputs after scheduling unless the data structure and protocol were designed for
 concurrent mutation.
+
+`ThreadLocal` values belong to the executing thread, not to a task graph. A child stolen by another
+worker can see different request/logging context, while direct invocation or helping may see the
+caller's values. Capture the required context explicitly. For an existing context wrapper, verify
+installation and restoration on success, failure and nested inline execution; simply clearing the
+value can erase context that belonged to the helping caller. Do not assume a pool-wide cleanup
+policy propagates context between tasks.
 
 ## Managed blocking
 
@@ -153,8 +183,9 @@ the documented `cancelDelayedTasksOnShutdown()` policy before changing it.
 
 - [Java 25 `ForkJoinPool`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinPool.html)
 - [Java 25 `ForkJoinTask`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ForkJoinTask.html)
+- [Java 17 `ThreadLocal`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/ThreadLocal.html) — values belong to threads, not forked tasks.
 - [OpenJDK 25 `ForkJoinPool` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java) — submission wrappers and compensation rejection.
-- [OpenJDK 25 `ForkJoinTask` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinTask.java) — interruptible wrapper behavior.
+- [OpenJDK 25 `ForkJoinTask` source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinTask.java) — interruptible wrappers and helping before timed blocking in `awaitDone`.
 - [OpenJDK 17.0.16 `ForkJoinPool` source](https://github.com/openjdk/jdk17u/blob/jdk-17.0.16-ga/src/java.base/share/classes/java/util/concurrent/ForkJoinPool.java) — older `submit` wrappers; do not infer behavior of other submission APIs from these overloads.
 - [CountDownLatch publication contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CountDownLatch.html)
 - [Java Language Specification §17.4.5](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.5)

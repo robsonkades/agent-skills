@@ -3,7 +3,7 @@ name: java-numeric-types
 description: >
   Choosing and using Java's numeric types correctly: binary floating-point limits for exact
   decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,
-  integer overflow and the exact-arithmetic methods, primitives versus boxed types, the
+  integer overflow, lossy conversions and exact arithmetic, primitives versus boxed types, the
   boxed-value caching that makes == appear to work for some values, unboxing NPEs,
   boxing cost in bulk paths, and what happens to a numeric value when it crosses JSON, a
   database column or a JavaScript client. Use when money or any exact quantity is held in
@@ -34,7 +34,8 @@ behaviour differ from the primitive it looks like.
    If range, rounding or boundary policy is absent, identify the missing decision before
    changing persisted values or a public JSON representation.
 1. **Classify the quantity.** Exact decimal (money, tax, decimal contractual units) →
-   `BigDecimal` or integral minor units. Counting/identity → `int`/`long`. Physical measurement
+   `BigDecimal` or integral minor units. Counting/identity → `int`/`long` when the range fits,
+   or `BigInteger` for exact integers beyond it. Physical measurement
    or statistics where bounded floating-point error is acceptable → `double`. Never decide by
    what the JSON happens to contain.
 2. **Fix precision, scale and rounding policy with the domain type**, not ad hoc at call sites.
@@ -42,13 +43,16 @@ behaviour differ from the primitive it looks like.
    `MathContext`; exact-only operations may deliberately throw.
 3. **Bound the range.** Check whether any product, sum, difference or conversion can exceed the type —
    ids, byte counts, milliseconds, accumulators — and use exact arithmetic where it can.
+   Check the operand types before evaluation and validate before a lossy conversion;
+   assigning an already truncated or overflowed result to a wider type cannot repair it.
 4. **Choose primitive or boxed deliberately.** Primitive unless absence is meaningful or a
    generic/collection requires the box.
 5. **Check the boundaries.** Database column type and precision, JSON representation, the
    consumer's own numeric limits. A `long` above JavaScript's exact integer range is not safe as
    a browser JSON number.
 6. **Verify with adversarial values**: `0.1 + 0.2`, `Integer.MAX_VALUE + 1`, a null `Integer`,
-   `1.0` versus `1.00`, a negative operand to `%`, `NaN` in a comparator.
+   `1.0` versus `1.00`, a negative operand to `%`, `NaN` in a comparator, and fractional,
+   non-finite and just-out-of-range inputs at numeric conversion boundaries.
 
 ## Rules
 
@@ -85,6 +89,13 @@ behaviour differ from the primitive it looks like.
   binary search can overflow; `low + ((high - low) >>> 1)` is safe for ordered nonnegative
   array bounds. Integer `MIN_VALUE / -1` also overflows silently; reject that pair when exact
   division is required, and range-check narrowing casts before they discard bits.
+- Select the arithmetic type **before** the operation: `double ratio = 1 / 3` is `0.0`.
+  Convert an operand for an approximate ratio, or divide decimal operands with the specified
+  policy for an exact-decimal calculation. A `double`-to-`int`/`long` cast truncates fractions,
+  saturates out-of-range values and converts NaN to zero; it is not checked conversion.
+  Validate finite/integral/range requirements first, and retain original decimal text when
+  its digits are the contract. Read the conversion section in
+  [integers, boxing and overflow](references/integers-boxing-and-overflow.md) for boundary traps.
 - `%` with a negative dividend can yield a negative remainder (exact multiples yield zero), which breaks the standard "hash into a
   bucket" idiom. With a positive bucket count, use `Math.floorMod(x, n)` (and understand
   `floorDiv`) when the operand can be negative—a partition index computed from a hash is the
@@ -153,6 +164,6 @@ separate arithmetic tests from serializer/database round trips and measured allo
   rounding or allocation of a total across parts is involved, or when decimals cross a database
   or an API.
 - [Integers, boxing and overflow](references/integers-boxing-and-overflow.md) — read when
-  choosing between primitive and boxed types, when arithmetic could overflow, when `==` or
+  choosing between primitive and boxed types, when arithmetic or conversion could lose values, when `==` or
   `null` behaviour on boxed values is in question, or when boxing shows up in an allocation
   profile.

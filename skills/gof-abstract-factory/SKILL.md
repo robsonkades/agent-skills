@@ -24,6 +24,10 @@ aggregate constructor can accept mismatched products. State the enforcement boun
 assembly with contract tests, validated family identities, family-typed APIs, or encapsulated
 operations that never expose mixable products. Shared family identity may also require the same
 transaction/session instance, not merely the same vendor or format.
+Choose the mechanism for the promised misuse boundary: tests support trusted assembly but do
+not reject arbitrary caller combinations. A shared generic family parameter distinguishes types,
+not two runtime sessions of the same type; use a checked owner identity or hide the products when
+that distinction is required.
 
 If there is no invariant binding the products to each other, this is not Abstract Factory. It
 is a bag of factory methods, and it should be several separate providers or none at all.
@@ -169,7 +173,7 @@ unresolved lifecycle or compatibility evidence makes the recommendation conditio
 ## References
 
 - [Decision and alternatives](references/decision-and-alternatives.md) — the family-invariant
-  test, Abstract Factory against dependency injection, `Map<Key, Supplier>`, `ServiceLoader` and
+  test and enforcement choices, Abstract Factory against dependency injection, `Map<Key, Supplier>`, `ServiceLoader` and
   configuration, and how it differs from Factory Method and Builder. Read before introducing or
   removing a factory interface.
 - [Worked example](references/worked-example.md) — a report-export family selected per request,

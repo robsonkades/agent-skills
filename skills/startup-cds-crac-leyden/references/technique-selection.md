@@ -41,12 +41,12 @@ Is there a measured startup cost that the current adequate default/CDS setup lea
 
 ## JEP status at the JDK 25 baseline
 
-The earlier 2026-09-05 status check recorded 514 Closed/Delivered for 25 and 516 for 26;
-the 2026-09-11 source check retains those statuses.
+The 2026-09-27 source check retains JEP 514 Closed/Delivered for 25 and JEP 516 for 26.
 These are release integration facts, not a promise about installed/vendor builds or GA artifacts
-on a target platform. Verify vendor release availability separately. On 2026-09-11, JEP 544
-lists AOT code compilation as Candidate with no release row, while Leyden's overview still
-labels it in progress/TBD. The JDK 25 column above remains profile-based.
+on a target platform. Verify vendor release availability separately. JEP 544 now lists
+AOT code compilation as Proposed to Target JDK 28, superseding the earlier Candidate/no-release
+entry. A proposed target can change and is not delivery evidence; recheck its status before
+planning adoption. The JDK 25 column above remains profile-based.
 
 | JEP / issue | What it delivers                                                  | Status                                                                                                                                     |
 | ----------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -58,7 +58,7 @@ labels it in progress/TBD. The JDK 25 column above remains profile-based.
 | 514         | One-command AOT ergonomics: `-XX:AOTCacheOutput`                  | Delivered, JDK 25                                                                                                                          |
 | 515         | AOT method profiling persisted into the cache                     | Delivered, JDK 25                                                                                                                          |
 | 516         | AOT cache with any collector, ZGC included                        | Delivered, JDK 26 (not on 25)                                                                                                              |
-| 544         | Native application code in an AOT cache                           | Candidate, no target release listed on 2026-09-11; not a JDK 25 capability                                                                 |
+| 544         | Native application code in an AOT cache                           | Proposed to Target JDK 28 on 2026-09-27; not delivered and not a JDK 25 capability                                                         |
 | JDK-8377932 | Affected AOT-cache builds accepted a modified application JAR     | Current Corretto develop capture lists it under 25.0.3.9.1; earlier record differed. See validation reference; qualify actual vendor build |
 
 ## Measurement contract

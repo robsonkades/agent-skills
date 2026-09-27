@@ -83,11 +83,17 @@ accrued` per thread. Correlate affected requests; absent pauses alone do not ide
   precede `-XX:+UseEpsilonGC`. Epsilon was never promoted to product — unlike ZGC and
   Shenandoah (both product in JDK 15, JEP 377 and JEP 379). Any document claiming the flag
   stopped being necessary describes an event that never happened.
-- **Epsilon exits the process on OOM.** It sets `ExitOnOutOfMemoryError=true` by default:
-  the JVM prints `Terminating due to java.lang.OutOfMemoryError` and exits with status 3; no
-  `catch`, `finally` or shutdown hook runs (verified on 25.0.3). Pass
-  `-XX:-ExitOnOutOfMemoryError` when something in-process must observe the error. The heap
-  dump is written before the exit.
+- **VM-reported heap exhaustion exits Epsilon by default.** It sets
+  `ExitOnOutOfMemoryError=true`: this path prints `Terminating due to java.lang.OutOfMemoryError`
+  and exits with status 3 without running `catch`, `finally` or shutdown hooks (verified on
+  25.0.3). An isolated harness can use `-XX:-ExitOnOutOfMemoryError` to observe that error.
+  An enabled heap dump is attempted before exit. This does not intercept every Java-thrown
+  `OutOfMemoryError`: exhausting the direct-buffer limit can still reach a catch block.
+- Classify the actual failed resource before deriving allocation rate from time-to-OOM.
+  Direct buffers can exhaust their separate limit when cleanup relies on reachability and
+  collection; Epsilon does not reclaim them through GC, and `System.gc()` cannot restore
+  that behavior. Preserve a collecting baseline when such cleanup is essential. Heap size
+  divided by time-to-direct-memory exhaustion is not a heap allocation-rate measurement.
 - Epsilon needs a bounded whole-process allocation budget including background work, or
   recycling before conservative exhaustion. An allocation-free hot path alone is insufficient;
   otherwise it is an OOM on a
@@ -173,7 +179,7 @@ an unexecuted experiment as a measured improvement.
 ## References
 
 - [Epsilon as an instrument](references/epsilon-as-an-instrument.md) — the time-to-OOM
-  arithmetic in both directions, the exit-on-OOM default and lazy commit, the four legitimate
+  arithmetic in both directions, VM versus Java-thrown OOM, direct-buffer cleanup, lazy commit, the four legitimate
   uses with the heap size each implies, the two-phase allocation-free test, the verified log
   format, and the OOM-plus-heap-dump procedure. Read before running Epsilon, and when sizing
   a heap for a benchmark or a short-lived process.

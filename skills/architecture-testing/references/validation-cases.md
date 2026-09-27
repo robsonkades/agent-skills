@@ -84,6 +84,10 @@ coverage from latency/plan claims.
 **Failure:** Accepting zero, relying on a reset for isolation, measuring only repository return,
 or raising the budget to accommodate an unexplained count.
 
+**Cache-control variant:** Statistics are now live and isolated, but the instrumentation control
+loads the same orders and lines before the measured call. Require restoration of the declared
+cold context/cache state after that control. Fail if resetting counters is treated as cache eviction.
+
 ## 4. Unbounded optimistic-lock test
 
 **Request/context:** “Two workers read one row, wait forever on a Phaser and write the same
@@ -134,3 +138,43 @@ explicit; do not install or contact production infrastructure.
 
 **Failure:** Inventing policy, claiming container fidelity/capacity from small data, saying H2 cannot
 catch any defect, or reporting unrun integration tests as passed.
+
+## 7. Distinct rows, different promises
+
+**Request/context A:** “Two PostgreSQL 17 Repeatable Read transactions read two active duty
+assignments, then each deactivates a different assignment. Both assignments have @Version.
+At least one must remain active. Our same-row optimistic-conflict test passes; certify this
+invariant. No shared guard is shown. Review only.”
+
+**Expected behavior/output:** Identify distinct write sets and the shared predicate; propose
+the controlled read-before-write schedule and a fresh committed count assertion. Explain why
+the same-row test is insufficient. Report the design/coverage gap and hand off the coordination
+decision with its inputs; do not edit the application or silently raise isolation. With an
+accepted serializable/retry protocol, verify the actual failure class and fresh whole-transaction
+retry, not a mandatory OptimisticLockException.
+
+**Request/context B:** Use A, changing only the business contract to “These assignments are
+independent; both may be inactive.”
+
+**Expected behavior/output:** Allow both distinct updates to succeed and verify their durable
+values. Preserve the same-row conflict test for its existing promise; a shared guard or a
+minimum-active assertion is unjustified under the changed contract.
+
+**Failure:** Certifying A solely from @Version or the existing test, asserting exactly one winner
+in B, using a barrier that cannot complete under a shared lock, or changing production policy
+during a findings-only review.
+
+## 8. Preserve adequate evidence during review
+
+**Request/context:** “Review this unchanged ArchUnit rule, findings only. Attached CI artifacts
+show the current module inventory, test discovery, a compilable violating fixture failing the
+intended assertion, and the restored passing run on the current build. Check whether the evidence
+supports our stated dependency prohibition.”
+
+**Expected behavior/output:** Inspect the supplied evidence against the actual promise and current
+inputs; reuse it if adequate. Report supported scope and any concrete gap without rewriting tests
+or requiring another mutation merely to follow a ritual. If artifacts do not match the current
+inputs, explain the missing experiment and mark it pending.
+
+**Failure:** Unrequested edits, invented failures, treating old/incompatible evidence as current,
+or reporting a proposed experiment as executed.

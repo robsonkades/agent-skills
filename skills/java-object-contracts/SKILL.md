@@ -109,6 +109,9 @@ a demonstrated contract defect from a representation preference.
 - Prefer `Integer.compare`, `Long.compare`, `Double.compare` or a `Comparator.comparing*`
   factory over subtraction. Subtraction needs a range proof against overflow; narrowing a
   floating-point difference can also turn distinct values into a false tie.
+- Define direction, null placement and tie direction separately. Reversing a completed comparator
+  reverses all three; reverse only the intended key order when nulls must remain last or a
+  tiebreaker must remain ascending. See the composition example in the ordering reference.
 - A comparator that violates its contract may corrupt ordered-collection semantics or be detected
   by a sorting implementation. OpenJDK object sorts commonly use TimSort and can throw
   `IllegalArgumentException: Comparison method violates its general contract!` for some input

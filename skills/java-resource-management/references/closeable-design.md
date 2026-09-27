@@ -102,6 +102,11 @@ Points that generalise:
 - **Idempotent where the contract permits.** Decorators and error paths can double-close;
   arbitrary `AutoCloseable` or reference-counted releases need their own protocol. This
   confined wrapper marks itself closed before release and does not blindly retry a failed close.
+- **A composite must close every owned member.** Reuse try-with-resources or equivalent nested
+  cleanup to attempt the remaining releases after one fails; preserve primary/suppressed ordering.
+  Test one member failing and two failing, including the chosen dependency order. Track which
+  releases were attempted or completed when retry is supported; a single flag does not settle
+  partial cleanup. Do not add a retry to the confined example without a delegate contract allowing it.
 - **Specify post-close use.** This wrapper rejects writes with a named `IllegalStateException`.
   Preserve other APIs' actual post-close behavior; do not replace it with an accidental NPE.
 - **Take ownership visibly.** A constructor or factory that will close what it was given must
@@ -148,6 +153,41 @@ public Stream<String> lines() throws IOException {
 }
 ```
 
+## Consumption, views and closing
+
+These similar-looking line sources carry different ownership:
+
+- `Files.lines(path)` opens its source and requires the returned stream to be closed. Keep the
+  close scope around traversal, including a short-circuit result, consumer exception or iterator.
+- `reader.lines()` reads from an existing `BufferedReader`. Its contract does not promise that
+  closing the stream closes the reader; OpenJDK 21 installs no reader-close handler. Keep the
+  reader's explicit owner alive through traversal. A helper borrowing the reader must not add
+  a reader-closing handler as an ownership fix; that changes the caller's release contract.
+
+A terminal operation consumes a stream; it does not invoke the pipeline's close handlers.
+An `onClose` callback can make release necessary even for a stream built from an in-memory source.
+When using `iterator()` or `spliterator()`, retain and close the original owned stream rather than
+returning only a traversal interface that hides cleanup.
+
+For a result that needs no open resource after return, complete the bounded computation inside
+the owning scope. This Java 21 method sketch needs `Path`, `Files`, `IOException` and `Optional`
+imports and an enclosing class:
+
+```java
+public static Optional<String> firstLine(Path path) throws IOException {
+    try (var lines = Files.lines(path)) {
+        return lines.findFirst();
+    }
+}
+```
+
+For small, bounded results, an eager snapshot can similarly simplify ownership; do not materialize
+an unbounded file merely to avoid documenting a lazy lifetime. Line-stream read failures can arise
+during traversal as `UncheckedIOException`, not only as `IOException` when opening. Preserve that
+failure boundary when changing eager/lazy APIs. A borrowed reader also has traversal constraints:
+do not operate on it concurrently with its line-stream terminal operation or promise an exact
+reader position afterward.
+
 ## Authoritative references
 
 - [JLS §14.20.3: try-with-resources, Java SE 21](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.3)
@@ -155,3 +195,7 @@ public Stream<String> lines() throws IOException {
 - [Closeable idempotence contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Closeable.html)
 - [JDBC Connection close/transaction contract, Java SE 25](<https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#close()>)
 - [Cleaner explicit release and automatic fallback, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/ref/Cleaner.html)
+- [Stream consumption and I/O closing, Java SE 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/Stream.html)
+- [BaseStream close handlers and traversal interfaces, Java SE 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/BaseStream.html)
+- [BufferedReader.lines borrowing and traversal contract, Java SE 21](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/BufferedReader.html#lines()>)
+- [OpenJDK 21+35 BufferedReader.lines implementation](https://github.com/openjdk/jdk/blob/jdk-21%2B35/src/java.base/share/classes/java/io/BufferedReader.java)

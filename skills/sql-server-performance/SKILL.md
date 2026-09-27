@@ -69,6 +69,8 @@ Use the applicable steps for the diagnostic question and available evidence.
 
 - Wait stats answer where time accumulated, not why. Prefer session-scoped waits in an incident and
   correlate accumulated waits with uptime, workload, and signal-wait ratio.
+  Distinguish `PAGELATCH_*` from `PAGEIOLATCH_*`, local log flush from replica hardening, and
+  `ASYNC_NETWORK_IO` from proof of a slow network; use the concurrency/resource reference's evidence map.
 - Read deadlocks from the `system_health` `xml_deadlock_report` resource graph. The victim is an
   outcome, not necessarily the faulty participant.
 - RCSI provides statement-level versions; SNAPSHOT provides transaction-level consistency and can

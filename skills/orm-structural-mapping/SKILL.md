@@ -96,6 +96,10 @@ Natural key that is stable, small and never changes
 
 Two entities, one reference
         → foreign key mapping. Identify the owning mapping attribute.
+          Decide whether multiple referencing rows may share the same target:
+          that distinguishes ManyToOne from OneToOne, not the Java field type.
+          Verify uniqueness and nullability in the deployed schema; a child FK
+          alone does not require every parent to have a child.
           Bidirectional is a convenience; keep both sides in sync in a
           relationship helper, usually on the aggregate root.
 

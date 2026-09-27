@@ -45,6 +45,11 @@ implementation; inspect the project's toolchain and APIs without assuming upgrad
    replication lag. Use top-share,
    max/median and a heat map; max/mean is only a screening signal. A ratio near 1 can still
    hide a uniformly saturated fleet, rejected work or heterogeneous instances.
+   Join logical shards to physical owners, leader/replica roles and shared resource capacity;
+   many ordinary shards can overload one node. Trace write throttling to the named table,
+   index or other constrained resource: balanced base-table keys do not imply balanced index
+   updates. If the provider hides placement, use its resource-level diagnostics and qualify
+   what cannot be established.
 2. **Classify the supported hypothesis** as read-hot, write-hot, storage-hot or mixed using
    request mix and resource evidence, not a ratio alone. Ordinary read caching does not
    remove write throughput requirements. The signature table is `references/detecting-skew.md`.
@@ -88,8 +93,12 @@ Coalesce concurrent requests for the key when:
 Split the partition when:
 - the store supports online split, the hot range is contiguous, and the skew is a range
   boundary rather than a single key
+Reassign existing partitions or leadership when:
+- individually manageable workloads are concentrated on one physical owner and eligible
+  destinations have headroom; verify replica/failure-domain safety and migration cost
 Investigate fleet capacity or common-mode failure when:
-- normalized load is similar across shards and saturation, queueing or rejection is elevated;
+- normalized pressure is similar after checking physical placement and dependent resources,
+  and saturation, queueing or rejection is elevated;
   a ratio near 1 alone does not establish overload or justify adding capacity
 Change the shard key when:
 - the concentration is structural rather than incidental — the key design guarantees it

@@ -18,6 +18,45 @@ document those contracts regardless of topic or queue transport. Conversely, a f
 currently have one consumer without becoming a command. Work distribution to interchangeable workers is
 `task-queues-and-competing-consumers`.
 
+## Map logical subscribers before scaling workers
+
+Decide whether each event must reach **each independent reaction**, or whether interchangeable
+workers should share one reaction's work. These are different topologies, even when all
+handlers subscribe to the same event type.
+
+For example, `InvoiceIssued` may feed an accounting projection and a customer notification.
+Those are two logical subscribers with separate progress and recovery ownership. Three
+replicas of the notification handler are capacity for one subscriber, not three independently
+required notifications. In Kafka's consumer-group subscription model, the independent
+reactions use distinct groups; replicas of one reaction share its group. Placing both reactions
+in one group distributes records between them rather than delivering each record to both.
+For a RabbitMQ fanout exchange, separate bound queues receive copies; consumers sharing one
+queue compete for its deliveries. Routing filters must still match the intended event set.
+
+Name subscription/group identity, owner, starting position, offline recovery window and
+retirement policy. Live-only notifications may accept missed events while disconnected;
+business projections needing catch-up require an appropriate retained/durable subscription
+and replay boundary. An exchange alone is not a historical log, and creating a subscription
+after publication does not necessarily make prior events available. Inspect the deployed
+broker's queue lifetime, persistence, retention and acknowledgement settings before claiming
+offline delivery. Fan-out topology alone proves neither durability nor exactly-once effects.
+
+Validate the distinction using stable event identities: each required reaction must observe
+the intended event set, while adding interchangeable replicas must not create extra logical
+effects. Stop and resume one subscriber across its supported offline window, then check its
+coverage independently of the other's progress. Use the actual broker configuration for this
+test; an in-memory listener list does not exercise consumer groups, routing or retention.
+
+For worker ownership/acknowledgement mechanics, hand off to `task-queues-and-competing-consumers`
+and `delivery-semantics` with the topology, broker/client version, progress store and recovery
+requirements. If unavailable, retain the architectural choice and mark those delivery claims
+unverified. Required key/order scope goes to `message-ordering-and-partitioning`; a separate
+subscription does not establish side-effect order.
+
+Sources: [Kafka 4.1 consumer groups and topic subscriptions](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html),
+[RabbitMQ 4.2 exchanges](https://www.rabbitmq.com/docs/4.2/exchanges), and
+[RabbitMQ 4.2 queue lifetime and durability](https://www.rabbitmq.com/docs/4.2/queues).
+
 ## Choreography versus orchestration
 
 | Dimension              | Choreography                                                                              | Orchestration                                                             |

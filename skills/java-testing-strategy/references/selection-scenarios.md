@@ -127,6 +127,30 @@ current passing regression test; a controlled defect check may help but is not a
 the actual balance/refund invariant; if so, test it at its owning boundary
 (java-design-by-contract). Do not infer an overdraft policy from the symptom alone.
 
+## 6. A regression exists, but CI is green
+
+> "The migration regression fails in the IDE. CI runs `./mvnw test` and is green. The class
+> is `CustomerMigrationIT`, and Failsafe is bound to `integration-test` and `verify`."
+
+**Risk:** the intended real-engine regression never contributes to the gate. The test's scope
+can be correct even though the execution path is not.
+
+**Chosen:** inspect the effective plugin/profile configuration and current test reports;
+confirm whether this exact case ran, skipped or was not discovered. Under the stated bindings,
+`test` does not reach Failsafe. Wire the intended gate to the configured `verify` path when
+authorized, preserving required setup/cleanup and credentials isolation. Observe the reported
+regression fail for its actual assertion, then pass after the authorized fix. A local IDE run
+alone proves neither CI discovery nor build failure propagation.
+
+**Changed constraint:** if CI already invokes the configured `verify` path, investigate
+skips, failure-ignore settings, retries and environment differences before changing its level.
+An assertion failure, an unavailable database and an undiscovered test are different evidence.
+
+**Not written:** a duplicate end-to-end migration test, or a filename rename that moves the
+integration test into an unintended fast suite. Keep the scope where the risk remains real.
+The execution checklist in `test-levels.md` also applies to Gradle/custom suites; determine
+their actual task graph rather than transplanting Maven commands.
+
 ## The recurring shape
 
 In every scenario, the level is chosen by asking _where can this specific thing be wrong_,

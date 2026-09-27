@@ -70,7 +70,9 @@ execution model or a full fault campaign.
    enforce/account for bounded residual work even after reply.
 6. **Decide the partial/quorum-result contract with the caller.** Distinguish expected,
    responded, missing and failed work, data/version watermark and whether aggregation is exact,
-   lower/upper-bounded or stale. Expose authorized counts/status or opaque reconciliation tokens
+   lower/upper-bounded or stale. Check that leaf summaries retain the information needed by the
+   merge: all owners responding at compatible versions does not prove an exact aggregate.
+   Expose authorized counts/status or opaque reconciliation tokens
    when internal owner names are sensitive; the representation must support the caller's actual
    decision (`rpc-and-api-contracts`).
 7. **Only then consider hedging**, with operation safety, replica independence/consistency,

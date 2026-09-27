@@ -106,6 +106,9 @@ Prefer instead:
   request rate and byte volume, not `COUNT(*) GROUP BY key`. Key distribution is
   `consistent-hashing`; traffic skew is `hot-partitions-and-rebalancing`, and no hash
   function prevents it.
+- Include secondary-index and other required maintenance writes in the key/capacity decision.
+  An evenly distributed base table can still be limited by a hot index or its write budget;
+  inspect each access path's partitioning and backpressure before changing the primary key.
 - A globally monotonic leading key sends current inserts toward the newest range under
   simple range partitioning. Hash/shard prefixes or independent leading tenant keys can spread
   writes, at the cost of more scan/merge work for a global ordered query. Test the actual key order.

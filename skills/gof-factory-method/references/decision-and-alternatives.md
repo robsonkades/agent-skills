@@ -18,7 +18,9 @@ the pattern and still be replaceable when its extension contract permits composi
 
 Static factories earn their place for reasons the GoF pattern never claims: `Optional.of` versus
 `Optional.ofNullable` are two names for one signature; `List.of` may return a specialised
-implementation per arity; `Integer.valueOf` caches. None of that involves a subclass.
+implementation per arity; `Integer.valueOf` caches. A returned implementation may be a subtype,
+but the static method is not overridden: a subclass declaration can hide it, as specified by
+[JLS 17 method hiding](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.4.8.2).
 
 ## The hook against its replacements
 
@@ -119,7 +121,9 @@ unknown key.
 A one-method factory can become a Supplier when its domain contract, checked exceptions and
 public compatibility permit. Specify nullability, freshness, thread safety and resource ownership;
 the [Java 17 Supplier contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/function/Supplier.html)
-does not promise a distinct result for each invocation.
+does not promise a distinct result for each invocation, and `get()` has no checked `throws`
+clause. A named functional provider can preserve a checked acquisition failure while still
+accepting lambdas and method references; composition does not require erasing that contract.
 
 ## Relationship to the neighbouring patterns
 

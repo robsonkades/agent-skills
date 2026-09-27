@@ -215,11 +215,23 @@ try (RecordingStream stream = new RecordingStream()) {
 
 The callback example intentionally performs no network I/O. It requires imports, a bounded handoff
 queue, counters and a minimizing function; interruption must propagate or restore interrupt status.
-`minimize` copies only required values into an immutable application value. If `setReuse(true)` is
-enabled, retaining the callback's `RecordedEvent` after return is explicitly invalid; copying also
-bounds payload retention independently of that option.
+`minimize` copies only required values into an immutable application value. Event streams allow
+object reuse by default; while reuse is enabled, do not retain the callback's `RecordedEvent`
+after return. Alternatively set `setReuse(false)` before starting when retaining event objects
+is necessary, with a bounded retention budget. Copying a small value also limits the retained
+payload independently of that option.
 Use a bounded queue; track oldest-event lag, drops, exceptions, memory, export retries, and
-shutdown deadline. Event ordering across threads/types is not equivalent to causal ordering.
+shutdown deadline.
+
+Ordered event streams sort each batch by event **end time**, not start time. A later batch can
+contain an event with an earlier end time; `onFlush` only marks the current batch's completion.
+Do not finalize a time window or discard an apparently late event merely because a flush occurred.
+For joins/windows, define the timestamp, correlation key, tie handling, allowed lateness and
+bounded buffering/revision/drop policy. If exact completeness is required and lateness cannot
+be bounded, prefer a bounded recording followed by offline analysis of the captured population;
+sorting cannot recover lost, censored or uncommitted events. A count-only aggregation
+may not need sorting (`setOrdered(false)`), provided no other handler depends on order. Neither
+chronology nor matching timestamps establish causality between threads or event types.
 
 `start()` blocks the caller while processing; that can be correct on a dedicated owned thread. Use
 `startAsync()` when lifecycle code must continue. It returns `void`, not a future/thread;
@@ -264,6 +276,12 @@ Handle null stack/thread, truncation, experimental/unknown fields, renamed event
 custom event absence. Validate complete/readable files before processing and preserve raw
 recordings.
 
+`RecordingFile.readEvent()` advances through the file; do not assume a global chronological
+order. If analysis requires ordering, select start/end time and a suitable tie policy explicitly,
+then sort the needed values within a size budget or use an external sort. `readAllEvents` retains
+all events and is intended for small/simple cases, not large incident recordings. Pure counts or
+other order-independent aggregates can use the sequential reader without sorting.
+
 ## MXBean and remote control
 
 `FlightRecorderMXBean` provides remote management but expands the security and failure surface:
@@ -283,6 +301,8 @@ adequate fixtures can supply evidence. A focused offline reader does not need a 
 - two recordings with different thresholds/stack settings;
 - event burst and callback/exporter slowdown;
 - callback exception and queue full;
+- default event-object reuse versus copied values or explicit `setReuse(false)`;
+- older event in a later batch, equal timestamps and start-time versus end-time ordering;
 - controller-initiated stream drain versus abrupt deadline close; export queue still pending;
 - disk full/unwritable destination/process shutdown during chunk/dump;
 - malformed/unknown JFC/event/setting;
@@ -301,4 +321,6 @@ adequate fixtures can supply evidence. A focused offline reader does not need a 
 - [HotSpot 25.0.3 event instrumentation](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/EventInstrumentation.java)
 - [`Recording`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Recording.html)
 - [`RecordingStream`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingStream.html)
+- [`EventStream` reuse and batch-order contract (Java 17)](https://docs.oracle.com/en/java/javase/17/docs/api/jdk.jfr/jdk/jfr/consumer/EventStream.html)
+- [`RecordingFile` sequential and whole-file readers](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/consumer/RecordingFile.html)
 - [`FlightRecorderMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management.jfr/jdk/management/jfr/FlightRecorderMXBean.html)

@@ -73,6 +73,8 @@ Grep-able signals that this skill applies:
 - `new \w+Exception\(.*getMessage\(\)` — cause chain being destroyed.
 - `catch (Exception` outside a top-level boundary — over-broad capture mid-stack.
 - `catch` body containing only a log call — swallow converting failure to false success.
+- `return` or fallible cleanup in `finally` — may replace a pending return or exception;
+  check body-failure plus cleanup-failure and body-success plus cleanup-failure separately.
 - `getMessage().contains(` or message regexes in retry/handler code.
 - `throws SQLException`, `IOException` or an HTTP client's exception on a domain-layer
   interface — a lower layer's failure vocabulary leaking upward.
@@ -116,6 +118,7 @@ Grep-able signals that this skill applies:
 ## Authoritative references
 
 - [JLS 21 §14.8: expression statements](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.8) — a method invocation can discard its result.
+- [JLS 21 §14.20.2–3: finally and try-with-resources](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.20.2) — abrupt cleanup can replace the original outcome; try-with-resources defines primary and suppressed failures.
 - [JLS §11: Exceptions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html)
 - [Throwable cause and suppressed-exception API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html)
 - [InterruptedException API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/InterruptedException.html)

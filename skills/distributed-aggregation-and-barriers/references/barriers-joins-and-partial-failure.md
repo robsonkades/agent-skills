@@ -105,6 +105,12 @@ Three rules that are cheap to get right and expensive to get wrong:
 - **Record what the checkpoint covers** — which partitions, which input offset or watermark.
   A checkpoint that cannot say what is already included is a checkpoint you cannot resume
   from without recomputing to be safe.
+  Bind that coverage to the input snapshot/version, logical partition mapping and aggregate
+  definition, including filters, units and key/state encoding versions. A deployment may
+  change those semantics even when old state still deserializes. Resume only under a proven
+  compatible contract or an explicit state migration; otherwise recompute from a suitable
+  input snapshot. An unchanged file path is not evidence that the source contents are unchanged.
+  This is a recovery invariant, not a claim that every engine checks all of this metadata.
 
 ## Partial failure: 10,000 tasks, 3 failures
 
@@ -172,6 +178,15 @@ assert that the obsolete publication cannot replace the current result. Check th
 participant set too: duplicate, unknown, old-epoch or unreadable-output arrivals must not make
 a missing participant disappear. Recover the coordinator with one required partition absent;
 verify that its removal/reassignment cannot silently turn partial coverage into complete coverage.
+
+Also resume a checkpoint after changing a grouping-key normalization rule, aggregate filter
+or source version. Require rejection, a validated migration or a clean recomputation; never
+silently combine old and new meanings. A useful review case is a job with 80% of partitions
+committed under a case-sensitive grouping rule, then resumed with a case-insensitive rule.
+The remaining 20% cannot simply use the new rule and produce one complete result. If unchanged
+snapshot and equivalent key/state semantics are demonstrated instead, reuse remains valid;
+do not require a full rerun solely because a binary version changed. These cases exercise
+compatibility separately from stale-writer fencing.
 
 ## Sources
 

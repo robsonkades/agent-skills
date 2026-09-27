@@ -56,6 +56,10 @@ public record Division(String name, List<Rule> rules, List<OrgNode> children) im
 ```
 
 The shared operation is on the interface; only branches expose their child storage in this design.
+`List.copyOf` freezes list membership, not the `Rule` objects or state captured by their predicates.
+The later snapshot/cache design requires those inputs to be immutable or separately snapshotted
+and versioned; copying the lists alone does not make this policy deeply immutable. See the
+[Java 21 List contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html).
 Structural code switches exhaustively:
 
 ```java

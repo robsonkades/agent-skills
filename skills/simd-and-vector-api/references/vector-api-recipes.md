@@ -169,6 +169,26 @@ static int countAboveVector(float[] data, float threshold) {
 }
 ```
 
+## Indexed updates and repeated destinations
+
+Gather and scatter make irregular access expressible; they do not remove dependencies between
+lanes. Replacing scalar `bins[index[i]]++` with gather, add one, then scatter loses increments
+when two active lanes name the same bin: both read the old count and both store old count plus
+one, instead of accumulating two. This failure occurs with one thread and valid bounds.
+
+For that transformation, establish stable indexes and distinct active destinations within each
+vector batch under exclusive ownership; preserve the bounds, exception and index/data alias contract
+as well. Repeated indexes in later batches are a different case: a later gather can
+observe the previous batch's stores. A mask excludes lanes but does not combine updates among
+the active ones, and indexed stores are not an atomic read-modify-write protocol for threads.
+
+If duplicates are allowed, keep scalar updates for conflicting batches or use a proven algorithm
+that groups and combines them before writing. Include the detection/grouping cost when measuring;
+random mostly unique indexes can hide the failure and the production cost of skew. Differential
+tests should include repeated indexes within a batch, across a batch boundary, and in a masked
+tail, plus inactive lanes that repeat an active destination. Do not infer a conflict policy or
+ordered accumulation from whichever scatter instruction a particular CPU happens to use.
+
 ## Measuring
 
 Partial JMH fixture: supply imports, `float[] a, b, out` fields and `@Setup` initialization with

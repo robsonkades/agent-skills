@@ -100,8 +100,9 @@ cached value with an explicit staleness marker (caching-strategies), or omission
 recorded on a degraded-response counter so the degradation is visible.
 
 Declared degradable but implemented as required — treat as critical until fixed:
-- called synchronously, no timeout shorter than the request budget, no fallback branch,
-  no breaker. This is the classification error that causes the outage: nobody believed
+- called synchronously with no bounded, correct failure/degradation path.
+  A breaker is one possible control, not a prerequisite for every degradable call.
+  This is the classification error that causes the outage: nobody believed
   the dependency mattered, and the code made it required.
 ```
 
@@ -110,10 +111,25 @@ preserves the full contract is not feature degradation; account for its load and
 primary effect before invoking it. A stale authorization decision is not automatically such an
 alternative just because it is cached.
 
+Separate **semantic criticality** from **capacity dependence**. A cache may contain no unique
+data yet be required to keep origin demand sustainable. An origin read is semantically correct
+but unsafe as an unlimited fallback when the origin was sized for cache misses. Admit bypass
+only within the origin's measured budget, including other callers; use permitted stale data,
+omit optional work or reject excess when that budget is insufficient. If tested capacity covers
+the failed-mode traffic, preserving a bounded direct-origin path is reasonable. A secondary
+provider likewise needs its own capacity evidence and must not share the failing bottleneck.
+
 The test that this classification is real: for each non-critical dependency, there is a test
 that makes it fail and asserts the endpoint still returns a successful, degraded response —
 and a metric that increments when it does. A classification held only in a document is not
-implemented.
+implemented. Also exercise correlated failure under representative load: disable the shared
+cache or withdraw a failure domain, and verify recipient/origin goodput and unaffected paths
+against explicit bounds. A one-request fallback test checks semantics, not aggregate capacity.
+If load testing is unavailable, report fallback correctness separately and leave the capacity
+claim unverified. The [AWS cache guidance](https://aws.amazon.com/builders-library/caching-challenges-and-strategies/)
+describes this cache-outage test; the
+[Google cascade chapter](https://sre.google/sre-book/addressing-cascading-failures/) explains
+overload spreading across clusters after traffic transfer.
 
 **Fail open is a security decision, not a synonym for feature degradation.** For an authoriser, a
 quota enforcer or a fraud check, failing open admits requests that should have been refused;

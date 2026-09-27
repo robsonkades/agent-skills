@@ -18,11 +18,16 @@ atomicity, recoverability, and online workload. “More threads” and “larger
 success means meeting the actual load window and correctness contract. A safety review can
 retain an adequate mechanism without increasing throughput.
 
+For routine entity-write batching, pass identifier strategy, lifecycle callbacks and JDBC/server
+evidence to `orm-fetch-and-batching-performance` for an ORM-preserving fix. If unavailable, inspect
+effective batching on the existing path; fewer statements alone do not justify bypassing it.
+
 ## Inputs required
 
 ```text
 engine, server/driver versions, topology, durability and replication mode:
 source format/location/trust, rows and bytes, row width, and error distribution:
+source-to-target columns/types, null/empty/default semantics, and schema/format version:
 target constraints, triggers, indexes, generated keys, and online traffic:
 required atomicity, duplicate/upsert semantics, rejection policy, and restart point:
 current mechanism, batch size, transaction size, throughput, CPU/I/O/log/network, and heap:
@@ -37,6 +42,21 @@ For JVM implementation changes, inspect compiler release/toolchains, runtime ima
 JDBC driver and ORM versions, connection properties and transaction-manager ownership. This skill
 imposes no Java baseline; preserve the project's target and dependencies. When missing timing or
 failure evidence could change the choice, propose a bounded pilot and keep those conclusions conditional.
+
+## Preserve source meaning
+
+Before replacing an ingestion path, establish its field mapping and conversions: column order or
+names, omitted fields versus explicit nulls, empty strings, defaults, numeric precision/scale,
+temporal interpretation and character encoding. Verify an existing ordinal mapping or make it
+explicit; a matching row count cannot detect values loaded into the wrong compatible columns.
+
+Identify required application/ORM validation, converters, callbacks and audit effects. A native
+loader does not invoke that application path; preserve required behavior through an explicit
+equivalent or retain the existing mechanism. Do not assume database triggers replace it.
+
+For files, use an encoder/parser matched to the loader's actual dialect and test representative
+values through to stored rows. Define a rejection budget and whether exceeding it rolls back the
+chunk or prevents staged publication. See the recovery reference for format and restart checks.
 
 ## Workflow
 
@@ -102,6 +122,7 @@ For implementation work, distinguish changes and checks actually completed from 
 
 ```text
 chosen or retained mechanism and the material alternatives considered:
+source mapping, conversion/default rules, and preserved application effects:
 transaction, partial-error, warning, retry, and idempotency semantics:
 staging/final-table design and index/constraint/trigger handling:
 batch/chunk/parallelism values as hypotheses with guardrails:
@@ -114,6 +135,6 @@ confidence and untested failure modes:
 ## References
 
 - [Mechanisms by engine](references/engine-mechanisms.md) — read before selecting or configuring a
-  native API, driver rewrite, or minimal-logging path.
+  native API, its field/default mapping, driver rewrite, or minimal-logging path.
 - [Failure, restart, and validation](references/recovery-and-validation.md) — read when partial
-  input failure, upsert, restart, cutover, or data-quality guarantees matter.
+  input failure, file parsing/chunking, upsert, restart, cutover, or data-quality guarantees matter.

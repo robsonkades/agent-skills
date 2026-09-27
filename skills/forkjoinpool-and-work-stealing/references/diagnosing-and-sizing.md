@@ -80,6 +80,15 @@ overloaded dependency.
 
 ## Failure and shutdown tests
 
+- Compare `root.invoke()` with `pool.invoke(root)` from an external caller using fresh roots;
+  record root/child thread and pool identity. Force a steal with a bounded independent release
+  signal when checking request context; a lucky inline run cannot establish context propagation.
+- In an async-mode pool with at least two workers, hold the first event while allowing a later
+  event to finish. If ordered completion is required, test the actual dependency/dispatch mechanism,
+  including a failed predecessor, rather than relying on local FIFO.
+- Interrupt an external waiter using `join` and one using `get` while the task is held by an
+  independent releaser. Distinguish waiter return, task cancellation and body exit. For timed waits
+  made within a worker, check whether helping executes the task past the requested timeout.
 - Throw from one child before/after its sibling and assert who observes it.
 - Cancel tasks created by the actual submission path after observing body entry. Compare plain
   `submit`, a supplied `ForkJoinTask`, and explicit interruptible adapters where supported; record

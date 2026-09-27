@@ -220,6 +220,11 @@ thread. Neither solves callback backpressure. Event handlers must be fast, bound
 safe, and decoupled from network I/O. Define queue/drop/spool/shutdown behavior and monitor
 consumer delay, drops, callback errors, memory, and repository retention.
 
+Streaming event objects may be reused by default: copy required values before handing them off,
+or explicitly disable reuse and budget retained objects. Ordered streams sort by event end time
+within a batch; later batches can contain older events. A flush is not proof that a time window
+is complete. Define late-event handling before building joins/windows; see the consumer reference.
+
 For graceful stream draining on Java 20+, use `RecordingStream.stop()` from lifecycle code,
 never from a callback; `close()` can discard unconsumed events. Neither drains an external
 export queue. See the consumer reference for Java 17 compatibility and shutdown limits.

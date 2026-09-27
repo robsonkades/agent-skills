@@ -6,7 +6,7 @@ description: >
   parallelism, batching under a latency deadline, reusing direct buffers, warming deployments and
   diagnosing native memory outside NMT. Use when DJL, ONNX Runtime or another native inference
   engine loses throughput as concurrency rises, leaks RSS, overloads a model pool or needs graceful
-  degradation. Model quality and training pipelines are outside scope.
+  degradation. Training and choosing model quality targets are outside scope.
 ---
 
 # JVM ML Inference
@@ -32,6 +32,12 @@ provider/device support. This skill prescribes no universal JDK baseline; engine
 and virtual-thread guidance are version-specific (virtual threads are final in JDK 21).
 Do not upgrade Java or the engine merely to apply an example from current documentation.
 
+For changes to tensor conversion, batching, precision or provider, establish the accepted input
+and output contract before treating a performance gain as useful. Check representative outputs
+with project-defined tolerances; model-quality targets belong to the model owner, but preserving
+them is a serving obligation. Keep findings-only reviews and diagnosis read-only unless fixes
+are authorized.
+
 ## Workflow
 
 1. When choosing or reconsidering the serving boundary, compare in-process versus remote serving
@@ -43,12 +49,17 @@ Do not upgrade Java or the engine merely to apply an example from current docume
    Reuse only after actual native completion.
 3. For concurrency tuning, use the relevant axes of outer requests, session count,
    intra-op/inter-op threads and device streams. Start from current settings and a measured
-   bottleneck; measure absolute goodput and tail latency, not speedup alone.
+   bottleneck; verify actual provider/operator placement and transfer costs before attributing
+   low accelerator utilization to too few workers. Measure absolute goodput and tail latency,
+   not speedup alone.
 4. If batching is used, bound size/storage and maximum wait, and dispatch before the earliest
    member deadline minus the execution/remaining-work budget. Test sparse and burst traffic;
-   full-batch throughput is not a latency policy.
+   full-batch throughput is not a latency policy. Equal shapes do not establish independent
+   requests: preserve sequence state, ordering and affinity when the model requires them.
 5. For deployment/readiness changes, warm the JVM code path and the model/engine separately,
-   then gate readiness on a representative successful inference rather than model-file load.
+   then gate readiness on representative inference with expected outputs rather than model-file
+   load. During replacement, budget old/new overlap and drain actual native calls and consumers
+   before releasing the retired generation; a caller timeout is not completion.
 6. When changing admission or failure behavior, test overload in an isolated or authorized load
    environment. Use bounded admission, deadline-aware rejection/cancellation and an explicit
    fallback, if required by the contract, whose quality is also verified.
@@ -78,13 +89,16 @@ For a focused review, return the finding, supporting contract/evidence, conseque
 correction or check. When measurements are missing, keep causal diagnoses and sizing conditional
 and name the evidence that would distinguish the hypotheses. For experiments, separate measured
 result from analytical ceiling, pin environment and raw output, and compare the same metrics
-after a change. Report what was verified and what remains unknown; an adequate existing design
-is a valid outcome.
+after a change, including output-regression checks. Report what was verified and what remains
+unknown; an adequate existing design is a valid outcome. If output acceptance is unresolved,
+pass the model owner the changed configuration and representative before/after outputs; keep
+the accepted serving path while that consequential decision remains open.
 
 ## References
 
 - [Native resources, parallelism and batching](references/native-resources-and-batching.md) — read
-  when reviewing native ownership, sizing pools, engine threads, buffers or a dynamic batcher;
-  includes versioned library sources and diagnostic coverage limits.
+  when reviewing native ownership, sizing pools, engine threads, buffers, batching or model
+  replacement; also read before changing tensor conversion, precision or provider. Includes
+  output contracts, versioned library sources and diagnostic coverage limits.
 - Use `jni-and-ffm`, `off-heap-memory`, `concurrency-limiting-and-bulkheads` and
   `load-testing-advanced` for their owning mechanisms.

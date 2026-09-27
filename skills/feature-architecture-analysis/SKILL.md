@@ -34,6 +34,8 @@ from outside.
    alone, derive a small scope list from the request. Discovered impacts of accepted work
    remain relevant even if their files were absent from that list; surface new requirements
    as scope questions rather than silently adding them.
+   If a mechanism is undecided, map confirmed impacts now and mark mechanism-specific
+   candidates conditional on that choice. A proposed location does not establish an accepted design.
 2. **Walk each item outward** — the component that changes, its callers, its persisted state,
    its contract, its configuration, its tests. `references/impact-map.md` gives the traversal
    and the shape of an entry.
@@ -75,6 +77,11 @@ THEN distinguish unchanged access/load from schema, representation or semantic c
 IF the impact reaches a message contract
 THEN name the consumers and whether they can be deployed independently.
 
+IF exposure depends on a feature flag, deployment version or retained state
+THEN record the applicable environment/state and its evidence. Deployment and activation may
+     differ; disabling new writes or reverting code does not erase existing rows/messages.
+     Map relevant old/new readers and compatibility questions without choosing the rollout.
+
 IF an entry has no repository path
 THEN cite its concrete external identity/specification and evidence, or mark it unknown.
 
@@ -88,8 +95,10 @@ THEN say so with the search boundary; lower review depth only if risk evidence s
 - **Concrete locators.** Cite existing paths/symbols or external resource identities and
   evidence. NEW paths are proposed locations, not files claimed to exist. A shared topic,
   table or operator-owned dashboard is an impact even outside this checkout.
-- **Do not design here.** The map says what is touched under the scope as agreed. If two designs
-  produce different maps, that is an input to the solution phase, and both maps belong there.
+- **Do not select a design here.** Keep confirmed impacts separate from candidates whose
+  applicability depends on an unresolved choice. Pass those differences, evidence locators and
+  open questions to `feature-solution-analysis`; if unavailable, report them for the decision owner.
+  Do not block the supported map or present an option's resources as committed work.
 - **Do not omit tests and configuration.** They are where features are actually incomplete.
 - **Keep independently actionable impacts identifiable.** Group generated/repeated files
   under their source only when consumers, risks and verification remain traceable. File
@@ -125,13 +134,15 @@ tests/
 Boundary crossings   <IMP-*, who depends on it, and accountable owner>
 Contracts            <IMP-* -> existing CT/specification revision, or required definition and owner>
 Consumers/dependencies   <IMP-* -> locators, count type, searched scope and evidence>
+Applicability        <where consequential: IMP-* -> decision/unknown and environment/flag/version/state>
 Verification points  <IMP-* -> existing test/contract evidence or required check>
 Unknowns             <what could not be established, next check/owner, and what it blocks>
 ```
 
 Before handoff, check that every accepted scope item maps to impacts or an evidenced no-impact
 conclusion, locators match the inspected revision, and affected consumers and verification points are
-traceable. If scope, contracts, code or wiring change, recheck affected entries and their propagation
+traceable. Conditional entries name what would include or exclude them. If scope, decisions,
+contracts, code, wiring or relevant release state change, recheck affected entries and their propagation
 before reusing the map; a path that still exists does not make old evidence current.
 Material unknowns name their next check/owner and dependent work; they do not prevent
 reporting the supported map or imply implementation readiness. A local feature may need only a few

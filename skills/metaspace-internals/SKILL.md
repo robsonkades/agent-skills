@@ -68,7 +68,10 @@ could change the decision. Return the justified change or no-change and checks r
    `committed × 1.5` margin exists.
 7. **Classify runtime generation before changing it.** Unbounded retained generation needs
    lifecycle/cardinality control; a legitimate bounded class population may instead need
-   capacity. Record raising a ceiling against unresolved growth as mitigation.
+   capacity. A bounded compiled-object cache does not bound metadata when evicted entries
+   leave ordinary named classes in a reachable loader. Test key churn and recompilation,
+   not only repeated cache hits (`references/runtime-class-generation.md`). Record raising
+   a ceiling against unresolved growth as mitigation.
 
 ## Rules
 

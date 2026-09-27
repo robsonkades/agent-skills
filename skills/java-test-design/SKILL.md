@@ -47,8 +47,10 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
    isolating/configuring it, rather than changing production semantics to simplify the test.
    See `references/determinism.md`.
 6. **For a consequential new regression test, check a representative fault** with a temporary
-   local mutation or the known failing revision. Restore the mutation and rerun the test;
-   inspect both fault detection and diagnostic clarity. Do not leave broken production code.
+   local mutation or the known failing revision. Confirm the intended assertion detects it;
+   compilation, discovery or unrelated setup failure is not evidence of that detection.
+   Restore the mutation and rerun the test; inspect diagnostic clarity. Do not leave broken
+   production code.
 
 ## Rules
 
@@ -57,6 +59,10 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
   is independent, readable and identifies the failing input.
 - One behaviour per test; `assertAll` only for several facets of the _same_ outcome, so that
   all of them are reported rather than just the first.
+- Verify the intended scenario reaches its checks. A loop, `allMatch` or `assertAll` over an
+  unexpectedly empty result can pass without checking an element. Assert required membership
+  or cardinality from the contract; when emptiness is the expected outcome, assert that instead.
+  See the execution checks in `references/junit5-patterns.md`.
 - Shared mutable fixture state is a lead for "passes alone, fails together", not proof of the
   cause. Prefer fresh test/`@BeforeEach` state; deliberate sharing needs a verified reset,
   ownership and synchronization contract. `PER_CLASS` reuses one instance; `PER_METHOD` does
@@ -87,14 +93,18 @@ failure cannot be reproduced, report the observation and diagnostic next step, n
   behaviour is asserted or duplicate production logic.
 
 Report the behaviour covered, relevant boundary/failure cases, exact command and executed test
-count, and any untested hypothesis. A green command with zero matching tests is not validation.
+count, and any untested hypothesis. Check skipped/aborted outcomes for the intended cases;
+assumption-aborted tests and a green command with zero matching tests do not validate them.
+For a findings-only review, report corrections without applying them. Stop when the requested
+behavior and its representative failure are supported, or identify the missing evidence.
 
 ## References
 
 - **JUnit patterns** — `references/junit5-patterns.md`. Partial examples
   (Java 17+ syntax, Jupiter 5 APIs): test data builder, `@ParameterizedTest` with `@CsvSource` and implicit
   `java.time` conversion, `@Nested` for context, exception assertions, and the lifecycle
-  choices that create shared state. Read when reaching for a Jupiter feature.
+  choices that create shared state. Read when reaching for a Jupiter feature or checking
+  whether a passing test exercised its intended case.
 - **Removing non-determinism** — `references/determinism.md`. The controllable inputs a test
   accidentally depends on — clock, zone, locale, charset, iteration order, randomness,
   filesystem, ports — each with the substitution, plus the "passes alone, fails together"

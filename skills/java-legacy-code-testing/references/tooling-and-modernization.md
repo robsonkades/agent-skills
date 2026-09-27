@@ -26,8 +26,9 @@ meets those semantics.
 
 ## Verified coordinates
 
-Coordinates rechecked against Maven Central metadata on 2026-09-10. Their presence is not a
-tested compatibility matrix or an instruction to upgrade; inspect the project's resolved stack.
+These example published versions were rechecked against Maven Central metadata on 2026-09-27;
+newer versions may exist. Their presence is not a tested compatibility matrix or an instruction
+to upgrade; inspect the project's resolved stack.
 
 | Library        | Coordinate                                   | Note                                                                                                                                                        |
 | -------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -110,7 +111,7 @@ not.
 | Subclass and Override, Extract Implementer, Push Down Dependency                   | **Still current, still the workhorse.** Modern caveat: a sealed type restricts direct subclasses to its permits/module/package contract; use an allowed extension seam or injection rather than assuming any test subclass is legal |
 | Extract and Override / test subclasses generally                                   | Final classes/methods block overriding. Supported inline mocking is an instrumentation seam; compare its constraints with an available object seam instead of treating either as mandatory                                          |
 | In-memory / fake databases to get persistence code under test                      | Use the real database engine for SQL/transaction semantics; a fake port remains useful for isolated domain policy. Testcontainers needs a compatible runtime and does not replace every fake                                        |
-| "The tests are too slow to run often"                                              | Partially superseded — parallel execution, container reuse, modern hardware. The _design_ argument for small units survives; the _speed_ argument should not be the headline                                                        |
+| "The tests are too slow to run often"                                              | Measure the affected feedback loop. Parallel execution or container reuse may help only if isolation and resource limits permit; neither is evidence that the existing suite is fast enough                                         |
 
 **Not superseded, and rarely covered by modern material:** effect analysis (ch. 11) and
 interception/pinch points (ch. 12). Both are in `references/seams-and-interception.md` — they are
@@ -119,7 +120,7 @@ what answers "where do I put the test?".
 ## Sources
 
 - [Java 21 Clock](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/Clock.html) — `systemDefaultZone()` captures the selected zone; it is not a monotonic timer.
-- Maven Central metadata, rechecked 2026-09-10, for the coordinate families above.
+- Maven Central metadata, rechecked 2026-09-27, for the coordinate families above.
 - [Mockito 5.23.0 API and instrumentation](https://javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/Mockito.html)
 - [JUnit 6.1.3 runtime requirements](https://docs.junit.org/6.1.3/overview.html)
 - [Testcontainers 2.0.0 release and migration changes](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.0)

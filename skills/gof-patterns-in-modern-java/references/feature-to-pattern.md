@@ -31,6 +31,21 @@ If the existing contract requires content equality, preserve matching `equals` a
 and verify reconstruction from accessors remains equal to the original (`java-object-contracts`).
 See the [Java 17 Record contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html).
 
+Class-to-record conversion also changes the public shape. A record is final, extends `Record`, and
+generates component-named accessors rather than JavaBeans getters; it does not generate a no-arg
+constructor for a nonempty component list. An internal final value class with compatible consumers
+may fit; the same data shape exposed as a supported subclass extension point does not. Preserve
+existing signatures explicitly where possible and check actual serializer/framework support instead
+of assuming every data class is record-compatible.
+
+A public record's canonical constructor must be public. Keep required validation there, even if
+a named factory is preferred; factory-only validation leaves direct construction unchecked. Retain
+a class when construction must remain factory-only. Compile representative callers and subclass
+extensions, and exercise invalid direct construction and configured serialization paths before
+claiming compatibility ([JLS 17 §8.10](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10)).
+For a construction redesign, pass the existing signatures, invariants and framework constraints to
+`java-object-construction`; if unavailable, retain the existing class and state the limit.
+
 ## Sealed types
 
 **Changes:** Visitor, State, Composite, Interpreter, Strategy, Chain of Responsibility.
@@ -98,6 +113,16 @@ Generated lambda class/frame names are implementation details, and a named metho
 already give useful diagnostics. Compare actual traces before replacing functions with classes;
 do not depend on lambda object identity or a particular synthetic name
 ([JLS 17 §15.27.4](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.4)).
+
+An anonymous implementation's `this` denotes that implementation; a lambda's `this` denotes the
+enclosing instance ([JLS 17 §15.27.2](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2)).
+Replacing an Observer that unregisters `this`, or a Strategy synchronizing on `this`, can therefore
+change registration or lock ownership. Capturing an effectively final reference also does not
+snapshot its mutable referent. A stateless Strategy may simplify cleanly; retain a named or anonymous
+implementation when self-reference or owned state is part of the contract. For a nontrivial rewrite,
+pass callback registration, receiver/capture and lifetime evidence to
+`java-lambdas-and-functional-interfaces`; if unavailable, preserve the implementation until those
+contracts are checked. Test callback removal and the actual receiver, not just the computed result.
 
 ## Generics
 

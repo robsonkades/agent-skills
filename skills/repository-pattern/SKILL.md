@@ -147,6 +147,10 @@ Bulk or set-based work over the aggregate's table
 - Reads and writes have different requirements and may legitimately use different paths.
   Measure query counts, fetched rows/bytes and hydration before attributing slow screens to
   the repository structure (`architecture-and-performance`).
+- Define lookup absence, operational failure and required freshness separately. An empty
+  result must not silently stand for an unavailable store, and a collection-like interface
+  does not guarantee visibility of a recent write through a cache or replica. Check the
+  consumer's contract before changing read routing; see `references/repository-boundaries.md`.
 - `existsBy(...)` followed by `save(...)` can race unless a verified protocol serializes
   all relevant contenders across the complete check/write/commit boundary. Prefer a database
   constraint for database-owned uniqueness with the required normalization/null semantics;

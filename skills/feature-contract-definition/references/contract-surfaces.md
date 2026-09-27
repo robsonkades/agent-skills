@@ -72,6 +72,41 @@ Define denominator, exclusions, measurement location and whether the target is a
 or an existing commitment. A recovery obligation needs its scope and evidence; do not infer
 RTO/RPO from availability percentage alone.
 
+## Interacting surfaces
+
+Read this when a consumer journey depends on several of the surfaces above. Follow one operation
+through its applicable checkpoints: acceptance, committed state, event publication, downstream
+effect and read visibility. Define which checkpoint each response or event promises, and what
+the consumer can observe or must do while later work is pending or has failed. Include the
+accepted scope, conditions and limits of any timing promise; a percentile SLO is not a guarantee
+for every operation.
+
+For example, a warehouse count edit can commit before a separately updated summary shows it.
+The [CQRS considerations](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs#problems-and-considerations)
+explain this possible read-model lag. The accepted requirement changes the contract decision:
+
+- If the summary is allowed to lag and an established pending/retry interaction meets the
+  requirement, retain that interaction and specify its visible states, recovery and any agreed
+  freshness limit. Do not introduce immediate visibility merely because the write succeeded.
+- If the same caller must see its accepted edit on the next summary read, an unrestricted stale
+  result violates that rule. Return the unsupported mechanism to solution analysis; do not
+  quietly weaken the rule or prescribe a new datastore. A proposed weaker rule needs the
+  accountable Product decision.
+
+In either case, a planned criterion can delay summary updates after a successful edit and assert
+the permitted next-read result. Keep conformance pending until the relevant implementation is
+tested. If "complete" has no established meaning, ask which observation it promises, reusing
+available decisions instead of choosing a visibility guarantee by convention.
+
+Likewise, a database commit and successful event notification are distinct outcomes; a failure
+between them can leave only one completed, as illustrated by
+[AWS's dual-write failure cases](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html#transactional-outbox-motivation).
+Define the permitted outcome and recovery across the API/data/event contracts before evaluating
+a mechanism. Pass the conflicting promises, accepted requirement revisions and failure scenario
+to solution analysis, requesting a feasible option for those obligations. If that skill is
+unavailable, record the unresolved choice and dependent acceptance; continue drafting independent
+surfaces. Do not turn contract definition into implementation of an outbox or transaction protocol.
+
 ## Compatibility evidence
 
 For each relevant direction, identify actual artifacts and the observable assertion:

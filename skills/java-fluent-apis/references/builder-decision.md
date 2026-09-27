@@ -35,8 +35,35 @@ pairing on configuration-like types.
   point, so a builder pays even for a three-field type. Do not let a test-data builder's
   existence argue for one in production code.
 - **Two clear required parameters.** `Range.closed(low, high)` normally beats
-  `Range.builder().low(l).high(h).build()`. Distinct factories or role types usually solve
-  transposition; unusual staged/domain DSL requirements still need their own evidence.
+  `Range.builder().low(l).high(h).build()`. Factory names can clarify creation meaning, but
+  `closed(int, int)` still accepts swapped arguments at compile time. Role types can prevent
+  that swap; named builder methods improve readability without proving the caller chose the
+  right value. Choose from actual misuse evidence, not a claim that naming guarantees safety.
+
+## State contracts behind similar chains
+
+Read the API contract and implementation before treating two fluent surfaces as interchangeable:
+
+| Consumer need                   | Mutable builder                                                         | Immutable fluent value                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Apply an option conditionally   | Mutate the confined builder inside `if`                                 | Assign/use the returned value inside `if`                                                   |
+| Derive two independent variants | Use fresh builders or an explicit copy with appropriate input ownership | Derive both from the unchanged base; every intermediate value must remain valid             |
+| Recover after a call fails      | Inspect which state remains and whether reuse is allowed                | The original value remains unchanged; external effects of callbacks are a separate contract |
+
+For example, [LocalDate.withDayOfMonth](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/LocalDate.html#withDayOfMonth(int)>)
+(Java 8+) leaves its receiver unchanged. Ignoring the returned date loses the requested update.
+By contrast, [HttpRequest.Builder](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html)
+(Java 11+) mutates itself: assigning a second variable to a chained setter result does not create
+an independent request builder. Its `copy()` permits independent configuration. Its `header(...)`
+adds values while `setHeader(...)` replaces them; repeating a chain may accumulate values even when
+each individual call is valid. These are concrete contracts, not universal naming conventions.
+
+Java evaluates the receiver expression before the next method's arguments
+([JLS §15.12.4.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.4.1)).
+In `builder.optionA(a).optionB(b).build()`, successful earlier mutations are not automatically
+undone by a later exception. A builder may define stronger rollback guarantees, but chaining alone
+does not supply them. Check post-failure state and accumulation before suggesting catch-and-retry;
+a fresh builder is often the simpler recovery boundary.
 
 ## The staged builder's price list
 

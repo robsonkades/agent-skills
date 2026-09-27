@@ -32,6 +32,8 @@ Reuse existing wiring, proxy-mode, transaction, identity and outcome evidence be
 material gaps. Keep an adequate direct object, explicit lazy accessor or existing proxy. Finish
 with the retained or revised contract, evidence, relevant checks and unresolved limits; distinguish
 proposed tests from executed results.
+Match the requested role: a review returns supported findings and corrections; implement only
+when requested or already authorized. Do not create a proxy merely to demonstrate the pattern.
 
 ## When it is the answer
 
@@ -136,6 +138,8 @@ THEN inspect executed statements: it can create N+1, while batch/subselect fetch
 IF a caller subject to the protection policy can obtain the target through an unchecked route
 THEN that caller can bypass the guard. Restrict that route or enforce the
      required check at the protected operation within the actual trust boundary.
+     Include fluent methods returning the target, nested result objects and callbacks in that
+     inspection; hiding a constructor does not prevent those aliases from escaping.
 
 IF a lazy proxy escapes the scope that can initialise it
 THEN uninitialized lazy state may fail to load; already initialized values need no session.
@@ -155,6 +159,16 @@ THEN uninitialized lazy state may fail to load; already initialized values need 
   caller did not ask for, partial failure presented as an exception indistinguishable from a
   local bug, and fan-out hidden inside a getter. Every remote proxy needs a timeout, a failure
   vocabulary and a granularity review (`timeouts-and-deadlines`, `failure-models`).
+- **Protection with caching.** Trace actual advice/wrapper order and both cache-hit and miss
+  paths. Required authorization must still hold when the target method does not run. Partition
+  cached results by context that changes their meaning or permitted visibility; a user-specific
+  key alone does not enforce revocation. Do not add caller-specific keys to genuinely shared
+  public data without a requirement. Check result filtering as well as pre-invocation guards.
+- **Owned lifecycle.** State whether the proxy owns or borrows its target. Closing an unused
+  virtual proxy should not instantiate a resource merely to close it. Coordinate initialization,
+  in-flight use and disposal so shutdown cannot publish a newly usable target or close a borrowed
+  subject; define cleanup of a construction that finishes after closure was requested.
+  Safe publication alone does not establish those lifecycle guarantees.
 - **Performance.** JDK dynamic proxies route through an `InvocationHandler`; subclass proxies use
   generated overrides. Either can inhibit optimizations depending on call-site profiles and
   advice, but modern reflection internals are version-specific. Costs that usually matter are hidden ones: a lazy proxy
@@ -175,6 +189,8 @@ THEN uninitialized lazy state may fail to load; already initialized values need 
 - [ ] Proxy kind is compatible with final/private/interface constraints where interception is required
 - [ ] Lazy initialization is safely published; duplicate-creation semantics are explicit
 - [ ] Callers subject to a protection policy cannot reach the operation through an unchecked route
+- [ ] Returned aliases and cache hits preserve required interception and authorization
+- [ ] Owned target initialization/use/disposal follow an explicit lifecycle
 - [ ] Identity-sensitive infrastructure uses semantic/framework-aware APIs or a constrained unwrap
 - [ ] Lazy proxy loops are backed by query-count/fetch-plan evidence
 - [ ] Failure paths — denied, unavailable, uninitialised — are covered by tests
@@ -184,7 +200,8 @@ THEN uninitialized lazy state may fail to load; already initialized values need 
 - [Kinds and hazards](references/proxy-kinds-and-hazards.md) — the four kinds with what each
   controls, JDK dynamic proxies against bytecode subclassing and what each cannot intercept, the
   self-invocation hole and contract-dependent fixes, JPA lazy proxies and `LazyInitializationException`,
-  identity and unwrapping, and Proxy against Decorator in one table. Read when introducing or
+  fluent-return escapes, cache-hit authorization, identity and unwrapping, and Proxy against
+  Decorator in one table. Read when introducing or
   debugging a proxy.
 - [Worked example](references/worked-example.md) — a virtual proxy over an expensive report
   engine with correct publication, and a remote proxy rewritten as an honest client after a

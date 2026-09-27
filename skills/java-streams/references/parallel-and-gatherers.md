@@ -63,6 +63,22 @@ list of pointer-heavy domain objects.
   common-pool platform threads while the caller can help; a virtual caller does not make every
   callback virtual or remove coupling to work outside the request scope.
 
+## Bounded output versus bounded traversal
+
+Short-circuiting is necessary but not sufficient for an infinite pipeline to finish. For an
+unsorted source, `sorted().limit(3)` requests the globally smallest three values and may need
+to read and buffer the whole input; `limit(3).sorted()` sorts only the first three. With input
+`[9, 8, 7, 1]`, those answers differ. Move the bound only if the consumer's requested population
+permits it. A selective `filter` or a search for more distinct values may likewise exhaust a
+finite source or never satisfy downstream demand on an infinite one.
+
+Ask which bound is required: returned elements, source elements examined, retained state or
+elapsed time. A pipeline can satisfy one and violate another. Prefer a bounded source/query or
+explicit traversal control when that matches the contract; keep source/client timeout ownership
+explicit for blocking reads. Parallelism does not supply a deadline or make a global sort of
+unbounded input complete. Verify stage-order changes with data whose desired elements occur
+after the proposed cutoff, and observe source consumption rather than only result length.
+
 ## Gatherers: the supported extension point
 
 `Stream.gather(...)` with `java.util.stream.Gatherers` (final since Java 24) adds intermediate
@@ -72,9 +88,14 @@ operations the JDK does not otherwise ship. The built-ins:
 | ------------------------------ | ---------------------------------------------------------------------------------------------- |
 | `windowFixed(n)`               | groups elements into consecutive lists of size `n`                                             |
 | `windowSliding(n)`             | overlapping windows of size `n`, or one short window when the entire input is shorter          |
-| `fold(supplier, folder)`       | a single running value, like a lazy `reduce` with a different state type                       |
+| `fold(supplier, folder)`       | emits one final aggregate after consuming upstream, including order-dependent folds            |
 | `scan(supplier, scanner)`      | emits every intermediate accumulation                                                          |
 | `mapConcurrent(limit, mapper)` | applies `mapper` on **virtual threads**, at most `limit` at a time, preserving encounter order |
+
+`fold` must finish its upstream before emitting its one result; a downstream `findFirst()` or
+`limit(1)` does not make it incremental. Use `scan` when each accumulated prefix is required.
+An unbounded upstream therefore needs a semantically justified bound before `fold`; `scan`
+can emit incrementally, but a downstream terminal `toList()` still needs a finite result stream.
 
 ```java
 // Batch a large feed into chunks of 500 for bulk insertion
@@ -133,6 +154,7 @@ with a `peek`-plus-external-state scheme whose required callbacks can be skipped
 
 ## Primary references
 
+- [Java 21 stream operations, buffering and short-circuiting](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/stream/package-summary.html#StreamOps)
 - [Java 25 Gatherers](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/stream/Gatherers.html)
 - [Java 24 window contracts](https://docs.oracle.com/en/java/javase/24/docs/api/java.base/java/util/stream/Gatherers.html)
 - [JEP 485: Stream Gatherers, final in Java 24](https://openjdk.org/jeps/485)

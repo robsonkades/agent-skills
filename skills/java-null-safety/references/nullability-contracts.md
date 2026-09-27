@@ -67,6 +67,41 @@ The shape is: establish the nullness contract where data enters/objects are cons
 on it within the checked scope. Re-check only when another framework, override, reflective path or
 trust boundary can invalidate the proof.
 
+## Implicit unboxing can erase a legal absence
+
+Unboxing a null wrapper throws NPE. Numeric conditional expressions can unbox before assignment
+to a boxed result: `useDefault ? 3 : configured` has type `int` when `configured` is `Integer`.
+Annotating the result nullable does not alter this language rule.
+
+These partial Java method snippets belong in a null-marked class with the JSpecify 1.0
+`Nullable` import. Here null means “inherit the enclosing policy,” distinct from zero retries:
+
+```java
+// Before: configured == null throws when useDefault is false.
+static @Nullable Integer retryLimit(boolean useDefault, @Nullable Integer configured) {
+    return useDefault ? 3 : configured;
+}
+
+// After: explicit branches preserve the documented absence.
+static @Nullable Integer retryLimitPreservingAbsence(
+        boolean useDefault, @Nullable Integer configured) {
+    if (useDefault) return 3;
+    return configured;
+}
+```
+
+If the receiving operation instead requires a primitive, resolve absence there: reject a missing
+required value or apply its specified default before unboxing. Do not preserve null into that
+operation, silently use zero, or add Optional merely to rewrite this expression. For a nullable
+Boolean, treating null as false is likewise a policy choice, not a universally safe correction.
+
+Exercise both branches with null, zero and a nonzero value; assert whether absence is preserved,
+defaulted or rejected. A configured checker should also flag the unsafe expression; plain
+`javac` compilation only verifies syntax/types. The mechanism is defined by
+[JLS 25 unboxing](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.8) and
+[numeric conditional expressions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.25.2),
+checked **2026-09-27**.
+
 ## False positives — nullable that is not a defect
 
 - **A `@Nullable` field with a checked lifecycle.** A field null between construction and

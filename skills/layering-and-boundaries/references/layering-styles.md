@@ -91,9 +91,10 @@ one deployable, N modules, each with a published surface
 [orders] → published API of [pricing] → published API of [catalogue]
 ```
 
-**Constrains:** cross-module access goes through each module's published surface; internals
-are unreachable. Layering may still exist **inside** a module — and this is the key point:
-the two schemes are orthogonal and compose.
+**Constrains:** cross-module access goes through each module's published surface, enforced
+with the chosen visibility/build rules. Define shared-data access separately: hidden Java
+packages do not hide database tables. Layering may still exist **inside** a module — the
+two schemes are orthogonal and compose.
 
 **Costs:** enforcement machinery (Java modules, an architecture test, or a build-level
 module per component), and honest module boundaries, which is the hard part.
@@ -101,10 +102,12 @@ module per component), and honest module boundaries, which is the hard part.
 **Driver that justifies it:** independent teams, or a credible future extraction, or the
 practical one — a codebase where "where does this go?" has stopped having an answer.
 
-**Why it usually beats early service extraction:** the module boundary is the same boundary
-a service extraction needs, but it costs no network, no serialisation and no distributed
-transaction (`distribution-boundaries`). Getting a module boundary wrong costs a refactor;
-getting a service boundary wrong costs a migration.
+**Why it can precede service extraction:** it tests a candidate boundary without adding a
+network or remote failure semantics. It does not establish extraction readiness: a shared
+transaction, direct table access or chatty local API can require redesign before separation.
+Pass data ownership, callers and atomicity/compatibility requirements to
+`distribution-boundaries` when a remote boundary has a driver. If that analysis is unavailable,
+retain the local boundary and state the unresolved extraction assumptions.
 
 ## Vertical slices
 

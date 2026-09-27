@@ -229,6 +229,21 @@ automatically spans generated JIT frames.
 
 ## Ring buffer and map safety
 
+Choose value ownership before sizing the map. A per-CPU hash has a separate value for each
+CPU, and ordinary BPF lookup accesses the current CPU's slot. A TID key alone therefore does
+not make a per-CPU start timestamp usable after migration; block completion can also run on a
+different CPU. Shared keyed correlation state is the baseline. A per-CPU alternative needs a
+verified same-CPU lifecycle or explicit source-slot protocol, including cleanup and identity
+reuse. An atomic map-element replacement does not make a lookup/modify/update sequence atomic.
+These are [kernel hash-map contracts](https://docs.kernel.org/bpf/map_hash.html).
+
+For bpftrace aggregation, prefer `@events = count()` and `@total = sum(value)` to shared raw
+`@events++` or `@total += value`: raw updates can lose concurrent increments. The 0.24
+[aggregation functions](https://bpftrace.org/docs/release_024/stdlib) use per-CPU values for
+thread-safe writes; synchronous reads must combine CPU slots and can cost more. This trade-off
+supports counters, not a per-CPU replacement for lifecycle state. Keep update races separate
+from export loss when explaining count discrepancies.
+
 For high-rate event export:
 
 - use fixed-size records and bounded strings/stacks;
@@ -257,6 +272,9 @@ and add target-specific checks for uncovered risks. Relevant controls include:
 - a same-host non-target workload that must be excluded;
 - a dynamic-thread/restart test;
 - concurrent/nested events to test pairing;
+- migration between entry and exit, or cross-CPU completion, where the lifecycle permits it;
+- concurrent producers with known event totals to expose lost counter updates; success with
+  a single CPU-pinned producer does not establish multi-CPU correctness;
 - forced map/buffer pressure to verify loss counters;
 - start/stop mid-operation to test unmatched state;
 - an overhead comparison under peak event rate.

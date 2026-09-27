@@ -165,10 +165,12 @@ The framework's abstraction already IS the port you were going to write
   `javax.sql.DataSource` may serve ordinary JDBC consumers; a driver-specific capability may remain
   inside its adapter. A neutral cache or JDK API is useful only if its lifecycle, failure and
   provider semantics fit; neither a forwarding wrapper nor lost capability buys independence.
-- **Upgrade at a governed cadence.** The dominant cost of framework coupling is often not migrating between
-  frameworks — almost nobody does — it is falling behind within one, until the jump crosses
-  several breaking changes at once and lands outside the support window. Balance smaller deltas
-  against change frequency, validation cost and support policy; “latest” is not itself a control.
+- **Upgrade at a governed cadence.** Compare maintaining this framework with the actual replacement
+  scenario; neither its likelihood nor its cost is universal. Skipped releases can compound
+  breaking changes and end support coverage. Check the required operating horizon against the
+  resolved stack's available support and compatibility, including any applicable paid coverage.
+  Knowing about a gap does not make continued use satisfy the project's requirements. Balance
+  smaller deltas against change frequency and validation cost; “latest” is not itself a control.
 - Keep ordinary rule tests independent of container startup when practical; retain focused
   integration tests for framework behavior. A container-based test alone does not establish
   that the tested rule requires the container.

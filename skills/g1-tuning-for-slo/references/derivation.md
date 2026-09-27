@@ -38,6 +38,19 @@ the estimate controls a flag, and report its distribution rather than one averag
 Given a pause SLO `T_slo` ms, fixed overhead `T_fixed` ms, copy bandwidth `C` MB/s and
 allocation rate `A` MB/s:
 
+Here `T_slo` is a GC-pause goal whose effect on the request SLO must be validated; request
+percentiles cannot be split into additive GC and application percentile budgets.
+Before converting the model to flags, require measured positive copy bandwidth and a
+positive residual budget `T_slo - T_fixed`. If representative non-copy work already meets
+or exceeds the goal, shrinking young alone has no feasible solution **under this model**.
+Do not turn a negative size into zero, a minimum region count or a smaller pause target and
+claim the constraint is met. Inspect root/reference work, worker imbalance and CPU/page
+delays with `g1-internals` or `pause-attribution`, passing the phase and elapsed-time evidence.
+Those costs may change with another mechanism or workload; the failed model does not prove
+that G1 can never meet the SLO. If phase/byte evidence is missing, gather it instead of
+inventing a bandwidth. A positive budget still needs enough legal young capacity, evacuation
+headroom and an acceptable pause-frequency cost after rounding.
+
 ```
 max_young_size_mb = (T_slo − T_fixed) / 1000 × C
 
@@ -106,6 +119,22 @@ is beneficial in most cases". Maximum region capacity is then `-Xmx / region_siz
 **not** always 2048: `-Xmx5g` has 1280 regions of 4 MB.
 Young/mixed policy percentages use currently committed regions; explicit region-size
 requests must be resolved to their effective value before either calculation.
+
+For a region-size change intended to avoid humongous allocation, use the aligned **individual
+object** size, not retained graph size. The target region must be at least twice that size,
+rounded up to an accepted power of two. Check feasibility before proposing it: the pinned
+[25.0.3 flag range](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1_globals.hpp)
+allows at most 512 MiB on 64-bit builds and 32 MiB on non-LP64 builds. Thus a 300 MiB aligned
+object remains humongous even at the 64-bit maximum; a 1 GiB region is not an available fix.
+This follows from the strict half-region predicate documented in
+[the flag reference](flags-and-baselines.md#source-checks).
+
+Consider reducing or chunking the allocation if its contract permits, or retaining humongous
+allocation with measured contiguous-space/reclamation headroom; heap/collector alternatives
+belong to `jvm-gc-tuning`. Even a legal region size can leave too few regions for useful
+collection-set granularity. Moving a large object into ordinary young allocation can increase
+copying if it survives, so verify phase costs, occupancy and footprint instead of equating
+"no longer humongous" with improvement.
 
 Use binary GB. `-Xmx8g` is 8192 MiB; using 8000 MB in one step and 8192 MB in another
 produces a derivation whose numbers do not reconcile.

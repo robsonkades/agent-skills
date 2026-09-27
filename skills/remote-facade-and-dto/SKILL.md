@@ -49,6 +49,8 @@ support; the Spring `ProblemDetail` snippets require Spring Framework 6+ (Java 1
 Examples are partial sketches, with application types, wiring and authorization omitted;
 they do not authorize upgrades or new dependencies. A DTO need not implement Java
 `Serializable` to be encoded as JSON or another wire format.
+Verify representative payloads through the consumer's decoder as well as the producer's
+serializer; a successful Java round trip alone does not establish preservation of values.
 
 When caller traces, payloads or compatibility tests are unavailable, state the gap and keep
 coarsening/removal recommendations conditional. A local facade can simplify an interface

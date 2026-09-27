@@ -83,6 +83,21 @@ toward common reuse. Moving is a refactor, not a failure.
 
 ### Acyclic dependencies
 
+Establish which graph contains the alleged cycle before changing code. Record each edge's
+origin, scope and artifact version from the effective build under the failing profiles, source
+imports or module descriptor. A runtime callback or a diagram of repository/module membership
+does not establish a source/build dependency.
+
+For Maven, include instantiated project, plugin, plugin-dependency and build-extension references;
+the latter can constrain reactor order even without an application import. Entries solely in
+`dependencyManagement` or `pluginManagement` do not create reactor ordering edges. Follow the
+[Maven reactor rules](https://maven.apache.org/guides/mini/guide-multiple-modules.html) for the
+project's Maven version; the linked guide describes Maven 3 and routes Maven 4 separately.
+If the cycle comes from a build tool depending on the project it builds, inspect that bootstrap
+relationship and supported tool versions. Adding an application interface cannot remove a
+build-only edge. Removing a real dependency declaration just to make the graph acyclic can hide
+required compilation or runtime inputs; validate the resulting build and consumer behavior.
+
 The current source/build dependency graph between components must be a directed acyclic graph for
 Maven or JPMS to build it. Release-time dependencies across separately published versions are a
 different graph and may temporarily point both ways, though that makes coordinated breaking change
@@ -109,9 +124,11 @@ Before:   orders ⇄ billing            (current reactor/source cycle)
 After:    orders ──► identifiers ◄── billing
 ```
 
-The new component must be genuinely more stable than both — identifiers, value objects and
-domain vocabulary qualify; a `shared` module that accumulates whatever unblocks the build
-does not.
+The new component needs coherent ownership and an evolution policy acceptable to both consumers.
+Identifiers and value objects are candidates, not proof of stability: meanings, validation rules
+or representations may evolve independently. Inspect those change reasons before extracting;
+moving disputed vocabulary into `shared` only relocates the disagreement. The acyclic graph proves
+that these build edges were removed, not that the new release boundary is worthwhile.
 
 **2. Invert the edge.** If `billing` needs to notify `orders`, `billing` declares the
 interface it needs and `orders` implements it. The source dependency now points from `orders`

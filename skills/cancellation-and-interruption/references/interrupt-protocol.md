@@ -1,5 +1,23 @@
 # Interrupt handling by boundary
 
+## Signal the intended task
+
+A delayed timeout callback holding a pooled worker's `Thread` can interrupt a later task after
+the intended task returns. Checking a completed flag before `interrupt()` still races that
+return. Cancelling the timer is useful cleanup, but does not prove an already-running callback
+has finished. Prefer the task's owned `Future` or provider handle and verify its cancellation
+contract. OpenJDK 25.0.3 `FutureTask` coordinates cancellation delivery with exit from `run`;
+do not recreate that lifecycle protocol with a raw saved thread reference. Direct interruption
+can remain appropriate for a dedicated owned thread whose lifetime is the work's lifetime.
+
+Interrupt status carries no source identity or count; two requests do not become two queued
+interrupts. If cause/precedence matters, publish it through the owner's synchronized or atomic
+state rather than infer it from the bit. For a first-winner policy an atomic reference to an
+immutable cancellation cause can publish cause and decision together; a plain boolean cannot
+provide cross-thread visibility by itself. A volatile flag suffices for a simple one-way signal,
+but not for a compound check-and-update race. Do not reset a token while tasks from its previous
+lifetime can still observe it. Visibility and waking a blocking operation are separate duties.
+
 ## Handler patterns
 
 ### Propagating API
@@ -109,3 +127,8 @@ the outer cancellation contract after cleanup; do not clear or restore status by
 - [`Thread.interrupt`](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#interrupt()>)
 - [`InterruptedException`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/InterruptedException.html)
 - [`ExecutorService`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html)
+- [Java memory model, synchronization order](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4.4)
+  — volatile publication and interrupt detection; application cause/state still needs its own protocol.
+- [OpenJDK 25.0.3 `FutureTask`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/FutureTask.java)
+  — `cancel`, `run` and `handlePossibleCancellationInterrupt` coordinate late interrupt delivery;
+  implementation evidence, not a guarantee for arbitrary Future implementations.

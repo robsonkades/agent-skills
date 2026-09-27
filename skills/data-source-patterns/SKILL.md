@@ -152,6 +152,11 @@ Read path of an application whose write path uses a mapper
   round trips and application latency. Set-based writes must preserve invariants, versioning
   and transaction semantics; ORM callbacks and managed state may be bypassed. Decide flush
   and invalidation order before direct SQL; `clear` can discard unflushed entity changes.
+- Treat a read projection and a writable model as different contracts. Missing columns are
+  not evidence for null, zero or empty domain state. Before saving a reconstructed object,
+  establish which fields the command owns and which state its invariants need. An identity
+  and version token alone do not make a partial object safe to write back; compare loading
+  the required state with a narrowly scoped conditional update.
 
 Deliver a pattern choice grounded in one representative read/write path, ownership and
 coupling costs, plus a validation case and revisit trigger. If schema or lifecycle evidence
@@ -167,5 +172,6 @@ is missing, state the conditional choice instead of prescribing a migration.
 - [Active Record versus Data Mapper](references/active-record-vs-data-mapper.md) — the
   comparison dimension by dimension with the same domain implemented both ways, what each
   actually couples, testability and query control, the JPA middle ground and its risks, and
-  the migration path when the choice must change. Read when the decision is genuinely open
-  or is being re-opened.
+  the migration path when the choice must change. Read when the decision is genuinely open,
+  is being re-opened, or a read projection is being reused for writes; it includes worked
+  cases for that boundary.

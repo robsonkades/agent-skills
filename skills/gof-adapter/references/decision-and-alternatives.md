@@ -8,7 +8,7 @@ Partial structural sketches; names are illustrative, not real SDK declarations:
 // Object adapter — usual starting point
 public final class StripeGateway implements PaymentGateway {
     private final StripeClient stripe;                 // adaptee held, not inherited
-    @Override public Authorisation authorise(Payment p) { ... }
+    @Override public Authorisation authorise(Payment p, IdempotencyKey key) { ... }
 }
 
 // Class adapter — requires inheritable adaptee and justified subclass hooks
@@ -20,6 +20,25 @@ adaptee through the concrete subtype (not through a variable typed only as the p
 delegate to an arbitrary existing instance. Port implementations can still be swapped. Subclass
 hooks/protected behavior may justify inheritance; evaluate those constraints instead of claiming
 composition always reproduces them.
+
+## Can the target contract actually be represented?
+
+Compare required preconditions, results and observable failure states before choosing a wrapper
+shape. Splitting one target call into several adaptee calls may expose intermediate effects;
+catching exceptions does not restore the earlier state or exclude concurrent observers.
+
+For example, a port promising an atomic move cannot be implemented by an ordinary copy followed
+by delete. [Java 17 Files.move](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Files.html#move(java.nio.file.Path,java.nio.file.Path,java.nio.file.CopyOption...)>)
+with `ATOMIC_MOVE` fails with `AtomicMoveNotSupportedException` when atomic movement is unavailable.
+Silently retrying without that option changes the guarantee. If the target instead explicitly
+allows a best-effort move with partial-state reporting and recovery, a multi-step adaptation may
+fit; verify failures between steps and what observers can see. Keep unsupported guarantees
+visible until a supported mechanism or an authorized contract change resolves them.
+
+Similarly, a one-shot source does not automatically satisfy repeatable reads. Bounded
+materialization may provide an agreed snapshot at a memory/latency cost; an unbounded source or
+a live-view requirement changes that choice. Do not add buffering merely to make method types
+line up. Test the consumer's promised behavior, not just each mapping helper in isolation.
 
 ## Adapter against its four lookalikes
 
@@ -46,9 +65,9 @@ worked example:
 
 ```java
 @Override
-public Authorisation authorise(Payment payment) {
+public Authorisation authorise(Payment payment, IdempotencyKey key) {
     try {
-        var response = stripe.charges().create(toRequest(payment));
+        var response = stripe.charges().create(toRequest(payment, key));
         return toAuthorisation(response);
     } catch (StripeCardException e) {
         throw new PaymentDeclined(payment.id(), declineReason(e.getDeclineCode()), e);

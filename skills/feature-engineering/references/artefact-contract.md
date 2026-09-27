@@ -6,6 +6,7 @@ Use this at intake, whenever an accepted baseline changes, and at each readiness
 
 ```text
 Type                 Product Feature | Tech Feature
+Requested endpoint   <deliverable/stage authorized by the request and session>
 Product revision     <immutable ID; required for Product Feature>
 Engineering revision <immutable ID; required when analysis is required>
 Tech revision        <immutable ID; required for Tech Feature>
@@ -22,6 +23,9 @@ begin. At implementation readiness, required analysis is complete or its account
 established why it is inapplicable. A Tech Feature is engineering-owned from definition onward.
 For Light work, a cited request/session statement can serve as the concise accepted baseline;
 do not fabricate separate documents or approvals. Preserve target technology/version constraints.
+The requested endpoint limits the work, independently of feature readiness. An accepted plan can
+be the complete requested deliverable while the feature remains unimplemented. Distinguish those
+states in the handoff; if implementation is already authorized, no duplicate permission is needed.
 
 ## Identifier namespace
 
@@ -138,6 +142,11 @@ Every independent readiness pass returns one status, reasons, affected IDs, and 
 Only the first two advance. A return status reopens a focused phase and produces a new snapshot when
 resolved. State the scope of each gate: a blocked resource does not block an unrelated ready resource,
 and a partial pass is not a pass for the entire feature.
+
+Identify the performed review and its evidence/actor, rather than inferring a pass from accepted
+input or a specialist's name in the plan. Follow the request's and local policy's reviewer requirements. When
+that review has not run, preserve the pending gate and affected scope; a draft prepared for review
+is not a completed validation. A pass grants readiness only, within the requested endpoint.
 
 These are readiness outcomes, not completion or deployment authorization. At completion, use
 feature-readiness-review to report Complete: yes/no for the accepted baseline, trace Required

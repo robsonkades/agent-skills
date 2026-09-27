@@ -1,15 +1,16 @@
 # Techniques, what each checks, and what it costs
 
-| Technique                      | Can check                                                | Cannot establish                               | Cost            |
-| ------------------------------ | -------------------------------------------------------- | ---------------------------------------------- | --------------- |
-| Unit test with mocks           | branching, mapping, modeled policy/time in one process   | actual remote/store integration                | seconds         |
-| Testcontainers integration     | real broker, database and driver behaviour under failure | fleet-scale effects, production data shapes    | tens of seconds |
-| Proxy fault injection          | timeout, retry, breaker and fallback paths execute       | that the fault is the one production produces  | minutes         |
-| Container kill / process pause | crash-recovery and lease behaviour under a stall         | correlated multi-node failure                  | minutes         |
-| Barrier race test              | the concurrent-duplicate case against the real store     | absence of races in general                    | seconds         |
-| Property-based order shuffle   | an invariant holds under many orders                     | it holds under all orders                      | seconds         |
-| Deterministic simulation       | invariants over explored modeled interleavings           | omitted model behavior or unexplored schedules | a design cost   |
-| Chaos experiment               | behavior of the observed cohort under the injected fault | other conditions or general causal proof       | risk            |
+| Technique                      | Can check                                                | Cannot establish                               | Cost                    |
+| ------------------------------ | -------------------------------------------------------- | ---------------------------------------------- | ----------------------- |
+| Unit test with mocks           | branching, mapping, modeled policy/time in one process   | actual remote/store integration                | seconds                 |
+| Testcontainers integration     | real broker, database and driver behaviour under failure | fleet-scale effects, production data shapes    | tens of seconds         |
+| Proxy fault injection          | timeout, retry, breaker and fallback paths execute       | that the fault is the one production produces  | minutes                 |
+| Container kill / process pause | crash-recovery and lease behaviour under a stall         | correlated multi-node failure                  | minutes                 |
+| Barrier race test              | the concurrent-duplicate case against the real store     | absence of races in general                    | seconds                 |
+| Property-based order shuffle   | an invariant holds under many orders                     | it holds under all orders                      | seconds                 |
+| History checking               | recorded operations conform to the selected model        | unobserved executions or a stronger model      | model/history dependent |
+| Deterministic simulation       | invariants over explored modeled interleavings           | omitted model behavior or unexplored schedules | a design cost           |
+| Chaos experiment               | behavior of the observed cohort under the injected fault | other conditions or general causal proof       | risk                    |
 
 Each row is conditional on the actual assertion, injected fault and coverage. Costs are rough
 planning categories, not measurements. A finite run does not prove all distributed executions.
@@ -118,6 +119,38 @@ Retain the seed, generated input and trace. A seed reproduces only the randomnes
 the harness controls. A property-based library can generate and shrink cases when that capability
 is useful; a small fixed set may already cover the relevant ordering contract.
 
+## Checking client-visible histories
+
+Use this when the contract concerns what clients may observe during concurrent operations or
+partitions. Choose the oracle from the accepted guarantee and operation scope (`consistency-models`);
+a register checker does not establish multi-key transaction atomicity. Reuse a suitable existing
+checker or a focused invariant test; do not introduce a general history framework for a simple
+timeout assertion. If the guarantee is unresolved, pass the observed read/write paths and legal
+outcome question to `consistency-models`; keep the test expectation conditional until resolved.
+
+Capture each logical operation's client/operation ID, invocation, arguments, completion and result,
+plus the fault timeline. Correlate retries without losing their attempts or side effects. Record
+invocation/return ordering at the harness; unsynchronized server timestamps do not establish
+real-time precedence. Retain overlapping operation intervals instead of sorting by completion alone.
+
+Distinguish successful outcomes, definite non-application, and indeterminate outcomes. A lost
+response after a write must remain potentially applied; dropping it or marking it definitely
+failed can manufacture a consistency violation. In Jepsen histories these outcomes are `:ok`,
+`:fail` and `:info`; follow the chosen checker's process and event-format contracts. A subsequent
+read may legally observe an indeterminate write. Recovery queries can resolve uncertainty only
+within their authority and observation limits.
+
+Check safety and the declared progress/recovery bounds separately. A history with no successful
+operations may satisfy safety vacuously while the service is unavailable. Report which operations
+ran during the fault and which completed; verify rejection-only behavior where that is the actual
+contract. For eventual consistency, healing and quiescence can test observed convergence, but a
+finite observation window is not a universal convergence proof or an implicit staleness SLA.
+
+Bound analysis time and retain the history, model, checker version and result. A checker error or
+`:unknown` result is inconclusive, not success or a proven system defect. Investigate the harness
+and simplify the reproducer without deleting uncertain operations or dependencies needed to expose
+the defect. Validate the oracle against a known-invalid isolated history as well as a valid one.
+
 ## Controlling time
 
 Inject `java.time.Clock` wherever the component reads the current instant, and advance it in
@@ -156,3 +189,5 @@ store's real expiry mechanism; shortened values also change the tested timing co
 - [Clock contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Clock.html) — zone views and thread safety.
 - [Docker stop](https://docs.docker.com/reference/cli/docker/container/stop/) — graceful signal and timeout before forced termination.
 - [Transactional outbox](https://microservices.io/patterns/data/transactional-outbox.html) — relay redelivery and idempotent consumers.
+- [Jepsen history representation](https://github.com/jepsen-io/history) — invocation, definite and indeterminate outcomes, and logical process contracts.
+- [Knossos](https://github.com/jepsen-io/knossos) — model-based linearizability analysis, pending operations and inconclusive results.

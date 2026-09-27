@@ -141,6 +141,9 @@ avoiding deployment alone does not establish that it is cheaper (`architecture-d
 
 ## Removing an abstraction safely
 
+Use this sequence when implementation of the correction is authorized. For a review-only
+request, return the proposed first change and its validation instead of executing the sequence.
+
 1. **Inventory contracts and indirect consumers.** Include reflective/configuration uses,
    published APIs, transactions, authorization and proxy advice. Define preserved behavior.
 2. **Change one call path** and run focused behavior/contract tests through the real boundary.

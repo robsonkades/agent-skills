@@ -141,6 +141,9 @@ THEN its standard serialization/reflective-construction identity guarantees may
   this from class-initialisation semantics; a plain `if (instance == null)` does not, and
   the shown classic DCL needs `volatile` or a separately proven publication protocol
   (`java-memory-model`).
+  Inspect constructor callbacks, registration and thread startup for early `this` escape or
+  reentry into the accessor. Safe publication through the accessor does not repair these paths;
+  complete construction before exposing the instance and resolve initialization cycles.
 - **Distribution.** Local state remains local. N independent pools or limiters with equal limits
   have an aggregate configured ceiling of N times that limit, not necessarily observed usage.
   Budget rollout overlap and other clients; inspect actual demand before attributing exhaustion

@@ -130,6 +130,9 @@ Prefer routing by key (sharding-and-partitioning) instead when:
   react to outstanding request count; that count still misses heterogeneous cost and can bias
   toward a freshly started/cold endpoint. Select weighted least-request, EWMA latency,
   power-of-two choices or round-robin from measured workload and locality constraints.
+  If a ready endpoint still needs to warm up, compare supported slow start or weight ramping
+  with prewarming before eligibility. Check survivor headroom and time to usable added capacity;
+  a ramp is unnecessary when the endpoint already handles its full share within the contract.
 - Distributed least-loaded can herd when balancers share stale load information and choose
   the same endpoint. Independent random candidate selection can reduce that correlation,
   but power-of-two choices is not universally superior: weights, locality, signal quality

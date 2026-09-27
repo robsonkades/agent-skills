@@ -28,6 +28,12 @@ compiles, passes its own tests, and does something other than what was agreed.
 
 Each gate has a stop condition and a return owner; “not ready” without where to return is incomplete.
 
+A review request authorizes investigation and a gate result, not automatic edits to the reviewed
+code, baseline, persisted records or approval state. Reuse any authority already granted to fix or
+update those artifacts; do not ask again merely because a gate is being run. With findings-only
+scope, propose the corrections in the report. With authorized corrections, change only the affected
+scope and recheck it before reporting a new result.
+
 ## Gate 0 — definition intake
 
 Validate the exact Product Definition plus required Engineering Analysis revisions, or the Tech Feature
@@ -68,6 +74,12 @@ implementation evidence before implementation or establish that the feature is D
 
 ## Gate 2 — at completion
 
+Identify the accepted baseline, implementation candidate (commit, index or working-tree snapshot),
+resource set and completion stage being judged. If deployment or production observation is Required,
+an implementation-only result cannot satisfy it. If those activities are outside the accepted scope,
+do not invent them as blockers or imply that this review has established production readiness.
+Reassess evidence affected by later candidate or contract changes; retain still-applicable results.
+
 Run the review in `references/completion-review.md`. It answers one question in twelve parts:
 **is this the feature that was agreed, and is the claim that it is done supported by something
 that was observed?**
@@ -102,6 +114,9 @@ Compilation and a green build establish only the properties and modules actually
 Apply the project's required checks; a documentation-only feature need not acquire a Java build.
 Accepted gaps retain their unverified status and cannot make an unmet Required criterion satisfied
 or a resource DONE. An authorized scope amendment changes the reviewed baseline explicitly.
+SKIPPED and CANCELLED are terminal resource states, not evidence that their Required obligations
+were met: trace equivalent accepted coverage or an authorized scope revision. A replacement with
+unverified acceptance still leaves that obligation open.
 
 ## Decision rules
 
@@ -118,8 +133,9 @@ THEN establish whether it belongs to this feature, pre-existing work or another 
      Classify feature changes as missed impact or added scope; preserve others' edits.
 
 IF a decision was taken during implementation and never recorded
-THEN record it now, marked as recorded retrospectively — the label matters, because
-     a retrospective record is a justification and reads differently.
+THEN report the missing record and its owner. If record updates are authorized, add it
+     marked as recorded retrospectively; otherwise propose the entry in the finding.
+     Retrospective documentation does not itself establish acceptance of the decision.
 
 IF an acceptance criterion cannot be checked
 THEN distinguish ambiguity from missing tools, access or evidence. Report it as unverified;
@@ -155,6 +171,7 @@ Gate 2:
 
 ```text
 Feature      <name>
+Reviewed     <accepted baseline, candidate revision/snapshot, resource set and completion stage>
 Complete     yes | no
 
 Requirements   <each BAC/TC/SC item -> the RES-* that satisfy it>
@@ -169,3 +186,6 @@ Unverified     <everything that could not be checked>
 ```
 
 If `Complete` is no, that is the headline, and the report says exactly what remains.
+A `Complete: yes` result is an evidence judgment for that reviewed scope, not authorization to
+deploy, publish or change an external approval state. Light/Inline work may state the reviewed
+scope and evidence concisely without creating dossier files or formal IDs.

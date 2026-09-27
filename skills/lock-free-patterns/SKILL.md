@@ -115,6 +115,14 @@ Use history/model tests in addition to invariants. Define behavior on exceptions
 cancellation, close, empty/full state, counter/version overflow and thread death between preparation
 and publication.
 
+A visible cancel/close flag checked before CAS leaves a race in which publication still succeeds
+after that check. If the contract permits best-effort abandonment, state that residual outcome.
+If accepted cancellation promises no commit, cancellation and publication must compete in the same
+linearization protocol; independent atomic flags do not establish it. After linearization,
+cancellation or cleanup failure does not prove the operation had no effect. Read
+[commit versus cancellation](references/lock-free-structures.md#commit-versus-cancellation)
+for the discriminating schedule and a bounded state-machine alternative.
+
 ## ABA and reclamation
 
 ABA occurs when the compared state returns to a value/reference that compares equal while relevant

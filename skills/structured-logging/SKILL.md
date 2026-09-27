@@ -64,6 +64,11 @@ Not every event has a request or active trace: startup, scheduler, health and ba
 events legitimately omit them. Encode absence explicitly where consumers require it; never
 copy stale context to satisfy a mandatory-field rule.
 
+Distinguish event occurrence from collector observation time when buffering or replay matters;
+an unknown source time stays unknown. Treat opaque identifiers separately from measured
+quantities: verify exact values through downstream parsers, not only JSON validity and field
+types. Large numeric IDs can lose precision. See the fields reference for these decisions.
+
 ### 3. Choose API, encoder and transport together
 
 SLF4J fluent key-value APIs preserve field intent, but the selected provider/layout determines

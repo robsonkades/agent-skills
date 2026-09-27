@@ -99,6 +99,13 @@ future constants. Test that fallback rather than removing it by rule; observe un
 only as the operational contract warrants. A raw unknown string may fail decoding before any
 switch runs, so boundary decoding needs its own policy.
 
+Exhaustiveness covers enum constants, not absence. With a null selector, a switch without
+`case null` throws `NullPointerException` even if it has a plain `default`. Handle or reject
+null according to the caller's contract before switching; Java 21+ also supports `case null`
+without preview. Do not upgrade a Java 17 project just to use that label. If a decoder maps
+an unknown code to null, it has erased the distinction from absence before the switch runs;
+preserve that distinction upstream when the two require different behavior.
+
 ## Extensibility through interfaces
 
 An enum cannot be extended, and that is a deliberate constraint. When a set of operations must
@@ -139,6 +146,11 @@ applyStyles(EnumSet.of(Style.BOLD, Style.ITALIC));
   wrapper overhead means equivalent total footprint or speed must not be assumed.
 - The bit-field contrast is for a new local API. Preserve published masks and unknown bits when
   translating an existing protocol; enum declaration positions are not that protocol's bit numbers.
+- `allOf` and `complementOf` operate over the loaded enum's full set of constants. On a new
+  version, re-evaluating either can admit a new constant without editing the set-building code.
+  That fits a UI listing every supported option, but not a permission allowlist that must deny
+  new actions until reviewed: use explicit `EnumSet.of(...)` membership there. Test a newly
+  added constant against the policy; an unmodifiable wrapper does not fix unintended membership.
 - Accept `Set<Style>` in the parameter, not `EnumSet<Style>` — callers may hold any set — and
   return an unmodifiable copy: `EnumSet` is mutable and not thread-safe. `Set.copyOf` does
   not promise declaration-order iteration or an `EnumSet` representation. For arbitrary
@@ -189,4 +201,5 @@ gof-state, offline-concurrency-control and distributed-locks-and-leases.
 Primary references: [EnumSet API and empty-copy behavior](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/EnumSet.html)
 and [EnumMap API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/EnumMap.html),
 [Enum identity and ordering](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html),
-and [JLS enum members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.9.3).
+[JLS enum members](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.9.3),
+and [JLS 21 switch-label matching, including null](https://docs.oracle.com/javase/specs/jls/se21/html/jls-14.html#jls-14.11.1.2).

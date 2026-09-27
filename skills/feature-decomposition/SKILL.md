@@ -48,6 +48,10 @@ unclear, resolve that boundary before creating a delivery breakdown.
 2. **Produce the resource list first**, from the impact map. Account for each entry as scoped work,
    validation coverage or an evidenced unchanged dependency. A `READ` entry need not become an edit:
    link the resource that verifies its relied-on behavior or cite applicable existing evidence.
+   Keep alternatives and Optional/Recommended proposals outside the delivery resource list unless
+   selected in the accepted baseline; their presence in the map does not select them. Preserve
+   explicitly accepted obligations even if a proposal later labels them optional. Record these
+   dispositions against the baseline.
    Reuse the current map/scope revision. If none exists, record a minimal source-to-resource
    mapping for the known work; leave material unknowns open rather than inventing files or scope.
 3. **Reuse each resource's `RES-*` identifier or assign one to new work**, with dependencies and
@@ -156,5 +160,8 @@ Then         RES-02 -> RES-03; RES-04 may proceed independently
 Execution consumes resource scope, acceptance, ownership and dependencies together. Independence
 in the graph permits parallel planning only when shared-file/resource ownership is also resolved.
 Before handoff, check scope coverage, unique/stable IDs, an acyclic dependency graph and validation
-for each resource; report unresolved dependencies rather than claiming the breakdown ready.
+for each resource. Check the reverse direction too: every applicable accepted criterion needs a
+resource or shared validation mapping, including parent-wide behavior that no child alone proves.
+Keep criterion meaning with its owning stage; report missing acceptance or dependencies rather than
+claiming the breakdown ready.
 A defined breakdown does not establish accepted scope, implementation or observed validation.

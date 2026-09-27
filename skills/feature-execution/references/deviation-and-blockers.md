@@ -105,3 +105,18 @@ RES-05 Dispatch consumer                     IN_PROGRESS
 ```
 
 "Not yet run" is the field that prevents the next session from assuming validation happened.
+
+Also reconcile work outside the current call stack. Before releasing file ownership,
+identify any validation jobs, generators or watchers you started that can still change the
+owned files or their fixtures. Wait for a bounded check, stop an owned helper safely, or
+explicitly transfer it to the receiving owner with its handle, target, current state and
+next observation. A handoff entry alone does not transfer a process or prevent concurrent
+writes. Do not stop unrelated user services or another owner's jobs.
+
+If interruption leaves an operation's result unknown, record the last observed state,
+possible effects and the evidence needed to distinguish running, completed and failed.
+On resumption, inspect that evidence before restarting: a disconnected command can have
+committed work even when no success message was captured. Reconcile the actual files or
+durable job/migration state and repeat only when the operation's repeat/recovery contract
+permits it. An unknown required result remains IN_PROGRESS, or BLOCKED if an external
+impediment prevents resolving it; no new status or automatic rollback is needed.

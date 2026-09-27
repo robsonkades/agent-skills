@@ -27,8 +27,9 @@ preview features or new dependencies; keep unsupported tool choices conditional.
 
 1. **Establish the promise and evidence.** Obtain the characteristic/scenario, protected scope,
    acceptance policy and owner. Inspect existing rules, pipeline wiring, suppressions, recent
-   verdicts and relevant incidents. If the characteristic or policy is unknown, record a
-   provisional interpretation and ask for the missing decision; do not invent a threshold or
+   verdicts and relevant incidents. Separate approved policy from an incidental current threshold.
+   If a decision-changing characteristic or policy remains unknown after inspection, record a
+   provisional interpretation and ask for that decision; do not invent a threshold or
    retire a check because its original author is unavailable.
 2. **Triage inherited checks.** For each, record enabled/skipped state, evidence actually
    collected, protected property, observed signal/noise and response. Use history to recover
@@ -73,7 +74,10 @@ preview features or new dependencies; keep unsupported tool choices conditional.
 - When checks conflict, compare their scenarios, assumptions and required outcomes. Route the
   design trade-off to `architecture-trade-off-analysis`; do not relax whichever check is easier.
 - Distinguish no-new-violations from required debt reduction. A stable baseline can satisfy the
-  former indefinitely; a shrinking deadline needs a separate policy and measurement.
+  former indefinitely; a shrinking deadline needs a separate policy and measurement. For no-new
+  policies, compare violation identities against the accepted baseline, not just totals: fixing
+  one old violation does not authorize a different new one. Read the baseline guidance in
+  [catalogue.md](references/catalogue.md) when defining that comparison.
 
 ## Deliverable and reusable checker
 
@@ -81,6 +85,13 @@ For a small review: evidence, defect/gap, consequence, proposed adjustment and v
 For a new control: property/scope, metric or rubric, justified threshold, evidence requirements,
 site/cadence, response/exception policy, owner and known limits. Include execution cost and
 unverified assumptions where material.
+
+Finish a design or review when each requested concern has a supported disposition or an explicit
+evidence gap with its next action. Do not call a proposed control operational until its detection,
+population and response have been exercised. For implementation handoffs, pass the approved
+contract, baseline/population, tool versions and passing/violating/inconclusive cases; request
+execution evidence back. If the named skill is unavailable, provide those actionable inputs and
+state what remains unverified; do not reopen approved decisions or claim implementation occurred.
 
 If a JSON governance register is used, follow [ungoverned.md](references/ungoverned.md) and run
 `node scripts/check-governance-register.mjs <register.json>` from this skill's directory.

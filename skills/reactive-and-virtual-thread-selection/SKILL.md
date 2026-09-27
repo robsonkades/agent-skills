@@ -33,8 +33,9 @@ Inspect the project's compiler/runtime, resolved framework versions, server and 
 configuration before choosing a model. Virtual threads are final in Java 21; this does not
 authorize a runtime upgrade or a stack rewrite. `StructuredTaskScope` is version-specific
 preview API on Java 21–25, not a prerequisite for thread-per-request. JDK 24's JEP 491 removes
-monitor-related pinning in HotSpot; remaining blocking and pinning depend on the operation
-and runtime. Route their diagnosis to `blocking-and-nonblocking-io`.
+monitor-related pinning in HotSpot's default locking configuration; nondefault legacy locking
+can retain it. Remaining blocking and pinning depend on the operation and effective runtime
+configuration. Route their diagnosis to `blocking-and-nonblocking-io`.
 
 If workload, limits or runtime evidence are missing, keep the choice conditional and name
 the observation needed. Preserve existing streaming, ordering, cancellation and transaction
@@ -142,6 +143,9 @@ A new service, blocking dependencies, ordinary request/response
 - Changing threads does not propagate a transaction, security identity or Reactor Context
   automatically. State the context carrier and transaction owner at each asynchronous handoff;
   avoid sharing a persistence context across concurrent tasks.
+- Preserve process lifetime too. Virtual threads are daemon threads and cannot by themselves
+  keep the JVM alive. A resident scheduler needs an explicit liveness owner; a finite job
+  should await its owned work and then exit. Check framework lifecycle settings before a flag change.
 
 ## Deliverable
 

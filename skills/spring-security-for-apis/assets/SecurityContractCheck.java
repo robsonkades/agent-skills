@@ -105,6 +105,11 @@ public class SecurityContractCheck {
             check(mvc, "malformed bearer", bearer(get("/api/orders/7"), "not-a-jwt"), 401, 0);
             check(mvc, "cookie does not authenticate header-only API", get("/api/orders/7")
                 .cookie(new Cookie("access_token", write)), 401, 0);
+            check(mvc, "query token does not authenticate header-only API", get("/api/orders/7")
+                .queryParam("access_token", read), 401, 0);
+            check(mvc, "form token does not authenticate header-only API", post("/api/orders/7")
+                .contentType("application/x-www-form-urlencoded")
+                .content("access_token=" + write), 401, 0);
             check(mvc, "actual unclassified API handler", bearer(get("/api/new-route"), read), 403, 0);
             check(mvc, "actual handler outside API", get("/unclassified"), 403, 0);
             check(mvc, "method permission required", bearer(get("/api/report"), read), 403, 0);

@@ -183,6 +183,27 @@ tested runtime initialization path before any reader. Verify deployment-specific
 access, concurrent readers, and initialization failure. Otherwise this substitution merely trades
 captured build-host state for a runtime null/failure.
 
+## JSSE trust-store ownership
+
+GraalVM for JDK 25 embeds the build environment's default JSSE trust store unless configured
+otherwise. Changing the deployment container's CA files alone does not replace that embedded
+store. Choose from the required certificate lifecycle:
+
+- **Fixed roots per artifact:** control the build-time store and rebuild when those roots change.
+- **Deployment-specific roots or independent rotation:** configure the runtime
+  `javax.net.ssl.trustStore` path and appropriate type/provider/password settings. The documented
+  runtime contract requires an accessible store file when any of those four properties is
+  supplied; a type or password inherited without a valid path can fail.
+
+Keep builder and executable property settings distinct. Test the actual binary/client/container:
+an intended chain succeeds, an untrusted chain and wrong hostname fail, an unavailable configured
+store fails as expected, and rotation takes effect through the client's supported restart/context
+refresh path. Do not assume existing TLS clients reload automatically. Custom trust managers or
+native TLS libraries may use a different configuration path; inspect the actual implementation.
+Do not repair a trust failure by disabling certificate or hostname validation.
+
+Source: [JDK 25 certificate management](https://www.graalvm.org/jdk25/reference-manual/native-image/dynamic-features/CertificateManagement/).
+
 ## Runtime and distribution choices
 
 Distribution capabilities are release-specific. For the current JDK 25 line, Community Edition

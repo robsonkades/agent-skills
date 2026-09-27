@@ -46,7 +46,7 @@ counters alone establish neither batching efficiency nor copy elimination.
 ## Finding ring descriptors
 
 ```bash
-for fd in /proc/12345/fdinfo/*; do
+for fd in /proc/"$pid"/fdinfo/*; do
     grep -q '^Sq' "$fd" 2>/dev/null && echo "$fd"
 done
 ```
@@ -58,7 +58,7 @@ identifies a ring but not ownership of each operation; sample queue movement und
 ## io-wq workers
 
 ```bash
-ps -eLo pid,tid,comm | awk '$1 == 12345'
+ps -eLo pid,tid,comm | awk -v selected_pid="$pid" '$1 == selected_pid'
 ```
 
 io-wq workers may execute operations that would otherwise block. Their names and visibility vary
@@ -84,6 +84,9 @@ Observe the mechanism and the outcome separately:
 - For `SEND_ZC`, distinguish send completion from buffer-release notification. Check documented
   usage reporting (such as `IORING_SEND_ZC_REPORT_USAGE`) for copied fallback; observing a `_ZC`
   opcode or notification alone does not establish that those bytes avoided copying.
+- Count payload bytes by operation/result type, not by summing every CQE result: cancellation
+  results and zero-copy notifications are not additional transferred bytes. Local send/release
+  completion also does not establish remote application processing or durable delivery.
 - CPU time and memory bandwidth per completed byte test whether the path became cheaper;
   state which processes, threads and counters are included.
 - Throughput and p50/p95/p99 under matched payload, concurrency and backpressure test user-visible
@@ -101,7 +104,9 @@ not a reduction in total CPU cost.
 
 Page faults and LLC misses are supporting signals, not signatures of an eliminated copy. Mapping
 can increase faults, cache behavior has many causes, and buffered I/O may be served from page
-cache. Do not infer an end-to-end copy-free path from either counter alone.
+cache. Separate warm-cache and cold/read-miss workloads when they represent actual use; state the
+cache state rather than attributing its difference to the API. Do not infer an end-to-end copy-free
+path from either counter alone or drop host-wide caches merely to create a benchmark condition.
 
 ## Troubleshooting flow
 
@@ -119,6 +124,40 @@ Ring activity exists but CPU/latency does not improve
     -> check saturation and backpressure rather than mechanism presence alone
     -> retain the simpler path when the validated outcome is neutral or worse
 ```
+
+## Decision cases
+
+These teaching cases are structured walkthroughs, not recorded benchmarks or agent evaluations.
+
+- **Mapped-file pair:** an index uses immutable file generations retained until their readers
+  finish. Compare mapping with explicit reads for its repeated-access workload. Change only the
+  lifetime contract: an external rotator now truncates the same mapped file in place. Require a
+  coordinated lifetime/snapshot scheme or choose explicit reads with defined mutation handling.
+  Calling a read-only mapping a snapshot, or claiming that closing its channel unmaps it, fails.
+- **Short zero-copy send:** an 8 KiB request reports 3 KiB sent with `MORE`, then a `NOTIF`.
+  Account for 3 KiB of payload, retain the referenced memory until release and handle the remaining
+  5 KiB without overwriting in-use data. Treating the notification as another 3 KiB or proving
+  peer application receipt from these events fails. A copied-fallback report changes the copy claim.
+- **Result-kind pair:** on Linux 6.6, a send CQE with `res=-32` is an operation failure. Change
+  the event to a release CQE with `NOTIF` and `res=0x80000000`, after a successful send with
+  usage reporting enabled: this is a copied-fallback flag, even though its Java `int` is negative.
+  Release the retained buffer according to its ownership contract and qualify the zero-copy
+  claim; inventing an errno, a copied-byte count or a retry for that notification fails.
+- **Cancel race:** a multishot receive has emitted data with `MORE`; cancellation later reports
+  `-ENOENT` or `-EALREADY`. Reconcile target completion, selected-buffer consumers and release
+  state before reuse. Freeing everything from the cancel CQE alone fails.
+- **Slow peer:** SQ entries are available while unreleased send buffers grow. Bound admitted
+  bytes and keep draining CQ events; assess latency/native memory alongside throughput. Increasing
+  ring depth without a release/backpressure budget is not a demonstrated fix.
+- **Unknown backend:** JFR has no socket events and tracing is unavailable. Inspect loaded
+  transport/provider versions, native availability and existing metrics; state the remaining
+  evidence gap. Neither invent an io_uring JDK flag nor claim no network I/O from silence.
+- **Preserved protocol:** file serving must apply user-space TLS and per-response compression.
+  Keep that protocol path unless a separately supported offload preserves both requirements.
+  Replacing it with raw `transferTo` for a zero-copy label fails.
+- **Capture identity:** the chosen JVM PID differs from the illustrative `12345`. Every command
+  must use that selected process and namespace; evidence from a different JVM invalidates the
+  attribution. Missing fdinfo/permissions means unavailable evidence, not an empty ring.
 
 ## Primary references
 

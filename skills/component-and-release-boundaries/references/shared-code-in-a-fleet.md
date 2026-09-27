@@ -188,9 +188,19 @@ versions remain supported. Do not mistake deleting published artifacts for compl
 4. **Split the rest by reason to change**, not by layer. Platform concerns into a platform
    library; domain vocabulary into a vocabulary library; wire types into generated contracts.
    Each new component gets an owner and a version policy before it gets code.
-5. **Leave the old artefact published**, deprecated, delegating where it still must. Consumers
-   migrate within the support window. Retire maintenance only after supported consumers
-   migrate; do not delete or overwrite released artifacts needed for reproducible builds.
+5. **Keep existing releases immutable and available.** Publish a new compatibility version if
+   the old coordinates need to delegate to extracted code; do not replace bytes or dependency
+   metadata under an already released version. Deprecation notices can identify the migration
+   path without rewriting the artifact. Consumers migrate within the support window. Retire
+   maintenance only after supported consumers migrate; retain artifacts needed for reproducible
+   builds. This follows the released-version immutability rule in [SemVer](https://semver.org/).
+
+For any compatibility bridge, inspect the assembled consumer classpath/module path: each moved
+class must have the intended provider, and required resources, service registrations and reflective
+access must survive. Merely adding the extracted jar beside an unchanged `commons` jar can create
+duplicate classes or split packages. Validate supported intermediate dependency combinations and
+their published metadata before calling the move compatible; a new version number alone proves
+neither class identity nor binary compatibility.
 
 This sequence can avoid simultaneous releases when supported versions and intermediate contracts
 can coexist. Check each checkpoint and recovery path; where coexistence is impossible, retain the

@@ -32,6 +32,55 @@ Integer division of `MIN_VALUE` by `-1` is another silent overflow, even though 
 zero throws. Explicitly reject that pair for exact division. A narrowing cast can also discard
 bits; `Math.toIntExact` checks a long-to-int conversion.
 
+## Conversion cannot repair an earlier loss
+
+The operand types determine division as well as multiplication:
+
+```java
+double ratio = 1 / 3;           // 0.0: integer division happened first
+double approximate = 1.0 / 3;   // approximate binary fraction, when that is the contract
+```
+
+Casting the result `(double) (1 / 3)` still gives zero. For decimal arithmetic, convert
+the original operands to `BigDecimal` before dividing with the required scale/precision
+and rounding policy; `BigDecimal.valueOf(1 / 3)` has already lost the fraction.
+Keep truncating integer division when whole-unit quotient/remainder is intended.
+
+A cast from `double`/`float` to `int`/`long` truncates toward zero, maps NaN to zero and
+saturates values beyond the target range, including infinities. It does not throw.
+An exact check after that cast cannot detect all information already lost:
+`Math.toIntExact((long) 1.9)` accepts `1`. Even widening from `long` to `double` can
+lose integer digits. These are language rules, not JVM optimizations; see
+[JLS 17 conversions](https://docs.oracle.com/javase/specs/jls/se17/html/jls-5.html#jls-5.1.3).
+
+When the actual input is a `double` and the contract requires a finite, integral value
+within `long` range, this partial method checks before casting (Java 17-compatible):
+
+```java
+static long toLongExact(double value) {
+    if (!Double.isFinite(value) || value != Math.rint(value)
+            || value < -0x1.0p63 || value >= 0x1.0p63) {
+        throw new ArithmeticException("not a finite integral value in long range");
+    }
+    return (long) value;
+}
+```
+
+The hexadecimal literals are exact powers of two: the interval is `[-2^63, 2^63)`.
+Do not replace the upper check with `value <= Long.MAX_VALUE`: promotion rounds that
+maximum to the out-of-range double `2^63`. The helper accepts both signed zeros as
+integer zero; preserve or separately validate the sign if the domain requires it.
+[Math.rint](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Math.html#rint(double)>)
+tests integrality here; it is not being used to silently round an accepted fraction.
+
+This checks the value represented by the double, not the original digits before a lossy
+parse or widening. If decimal text is authoritative, parse it directly and use
+`BigDecimal.longValueExact()` (or the corresponding exact conversion) after any
+explicitly required unit scaling. Use `BigInteger` when the required integer range exceeds
+`long`; a checked overflow is detection, not a representation that supports that range.
+Test NaN, both infinities, positive/negative fractions, both zeros, `-2^63`, `2^63`,
+`Math.nextDown(0x1.0p63)` and `Math.nextDown(-0x1.0p63)`.
+
 ## Negative operands: `%` and `/`
 
 ```java
@@ -138,6 +187,8 @@ claims performance-methodology exists to discipline.
 
 - [ ] Check both signed bounds on products, sums, differences and conversions; use exact methods
       where overflow/underflow is a defect, retaining deliberate modular/hash arithmetic.
+- [ ] Operand promotion occurs before arithmetic; conversions validate the original value before
+      truncation/saturation, and no double conversion claims to recover discarded decimal digits.
 - [ ] For bucket indices with positive bucket count, `Math.floorMod` handles negative hashes;
       retain truncating remainder where that is the intended arithmetic contract.
 - [ ] Boxed comparisons distinguish value equality from intentional object identity; no accidental
@@ -152,6 +203,8 @@ claims performance-methodology exists to discipline.
 ## Authoritative references
 
 - [JLS 17 integer division](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.17.2)
+- [JLS 17 widening and narrowing primitive conversions](https://docs.oracle.com/javase/specs/jls/se17/html/jls-5.html#jls-5.1.2)
+- [BigDecimal exact integral conversions, Java SE 17](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html#longValueExact()>)
 - [JLS §5.1.7: Boxing Conversion](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.7)
 - [JLS §5.6: Numeric Contexts and Promotions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.6)
 - [Math exact-arithmetic API, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Math.html)

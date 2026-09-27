@@ -38,7 +38,9 @@ do not know. That last part is what makes the rest of it trustworthy.
    needs context: establish whether the backfill blocks exports before claiming unavailability.
 4. **Separate what you know from what you believe.** Mark the boundary explicitly: measured,
    inferred, assumed. A reader who cannot tell which is which will either over-trust or
-   discard the whole message.
+   discard the whole message. When reports conflict, compare their source, population, time
+   window and measurement before combining them. If the conflict remains, name it and the
+   check or owner needed; neither seniority nor a newer timestamp resolves mismatched scopes.
 5. **For a decision, give viable options and recommend one with a reason.** An awareness-only
    update does not need invented alternatives. Preserve required controls and distinguish
    the proposed option from an approved commitment.
@@ -48,6 +50,9 @@ do not know. That last part is what makes the rest of it trustworthy.
    do not invent measurements, confidence percentages, approval, recipients or delivery promises.
    Retain a measurement's source, population and time window when they affect its meaning;
    a dated observation does not establish the current state or an entire incident's impact.
+   If an earlier shared claim was materially wrong, identify what is corrected and whether the
+   reader's next action changes. A later observation for a different window is an update, not
+   necessarily a correction; preserve that distinction.
    Use a visible placeholder or one focused question for missing decision-critical facts.
 
 Deliver the message at the requested length and register, plus only material unresolved
@@ -84,9 +89,10 @@ use an external communication tool only within explicit authorization for that a
 ## References
 
 - **Message patterns, with worked examples** — `references/message-patterns.md`. Raising a
-  risk, reporting a slip, saying no, an incident status update, and a post-incident summary —
+  risk, reporting a slip, saying no, an incident status update, correcting a material claim,
+  and a post-incident summary —
   each in a version that fails and a version that works, with what changed and why. Read before
-  sending a message that carries bad news or asks for a decision.
+  drafting a message that carries bad news, corrects an earlier claim or asks for a decision.
 - **Disagreement and escalation** — `references/disagreement-and-escalation.md`. Separating
   checkable claims from preferences, ending a two-round argument, disagreeing with someone more
   senior, when and how to escalate without going around a person, and disagree-and-commit. Read

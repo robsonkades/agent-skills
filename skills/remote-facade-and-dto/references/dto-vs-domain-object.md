@@ -141,6 +141,22 @@ may deserialize both as null and lose presence; use the serializer's supported p
 representation. Verify unknown fields, enum additions and numeric/date encoding with old
 readers and new writers. Never infer wire compatibility from Java compilation alone.
 
+## Consumer precision at the wire boundary
+
+Java `long` and `BigDecimal` do not impose their precision on a JSON consumer. For example,
+ordinary JavaScript `JSON.parse` reads the numeric ID `9007199254740993` as
+`9007199254740992`; distinct IDs can become indistinguishable even though Java-side tests
+pass. Exercise the declared range and exact decimal values through the real consumer decoder,
+including generated bindings. Test using original digits, not an already-rounded numeric literal.
+
+For exact large IDs/decimals, choose a deliberate string representation or a verified lossless
+encoding/decoder contract. Keep an adequate bounded integer number contract when its range
+is exactly preserved; stringifying every number is not the rule. Changing an existing field
+from number to string requires a compatibility plan, not a global serializer toggle.
+If precision, scale or rounding policy needs design, pass the schema, valid range and failing
+consumer fixture to **java-numeric-types** for a representation decision. Without that skill,
+preserve the explicit exactness requirement and report the unverified encoding choice.
+
 ## Shrinking an over-mapped codebase
 
 When reducing a demonstrated mapping burden, inspect these candidates; none requires a
@@ -166,6 +182,7 @@ query behavior and ownership. No fixed number of edited files proves a healthy b
 ## Sources
 
 - [Fowler: Data Transfer Object](https://martinfowler.com/eaaCatalog/dataTransferObject.html) — transfer and serialization boundary.
+- [RFC 8259 section 6: JSON numbers](https://www.rfc-editor.org/rfc/rfc8259.html#section-6) — consumer range/precision limits and interoperable integer range.
 - [Java 21 Record API](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html) — shallow immutability and defensive copying; records final since Java 16.
 - [MapStruct 1.6.3 guide](https://mapstruct.org/documentation/1.6/reference/html/) — generated mapping and unmapped-target policy.
 - [MapStruct 1.6.3 BeanMapping source](https://github.com/mapstruct/mapstruct/blob/1.6.3/core/src/main/java/org/mapstruct/BeanMapping.java) — explicit mapping and ignored-target diagnostics.

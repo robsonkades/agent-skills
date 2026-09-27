@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-concurrency
-version: 1.2.3
+version: 1.2.4
 description: >-
   Entry point for designing or triaging concurrency inside one JVM. Classifies work by
   lifecycle, blocking and CPU demand, state ownership, arrival shape, ordering, cancellation,
@@ -58,6 +58,8 @@ dependencies:
   - name: forkjoinpool-and-work-stealing
     version: ^1.0.0
   - name: java-memory-model
+    version: ^1.0.0
+  - name: java-thread-safety-contracts
     version: ^1.0.0
   - name: jmh-microbenchmarks
     version: ^1.0.0

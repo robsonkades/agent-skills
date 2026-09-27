@@ -91,6 +91,15 @@ Do not replace a public binary API with `List<Byte>` without a consumer/compatib
 `ByteBuffer` equality depends on remaining elements/position, so it is not a drop-in immutable
 value. See java-immutability for ownership and defensive-copy details.
 
+`Objects.hash` is not a deep-hashing helper. A `byte[]` passed to `Objects.hash(bytes)` is one
+varargs element, so its identity hash contributes; the same is true in `Objects.hash(label, bytes)`.
+A `String[]` passed directly can instead serve as the varargs array, hashing its elements.
+Do not infer array-content semantics from the method name or from the reference-array case.
+For a content-equal binary component, combine `Arrays.hashCode(bytes)` with the other equality
+fields; use matching deep equality/hashing for nested arrays. `Objects.hashCode(bytes)` also
+delegates to the array's identity hash. Test equal contents in distinct arrays through map/set
+lookup; do not require unequal arrays to have unequal hashes, since collisions are allowed.
+
 ## Inheritance: the part with no free answer
 
 There is no way to add a value-carrying component in a subclass and keep symmetry and
@@ -199,5 +208,7 @@ added later — including caches, back-references, and the lazy association that
 
 - [Object contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
 - [Record contract, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
+- [Objects.hash and hashCode, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html)
+- [Array content equality and hashing, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Arrays.html)
 - [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html)
 - [Hibernate ORM 7 User Guide: implementing equals/hashCode](https://docs.jboss.org/hibernate/orm/7.0/userguide/html_single/Hibernate_User_Guide.html#mapping-model-pojo-equalshashcode)

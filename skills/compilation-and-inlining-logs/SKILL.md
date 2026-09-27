@@ -71,7 +71,9 @@ trap`, or at tier 4 with the hot path still slow — each suggests a different n
    through code bloat while "fixing" the target method.
 7. **Steer one method, not the process.** A compiler directive or `CompileCommand` scoped
    to a caller affects matching compilation tasks; callee `CompileCommand` patterns may affect many
-   callers. On the examined HotSpot implementation, tasks capture directives when initialized,
+   callers. Use the full descriptor from `javap -s` when only one overload is intended: a partial
+   signature can match several overloads, and a `match` array combines alternatives rather than
+   narrowing them. On the examined HotSpot implementation, tasks capture directives when initialized,
    so already queued tasks can retain old policy. See `references/directives-and-production-logging.md`.
 8. **Confirm the intended compiler outcome in a controlled comparison.** For an inlining
    change, verify that its enclosing task succeeded and installed code. Check workload-level
@@ -81,10 +83,11 @@ trap`, or at tier 4 with the hot path still slow — each suggests a different n
 
 ## Rules
 
-- `PrintCompilation` is a product flag. `PrintInlining`, `LogCompilation`,
-  `CompilerDirectivesFile` and `-XX:CompileCommand=PrintInlining,…` all need
-  `-XX:+UnlockDiagnosticVMOptions` **before** them on the command line; the JVM refuses to
-  start otherwise (executed, 25.0.3).
+- `PrintCompilation` is a product flag. Direct `PrintInlining`, `LogCompilation` and
+  `CompilerDirectivesFile` options require `-XX:+UnlockDiagnosticVMOptions` **before** them.
+  Scoped `-XX:CompileCommand=PrintInlining,…` also requires the unlock, but on 25.0.3 accepts
+  it later on the command line because command parsing is deferred. Put the unlock first
+  consistently; do not diagnose valid scoped options from the direct-flag ordering rule.
 - Unified logging needs no unlock: `-Xlog:jit+compilation` formats attempt and retirement
   records like `PrintCompilation` (minus the timestamp column, plus decorations), but omits
   its `COMPILE SKIPPED` bailout records on 25.0.3. `-Xlog:jit+inlining=debug` exposes the

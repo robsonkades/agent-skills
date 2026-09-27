@@ -177,6 +177,60 @@ through the authoritative write and report conflict if it changed; replacing tha
 fresh read silently weakens the precondition. An explicit merge/retry policy may authorize a new
 attempt, but atomicity alone does not do so (`offline-concurrency-control`).
 
+## Reentrancy and transition completion
+
+An event handler may call user code through a guard, listener or entry/exit hook. Java monitors
+are reentrant: the same thread can enter the machine again while the outer call holds its lock.
+This separate sketch uses an ordinary `OrderState state` field and a `Runnable beforeChange`:
+
+```java
+// Wrong if the callback can change this machine.
+synchronized void apply(OrderEvent event) {
+    OrderState next = transition(state, event);
+    beforeChange.run(); // nested apply can commit a different transition
+    state = next;       // overwrites the nested result with an older decision
+}
+```
+
+Choose a policy from the callback contract:
+
+- If nested commands are programming errors, reject them with an explicit in-progress guard;
+  clear it in `finally` so an exception cannot disable future transitions. A lock alone is not
+  this guard. Keep callbacks out of the decision/commit interval when possible.
+- If follow-up events are required, a bounded queue can process one complete event at a time.
+  Define ordering, overflow and exception handling. A callback must not synchronously wait for
+  an event that the same dispatcher can process only after that callback returns.
+- If immediate nested transitions are supported, commit the outer state before notification
+  and perform no later stale write. Give callbacks the committed outcome; rereading the machine
+  may observe a later transition. Include the committed revision/outcome in the command result
+  and define notification ordering when other threads can transition concurrently.
+
+Separate transition rejection from notification failure after commit. Throwing from a listener
+does not roll back the assigned state or effects already performed. Report that distinction and
+apply the chosen effect-recovery policy; do not restore an old snapshot over a nested or concurrent
+transition. Entry/exit actions that acquire resources or can fail need an explicit owner and
+failure transition/cleanup policy, not an assumption that changing the state reference undoes them.
+
+For asynchronous work, a pending state describes an accepted request, not proof the effect finished.
+For example, `Connecting(attemptId)` may accept `Connected(attemptId, connection)` only while that
+same attempt is current. Timeout, cancellation, retry and completion must compete through the same
+authoritative update. A late success from an earlier attempt must not reopen a cancelled machine
+or replace a newer connection; close the returned connection if this handler owns it and it was
+not adopted. Duplicate callbacks referring to an already adopted resource must not close it again;
+define ownership transfer and cleanup separately from command deduplication.
+
+The decisive condition is the attempt and phase, not merely a status name that may recur.
+Cancelling a future does not by itself prove the operation stopped; for `CompletableFuture`,
+`cancel` is exceptional completion and its interrupt flag does not control the computation.
+When cancellation propagation or cleanup remains uncertain, pass the task owner, provider/API,
+attempt lifecycle and residual-resource evidence to `cancellation-and-interruption`; expect a
+bounded stop/cleanup contract. If unavailable, inspect the provider contract and keep unproven
+termination explicit while still guarding state adoption.
+
+Test same-thread re-entry, callback failure before and after commit, completion-versus-timeout,
+and a late completion after a newer attempt starts. Use controlled callbacks/latches or manually
+completed futures to force the sequence; sleeps do not establish the ordering being tested.
+
 ## Side effects of a transition
 
 A transition that also sends an email, publishes an event or calls a service must define what
@@ -244,6 +298,8 @@ kind, then test payload guards, reason/reference preservation, repeated commands
 Scenario tests remain necessary for multi-step invariants and failures.
 
 Primary sources: [Java 21 pattern switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html),
+[JLS 17.1 monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1),
+[CompletableFuture cancellation](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CompletableFuture.html#cancel(boolean)>),
 [AtomicReference](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html),
 [Jakarta Persistence 3.2 bulk updates/versioning](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2),
 [Jakarta Persistence 3.2 enum value mapping](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/enumeratedvalue),

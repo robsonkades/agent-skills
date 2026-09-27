@@ -49,6 +49,41 @@ whole ecosystem. A zero text-match count is not proof of no users.
 Visibility is about observability relative to the named component, not about access modifiers. A private field that is
 persisted is EXTERNAL, because the stored rows outlive the deployment.
 
+## Mapping before a mechanism is selected
+
+Do not require a completed design to discover impacts. Separate surfaces established by the
+accepted behavior from candidates that depend on an unresolved decision. Link the decision or
+unknown and state what would make each candidate applicable; NEW labels alone do not express this.
+
+For example, an accepted asynchronous export may require authorization and retrieval behavior,
+but a Kafka topic is conditional if Kafka is only a proposal. Finding an existing broker is evidence
+of a capability, not acceptance of that solution. Trace confirmed surfaces now; give the solution
+analysis the candidate topic/consumer locators and compatibility questions. If Kafka is already an
+accepted decision, include its relevant producer, consumer, configuration and failure-path impacts
+in the supported map. Recheck affected branches when that decision changes, without comparing or
+selecting implementations here.
+
+## Deployment, activation and retained effects
+
+Use this check when flags, coexistence of versions or durable effects can change who observes an
+impact. Inspect the actual gate and effective configuration: a request flag may not guard startup
+registration, migrations or background processing. Record environment/cohort differences only when
+they affect the map; an unavailable runtime value is an explicit unknown, not evidence of exclusion.
+
+Map the relevant states and transitions: deployed but inactive, active writers/readers, mixed
+versions, and disabled or reverted code with retained data. Follow the evidence to old/new readers,
+stored representations, queued messages and replay where applicable. Do not enumerate every flag
+combination or prescribe a release sequence; identify which compatibility checks or contract
+decisions the reachable states require.
+
+For example, a flag gates emission of a new status value. Turning it off may stop new emissions,
+but previously written rows and queued events can still reach an old reader after rollback.
+Keep those readers and the retained representations in the map until their absence or compatibility
+is established. If evidence shows the gate has never been enabled and no other writer produces the
+value, that retained-value branch can be excluded for the inspected environment; deployed schema,
+registration and configuration effects still need their own evidence. Tests must address the
+identified state/contract question, not merely show that each binary starts alone.
+
 ## The layers to sweep
 
 A map that only lists application code can miss important effects. Use the applicable concerns below
@@ -110,8 +145,10 @@ Not a design, not an order of work, and not a task list. It answers one question
 this touch — and it answers it with paths so that the answer can be checked against the diff at
 the end.
 
-## Compatibility references
+## Compatibility and release references
 
 - [JLS 25 binary compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html) — consult the target Java version; binary compatibility does not establish source or behavioral compatibility.
 - [Protocol Buffers message evolution](https://protobuf.dev/programming-guides/proto3/#updating) — binary wire-safe changes can still affect application code; JSON and other formats have different rules. Apply the actual protocol/version rather than assuming every additive field is safe.
 - [PostgreSQL 18 transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html) — when transaction scope changes, check snapshot and visibility rules even for unchanged queries; verify the target engine/version.
+- [Pete Hodgson: Feature Toggles](https://martinfowler.com/articles/feature-toggles.html) — deployment and activation can be separate; inspect relevant runtime/cohort configuration and test consequential flag states.
+- [AWS Builders' Library: Ensuring rollback safety during deployments](https://d1.awsstatic.com/builderslibrary/pdfs/ensuring-rollback-safety-during-deployments.pdf) — independently working versions do not establish transition safety; old/new readers and retained representations determine rollback compatibility.

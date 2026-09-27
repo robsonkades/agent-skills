@@ -81,6 +81,14 @@ evaluates only its selected branch: replace a computed/side-effecting fallback w
 `Objects.requireNonNullElse` would change it. `Optional.of` is appropriate when null is a defect,
 and an explicit guarded `get` can be the clearest way to express several related operations.
 
+A guard applies only to the result inspected. In
+`if (source.find().isPresent()) use(source.find().get())`, the two calls may observe different
+values; a consuming lookup can even advance twice without any concurrency. Capture the lookup
+once and guard that local Optional, or use a single `source.find().ifPresent(...)` when it expresses
+the operation clearly. Preserve intentional repeated reads when they serve a different contract.
+Capturing one result does not make its mutable payload thread-safe or make a later action against
+the source atomic; those requirements need their own contract and verification.
+
 The `map(f)` rewrite assumes an already evaluated, non-null `Function`. `map` rejects a null
 mapper even when the Optional is empty, whereas the conditional skips `f.apply` when `x` is null.
 Preserve that validation if null callbacks are possible. A factory expression such as

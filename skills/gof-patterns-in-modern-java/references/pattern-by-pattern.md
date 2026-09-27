@@ -30,7 +30,7 @@ Notes worth carrying:
 | **Composite** | Sealed interface + records + exhaustive `switch`                                       | Choose sealed or open from extension needs; mutation API remains a choice      |
 | **Decorator** | Filters, interceptors, Resilience4j                                                    | When existing mechanisms do not meet the required contract                     |
 | **Facade**    | An application service / use-case class                                                | When a consumer boundary simplifies actual subsystem use or coordination       |
-| **Flyweight** | String deduplication; enum constants; boundary canonicalisation                        | When measured retention, allocation or construction cost justifies sharing     |
+| **Flyweight** | Enum constants; boundary canonicalisation; storage deduplication as an alternative     | When measured retention, allocation or construction cost justifies sharing     |
 | **Proxy**     | Configured advice proxies; provider-specific JPA proxy/enhancement                     | When existing mechanisms lack required access, lifecycle or location semantics |
 
 Notes:
@@ -41,6 +41,12 @@ Notes:
   (`gof-composite`).
 - Before writing a decorator, compare the framework's ordering, lifecycle and failure semantics;
   transport versus domain responsibility is a clue, not a prohibition on custom layers.
+- GC string deduplication shares backing storage, not canonical `String` object identity
+  ([JDK 17 option semantics](https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html#advanced-garbage-collection-options-for-java)).
+  It can be a memory alternative to a pool, but cannot replace an identity contract. Check the target
+  collector and measured duplicate retention; pass those findings and the required sharing scope to
+  `gof-flyweight` for the trade-off. If unavailable, retain current semantics and report the evidence
+  needed; do not enable a JVM flag merely because the table lists it.
 
 ## Behavioural
 

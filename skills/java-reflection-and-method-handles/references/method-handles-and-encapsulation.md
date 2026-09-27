@@ -47,6 +47,10 @@ public final class Accessors {
 
 Details that matter:
 
+- `getMethod` finds public methods including inherited ones; `getDeclaredMethod` searches only
+  the declaring class, including non-public methods. Both match exact erased parameter types:
+  `int.class` is not `Integer.class`, and a declaration taking `Object` is not found by passing
+  `String.class`. Invocation conversions do not turn lookup into Java overload resolution.
 - `invokeExact` requires the call site's symbolic/static types to match the handle's
   `MethodType`, including the return-context cast. Plain `invoke` accepts conversions as if via
   `asType`; if types already match it follows the exact path. Cost is not specified.
@@ -58,6 +62,35 @@ Details that matter:
 - For fields, use `VarHandle` (`lookup.findVarHandle`), which additionally offers the access
   modes — plain, opaque, acquire/release, volatile — see varhandles-and-memory-ordering.
   `VarHandle` is the supported replacement for `sun.misc.Unsafe` field access.
+
+### Forwarding arrays and varargs
+
+`Method.invoke` takes an outer `Object[]` of arguments. A target declared `join(String... parts)`
+still has one `String[]` parameter: reflection does not pack separate strings for it. Passing a
+`String[]` directly as the outer arguments can accidentally spread it. For an accessible public
+static `String join(String... parts)` on `Target`, this partial forwarding fragment keeps the
+array as one parameter (enclosing method throws `Throwable`; imports `java.lang.reflect.Method`
+and `java.lang.invoke.*`):
+
+```java
+String[] parts = {"a", "b"};
+Method reflected = Target.class.getMethod("join", String[].class);
+String reflectedResult = (String) reflected.invoke(null, (Object) parts);
+MethodHandle fixed = MethodHandles.lookup().findStatic(
+    Target.class, "join", MethodType.methodType(String.class, String[].class)).asFixedArity();
+String handleResult = (String) fixed.invokeExact(parts);
+```
+
+When intentionally collecting separate logical arguments, retain a variable-arity handle and use
+its documented `invoke`/`invokeWithArguments` behavior. Inspect `isVarargsCollector()`: an array
+statically passed as `Object` can become one collected element, rather than the array of elements
+the caller intended, or fail a component cast. Use fixed arity when forwarding an already packed
+argument array; do not apply reflection's `(Object)` cast to handles indiscriminately. Test empty
+arrays, one element, multiple elements and null. For reflection, `(Object) null` supplies one null
+argument while `(Object[]) null` supplies zero; for `invokeExact`, a typed null must match the
+declared parameter type. Keep absence policy separate from argument-count errors.
+
+### Linking a functional adapter
 
 `LambdaMetafactory` can link a compatible direct implementation handle to a functional-interface
 call site. Its caller lookup must have full privilege access (`PRIVATE` and `MODULE` in the
@@ -192,6 +225,9 @@ injection can make dependencies explicit without proving native reachability. Se
 
 ## Primary references
 
+- [Java 17 Class member lookup](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Class.html)
+- [Java 17 Method invocation contracts](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/Method.html)
+- [Java 17 MethodHandle varargs and fixed arity](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandle.html)
 - [Java 17 LambdaMetafactory linkage requirements](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/LambdaMetafactory.html)
 - [Java 17 MethodHandles lookup rules](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html)
 - [Java 17 AccessibleObject](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/reflect/AccessibleObject.html)

@@ -40,7 +40,9 @@ guessing visible, so that later phases can be trusted to know which is which.
 4. **Give every assumption a falsifier.** What observation would show this is wrong? If none
    can be stated, narrow the claim or record the missing meaning/evidence as an unknown.
    An unsupported premise does not become a requirement; that needs sourced intent or an
-   applicable constraint.
+   applicable constraint. Identify known conclusions, estimates or decisions that already
+   rely on it; do not create a plan merely to fill this field. When its basis or applicable
+   scope changes, flag those dependents for revalidation rather than copying them as current.
 5. **Give every unknown an impact.** HIGH, MEDIUM or LOW, defined by what changes if the answer
    turns out to be the other one — not by how interesting the question is.
 6. **Name the ambiguities separately.** An ambiguity is a phrase with two readings that lead to
@@ -83,6 +85,12 @@ THEN it is a FACT about the request, sourced to that message —
 
 IF evidence describes the current implementation
 THEN record the scoped observation; it does not by itself establish what the feature must do.
+
+IF a supplied search or observation found nothing
+THEN record what was checked and its coverage. "No matches in these files/logs" does not
+     establish "the system has none". A bounded absence claim needs evidence that the method
+     could detect the relevant case and covered the claimed population, revision and interval;
+     otherwise keep the broader proposition UNKNOWN, without running a new investigation here.
 
 IF a supplied policy, contract or decision establishes a constraint
 THEN cite its authority, applicable scope and revision. An accepted repository artefact can
@@ -132,7 +140,7 @@ Feature            <name, in the domain's words>
 Problem            <what is wrong or absent today>
 Goal               <desired capability, behaviour or quality change>
 Facts              <each with source>
-Assumptions        <each with falsifier>
+Assumptions        <each with falsifier and known reliance>
 Unknowns           <each with impact HIGH | MEDIUM | LOW>
 Decisions          <owner, source and proposed/accepted/superseded status>
 Constraints        <request or applicable accepted policy/contract/decision; source and scope>
@@ -146,4 +154,17 @@ Accepted gaps      <GAP-* or none; never convert an unknown silently>
 Preserve original entries and identifiers while recording dated resolutions, corrections and
 supersession. Keep the current status easy to find, with links to the supporting revision;
 history must remain available without making stale claims look current. Hand off material
-unknowns to context/clarification without solving or prioritizing them here.
+unknowns without solving or prioritizing them here:
+
+- For implementation or runtime evidence, route to `feature-context-analysis` with the
+  proposition, existing sources, coverage limits and consequence of an incorrect answer.
+- For intended behaviour or conflicting authority, route to
+  `feature-requirement-clarification` with the readings, established authority and impact.
+  That phase decides whether and how to ask; discovery does not turn every HIGH into a blocker.
+
+The expected return is a sourced resolution or a stated remaining gap, linked to affected
+entries. If a suggested skill is unavailable, preserve this handoff in the ledger for the
+responsible investigator or stakeholder; its absence does not prevent completing discovery.
+Stop when material supplied claims are classified, sources and reliance are traceable, and
+unresolved items and their consequences are visible. A complete ledger can contain unknowns;
+it is not implementation approval or a claim that the feature is ready to build.

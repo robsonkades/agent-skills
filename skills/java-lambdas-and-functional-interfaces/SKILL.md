@@ -77,6 +77,10 @@ and performance conclusions can be made.
   queued executor task holds every captured value, and — if it touches an instance member —
   its enclosing object. That capture path remains live while the holder retains the callback; see
   java-reference-types-and-leaks.
+- Retaining a resource reference does not keep it open or make it safe to use on another thread.
+  Borrow it only within its owner's valid lifetime and access contract. For deferred callbacks,
+  consider acquiring and closing inside the invocation, or capture bounded data when submission-time
+  content is required. See `references/capture-and-composition.md` before moving resource use.
 - Use the standard functional interfaces. The six basics (`Function`, `BiFunction`,
   `Predicate`, `Supplier`, `Consumer`, `UnaryOperator`/`BinaryOperator`) plus their primitive
   specialisations cover nearly everything, compose via `andThen`, `compose`, `negate`, `and`,
@@ -96,6 +100,10 @@ and performance conclusions can be made.
 - Avoid introducing overloads with functional-interface parameters that an implicit lambda
   could match ambiguously or surprisingly. Preserve published signatures; a distinct entry-point
   name or a typed adapter/local can give callers an unambiguous path without breaking old clients.
+- Check whether the target silently discards a result: a value-returning method reference or
+  statement-expression lambda can fit `Consumer`/`Runnable`. Preserve required admission, failure,
+  completion or ownership information; compilation alone does not prove a suitable contract.
+  At an existing void boundary, handle that information explicitly inside the callback.
 - Checked exceptions do not fit most standard interfaces. Decide per boundary: preserve an API
   that declares the exception, wrap with meaningful unchecked semantics, define
   your own throwing interface and adapt at the boundary, or keep the operation out of the

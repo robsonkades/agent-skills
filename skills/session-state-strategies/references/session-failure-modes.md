@@ -88,16 +88,34 @@ against actual hop limits; a fixed role/profile rule is not a substitute for tha
 **Symptom:** a multi-step form ends in an inconsistent state; a basket loses an item;
 double-submits create two records.
 
-**Candidate cause:** shared mutable conversation state is concurrently updated without the
-required protocol. Confirm the writers and outcome; duplicate effects may also come from retries.
-Container-managed sessions do not serialise access in any way you should rely on.
+**Distinguish identity from update conflicts.** A cookie-based login session can serve several
+tabs; it is not an identifier for one business conversation. Servlet 6.0 section 7.7.3 tells
+applications to assume client windows can share a session. Inspect the draft ID selected by
+each request, not just the session ID or replica. Duplicate effects may also come from retries.
 
-**Fix:** treat the conversation as data with a version, and detect the conflict
+For independent workflows, consider A opening draft X, B opening draft Y, then A submitting its
+next step. If opening B changed `session.currentDraft` to Y, A may edit Y even when the requests
+run sequentially. Locking that pointer, versioning only the session or moving it to Redis does
+not recover A's intended identity. Carry a conversation/draft ID in the request and keep state
+under that key; a session-scoped map may suffice for accepted transient loss, while durable
+drafts need the required shared recovery. Check owner/tenant, expiry and allowed transitions
+for the selected draft on every operation. An ID is a selector, not proof of authority; preserve
+the existing protected capability contract for anonymous drafts.
+
+When both tabs intentionally edit X, distinct tab IDs must not silently fork the authoritative
+draft or bypass conflict handling. Container-managed sessions do not serialize those business
+updates. Use the actual conversation's concurrency protocol below. A tab-local UI hint may
+remember a selector but cannot authorize it or establish independent server-side state.
+
+**Fix for shared updates:** treat the conversation as data with a version, and detect the conflict
 (`offline-concurrency-control`). For repeated submissions, use an operation-scoped idempotency
 protocol binding key, intent/payload, authority and outcome; a key field alone does not prevent
 duplicate effects (`idempotency`).
 Require atomic compare-and-update with affected-row/result checks, not just a version field.
-Test two writers from the same version and a stale request saving after logout/ID rotation;
+Test distinct drafts under the same session for isolation, then two writers to the same draft
+from the same version. Also test a foreign/expired draft ID and a stale request after a tab
+opens a different workflow; it must not redirect the mutation to that new workflow.
+Test a stale request saving after logout/ID rotation;
 the loser must not overwrite newer state or resurrect an invalidated session. Distributed stores
 can lose updates too; container attribute-map safety does not protect mutable attribute objects.
 
@@ -160,6 +178,6 @@ Do not require a full session audit or new latency/failure campaign for a narrow
 5. What happens with two tabs?
 6. What is the p99 added latency of the session lookup on the request path?
 
-Sources: [Servlet 6.0 session concurrency](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0),
+Sources: [Servlet 6.0 session concurrency and client semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0),
 [OWASP session lifecycle](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html),
 [JWT BCP](https://datatracker.ietf.org/doc/html/rfc8725).

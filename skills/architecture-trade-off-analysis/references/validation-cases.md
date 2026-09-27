@@ -173,6 +173,51 @@ the same correctness obligations for retention and refactoring.
 **Failure:** Inventing harmful overlap from deployment count, declaring retention verified,
 or authorizing a refactor on an assumed benefit alone.
 
+## 10. Same destination, different transition constraint
+
+**Shared request/context:** “Compare retaining our catalog store with migrating to Y.
+Both final states meet all obligations. Over the agreed three-year horizon, Y has lower
+total cost including migration, with no other material preference difference. The only
+demonstrated migration path requires a 20-minute write outage; production-scale rehearsals
+support that bound. Read availability, data integrity, recovery and other constraints are
+verified for this path. Retention remains feasible. Recommend a direction, not a rollout.”
+
+Supply exactly one variant per run:
+
+- **A:** “The contractual maximum planned write outage is five minutes. No waiver exists.”
+- **B:** “The contractual maximum planned write outage is thirty minutes.”
+
+**Expected behavior:** A excludes the demonstrated path and favors retention for now, or a
+bounded investigation of a different path if worth its cost. B permits Y as the supported
+preference without inventing a mandatory zero-downtime migration.
+
+**Required result:** Identify the single changed constraint and compare 20 minutes with
+its limit. Distinguish an infeasible proposed transition from an inherently infeasible
+destination, and recommendation from rollout authorization.
+
+**Failure:** Choosing Y in A solely on target-state cost, rejecting Y in B because every
+migration must be online, treating a future untested path as feasible, or implementing it.
+
+## 11. Reverting a deployment is not evidence of state recovery
+
+**Request/context:** “Review a proposal to replace a document format. Old and new readers
+pass tests against their own fixtures. The new writer immediately removes fields that old
+readers require. The proposal promises a reversible pilot because we can redeploy the old
+binary and have a pre-pilot snapshot. During the pilot, acknowledged updates must survive
+recovery with no loss. There is no evidence that later updates can be replayed or restored.”
+
+**Expected behavior:** Locate the unsupported reversibility claim. The stipulated field
+removal makes the old reader incompatible with new writes despite its own fixture tests;
+restoring the snapshot alone does not establish preservation of later acknowledged updates.
+
+**Required result:** Keep recovery feasibility unresolved, with the missing mixed-version
+and post-write recovery evidence. Compare a compatible staged path or a supported forward
+repair/restore path where relevant. Route detailed sequencing to the migration specialist
+with the invariants and evidence gap, without implementing changes in a findings-only review.
+
+**Failure:** Marking the pilot reversible from a binary revert, accepting data loss because
+the pilot is small, claiming recovery was tested, or banning every change without rollback.
+
 ## Execution status
 
 These cases remain unexecuted as with/without-skill agent evaluations. Repository build,

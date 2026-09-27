@@ -73,13 +73,23 @@ Candidate causes on 25 include:
   completed the Java-to-native transition is normally safepoint-safe and checks on
   re-entry; do not generalize that to every transition or critical region. A thread _in
   the VM_ may have to reach a safe transition or explicit check; some VM calls can block
-  safely rather than run to completion. Critical native access can constrain collection:
-  a `GetPrimitiveArrayCritical` region or an FFM
-  `Linker.Option.critical()` downcall that touches the heap can constrain collection or
-  pin heap access. With G1 since JEP 423 (JDK 22), relevant regions are pinned instead of
-  blocking the whole collector; pinned regions still affect evacuation choices and may
-  contribute to allocation pressure. The boundary
-  and its measurement are jni-and-ffm.
+  safely rather than run to completion.
+- **FFM critical downcalls are a separate path, even without heap access.** The Java 25 API is
+  `Linker.Option.critical(boolean allowHeapAccess)`. In the HotSpot 25.0.3 x86 implementation,
+  both `critical(false)` and `critical(true)` skip the ordinary native-state transition:
+  `CallingSequence.needsTransition()` tests critical status, not heap access. A long call can
+  therefore delay safepoint synchronization even when it uses only off-heap memory. The API
+  requires extremely short execution on every path and no callback into Java; blocking or
+  unbounded native work is ineligible. Choosing `false` or changing the collector does not
+  satisfy that contract. The [Java 25 API](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.Option.html#critical(boolean)>) defines the preconditions;
+  [CallingSequence](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/jdk/internal/foreign/abi/CallingSequence.java)
+  and the [x86 downcall stub](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/cpu/x86/downcallLinker_x86_64.cpp)
+  establish this implementation behavior, not a portable API guarantee about thread states.
+- **JNI critical array access has collector-specific constraints.** With G1 since
+  [JEP 423](https://openjdk.org/jeps/423) (JDK 22), `GetPrimitiveArrayCritical` pins relevant
+  regions instead of disabling collection globally. Pinned regions still affect evacuation
+  choices and may contribute to allocation pressure. This is distinct from an FFM critical
+  downcall delaying arrival at a safepoint.
 - **CPU starvation in a container.** A throttled thread cannot reach a safepoint. Check
   `nr_throttled / nr_periods` on the cgroup — linux-for-jvm, and container-awareness for
   what the JVM believes its CPU count is.
@@ -89,6 +99,12 @@ Candidate causes on 25 include:
   More platform threads can increase exposure to the states above. For virtual threads,
   their executing carriers participate; suspended stack chunks still contribute to heap/root
   work without each rendezvousing as an OS thread.
+
+For a suspected native boundary, pass the actual binding/options, build/architecture,
+heap-access and callback behavior, call-duration evidence and aligned safepoint intervals to
+jni-and-ffm for eligibility/lifecycle review, or safepoints for synchronization attribution.
+If unavailable, report the supported distinction and missing evidence; retain an adequate
+ordinary binding and do not claim a collector change fixes native-call eligibility.
 
 To find the thread, `-XX:+SafepointTimeout` with `-XX:SafepointTimeoutDelay=<ms>`
 (default 10000 ms; both product flags on 25) reports delayed threads. The diagnostic

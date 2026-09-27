@@ -138,6 +138,15 @@ java -XX:+UnlockDiagnosticVMOptions \
      MyClass
 ```
 
+`compileonly` restricts which methods may be compiled; it does not merely filter output.
+Use this narrowed reproduction only to test a mechanism, then recheck with the original
+compilation policy before making performance claims. Omit it when preserving surrounding
+compilations matters. Neither `PrintEscapeAnalysis` nor `PrintEliminateAllocations` is a
+per-method `CompileCommand` option on this baseline, even in a debug build. Verify supported
+options rather than translating a global flag into a guessed per-method command.
+See the [supported command list](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerOracle.hpp)
+and [compilation exclusion policy](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerOracle.cpp).
+
 The exact text these flags print for "not eliminated" is internal compiler diagnostics and
 varies in format between builds. Read the output of your own runtime and cross-check it against
 the method source — is there a reference that escapes, or not? Never build a log parser around
@@ -154,8 +163,42 @@ JMH GC profiler or controlled runtime counters), async-profiler allocation sampl
 allocation events with compilation state fixed. Sampling absence is not proof; event settings,
 TLAB/outside-TLAB coverage and workload equality matter. Where warranted, confirm no allocation
 sequence in assembly/ideal-graph tooling. The
-per-method form of the escape-analysis output, and the `CompileCommand` syntax that scopes it,
-are in `escape-analysis-internals`.
+`escape-analysis-internals` skill explains how to associate evidence with a method and inline
+context without inventing per-method diagnostic flags.
+
+## Capture an ideal graph only when it resolves a phase question
+
+Use this when logs establish the target compilation but leave a specific dependency or
+transformation unresolved. A compatible **debug HotSpot C2 build** is required for this
+recipe: `PrintIdealGraphLevel` and `PrintIdealGraphFile` are `develop` flags on the baseline.
+Diagnostic unlocks cannot make them available in a product build. With only a product JVM,
+retain `LogCompilation`/inlining evidence and use available assembly or measured allocation
+evidence; state which phase-level question remains unanswered.
+
+For a small, bounded reproduction on a debug build, use a fresh artifact directory:
+
+```bash
+java -Xbatch -XX:+PrintCompilation -XX:PrintIdealGraphLevel=2 \
+     -XX:PrintIdealGraphFile=/path/to/fresh-artifacts/ideal.xml \
+     MyApp > /path/to/fresh-artifacts/compilation.log 2>&1
+```
+
+Level 2 includes major phase snapshots; increase detail only if the missing transition
+requires it. The file option avoids the default connection to a running visualizer.
+Compiler threads may create numbered files, so inspect all outputs and check that the
+target compilation and phases completed. Open the XML with OpenJDK's Ideal Graph Visualizer
+(IGV), checking that tool revision's own build/runtime requirements separately from the
+application JDK. Keep compile ID, root method, OSR BCI and phase attached to conclusions.
+A helper inlined into another method belongs to the caller's graph.
+
+`-Xbatch` reduces incomplete dumps from background compilations at VM exit, but changes
+compilation timing. Debug builds and graph dumping also perturb execution; this run establishes
+compiler structure, not production latency. Recheck any proposed improvement on the original
+runtime/configuration. An absent node is not sufficient evidence of allocation elimination;
+apply the entry-context and phase checks in [C2 phases and the IR](c2-phases-and-ir.md).
+
+Sources: [OpenJDK IGV usage and output levels](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/utils/IdealGraphVisualizer/README.md)
+and [debug-only graph flags](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/c2_globals.hpp).
 
 ## Offline deep dive
 

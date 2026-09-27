@@ -27,6 +27,24 @@ Use `structured-concurrency` for the exact scope API and `timeouts-and-deadlines
 selection. If ownership or provider semantics are unknown, identify the missing evidence and
 propose a bounded control experiment; do not claim a stop guarantee from the API name.
 
+## Establish the requested contract
+
+For design, implementation, diagnosis or review, first trace the actual task from submission
+through its waiters, cancellation handles, catch/finally blocks and resource owners. Read the
+caller contract, executor/client configuration, existing tests and incident evidence. A caller's
+wait-timeout log records expiry of that wait; it does not establish a leaked task or its cause.
+
+Distinguish request-owned work from shared work and a durably accepted background job with its
+own lifetime. Preserve an adequate existing cancellation mechanism. Ask only when an unresolved
+ownership, effect or latency requirement would change the decision; label assumptions while
+continuing independent work. A diagnosis or findings-only review does not authorize a rewrite.
+
+For timeout selection, pass the caller budget, phase bounds and residual-work evidence to
+`timeouts-and-deadlines`; for scope API changes, pass target JDK, ownership and failure policy to
+`structured-concurrency`. Expect a budget policy or version-compatible scope design respectively.
+If either skill is unavailable, use the project's existing policy and version-matched API
+documentation; leave unresolved policy conditional rather than inventing it.
+
 ## Cancellation contract
 
 ```text
@@ -52,6 +70,11 @@ terminate according to its API. Many methods throwing `InterruptedException` cle
 do so. `Thread.interrupted()` reads and clears the current thread's status; `isInterrupted()` does
 not clear it.
 
+Interruption targets a thread, not a task identity or cancellation reason. Prefer the owned
+task's cancellation handle to a saved executor worker `Thread`: a late signal may otherwise
+interrupt that worker's next task. Direct interruption is appropriate when ownership covers
+the target thread's lifetime; see the interrupt-protocol reference for completion races.
+
 Choose handling by boundary:
 
 | Boundary                                                | Appropriate handling                                                                   |
@@ -72,6 +95,11 @@ Check cancellation at a cadence derived from maximum allowed latency and per-ite
 necessarily every iteration. Avoid allocating/logging on every check. Include nested library work,
 parallel subtasks and safepoint behavior in the bound. `Thread.onSpinWait()` does not check interrupt
 or relinquish ownership.
+
+An application cancellation flag needs cross-thread visibility: use the existing token or a
+`volatile`, atomic or consistently locked state, not an unsynchronized boolean. A visible flag
+does not wake a blocked operation. Combine polling with an ownership-safe interrupt/cancel/wakeup
+path where needed; neither polling frequency nor `onSpinWait()` repairs a publication defect.
 
 ## Blocking and resource cancellation
 
@@ -104,6 +132,9 @@ reuse are acceptable.
 - wait timeouts such as `get(timeout)` bound the waiter, not the producer. `orTimeout` mutates and
   returns the same future; it does not universally stop underlying work. If its timeout wins on
   a shared future, other callers observe that timeout too.
+- `InterruptedException` from `get` concerns the waiting thread; it does not itself cancel the
+  producer. Use an interruptible wait when the caller must leave on interruption; replacing
+  `get()` with `CompletableFuture.join()` removes that interruptible waiting contract.
 
 Bridge cancellation only under the underlying operation owner's policy: retain its handle and
 resolve completion-versus-cancel races. One caller abandoning a shared operation does not by
@@ -157,6 +188,7 @@ process so a failing termination assertion cannot hang the test suite.
 
 - cancel before start, during CPU work, at each blocking point and after semantic commit;
 - multiple sources racing with normal completion/failure;
+- late cancellation after worker reuse, and token visibility separately from blocking wakeup;
 - one caller abandoning shared work while another still needs it;
 - a blocking abort hook, saturated abort dispatcher or rejected abort request;
 - swallowed/cleared interrupt and task/framework boundary translation;
@@ -180,6 +212,11 @@ process so a failing termination assertion cannot hang the test suite.
 
 ## Definition of done
 
+Apply the checks to the affected contract. For design or diagnosis, deliver the justified policy
+or finding, evidence, unresolved guarantees and a discriminating validation plan. For implemented
+changes, execute the relevant checks below; report unavailable checks as limitations. A review
+may conclude that the existing solution is adequate without changing it.
+
 - [ ] All sources/races converge on one idempotent terminal-state model.
 - [ ] Every CPU/blocking/native/resource layer has a tested stop/abort path or explicit bound.
 - [ ] Interrupt propagation/translation/restoration is correct at each ownership boundary.
@@ -189,15 +226,16 @@ process so a failing termination assertion cannot hang the test suite.
       or unavailable checks are stated explicitly.
 
 Report the owning boundary, observed signal and terminal/release evidence, unresolved outcome,
-and one validating test for each proposed fix. Distinguish measured termination latency from
-a configured deadline or an untested estimate.
+and a validating check for each proposed fix, identifying checks run versus planned. Distinguish
+measured termination latency from a configured deadline or an untested estimate.
 
 ## References
 
 - [Interrupt handling by boundary](references/interrupt-protocol.md) — read when reviewing
-  a catch/finally boundary, deferred interruption or executor shutdown.
+  a catch/finally boundary, task-specific signalling, deferred interruption or executor shutdown.
 - [Blocking operations and cancellation adapters](references/uninterruptible-operations.md) —
-  read when a blocking provider, external cancel handle or resource abort must stop work.
+  read when selecting an interruptible wait, or when a blocking provider, external cancel handle
+  or resource abort must stop work.
 - [`Thread` interruption API](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html#interrupt()>)
 - [`Future`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html)
 - [`CompletableFuture`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)

@@ -30,6 +30,12 @@ size, which names the leaf array instead of the static map holding it.
 
 ## Workflow
 
+Start from the requested question and existing dumps, GC/JFR data and ownership code. Analysing
+an available artifact does not require a new capture. Before a live capture, establish the exact
+target PID/container, existing incident authority and acceptable pause/storage/data-exposure
+budget; a findings-only request does not authorize disrupting an application. Ask only for
+missing consequential scope, and continue analysis that does not depend on a new capture.
+
 1. **Record the context with the file.** `-Xmx`, wall-clock time, approximate load in
    req/s, JVM uptime, and whether `-XX:+UseCompactObjectHeaders` was on. A dump without
    these has limited comparability. Record JDK/vendor, collector, MAT/parser version, capture
@@ -41,7 +47,8 @@ size, which names the leaf array instead of the static map holding it.
 3. **Capture, choosing the tool by reachability and incident risk.** `jcmd`/`jmap` need target-VM
    cooperation/safepoint and can block or time out when it is wedged. Serviceability Agent attach
    is invasive and may suspend/conflict with the process; prefer operating on a core dump when
-   recovery time and disk permit.
+   recovery time and disk permit. Stopping the attach client does not establish that accepted
+   target-side work stopped; reconcile completion before retrying or handling a still-written file.
 4. **Take a second dump only when its incremental diagnostic value exceeds another global pause.**
    Choose separation from the suspected growth rate/business cycle and normalize for load, cache
    warm-up and topology. Continuous class/heap/JFR statistics may establish slope more safely.
@@ -56,7 +63,9 @@ size, which names the leaf array instead of the static map holding it.
    by excluding weak/soft/phantom paths to expose strong ownership, then inspect excluded
    strengths when a soft cache or reference-processing policy is itself the question. A
    static field often names an owner, but framework/JVM roots require version-aware
-   interpretation rather than a guessed label.
+   interpretation rather than a guessed label. Dominator-tree edges need not be actual object
+   references: inspect incoming fields/root paths before naming a field to clear. One displayed
+   shortest path does not establish that there are no other retaining aliases.
 7. **Validate the former retention path and growth trigger.** Use lifecycle regression checks
    and sufficiently long normalized heap/owner statistics; take comparable post-fix dumps when
    they resolve an ownership question worth another pause. Two stable snapshots alone cannot

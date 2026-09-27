@@ -75,6 +75,35 @@ benchmark can be `unbaselined`; disappearance of a required benchmark is invalid
 decision inputs, duplicate keys, incompatible units, empty input, or unknown schema must not
 be silently skipped.
 
+### Aggregate decisions without hiding a critical result
+
+Choose the suite contract before seeing its deltas:
+
+- **Every critical benchmark must pass:** require valid passing evidence for every required
+  entry under the declared joint decision policy. A confirmed critical regression blocks;
+  remaining invalid/inconclusive entries prevent a complete pass. Define status precedence
+  when both occur and retain every reason, rather than erasing the regression or the missing
+  evidence to fit one status. Diagnostic-only entries remain reporting results.
+- **A composite objective may trade components:** specify its population, compatible units,
+  normalization, weights and margin in trusted versioned policy. Analyze that composite using
+  the experimental blocks and dependence structure; averaging point estimates or interval
+  endpoints is not a substitute for its uncertainty calculation. Required per-component
+  guardrails still apply. Do not drop a missing positive-weight component and renormalize the
+  survivors, or change weights after seeing a regression.
+
+Arithmetic illustration, not calibration evidence: two latency ratios of `1.30` and `0.70`
+have mean `1.00` and geometric mean about `0.954`, while the first operation is 30% slower.
+Neither summary rules out that critical regression. Conversely, a declared total-duration
+objective for one execution of each operation can remain unchanged if both baseline durations
+are equal; it need not fail solely because one component slowed when no component budget was
+required. Use the uncertainty rule for the actual objective, not these point values alone.
+
+An aggregate of normalized ratios is not automatically production cost or tail latency.
+[SPEC CPU 2017](https://www.spec.org/cpu2017/Docs/overview.html) defines geometric
+aggregation for its own overall score; that choice does not establish a per-benchmark guarantee
+or a universal CI acceptance rule. Validate one slow critical entry plus unrelated speedups,
+missing components, and changed weights in addition to all-pass fixtures.
+
 ## JMH configuration is an experimental input
 
 Do not copy a universal annotation block. Choose forks, warm-up, measurement time, threads,

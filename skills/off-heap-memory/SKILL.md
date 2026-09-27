@@ -101,6 +101,10 @@ arena ownership.
 - Accessing or closing a confined arena from another thread throws `WrongThreadException`. If
   more than one thread needs to access or close and lifetime must be explicit, choose `ofShared()` from
   creation and coordinate close against in-flight access.
+- `MemorySegment.asByteBuffer()` creates a borrowed view: the segment's lifetime and thread
+  restrictions still apply. Returning or retaining that buffer does not extend an explicitly
+  closed arena's lifetime. Inspect whether an existing buffer consumer retains or hands it off
+  before choosing the owner; see the FFM reference for bridge range, byte-order and I/O constraints.
 - JOL measures the heap **wrapper**, never the native payload. Reading a few dozen bytes from
   `ClassLayout.parseInstance` on a 1 MB direct buffer and concluding it is cheap is the classic
   misdiagnosis here.
@@ -149,8 +153,8 @@ evidence. A narrow API explanation does not require a deployment or a full captu
   and you need to find out where it went.
 - [The FFM memory API](references/ffm-memory-api.md) — the four `Arena` types with their
   selection rule, `MemorySegment` and `MemoryLayout` usage, mmap through a segment, a pooling
-  pattern, and the step-by-step migration from `Unsafe` or `DirectByteBuffer`. Read when
-  writing or migrating off-heap allocation code.
+  pattern, `ByteBuffer` consumer adaptation, and the step-by-step migration from `Unsafe` or
+  `DirectByteBuffer`. Read when writing or migrating off-heap allocation code.
 
 Authoritative sources: [JEP 454](https://openjdk.org/jeps/454),
 [JEP 471](https://openjdk.org/jeps/471), [JEP 498](https://openjdk.org/jeps/498),

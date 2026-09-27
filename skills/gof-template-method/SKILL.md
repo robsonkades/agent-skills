@@ -103,6 +103,16 @@ IF the template sequence must be invariant
 THEN use final for a new or compatibly migrated API. If subclasses may refine the sequence, document
      allowed override/super-call behavior and test it as public extension API.
 
+IF a hook can fail and later work is mandatory
+THEN distinguish success-only steps, failure reporting and cleanup. An ordinary after-hook is
+     skipped when an earlier hook throws; final does not guarantee execution of every step.
+     Enclose resource-using hooks in the owner's cleanup scope and preserve the primary failure.
+
+IF a hook starts asynchronous work
+THEN invocation order alone does not establish completion order. Inspect what hook return and
+     overall run completion mean before chaining later effects or closing resources. Preserve a
+     synchronous contract unless an explicit migration defines an asynchronous one.
+
 IF the constructor calls a hook
 THEN it may read subclass state before initialization. Avoid overridable calls from a
      constructor (java-composition-over-inheritance).
@@ -171,6 +181,7 @@ change or reason to retain inheritance, and checks executed versus pending.
 - [ ] No constructor calls an overridable hook
 - [ ] The hook surface is cohesive and documented; required `super` calls are preserved or compatibly migrated
 - [ ] Optional no-op hooks are explicit; required hooks preserve substitutability
+- [ ] Success, failure and cleanup paths follow the hook's completion contract, including asynchronous work
 - [ ] Mutable cross-hook state follows explicit concurrency and reentrancy contracts
 - [ ] Multiple variants or a concrete framework/SPI extension constraint exists
 - [ ] Remote deadline, transport timeout and resilience ownership are explicit
@@ -181,8 +192,9 @@ change or reason to retain inheritance, and checks executed versus pending.
 
 - [Inheritance or composition](references/inheritance-or-composition.md) — the decision table, the
   `final` and hook-design rules, the constructor trap, `super`-call coupling, the cases where the
-  hierarchy genuinely wins, and a step-by-step migration to composed steps. Read before adding or
-  removing a template hierarchy.
+  hierarchy genuinely wins, failure/completion boundaries, and a step-by-step migration to
+  composed steps. Read before adding or removing a template hierarchy, or changing when a hook
+  is considered complete.
 - [Worked example](references/worked-example.md) — a nightly settlement run built as an abstract
   base with seven overridable methods, converted to a final template taking composed steps: what the hooks were
   hiding, the shared-field race, the remote step's timeout, and how the contract test base class

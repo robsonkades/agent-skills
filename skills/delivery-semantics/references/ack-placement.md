@@ -5,6 +5,35 @@ partial Java 17 sketches: clients/handlers/imports and lifecycle handling are om
 manual-commit sketches require `enable.auto.commit=false`, one consumer owner thread and a
 synchronous handler that returns only after its effect commits durably.
 
+## Publication progress
+
+Before consumer ack placement, identify what the producer's success signal actually confirms.
+Local buffering, broker acceptance, transaction commit and consumer effect completion are
+different milestones. Inspect the effective client/broker configuration and error path; naming
+a method `publish` does not establish a durable handoff.
+
+- Kafka `send` returns a Future after local buffering, before the send is necessarily accepted
+  by the broker. Observe successful Future/callback completion and the configured `acks` and
+  durability assumptions. With `acks=0`, even a successful completion does not acknowledge
+  broker receipt. With transactions, a successful send does not commit the transaction.
+- RabbitMQ AMQP 0-9-1 publisher confirms are independent of consumer acknowledgements. An
+  unroutable publication can receive a positive confirm; with `mandatory`, `basic.return`
+  precedes that confirm. If delivery to a queue is required, correlate returns and confirms,
+  verify the exchange/bindings and queue durability, and treat a return as an unsuccessful
+  handoff. Confirm alone does not prove the intended queue received the message; persistent
+  publication to a durable queue and the selected queue type's confirmation contract matter.
+- If the publication response is lost, acceptance may be unknown. Keep recoverable intent and
+  stable event identity; a retry can publish again. A negative result with a known rejection is
+  different from a timeout or disconnect with an unresolved earlier attempt.
+
+For example, an outbox relay that calls asynchronous `send`, marks the row sent, then crashes
+before the broker receives it has lost its recovery obligation. Advancing that marker only after
+the required confirmed publication instead leaves a duplicate window if the marker write fails.
+That is the expected trade for at-least-once publication, not an exactly-once relay.
+
+These contracts come from the [Kafka 4.1 producer API](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)
+and [RabbitMQ publisher confirms and routing](https://www.rabbitmq.com/docs/confirms).
+
 ## Position 1 — ack, then process: at-most-once
 
 ```java

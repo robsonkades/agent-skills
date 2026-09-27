@@ -202,9 +202,11 @@ compiles the loop body and jumps into it mid-execution once back-edges pass
 
 Three consequences:
 
-- An OSR nmethod is a separate compilation for one loop entry. It does not make the **next
-  invocation** of the method fast — that needs the normal compilation, which for `main` may
-  never happen.
+- An OSR nmethod has an entry at a loop BCI, distinct from the normal method entry. A later
+  invocation can reuse a valid OSR nmethod when it reaches an eligible backedge; it need not
+  wait for a normal-entry compilation to benefit inside that loop. Code before the OSR entry
+  may still run interpreted or at a lower tier. Match method, BCI, tier and code lifetime rather
+  than treating an OSR compilation as either a warmed normal entry or useless to later calls.
 - In this lab, the `uncommon trap` on exit occurred because the compiled OSR path had not seen
   that exit. Do not generalize every OSR invalidation or loop exit to that cause; inspect reason,
   action, BCI, rate, and successor compilation.
@@ -226,11 +228,18 @@ long-running loops interpreted and should not be routine tuning.
 
 Timestamp in ms since start, compile id, flags (`%` OSR, `b` blocking, `n` native wrapper,
 `s` synchronized, `!` has exception handlers), **tier**, method with bytecode size, and an
-optional status. In the shown sequence, `made not entrant: not used` retires lower-tier code
+optional status. The initial header precedes the compiler invocation: it records an attempt,
+not successful completion or code installation. Correlate its ID with a captured task outcome;
+`jcmd <pid> Compiler.codelist` can show currently listed nmethods and their state, but cannot
+reconstruct reclaimed code or establish that a request executed a particular entry. Missing
+outcome evidence leaves installation unresolved. In the shown sequence, `made not entrant: not used` retires lower-tier code
 after its replacement. The reason is not unique to tier-up; inspect successor compile IDs,
-tiers and method identity before inferring the transition or a performance problem. The same lines reach a file
-through unified logging on 25.0.3 — `-Xlog:jit+compilation=info:file=jit.log` — with
-timestamps and rotation. Column semantics, filtering and `PrintInlining` are
+tiers and method identity before inferring the transition or a performance problem. Attempt headers and
+retirement records also reach a file through `-Xlog:jit+compilation=info:file=jit.log` on
+25.0.3, using logging decorations for timestamps. Coverage is not identical: `COMPILE SKIPPED`
+bailout output goes to `PrintCompilation`, not this unified tag set on that build. Use captured
+LogCompilation task results or appropriately enabled JFR outcomes when installation matters;
+an absent bailout line in the unified log is not success. Column semantics, filtering and `PrintInlining` are
 `compilation-and-inlining-logs`; recurring `uncommon trap` is `deoptimization`; why a method
 stayed at tier 3 after reaching tier 4's counters is `c2-sea-of-nodes`.
 
@@ -336,7 +345,8 @@ Decisions that follow:
 
 - [HotSpot 25.0.3 compilation policy](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilationPolicy.cpp)
 - [HotSpot 25.0.3 mode and threshold initialization](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDefinitions.cpp)
-- [HotSpot 25 compile broker: waiting and elapsed timers](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileBroker.cpp)
+- [HotSpot 25.0.3 compile broker: attempts, outcomes, waiting and elapsed timers](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileBroker.cpp)
+- [HotSpot 25.0.3 interpreter OSR lookup](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/interpreter/interpreterRuntime.cpp) — read with the compilation policy's loop-event path when distinguishing OSR reuse from normal entry.
 - [JDK 25.0.3 JFR compiler-statistics view definition](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/query/view.ini)
 - [HotSpot 25.0.3 periodic compiler counters](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/periodic/jfrPeriodic.cpp)
 - [JDK 25 `java` command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html)

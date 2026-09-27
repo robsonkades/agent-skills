@@ -115,6 +115,10 @@ Sometimes an atomic callback-under-lock is required; then bound/document the cal
 reentrancy and lock graph, and consider an event/outbox/snapshot design. “Never call alien code” is
 a strong heuristic, not a semantic law.
 
+If callers must abandon lock acquisition on interruption or timeout, entering `synchronized`
+does not supply that behavior. Choose an acquisition API that supports the required contract;
+distinguish acquisition from condition waiting and lock reacquisition in the lock-scope reference.
+
 ## Deadlock and liveness
 
 Review monitors, `Lock`s, conditions, class initialization, pool/queue permits, futures and external

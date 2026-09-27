@@ -153,6 +153,10 @@ This recursive stream sketch explicitly treats Table rows/cells as non-Node valu
 Nodes, define and traverse those edges too. No default hides a future branch type: recompile this
 helper when the node set changes and test encounter order and reachability. Per-node operations
 must not recursively revisit descendants already supplied by this walk.
+This walk and the recursive count are per occurrence: reusing one `Text("echo", ...)` instance
+twice contributes two words. A distinct-object inventory would instead visit that object once;
+adding a global visited set to the billing fold would change its contract. Keep that pair in
+semantic tests if structural sharing is supported, and define any context-dependent reuse separately.
 
 `validate` keeps its own recursion because pruning is part of what it does, which is the honest
 answer when traversal is an aspect of the operation.

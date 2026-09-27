@@ -203,8 +203,22 @@ expression.
 
 **Cost.** Five files for five expressions, and a selector to maintain.
 
-**Fix.** A domain-named functional interface and lambdas — with a class kept for any variant that
-needs a name in a stack trace or a profile (`gof-strategy`).
+**Fix.** Compare a domain-named functional interface with lambdas or method references against the
+existing named types (`gof-strategy`). Keep a class when its name, discovery, annotations, construction
+or consumer contract matters, including useful stack traces and profiles. Inspect registrations,
+serialization and external clients before treating absence of Java references as absence of use.
+
+A lambda's `this` is the enclosing receiver, not a new implementation receiver. Java does not promise
+fresh or stable object identity across evaluations of the same lambda expression. Check receiver use,
+identity-based registration/equality and synchronization before replacing a class or anonymous object;
+equal algorithm results alone do not establish equivalence. Do not infer allocation savings from syntax.
+
+**Decision contrast.** An internal stateless normalizer invoked only through its functional contract
+may become a lambda when that removes an observed navigation/change cost. The same calculation in a
+class named by a classpath `META-INF/services` entry still needs a compatible provider class; a lambda
+value is not a drop-in provider declaration. Retain that boundary or migrate the discovery contract
+deliberately. Verify representative results/failures and the actual selection/discovery path; check
+identity or receiver behavior only when consumers depend on it.
 
 ## Prototype with `clone()`
 
@@ -251,3 +265,5 @@ Sources:
 
 - [Object.clone contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html).
 - [CopyOnWriteArrayList snapshot iteration](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html) — an existing iterator does not reflect subsequent removal.
+- [JLS 17 lambda body and runtime evaluation](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.27.2) — lexical receiver scope and the identity rules in §15.27.4.
+- [Java 17 ServiceLoader provider deployment](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html) — provider classes and classpath configuration.

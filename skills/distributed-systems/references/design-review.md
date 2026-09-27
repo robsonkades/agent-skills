@@ -55,13 +55,23 @@ independent review or incident mitigation.
 
 - What happens at twice the expected load? At ten times?
   → `rate-limiting-and-load-shedding`
-- Is every queue and every pool bounded? Name the bound for each.
+- Where are active work, waiting tasks and retained bytes bounded? Name the effective admission
+  or producer bound, its scope, ownership interval and overload behavior. An unbounded container
+  can have bounded occupancy through an enforced external limit; a bounded worker pool alone
+  does not bound its backlog. → `concurrency-limiting-and-bulkheads`
 - Where is admission controlled, which work is shed first, and can retries/recovery traffic
   bypass the same budget?
 - Which dependencies are required and which are optional, and what is the defined degraded
   behaviour of each optional one? → `cascading-failures`
 - Does a failing dependency stop being called, and does the caller have something useful to do
   with the fast failure? → `circuit-breakers`
+
+For example, a Java 21+ virtual-thread-per-task executor with demonstrated admission/resource
+bounds need not be replaced with a fixed thread pool. Check that waiting requests, fan-out,
+retries and retained payloads are covered; a semaphore around active I/O alone does not bound
+its waiters. Preserve an adequate arrangement and route missing bounds to their owner. This
+follows the [JDK virtual-thread adoption guidance](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html),
+which separates resource limits from thread pooling; it is not authorization to upgrade Java.
 
 ## 7. Lifecycle
 
@@ -109,12 +119,14 @@ independent review or incident mitigation.
 
 ## Red flags requiring an owner and evidence before accepting the affected design
 
-- No fault model written down.
+- A guarantee asserted without available fault assumptions; reuse established evidence rather
+  than requiring a new document solely for this review.
 - "Exactly-once" claimed with no boundary named.
 - A retry policy with neither established repeat-safety nor evidence of non-application.
 - A distributed lock protecting a resource that cannot enforce ownership and whose duplicate
   effect is not survivable.
-- An unbounded queue, an unbounded executor, or a timeout of zero meaning infinite.
+- Work, backlog or retained bytes can grow without an enforced bound, or a timeout of zero
+  means infinite on a path that needs a deadline. Inspect effective behavior, not names alone.
 - Sharding proposed with no measured growth curve.
 - A liveness probe coupled to an external dependency without evidence that restarting the
   process can repair the condition.

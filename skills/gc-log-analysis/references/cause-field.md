@@ -3,16 +3,16 @@
 The value in parentheses is a routing signal, not a root-cause verdict. Interpret it with
 the collector, event type, phase lines and the events immediately before it.
 
-| Cause                                 | Meaning                                                         | Investigate                                                                               |
-| ------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `G1 Evacuation Pause`                 | G1 evacuation event, including mixed pauses                     | type, duration, frequency and phase/work counts                                           |
-| `Evacuation Failure: ...` (G1 suffix) | failure detail, not the triggering cause on the JDK 25 baseline | `Allocation`, `Pinned`, or both; inspect destination capacity and native/pinning evidence |
-| `Metadata GC Threshold`               | Metaspace pressure triggered a collection                       | inspect metaspace and class-loader evidence — see `jvm-class-loading`                     |
-| `GCLocker Initiated GC` (older logs)  | GC-locker coordination triggered collection                     | establish the older collector/JDK contract; not a JDK 25 G1 cause name                    |
-| `System.gc()`                         | explicit collection was requested                               | identify caller and required semantics; compare disable vs concurrent handling            |
-| `Allocation Failure`                  | allocation could not be satisfied                               | allocation rate, then heap sizing                                                         |
-| `Heap Dump Initiated GC`              | a tool asked for it                                             | tag diagnostic intervention; retain in user-impact totals, separate for tuning            |
-| `Proactive`                           | ZGC's proactive policy initiated a collection                   | usually expected; investigate only if CPU/headroom/SLO evidence shows harm                |
+| Cause                                 | Meaning                                                                              | Investigate                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `G1 Evacuation Pause`                 | G1 evacuation event, including mixed pauses                                          | type, duration, frequency and phase/work counts                                           |
+| `Evacuation Failure: ...` (G1 suffix) | failure detail, not the triggering cause on the JDK 25 baseline                      | `Allocation`, `Pinned`, or both; inspect destination capacity and native/pinning evidence |
+| `Metadata GC Threshold`               | Metaspace pressure triggered a collection                                            | inspect metaspace and class-loader evidence — see `jvm-class-loading`                     |
+| `GCLocker Initiated GC` (older logs)  | GC-locker coordination triggered collection                                          | establish the older collector/JDK contract; not a JDK 25 G1 cause name                    |
+| `System.gc()`                         | explicit collection was requested                                                    | identify caller and required semantics; compare disable vs concurrent handling            |
+| `Allocation Failure`                  | an allocation path required collection; ordinary young-GC trigger in Serial/Parallel | classify young/full event, recovery, frequency and SLO impact before considering changes  |
+| `Heap Dump Initiated GC`              | a tool asked for it                                                                  | tag diagnostic intervention; retain in user-impact totals, separate for tuning            |
+| `Proactive`                           | ZGC's proactive policy initiated a collection                                        | usually expected; investigate only if CPU/headroom/SLO evidence shows harm                |
 
 `Metadata GC Threshold` recurring is the one most often misread. It looks like a heap
 event and appears in the heap log, but raising `-Xmx` does not directly address the metaspace
@@ -22,6 +22,12 @@ the rest of the heap cannot affect the overall workload.
 The [JDK 25.0.3 cause names](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/shared/gcCause.cpp)
 and [G1 failure suffix construction](https://github.com/openjdk/jdk25u/blob/2fce64f0ecc22355298b9ab9c1ba9477a2f1ec86/src/hotspot/share/gc/g1/g1YoungCollector.cpp)
 are distinct. Match the target build; a failure suffix must not replace the initiating cause.
+
+For example, `Pause Young (Allocation Failure)` alone is neither an `OutOfMemoryError`
+nor evidence of a leak or an undersized heap. If reclamation and pause share meet the workload's
+requirements, preserve the configuration. The same cause accompanied by harmful frequency,
+promotion pressure or repeated Full collections warrants investigating that mechanism. A
+diagnostic request for interpretation does not itself authorize tuning.
 
 ## The ZGC log format changed
 
@@ -36,6 +42,21 @@ runbook may target another release/mode. Establish the actual format before deci
 the parser or the input assumptions are wrong.
 See [JEP 490](https://openjdk.org/jeps/490) for the JDK 24 removal boundary; keep an older
 project's collector mode when interpreting its existing logs.
+
+Cycle completion duration includes concurrent work; do not put it in a global-pause histogram.
+`Allocation Stall` is a separate event: an allocating thread waited for allocation to complete
+or fail. Multiple threads may wait concurrently, so summing their durations does not give
+process-wide STW time. Record the affected thread, interval and capture coverage separately;
+correlate with the request before attributing its latency. A capture limited to pause phases
+cannot establish the absence of allocation stalls.
+
+The JDK 25.0.3 [ZGC allocator](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zPageAllocator.cpp)
+times the allocation wait, and [phase logging](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/z/zStat.cpp)
+reports that critical phase with thread context. For mechanism or tuning decisions, hand off
+to `zgc-and-shenandoah` with the build/mode, pause and stall intervals, allocation/live-set
+evidence and available CPU/quota data; expect a discriminating capacity or scheduling check.
+If unavailable, retain the supported interpretation and state which evidence would separate
+those hypotheses rather than choosing heap or worker settings from the stall label alone.
 
 ## Investigation signals and alerts
 

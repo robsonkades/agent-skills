@@ -49,6 +49,10 @@ failure, lifecycle or interaction contract that would change the choice.
 4. **Verify contractual interactions.** Prefer returned values or readable state. Query counts
    or absence can matter for caching, remote-call budgets or authorization; verify these only
    when the requirement makes the interaction itself observable, not merely because it occurred.
+   For asynchronous effects, establish completion of the relevant work or the contract's
+   observation window before asserting final counts or absence. A polling verification that
+   sees one call is not evidence that no later duplicate can occur; see the Mockito hazards
+   reference for this distinction and the concurrency-testing handoff.
 5. **Pay the boundary's debt.** A mocked boundary carries assumptions to check against the
    real thing — the query against the real engine, the HTTP shape against a stub server. Track
    relevant existing evidence and uncovered risks as part of the change (java-testing-strategy).

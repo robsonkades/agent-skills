@@ -109,6 +109,23 @@ publishing, release the lock after the commit. Then say so in the test name.
 It verifies mocked call order, not a real durable commit or completion of asynchronous effects;
 those need the appropriate real-boundary evidence.
 
+### Asynchronous interaction assertions
+
+Choose the observation point from the contract. An immediate `never()` or
+`verifyNoInteractions` can pass while a forbidden call is still queued. Mockito's
+`timeout(...).times(1)` can return as soon as one matching invocation is observed; a second
+invocation after that success does not retroactively fail the assertion. It is not proof of
+exactly one invocation over the operation's lifetime. `after(...)` observes a bounded period,
+not the absence of calls after that period.
+
+For final counts or absence, first establish that the relevant work has finished, including
+owned child tasks; for a time-window contract, name that window and its limits. Pass task
+ownership, completion handles/checkpoints and the required count/window to `concurrency-testing`
+when scheduling or teardown needs design. If completion cannot be established, report the
+coverage gap instead of substituting a sleep. Verify the oracle with a queued forbidden call
+or a duplicate released after the first successful observation. A double records an invocation,
+not completion of a real payment, durable write or asynchronously dispatched effect.
+
 ## Argument captors versus state
 
 ```java
@@ -163,6 +180,7 @@ expected value — the call-time assertion must still fail.
 
 - [Mockito 5.23 API and agent setup](https://www.javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/Mockito.html) — verify the corresponding section for the installed version.
 - [Mockito 5.23 argument-mismatch diagnostics](https://www.javadoc.io/static/org.mockito/mockito-core/5.23.0/org.mockito/org/mockito/exceptions/misusing/PotentialStubbingProblem.html) — intentional varying arguments and stubbing API trade-offs.
+- [Mockito 5.23 timed verification](https://github.com/mockito/mockito/blob/v5.23.0/mockito-core/src/main/java/org/mockito/verification/VerificationWithTimeout.java) and [delayed verification](https://github.com/mockito/mockito/blob/v5.23.0/mockito-core/src/main/java/org/mockito/verification/VerificationAfterDelay.java) — early success versus a bounded observation period; neither establishes task completion.
 - [Mockito 5.23 ArgumentCaptor](https://github.com/mockito/mockito/blob/v5.23.0/mockito-core/src/main/java/org/mockito/ArgumentCaptor.java) and [CapturingMatcher implementation](https://github.com/mockito/mockito/blob/v5.23.0/mockito-core/src/main/java/org/mockito/internal/matchers/CapturingMatcher.java) — equality matching, last/all captured values and reference retention.
 - [JDK 25 List.copyOf](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>) — unmodifiable lists can still contain mutable elements.
 - [Spring bean overrides and context reuse](https://docs.spring.io/spring-framework/reference/testing/annotations/integration-spring/annotation-mockitobean.html)

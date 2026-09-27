@@ -54,9 +54,12 @@ that could change the recommendation, and continue independent graph or contract
    can pull in different directions. Identify the actual consumer/change conflict before
    choosing which cost to accept; aligned needs can justify keeping the component.
 4. **Prevent source/build cycles and investigate release cycles.** Maven/JPMS reject cycles in the
-   current build graph. Published artifacts can sometimes evolve against previous versions, but a
-   mutually breaking change then requires coordination and exposes that independent evolution is
-   weak.
+   current build graph. Identify the concrete artifact versions and edge kinds first: source,
+   test, build plugin/extension or JPMS `requires`. A managed version alone is not a Maven reactor
+   dependency; a runtime call cycle is not necessarily a build cycle. Use the
+   [graph checks](references/component-principles.md#acyclic-dependencies) before applying source-level remedies.
+   Published artifacts can sometimes evolve against previous versions, but a mutually breaking
+   change then requires coordination and exposes that independent evolution is weak.
 5. **Point dependencies toward stability.** A component many things depend on must be hard to
    change; if it is also volatile, its churn reaches everything.
 6. **Recheck against release history and compatibility tests.** Distinguish required lockstep

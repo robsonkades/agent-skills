@@ -44,6 +44,9 @@ omits and code cannot omit — the compiler will make you choose, so choose deli
 
 - Who is allowed to do this? Not "authenticated" — which subject, over which resource.
 - Who decides when the rule is disputed? Whose interpretation wins is itself a requirement.
+- Is a rule documented or explicitly requested, a consistent convention, or just today's
+  behavior? If a test encodes it, is that a compatibility promise or a characterization of
+  behavior the request intends to change? Inspect its source and affected consumers.
 - Does it need to be recorded for audit, and for how long?
 
 ## Lifecycle
@@ -113,7 +116,7 @@ and supported opening, import and save/reopen workflows.
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Two readings produce different data models, APIs or costs        | Inspect prior decisions; ask if material uncertainty remains, blocking only dependent work. |
 | Two readings produce the same code                               | Proceed if contract consequences are also equivalent; record material assumptions.          |
-| The answer is discoverable in the codebase or from existing data | Find it. Do not spend someone's attention.                                                  |
+| The answer is discoverable in the codebase or from existing data | Find it and distinguish a contract from observed behavior before treating it as binding.    |
 | Answering requires authority you do not have (legal, product)    | Ask, and name the decision as theirs.                                                       |
 | The requirement contradicts another requirement                  | Check scope and authorized decisions; surface unresolved conflict with options.             |
 

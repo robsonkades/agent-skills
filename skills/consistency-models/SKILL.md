@@ -47,7 +47,9 @@ for that session. No global linearizability requirement follows from this observ
    can weaken a linearizable store's client-visible guarantee. Validate routing, versions and
    read snapshots; an immutable-version endpoint may have a different contract from a mutable
    "latest" lookup. A caught-up server does not refresh an already established transaction
-   snapshot. Topology alone does not establish the path's guarantees.
+   snapshot. For a combined response, establish whether its separate reads need one coherent
+   view; individually fresh reads need not describe the same state. Topology alone does not
+   establish the path's guarantees.
 5. **Separate but connect isolation from consistency explicitly.** Decide the transaction isolation
    level for interactions among concurrent transactions, and the distributed model for ordering
    and recency across nodes; a product may bundle these as strict serializability.
@@ -94,6 +96,11 @@ supporting evidence, failure behavior and one test that distinguishes it from a 
 - Causal consistency orders causally related operations and permits different orders for
   concurrent ones. Highly available causal designs exist under specific replication/conflict
   assumptions; do not convert that into a universal “strongest AP model” claim.
+  Establish how observed dependencies cross session/service boundaries; a shared user ID or
+  trace ID alone does not carry a datastore's causal context. Causal ordering alone does not
+  assemble a coherent multi-object response from separate reads. Use the
+  [causal-view checks](references/requirement-to-model.md#causal-order-and-a-coherent-response)
+  before treating a parent/reply UI requirement as satisfied.
 - **Eventual consistency promises convergence only under its stated conditions**, typically after
   updates stop and communication/reconciliation resumes. It has no deadline. A numeric requirement
   is bounded staleness/SLA evidence, not plain eventual consistency; measure end-to-end visibility,

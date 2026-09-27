@@ -31,6 +31,24 @@ Two rungs deserve their own warning:
   invariants and approval/rollout controls. External configuration and runtime reload add ownership
   and failure modes; neither follows merely from the variation being data.
 
+## Check combinations before separating roles
+
+For the candidate axes, identify supported combinations from consumer contracts, wiring and tests;
+absence of a test is not proof that a combination is allowed or forbidden. Record material unknowns.
+Independent implementation evolution does not imply that every pair of runtime choices is valid.
+
+For example, suppose an export format and a delivery channel vary. When every supported format can
+use every channel, composing those roles may avoid a subclass for each pair. If a channel accepts
+only its matching format, unrestricted injection exposes invalid states. Compare named valid
+configurations, checked assembly or a capability boundary; do not automatically add either a full
+cross-product of classes or an Abstract Factory. A matched family matters when an invariant binds
+several products, as in worked elimination 2. Price enforcement and diagnostics along with flexibility.
+
+When the choice remains unclear, pass the supported/forbidden combinations and consumer invariant
+to `gof-bridge` for independent roles or `gof-abstract-factory` for matched products. Expect an
+assembly contract that preserves those constraints. If unavailable, keep the adequate existing
+design or give a conditional comparison; the pattern name is not evidence of valid composition.
+
 ## Worked elimination 1 — Strategy collapses to a function value
 
 Proposed: `interface DiscountStrategy` with `PercentageDiscount`, `FixedDiscount`,

@@ -25,7 +25,9 @@ into a bounded experiment with a falsifiable hypothesis, threshold, evidence, co
 3. **Write the hypothesis and threshold before acting.** A result without a predeclared boundary is a
    useful exploratory observation, but does not validate a pass criterion selected afterwards.
    Derive the threshold from the decision/requirement, including units, population, window and
-   acceptable uncertainty where relevant; keep an unapproved proposed threshold explicit.
+   acceptable uncertainty where relevant; keep an unapproved proposed threshold explicit. Name
+   the candidate revision, configuration and input domain: testing one candidate is different from
+   establishing whether any permitted approach could satisfy the feature.
 4. **Choose the cheapest valid experiment.** Minimize code, environment, data, duration, and side
    effects while preserving the condition that matters. Read
    [Experiment record](references/experiment-record.md) for the required fields.
@@ -37,10 +39,16 @@ into a bounded experiment with a falsifiable hypothesis, threshold, evidence, co
    field does not impose another approval round for authorized reversible local work.
 7. **Read and preserve evidence.** Record commands, versions, inputs, raw results, repetitions, and
    anomalies. First verify the experiment exercised the intended condition: zero tests, an
-   unavailable dependency or a broken harness cannot establish feasibility. Separate execution
+   unavailable dependency or a broken harness cannot establish feasibility. Derive expected
+   outcomes from the requirement, specification or independently checked fixture, not merely the
+   prototype's own output. If detection is uncertain, check that a known violation is detected;
+   a fast run that skips the required work is not a performance success. Separate execution
    status from `SUPPORTED`, `REFUTED`, or `INCONCLUSIVE`; no valid result means no pass/fail claim.
 8. **Feed the result back.** Update or reopen the affected option, decision, contract, risk, depth, and
-   Product question. A conclusion never silently becomes production design.
+   Product question. If the result changes the viable options, pass the tested scope, fixed versus
+   negotiable constraints, evidence and remaining alternatives to `feature-solution-analysis`
+   for a revised recommendation. If unavailable, report that bounded consequence and next
+   discriminator directly. A conclusion never silently becomes production design.
 
 ## Decision rules
 
@@ -50,6 +58,12 @@ THEN do not run the experiment.
 
 IF the experiment omits the condition that creates the uncertainty
 THEN it cannot answer the question, however convincing the demo looks.
+
+IF a valid experiment refutes one candidate
+THEN reject that scoped claim, not every possible solution. Broader infeasibility needs evidence
+     that excludes the other permitted options or a demonstrated binding constraint. Conversely,
+     one valid counterexample can refute an "all supported inputs" claim for a fixed candidate;
+     one passing example does not establish that universal claim.
 
 IF a threshold is chosen after seeing results
 THEN label the result exploratory and run a confirmatory experiment before deciding.

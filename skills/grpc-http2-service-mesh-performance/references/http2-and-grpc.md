@@ -42,6 +42,39 @@ For streaming, transport credit and application message demand/readiness are sep
 accepted by the API need not have reached the peer. Bound producer buffering, respect readiness,
 and test slow readers; both peers writing while neither reads can stall or deadlock.
 
+## A size rejection is not exhausted flow-control credit
+
+| Boundary                 | What it limits                                       | Discriminating evidence                                                   |
+| ------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| HTTP/2 frame             | One frame's payload                                  | Negotiated frame setting and frame/protocol error                         |
+| Stream/connection window | Outstanding DATA credit, replenished by the receiver | Remaining credit, WINDOW_UPDATE and progress/stall timing on that hop     |
+| gRPC message             | One accepted message                                 | Receiver configuration and size-specific rejection details                |
+| Proxy/filter buffer      | Data retained by that filter/path                    | Effective filter configuration, buffer metrics and local rejection origin |
+
+A gRPC message may span many DATA frames; frame and message boundaries need not align. A message
+larger than the current window can progress as credit is replenished. Raising frame/window sizes
+does not override the receiver's message limit. See the
+[gRPC HTTP/2 framing contract](https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#data-frames).
+
+For `RESOURCE_EXHAUSTED` or a proxy error, establish who produced it, the request/response direction,
+effective limit and measured message/body size. Do not classify every resource error as oversize.
+Check encoded and decoded sizes: grpc-java 1.84.0's
+[MessageDeframer](https://github.com/grpc/grpc-java/blob/v1.84.0/core/src/main/java/io/grpc/internal/MessageDeframer.java)
+checks the declared message length and enforces a size limit while reading decompressed message
+data. Compression is therefore not a general bypass for receive limits.
+
+Keep an intentional limit when the payload violates the accepted contract. If larger messages are
+required, compare a bounded receiver/filter adjustment against smaller messages, pagination or
+streaming; include concurrent buffering, decoded objects and CPU in the resource budget. Pass the
+consumer/compatibility and partial-result requirements to `rpc-and-api-contracts` before changing
+the API shape; if that work cannot proceed, retain the current contract and identify the blocked option.
+
+Verify just-below/at/above accepted limits, compressed expansion and slow readers on the actual
+transport/filter path. Handler-only or in-process success does not establish transport acceptance:
+the [ManagedChannelBuilder API](https://grpc.github.io/grpc-java/javadoc/io/grpc/ManagedChannelBuilder.html#maxInboundMessageSize%28int%29)
+documents `maxInboundMessageSize` as advisory and notes that `InProcessTransport` does not enforce
+it (served as 1.84.0 when reviewed). Check the deployed transport rather than relying on the in-process result.
+
 ## Runtime review
 
 - Reuse base stubs/channels. Stubs are not closeable connections; the ManagedChannel owner initiates

@@ -131,11 +131,29 @@ neither alone proves which events were enabled. Preserve the recording configura
 answer different questions. A park event does not identify a lock owner; a pin event does not say the
 operation caused the service SLO breach.
 
+Check when an event is committed, not only whether it was enabled. In HotSpot 25.0.3+9,
+platform-thread `jdk.ThreadPark` is committed after the park returns; a contended
+`jdk.JavaMonitorEnter` is committed after acquiring the monitor. A dump of a recording while
+those waits are still active can contain neither event even with zero thresholds and stacks
+enabled. Longer recordings or lower thresholds do not make a permanently unfinished wait
+complete. Pair current thread/owner evidence with task age; after recovery, correlate completed
+event durations with their actual start/end times rather than only when a dashboard received them.
+This is an event/runtime-specific limitation, not a claim that every JFR event waits for completion.
+
+A bounded check on Temurin 25.0.3+9 enabled both events at zero threshold, started one platform
+thread parked on a latch and another blocked on a held monitor, then dumped the recording.
+Filtering by those thread IDs found zero events for each; after releasing both waits and stopping
+the recording, each had one event. This checks the mechanism, not an application's diagnosis.
+To reproduce, ensure the waits started after recording began, confirm their live states, capture
+before release and after bounded joins, and always release/cancel workers in teardown. The
+matching source paths are [platform parking](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/prims/unsafe.cpp)
+and [contended monitor entry](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/objectMonitor.cpp).
+
 Pair profiles:
 
 - CPU samples: what consumed scheduled CPU;
 - wall samples: where elapsed time accumulated;
-- JFR duration events: selected operations that crossed configured thresholds;
+- JFR duration events: selected committed intervals that crossed configured thresholds;
 - application metrics/traces: which business/resource identity was affected.
 
 Use the profiler version's documented syntax and validate virtual-thread support. Sampling every

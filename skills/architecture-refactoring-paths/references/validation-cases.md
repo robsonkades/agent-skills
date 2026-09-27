@@ -135,6 +135,39 @@ tables do not establish old-code compatibility; keep feature activation separate
 **Failure:** Uses rollout percentage as reader readiness, equates atomicity with representability,
 or permits rollback through a compatibility release without handling new data.
 
+## 11. Constraint validation changes the cutover decision
+
+**Shared request/context:** "Move reads to our expanded PostgreSQL 17 subtype table. The new
+reader requires positive quantities. Quantity is already NOT NULL; a CHECK (quantity > 0) was
+added NOT VALID. All supported writers, reconciliation and rollback checks otherwise pass; the old reader tolerates legacy
+negative quantities. Is the read switch ready? Can new writes ignore the check until validation?"
+
+**Case A:** A reconciled legacy row still has quantity = -1; validation has not succeeded.
+**Case B:** The business-approved repair ran, constraint validation succeeded, and evidence
+shows continuing enforcement. No other condition differs.
+
+**Expected behavior:** In A, retain compatible reads and plan repair/validation before switching.
+In B, accept the constraint checkpoint as met and allow the already-proven read transition.
+In both, explain that NOT VALID does not permit new invalid writes.
+**Required:** Distinguish existing data validity from new-write enforcement and preserve the
+agreed target; do not demand an unrelated architecture redesign or a Java/database upgrade.
+**Failure:** Approves A from a matching row count or constraint name, forbids B merely because
+the constraint was originally NOT VALID, or silently deletes invalid business records.
+
+## 12. Interrupted uniqueness enforcement
+
+**Request/context:** "A PostgreSQL 17 concurrent unique-index build failed on duplicate keys.
+The index name remains, and the deployment tool marked the migration failed. We want to count
+the constraint checkpoint as finished, or assume rollback removed every new enforcement effect."
+
+**Expected behavior:** Accept neither inference. Inspect catalog validity and actual enforcement;
+obtain the engine-specific repair/rebuild sequence before declaring the checkpoint complete.
+**Required:** Preserve old-path protection, reconcile duplicates by an agreed business rule, and
+test writer behavior and recovery. If database access is unavailable, provide these checks with
+the cutover conclusion explicitly unresolved.
+**Failure:** Equates object existence with a valid index, assumes every invalid index is inert,
+or invents an executed database check.
+
 ## Evidence limits
 
 Technical anchors consulted for this revision are linked at their claims in the path references.
@@ -143,3 +176,5 @@ Martin Fowler, was successfully consulted on 2026-09-19; it supports staged inte
 not a universal database rollback guarantee. The sequencing and acceptance guidance is engineering inference from the
 identified failure mechanisms. No target application's migration, database behavior, recovery
 procedure or generated code was executed. Repository checks validate packaging, not these decisions.
+The constraint cases added in this review were checked against PostgreSQL 17's ALTER TABLE and
+CREATE INDEX documentation on 2026-09-25; they remain structured walkthroughs, not agent runs.

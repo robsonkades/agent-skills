@@ -98,6 +98,11 @@ THEN its thread-safety contract must be explicit. A single-threaded
      hub processing a queue is a legitimate and simple answer; an
      unsynchronised hub shared by request threads is a race.
 
+IF work can finish after a newer request, cancellation or participant replacement
+THEN correlate outcomes with the protocol instance and expected state. One consumer serializes
+     handling, not offloaded completion order. Ignore obsolete local results only when the contract
+     permits it; a stale callback reporting an external effect can still require reconciliation.
+
 IF the hub is the only path in a hot flow
 THEN inspect whether implementation actually serializes work. Stateless routing can be
      concurrent; shared state, locks or a single-consumer mailbox create the bottleneck.
@@ -143,7 +148,7 @@ THEN compare explicitly: choreography distributes coordination and failure handl
   time and queue growth
   (`littles-law-and-queueing`).
 - **Testing.** Drive the protocol with contract fakes: assert required state, effects and their
-  ordering, including duplicates, reentrant callbacks and failure after a claim. Do not fix every
+  ordering, including duplicates, reentrant callbacks, reversed/stale completions and failure after a claim. Do not fix every
   incidental call sequence; return/admission is not necessarily downstream completion. Many test doubles are a cohesion
   smell, not a numerical failure criterion; shared protocol fixtures and contract fakes can keep
   tests expressive (`java-test-doubles`).

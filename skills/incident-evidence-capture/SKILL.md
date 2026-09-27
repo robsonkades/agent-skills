@@ -115,6 +115,11 @@ should produce bounded instructions and pending drills, not execute incident act
 For an active rolling JFR recording, a bounded `JFR.dump` may preserve the incident window
 without stopping the recording, subject to target-JDK support and storage. A configured
 destination/dump-on-exit may behave differently; inspect `JFR.check` and effective settings.
+Record the selected recording's identity and owner. Concurrent JFR recordings combine event
+settings: an incident recording can increase overhead and data in an existing recording.
+A recording name selects lifecycle/history, not a privacy or cost boundary. Bound the overlap
+and stop only temporary recordings owned by this capture or explicitly authorized for change;
+use the JFR protocol in [Adaptive capture protocol](references/capture-order.md).
 
 ## Thread evidence
 
@@ -266,6 +271,7 @@ exercise them before the incident.
 - [ ] Commands are target-version-discovered and symptom-driven; client timeouts and target-side
       completion/cancellation are recorded separately, since a timeout may not stop the VM operation.
 - [ ] Disruptive/draining/heap/core actions have approval, capacity proof, and rollback.
+- [ ] Temporary recording/profiler ownership and cleanup are recorded; existing shared telemetry remains available unless its change was authorized.
 - [ ] Every artifact has provenance, clocks, completion status, checksum, and privacy class.
 - [ ] Remediation follows the authorized deadline; actual recovery time/state, missed deadlines
       and uncaptured evidence are recorded. Requesting restart is not proof service recovered.

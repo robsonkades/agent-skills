@@ -42,7 +42,9 @@ its unresolved controls visible instead of discarding it as a worry.
    "a customer tells us", write that — it is the finding.
 5. **Write mitigation and fallback.** Mitigation reduces probability or cost before the fact;
    fallback is what is done after. They are different fields and a register that merges them
-   usually has only mitigation.
+   usually has only mitigation. When harm reduction relies on detection and response, check
+   that they can act within the exposure window and that fallback remains available during
+   this failure; use the control-chain check in `references/risk-register.md`.
 6. **Convert what is actionable into work.** Track a mitigation that requires code in the
    applicable plan or task list, with an owner or an explicit ownership gap and validation.
 7. **Revisit controls and residual exposure at completion.** Link relevant input revisions,

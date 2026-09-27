@@ -8,6 +8,7 @@ Local connect errors under burst ..................... ports/source address/rout
 SYNs dropped at peak ................................ SYN/accept queues, NIC or path drops
 One core pinned, the others idle, multi-core host ... accept, RSS/RPS, event loop or application
 Low throughput on a high bandwidth-delay link ....... window, cwnd, loss, CPU or sender limits
+Small transfers work, larger data stalls ............ path MTU, receiver window or application
 ```
 
 ## Which tool answers which question
@@ -148,6 +149,41 @@ For backlog hypotheses, compare `ss -ltn` listener queues and requested backlog 
 `ss -Htn state syn-recv` and interval deltas of TcpExtListenOverflows/ListenDrops and syncookie
 counters. SYN cookies can hide pressure from the visible SYN queue; a snapshot is insufficient.
 
+## Size-dependent stalls after a successful connection
+
+A TCP handshake, a small ping or a small request can succeed while larger packets disappear
+at a lower-MTU hop. Missing path MTU discovery (PMTUD) feedback can then leave data retransmitting
+until timeout. TLS handshake data can expose this too; a stalled TLS exchange alone does not
+identify a TLS configuration defect or an MTU defect.
+
+Identify the affected TCP connection and direction first, including any proxy that terminates
+TCP and creates a separate upstream connection. Use the existing bounded capture procedure with
+an appropriate filter and capture points; evidence on one connection does not establish the
+state of another. Compare competing explanations:
+
+- **Path-size hypothesis:** repeated failure above a packet-size threshold while smaller packets
+  pass, with receiver window available. Correlate sequence/ACK progress at both ends with route,
+  interface and tunnel MTUs, encapsulation overhead and negotiated MSS. MSS in the SYN is not a
+  measurement of every hop's MTU. Host segmentation/receive offloads can make captured sizes
+  differ from wire packets; retain capture location and offload context.
+- **Missing PMTUD feedback:** include relevant IPv4 ICMP fragmentation-needed or ICMPv6 Packet Too
+  Big messages and correlate their quoted flow. The Nagle example's TCP-only capture filter
+  excludes these messages; absence from that capture cannot establish that the path dropped them.
+  Missing access to the other endpoint or hop leaves attribution unresolved.
+- **Receiver/application hypothesis:** an advertised zero window points to receiver flow control;
+  inspect socket receive occupancy and application reads/pauses before raising buffer ceilings.
+  If the expected data was never emitted, inspect application/TLS buffering and scheduling.
+  Retransmissions alone also admit ordinary loss or reordering; one successful small transfer
+  does not prove an MTU threshold.
+
+For a demonstrated path defect, pass affected tuples/direction, namespace, packet-size and ACK
+evidence, timestamps and tunnel/route context to the network owner. Repair the MTU/encapsulation
+configuration or required ICMP delivery within authorized scope. If that repair is unavailable,
+a scoped TCP MTU-probing experiment may be a workaround; see the options reference. Validate
+large and small transfers, both relevant directions, latency, retransmissions and CPU/throughput
+cost under comparable load. Do not disable PMTUD, lower every interface MTU or change congestion
+control merely because a connection stalled.
+
 ## Incident checklist
 
 Use the items relevant to the incident and reuse adequate evidence; a narrow source/API answer
@@ -170,5 +206,8 @@ Sources: [ss options and TCP diagnostics](https://man7.org/linux/man-pages/man8/
 [private temporary directories](https://www.gnu.org/software/coreutils/manual/html_node/mktemp-invocation.html),
 and [tcpdump 4.99.5 capture/privilege options](https://github.com/the-tcpdump-group/tcpdump/blob/tcpdump-4.99.5/tcpdump.1.in).
 The hping timestamp/RTT distinction is documented in its [manual at source revision 3547c769](https://github.com/antirez/hping/blob/3547c7691742c6eaa31f8402e0ccbb81387c1b99/docs/hping3.8).
+For the size-dependent failure mechanism, see [RFC 2923, TCP PMTUD black holes](https://www.rfc-editor.org/rfc/rfc2923.html#section-2),
+[RFC 8201, IPv6 PMTUD](https://www.rfc-editor.org/rfc/rfc8201.html#section-1),
+and [Linux segmentation and receive offloads](https://docs.kernel.org/networking/segmentation-offloads.html).
 These shell examples require the named Linux tools and permissions; isolated command stubs can
 check status handling but cannot validate packet capture, Linux privileges or network behavior.

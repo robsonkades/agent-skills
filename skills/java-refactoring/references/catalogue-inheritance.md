@@ -74,9 +74,13 @@ This is the fix for Refused Bequest when the hierarchy is otherwise sound.
 
 Two classes with common behaviour gain a shared parent.
 
-**Precondition, mechanical:** neither class already extends another — Java has single
-inheritance — and neither is a record or an enum. Where one does extend something, the
-shared code becomes a delegate, not a parent.
+**Precondition, mechanical:** both classes can retain their required superclass contracts
+through one inheritance chain; neither is a record or an enum. Java allows one direct superclass,
+but two siblings already extending `Base` may gain `Shared extends Base` and both extend
+`Shared`. Check constructor chaining, dispatch, accessibility, sealed permits, reflection and
+serialization before that insertion; source assignability alone does not prove preservation.
+When the classes require incompatible superclass chains, use a delegate instead of dropping
+either contract. See [JLS 25 §8.1.4](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.1.4).
 
 **Precondition, design:** the commonality is a genuine is-a relationship, tested by LSP —
 anything true of the superclass must be true of both subclasses, including exceptions thrown

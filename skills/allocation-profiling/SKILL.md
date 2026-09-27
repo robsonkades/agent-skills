@@ -33,6 +33,9 @@ are not portable Java guarantees.
 2. **Establish the rate and denominator.** Prefer existing counters or a recording from the
    affected window. Report bytes/s and bytes/completed operation when that denominator is
    meaningful; account for background work and failed requests. Compare like workloads.
+   During ramp-up, backlog growth or draining, bytes allocated in the window may belong to
+   different operations than its completions. Do not present that ratio as intrinsic request
+   cost; use a stable window or an isolated cohort measured through completion.
    GC-log Eden consumption is only an estimate of young allocation and can miss direct-old
    allocation. Read [allocation tools](references/allocation-tools.md) before collecting or
    interpreting events, counters, empty profiles, or virtual-thread data.
@@ -54,7 +57,9 @@ are not portable Java guarantees.
    For a candidate change, state the site, estimated contribution, mechanism and expected
    effect. Read [reducing allocation](references/reducing-allocation.md) before
    proposing code, reuse or flags. Preserve behavior; a semantic shortcut is not an
-   allocation fix. Use `jit-inlining-and-escape-analysis` when the decision needs C2
+   allocation fix. For thread-local reuse, count retaining threads and actual reuse across
+   tasks; carrier count does not bound virtual-thread-local buffers.
+   Use `jit-inlining-and-escape-analysis` when the decision needs C2
    inlining or scalar-replacement analysis.
 6. **Validate both bytes and outcome.** Repeat a matched workload in the affected lifecycle
    phase with comparable instrumentation: warm it for steady-state claims, but retain cold

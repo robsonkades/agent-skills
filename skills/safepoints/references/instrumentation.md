@@ -35,6 +35,13 @@ release (`end - sync`); JDK 25 separates `At = leave - sync` and `Leaving = end 
 Older `Total` already includes the cycle; do not add release to it again. On 25, summing
 only `Reaching + At` omits release. `Time since last` is neither TTSP nor total cycle duration.
 
+**Place the interval before the summary timestamp.** The checked JDK 25 implementation logs
+this line after capturing cycle end. `timestamp - Total` is an approximate start, subject
+to timestamp precision and reporting delay, not an exact event boundary. An illustrative
+line at uptime `10.000s` with `Total: 20000000 ns` suggests approximately `9.980–10.000s`,
+not `10.000–10.020s`. For ambiguous overlaps, use aligned JFR boundaries or more precise
+target evidence; file arrival time is not an event clock.
+
 More detail when the `info` level is not enough:
 
 ```bash

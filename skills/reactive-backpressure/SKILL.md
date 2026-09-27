@@ -52,6 +52,8 @@ review need not add instrumentation, migrate concurrency models or run a full te
    `Subscription.request(n)` the publisher honours, a Kafka `pause()`/`resume()`, a
    `Semaphore` before dispatching work. If the source cannot slow down, explicitly choose
    bounded rejection/drop or durable transfer; also bound producers waiting for admission.
+   For callback adapters, inspect `create`/`push` demand, overflow and listener cleanup;
+   wrapping an API in a `Flux` does not make the external producer demand-aware.
 4. **Choose the overflow strategy from the data's semantics**, not from the operator name.
    Losing the newest, the oldest, everything, or failing loudly are four different product
    decisions.
@@ -132,8 +134,8 @@ review need not add instrumentation, migrate concurrency models or run a full te
   control table, the three conditions that make reactive backpressure the right answer, the
   scenario-by-scenario comparison against thread-per-request, the full overflow strategy
   table with each operator's real signature and behaviour, and prefetch and maxConcurrency
-  tuning. Read when choosing where to apply flow control or which overflow policy a stream
-  should have.
+  tuning. Read when choosing where to apply flow control, adapting callback sources, or
+  choosing which overflow policy a stream should have.
 - [Instrumenting backpressure](references/instrumenting-backpressure.md) — the real
   Micrometer metric names and what each one reveals, `checkpoint()` versus
   `ReactorDebugAgent` versus `Hooks.onOperatorDebug()`, BlockHound setup and its detection

@@ -46,6 +46,14 @@ serialization can make it costlier than inversion. Establish ownership and migra
 before choosing; reach for java-dependency-inversion when the abstraction belongs with the
 consumer and the concrete implementation should remain elsewhere.
 
+Before relocating a class, inspect which package-private types or members it uses or exposes
+and any protected access that depends on package membership. A child package is not inside
+its parent's access boundary. Compile affected producers and consumers at the target release;
+fixing errors by making internals public can create more coupling than the move removes.
+Under JPMS, inspect the destination's exact `exports`/`opens` directives: these name individual
+packages, not recursive namespace prefixes. Keep reflection/scanning and published-name checks
+alongside compilation, since compilation alone cannot validate those consumers.
+
 ## Worked example: an inventory cycle
 
 `jdeps -verbose:package` reports:
@@ -164,6 +172,10 @@ are an optional architecture change, not runnable alongside the classes as one s
 
 - [`jdeps` for JDK 25](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jdeps.html)
 - [JPMS module declarations, JLS §7.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.7)
+- [Package members, JLS §7.1](https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.1)
+  explains why a package and its subpackages have no special access relationship.
+- [Access control, JLS §6.6](https://docs.oracle.com/javase/specs/jls/se25/html/jls-6.html#jls-6.6)
+  defines the package and protected access constraints to recheck when moving a class.
 - [`Module` exports, opens and readability](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Module.html)
 - [JLS 25 binary representation of constant variables](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.1)
   explains why inlined field uses cannot be recovered as symbolic field references.

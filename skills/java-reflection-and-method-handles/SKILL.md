@@ -81,6 +81,10 @@ which becomes an execution primitive once initialization, construction or invoca
   and `InvocationTargetException` are implementation detail; propagate a domain or configuration
   error, and always unwrap `InvocationTargetException.getCause()` — losing the cause hides the
   real exception under a generic wrapper (java-exception-design).
+- Separate member lookup from argument adaptation. Reflection looks up exact erased parameter
+  types and does not collect the target's varargs; a variable-arity method handle can collect them.
+  Preserve array shape, null meaning and exception contracts when changing mechanisms; use the
+  forwarding guidance in `references/method-handles-and-encapsulation.md`.
 - For repeated dynamic invocation, resolve a typed `MethodHandle` (or `VarHandle`) once. A stable
   handle visible as a compiler constant often enables adapter/target inlining, but this is a JIT
   decision, not a `static final` guarantee. `invokeWithArguments` intentionally performs generic

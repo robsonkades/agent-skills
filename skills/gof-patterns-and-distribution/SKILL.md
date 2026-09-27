@@ -130,6 +130,12 @@ THEN identify whether the protocol transfers a value or a remote handle. Neither
      are protocol/codec-specific; the representation is a compatibility contract
      (rpc-and-api-contracts).
 
+IF a proxy or message handler acts with authority on another caller's behalf
+THEN establish the authenticated sender, represented subject, executing service and allowed
+     operation/resource scope. Copied identity or tracing metadata is not authorization.
+     For delayed work, derive acceptance-time versus execution-time permission checks from
+     the accepted policy; neither a queue nor a pattern supplies that policy.
+
 IF a pattern name is applied to a deployed component — "the gateway is
 our facade", "the orchestrator is a mediator"
 THEN identify the actual deployment boundary and its availability, authentication,
@@ -179,6 +185,7 @@ machine. The required behavior need not force a particular GoF object structure.
 - [ ] Remote contracts expose deadline representation, failure types and operation granularity
 - [ ] Any getter/per-item remote call is explicit, bounded and protected from accidental fan-out
 - [ ] Published representations have explicit schema identity and compatibility/unknown-value policy
+- [ ] Cross-boundary authority and any delayed-execution permission policy are explicit and checked
 - [ ] Delivery semantics drive idempotency/deduplication and atomicity requirements
 - [ ] Fan-out has an overall deadline and a defined partial-failure result
 - [ ] Durable workflows persist their state and treat timeouts as real events
@@ -193,6 +200,8 @@ protocol design to the specialist skills below.
 - [Boundary classification](references/boundary-classification.md) — all twenty-three placed in the
   four classes, with what survives a boundary crossing, what silently stops holding, and the
   specific additions each distributed form requires. Read when distributing an existing design.
+  Read its [Authority across a boundary](references/boundary-classification.md#authority-across-a-boundary)
+  section when forwarding caller context or moving protected work to a remote handler.
 - [Design patterns against architectural patterns](references/design-vs-architecture.md) — the four
   levels with what belongs at each, the pairs most often conflated (Proxy/gateway, Observer/EDA,
   Mediator/orchestration, Memento/event sourcing, Flyweight/distributed cache), how patterns

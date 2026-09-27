@@ -84,6 +84,9 @@ alternatives separately. Missing lifecycle/identity evidence makes a recommendat
   or remove an undocumented cache while preserving value semantics; callers using `==` on that
   basis are wrong. A documented freshness/canonicalization guarantee is an API commitment and
   constrains future implementations.
+- If concurrent calls must return the same canonical instance, make winner selection atomic
+  and return that winner. A thread-safe cache alone does not make get/create/put atomic or
+  prevent callers receiving different candidates; test the identity contract under contention.
 - Never cache without a bound. An unbounded interning map keyed by user or tenant data is a
   leak with a factory in front of it — see java-reference-types-and-leaks.
 - Do not synchronise on, or key identity off, a value-based class (`Optional`, `LocalDate`,

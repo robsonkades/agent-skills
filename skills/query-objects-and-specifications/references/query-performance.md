@@ -142,6 +142,10 @@ tests. A narrow review can reuse adequate existing evidence:
   expect the empty and blue-only orders, never the mixed collection.
 - Test absent filters, empty sort, both directions, equal sort values, both date boundaries
   (including a zone transition), mixed currencies and empty authorization scope.
+- For text filters, test literal `%`, `_`, the configured escape character and an apostrophe,
+  plus nonmatching near-matches. Change only literal versus pattern mode and assert the
+  intended difference; include empty input and any promised case/accent semantics. Keep
+  mandatory scope in both modes and test the actual framework path for double escaping.
 - Seed another tenant and an unauthorized customer that match a user OR clause. Assert no
   data, count, existence or export path leaks them; user NOT must not negate mandatory scope.
 - With matching rows present, set the trusted allowed-customer scope to empty and compose it

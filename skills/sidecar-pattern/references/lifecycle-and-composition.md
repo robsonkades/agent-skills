@@ -9,7 +9,7 @@ spec:
     - name: proxy # native sidecar: a restartable init container
       image: registry.example/proxy:1.14.2
       restartPolicy: Always # <- this line is the whole mechanism
-      # Assumes this image serves a meaningful startup check on port 15002.
+      # Assumes a meaningful startup check reachable on the Pod IP at port 15002.
       startupProbe:
         httpGet: { path: /startup, port: 15002 }
         periodSeconds: 1
@@ -105,6 +105,20 @@ The pod shares one network namespace. Consequences you must design around:
   debugger, a core dumper) and otherwise a security surface you did not need.
   It also exposes process information and access through `/proc/$pid/root`, subject to Unix
   and filesystem permissions; mounted volumes are not the only possible filesystem access path.
+
+These network assumptions need adjustment for `hostNetwork: true`, where the Pod uses the
+node's network namespace; loopback access and port conflicts are no longer confined to the Pod.
+
+Distinguish the caller's namespace from the listener's. A kubelet HTTP probe normally connects
+to the Pod IP, not from inside the Pod. A helper listening only on `127.0.0.1` can therefore
+serve the app while failing that probe. Setting `httpGet.host: 127.0.0.1` does not target an
+ordinary Pod's loopback; the documented loopback case uses `hostNetwork: true`. Inspect the
+effective bind address and probe errors before treating this as slow startup or a broken app.
+Keep privileged administration restricted: use a separate minimal health endpoint reachable
+by the kubelet, or a supported in-container `exec` check when the image contains an appropriate
+bounded checker. Do not assume a shell or `curl` exists, and do not enable host networking just
+to make a probe pass. Verify peer access and probe access separately; health meaning and timing
+remain `kubernetes-service-lifecycle`.
 
 Shared networking or PID visibility does not authenticate a peer or grant every management
 capability. Deliberate JMX/JVMTI/agent integration needs supported interfaces, credentials and
@@ -216,6 +230,7 @@ faults; a narrow explanation does not require an unrelated full cluster campaign
 - [Kubernetes 1.34 emptyDir volumes](https://v1-34.docs.kubernetes.io/docs/concepts/storage/volumes/#emptydir) — Pod lifetime, memory accounting and shared node capacity.
 - [Kubernetes 1.34 Pod lifecycle](https://v1-34.docs.kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/) — grace and failure conditions.
 - [Kubernetes 1.34 process namespace sharing](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/share-process-namespace/) — process and filesystem visibility with permissions.
+- [Kubernetes 1.34 probe configuration](https://v1-34.docs.kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#http-probes) — kubelet HTTP probe destination and the host-network loopback exception.
 - [Kubernetes 1.34 node-pressure eviction](https://v1-34.docs.kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/) — actual ranking inputs and QoS limits.
 - [Java 11 HttpClient connect timeout](<https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.Builder.html#connectTimeout(java.time.Duration)>) and [response body handlers](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpResponse.BodyHandlers.html) — verify actual completion/streaming scope.
 - [Java 25 JVMTI specification](https://docs.oracle.com/en/java/javase/25/docs/specs/jvmti.html) — in-process agent and possible external controller; inspect the target JVM's support.

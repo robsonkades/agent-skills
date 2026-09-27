@@ -19,6 +19,31 @@ Fix route/mix, outcome and timeout policy, state (cold/ramp/sustained), load, qu
 and observation window. Write the smallest operationally relevant effect and asymmetric error
 costs before seeing the result.
 
+## When traffic mix changes
+
+Route, region or payload mix can change a fleet quantile even if every cohort's distribution is
+unchanged. For the observed user-experience SLI, retain the actual request weights; a mix-driven
+regression is still a change in that SLI. For a comparison at a common population mix, inspect
+within-cohort distributions and use declared common weights instead of attributing the fleet
+difference directly to the build.
+
+For treatment `t` and cohorts `c`, construct `F_t*(x) = sum_c w_c F_t,c(x)`, with nonnegative
+weights summing to one, then query its quantile. Normalize each cohort's empirical CDF or compatible
+histogram by its own count before weighting; averaging cohort p99s does not implement this formula.
+State the target weights and preserve the experimental design in uncertainty calculations.
+If a positive-weight cohort has no observations in one arm, its distribution is unavailable;
+collect evidence or label any extrapolation model rather than assigning it zero latency.
+
+Illustrative finite sample: 9,950 requests at 10 ms and 50 at 500 ms have type-1 p99 = 10 ms.
+Changing only those counts to 9,800 and 200 makes p99 = 500 ms. The actual fraction at most
+300 ms falls from 99.5% to 98%. At common 98%/2% cohort weights, both distributions have p99 =
+500 ms; the weighted average of cohort p99s, 19.8 ms, is neither mixture's p99.
+
+Report actual-mix and common-mix results separately. Choose comparison cohorts from suitable
+pre-treatment characteristics; silently conditioning on successful outcomes or a treatment-induced
+routing change can remove part of the effect being studied. Standardization alone does not remove
+other confounding or establish causality.
+
 ## Find the experimental unit
 
 Requests are nested in connections, JVMs, hosts, shards, zones and time periods. A million
@@ -145,6 +170,8 @@ Decision:       passes +15 ms non-inferiority margin; does not prove exact equal
 
 ## Sources
 
+- [Pishro-Nik, mixed-distribution CDF derivation](https://www.probabilitycourse.com/chapter4/4_3_3_solved4_3.php) — the law of total probability combines cohort CDFs, not quantiles.
+- [Stark, comparison, experiments and confounding](https://www.stat.berkeley.edu/~stark/SticiGui/Text/experiments.htm) — observed group differences need not be treatment effects.
 - [Kalibera and Jones, _Rigorous Benchmarking in Reasonable Time_ (ISMM 2013)](https://kar.kent.ac.uk/33611/)
 - [Kalibera and Jones, _Quantifying Performance Changes with Effect Size Confidence Intervals_](https://arxiv.org/abs/2007.10899)
 - [Georges, Buytaert and Eeckhout, _Statistically Rigorous Java Performance Evaluation_ (OOPSLA 2007)](https://doi.org/10.1145/1297027.1297033)

@@ -41,7 +41,9 @@ return a supported no-change conclusion or the next discriminating check where a
 1. **Generate competing hypotheses before touching anything.** Small-write latency can involve
    Nagle/delayed ACK; local connect failures can involve ports, source addresses or routing;
    dropped SYNs can involve several path queues; one busy core can involve accept, RSS/RPS,
-   event-loop affinity or application work. Each needs its own evidence.
+   event-loop affinity or application work. A connection that establishes but stalls on larger
+   data can involve path MTU discovery, receiver flow control or application buffering. Each
+   needs its own evidence.
 2. **Measure the relevant current state.** Select connection/tuple counts, TIME_WAIT depth,
    write/ACK timing, per-connection `cwnd` or retransmissions for the hypothesis. Recipes are in
    `references/diagnosis-recipes.md`.
@@ -93,6 +95,11 @@ return a supported no-change conclusion or the next discriminating check where a
 - Nagle/delayed-ACK interaction can create a repeatable delay (often tens of milliseconds on
   specific stacks). Correlate packet/ACK timing and effective options with application writes
   and flushes; a gap alone does not distinguish it from RTT, scheduling, batching or proxy timers.
+- Successful handshakes and small pings do not rule out a path MTU black hole. When larger
+  packets repeatedly fail while smaller ones pass, inspect effective path/tunnel MTU, actual
+  packetization and ICMP feedback before changing buffers or congestion control. An advertised
+  zero receive window instead calls for receiver/drain evidence; application write size alone
+  establishes neither diagnosis. Use the size-dependent-stall recipe for discriminating checks.
 - Treat BBR as a versioned congestion-control implementation, not a universal speedup.
   BBRv1/v2/later revisions, pacing support, RTT fairness, policers and workload mix differ.
   Reproduce against the deployed kernel and path with throughput, RTT distribution, loss and
@@ -120,4 +127,5 @@ return a supported no-change conclusion or the next discriminating check where a
   Read before changing any kernel parameter or writing socket setup code.
 - [Diagnosis recipes](references/diagnosis-recipes.md) — the symptom-to-tool map and the exact
   commands for connection state, TIME_WAIT depth, Nagle capture analysis, RTT, retransmissions
-  and congestion window. Read during an incident, or when confirming a change took effect.
+  and congestion window, plus path MTU versus receiver stalls. Read during an incident,
+  when larger transfers stall despite a successful connection, or when confirming a change took effect.

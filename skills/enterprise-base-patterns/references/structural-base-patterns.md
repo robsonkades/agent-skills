@@ -149,6 +149,53 @@ For this tax selector, reject an unknown region rather than silently changing ta
 Test supported, missing and ambiguous selection against the declared contract, including any
 explicit default, and identify provider initialization and cleanup ownership.
 
+### Extension compatibility and execution trust
+
+Distinguish approved application code selected at startup from arbitrary code supplied by a
+customer. The same interface can describe both, but it does not grant the same execution
+authority. Before loading external providers, establish their provenance, allowed file/network
+and credential access, resource limits and failure containment. A separate class loader can
+help with class identity or dependency separation; that alone is not a security boundary.
+
+Provider creation is execution. With Java 17 `ServiceLoader`, iteration can instantiate a
+provider through its constructor or provider method; `Provider.get()` also obtains an instance.
+Do not instantiate unfamiliar providers merely to inspect their declared capabilities.
+Metadata/type inspection and running provider code establish different evidence. See the
+[ServiceLoader contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html).
+
+For approved code, retain an adequate in-process selector and its compatibility, selection,
+initialization and cleanup tests. If requirements include running untrusted code, compare a
+constrained declarative format with an execution boundary enforced by the deployment platform.
+A separate process with the same secrets, files and unrestricted network access may still violate
+the required boundary. Pass provider origin, allowed capabilities and failure/resource limits to
+the security/deployment owner; require a concrete containment design and adversarial checks before
+loading that code. If those requirements cannot be established, leave the provider unloaded and
+continue designing the interface and selection contract.
+
+Do not propose SecurityManager as a portable plugin sandbox: it is permanently disabled in
+JDK 24 and later. Inspect the deployed JDK and existing controls; this is not an instruction to
+upgrade or remove a legacy control without a replacement. The
+[JDK 24 security guide](https://docs.oracle.com/en/java/javase/24/security/security-manager-is-permanently-disabled.html)
+describes external containment options; selecting and configuring them is outside this pattern's
+scope.
+
+**Decisive pair — same SPI, different supplier.** A report renderer implements one small
+interface and is selected by configuration.
+
+- A: “The implementation is approved code shipped with our application; deployment chooses
+  the renderer.” Retain a suitable in-process Plugin if that variation is real; test selection
+  and lifecycle. Failure: requiring a separate service solely because it is called a plugin.
+- B: “Customers upload arbitrary renderer JARs. They must not read application credentials or
+  another tenant's files; isolate them with a ClassLoader.” Reject the proposed containment
+  claim; compare nonexecutable configuration or a platform-enforced execution boundary and
+  define its verification. Failure: loading the upload to try it, trusting interface conformance
+  as permission control, or prescribing SecurityManager on JDK 24+.
+
+These are teaching cases, not executed agent evaluations. A harmless adversarial fixture can
+attempt to read a dummy credential marker and alter host state during provider construction;
+verify the intended boundary blocks forbidden effects before any business method is invoked.
+Never use real credentials or customer data for that check.
+
 ## Record Set and Value Object in modern Java
 
 Two patterns whose modern forms are worth naming:
@@ -194,7 +241,7 @@ claiming a valid tax identifier
 
 - [Separated Interface](https://martinfowler.com/eaaCatalog/separatedInterface.html): separating contract from implementation; caller-package placement is not universal.
 - [Special Case](https://martinfowler.com/eaaCatalog/specialCase.html): special behavior through the expected interface; shared operations need not erase every caller distinction.
-- [Java 25 ServiceLoader](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/ServiceLoader.html): independently deployed providers, selection with zero/one/many providers and configuration failures; not a requirement to adopt this loader.
+- [Java 17 ServiceLoader](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ServiceLoader.html): independently deployed providers, construction, selection with zero/one/many providers and configuration failures; not a requirement to adopt this loader.
 - [Java 17 CachedRowSet](https://docs.oracle.com/en/java/javase/17/docs/api/java.sql.rowset/javax/sql/rowset/CachedRowSet.html): disconnected tabular data support.
 - [Java 17 Record](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Record.html): shallow immutability and component-derived equality.
 - [Java 21 pattern matching for switch](https://docs.oracle.com/en/java/javase/21/language/pattern-matching-switch.html): type patterns and exhaustiveness for sealed variants.

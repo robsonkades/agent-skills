@@ -74,13 +74,13 @@ zero-tooling fallback; keep it short-lived, it is one line per class.
 
 ## Remediation, by finding
 
-| Finding                                         | Fix                                                                                                                                 | Verified by                                                                                                                |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Script or expression compiled per evaluation    | Cache the compiled form keyed by source text; bound the cache; parametrise instead of interpolating data into the source            | `VM.classloader_stats` class count flat across N evaluations of the same script                                            |
-| Proxy per instance                              | Reuse the generated class for the actual bounded cache key; inspect cache bypass and changing keys/loaders                          | Class count per loader and metadata plateau for the tested key population; flat loader count alone is insufficient         |
-| Mock-driven CI failure                          | Bound fork lifetime/cardinality and size from representative evidence; retained generator state needs lifecycle/cache investigation | Complete the bounded workload within the budget; repeated passes alone do not prove unloading or bounded long-lived growth |
-| Handle chains built from user input             | Precompute the finite set of shapes; reject or interpret unbounded input                                                            | `LambdaForm$MH` count plateaus after warm-up                                                                               |
-| Everything bounded but the ceiling is still hit | It is sizing: `MaxMetaspaceSize` and `CompressedClassSpaceSize` from the measured plateau (`sizing-and-flags.md`)                   | Plateau reproduced under the same load                                                                                     |
+| Finding                                         | Fix                                                                                                                                 | Verified by                                                                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Script or expression compiled per evaluation    | Reuse compiled forms for a bounded key population; parametrise inputs; couple eviction to the actual class/loader lifetime          | Stable hits stop definitions; churn beyond cache capacity and revisiting evicted keys do not cause unbounded retained classes |
+| Proxy per instance                              | Reuse the generated class for the actual bounded cache key; inspect cache bypass and changing keys/loaders                          | Class count per loader and metadata plateau for the tested key population; flat loader count alone is insufficient            |
+| Mock-driven CI failure                          | Bound fork lifetime/cardinality and size from representative evidence; retained generator state needs lifecycle/cache investigation | Complete the bounded workload within the budget; repeated passes alone do not prove unloading or bounded long-lived growth    |
+| Handle chains built from user input             | Precompute the finite set of shapes; reject or interpret unbounded input                                                            | `LambdaForm$MH` count plateaus after warm-up                                                                                  |
+| Everything bounded but the ceiling is still hit | It is sizing: `MaxMetaspaceSize` and `CompressedClassSpaceSize` from the measured plateau (`sizing-and-flags.md`)                   | Plateau reproduced under the same load                                                                                        |
 
 Raising a ceiling against unbounded generation moves the incident, and the ticket should say
 so. The structural fix depends on ownership: bound and validate input cardinality, cache with
@@ -88,6 +88,30 @@ an eviction/lifetime model, reuse or retire loaders, interpret instead of compil
 tenant, or reject work under pressure. User-controlled scripts/expressions are a resource-
 exhaustion boundary: cap source size, compilation rate, distinct keys and per-tenant budget;
 do not use an unbounded cache as the remedy.
+
+### A bounded cache is not a metadata bound
+
+For example, an LRU holding 100 compiled expressions can still leave thousands of named
+classes in one reachable application loader. Eviction releases cache entries, not those
+class definitions; compiling an evicted expression into another uniquely named class adds
+metadata again. A weak-valued cache alone does not change that loader lifetime either.
+Check the generator's actual definition and reuse policy before prescribing eviction.
+
+For a finite, reusable key population, keep the existing class cache when it bounds definitions
+and fits the budget. For sustained novel input or recompilation, prefer parameterization or
+interpretation when acceptable; otherwise design retireable loader cohorts with the generator,
+accounting for in-flight work and references that prevent retirement. Non-strong hidden classes
+can instead become unloadable while their loader remains alive, if instances, classes and
+handles no longer retain them. That option requires generator compatibility; it is not an
+automatic replacement for named classes. Neither eligibility nor eviction promises immediate
+unloading or OS uncommit.
+
+Verify both repeated hits and a sequence larger than the cache, including revisits after
+eviction. Compare definitions, retained classes/CLDs and used/committed metadata across
+equivalent cycles with unloading opportunities. Cache entry count alone cannot establish the
+fix. Pass the generator, key sequence, loader policy and retained cohort evidence to
+`jvm-class-loading` if the lifecycle needs investigation; without that evidence, keep cache
+eviction as an unverified mitigation rather than claim a metadata bound.
 
 A fixed loader count can coexist with growing named classes in one long-lived loader. Compare
 class counts and metadata by defining loader as well as total loader/CLD counts. For a lifecycle
@@ -97,3 +121,6 @@ the reachability and retainer investigation.
 
 [Lookup API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.Lookup.html)
 distinguishes named definition, hidden-class identity and strong versus weak lifetime.
+[JLS 25 class unloading](https://docs.oracle.com/javase/specs/jls/se25/html/jls-12.html#jls-12.7)
+ties ordinary class unloading to reclaimability of its defining loader, which is why cache
+eviction alone cannot establish a metadata bound.

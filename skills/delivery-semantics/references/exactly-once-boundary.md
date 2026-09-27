@@ -98,7 +98,11 @@ public void placeOrder(Order order) {
 }
 ```
 
-- Publishing before marking the row sent permits duplicates if the relay dies between them.
+- Mark a row sent only after observing the required confirmed publication, including transaction
+  commit when applicable. Returning from an async send, or a successful send callback inside an
+  uncommitted transaction, is insufficient. Handle routing failures and uncertain responses using
+  the [publication progress contract](ack-placement.md#publication-progress); retain retryable intent.
+- Confirmed publication before marking the row sent permits duplicates if the relay dies between them.
   At-least-once publication also depends on retained outbox state and eventual successful
   relay recovery; consumers must be repeat-safe — `idempotency`.
 - Multiple relays require an atomic claim/lease, partition ownership or CDC protocol. A
@@ -159,15 +163,17 @@ If neither covers the required outcome:
 
 ## Evidence and failure matrix
 
-| Cut point                                  | Expected recovery evidence                                                                                 |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Before external effect in this attempt     | This attempt has no effect; retain any earlier unknown outcome; replay depends on progress/recovery policy |
-| Effect committed, local response lost      | Resolve through a verified retry/status contract; without one, the caller's outcome remains unknown        |
-| Effect confirmed, offset response lost     | Effect stays known; resolve progress separately before claiming replay                                     |
-| Kafka output sent, transaction aborted     | `read_committed` hides this transaction's output; this transaction does not advance input progress         |
-| Kafka transaction commit response lost     | client resolves transaction/fencing state; no external effect assumed                                      |
-| Outbox row committed, relay not run        | Retained intent is published after successful scanner/CDC recovery                                         |
-| Relay published, sent marker not committed | Publication may repeat; the downstream outcome invariant still holds                                       |
+| Cut point                                        | Expected recovery evidence                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Before external effect in this attempt           | This attempt has no effect; retain any earlier unknown outcome; replay depends on progress/recovery policy    |
+| Effect committed, local response lost            | Resolve through a verified retry/status contract; without one, the caller's outcome remains unknown           |
+| Effect confirmed, offset response lost           | Effect stays known; resolve progress separately before claiming replay                                        |
+| Kafka output sent, transaction aborted           | `read_committed` hides this transaction's output; this transaction does not advance input progress            |
+| Kafka transaction commit response lost           | client resolves transaction/fencing state; no external effect assumed                                         |
+| Outbox row committed, relay not run              | Retained intent is published after successful scanner/CDC recovery                                            |
+| Relay send buffered, broker acceptance unknown   | Sent marker must not retire intent; recover with the same identity and allow for a possible prior publication |
+| Publication confirmed but returned as unroutable | Required queue handoff failed; preserve intent, correct routing and observe recovery before retiring it       |
+| Relay published, sent marker not committed       | Publication may repeat; the downstream outcome invariant still holds                                          |
 
 Exercise representative cuts for the actual path in a bounded disposable fixture; include
 relevant broker restarts, network ambiguity, partition revocation or process death. Record

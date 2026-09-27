@@ -46,6 +46,28 @@ Traffic uniformity is the criterion that gets skipped, because row counts are ea
 and per-key request rates are not. Skipping it is how a correct shard map ends up with one
 saturated shard — the diagnosis and repair are `hot-partitions-and-rebalancing`.
 
+### Include secondary write paths
+
+Inventory the secondary indexes, lookup tables and maintained views affected by each important
+mutation. Their partitioning, update volume and capacity may differ from the base table. A
+uniform primary key is insufficient evidence that the complete write path scales.
+
+For example, Spanner documents that a high-rate, non-interleaved index led by a monotonic
+timestamp can create a growing-edge hotspot even when that timestamp is not the table's
+primary key. DynamoDB documents that insufficient provisioned write capacity on a global
+secondary index can throttle base-table writes; asynchronous index propagation does not by
+itself isolate their capacity. Inspect the deployed service's actual maintenance contract.
+
+Preserve an adequate index. When evidence identifies it as the constraint, distinguish an
+insufficient provisioned budget from a hot key/range: increasing aggregate capacity need not
+relieve concentrated traffic. Compare sufficient index capacity, supported local/interleaved
+indexes, a distributed index key or removing an unnecessary access path.
+Adding a tenant/hash prefix can spread index writes but make a global ordered query require
+multiple scans and merging; measure that lost locality before accepting the trade. An
+asynchronously maintained read view is an alternative only if its freshness, lag, capture
+capacity and recovery contract fit. Re-sharding the base table alone need not change any of
+these index constraints.
+
 ## The wrong keys, and what each produces
 
 - **Tenant id in a fleet with a power-law tenant distribution.** Row counts look plausible
@@ -93,6 +115,10 @@ arrival/work distribution and failure domain from the contract; power-law traffi
 loss are useful cases when representative, not a universal campaign. Run failure injection only
 in an authorized isolated environment and report any untested recovery claim.
 
+For a write-capacity claim, include the production index/view set and representative mutations,
+not only inserts into an unindexed table. Attribute saturation, throttling and maintenance lag
+to the base or secondary path; include any added read fan-out in the acceptance criteria.
+
 Also evaluate adversarial keys/hash flooding, null/canonicalization across languages, mutable
 tenant merges/splits, new region/residency placement and a tenant larger than one shard. A key
 that works only for today's median tenant is already a migration plan.
@@ -101,6 +127,7 @@ that works only for today's median tenant is already a migration plan.
 
 - [Google Cloud Spanner schema design](https://cloud.google.com/spanner/docs/schema-design)
 - [Amazon DynamoDB partition-key design](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+- [Amazon DynamoDB global secondary indexes](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GSI.html) — asynchronous maintenance, separate provisioned capacity and base-write throttling.
 - [CockroachDB 25.4 transaction layer](https://www.cockroachlabs.com/docs/v25.4/architecture/transaction-layer)
 - [PostgreSQL 18 partitioning limitations](https://www.postgresql.org/docs/18/ddl-partitioning.html)
 - [MongoDB 8.0 shard-key values and missing keys](https://www.mongodb.com/docs/v8.0/core/sharding-shard-key/)

@@ -37,7 +37,9 @@ distinct—inspect the failure phase rather than assuming “first execution” 
 ## Workflow
 
 1. **Preserve and inspect the actual artifact first.** Record its digest, selected JAR entry,
-   loader/module, compiler release/options and target vendor/build. Recompile only for a separate
+   loader/module, compiler release/options and target vendor/build. For instrumented bytes, record
+   the transformer stage and whether this is initial load, redefinition or retransformation.
+   Recompile only for a separate
    reproduction; use `-g -parameters` when useful without overwriting the incident artifact.
    Examples here use JDK 25; Class-File API needs JDK 24+, not an implicit project upgrade. `javap`
    for signatures, `javap -c` for the code, `javap -c -p` to include private members,
@@ -121,6 +123,10 @@ recompilation cannot establish which bytes failed in production.
   retransformation and generated classes in the compatibility matrix. Hidden classes have
   instrumentation restrictions; do not promise that a normal transformer can observe or
   retransform lambda proxy definitions.
+- Check lifecycle restrictions before changing class structure. An added helper field or method
+  can be valid at initial definition yet forbidden when retransformation/redefinition replaces
+  an already loaded class. Valid frames and `isModifiableClass` do not establish that the requested
+  structural change is supported; the anatomy reference covers the JDK 25 restrictions.
 - Treat a Java agent or transformer as privileged production code: pin and verify its artifact,
   minimize its class/method scope, protect dumped bytecode because it may contain secrets, and
   make mandatory instrumentation fail an explicit readiness/deployment gate.
@@ -163,10 +169,11 @@ recompilation cannot establish which bytes failed in production.
 - `obj instanceof String s` and `instanceof` followed by a cast compile to the **same**
   `instanceof`/`checkcast` pair on javac 25. Prefer the pattern for its scoping, not for a
   saved instruction that does not exist.
-- A class file with `minor_version = 0xFFFF` depends on preview features and loads only on
+- For `major_version >= 56` (Java 12+), `minor_version = 0xFFFF` marks preview features and loads only on
   exactly that feature release, with `--enable-preview` at runtime as well as at compile time.
   Depending on a preview **API** is enough to set it; passing `--enable-preview` to a class
-  that uses nothing preview is not.
+  that uses nothing preview is not. Historical major versions 45–55 permit other minor values
+  under the JVMS 25 format rules; `52.65535`, for example, is not a preview class. Read both numbers.
 - Verify any suspicious VM flag with `java -XX:+PrintFlagsFinal -version | grep -i <term>`
   before it goes into a runbook; a `develop` flag such as `HugeMethodLimit` is absent from that
   list on a product build and refuses to start the JVM.

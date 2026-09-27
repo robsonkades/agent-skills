@@ -102,6 +102,8 @@ for the affected contract, reusing adequate existing controls. Select the releva
 - parseable one-event framing;
 - name/version/service/timestamp where required by the event's schema;
 - correct types/units;
+- exact identifier values survive parser/index/query round trips, including numeric boundaries;
+- occurrence/observation times and unknown source time keep their documented meanings;
 - reserved-key collisions rejected or handled by the documented trusted-field policy;
 - occurrence-time values survive delayed encoding without caller mutation;
 - valid context included and absent context not stale;

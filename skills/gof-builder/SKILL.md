@@ -54,7 +54,8 @@ A collection is accumulated by the caller over several steps
         → addItem(...) reads better than assembling a list first.
 
 The object is built from parsed or streamed input arriving in pieces
-        → there is no single moment where all arguments are in hand.
+        → compare an incremental builder with local accumulation followed by a factory;
+          input arrival alone does not require a public builder API.
 ```
 
 ## When it is not
@@ -110,6 +111,12 @@ IF an intrinsic value invariant lives only in build() and other construction pat
 THEN enforce it at the value's constructor/factory boundary and delegate from build().
      A GoF mutable representation may instead need explicit completion validation.
 
+IF one construction process must produce different representations
+THEN compare GoF builders with one intermediate model plus renderers. Retained inspection
+     or editing favors a model; incompatible representations or a retention limit may
+     favor direct builders. Define valid completion, failure cleanup, product ownership
+     and any externally visible partial output; do not assume a success callback runs on failure.
+
 IF the builder is stored in a field or shared between requests
 THEN inspect ownership and escape paths. Prefer per-construction confinement;
      alternatives need an explicit ownership-transfer, immutable or synchronized lifecycle
@@ -155,6 +162,8 @@ THEN verify the generated constructor path, identity/lifecycle rules, associatio
 - [ ] Cross-field rules hold at the product boundary; constructor/build diagnostics identify conflicting fields
 - [ ] Required components are enforced — by a staged builder, or by a check that names them
 - [ ] Builder confinement, reuse/reset semantics and failed-build behavior are explicit
+- [ ] Representation builders publish complete results only on success; streaming partial output
+      and abort cleanup have explicit contracts independent of a success callback
 - [ ] Call-site ambiguity, optionality, staged construction, or representation variance actually
       justifies it; parameter count alone does not
 - [ ] Immutable products snapshot collections at construction; mutable elements are addressed separately
@@ -169,8 +178,9 @@ adds value. For a small review, a concrete finding and focused check suffice.
 
 - [Decision and alternatives](references/decision-and-alternatives.md) — selection signals,
   records and static factories against builders, staged builders and
-  what they cost, where validation must live, and the Lombok `@Builder` failure modes on
-  entities and records. Read before adding or removing a builder.
+  what they cost, where validation must live, representation-builder completion and ownership,
+  and the Lombok `@Builder` failure modes on entities and records. Read before adding or removing
+  a builder; use the representation section for parser/director-driven construction.
 - [Worked example](references/worked-example.md) — a payment instruction with mutually exclusive
   fields, taken from telescoping constructors to a record and builder, then a staged API sketch,
   with the validation placement made explicit and a test data

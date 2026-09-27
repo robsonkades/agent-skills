@@ -26,14 +26,19 @@ together because they state the same domain rule or technical contract. Code tha
 the same but represents independently changing rules is incidental; merging it couples those
 policies. Separate teams or release schedules can still implement one explicitly shared contract.
 
+Use this skill to decide the boundary in a design, review or authorized refactoring. A review
+request produces findings and alternatives; it does not by itself authorize code changes.
+
 ## Workflow
 
 0. **Establish the target and authority.** Inspect compiler release/toolchains, callers,
    published APIs, resource/failure contracts, tests and change history; identify who owns
    the rule and its effective version/date.
    Examples use Java 17-compatible syntax (records need Java 16+ without preview); on older
-   targets use existing classes, without an implicit upgrade. If authority or caller behavior
-   is unknown, document the gap and defer a merge that would silently decide policy.
+   targets use existing classes, without an implicit upgrade. Distinguish explicit requirements
+   from conventions and assumptions. If authority or caller behavior remains unknown after
+   inspection, ask the focused question that changes the decision; defer only the affected
+   merge and continue independent analysis.
 1. **Classify the duplicated knowledge, not whole fragments.** Enumerate change reasons. If a
    subset must change together under one authority, extract that nucleus while leaving
    independently varying policy separate. Similar fragments need not be all-shared or all-
@@ -53,7 +58,13 @@ policies. Separate teams or release schedules can still implement one explicitly
      supported APIs through the applicable migration/compatibility policy; a costly split
      need not beat retaining adequate code. Read [references/worked-examples.md](references/worked-examples.md)
      when performing either operation.
-4. **Verify.** After a merge, rule tests cover meaningful boundaries and consumer tests
+   - Flexibility for future use → compare today's simple implementation with the smallest
+     preparation actually needed now. An approved future feature still has carrying and delay
+     costs; inspect lead time and the cost of changing later before building it early. Read
+     the YAGNI timing guidance in [references/decision-heuristics.md](references/decision-heuristics.md).
+4. **Verify at the requested level.** For a review, identify the tests or evidence needed to
+   substantiate the recommendation. For implemented changes, run the relevant checks.
+   After a merge, rule tests cover meaningful boundaries and consumer tests
    confirm each caller selects the right policy/version. Remove caller-identity flags, not
    legitimate domain inputs. After an inline, preserve each supported caller's behavior while
    removing branches used only by others. Report any policy change separately.
@@ -73,8 +84,8 @@ policies. Separate teams or release schedules can still implement one explicitly
 - Build for the requirement that exists. A type parameter with one instantiation, a config
   point never configured differently, or a hook nobody calls is a signal to investigate,
   not proof of speculative generality. Check test seams, external users and planned work
-  before removing it. (Its detection as a
-  smell lives in java-code-smells.)
+  before removing it. Preserve testing and changes that make current code easier to modify;
+  YAGNI is not permission to neglect them. Smell detection lives in java-code-smells.
 - Separate essential from accidental complexity before "simplifying". Code implementing a
   genuinely intricate rule is not a KISS violation; indirection the problem does not
   require is. Deleting essential complexity moves it into callers or into production
@@ -87,6 +98,12 @@ State the shared knowledge (or independent change reasons), evidence/authority, 
 and main cost. For changes, list preserved behavior, deliberate policy changes and checks
 actually executed. Missing history is uncertainty, not evidence that future flexibility is useful
 or useless; keep conclusions proportionate to the available caller and requirement evidence.
+
+For implementation mechanics, pass java-refactoring the chosen boundary, caller inventory,
+preserved contracts and compatibility constraints; expect a bounded change with evidence of
+preserved behavior. If unavailable, use the project's refactoring workflow with those same
+constraints. Stop when the decision is supported and the requested work verified, or name the
+specific missing evidence that leaves a recommendation conditional.
 
 ## Safety and production constraints
 
@@ -111,8 +128,8 @@ or useless; keep conclusions proportionate to the available caller and requireme
 
 - [Decision heuristics and false positives](references/decision-heuristics.md) — tests for
   knowledge versus incidental duplication, the wrong-abstraction and speculative-generality
-  signatures, the cost model, and the cases that look like violations but are correct.
-  Read before merging or inlining anything.
+  signatures, the cost model, YAGNI timing, and the cases that look like violations but are
+  correct. Read before merging, inlining or adding flexibility for future use.
 - [Worked examples](references/worked-examples.md) — one inlining of a wrong abstraction
   back into duplicates, one merge of genuine knowledge duplication, each with trade-offs
   and verification. Read when performing either operation.

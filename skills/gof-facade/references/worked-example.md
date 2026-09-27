@@ -118,6 +118,30 @@ For this local example, verify these contracts before relying on `@Transactional
 
 None of that is visible in the signature, which is why it is written down beside it.
 
+## Translating failures without changing the operation
+
+Callers of `place` need to distinguish a rejected basket from an unavailable dependency and an
+uncertain completion. Use the project's existing contract for those outcomes; do not catch all
+failures and return a missing `OrderId`. Preserve the underlying cause for diagnostics while
+exposing only the detail appropriate for the consumer. A known rejection may justify correcting
+the request; an uncertain outcome needs reconciliation or the established idempotency protocol,
+not an inference that nothing happened.
+
+Translation location also matters. In Spring's default imperative rollback rules, unchecked
+exceptions trigger rollback and checked exceptions do not. Wrapping a checked failure in a
+runtime exception **inside** the transactional method can therefore change whether work commits.
+Catching an unchecked failure and returning an ordinary failure value may instead permit commit
+if nothing has marked the transaction rollback-only. Translating **after** the proxied transaction
+has completed does not revise that earlier decision. Inspect configured overrides, propagation
+and inner participants; these examples do not establish what this application's manager will do.
+See [Spring 6.2 rollback rules](https://docs.spring.io/spring-framework/reference/6.2/data-access/transaction/declarative/rolling-back.html).
+
+Test the boundary with a failure after stock reservation and before order/outbox completion,
+using the actual proxy, transaction manager and enlisted persistence resource. Assert both the
+consumer-visible outcome and the intended persisted effects. A fake throwing the desired public
+exception establishes neither rollback nor recovery. If that environment is unavailable, report
+the unverified transaction behavior and preserve the existing policy until it can be checked.
+
 ## The split when the second use case arrived
 
 Six months later the class had `place`, `cancel`, `refund`, `resendConfirmation` and

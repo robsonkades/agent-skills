@@ -140,6 +140,46 @@ The one shape that is never correct is a remote call inside the transaction with
 justification that "it will be rolled back if the call fails" — the remote side has already
 acted, and your rollback does not reach it.
 
+## Work triggered after commit
+
+For imperative Spring transactions, check the actual listener mechanism and framework version.
+The Spring 6.2.19 contracts distinguish these cases:
+
+- `@TransactionalEventListener` defaults to `AFTER_COMMIT`. Without an active transaction,
+  the event is discarded unless `fallbackExecution` is enabled. Enabling fallback permits
+  handling without a transaction; it does not create one or supply an after-commit guarantee.
+- Completion callbacks can still access resources bound to the transaction that just ended.
+  Repository work that joins that context does not gain another commit. For a database write
+  that should commit independently afterward, use a genuinely separate transaction, such as
+  an intercepted `REQUIRES_NEW` service call, and verify it from a fresh transaction. If the
+  write must be atomic with the original change, put it in the original atomic unit instead.
+  A new transaction does not close the crash gap between those commits.
+- A plain in-process event or callback has no durable delivery record. Moving it to an
+  asynchronous executor changes scheduling, not crash recovery. For required follow-up,
+  commit durable intent with the business change and recover it, as in the outbox above.
+  Reuse an existing durable job/event facility when it already supplies that atomic capture
+  and recovery; a new queue or separate outbox table is not mandatory.
+- Failure after commit cannot roll back that commit. Direct
+  `TransactionSynchronization.afterCommit` exceptions can propagate to the caller, whereas
+  transactional `AFTER_COMMIT` listeners run in the after-completion sequence. Inspect the
+  actual error handling; do not equate every listener with the direct callback or infer
+  rollback from an error returned to the request caller.
+
+### Same timing, different durability requirement
+
+These synthetic cases guide design; they are not executed application tests:
+
+| Follow-up requirement                                                                             | Appropriate candidate                                                 | What would invalidate it                                                                            |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Optionally warm a cache; misses read the authoritative database and skipped warming is acceptable | A bounded after-commit listener can suffice                           | The cache is authoritative, or a missed callback violates correctness                               |
+| Every committed order must eventually create a shipment request, including after a process crash  | Durable intent in the order transaction plus a recoverable dispatcher | Only an in-memory event or a new transaction begun after the order commit records the required work |
+
+For a listener-related fix, test publication with and without an active transaction, committed
+state after callback failure, and any follow-up database write from outside the listener's
+transaction. For required delivery, also interrupt after business commit before dispatch;
+verify pending work remains recoverable and retries retain the operation identity. A happy-path
+listener invocation or an active-transaction flag proves neither durability nor follow-up commit.
+
 ## Batch work
 
 ```java
@@ -205,6 +245,8 @@ implement concurrent-worker claiming, cancellation or changing-input semantics.
 
 ## Sources
 
+- [Spring 6.2.19 transactional event listener contract](https://docs.spring.io/spring-framework/docs/6.2.19/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html): phase, no-transaction fallback and completed-resource warning.
+- [Spring 6.2.19 synchronization contract](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-tx/src/main/java/org/springframework/transaction/support/TransactionSynchronization.java) and [transaction phases](https://github.com/spring-projects/spring-framework/blob/v6.2.19/spring-tx/src/main/java/org/springframework/transaction/event/TransactionPhase.java): subsequent transaction boundaries and different completion callbacks.
 - [Spring propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html): physical versus logical scope, joining attributes and retained resources.
 - [Spring rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html): default rules and overrides.
 - [Spring transaction annotation settings](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html): proxy interception and the 6.2+ global rollback default. Consult the project's version.

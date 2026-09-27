@@ -158,6 +158,9 @@ A test depends on a third-party service
 - **Plugin needs a concrete variation or extension contract.** A supported external SPI can
   justify one bundled provider. Compare selection, compatibility and lifecycle costs with
   direct construction; speculative internal switches can wait (`enterprise-architecture-smells`).
+  Establish who supplies the provider and what it may access before choosing an in-process
+  extension. An interface, module or class loader does not by itself confine provider code;
+  untrusted implementations need an enforceable execution boundary, not just an SPI.
 - A Service Stub exercises the **port's outcomes**, not every transport detail. A focused
   successful stub is useful for its test; a suite covering only success leaves failure behavior
   unverified. HTTP decoding and status translation need adapter tests (`architecture-testing`).

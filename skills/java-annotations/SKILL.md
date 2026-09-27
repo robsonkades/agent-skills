@@ -28,6 +28,12 @@ convention or magic string doing a job an annotation would do with compile-time 
 
 ## Workflow
 
+Match the requested action: a review reports findings; diagnosis establishes a cause or the
+next discriminating check; implementation changes the annotation or consumer only when requested.
+Inspect the annotation definition, actual reader/call sites, build configuration and relevant tests
+before asking for missing context. Treat a documented contract as stronger evidence of intended
+behavior than an isolated usage pattern; state consequential assumptions when they disagree.
+
 0. **Establish compatibility.** Inspect compiler release/toolchain, processor configuration,
    resolved framework versions and runtime. Language references and sketches here use Java 17;
    records require Java 16+ without preview, and
@@ -38,9 +44,11 @@ convention or magic string doing a job an annotation would do with compile-time 
    framework, static-analysis tool, documentation generator or a human-facing API contract. If no
    consumer benefits from structured metadata, Javadoc is usually clearer. Keep adequate direct
    code or configuration; adding metadata or a processor needs a concrete consumer benefit.
-2. **Pick the retention from the reader.** `SOURCE` for compile-time-only checks, `CLASS` for
-   bytecode tools, `RUNTIME` only when something reflects over it at runtime. Retention is not
-   a default to copy from the last annotation you wrote.
+2. **Pick retention from the reader and artifact boundary.** `SOURCE` suffices when every required
+   reader sees the annotated source in that compilation. A later build inspecting compiled
+   dependencies needs retained metadata too: `CLASS` can serve bytecode tools and processors
+   inspecting binary declarations; ordinary runtime reflection needs `RUNTIME`. Verify the actual
+   consumer instead of choosing retention from "build time" versus "runtime" alone.
 3. **Constrain the targets.** `@Target` restricts where it can be applied; without it, an
    annotation is legal in places the reader never looks, which is how "the annotation does
    nothing here" bugs happen.
@@ -67,8 +75,8 @@ convention or magic string doing a job an annotation would do with compile-time 
   a type (methods, fields, parameters, packages, modules), when the marking must be added later
   without touching the type hierarchy, or when the marker may gain parameters.
 - Give every annotation an explicit `@Retention` and `@Target`. The default retention is
-  `CLASS`, which is almost never what a runtime framework needs, and is the reason a
-  hand-written annotation is silently invisible to reflection.
+  `CLASS`, so a hand-written annotation is invisible to ordinary runtime reflection unless
+  retention is changed. A framework reading class-file metadata directly has a different contract.
 - `@Inherited` applies only to annotations on **classes**, and only along the superclass chain.
   It does not make an annotation inherited from an interface, and it does not apply to methods
   or fields. Framework meta-annotation mechanisms (Spring's `@AliasFor`, `MergedAnnotations`)
@@ -118,6 +126,12 @@ correction and a check that confirms it. Distinguish static evidence from execut
 tests. For a new annotation, supply its retention/target contract and consumer integration
 with positive and negative checks. Annotation presence or reflection visibility alone does
 not demonstrate enforcement.
+
+Stop when the requested decision is supported by the reader/target contract and appropriate
+consumer checks, or report precisely which unavailable evidence prevents that conclusion.
+For a neighboring concern, pass the annotation definition, reader/call path, project versions and
+observed failure to its named specialist. If unavailable, retain the metadata findings and identify
+the remaining check rather than inventing a framework, nullness or native-image guarantee.
 
 ## References
 

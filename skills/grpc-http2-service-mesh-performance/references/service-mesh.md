@@ -19,6 +19,13 @@ a plaintext bypass is not an isolated measurement of proxy implementation cost. 
 spans and queue boundaries carefully: per-hop quantiles are not additive, and removing a proxy can
 change routing, connection count and backend load rather than simply remove one fixed delay.
 
+An application streaming its body does not prove that every intermediary streams it. Inspect the
+effective filter chain when large payloads fail or proxy memory rises: a filter that requires the
+whole body can impose buffering and size limits before the backend sees it. Envoy's
+[v1.36.0 flow-control FAQ](https://github.com/envoyproxy/envoy/blob/v1.36.0/docs/root/faq/configuration/flow_control.rst)
+documents this distinction. Locate the rejection and verify that version's filter/route behavior;
+do not disable a required inspection filter merely to make a streaming experiment pass.
+
 ## Policy composition
 
 Inventory timeout, retry, hedge, circuit breaking, connection-pool and outlier policies at client,

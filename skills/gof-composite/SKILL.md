@@ -56,8 +56,10 @@ rules and specifications, UI component trees.
 - **Leaves cannot honour required operations.** Do not promise structural mutation on every
   node when only branches support it. An explicitly optional operation may reject a call by
   contract, and `children()` returning an empty collection can be meaningful for a leaf.
-- **Clients constantly need to know which they hold.** Every `instanceof` at a call site is
-  evidence that the operation is not indifferent — model the difference instead of hiding it.
+- **Clients of the shared operation constantly inspect node kinds.** Check whether the common
+  contract hides a meaningful difference or whether polymorphic implementations can own the
+  behavior. Structural editors legitimately distinguish branches from leaves; that alone does
+  not invalidate Composite.
 - **The children are remote.** Composite alone does not define the scheduling, partial-failure
   or deadline contract hidden by those calls (`gof-patterns-and-distribution`).
 - **The structure is an unrestricted graph with undefined visit semantics.** Composite can
@@ -114,8 +116,9 @@ THEN a walk can see a half-applied change or throw
      ConcurrentModificationException. Prefer immutable nodes with
      structural sharing; if mutable, state the consistency and synchronization/versioning policy.
 
-IF a leaf must implement an operation that has no meaning for it
-THEN the interface is wrong. Move that operation to the composite type.
+IF a leaf cannot honour an operation required by the common contract
+THEN move that operation to the composite/capability type or revise the contract explicitly.
+     Preserve intentionally optional operations when callers already handle refusal correctly.
 
 IF the same node instance appears in two places
 THEN it is shared structure; check acyclicity separately before calling it a DAG.
@@ -123,13 +126,20 @@ THEN it is shared structure; check acyclicity separately before calling it a DAG
      neither is universally correct. Forbid sharing or track visited identity when
      the chosen semantics require it.
 
+IF clients attach, remove or move children
+THEN define whether they identify a value, a node instance or a particular parent-child occurrence.
+     Specify duplicate-edge and order rules; validate ownership/cycles before mutation and preserve
+     parent/child consistency on failure and through the promised synchronization or snapshot policy.
+
 IF a numeric aggregate can exceed its representation
 THEN define and test the overflow policy as part of the operation contract.
      Exact byte totals must reject overflow or use a wider representation, not wrap silently.
 
-IF an operation over the tree needs to know each node's concrete type
-THEN it is a Visitor or a pattern-matched fold, not a method on
-     Component (gof-visitor).
+IF new operations need variant-specific behavior
+THEN compare methods on nodes with an external Visitor or pattern-matched fold.
+     Keep intrinsic behavior on Component when owned implementations and extension needs favor it.
+     For independently changing external operations, pass ownership, variants and compatibility
+     constraints to gof-visitor; if unavailable, compare those update costs directly.
 
 IF children are fetched lazily from a database
 THEN inspect query counts and required subtree size. Batch, prefetch, page or query the needed
@@ -149,8 +159,9 @@ THEN inspect query counts and required subtree size. Batch, prefetch, page or qu
 - **Distribution.** The object structure does not supply distributed guarantees. Remote-child
   latency depends on sequential, concurrent or bounded-wave execution, short-circuiting and
   deadlines; partial outcomes need an explicit contract (`scatter-gather`). Where trees are transmitted,
-  depth is an attack surface — deeply nested JSON or XML exhausts the parser's stack or the
-  serialiser's, so a depth limit belongs at the boundary, not in the domain.
+  depth is an attack surface — deeply nested JSON or XML can exhaust the parser's stack or the
+  serialiser's. Configure parser limits as well as any domain-construction guard; a check
+  after a document has been materialized cannot protect the parser.
 - **Performance.** Per-node object overhead can dominate wide shallow trees of small payloads;
   measure layout rather than infer it from node count. Recursive traversal consumes call-stack
   space; virtual-thread stacks use heap chunks rather than a dedicated native platform-thread stack.
@@ -171,6 +182,7 @@ THEN inspect query counts and required subtree size. Batch, prefetch, page or qu
 - [ ] Structural methods terminate within the supported depth/work limits and preserve required equality semantics
 - [ ] Traversal preserves the promised consistency through snapshots, synchronization or an explicit weak view
 - [ ] Node sharing is either forbidden or accounted for in every aggregation
+- [ ] Child mutation identifies the intended node/occurrence and preserves ownership, cycle and order rules
 - [ ] Numeric aggregates follow the declared range and overflow contract
 - [ ] Query count and loaded subtree volume fit the operation and budget
 

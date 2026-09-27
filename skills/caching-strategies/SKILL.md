@@ -32,6 +32,12 @@ versions and do not enable preview features or upgrade dependencies to fit an ex
 freshness requirements or measurements are absent, identify the gap and offer a conditional
 decision and measurement plan rather than inventing a hit rate or safe TTL.
 
+Trace the actual caller, key generator, loader, write/commit path and existing tests. Establish
+who can change the source (including other services), what a reader must observe after a write,
+and what may be served during an outage. Reuse documented requirements; an existing TTL is
+configuration evidence, not proof of an accepted stale-data window. Ask only for unresolved
+freshness or failure requirements that change the decision; continue independent inspection.
+
 1. **Measure source cost and capacity** (latency distribution, CPU/I/O and rate) before deciding.
    Even a sub-millisecond lookup may matter at very high volume; latency alone is not the case.
 2. **Measure the access distribution** and estimate `h` for the intended `maximumSize`.
@@ -39,6 +45,11 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
    distribution and compare `h·T_hit + (1-h)·T_miss` (including queueing/load cost) with the
    uncached distribution. Count actual origin attempts, including refresh, warm-up and retries;
    concurrent misses may coalesce into one load. Tail latency cannot be derived from averages.
+   Keep the uncached path when reuse is too low to offset lookup/fill/serialization costs, or
+   when no feasible cache protocol meets the required consistency. Compare existing query/index
+   improvements, batching or request-local reuse before adding shared state. A TTL plus eventual
+   invalidation does not guarantee that every read beginning after a commit sees that write;
+   stricter readers need a proven validation/ordering protocol or a sufficiently fresh source.
 4. **Bound it**—by count or a measured weight proxy. Account for keys, values, node metadata,
    allocator/GC headroom and concurrent load buffers; a weigher's logical bytes are not measured
    heap retention. Validate with heap/allocation evidence under representative occupancy.
@@ -70,8 +81,12 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
 - In Spring's default proxy mode, `@Cacheable` self-invocation via `this` bypasses interception.
   AspectJ mode or direct programmatic caching differs. Test the deployed mode; extracting a
   collaborator is often clearer than self-injection.
-- Never cache an operation with a side effect. `@Cacheable` on something that _creates_
-  means that on a hit the thing is not created and the cache asserts that it was.
+- Do not let a hit suppress an effect required on every invocation. `@Cacheable` on something
+  that _creates_ can return an old success without creating anything. Put required auditing,
+  metering and authorization outside the skipped loader; loader-only diagnostic metrics are
+  compatible with caching. A write may update or evict a read cache without caching away the
+  write itself; Spring's `@CachePut` invokes the method, but does not make database and cache
+  updates one transaction. Verify commit ordering and failure handling.
   For idempotency that must survive eviction, restart and retries, use a durable record with an
   atomic relationship to the effect; a unique key alone does not supply that relationship.
   Delegate the operation contract to `idempotency`.
@@ -110,6 +125,16 @@ decision and measurement plan rather than inventing a hit rate or safe TTL.
   authoritative version or invalidation watermark, including absent entries and deletes.
   Write-through/CDC still need ordering against concurrent fills; use a tolerated stale window
   only when the consistency requirement permits it.
+- Invalidation follows dependencies, not just entity IDs. Inserts, deletes and membership or
+  sort changes can invalidate queries, counts and empty results even when no cached item key
+  matches the changed row. Read [query invalidation](references/configuring-a-cache.md#query-results-and-invalidation)
+  when caching derived results; choose dependency tracking, a scoped generation, tolerated TTL
+  staleness or no query cache according to the contract and invalidation cost.
+- Define an operation/schema namespace and all result-affecting inputs, including filters,
+  order and pagination, as part of key identity. Use stable equality/encoding without ambiguous
+  concatenation. Spring's default `SimpleKeyGenerator` uses arguments, not the target method:
+  two different operations sharing a cache and equal arguments can return each other's result.
+  Use separate cache names or explicit operation keys; test both call orders with the same ID.
 - A key defines cache isolation; it does not grant permission. Include and canonicalize trusted
   tenant, locale and entitlement/principal dimensions affecting the result; never reuse another tenant's
   response. Authorize hits as well as misses under the required revocation contract: checks only
@@ -130,10 +155,22 @@ For a design/review, return the cache/no-cache decision, measured inputs and ass
 contract, memory/freshness bounds, invalidation race handling and origin-outage policy. State the
 targeted tests and acceptance bounds. For an incident, report evidence, competing hypotheses and
 the next discriminating measurement; do not label an untested hypothesis a confirmed fix.
+Keep findings-only reviews and diagnostic requests read-only. For an authorized implementation,
+show representative hit/miss/failure checks and comparable workload evidence for claimed savings;
+report measurements that remain unavailable. Stop when the requested decision is supported and
+its material correctness and capacity risks are checked, or identify the exact remaining blocker.
+
+If the decision is cache placement, replication or shard failure, pass the freshness contract,
+working-set size, request distribution and origin budget to `cache-sharding-and-replication` for
+a topology/failure plan. If unavailable, state these constraints and defer topology guarantees;
+do not infer them from a local-cache test. Likewise, high Old Gen without evidence of cache
+retention needs heap attribution before changing cache policy or handing off GC tuning.
 
 ## Primary sources
 
 - [Spring cache interception and advice order](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html)
+- [Spring 6.2.11 default key generator](https://github.com/spring-projects/spring-framework/blob/v6.2.11/spring-context/src/main/java/org/springframework/cache/interceptor/SimpleKeyGenerator.java)
+- [Azure cache-aside consistency and suitability](https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside)
 - [Spring Data Redis object mapping and serializers](https://docs.spring.io/spring-data/redis/reference/redis/template.html)
 - [Spring Data Redis 4 migration guide](https://docs.spring.io/spring-data/redis/reference/upgrading.html)
 - [Caffeine refresh semantics](https://github.com/ben-manes/caffeine/wiki/Refresh)

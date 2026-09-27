@@ -209,8 +209,16 @@ Names and defaults from `-XX:+JVMCIPrintProperties -Djdk.graal.PrintPropertiesAl
 -Djdk.graal.LogFile=graal.log                 # redirect all of the above from stdout
 ```
 
+These are separate diagnostic choices, not one recommended launch command. `Diagnose` adds
+retry compilation and dump work; `ExitVM` requests process termination after the diagnostic
+retry. On CE 25.0.2, setting `Dump` explicitly bypasses the automatic retry path, and retry
+options clear `MethodFilter` by default. A method filter therefore does not bound all failure
+diagnostics. Inspect the target implementation, use an owned output directory and a bounded
+reproduction, and keep these runs separate from timing evidence. See
+[failure triage](troubleshooting-and-timeline.md#compilation-failure-or-incorrect-results).
+
 ```bash
-# Escape analysis and inlining knobs (defaults shown; change only with a measurement):
+# CE 25.0.2 escape-analysis/inlining defaults (change only with a measurement):
 -Djdk.graal.PartialEscapeAnalysis=true
 -Djdk.graal.MaximumEscapeAnalysisArrayLength=128   # arrays longer than this are never virtualised
 -Djdk.graal.EscapeAnalysisIterations=2
@@ -218,6 +226,14 @@ Names and defaults from `-XX:+JVMCIPrintProperties -Djdk.graal.PrintPropertiesAl
 -Djdk.graal.MaximumInliningSize=300                # graph nodes: inlining explored up to this
 -Djdk.graal.SmallCompiledLowLevelGraphSize=330     # callee's previous low-level graph above this: not inlined
 -Djdk.graal.InlineDuringParsing=true               # bytecode parser inlines trivial callees itself
+```
+
+The following are **opt-out experiments**, not defaults or a recommended bundle. Change
+one supported option to test an attributed regression, repeat correctness and timing checks,
+and retain the unchanged configuration as the control. Recheck option availability and the
+inliner's interpretation of older budget knobs on the selected release.
+
+```bash
 -Djdk.graal.UsePriorityInlining=false              # 25.3+ only: restore the pre-25.3 inliner
 -Djdk.graal.VectorizeLoops=false                   # 25.3+ only: disable CE loop vectorisation
 -Djdk.graal.OptimizeVectorAPI=false                # 25.0+: disable the Vector API lowering
@@ -231,8 +247,11 @@ comparing `nodes=9` against `TrivialInliningSize`, and no C2 limit (`MaxInlineSi
 Options that do **not** exist and refuse the tested CE 25.0.2 native launch: `CompilerThreads` (use
 `-XX:CICompilerCount` and `-XX:JVMCINativeLibraryThreadFraction`), anything named
 `Vectorization`, `OptDuplication` or `TuneInlinerExploration` on CE 25.0.2 (Oracle GraalVM
-only per the GraalVM options reference; GraalVM 25.4's changelog moves duplication into the
-community configuration — not verified as released here).
+only per the GraalVM options reference for that older line). GraalVM 25.4.4.1.1 was released
+on 2026-09-22; its release notes add `DuplicationPhase` and `PullThroughPhiPhase`, enabled by
+default, including the community configuration. The documented disabling options are
+`OptDuplication=false` and `OptPullThroughPhi=false`. This does not make those options valid
+on CE 25.0.2; consult the selected build's properties rather than copying newer flags back.
 
 ## Ideal Graph Visualizer
 
@@ -246,7 +265,10 @@ documentation for the GraalVM in use.
 
 - [Graal JIT Compiler Operations Manual](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/compiler/operations/)
 - [Graal JIT Compiler Configuration](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/java/options/)
+- [GraalVM 25 release notes](https://www.graalvm.org/release-notes/JDK_25/) — experimental Vector API lowering and its opt-out.
 - [GraalVM 25.3 release notes](https://www.graalvm.org/release-notes/25.3/)
+- [GraalVM 25.4 release notes](https://www.graalvm.org/release-notes/25.4/)
+- [Graal 25.0.2 failure-action and retry-option handling](https://github.com/oracle/graal/blob/vm-25.0.2/compiler/src/jdk.graal.compiler/src/jdk/graal/compiler/core/CompilationWrapper.java)
 - [JMH project and samples](https://github.com/openjdk/jmh)
 - [JMH 1.37 fork JVM and argument selection](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/runner/Runner.java)
 - [JDK 25 JFR compilation event fields](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)

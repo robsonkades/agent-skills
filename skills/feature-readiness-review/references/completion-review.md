@@ -12,12 +12,19 @@ is the finding: the feature is incomplete and nothing in the build says so.
 Then the reverse: take each `RES-*` and name the scope/criterion it traces to. Anything tracing to
 nothing entered without a decision.
 
+For SKIPPED or CANCELLED resources, inspect the authorized disposition and replacement coverage.
+A terminal status does not remove a Required criterion. A replacement awaiting validation is
+still open; an accepted change to scope must be visible in the baseline being reviewed.
+
 ## 2. Scope
 
 Compare feature-attributable changes against the plan's impact map. Establish the initial working
 tree and distinguish pre-existing or concurrent work before attributing a diff. File lists locate
 missed impact but do not prove intent; unrelated changes can share a planned file. Never revert
 someone else's work to make the feature's scope check pass.
+
+The following dispositions assume scoped corrections and record updates were authorized. In a
+findings-only review, recommend these dispositions without applying them or claiming they occurred.
 
 ```text
 Touched but unplanned   src/main/java/.../ShippingClient.java
@@ -35,8 +42,12 @@ Both outcomes are acceptable; the unacceptable one is not noticing.
 Each criterion, and the observed `EV-*` that checked it — a test identifier, command output, or manual step
 someone performed. Record the outcome, covered assertion, implementation/contract revision and
 relevant environment. Executed-but-failed or merely planned evidence does not satisfy a criterion;
-results for an older revision require a justified applicability check or rerun. A criterion checked
-by "the implementation does this" is unchecked.
+results for an older revision require a justified applicability check or rerun. An unsupported
+assertion that "the implementation does this" is unchecked. Direct inspection can establish a
+static criterion, such as required documentation or an accepted dependency boundary, when the
+report names the inspected locations, assertion and result. Code presence alone cannot establish
+successful deployment or recovery in a target environment. Match the evidence to the criterion
+instead of demanding execution for every static obligation or treating every passing test as proof.
 
 ## 4. Decisions
 
@@ -111,6 +122,7 @@ link each EV to the inspected result, checked revision and environment.
 
 ```text
 Feature      Asynchronous order dispatch
+Reviewed     Accepted baseline r3; candidate <inspected revision/snapshot>; full implementation scope
 Complete     no — BAC-02 unverified, BAC-03 blocked, BAC-04 has no resource
 
 Requirements
@@ -119,7 +131,8 @@ Requirements
   BAC-03 duplicate dispatch is suppressed  RES-07, RES-08           BLOCKED on Q-08
   BAC-04 dispatch audit is available       -                        NOT COVERED
 Scope
-  2 unplanned files; 1 kept with the impact map amended, 1 reverted
+  2 unplanned files; propose an impact-map amendment for one and removal of the incidental cleanup
+  No changes applied by this findings-only review
 Validation
   RES-01/03/04 DONE: EV-01 covers their BAC-01 behavior and passed for the current revision
   RES-06 BLOCKED: implemented, but required SQL validation cannot run without the database harness

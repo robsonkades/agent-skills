@@ -114,6 +114,18 @@ Read the relevant inputs before proposing a transformation:
   instead of assuming the same number identifies the same operation. An `Allocate` absent
   after macro expansion may have become allocation fast/slow paths. Confirm elimination
   with the corresponding compiler evidence and generated code, not node absence alone.
+- **Entry context:** an OSR graph starts at its recorded bytecode index and imports live
+  interpreter state. If a scratch object was allocated before entering that loop, its
+  reference can arrive as a load rather than an `Allocate`. The OSR compilation cannot
+  retroactively remove that allocation. A normal-entry compilation of the same method
+  includes different input state and may analyze the allocation itself. Compare equivalent
+  entry contexts before attributing different graphs to an escape-analysis regression;
+  allocations executed inside an OSR-compiled loop still need ordinary elimination evidence.
+
+The OSR distinction follows from [C2's interpreter-state import](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/parse1.cpp)
+(`Parse::load_interpreter_state` and `fetch_interpreter_state`), not from a rule that OSR
+disables escape analysis. For capture prerequisites, use the ideal-graph recipe in
+[JIT diagnosis recipes](jit-diagnosis-recipes.md).
 
 Pinned implementation references: [required and precedence inputs; node identity](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/node.hpp),
 [Region/Phi correspondence](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/opto/cfgnode.hpp),

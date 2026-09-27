@@ -212,6 +212,12 @@ forward prior checks and their limits so the next skill does not repeat intake o
 untested alternative as refuted. Controlled evidence of an effect can precede a mechanism
 explanation; `performance-methodology` owns that distinction and further validation.
 
+If the named skill cannot be loaded, preserve the bounded question, competing hypotheses and
+collection/recovery budgets. Use available evidence and verified target documentation for the
+next safe discriminator, and state which specialist conclusion remains unverified. An
+unavailable owner does not justify speculative tuning, an unbounded profiling campaign or
+delaying already authorized recovery; deliver the actionable handoff and its limits.
+
 ## Definition of done
 
 - [ ] Symptom, scope, time, work denominator, lifecycle, and recent changes are explicit.

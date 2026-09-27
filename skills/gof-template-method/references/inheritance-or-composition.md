@@ -106,6 +106,50 @@ rejection into an existing extension API requires a compatibility decision. Test
 reenters the same instance: either both invocations retain their own data or the nested call fails
 before effects, and a later permitted call still works after a failure.
 
+## Hook failure and completion are part of the skeleton
+
+For each relevant hook, specify its input state, result/absence contract, permitted effects,
+failure behavior and what return means. A `final` template prevents overriding its body;
+it cannot make a failing hook return normally or make detached work finish. These obligations
+also apply when hooks become composed collaborators.
+
+Separate three paths: subsequent business steps require prior success; failure reporting
+observes the declared failure; cleanup releases resources acquired for the invocation. A
+trailing `afterRun()` is a success-path hook unless control flow explicitly gives it another
+contract. Moving it into `finally` can change its meaning and expose it to partially initialized
+state, so establish which successful acquisitions it may depend on first.
+
+For synchronous `AutoCloseable` resources owned by the template, prefer a
+try-with-resources scope around all resource-using hooks. Successfully initialized resources
+are closed in reverse order even when a later acquisition or hook throws; a partially failed
+acquisition must clean up what it never returned. With suppression enabled, a hook failure
+remains primary and close failures are secondary. A throwing plain `finally` can replace the
+original failure. Define reporting/cleanup failure precedence and do not close borrowed resources
+without that responsibility. See [JLS 17 try/finally and try-with-resources](https://docs.oracle.com/javase/specs/jls/se17/html/jls-14.html#jls-14.20).
+
+A hook returning `CompletionStage<T>` changes the boundary: returning a stage may only start
+work. Following it immediately with `record()` orders invocation, not completion, and an
+exceptional completion is not caught by a `try/catch` around the earlier invocation. Express
+required completion dependencies in the returned stage graph; a success-dependent continuation
+does not run on failure. Return a stage that covers required reporting/cleanup instead of
+discarding their outcomes. Do not close a resource in lexical `finally` while a detached operation
+can still use it. A caller-facing timeout/cancellation stage does not necessarily establish that
+resource use has ended.
+
+Keep the synchronous design when it meets the contract. If asynchronous hooks are required,
+pass hook signatures, dependency order, execution constraints, failure policy and resource
+ownership to `completablefuture-composition`; expect a graph with explicit outcome and lifetime
+ownership. If unavailable, sketch those dependencies and identify unresolved provider completion
+semantics; do not add blocking `join()` calls without establishing that the caller may block.
+[CompletionStage, Java 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CompletionStage.html)
+defines completion dependencies and exceptional propagation, not underlying-operation cancellation.
+
+Test failure at each consequential boundary, including failure during cleanup. For asynchronous
+hooks, use manually controlled incomplete stages: verify that downstream effects wait, failure
+skips success-only work, and resources remain usable until their last actual use. Repeat with
+already-completed inputs because continuations may execute inline. Compilation and a happy-path
+call-order test alone do not establish this contract.
+
 ## Migrating to composition
 
 A conversion to consider when its consumer and maintenance benefits justify migration. Keep

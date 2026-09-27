@@ -51,9 +51,18 @@ Prefer a unique constraint on the business table instead when:
   distinguish retries or replay a stable outcome
 
 Prefer an absolute write instead when:
-- the operation is an increment or an append that can be restated as a target value plus
-  a version predicate. Rewriting the operation is cheaper than deduplicating it
+- the business intent really is a target value, and a version predicate rejects stale
+  competing updates under the accepted API contract. Preserve the target/version on retries
+- do not mechanically turn independent deltas into targets computed from an old read;
+  lost updates or rejected valid intents would change the business operation
 ```
+
+For example, setting a thermostat to 20 degrees may need no operation ledger when only its
+target state matters. Applying two separately authorized inventory adjustments of +5 must
+preserve both: two callers reading 10 and setting 15 lose one adjustment. A version predicate
+can reject one stale write, but does not identify whether a previous attempt of that same
+adjustment committed. Keep a stable adjustment identity with an atomic keyed delta/mutation
+when every adjustment must apply once despite retries.
 
 ## Scope
 
@@ -73,6 +82,25 @@ is unprotected.
 Derive the tenant/principal from authenticated context, not an untrusted body field. Choose
 whether credentials acting for the same tenant share an operation namespace; authenticate and
 authorize each replay without using a rotating secret itself as the durable identity.
+
+## One incoming intent, several downstream effects
+
+An incoming operation key correlates the workflow; a downstream key identifies one effect
+within that provider's namespace. Two legitimate charges or two recipient deliveries need
+distinct effect identities even when their payloads match. Retrying either effect reuses its
+own key and semantic payload, including after worker takeover.
+
+Persist a mapping from incoming operation plus stable effect identity and destination scope
+to the downstream key, or derive it deterministically with an unambiguous encoding that meets
+the provider's format/length contract. Do not use an attempt counter or an unstable list index.
+Persist the effect plan when recomputing it after a crash could change recipients, amounts or
+step identities. One parent completion flag cannot represent partial completion.
+
+Verify each API's support, key scope, retention and duplicate behavior rather than assuming
+one header contract. [PayPal's idempotency guidance](https://developer.paypal.com/api/rest/reference/idempotency/)
+requires request identity to distinguish API call types, such as authorization and capture,
+and directs callers to the specific endpoint for support and retention. A provider accepting
+the same header spelling is not evidence that two calls represent the same operation.
 
 ## Retention
 

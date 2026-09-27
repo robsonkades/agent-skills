@@ -119,13 +119,34 @@ age stays inside the deadline budget. The model assumes a common fluid queue and
 work-conserving service; partitioning, priorities, abandonment and variable cost require
 simulation or measurement. Do not conclude p99 from \(B/\lambda\).
 
+### Clearing backlog while new work continues
+
+Once useful capacity is available, let backlog be \(B_r>0\) and assume constant admitted
+arrivals \(\lambda\), constant effective service \(\mu\), and the same fluid-queue
+assumptions. Net drain rate is \(\mu-\lambda\), giving:
+
+\[
+T_{clear}=\frac{B_r}{\mu-\lambda}\quad(\mu>\lambda)
+\qquad
+\mu\ge\lambda+\frac{B_r}{T_{budget}}
+\]
+
+Here \(T_{budget}>0\) is the time left for recovery after the reaction/warmup interval.
+If \(\mu=\lambda\), existing backlog persists; if \(\mu<\lambda\), it grows. Dividing
+by \(\mu\) is valid only when arrivals stop. These follow from the net-input equation,
+not from a latency-distribution model. Check the age of already queued work: meeting a
+queue-empty recovery objective does not prove every item meets its deadline. For changing
+rates, replay the piecewise trajectory instead. Use achievable service under partition,
+dependency and retry constraints; do not assume each added worker adds equal capacity.
+
 The reflection construction follows the single-server workload model in
 [Fendick and Whitt, equation 3.13](https://www.columbia.edu/~ww2040/FendickWhitt20210916.pdf).
 This model supports backlog arithmetic under its assumptions, not a measured latency claim.
 
 ## 6. Resource-demand checks
 
-For a stable interval:
+For a stable interval, let \(C_{cpu}\) be available CPU seconds per wall-clock second and
+\(D_{cpu}\) be CPU seconds consumed per successful useful unit in that same scope:
 
 \[
 D_{cpu}=\frac{\text{CPU seconds consumed}}{\text{successful units}}
@@ -133,8 +154,29 @@ D_{cpu}=\frac{\text{CPU seconds consumed}}{\text{successful units}}
 X_u \le \frac{C_{cpu}}{D_{cpu}}
 \]
 
-This is a necessary CPU ceiling while demand remains stable. Repeat for database calls,
-connection occupancy time, bytes, broker operations or licence tokens.
+This is a necessary CPU ceiling while per-unit demand remains stable, not a safe operating
+point. Include CPU spent on failed/retried attempts, GC and background work in the measured
+total; distinguish CPU time from wall-clock latency and specify the CPU-percentage
+denominator. Repeat with matching units for database calls, connection occupancy time,
+bytes per second, broker operations or licence tokens.
+
+A ratio at one load does not establish that demand stays constant. If background CPU is
+material, use several comparable load points to separate fixed CPU rate \(F\) from
+marginal demand \(d\), testing the candidate model:
+
+\[
+R_{cpu}(X_u)=F+dX_u
+\qquad
+X_u\le\frac{C_{cpu}-F}{d}\quad(C_{cpu}>F,\ d>0)
+\]
+
+The second expression is algebra under the first model, not new capacity evidence. Keep
+fixed work in the budget; adding replicas may multiply it. With distinct operation classes,
+use \(F+\sum_i d_iX_i\) only where measured marginal demands support additivity. A changing
+mix, cache regime, failure ratio or GC cost can invalidate either model. Without comparable
+points, report the observed ratio and a conditional bound, not a proportional scale-up
+forecast. Memory/storage occupancy needs its own measured envelope; a rate ceiling does
+not bound retained bytes.
 
 Connection concurrency is governed by occupancy:
 

@@ -29,8 +29,10 @@ and the processors visible to the JVM.
 
 ## Workflow
 
-Inspect the project JDK, source ownership, null/order/mutability contract and workload before
-rewriting. Core examples target Java 21; Gatherers require Java 24+, and structured-concurrency
+Inspect the project JDK, source ownership and finiteness, null/order/mutability contract and workload
+before recommending a rewrite. A review produces findings; change code when the request authorizes
+it. Clarify unknown source bounds or result semantics only when they change the decision.
+Core examples target Java 21; Gatherers require Java 24+, and structured-concurrency
 alternatives need their exact preview policy checked. Do not upgrade or enable preview for a
 pipeline cleanup. Examples are partial snippets with application types and imports omitted.
 
@@ -49,8 +51,8 @@ pipeline cleanup. Examples are partial snippets with application types and impor
 5. **Only consider parallel with a measurement.** Blocking work needs explicit concurrency,
    cancellation and executor ownership; default parallel streams commonly use the shared
    common pool.
-6. **Trace and verify the contract:** source, what each stage computes, terminal result/effects
-   and cleanup. A single-use stream can buffer or make multiple processing passes internally;
+6. **Trace and verify the contract:** source, what each stage computes, terminal result/effects,
+   termination and cleanup. A single-use stream can buffer or make multiple processing passes internally;
    reuse adequate checks and investigate only the remaining material gaps.
 
 ## Rules
@@ -99,6 +101,12 @@ pipeline cleanup. Examples are partial snippets with application types and impor
 - Streams are lazy: traversal work starts at a terminal operation, and short-circuiting operations
   (`findFirst`, `anyMatch`, `limit`) may stop early. `peek` is an intermediate side-effect hook,
   not a guaranteed per-source-element callback; optimization and short-circuiting may skip it.
+- A bound on output is not necessarily a bound on work or memory. `sorted().limit(n)` can require
+  the entire upstream input before producing a result; `filter` or `distinct` before `limit`
+  may keep searching when the required matches or distinct values never arrive. Establish a
+  finite source or a valid source-consumption bound when termination matters. Moving `limit`
+  before a stage can change the answer: preserve whether the request concerns the whole input
+  or only its first elements. A count limit is not a timeout for a blocked source or callback.
 - Parallel streams commonly execute in `ForkJoinPool.commonPool()` when initiated normally;
   pool selection from custom ForkJoin tasks is implementation-sensitive, and common parallelism
   is configurable/container-aware rather than always processors-minus-one. Blocking can starve or
@@ -111,7 +119,8 @@ pipeline cleanup. Examples are partial snippets with application types and impor
   boxes when the source is already boxed. `mapToInt(...).sum()` and `summaryStatistics()` exist
   for exactly this.
 - Use `Gatherers` (final since Java 24) for intermediate operations the JDK does not ship —
-  fixed and sliding windows, `scan`, `fold`, and `mapConcurrent`, which runs a mapper on
+  fixed and sliding windows, `scan` for intermediate accumulations, `fold` for a final aggregate,
+  and `mapConcurrent`, which runs a mapper on
   virtual threads with a concurrency limit and preserves encounter order. It is the supported
   extension point on those releases. Keep an adequate existing `Spliterator` or loop when it
   fits the source/transform contract or the supported Java baseline cannot use gatherers.
@@ -121,7 +130,7 @@ pipeline cleanup. Examples are partial snippets with application types and impor
   `Collector.Characteristics`. Encounter order (`findFirst`, `forEachOrdered`) can limit
   parallelism; choose `findAny`/unordered processing only when semantics permit.
 
-Report the preserved null, duplicate, order, mutability and resource-lifetime contracts, the
+Report the preserved null, duplicate, order, mutability, termination and resource-lifetime contracts, the
 smallest justified rewrite (or decision to keep the loop), and tests/measurements actually run.
 Do not infer a performance improvement from shorter syntax.
 
@@ -132,4 +141,5 @@ Do not infer a performance improvement from shorter syntax.
   on real data, or when deciding between `reduce` and `collect`.
 - [Parallel streams and gatherers](references/parallel-and-gatherers.md) — read before adding
   `parallel()`, when a parallel pipeline is slower or is starving the common pool, or when a
-  pipeline needs windowing, running state or bounded concurrency per element.
+  pipeline needs windowing, running state or bounded concurrency per element. Also read it when
+  a downstream limit is being used to claim bounded work or termination.

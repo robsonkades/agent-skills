@@ -99,6 +99,9 @@ constraints that change the choice. Missing measurements leave a benefit claim u
   Validate output and completed measurements before claiming a gain.
 - Test tail handling with array lengths that are not multiples of the lane count, including
   lengths shorter than one full vector.
+- Indexed gather/add/scatter is not a histogram increment when active lanes repeat a destination.
+  Establish uniqueness within each vector batch or handle conflicting updates explicitly;
+  a tail mask does not combine collisions. See `references/vector-api-recipes.md`.
 - Use `fma` when single-rounding fused semantics are desired; do not substitute it for
   `mul().add()` when bitwise compatibility or the scalar operation order is the contract.
   Throughput depends on lowering, execution ports, dependencies and memory behavior.

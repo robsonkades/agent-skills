@@ -134,6 +134,9 @@ asType-style casts, boxing/unboxing and widening; `withInvokeExactBehavior()` re
 access-mode descriptor. Coordinates, variable type and return type must satisfy the chosen
 invocation behavior; failures can be `WrongMethodTypeException`, `ClassCastException`,
 or `UnsupportedOperationException`. Check `isAccessModeSupported` when building generic adapters.
+Inspect `varType()`, `coordinateTypes()` and `accessModeType(mode)` on the actual handle;
+lookup can narrow a receiver type. Use the access-mode reference for dynamic invocation and
+lookup authority rather than treating access-mode methods as ordinary reflective methods.
 Support does not validate actual coordinates: backing storage, alignment, bounds and access rights
 can still reject an invocation. In particular, JDK 23 changed byte-array and heap-buffer view
 support; consult the access-mode reference before reusing an older protocol. Do not fall back to

@@ -19,8 +19,9 @@ description: >
 ## Purpose
 
 Stop a design being selected by name similarity. Most of the twenty-three patterns have at least
-one neighbour with the same structure and a different intent, and the difference is always
-behavioural — who knows whom, who decides, what the caller believes it is holding.
+one neighbour with the same structure and a different intent. Distinguish them through collaboration
+contracts — who knows whom, who decides, what the caller believes it is holding — and documented
+constraints. A matching call trace alone may not reveal the intended role or axis of change.
 
 Naming is useful when it communicates a contract: a protection proxy calls for a bypass review,
 while a mediator calls for inspection of participant coordination rules. The label alone proves
@@ -33,6 +34,9 @@ delegation, transitions, failure paths and ownership; one class can serve multip
 Inspect ordinary consumer calls, an edge/failure path and public extension contracts to distinguish roles.
 Keep useful established API names; if intent is still unknown, state the missing evidence rather
 than requiring a rewrite or an exclusive label.
+A field and forwarding call alone establish no GoF role. If neither candidate's responsibility is
+present, ordinary delegation is a valid description; if callers or contracts are missing, report a
+provisional classification instead of asserting either a pattern or its absence.
 Examples are partial Java 17 sketches with domain types/imports/wiring omitted. Inspect the
 project release and actual framework APIs; classification does not authorize dependency upgrades.
 
@@ -101,7 +105,8 @@ Composite vs Decorator
 
 Visitor vs Iterator
     Iterator supplies the elements; Visitor supplies the operation.
-    A Visitor usually needs a traversal; an Iterator needs no operation.
+    Classical Visitor uses element-specific dispatch, usually accept/visit;
+    traversal can separately use an Iterator. A callback name alone proves neither.
 
 Bridge vs Strategy
     Independent abstraction/implementation evolution → Bridge.

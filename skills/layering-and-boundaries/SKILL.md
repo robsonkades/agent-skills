@@ -41,11 +41,13 @@ service interface and its single implementation.
    is a reason to inspect its cost, not proof that these protections are unnecessary.
    Compare retaining the current structure with the smallest useful adjustment and any
    materially different style justified by those drivers.
-3. **Fix the dependency direction and write it down.** Direction is the whole substance of
-   a layering decision; without it you have packages, not layers.
+3. **Fix the dependency direction and write it down.** Separate source dependencies from
+   runtime calls through ports. Package names alone do not establish either rule.
 4. **Decide what crosses.** The type that crosses a boundary is part of the boundary's
    contract. Serializing a JPA entity directly can couple the HTTP representation to the
    persistence model and lazy-loading behavior; inspect the actual mapping/serialization.
+   Include data access: a module can depend on another's tables or schema without importing
+   any of its Java classes. Name the data owner and the permitted read/write contract.
 5. **Enforce mechanically using the project's language/build tools.** Module visibility,
    dependency checks or compilation units; the reference's ArchUnit examples are Java-specific.
    Check that forbidden dependencies actually fail; code review alone can miss violations.
@@ -143,6 +145,11 @@ The boundary is between features rather than between technical concerns
   wiki. Prefer compiler and build-time enforcement that covers the intended rule; ArchUnit
   is one option for Java bytecode, not evidence that runtime wiring or business invariants
   are enforced.
+- A clean import graph does not prove module data isolation. Inspect direct SQL, ORM joins,
+  shared schemas and migrations for bypasses of the owning module's contract. A deliberate
+  shared read model or schema can be valid; name its owner, allowed consumers and compatibility
+  obligations rather than requiring a separate database for every module. Foreign writes need
+  an explicit invariant and transaction owner, not merely an allowed repository import.
 
 Deliver the retained or proposed boundary, its protected outcome, allowed dependencies and
 crossing types, concise alternatives/rationale, and validation performed or still needed.
@@ -162,4 +169,5 @@ need only a concise rationale. State what missing evidence would change the reco
   violations visible, ArchUnit and JPMS enforcement with concrete rules, what may cross a
   boundary and in which direction, and the seven recurring leaks (entity in the web layer,
   framework annotations in the domain, transaction demarcation in the wrong place, and the
-  rest). Read when designing the package structure or auditing an existing one.
+  rest), plus data-access crossings that import rules miss. Read when designing the package
+  structure or auditing an existing one.

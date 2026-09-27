@@ -86,6 +86,10 @@ Verify the engine, template mode and output context. Thymeleaf `th:text` escapes
   alone does not make JavaScript, event-handler attributes or dangerous URLs safe.
 - Prefer separate JSON responses. Embedded JSON needs a serializer safe for its exact HTML/
   script context, including `</script>` breakout; ordinary JSON validity is insufficient.
+- If htmx processes the resulting DOM, exclude untrusted `hx-*` and `data-hx-*` behavioral
+  attributes from the HTML allowlist too. Removing scripts alone does not prevent those
+  attributes from initiating requests. `hx-disable` can add isolation, but does not replace
+  sanitization or endpoint authorization.
 
 ## Transform View
 
@@ -188,4 +192,5 @@ Sources: [Fowler Transform View](https://martinfowler.com/eaaCatalog/transformVi
 [Thymeleaf 3.1.2 lazy-value implementation](https://github.com/thymeleaf/thymeleaf/blob/thymeleaf-3.1.2.RELEASE/lib/thymeleaf/src/main/java/org/thymeleaf/context/LazyContextVariable.java),
 [Spring 6.1.14 expression property access](https://github.com/spring-projects/spring-framework/blob/v6.1.14/spring-expression/src/main/java/org/springframework/expression/spel/ast/PropertyOrFieldReference.java),
 [OWASP context encoding and HTML sanitization](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html),
+[htmx security and untrusted attributes](https://htmx.org/docs/#security),
 [Spring 6.1.14 Open EntityManager in View](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/orm/jpa/support/OpenEntityManagerInViewFilter.html).

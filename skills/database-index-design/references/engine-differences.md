@@ -57,6 +57,48 @@ actual clustered key before estimating secondary-index width.
 - SQL Server columnstore, PostgreSQL GIN/GiST/SP-GiST/BRIN, and each engine's full-text facility
   answer different workloads. Select from predicate semantics, not feature-name resemblance.
 
+## Partitioned tables and uniqueness
+
+Separate the logical identity from the physical partitioning key. A unique index on
+`(event_id, event_month)` allows the same `event_id` in different months; it is not global
+uniqueness of `event_id`. Adding a partition column to make DDL succeed can therefore change
+valid data, references and application conflict handling. Inspect every relevant unique key,
+not just the primary key, before proposing a replacement.
+
+- **PostgreSQL 18:** a unique or primary-key constraint on a partitioned table must include
+  all partition-key columns; the partition key cannot contain expressions or function calls
+  for this purpose. Child indexes enforce within their partitions; independent child unique
+  indexes do not enforce an identifier's uniqueness across the parent table.
+- **MySQL 8.4:** every unique key, including the primary key, must include every column used
+  by the partitioning expression. A legal widened key is not evidence that the original
+  uniqueness contract survived.
+- **SQL Server:** a partitioned unique index must include its partitioning column in the key.
+  A nonaligned unique index can be an alternative when the table's partition column is not
+  part of the required identity. Check the actual index's partitioning definition and the
+  partition-switch/maintenance requirements; retaining global uniqueness does not establish
+  that the proposed aligned maintenance plan still works.
+
+If required global uniqueness cannot be enforced by the proposed layout, retain a compatible
+layout or expose the schema-design conflict for resolution. A separately coordinated uniqueness
+mechanism requires its own concurrency, failure and lifecycle design; an uncoordinated application
+check-then-insert is not a substitute for an enforced invariant. This skill does not authorize
+changing identity, partition strategy or conflict semantics to obtain a faster access path.
+
+### Decisive example
+
+These are synthetic contract cases, not executed DDL or performance measurements. Consider a
+proposal to partition a PostgreSQL 18 table by the stored, non-null `event_month` column;
+`event_id` is also non-null. All other schema and workload inputs are unchanged:
+
+| Required contract                                                      | Decision about `UNIQUE (event_id, event_month)`                                                       | Counterexample/check                                                                   |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| IDs may recur in different months but must be unique within each month | Candidate enforces that stated tuple contract; still assess plans, writes and rollout                 | Same ID/month pair must fail; same ID in two months may succeed                        |
+| IDs must be unique across all months                                   | Reject it as the sole enforcement mechanism; preserve global identity and resolve the layout conflict | Same ID in two months would pass this composite constraint but violate the requirement |
+
+If the scope of uniqueness is unknown, inspect constraints, referencing keys and application
+contracts, then ask that specific question if still unresolved. Do not infer a weaker contract
+from current data having no duplicates or from a proposed migration that happens to compile.
+
 ## UUID warning
 
 Time ordering is a property of the value plus the column's comparison semantics. SQL Server
@@ -66,6 +108,9 @@ does not automatically cluster heap rows; its values still affect B-tree localit
 
 ## Sources
 
+- [PostgreSQL 18 partitioned uniqueness restrictions](https://www.postgresql.org/docs/18/ddl-partitioning.html#DDL-PARTITIONING-DECLARATIVE-LIMITATIONS)
+- [MySQL 8.4 partitioning and unique keys](https://dev.mysql.com/doc/refman/8.4/en/partitioning-limitations-partitioning-keys-unique-keys.html)
+- [SQL Server index partitioning and alignment](https://learn.microsoft.com/en-us/sql/relational-databases/partitions/partitioned-tables-and-indexes?view=sql-server-ver17)
 - [PostgreSQL 18 CREATE INDEX, INCLUDE and uniqueness](https://www.postgresql.org/docs/18/sql-createindex.html)
 - [PostgreSQL 18 HOT eligibility](https://www.postgresql.org/docs/18/storage-hot.html)
 - [PostgreSQL 18 CLUSTER](https://www.postgresql.org/docs/18/sql-cluster.html) — explicit physical

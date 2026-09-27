@@ -32,6 +32,10 @@ recovery, retry and redundancy claims reviewable.
 
 ## Workflow
 
+Match the depth to the requested diagnosis, design or review. A narrow outcome or arithmetic
+question can finish with the relevant card fields inline, the supporting evidence and its limits.
+Reuse adequate models and tests; preserve findings-only scope and an already sound design.
+
 1. **Inspect the contract and write or update the relevant boundary's fault-model card.**
    Start with the requested operation, its success/degraded-success criteria, existing model,
    client/driver behavior and deployment evidence. Reuse established facts; ask only for gaps
@@ -57,10 +61,12 @@ recovery, retry and redundancy claims reviewable.
    deploy, write what a specified fault can affect. Replicas sharing a domain fail together for that
    cause; they may still tolerate independent process faults.
 5. **Do conditional availability arithmetic** on the request path before promising a
-   number. Required dependencies in series multiply availability only when their events are
+   number. Label inputs as observations, modeling assumptions or objectives; an SLA/SLO target
+   is not an observed probability or an availability ceiling. Required dependencies in series multiply availability only when their events are
    independent and their SLI windows and success definitions align; genuinely independent
    redundant alternatives multiply _unavailability_. Correlated and conditional failure
-   needs a measured joint distribution or an explicit common-cause model. See
+   needs a measured joint distribution or an explicit common-cause model for a point estimate.
+   Without dependence evidence, use bounds when they can resolve the decision. See
    `references/failure-domains-and-arithmetic.md`.
 6. **Walk the eight fallacies as a checklist** — reliable network, zero latency, infinite
    bandwidth, secure network, unchanging topology, one administrator, zero transport cost,
@@ -74,8 +80,9 @@ outcomes. The conceptual Java type uses sealed classes/records (Java 17); exhaus
 switch without preview requires Java 21. These examples do not set a platform requirement;
 preserve the project's target. Deliver the relevant card, evidence versus assumptions, outcome
 and recovery policies, and a recommendation compared with retaining the current design and
-any materially relevant alternative. Name what evidence would change it. Include a focused
-fault-injection case with an observable invariant; distinguish proposed checks from executed
+any materially relevant alternative. Name what evidence would change it. When a recovery or
+tolerance claim needs experimental evidence, include a focused fault-injection case with an
+observable invariant; distinguish proposed checks from executed
 results. Missing protocol or topology evidence means a conditional claim, not a replica count
 or availability promise.
 

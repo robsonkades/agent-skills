@@ -74,6 +74,23 @@ If one of these contracts cannot be preserved, retain the identity representatio
 experiment to an internal representation behind an unchanged boundary. Source-backed rejection
 of a migration is useful even when an EA runtime is unavailable; an unrun workaround is not validated.
 
+### Storage-shape hypotheses
+
+The current JEP 401 distinguishes these cases; they explain what to compare, not measured savings:
+
+- A concrete value-class array lets the VM know which value representation its slots permit.
+  `Object[]` must also accommodate unrelated identity objects, even when today's contents are values.
+- An erased generic field such as `T` in `Box<T>` commonly has runtime type `Object`.
+  `Box<Integer>` is not evidence of specialized or packed storage.
+- Flattened reference reads/writes must remain atomic. Wide values can restrict flattening in
+  mutable storage; immutable value-object fields give the VM more freedom. This does not replace
+  synchronization needed for mutable containers or mutable referents.
+
+If consumers require heterogeneous elements or the existing generic API, preserve that contract
+and measure the actual boundary. If homogeneous storage is permitted, compare a typed-array
+alternative on the pinned build. Include conversion/materialization costs and retained footprint;
+do not infer layout from type syntax or benchmark only the already-converted representation.
+
 ## Experiment record
 
 ```text

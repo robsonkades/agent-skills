@@ -139,6 +139,16 @@ THEN define synchronization, confinement or immutable snapshots. Stateless strat
      are easiest to share, but stateful incremental algorithms are valid when lifetime
      and thread-safety are part of the contract.
 
+IF strategy state belongs to one operation
+THEN select a factory or explicitly confined instance; a registry of instances reuses them.
+     Define who creates and releases owned resources, including asynchronous completion.
+     A lambda capture or dependency-injection scope name does not establish this lifetime.
+
+IF a strategy or its configuration can change during an operation
+THEN define the consistency boundary. Where one coherent policy version is required, capture
+     the selected implementation and configuration together for that operation. Atomic reference
+     replacement alone neither freezes collaborators nor makes old resources safe to close.
+
 IF selection is by a chain of if-else on a code
 THEN compare an exhaustive switch for a closed set with a validated map/registry for
      open contributions. Define unknown/default semantics explicitly.
@@ -211,7 +221,8 @@ plus focused checks. Keep performance benefits conditional on measurements.
 - [Concept, mechanism and selection](references/concept-mechanism-selection.md) — the three levels
   in detail; lambda against named type with the criteria that decide; selection mechanisms
   compared (map, sealed switch, injected list, `ServiceLoader`) with their failure modes; the
-  constants-are-configuration test; and the shared contract test. Read when choosing a mechanism.
+  constants-are-configuration test; state lifetime and replacement; and the shared contract test.
+  Read when choosing a mechanism or changing strategy lifetime/configuration.
 - [Worked example](references/worked-example.md) — shipping cost calculation taken from a growing
   if-else to lambdas, then to named strategies when logging, metrics and a `supports` check were
   needed, with unknown-method handling, an illustrative shared-state race, and the

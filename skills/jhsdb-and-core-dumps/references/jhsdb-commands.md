@@ -33,6 +33,22 @@ exists when the core contains the needed heap/metadata and SA can traverse it; `
 compresses it inline. Validate conversion completion and the resulting HPROF in MAT
 (heap-dump-analysis).
 
+Check collector support per operation. In OpenJDK 25.0.3, the SA has a ZGC heap-summary path,
+but `ZCollectedHeap.liveRegionsIterate` is explicitly unimplemented. Object traversal for
+`--histo`/`--binaryheap` is therefore not available through that path even with matching
+binaries. This is a tool capability limit, not proof of core corruption. Other builds need
+their own check; a mode appearing in `--help` does not establish support for every collector.
+Preserve the core and use available hs_err/native or supported SA evidence. For future Java-heap
+evidence, consider an authorized JVM-produced heap dump while the process can cooperate;
+do not swap in an arbitrary newer SA or repeat invasive live attachment to bypass this limit.
+
+A parseable HPROF is not proof that every object was recovered. In this build, `ObjectHeap`
+iteration can stop scanning a region after certain address/type decoding failures and continue
+with other regions. Retain tool output, conversion settings and artifact provenance; inspect
+warnings and compare plausible recovered classes/counts with available evidence from the same
+capture. HPROF file size need not equal heap occupancy. Report partial or unestablished coverage
+to heap-dump-analysis before using missing objects or retained sizes to rule out a hypothesis.
+
 For every `--pid` form, treat SA attach as an exclusive invasive operation: it suspends the
 target and the tool warns that detaching can leave the process hung. Use an authorized,
 capacity-safe isolation plan, prevent competing debugger use and prepare recovery. A client
@@ -245,5 +261,7 @@ secrets.
 - [JDK 25 jhsdb](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jhsdb.html) and target `clhsdb help` — supported modes and invasive live attachment.
 - [OpenJDK 25.0.3 Linux SA path mapping](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/linux/native/libsaproc/libproc_impl.c) — `pathmap_open`, `SA_ALTROOT` and suffix fallback; implementation-specific behavior.
 - [OpenJDK 25.0.3 Linux core reader](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/linux/native/libsaproc/ps_core.c) — direct core/executable opens and mapped loader/shared-library reads.
+- [OpenJDK 25.0.3 ZCollectedHeap](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/share/classes/sun/jvm/hotspot/gc/z/ZCollectedHeap.java) and [HeapSummary](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/share/classes/sun/jvm/hotspot/tools/HeapSummary.java) — operation-specific ZGC support.
+- [OpenJDK 25.0.3 ObjectHeap](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/share/classes/sun/jvm/hotspot/oops/ObjectHeap.java) and [AbstractHeapGraphWriter](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3-ga/src/jdk.hotspot.agent/share/classes/sun/jvm/hotspot/utilities/AbstractHeapGraphWriter.java) — region iteration and exporter call path; output existence alone is not a completeness check.
 - [Linux core(5)](https://man7.org/linux/man-pages/man5/core.5.html) — routing, namespaces, limits and omitted mappings.
 - [systemd syntax source](https://github.com/systemd/systemd/blob/v257/man/systemd.syntax.xml) — full comment lines and continuation handling.

@@ -96,10 +96,11 @@ Traversal must be parallel
 ## Decision rules
 
 ```text
-IF the traversal is over a resource — a file, a result set, a socket
-THEN the Stream is AutoCloseable and MUST be closed; wrap it in
-     try-with-resources and document it. A leaked cursor holds a
-     connection until the pool is exhausted.
+IF the traversal owns a resource — a file, a result set, a socket
+THEN expose and document closing, including early exit and failure.
+     A resource-backed Stream must be closed with try-with-resources;
+     plain Iterator/Iterable have no close contract. Keep an enclosing
+     owner scope or expose an explicitly closeable pull cursor.
 
 IF a collection is mutated during traversal
 THEN fail-fast is best effort, not a guarantee: ConcurrentModification-
@@ -114,6 +115,8 @@ THEN inspect its iterator contract: ConcurrentHashMap is weakly consistent,
 IF elements must be removed while traversing
 THEN use Iterator.remove() when supported, or a supported removeIf() outside
      the traversal; concurrent collections may explicitly permit other mutation.
+     remove() targets the last element returned by next(), once per next();
+     a prefetching wrapper must not blindly delegate removal to its source.
 
 IF a custom Spliterator is written
 THEN its characteristics must be true. Claiming SIZED or DISTINCT when
@@ -161,7 +164,9 @@ Two-handed traversal (merge, diff)   Iterator for explicit control; Stream.itera
   fail-fast (best-effort interference detection), weakly consistent (no
   `ConcurrentModificationException`, may reflect later changes), and structural snapshot
   (`CopyOnWriteArrayList`, with copying costs on updates). Inspect the concrete contract;
-  snapshot references do not freeze mutable elements.
+  snapshot references do not freeze mutable elements. A Collections synchronized wrapper
+  requires its documented external lock across traversal; synchronized individual calls
+  do not protect the whole iteration.
 - **Distribution.** Remote iteration is pagination, and the interface can hide latency per page,
   server-side cursor resources needing release when present, and consistency —
   with offset pagination, rows inserted or deleted mid-walk can cause items to be skipped or repeated.
@@ -176,8 +181,8 @@ Two-handed traversal (merge, diff)   Iterator for explicit control; Stream.itera
   verify it only on a measured hot path (`jit-inlining-and-escape-analysis`).
 - **Testing.** The cases that break: empty sequence, single element, exhaustion (`next()` after
   `hasNext()` returns false must throw `NoSuchElementException`), `hasNext()` called twice with no
-  `next()` between, and — for resource-backed traversals — that abandoning the stream halfway
-  still closes it. For a custom `Spliterator`, assert that sequential and parallel traversals
+  `next()` between, supported removal before/after next and after lookahead, and — for
+  resource-backed traversals — cleanup on early exit and callback failure. For a custom `Spliterator`, assert that sequential and parallel traversals
   produce the same result, and verify claimed size/comparator and split coverage where supported.
   An unsplittable source's equality check does not test parallel decomposition.
 

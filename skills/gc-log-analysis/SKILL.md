@@ -46,6 +46,9 @@ the missing interval, so a bounded baseline belongs in the service template.
 6. **Reconcile with the observed pause interval.** G1 pause timing excludes
    time-to-safepoint; correlate the safepoint and request intervals, not just equal timestamps.
    Use `pause-attribution` for the missing time; overlap alone does not establish causality.
+   For concurrent collectors, distinguish cycle duration, global pauses and per-thread
+   allocation stalls; a short global pause does not exclude GC-related thread delay.
+   See `references/cause-field.md` before interpreting ZGC stall or cycle summaries.
 7. **If you need to know how much is allocated and how much survives**, the log can
    provide bounded proxies: Eden refill and old-region growth come from the `Eden regions`
    and `Old regions`

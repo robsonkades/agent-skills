@@ -20,6 +20,30 @@ Do not add values from different populations or sampling engines. A recording pr
 async-profiler can use legacy JFR event names for its sampled data; identify the producer
 before treating those events as exhaustive HotSpot events.
 
+### Align bytes with completed work
+
+A process counter delta measures heap bytes during a time interval, not bytes owned by
+the requests that happen to complete in it. Record started/completed work, retries,
+failures and in-flight work at both boundaries when traffic is not steady. Bytes per
+successful response can be a useful service-efficiency metric, but includes failed work
+and must not be relabeled as the allocation cost of a successful request.
+
+For example, suppose 1,000 requests each allocate 100,000 B before waiting on I/O, with no
+other allocation. The 10-second window contains 100 MB of allocation (decimal units).
+If all finish, the ratio is 100,000 B/completion. If only 400 finish and 600 remain waiting,
+the ratio is 250,000 B/completion despite identical request allocation. That observation
+does not identify an allocation regression. A later drain window can show the opposite
+bias, with completions for bytes allocated earlier.
+
+Prefer a representative steady window with comparable mix and in-flight population. For
+a controlled batch, start with no prior work and measure the isolated cohort through
+completion, including delegated work and declared retry/failure accounting. If that is
+unavailable, retain bytes/s and the explicitly labeled interval ratio, state the boundary
+uncertainty, and gather lifecycle evidence before attributing a change to code. Never
+silently divide by zero completions or discard failed work to improve the reported result.
+This is measurement-population arithmetic, not a claim that the counter is exact; see the
+[ThreadMXBean approximation contract](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/ThreadMXBean.html).
+
 ## Bounded capture examples
 
 These shell examples require an accessible HotSpot process, compatible tools, permission to

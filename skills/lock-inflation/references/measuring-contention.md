@@ -77,6 +77,24 @@ have committed its duration event. Report that unfinished population using threa
 and any justified observed lower bounds; a completed-event summary alone cannot rule out a long
 wait. Do not turn a missing event into zero duration or an invented completed acquisition.
 
+### Monitor identity and aggregation
+
+Grouping by `monitorClass` can combine unrelated instances and critical sections. A hot class
+does not establish one globally contended lock. Within a bounded window, correlate the actual
+acquisition sites, thread roles, key distribution and available instance identity before choosing
+global-lock redesign or partitioning. If only class-level totals are available, keep instance
+attribution unresolved.
+
+Validate identity representation before joining sources or event types. In OpenJDK 25 GA,
+`post_monitor_wait_event` records an `ObjectMonitor*` as the `JavaMonitorWait` address, while
+`post_monitor_deflate_event` records the object's heap address (or zero after collection).
+The shared-looking field name does not establish a common key. `LockInfo.getIdentityHashCode()`
+instead exposes `System.identityHashCode`, not a native or heap address; it can also collide.
+Inspect the target schema and emission path, and do not equate any of these values merely because
+they print in hexadecimal. Addresses can be reused and object locations can change; correlate
+within a justified lifecycle/window using other evidence, rather than inventing a permanent
+cross-recording object ID.
+
 ### Wait event versus wait-call latency
 
 The `Object.wait` contract requires restored monitor ownership before return or an interruption
@@ -137,4 +155,5 @@ Report inconclusive if event opportunity/threshold or workload drift prevents di
 - [Java 25 Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)>) — reacquisition before return or interruption exception.
 - [JDK `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [Java monitoring API `ThreadInfo`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/ThreadInfo.html)
+- [Java monitoring API `LockInfo`](https://docs.oracle.com/en/java/javase/25/docs/api/java.management/java/lang/management/LockInfo.html) — class and identity-hash representation, distinct from an address.
 - [JEP 444 thread observability](https://openjdk.org/jeps/444)

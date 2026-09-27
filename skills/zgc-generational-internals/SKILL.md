@@ -89,7 +89,7 @@ and effective collector support; JDK 25 HotSpot is the source baseline, not auth
 - An object's generation is represented in `ZPage` metadata on the inspected JDK 25 source,
   not inferred from a simple generation color in each oop. Pointer metadata and barrier masks
   evolve; quote exact bits only from the target source/build.
-- The remembered set is a **bitmap** (`ZBitMap`, `zRememberedSet.hpp`) with one bit per
+- The remembered set is a **bitmap** (`ZRememberedSet` in `zRememberedSet.hpp`) with one bit per
   potential object-field address — not G1's byte-per-card array. Do not describe it as a
   card table.
 - Legacy ZGC multi-mapping and JEP 490's removal of non-generational mode are distinct

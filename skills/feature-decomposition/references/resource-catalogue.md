@@ -15,6 +15,7 @@ RES-03 Dispatch state column and migration
       Files         src/main/resources/db/migration/V42__order_dispatch_state.sql
                     src/main/java/com/acme/order/Order.java
       Traces to     IMP-08 (schema), SC-02
+      Acceptance    <accepted TC-* or source requiring the existing-row LEGACY behavior>
       Validation    Migration applies to a copy of the current schema; existing rows
                     read back as LEGACY; the entity maps the column.
       Decisions     ED-03 (default value), ADR-001
@@ -33,6 +34,16 @@ For shared work, identify ownership and files that require coordination. Two fie
   existing resource; a later-written check can still be valid when it tests that obligation.
 - **Depends on** — necessary inputs and their readiness criteria. Shared-file conflicts and
   release/validation prerequisites also constrain safe execution; label them explicitly.
+
+Link acceptance to its existing criterion or source; a validation method is not a new acceptance
+decision. Review coverage in both directions: each delivery resource has a selected scope reason,
+and each applicable accepted criterion has a resource or shared check that will establish it.
+For a criterion spanning child features, retain its parent-level meaning and name who owns the
+combined check. For example, two independently useful export modes may each pass happy-path tests
+while neither establishes the accepted requirement that every export enforces tenant access.
+Map that requirement to the relevant checks across both modes; do not weaken it to the first mode
+tested or create another child feature merely to hold its tests. Missing criteria return to the
+accountable stage while unaffected decomposition proceeds.
 
 ## Resource kinds
 
@@ -101,8 +112,10 @@ that obligation or reopen unrelated acceptance already established by sufficient
 Preserve IDs, criterion links and recorded status/evidence; the `TODO` example applies to new,
 unstarted work. Renaming or regrouping a resource does not make it new. For a split or merge,
 record the old-to-new mapping and reason without reusing an ID for a different obligation or
-deleting history. Update affected dependencies, acceptance and plan/progress links in their existing
-records. Mark evidence stale only where changed scope or contracts invalidate it; do not reset
+deleting history. Update affected dependencies, links to accepted criteria and plan/progress links
+in their existing records. A change to criterion meaning or selected scope requires the owning
+stage's authorized baseline revision; regrouping alone does not authorize it. Mark evidence stale
+only where changed scope or contracts invalidate it; do not reset
 unaffected completed work or copy a parent's `DONE` status onto unverified new children.
 
 ## Child features, when they are used

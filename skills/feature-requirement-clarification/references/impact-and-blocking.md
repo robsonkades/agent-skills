@@ -76,10 +76,38 @@ Q  Should we use Lombok for the new DTOs?
 An answer that arrives partially — "probably async, but check with the platform team" — is not
 an answer. Record it as still blocking, with the owner named.
 
+## When an answer requires evidence
+
+First identify what is missing. Stakeholder expectations establish desired outcomes; technical
+verification needs evidence against the requirement, such as inspection, analysis or testing
+([NASA: stakeholder expectations](https://www.nasa.gov/reference/4-1-stakeholder-expectations-definition/),
+[verification methods](https://www.nasa.gov/reference/5-3-product-verification/)). These distinguish
+the evidence needed; they do not impose another lifecycle or approval process.
+
+- "The report must be fast" lacks a usable target. Reuse an applicable SLO or ask the outcome owner
+  what delay and workload matter; do not invent a numeric acceptance threshold from a benchmark.
+- The same report with an accepted p95 target of 500 ms under a specified workload has a settled
+  target. If current capacity is unknown, seek applicable measurements or a bounded check instead
+  of asking the owner to confirm that the database can handle it. Preserve the target if an
+  experiment fails; changing it is a separate decision with its own authority.
+
+When existing evidence cannot resolve a material feasibility claim, hand off to
+`feature-feasibility-experiment` with the unknown, affected decision, accepted requirement and
+constraints, evidence already checked, and what supported, refuted or inconclusive results change.
+Expect a scoped result with evidence and limitations, or a concrete evidence plan if execution is
+not requested or available. If that skill is unavailable, report the same minimal next evidence
+action and unresolved claim without inventing a result. Experiment design and execution remain
+within the authorized task; a request only to clarify requirements ends with this handoff.
+
+Missing tools, access or representative inputs leave the technical claim unresolved. Stop only
+the commitment that needs that claim; continue authorized independent analysis. Do not run a PoC
+to settle a missing business decision, or label an option infeasible merely because it was not tested.
+
 ## Handling an unanswerable question
 
 Sometimes nobody knows. Then:
 
+- Separate missing intent or authority from missing empirical evidence using the route above.
 - Identify the accountable role and the phase/resource that cannot proceed.
 - Prefer the reversible option only within existing authorization, including routine choices
   implied by the authorized task. Reversibility alone does not authorize a new contract or scope.

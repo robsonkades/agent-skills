@@ -4,6 +4,33 @@ Parameters are named here by the role they play. Resilience4j is the usual Java
 implementation and its property names are given alongside; check the spelling against the
 version in your build rather than trusting a snippet.
 
+## Establish which breaker observes the call
+
+Before changing thresholds, inspect construction, registry lookup, reset/eviction events and
+the call site. Reuse a breaker across calls in its intended failure domain. Repeated
+`CircuitBreaker.of(name, config)` calls create separate instances even with the same name;
+a long-lived registry's lookup reuses the named instance. Creating the registry per request
+also loses history. Conversely, do not solve this by sharing one global breaker across
+unrelated dependencies. See the tagged [registry implementation](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/InMemoryCircuitBreakerRegistry.java)
+and [instance factories](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/CircuitBreaker.java).
+
+Check the active mode, not just configuration defaults. In Resilience4j 2.3.0,
+`METRICS_ONLY` records outcomes but never rejects on a threshold; `DISABLED` admits calls
+without recording their outcomes; `FORCED_OPEN` rejects calls and does not recover after
+the ordinary open wait. These modes require an explicit transition/reset to leave them.
+Metrics-only observation can help assess a proposed predicate/window, but does not provide
+protection or prove the recovery path. Do not remove an intentional operator override merely
+because it explains the symptom; establish the intended operating mode first. See the
+tagged [special states](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java).
+
+For proxy-based Spring AOP, a same-object call such as `this.fetch()` bypasses the proxy's
+advice even when `fetch` has the annotation. Check the actual interception mechanism; this
+restriction does not describe AspectJ weaving or explicit programmatic decoration. Exercise
+the application's real entry path and observe both breaker outcomes and stub invocations.
+Zero recorded calls can mean bypass, ignored outcomes, replacement/reset or disabled mode;
+it is not by itself evidence that the minimum is too large. See
+[Spring proxy semantics](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).
+
 ## Parameters and the failure each wrong value produces
 
 | Role                         | Resilience4j key                        | Too low                                                       | Too high                                                                  |

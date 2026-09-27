@@ -44,6 +44,30 @@ the relay's retry loop alone does not close the latter.
 **Where it fails:** unbounded aggregates; rules that leaked into the service; reads forced
 through the write model.
 
+### When the invariant spans independently versioned objects
+
+Unit of Work coordinates persistence and per-entity optimistic checks detect conflicts on
+the revisions actually validated. Their combination is not proof that a predicate across
+aggregates is protected. Consider two on-call staff rows and the rule "at least one remains
+on call". Each transaction counts two staff on call, then switches only its own row off using
+that row's expected version. Under snapshot isolation without shared predicate validation,
+both disjoint updates can commit: both local versions were valid, but no staff remain on call.
+
+If each row instead has only independent local rules, adequate per-row validation may be enough.
+For the shared rule, compare a database-enforced constraint when it can express the invariant,
+authoritative shared validation/locking in which every writer participates, or a serializable
+unit with supported retry handling. The database/provider and the timing of reads and validation
+matter. Do not simply move both rows into one object, add an annotation, or retry the last SQL
+statement and declare the composition correct. Retrying must re-evaluate the decision from fresh
+state and account for effects outside the transaction. If temporary violation is acceptable,
+state that weaker business contract and its recovery obligation instead of silently assuming it.
+
+Pass the invariant, read/write set, writer paths, engine/isolation level and retry/effect contract
+to `enterprise-transactions` for the concrete coordination design. Verify a schedule where both
+transactions decide before either commits, including bulk/external writers. If that specialist
+or target-engine verification is unavailable, keep the guarantee conditional and state the
+discriminating test; a green sequential test does not prove this composition safe.
+
 ## Composition 2 — transaction script
 
 ```text
@@ -70,7 +94,7 @@ not simply a business term appearing in three files.
 ```text
 Client
   └── Remote Facade                  one coarse operation per interaction
-      ├── DTO in                     validated, versioned, tolerant
+      ├── DTO in                     validated; explicit version/unknown-field policy
       ├── Retry contract             repeat-safe effects or authoritative deduplication
       ├── Application service        orchestration; transaction where required
       │     └── Domain / scripts
@@ -225,6 +249,11 @@ The [optimistic](https://martinfowler.com/eaaCatalog/optimisticOfflineLock.html)
 definitions describe coordination responsibilities; expiry and a version column are
 implementation choices. [Authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html)
 supports least privilege and checks on every access path, independently of pattern names.
+For the cross-aggregate case, [PostgreSQL 18 transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html)
+distinguishes repeatable snapshots from serializable execution and requires retry handling;
+[Jakarta Persistence 3.2 entity-version checks](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2.html#a2059)
+defines entity-version checks. Match the deployed engine/provider rather than assuming these
+mechanisms are identical across stacks.
 
 ## Explaining an existing architecture
 

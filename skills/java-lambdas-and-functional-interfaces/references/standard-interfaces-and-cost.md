@@ -23,6 +23,30 @@ Everything else in `java.util.function` is one of these with a prefix:
 Learning the naming scheme is the point: it means you can predict the interface name instead
 of defining a new one.
 
+## A matching shape can discard a required result
+
+Java permits a value-returning method reference, or a lambda with a statement-expression body,
+to implement a void-returning target. This Java 8+ snippet (imports/enclosing method omitted)
+compiles in both forms, but the caller gets different information:
+
+```java
+BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
+Consumer<String> ignoreAdmission = queue::offer;
+Predicate<String> tryAdmission = queue::offer;
+```
+
+`ignoreAdmission.accept(value)` loses the `false` result when the queue is full. With
+`tryAdmission.test(value)`, the caller can apply its rejection policy, but must actually inspect
+the result. Discarding can be correct for an explicitly best-effort operation; it is incorrect
+when callers require admission confirmation. At a fixed `Consumer` boundary, handle rejection
+inside the adapter according to the existing failure policy rather than breaking its signature.
+
+Apply the same check to methods returning a resource or a future/stage: adapting them to
+`Runnable` does not close the resource or observe asynchronous completion/failure. Check the
+caller's observation/ownership path. `Consumer.andThen` sequences invocations and propagates
+synchronous exceptions; it does not await work represented by a discarded stage. Keep an
+appropriate value-returning contract when that completion must be composed.
+
 ## When a custom functional interface is justified
 
 Define one when at least one of these holds:
@@ -120,3 +144,6 @@ For target-type limits and inline execution, see
 For primitive boundaries, see [JLS boxing](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.7),
 [unboxing and null](https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.8) and
 [Function.identity](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/function/Function.html#identity()>).
+For discarded results, see [JLS expression results](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.1),
+[method-reference target types](https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.13.2)
+and [BlockingQueue.offer](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/BlockingQueue.html#offer(E)>).

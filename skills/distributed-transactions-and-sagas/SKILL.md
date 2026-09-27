@@ -13,7 +13,7 @@ description: >
 ## Purpose
 
 Decide how a business operation spanning several owners ends in a consistent state when no
-transaction covers it, then implement that mechanism so it survives a crash mid-flight. The
+transaction covers it. When implementation is requested, make recovery survive a crash mid-flight. The
 choice includes removing the distribution, a transaction manager over enlisted resources,
 durable message intent and sagas; compare their invariant and recovery models.
 
@@ -34,6 +34,9 @@ reservation may expire or a refund window closes; keep the recommendation condit
 investigating those facts. A working local transaction or supported XA arrangement may already
 satisfy the contract. Stop mechanism selection when the required outcomes and recovery owner are
 supported; do not introduce a saga merely to anticipate possible future distribution.
+Inspect any existing durable workflow engine's history, retry, versioning and participant contracts
+before building a custom runner. The Java sketches illustrate obligations, not a required framework.
+For a findings-only review, report corrections and their verification without changing the workflow.
 
 1. **Enumerate the writes and their owners.** For each: which store or service, is it
    reversible, and what an observer sees between it and the next write.
@@ -45,7 +48,9 @@ supported; do not introduce a saga merely to anticipate possible future distribu
    recovery ownership usually make it a poor cross-service boundary.
 4. **Classify and order steps.** Compensatable steps precede the pivot; after the first
    non-compensatable committed pivot, only forward-retriable steps may remain. The pivot need
-   not be last, but nothing after it may require backward recovery.
+   not be last, but nothing after it may require backward recovery. Establish that reservations
+   and eligibility cannot expire or be consumed in a way that makes the promised forward outcome
+   impossible; a status check before a remote call does not close that race.
 5. **Persist the saga state before invoking each step and the outcome after.** A position
    that exists only in a call stack, a `CompletableFuture` chain or an in-memory map is lost
    on restart, silently. Preserve the plan definition and stable step identities across
@@ -72,8 +77,8 @@ Use a saga when:
   reaches every store
 - every pre-pivot step has a business-meaningful compensation, the pivot has a resolvable
   outcome, and every post-pivot step can be retried/repaired forward
-- the business tolerates a stated window — seconds or minutes — in which the operation is
-  partially applied and visible
+- the business accepts a stated pending duration and visible intermediate states, with an
+  expiry/escalation policy when progress exceeds that budget
 - the operation is long relative to a lock hold time: human approval, a batch, a third-party
   call with a multi-second p99
 Avoid a saga when:
@@ -132,7 +137,13 @@ Prefer the transactional outbox when the only non-database write is "publish a m
 - **The pivot defines recovery direction.** Before pivot commit, terminal rejection triggers
   backward compensation of completed compensatable steps. After pivot commit, continue
   forward; do not compensate earlier steps merely because a later forward-only step is
-  temporarily failing.
+  temporarily failing. A business deadline expiring does not prove an in-flight pivot failed;
+  resolve its outcome before releasing the resources needed to finish it.
+- **Stable command keys have a retention contract.** Participant deduplication, status/effect
+  records and cancellation tombstones must support the allowed workflow, replay and repair horizon.
+  Before resuming old work, check that contract; reusing an expired key can create a new effect.
+  If the original outcome cannot be established, keep it unresolved and use the agreed repair
+  path. Read the saga reference for expiry cases; `idempotency` owns the participant mechanism.
 - **Nothing automatically compensates a failed compensation.** Retry within an explicit
   time/attempt policy, retain durable status, page or queue manual repair, and reconcile.
   “Forever” may violate deadlines, retention or business policy; silent abandonment is never

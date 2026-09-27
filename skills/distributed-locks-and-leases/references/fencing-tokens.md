@@ -108,8 +108,11 @@ if (updated == 0) {
 }
 ```
 
-Release is always owner-conditional, making a stale release a no-op. It is safe to attempt
-that conditional release in `finally`; a bare delete is not.
+Release is always owner-conditional, making a stale release a no-op. For release in `finally`,
+the scope must cover the completion boundary the lock is intended to exclude. Method-level
+cleanup can precede transaction commit or asynchronous completion;
+see the [release boundary](lock-decision.md#release-follows-protected-completion). A bare delete
+is not owner-safe, regardless of when it runs.
 
 A lost claim response can make a retry return zero because the fence already equals the token.
 Reconcile that outcome under the ownership protocol or abort safely; do not infer another owner

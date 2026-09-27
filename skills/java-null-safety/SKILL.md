@@ -86,11 +86,17 @@ or a construction path is unavailable, report the gap rather than claiming null 
 - Primitive DTO fields cannot represent “missing” separately from zero/false when a binder applies
   Java defaults. Use boxed/raw DTO fields, required-creator semantics or presence tracking at the
   wire boundary, then convert to primitives after validation.
+- Check implicit unboxing at primitive assignments, arithmetic, Boolean conditions and mixed
+  primitive/boxed conditional expressions. A boxed return type does not stop an earlier unboxing
+  NPE. Decide whether null must survive, select a domain-approved default, or reject it before
+  conversion; replacing unknown with zero/false can silently change the contract. The conditional
+  example in `references/nullability-contracts.md` shows when explicit branches preserve null.
 
 ## NPE diagnosis
 
 1. Read the helpful-NPE expression and full stack, but treat the dereference as the symptom—not
-   necessarily the producer.
+   necessarily the producer. An implicit `intValue()`/`booleanValue()` call points to unboxing;
+   inspect expression operand types even when the destination is boxed or annotated nullable.
 2. Trace assignments/returns back to the first nullable or unannotated boundary; classify absence,
    invalid input or lifecycle state.
 3. Fix the producer contract/conversion and use available checker/caller evidence to find affected
@@ -107,7 +113,7 @@ zero-warning partial scan prove that every runtime construction path is safe.
 
 - [Nullability contracts](references/nullability-contracts.md) — read when introducing
   JSpecify to a codebase, deciding annotation placement, or judging whether a flagged
-  nullable field is actually a defect.
+  nullable field is actually a defect; also read for NPEs caused by implicit unboxing.
 - [Worked example: hardening a service boundary](references/boundary-hardening.md) — read
   when NPEs originate from deserialised input or repository lookups, or before reviewing
   an inbound adapter.

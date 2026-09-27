@@ -54,7 +54,9 @@ are missing, state the hypothesis and smallest discriminating capture or experim
    constraints. Include retaining the current collector; its measured costs and change
    risk matter more than a default designation.
 7. **Re-measure with the method that produced the baseline.** Judge the declared objective
-   (pauses, concurrent CPU, useful throughput or footprint) and its guardrails. Revert a
+   (pauses, concurrent CPU, useful throughput or footprint) and its guardrails. Compare offered
+   load, completed useful work, errors, timeouts and rejected work as well as latency: a lower
+   p99 from serving fewer requests does not establish an improvement. Revert a
    change that misses its prediction or causes a material regression.
 
 ## Rules
@@ -66,11 +68,17 @@ are missing, state the hypothesis and smallest discriminating capture or experim
   changes can be architecturally larger than a collector switch, while one flag can be more
   dangerous than either; there is no universal order by “size.”
 - `-Xmx` is not the container limit. Metaspace, code cache, thread stacks and direct
-  buffers live outside it and still count against the cgroup.
+  buffers live outside it and still count against the cgroup. Before increasing the heap for
+  an OOM or process exit, distinguish a Java-heap allocation failure from a native allocation
+  failure or an external memory kill; an exit code alone does not establish the cause. Pass
+  the exact error/termination evidence, effective heap settings and aligned memory/limit data
+  to `jvm-memory-regions` for a feasible total-memory budget. If unavailable, keep heap growth
+  conditional on measured non-heap headroom; do not infer that more heap repairs every OOM.
 - In a container, fixed `-Xms = -Xmx` trades predictable heap ergonomics/no growth for
   earlier commitment and usually higher residency pressure; variable heap trades warm-up
-  variability for footprint elasticity. Container memory can still serve page cache,
-  sidecars and node density. `AlwaysPreTouch` moves page population to startup and can
+  variability for footprint elasticity. Identify the actual container/parent limit and charged
+  consumers before budgeting page cache or sidecars; separate container limits are not one shared
+  heap allowance. `AlwaysPreTouch` moves page population to startup and can
   expose an undersized cgroup early, but raises startup/RSS and does not prevent swap or
   later faults. Measure the selected policy; do not combine these flags by ritual.
 - On the verified JDK 25 build, one visible CPU selected Serial
@@ -79,7 +87,7 @@ are missing, state the hypothesis and smallest discriminating capture or experim
   This integration status does not prove a deployed GA build includes it.
   Verify the exact vendor/build with startup logs or
   `VM.flags`; explicitly name a collector when fleet-wide intent must not depend on ergonomics.
-- `MaxGCPauseMillis` is a target, not a guarantee. Lowering it often selects less young/CSet
+- For G1, `MaxGCPauseMillis` is a target, not a guarantee. Lowering it often selects less young/CSet
   work and increases frequency; promotion changes only if lifetime/survivor policy makes it
   so. Raising it is a throughput candidate, not a rule—validate tails, pause share and CPU.
 - A rising post-reclamation floor means more retained state under those conditions. It may

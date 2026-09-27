@@ -20,7 +20,8 @@ description: >
 
 A smell is evidence, not a verdict. This skill runs a detection pass whose output is a
 short, prioritised list of findings — each with the code it names, the evidence, a
-severity argument, and the java-refactoring technique that addresses it. The failure
+severity argument, and an appropriate corrective route. Structural findings name a
+java-refactoring technique; demonstrated behavior defects need a separate correction. The failure
 modes it prevents: reporting everything pattern-matching a smell (noise the team
 ignores), and rewriting code during what was supposed to be a diagnosis.
 
@@ -31,10 +32,19 @@ toolchains and CI/runtime versions before suggesting records, sealed types or pa
 do not upgrade the project or enable preview features as part of detection. The catalogue
 also applies to older Java, with recommendations conditional on its supported language level.
 
+Establish the requested review boundary from the task, then inspect relevant callers, tests,
+configuration and documented contracts or prior design decisions. Treat consistent conventions
+as evidence of intent, not automatically as requirements; a lone implementation is not policy.
+When an unknown changes the recommendation (for example, whether an API has external consumers),
+look for repository evidence first, then ask that focused question if still unresolved. Continue
+independent findings and state the assumption and what would change the recommendation.
+
 1. **Scan for signals, not smells.** Size outliers (methods, classes, parameter lists),
    change history (`git log --follow` on files that appear in every PR), duplication,
    and dependency fan-in/fan-out. Signals say where to look; the catalogue says what
-   you found.
+   you found. Inspect representative diffs before claiming recurring semantic co-change;
+   separate formatting, mechanical migrations and generated-file churn from changes to the
+   underlying rule. Their file count alone does not prove Shotgun Surgery or Divergent Change.
 2. **Classify against the catalogue** — read `references/catalogue-within.md` for
    findings inside one class, `references/catalogue-between.md` for findings about
    coupling between classes. Check the smell's false positives before recording it.
@@ -42,13 +52,20 @@ also applies to older Java, with recommendations conditional on its supported la
    business/security criticality, defect evidence, test/observability confidence, ownership,
    reversibility and migration cost. A rarely edited authorisation or money-movement path may
    outrank a frequently edited formatter. Repository history is evidence, not a veto.
-4. **Record findings, do not fix them.** Each finding: smell name, location, evidence,
-   severity argument, the named java-refactoring technique — routed through
-   `references/smell-to-refactoring.md`, which also says what decides between competing
-   techniques and when the honest recommendation is no refactoring. Fixing happens in a
-   separate pass under that skill's safety workflow. If the user already authorized fixes,
-   continue into that pass with the established evidence, scope and compatibility constraints;
-   do not turn the handoff into another interview or approval gate.
+4. **Record findings, do not fix them.** Each finding: location, evidence, consequence,
+   severity argument and corrective route. For a structural finding, name the smell and use
+   `references/smell-to-refactoring.md` to select a technique or explain why no refactoring is
+   warranted. For a demonstrated behavior defect, follow the correction rule below. Pass the
+   evidence, contracts and affected tests into any subsequent fix pass; expect checks of the
+   identified risk, not merely cleaner code. If the user already authorized fixes, continue
+   under the receiving skill's safety workflow without another approval gate. If that skill is
+   unavailable, retain the concrete recommendation and verification needs; the detection result
+   must remain usable on its own.
+5. **Close the bounded pass.** Recheck each reported finding against counter-evidence and say
+   what would falsify it or verify the recommended correction. Deliver the prioritised findings,
+   reviewed scope and material evidence gaps; no findings is valid when candidates were falsified.
+   Stop when the requested scope is covered and supported findings have an actionable route;
+   an unresolved lead should name its next discriminating check, not widen the audit indefinitely.
 
 If history is shallow or unavailable, say which change-pressure claims cannot be established.
 Use source-level evidence for current coupling, but do not invent recurring co-change or defect
@@ -57,7 +74,14 @@ history. Name what additional evidence would distinguish a finding from a monito
 ## Rules
 
 - No finding without evidence a reviewer can check: a metric, a diff that fanned out, a
-  duplicated block's two locations. "This looks wrong" is not a finding.
+  duplicated block's two locations, or a contract violation with its triggering path.
+  "This looks wrong" is not a finding.
+- If inspection demonstrates a correctness defect, report expected versus actual behavior and
+  the triggering input/path separately from its structural explanation. Refactoring preserves
+  behavior; extraction or renaming alone cannot be credited with correcting it. Route uncertain
+  failure attribution to `debugging` with the reproduction, contract and competing explanations;
+  expect a supported cause and correction/verification plan. If unavailable, retain the bounded
+  finding and next discriminating check. Execute fixes only within the already authorized scope.
 - Stable code gets a lower change-pressure score, not immunity. Dormant compatibility,
   security, concurrency and data-integrity defects still warrant findings when their impact and
   evidence are strong; absence of tickets is weak evidence when failures are silent.

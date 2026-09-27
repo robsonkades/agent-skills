@@ -163,6 +163,11 @@ The fault or its invariant cannot be observed
 - **Idempotency is a claim about duplicates, so test with duplicates.** Send the same request
   or message twice, concurrently as well as sequentially, and assert one effect. Concurrent
   duplicates can expose a broken atomic claim or invariant that sequential ones miss (`idempotency`).
+- **Consistency claims need observations during the failure, not just converged final state.**
+  Capture client operation histories and check the promised model, preserving indeterminate
+  outcomes after timeouts. Do not impose linearizability on an eventual-consistency contract.
+  Check required progress separately: rejecting every operation can preserve safety while failing
+  availability. A checker timeout or missing coverage is not a pass (`references/techniques.md`).
 - Kill the process at the awkward moment — between the database write and the acknowledgement,
   between two writes, mid-batch. This is where at-least-once semantics stop being theoretical
   and where the outbox either works or does not.
@@ -190,7 +195,8 @@ shapes, not standalone suites. A passing run establishes only the exercised faul
 - [Failure scenario audit](references/failure-scenarios.md) — read when checking missing coverage
   or defining the invariant and an assertion that would otherwise hide failure.
 - [Techniques and controlled time](references/techniques.md) — read when selecting infrastructure,
-  implementing concurrent duplicate tests, or controlling local time.
+  implementing concurrent duplicate tests, checking client-visible consistency histories, or
+  controlling local time.
 
 - [Injecting failure in a Java system](references/fault-injection.md) — the tooling ladder
   from a stub server through a TCP-level proxy to mesh and node-level faults; what each can

@@ -5,6 +5,13 @@
 Take a concrete cache tier and compute what one node's departure does to the origin. Use
 your own numbers; the point is that the calculation exists, not these values.
 
+First establish units: the example counts individual cache lookups, each miss causing one
+origin call before coalescing or retries. A multi-key lookup, a batched loader or an origin
+fan-out can break that relationship. Trace the actual miss path and count origin operations
+and their cost; neither application requests nor cache command count is automatically origin
+req/s. Use the hit rate for the candidate resident set, not an unchanged historical rate after
+replicas have displaced entries at a fixed memory budget.
+
 ```
 Given:
   request rate to the cache          R = 50,000 req/s
@@ -134,6 +141,11 @@ For replicated restart/failover, verify the serving dataset and synchronization 
 including a persistence-disabled primary restart where applicable. For clustered products,
 probe unaffected slots as well as the failed shard: test the configured full-coverage and
 promotion/quorum behavior instead of assuming that replica process health preserves hits.
+Observe per-node memory, evictions/fill failures and foreground latency during copy rebuild;
+remaining replicas can be reachable yet overloaded or killed by a process-memory limit.
+When rack/zone tolerance is required, fail all members of that domain together and check
+surviving routing paths, eligible copies and voting quorum. Do not infer correlated-failure
+tolerance from a successful single-node test.
 
 Origin/client bounds are the acceptance evidence. "The cache recovered" or a restored hit rate is
 insufficient: recovery can be slow, fail, or succeed only after the origin violated its SLO.

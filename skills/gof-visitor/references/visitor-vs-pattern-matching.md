@@ -62,6 +62,19 @@ Double dispatch is the reason: `node.accept(visitor)` dispatches on the node's r
 `visitor.visitText(this)` dispatches on the visitor's — two virtual calls to reach one behaviour
 that depends on both types.
 
+This does not make Java overload selection dynamic. With overloaded `visit(Node)` and
+`visit(Text)`, calling `visitor.visit(node)` where the variable has static type `Node` selects
+`visit(Node)`, even if its value is a `Text`. The concrete element's `accept` supplies the required
+static type for the second call (or calls the dedicated named method as above).
+
+In a separate class-based hierarchy, if `SpecialBranch` inherits `Branch.accept` whose body calls
+`visitor.visit(this)`, `this` has static type `Branch` in that body. Adding `visit(SpecialBranch)`
+alone does not redirect the inherited call. Override `accept` when that subtype requires distinct
+semantics, or deliberately retain the base behavior. Test via a base-typed reference; a direct call
+to the new overload proves neither the first dispatch nor correct element wiring. Final record
+elements in the example avoid this inheritance trap but do not verify the operation's semantics.
+See [Java method selection and runtime invocation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12).
+
 ## Modern, and what it removes
 
 ```java
@@ -171,6 +184,19 @@ calling a recursive wordCount for each visited node double-counts descendants. J
 `FileVisitResult` to control descent, which keeps traversal in the framework and gives the visitor
 a say. Either is fine; share walking where it removes actual duplication, while retaining an
 operation's own descent when pruning or other semantics justify it.
+
+Before sharing a walker, establish which edges it follows and what one visit means. A document
+can reuse one immutable `Text` instance in two positions: rendering and occurrence-based counting
+visit it twice; an inventory of distinct objects visits it once. Neither policy follows from
+Visitor. A set using value equality can also collapse distinct equal nodes when the contract needs
+object identity. A cycle guard for an occurrence-based walk must not silently become global
+deduplication. Likewise, caching a result by node alone is invalid when scope, path, indentation or
+other traversal context changes that result; include the relevant context or avoid the cache.
+
+For graph/cycle mechanics, pass the accepted edge, identity and repetition semantics plus resource
+limits to `gof-composite`; expect a traversal/guard that preserves them. If unavailable, state those
+requirements and any unverified termination case before recommending a walk. Do not introduce graph
+support when the existing construction contract already guarantees a bounded tree.
 
 ## Depth and untrusted structures
 

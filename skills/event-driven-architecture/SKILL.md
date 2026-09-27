@@ -44,6 +44,9 @@ its recovery window rather than restarting architecture discovery.
 3. **Choose coordination from flow semantics.** Independent reactions can choreograph. A
    branching business workflow needing explicit state, deadlines, compensation or one
    recovery owner favors orchestration—participant count alone is not a threshold.
+   Map independent logical reactions to separate subscriptions/progress; distinguish them
+   from interchangeable replicas sharing work. A shared Kafka group or queue is not broadcast
+   to every handler. See `references/choosing-the-style.md` for the topology decision.
 4. **Design the payload.** Decide what the event carries versus what the consumer fetches,
    and name the authority for the current value — `references/event-design.md`.
 5. **Fix the compatibility direction and the window.** Historical reader support follows the
@@ -61,7 +64,7 @@ Inspect broker/client, serializer and Java/framework versions plus retention, re
 configuration before implementation advice. Integration events do not require an authoritative
 event store; adopting that storage model is a separate `event-sourcing` decision. The envelope reference uses Java 16+ record syntax;
 preserve the target rather than upgrading it. For an architecture change, deliver the interaction
-choice, outcome/recovery owner, commit boundary, reader/writer horizon and a confirming
+choice, logical subscriber topology, outcome/recovery owner, commit boundary, reader/writer horizon and a confirming
 failure/compatibility case. A narrow naming or contract review needs only the relevant subset.
 If material facts are missing, state a conditional choice and the smallest contract/configuration
 evidence needed to resolve it. Retaining the existing design is a valid result. Record
@@ -132,8 +135,10 @@ One consumer does not make a fact a command; asynchronous availability can still
   the guarantee vocabulary is `delivery-semantics`, the handler technique is `idempotency`.
   Never write "exactly-once" about an event pipeline without naming the boundary.
 - Choreography needs durable observability: event ID, causation ID, trace context and business
-  correlation identity have different roles. Propagate them with bounded cardinality and
-  retain a queryable event/workflow view where the business must answer current status.
+  correlation identity have different roles. Preserve occurrence identity in messages and
+  propagate correlation/trace metadata; bound metric-label dimensions instead of reducing
+  identity uniqueness. Retain a queryable event/workflow view where the business must answer
+  current status, and keep per-event IDs out of ordinary metric labels.
 - Orchestration's cost is a component that knows the flow and its workflow policy. Keep
   participant-local invariants with their actual owners; duplicating those rules in the
   coordinator creates drift. Judge the responsibility boundary, not the presence of business
@@ -152,10 +157,11 @@ One consumer does not make a fact a command; asynchronous availability can still
 - [AWS Lambda with Kafka event sources](https://docs.aws.amazon.com/lambda/latest/dg/with-kafka-configure.html)
 
 - [Choosing the style](references/choosing-the-style.md) — events versus commands versus
-  request/response with the condition that selects each, choreography versus orchestration
+  request/response with the condition that selects each, independent subscriptions versus
+  competing replicas, choreography versus orchestration
   compared on debuggability, coupling, failure handling and participant count, and the FaaS
   versus long-lived-consumer decision with the Java cold-start considerations. Read when
-  deciding how two components should communicate, or when a saga is being designed.
+  deciding how two components should communicate, adding/scaling a subscriber, or when a saga is being designed.
 - [Designing an event](references/event-design.md) — naming, fat versus thin payloads and the
   read-back stampede, the event schema as a contract with unknown consumers, which direction
   of compatibility events actually need, and what belongs in the payload versus what must be

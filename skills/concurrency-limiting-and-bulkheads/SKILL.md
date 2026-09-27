@@ -50,6 +50,12 @@ conditional design and the measurement/contract needed before choosing a product
 | rate            | arrivals/operations per interval | token/leaky bucket                             | simultaneous work when latency changes                            |
 | queue/admission | waiting work or bytes            | bounded queue/window plus rejection            | downstream concurrency unless connected to a worker/resource gate |
 
+An executor's worker count is a bound only on work confined to those workers. Under saturation,
+`ThreadPoolExecutor.CallerRunsPolicy` runs rejected work in submitting threads, which can exceed the
+intended active-work cap and block event loops. For a hard cap, use explicit rejection or a separate
+gate covering every execution path. Also check whether executor tasks merely launch asynchronous
+operations: the worker may finish while protected work remains active.
+
 Little's Law, `L = λW`, relates long-run average in-system work, throughput and average residence
 time for a stable, conserved population. It is not a per-request identity, a tail-latency formula or
 a guarantee under overload/non-stationary traffic. Use it as a consistency check alongside burst,
@@ -77,6 +83,13 @@ Acquire before starting the protected operation, not after obtaining its scarce 
 allocating its large buffer. Do not hold one resource's permit while waiting for another without a
 global ordering/cycle analysis.
 
+Charge retries, hedges and fan-out in the protected unit: one admitted request can create several
+simultaneous resource operations. Each attempt needs capacity, or the parent must reserve a proven
+maximum weight. A resource-attempt permit normally ends after that attempt's cleanup, before retry
+backoff; a separate ingress permit can cover the whole logical request. Check nested acquisition of
+the same gate for double charging and parent/child deadlock. See the implementation reference for
+composition and cancellation cases.
+
 ## Permit ownership
 
 - Acquire interruptibly or with a remaining monotonic deadline on cancellable paths.
@@ -92,7 +105,8 @@ global ordering/cycle analysis.
 - `Semaphore(1)` is not a reentrant/owned mutex. Use a lock when mutual exclusion and ownership are
   the contract.
 - Bulk `acquire(n)` can create head-of-line blocking; large weighted requests can starve or starve
-  small requests depending on fairness and arrival pattern.
+  small requests depending on fairness and arrival pattern. Acquire the full weight atomically;
+  incremental reservations require a progress argument, not just a timeout.
 - Cancellation while waiting must not release an unacquired permit; cancellation after acquisition
   must still execute cleanup. Refresh the remaining deadline after admission before starting the
   resource operation; admission wait is part of the same end-to-end budget.
@@ -181,6 +195,7 @@ risk using wait/queue age, rejection and downstream health; no one signal is uni
 - [ ] Limit derives from measured capacity and required load with headroom, not average arithmetic alone.
 - [ ] Acquisition is deadline-aware/interruptible; release is exactly once after success.
 - [ ] Rejection/degradation/retry semantics are explicit and tested.
+- [ ] Retries/hedges and executor saturation preserve the intended active-work bound.
 - [ ] Partition state is bounded and skew/borrowing behavior is observable.
 - [ ] Per-replica limits are treated as an aggregate upper bound, not a global guarantee.
 
@@ -191,8 +206,11 @@ deadline/rejection policy, aggregate exposure, and the tests establishing conser
 behavior. Distinguish source review, runtime validation and unmeasured performance expectations.
 
 - [Limit selection and implementation](references/limit-selection.md) — read when implementing
-  scoped permits, selecting weights/partitions, or testing acquisition and release.
+  scoped permits, composing retries/fan-out, selecting weights/partitions, or testing acquisition,
+  release and executor saturation.
 - [Process-to-cluster boundary](references/distributed-limits.md) — read when replicas, rollout
   overlap or shared provider quotas make a local limit insufficient.
 - [Java 25 `Semaphore`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
+- [Java 11 `ThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+  — worker bounds, queueing and rejected-task policies.
 - [Java 25 virtual-thread adoption guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)

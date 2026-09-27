@@ -1,6 +1,6 @@
 # PostgreSQL plans, memory, WAL, and concurrency
 
-## Sampling statistics
+## Sampling monitoring counters
 
 On PostgreSQL 17/18, default `stats_fetch_consistency` caches accessed cumulative statistics until
 the observer transaction ends. Repeated polling inside one `BEGIN` can therefore appear flat;
@@ -13,6 +13,32 @@ Compute rates and HOT-ratio deltas for the same instance/objects and reset inter
 `stats_reset` markers, known object-specific resets and restart/failover history; discard intervals
 that cannot be compared. Disabled timing collection or restricted `pg_stat_activity` fields are
 evidence gaps, not proof of zero I/O time or an absent session.
+
+## Choosing a planner-statistics remedy
+
+For a consequential row-estimate error, inspect `pg_stats`, analyze history, distribution changes
+and the actual predicates/parameters. Monitoring counters are not the planner's column statistics.
+After substantial data changes, targeted `ANALYZE` can refresh stale distributions. If fresh
+histograms/most-common values undersample important skew, consider a higher per-column statistics
+target and re-analyze; it increases collection/planning overhead, so check the affected estimates
+and workload rather than raising the database-wide default reflexively.
+
+Fresh single-column statistics do not describe cross-column dependence. For same-table distributions,
+consider `CREATE STATISTICS`: `dependencies` for correlated column-to-constant equality/`IN` conditions,
+`mcv` for common value combinations, or `ndistinct` for misestimated groups. Collect with `ANALYZE`
+after creating the object; its definition alone supplies no measurements. Dependencies do not fix
+range predicates or detect incompatible value combinations. On PostgreSQL 17/18, extended
+statistics do not directly estimate join-clause selectivity, though better base-relation estimates
+can affect the resulting join plan. Do not promise that one statistics object fixes all correlation.
+
+For an expression-estimate problem, expression statistics can avoid adding an index solely to
+collect statistics; they do not provide an index access path. Retain adequate estimates and compare
+the consequential plan/work after a justified change, including representative skewed parameters.
+
+Autovacuum can analyze ordinary partitions but does not analyze the partitioned parent. When parent
+statistics matter, arrange explicit parent `ANALYZE` after significant distribution changes;
+recent child autoanalyze timestamps do not establish parent freshness. Inheritance-child changes
+also do not trigger parent autoanalyze. Preserve a working maintenance policy.
 
 ## Reading the executed plan
 
@@ -34,14 +60,15 @@ are also per-loop averages where reported. LIMIT/early termination can explain p
 nodes; distinguish that from a cardinality estimate error. EXPLAIN execution time does not include
 all client transfer/materialization; correlate with application measurements.
 
-Apply the main skill's execution/scope checks before ANALYZE. Where supported, `TIMING OFF`
+Apply the main skill's execution/scope checks before EXPLAIN ANALYZE. Where supported, `TIMING OFF`
 reduces per-node clock overhead while retaining row counts and overall execution time; it does
 not prevent execution. Add WAL evidence when relevant, but do not treat per-statement WAL bytes
 as commit latency, fsync duration or total cluster WAL. Use interval counters and waits for those layers.
 
-Planner `cost` is dimensionless and anchored to relative cost constants. Calibrate a cost constant
-only from a representative plan population and hardware evidence; do not convert it to milliseconds
-or copy “SSD values.”
+Planner `cost` uses an arbitrary relative scale, conventionally based on sequential page fetches.
+It can be calibrated to time units, but remains a model estimate, not observed elapsed latency.
+Calibrate only from a representative plan population and hardware evidence; do not assume a
+milliseconds conversion or copy “SSD values.”
 
 ## Memory and connections
 
@@ -92,6 +119,10 @@ Sources: [Using EXPLAIN](https://www.postgresql.org/docs/18/using-explain.html),
 [serialization failure handling](https://www.postgresql.org/docs/18/mvcc-serialization-failure-handling.html).
 Sampling semantics: [PostgreSQL 17 statistics](https://www.postgresql.org/docs/17/monitoring-stats.html)
 and [PostgreSQL 18 statistics](https://www.postgresql.org/docs/18/monitoring-stats.html).
+Planner remedies: [planner statistics](https://www.postgresql.org/docs/18/planner-stats.html),
+[CREATE STATISTICS and join limitations](https://www.postgresql.org/docs/18/sql-createstatistics.html),
+[parent-table analysis](https://www.postgresql.org/docs/18/routine-vacuuming.html#VACUUM-FOR-STATISTICS),
+and [cost scale](https://www.postgresql.org/docs/18/runtime-config-query.html#RUNTIME-CONFIG-QUERY-CONSTANTS).
 Memory scope: [parallel plans](https://www.postgresql.org/docs/17/parallel-plans.html),
 [resource settings](https://www.postgresql.org/docs/18/runtime-config-resource.html) and
 [PostgreSQL 18.0 hash sizing](https://github.com/postgres/postgres/blob/REL_18_0/src/backend/executor/nodeHash.c).

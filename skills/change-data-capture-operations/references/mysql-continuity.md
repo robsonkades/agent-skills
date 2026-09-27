@@ -55,6 +55,14 @@ test whether a compatible retained source/backup can serve it before declaring o
 
 ## Failover and table additions
 
+For a replacement source or changed logging configuration, verify binary logging is enabled,
+`binlog_format=ROW` and `binlog_row_image=FULL`, as required by the Debezium 3.3 MySQL connector.
+If reading a replica, verify `log_replica_updates` records the upstream transactions in its own
+binlog. Current settings do not prove the retained replay range was recorded with those settings;
+inspect event evidence when configuration changed. Correcting future logging cannot fill missing
+row data in older logs. See [Debezium binlog prerequisites](https://debezium.io/documentation/reference/3.3/connectors/mysql.html#enable-mysql-binlog)
+and [MySQL replica update logging](https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html#sysvar_log_replica_updates).
+
 Without a verified GTID-based source-switch procedure, do not carry file/position coordinates to
 a different server. With GTIDs, verify the replacement has the required transactions and still
 serves the unread range; `gtid_executed` membership alone does not prove unpurged binlog availability.

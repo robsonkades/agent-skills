@@ -1,5 +1,40 @@
 # Routing, shards and experiments through an ambassador
 
+## Selection unit and long-lived traffic
+
+Establish what the proxy can select independently before promising a split or cutover:
+
+- A TCP proxy selects an upstream for a connection. All opaque requests on that connection
+  follow that selection; a 10% connection weight does not establish 10% of RPCs, bytes or users.
+- An HTTP-aware proxy can select a route for each new request, including separate HTTP/2
+  streams on a reused downstream connection. Upstream connection reuse does not by itself
+  force those requests to the same variant. Verify the actual filter/protocol configuration.
+- One streaming RPC or upgraded WebSocket session is not a sequence of independently routed
+  requests. Moving its later messages requires application/protocol support, not another weight.
+
+If per-operation routing is required but end-to-end encryption must remain opaque to the
+proxy, retain client-side routing or a suitable protocol-aware endpoint. Do not silently
+terminate TLS or replace the requirement with a connection percentage. If connection-level
+assignment satisfies the requirement, a TCP proxy can be adequate without HTTP inspection.
+
+For updates and rollback, distinguish **accepted configuration**, **selection for new work**
+and **retirement of old traffic**. Inspect which resource changed: route, endpoint, cluster or
+listener updates can have different connection effects. Do not assume hot reload closes every
+old flow, or that a drain operation is supported by every network filter. Keep new destinations
+ready before routing to them, and retain old destinations as required by active work and rollback.
+
+A finite cutover deadline may require bounded stream lifetimes or deliberate disconnects.
+An idle timeout does not bound a continuously active stream. Agree whether interruption is
+acceptable and how the client reconnects/resumes, including possible gaps or duplicate effects;
+transport reconnection alone does not restore application session state. If the service has no
+resume protocol and interruption is forbidden, preserve the old destination until completion
+or report the conflicting cutover requirement. Pass container shutdown timing to `sidecar-pattern`.
+
+Test with connections and streams opened **before** the update as well as new ones. Record
+actual serving destinations, active old flows, interruption/recovery and time to retire them.
+Exercise rollback too. Config-version agreement and new-connection smoke tests cannot establish
+that long-lived traffic has left the old destination.
+
 ## Shard-aware routing
 
 The app issues a request that carries the shard key while delegating physical shard selection.
@@ -68,6 +103,9 @@ that window:
   fixed number of seconds.
 
 ## Canary and A/B
+
+The following request splits require request-visible routing. For TCP connections or messages
+inside a long-lived stream, use the selection-unit contract above and measure that population.
 
 | Split by                                           | Selects                                      | Property                                                                            | Use when                                                   |
 | -------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -151,3 +189,14 @@ Rechecked 2026-09-19: the load-balancer source describes host-set remapping, and
 [Envoy priority levels](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/priority)
 describes health-driven movement between priority levels. The ownership constraint follows
 from the stated disjoint-shard contract; neither mechanism transfers datastore ownership.
+
+Checked 2026-09-25: [Envoy TCP proxy](https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/network_filters/tcp_proxy_filter)
+documents per-connection cluster selection; the HTTP routing source above documents request
+routing. [Envoy draining](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/operations/draining)
+describes filter-dependent drain support and passive completion of existing upstream streams.
+[Envoy timeout semantics](https://www.envoyproxy.io/docs/envoy/latest/faq/configuration/timeouts)
+distinguishes idle, connection and stream limits.
+[Envoy xDS sequencing](https://www.envoyproxy.io/docs/envoy/latest/configuration/overview/xds_api#aggregated-discovery-service)
+explains why destination resources precede routes referencing them. These moving docs support
+the distinctions, not a guarantee about an unspecified proxy release. Application recovery and
+old-flow tests above are required design evidence, not an executed migration.

@@ -41,7 +41,8 @@ scope is a decision, and it is the one that stops the argument later.
    risk/benefit, plus the source of the selection and its authority. Reuse the request, accepted
    decisions and delegated discretion; do not invent a requirement to justify an authorized benefit.
 4. **Run the creep check** (`references/scope-creep-catalogue.md`) over the Required and
-   Recommended buckets. The catalogue lists the additions that arrive without a requirement.
+   Recommended buckets and selected Optional items. The catalogue tests whether an addition is
+   necessary, an authorized benefit or unsupported growth; it does not override the request.
 5. **Give every Out of Scope item a reason and an owner** — who excluded it, and on what basis.
    Reuse the request, accepted baseline and established authority; do not invent a Product owner
    or require another approval round. A proposed exclusion remains proposed if authority is missing.
@@ -68,6 +69,26 @@ automatically a commitment; inspect its wording and prior decisions before class
 Permission to include an addition establishes authority, not by itself an obligation. If a later
 accepted scope revision commits to delivering it, update its classification and delivery baseline.
 
+## Selected work and conditional prerequisites
+
+Trace supporting work to the outcome or solution that makes it necessary. A prerequisite of one
+candidate design is not automatically Required for the feature: another feasible design may meet
+the same commitment without it. Until the design is selected, mark that prerequisite conditional
+and name the deciding evidence. Do not settle architecture by putting a preferred mechanism in
+the Required bucket.
+
+For a selected Optional or Recommended addition, include the work needed to make that addition
+correct and sufficiently validated. Its optional benefit does not make its correctness optional.
+If a necessary prerequisite is excluded or unavailable, expose the conflict: reconsider the
+selection, compare a feasible alternative or seek the specific scope revision needed. Do not
+retain the delivery promise while dropping its prerequisite. Conversely, when an addition is
+omitted, do not retain work needed only for that addition without another justified selection.
+
+If this depends on an unresolved design choice, pass the accepted outcome, constraints, candidate
+prerequisites and deciding question to `feature-solution-analysis`; expect a supported option or
+explicit unresolved feasibility. If unavailable, record conditional branches and the smallest
+evidence check. Continue independent classification without inventing a design decision.
+
 ## Decision rules
 
 ```text
@@ -78,11 +99,12 @@ IF an item improves the feature but dropping it violates no accepted commitment,
 THEN it is not Required. State the actual benefit or residual risk rather than promoting a preference.
 
 IF an item is a refactor of code the feature merely reads
-THEN Out of scope unless the feature demonstrably needs that change to meet its obligations.
-     Trace a necessary enabling change; report incidental cleanup separately.
+THEN default to Out of scope unless necessary for its obligations or separately selected within
+     existing authorization. Trace necessary enabling work; label authorized incidental cleanup
+     by its actual benefit and selection, without inventing a Required feature dependency.
 
 IF an item exists because a similar system had it
-THEN it needs a requirement here, or it is Out of scope.
+THEN establish an applicable obligation, risk or authorized benefit here; similarity alone is not a selection reason.
 
 IF the request explicitly excluded something
 THEN record that source and its actual authority. Cheapness does not override the exclusion;
@@ -122,6 +144,7 @@ Out of scope    SC-04  <item>  <- reason; accountable owner who excluded it
 Future work     SC-05  <item>  <- what it waits on
 
 Delivery        <selected SC-* items with selection/authority sources; unselected proposals>
+Dependencies    <conditional prerequisites; any conflicts with selected delivery>
 Creep check     <items examined, and what was reclassified>
 ```
 
@@ -135,3 +158,9 @@ An announced proposal does not replace the accepted scope, and missing implement
 justify rewriting acceptance to fit it.
 Bucket membership is classification, not permission to implement Optional, Recommended or Future
 work. State which candidates are selected for the authorized delivery and which remain proposals.
+
+The analysis is complete when the boundary, selected work, exclusions and necessary supporting
+work are consistent, or when a specific unresolved fact or authority is recorded with its effect
+on dependent commitments and next step. Do not present a blocked selection as ready for delivery.
+A scope-analysis request produces this decision record; implementation requires its own basis in
+the user's request or existing authorization.

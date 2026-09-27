@@ -52,6 +52,9 @@ boundary in `references/collector-mechanisms.md` when those lifetimes are being 
    traces and host scheduling. On 25, bulk operations with sparse polls (a large
    `arraycopy` or array zeroing), VM transitions and CPU starvation remain relevant;
    counted-loop polling depends on collector/compiler flags, not Java version alone.
+   Distinguish ordinary native execution from FFM critical downcalls: even
+   `Linker.Option.critical(false)` can delay synchronization on this HotSpot baseline.
+   G1's JNI region pinning does not resolve that separate mechanism; see the safepoint reference.
 6. **Look upstream before touching a flag.** Under stable throughput and bounded steady-state
    conditions, `N = λ × R` relates average requests in flight to mean residence time. Slower
    downstream calls can retain more objects, unless admission/cancellation changes throughput.

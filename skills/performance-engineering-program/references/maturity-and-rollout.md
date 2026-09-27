@@ -23,6 +23,21 @@ a single label hides too much.
 
 ## Adoption waves
 
+Choose the investment and its pilot separately. Use observed user harm, recurring escapes,
+capacity/cost exposure and upcoming changes to identify the capability worth improving. Compare
+the expected benefit with migration, training, measurement and maintenance costs; the easiest
+coverage percentage to increase need not be the most useful investment. If impact or available
+owner time would change the choice, inspect incident/cost records and team commitments, then ask
+only for the unresolved trade-off. Keep uncertain benefits conditional rather than inventing ROI.
+
+For example, a critical service with repeated regressions but no usable baseline and no available
+maintainer may need an owned stabilization and baseline action before piloting a blocking gate.
+A less critical service with representative runtime/workload, a baseline and protected owner
+time may be the better initial gate pilot. Record the critical service's interim response, owner
+and revisit condition; do not hide it by reporting only pilot coverage. Once its prerequisites
+and capacity are available, its exposure can justify moving it into the wave. An unrelated easy
+service cannot establish that the mechanism works for the critical workload.
+
 When adopting or expanding a capability, start with a small cohort representative of that
 expansion and a concrete artifact pack; reuse an adequate existing practice or exercised pilot.
 Select checks for the capabilities being adopted: a dry-run incident for response, deliberate
@@ -57,7 +72,10 @@ unknown, rather than 8 of 8 services that submitted evidence. If eligibility cha
 old/new populations or comparable cohort; otherwise the trend can improve without any adoption.
 
 Practice sources: [SRE Workbook: Implementing SLOs](https://sre.google/workbook/implementing-slos/)
-for user-oriented objectives and iterative adoption, and
+for user-oriented objectives and investment priorities,
+[Organizational Change](https://sre.google/workbook/organizational-change/)
+for incremental adoption, staffing and migration costs, and
 [Postmortem Culture](https://sre.google/workbook/postmortem-culture/)
-for learning and follow-through. These are experience-based guidance, not empirical proof
+for learning and follow-through. The prioritization example is a synthesis of these practices,
+not a reported case study. These are experience-based guidance, not empirical proof
 that a specific champion cadence or maturity score improves every organization.

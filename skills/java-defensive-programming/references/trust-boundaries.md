@@ -79,7 +79,13 @@ smuggled in as cleanup; changing existing behavior also requires a compatibility
 - **Validation duplicated between client and server**: the client's copy is UX; the
   server's copy is the defence. Removing either "duplicate" removes something real.
 - **Defensive copies of mutable arguments or return values at a boundary**: aliasing, not
-  nullness, is the threat; mechanics in java-immutability.
+  nullness, is the threat. After cheap bounds, acquire a stable owned representation and validate
+  that representation before storing or using it. Checking the original and copying afterward
+  leaves a change-between-check-and-copy gap. Copying alone is not an atomic multi-field snapshot;
+  follow the source's synchronization/ownership protocol and protect mutable elements as needed.
+  Do not copy an already adequate immutable value merely to follow a ritual. Mechanics belong to
+  java-immutability; pass the mutable component, aliases and required invariant if redesign is
+  needed. See [SEI CERT OBJ06-J](https://cmu-sei.github.io/secure-coding-standards/sei-cert-oracle-coding-standard-for-java/rules/object-orientation-obj/obj06-j/).
 
 ## The overengineering line
 
@@ -113,6 +119,45 @@ Set limits from downstream capacity and protocol needs, not arbitrary “reasona
 - do not compile/cache attacker-cardinality regexes/schemas/classes indefinitely;
 - ensure validation itself has bounded CPU/memory and honors request cancellation/deadlines;
 - measure rejects by stable reason without logging full hostile payloads.
+
+## Numeric guards that can be bypassed
+
+For a finite probability in `[0, 1]`, `value < 0 || value > 1` does not reject NaN: both
+comparisons are false. Explicitly reject non-finite values when that is the contract. A numerical
+API that deliberately accepts NaN as a missing-value marker has a different contract; preserve
+it rather than applying a blanket finite check. Decide signed-zero handling only if it matters.
+
+For an integer slice, `offset + count > length` can overflow and admit an invalid range even
+when both operands are nonnegative. Prefer the standard range helper when its exception contract
+and target release fit. These partial method examples require Java 9+ and `java.util.Objects`:
+
+```java
+static double requireProbability(double value) {
+    if (!Double.isFinite(value) || value < 0 || value > 1) {
+        throw new IllegalArgumentException("probability must be finite and in [0, 1]");
+    }
+    return value;
+}
+
+static int requireSlice(int offset, int count, int length) {
+    return Objects.checkFromIndexSize(offset, count, length);
+}
+```
+
+`Double.isFinite` is available since Java 8; the `int` range helper since Java 9. On an older
+target, retain a proven overflow-safe check, such as rejecting negative operands and checking
+`offset > length || count > length - offset`, rather than upgrading. For allocation sizes,
+validate operand domains, use checked arithmetic such as `Math.multiplyExact`, and then enforce
+the application size cap before allocation. An exactly representable size can still exhaust memory.
+Preserve the public exception/code contract when adopting helpers; arithmetic overflow throws
+`ArithmeticException`, while the slice helper throws `IndexOutOfBoundsException`.
+
+Test NaN/infinities where forbidden, endpoints, negative values, integer extremes and overflow
+before any allocation or protected effect. Test with assertions disabled as well as enabled.
+The API mechanisms are specified by [Double](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Double.html),
+[Objects](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html) and
+[Math](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Math.html); the allowed
+domain values and failure compatibility still come from the application contract.
 
 ## When not to apply
 

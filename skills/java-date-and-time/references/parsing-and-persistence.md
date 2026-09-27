@@ -29,6 +29,25 @@ containing both offset and region, validate their consistency explicitly when re
 successful parsing is not a guarantee that the original pair was consistent. See the
 [Java 17 formatter contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html).
 
+When consistency is required, extract the parsed local fields and offset before constructing
+a `ZonedDateTime`. The formatter can derive an instant from the offset despite a conflicting
+region; `ZonedDateTime.parse` can then normalize the local fields and offset. Validating that
+normalized object cannot detect the original mismatch. Partial Java 17 snippet, with `text`
+and imports supplied:
+
+```java
+var parsed = DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(text);
+ZonedDateTime value = ZonedDateTime.ofStrict(
+    LocalDateTime.from(parsed), ZoneOffset.from(parsed), ZoneId.from(parsed));
+```
+
+This accepts either valid offset during an overlap and rejects an invalid combination. It
+does not require bracketed region syntax: enforce that separately if the wire grammar does.
+If a recorded event's offset is authoritative and the region is only descriptive, preserve
+its instant instead of imposing this consistency policy; different producer/consumer zone
+rules can explain disagreement. Test the declared policy with both a matching and a
+contradictory offset/region pair.
+
 ## Precision is part of the public contract
 
 Write down accepted fractional digits, whether excess precision is rejected, truncated or

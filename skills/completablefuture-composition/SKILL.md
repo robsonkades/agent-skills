@@ -18,7 +18,8 @@ and the caller's deadline is connected to the underlying operation.
 
 This skill owns stage composition. Cancellation mechanics belong to
 `cancellation-and-interruption`; worker scheduling to `forkjoinpool-and-work-stealing`; lexical
-fork/join lifetimes to `structured-concurrency`.
+fork/join lifetimes to `structured-concurrency`; executor shutdown and rejection design to
+`executors-and-task-lifecycle`.
 
 ## Investigation workflow
 
@@ -51,6 +52,12 @@ Use a non-`Async` stage only for small, non-blocking, non-reentrant transformati
 any completing thread. Use an explicit executor when isolation, context, blocking behavior or
 capacity matters. An explicit executor does not by itself promise a new thread or concurrent
 execution.
+
+Require a visible outcome when scheduling fails. A silently discarded task can leave its future
+incomplete; `exceptionally` cannot recover a failure that never completes the stage. Inspect the
+rejection handler and shutdown state, and keep an owned executor available for dependents that
+will only be submitted when their inputs complete. Read the executor reference before changing
+that lifecycle; constructing the graph does not submit every future action.
 
 Do not derive the common pool from `availableProcessors() - 1` as an invariant. Active processor
 count, common-pool properties, embedding and implementation version can change it. Record effective
@@ -166,6 +173,7 @@ not a linearizable accounting system.
 ## Review checklist
 
 - [ ] Every `*Async` edge has an intentional executor or a documented safe default.
+- [ ] Rejection and shutdown settle affected results; no required stage can be silently discarded.
 - [ ] Every non-`Async` action is safe inline on any completer.
 - [ ] Every branch has a terminal observer and outcome policy.
 - [ ] Deadlines reach the underlying client; timeouts are not mistaken for cancellation.
@@ -183,7 +191,8 @@ guarantees explicitly instead of equating future completion with work terminatio
 - [Composition recipes](references/composition-recipes.md) — read when implementing branch
   aggregation, permit ownership, caller deadlines or a callback adapter.
 - [Executors, failures and context](references/pitfalls-and-executors.md) — read when diagnosing
-  thread affinity, exception surfaces, observer failure or lost/leaked context.
+  thread affinity, rejection/shutdown hangs, exception surfaces, observer failure or lost/leaked
+  context; includes decision exercises for these contracts.
 - [Java 25 `CompletableFuture` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
 - [Java 25 `CompletionStage` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletionStage.html)
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)

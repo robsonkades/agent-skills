@@ -2,7 +2,7 @@
 name: consistent-hashing
 description: >
   Stable key-to-node placement across membership changes: modulo remapping, consistent-hash
-  rings, virtual points, rendezvous hashing, collision-safe Java implementations, hash
+  rings, virtual points, rendezvous and jump hashing, collision-safe Java implementations, hash
   contracts, replica selection, weighting, testing and membership handoff. Use when changing
   node count causes a miss storm or migration, ownership is uneven, or placement relies on
   Object.hashCode. Does not choose the shard key (sharding-and-partitioning), repair hot keys
@@ -40,9 +40,10 @@ Keep a sound current mapping when it meets those constraints. Apply only the rel
    change owner, at what transfer rate, and under what availability target? `% N` can remap
    a large fraction; with equal nodes, a ring or rendezvous moves about K/(N+1) on a join and
    the removed node's approximately K/N share on a removal.
-2. **Count the nodes.** With a small membership, rendezvous hashing is fewer
-   moving parts than a ring and needs no virtual-node tuning. A ring earns its complexity at
-   larger N or where lookup must be sub-linear.
+2. **Check the membership model and lookup budget.** With a small arbitrary node set,
+   rendezvous needs no virtual-node tuning. For larger sets, compare a ring with alternatives:
+   jump hashing uses constant placement memory for contiguous equal logical buckets, but cannot
+   directly remove an arbitrary physical node. See `references/mapping-functions.md`.
 3. **Specify the placement contract completely:** algorithm and variant, seed, byte encoding,
    normalization and malformed-input policy, field framing, signed/unsigned ordering,
    virtual-point format and membership epoch. Prove
@@ -54,6 +55,8 @@ Keep a sound current mapping when it meets those constraints. Apply only the rel
    worst actual/target load for the relevant resource is inside tolerance, within a rebuild/memory budget.
    Use mean load only for equal target shares; normalize by the intended shares for weighted nodes. If skew is dominated by
    an indivisible hot key or poor hashing, more points are not the remedy. Measure lookup and rebuild cost.
+   Changing V on a deployed ring can change placement even with unchanged membership; evaluate
+   before/after ownership and migration cost separately from a one-node join.
 5. **For a ring, implement the wrap-around explicitly.** `ceilingEntry(h)` returning `null` means the key
    hashed past the last point on the ring and belongs to the first entry. This single branch
    is the most commonly omitted line in the pattern.
@@ -91,6 +94,9 @@ Use rendezvous (highest random weight) hashing when:
   virtual-node tuning and gives probabilistically even shares, even with frequent churn
 - you need the ordered list of candidates for a key (primary, then replicas) — rendezvous
   produces it directly, with probabilistic balance under a suitable hash
+Consider jump hashing when:
+- equal logical buckets remain numbered 0..N-1 and only the tail grows or shrinks;
+  arbitrary physical failures are handled by a separate assignment/replication layer
 Use bounded-load consistent hashing when:
 - the chosen algorithm's capacity unit matches the workload, allocation state is agreed,
   and displacement is acceptable; a key-count cap alone does not bound bytes or QPS
@@ -145,8 +151,8 @@ Prefer a directory (sharding-and-partitioning) instead when:
   split ownership and lost writes.
 - Replication follows the ring by walking clockwise to the next R **distinct physical** nodes
   — skipping further virtual nodes of a node already chosen. Forgetting the distinctness
-  check places every replica of a key on one machine, which is the failure the replication
-  was bought to prevent.
+  check can return repeated node IDs and fewer than R physical copies; it need not fail for
+  every key, so verify the distinct-owner count rather than just the list length.
   Distinct nodes can still share a host, rack or zone: define and enforce the required failure-domain
   and residency policy. Replica-set changes must be measured separately from primary movement;
   a key whose primary stays put can still need a new replica. Constrained placement may require an
@@ -166,7 +172,7 @@ Prefer a directory (sharding-and-partitioning) instead when:
   fraction of keys that move when a node is added. Read when implementing or reviewing
   placement code.
 - [Choosing the mapping function](references/mapping-functions.md) — modulo, ring with
-  virtual nodes, rendezvous and bounded-load compared on disruption, lookup cost,
+  virtual nodes, rendezvous, jump and bounded-load compared on disruption, lookup cost,
   distribution quality and implementation complexity, with a decision table and the hash
   function shortlist. Read when choosing between them, or when justifying a ring over the
   simpler option.

@@ -96,6 +96,10 @@ profile, change source or produce a full performance decision record.
   compiler-IR printers generally require a debug/fastdebug build.
 - State the syntax convention of every excerpt you quote or read. In AT&T the destination
   is the **last** operand: `mov 0x8(%rbx),%eax` writes into `eax`.
+- An absent hardware fence or plain-looking load does not establish Java memory-ordering
+  semantics. Identify the source access mode and synchronization contract; compiler ordering
+  and the target ISA can satisfy a barrier without a separate instruction. Never weaken
+  `volatile` or a VarHandle mode just because two listings look alike; see the reading reference.
 - Absence of `cmp`/`test` before a load is **not** proof the JIT proved non-nullity. Three
   cases share that appearance; an `; implicit exception` mapping identifies an implicit site,
   but missing comments do not prove elimination. Check the full control flow and metadata. The
@@ -181,7 +185,8 @@ shape to production. Missing evidence remains inconclusive, not proof of absent 
   the first capture in an environment, or when output arrives as hex bytes.
 - [Reading the output](references/reading-the-output.md) — the AT&T/Intel conversion table,
   the JDK 25 anatomy of a printed compilation, the optimisation-signal table, and the
-  three-way null-check decision procedure. Read while interpreting a captured listing.
+  three-way null-check decision procedure, plus limits on memory-ordering inference. Read while
+  interpreting a captured listing.
 - [Pattern catalogue](references/pattern-catalogue.md) — the runtime's own code decoded on
   Temurin 25.0.3: entry barrier, safepoint polls, bounds check and uncommon trap, TLAB
   allocation, Serial/G1 card marks, lightweight and inflated locking, ZGC load and store

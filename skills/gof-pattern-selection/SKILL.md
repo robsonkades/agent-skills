@@ -52,6 +52,7 @@ Use these questions to narrow the relevant dimension; they are not sufficient co
      two independent dimensions  → Bridge
      which concrete type         → factory; Factory Method if subclass creation hook
      a whole family of types     → Abstract Factory
+     representation built by the same process → Builder (GoF)
 
 3. What boundary must be handled?
      an incompatible interface   → Adapter
@@ -67,7 +68,7 @@ Use these questions to narrow the relevant dimension; they are not sufficient co
 5. What interaction contract is needed?
      interchangeable policy      → Strategy; selection may be internal
      lifecycle-dependent legality/behavior → State; transitions may be requested externally
-     a chain of candidates       → Chain of Responsibility
+     a chain of candidates       → Chain of Responsibility; establish first-match or pipeline contract
      a hub owning the protocol   → Mediator
      subscribers notified of changes → Observer; listeners may be known
 
@@ -76,6 +77,11 @@ Use these questions to narrow the relevant dimension; they are not sufficient co
      stable types, growing ops   → Visitor (or compatible exhaustive dispatch)
      growing types, stable ops   → compare polymorphism with the existing extension/fallback contract
 ```
+
+For creation, distinguish product selection from representation assembly and fluent caller
+ergonomics. A subclass creation hook need not sit inside an inherited algorithm; a small
+parameter count does not establish an unambiguous constructor. Compare representative creation,
+extension and invalid-input calls before selecting (`gof-factory-method`, `gof-builder`).
 
 ## The decision tree, used honestly
 

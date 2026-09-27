@@ -129,6 +129,15 @@ The third answer is **neither**. A parameter with no rule and no confusion risk 
 type at all; a significant transformation that is nobody's natural responsibility is a
 domain service, not an object looking for a home (Evans, p. 14).
 
+For example, allocating a discount across several supplied line values can be one named
+policy with a rounding/remainder contract. Do not invent an identity-bearing entity simply
+to house that calculation. An application service can load the inputs, invoke the policy,
+apply the result and coordinate persistence; the policy owns the business decision. A
+stateful transition such as editing a shipped order still belongs to its state owner.
+If responsibility remains unclear, pass the operation, required inputs and observable effects
+to `service-layer-design` to separate orchestration from domain decisions; retain the existing
+enforcement until that split is established rather than moving checks speculatively.
+
 This classification decides only _what kind of type_ a concept gets. Once decided, the
 mechanics belong elsewhere: record shape, shallow immutability and defensive copies are
 `java-immutability`; the `equals`/`hashCode` contract and entity identity under an ORM are
@@ -138,14 +147,15 @@ Obsession).
 
 ### Concept to construct
 
-| The concept is…                                              | Construct                              | Equality                   | Note                                                                                                                                                                                                                 |
-| ------------------------------------------------------------ | -------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A closed set of named constants, fixed at your release cycle | `enum`                                 | identity                   | Behaviour per constant, never `ordinal()` (`java-enums`)                                                                                                                                                             |
-| A value, immutable, every component part of what it is       | `record`                               | component-based by default | A candidate since JDK 16 when component equality and mutability fit the domain contract                                                                                                                              |
-| A value with a closed set of variants                        | `sealed interface` + `record` variants | value                      | Exhaustive `switch`, no `default`                                                                                                                                                                                    |
-| An entity: identity, lifecycle, mutable state                | class with an explicit identity policy | identity                   | Application-assigned stable ids simplify equality; generated ids need lifecycle/hash-collection care (`java-object-contracts`). A record cannot be a portable JPA `@Entity`.                                         |
-| An immutable snapshot of an entity                           | `record`                               | by default, all components | Snapshots of one identity with different state are unequal by default. Custom identity equality is possible but needs an explicit `equals`/`hashCode` contract; event sourcing does not make entity state immutable. |
-| Neither                                                      | the primitive                          | —                          | `java-code-smells`, Primitive Obsession, carries the budget for when a wrapper earns its place                                                                                                                       |
+| The concept is…                                              | Construct                               | Equality                    | Note                                                                                                                                                                                                                 |
+| ------------------------------------------------------------ | --------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A closed set of named constants, fixed at your release cycle | `enum`                                  | identity                    | Behaviour per constant, never `ordinal()` (`java-enums`)                                                                                                                                                             |
+| A value, immutable, every component part of what it is       | `record`                                | component-based by default  | A candidate since JDK 16 when component equality and mutability fit the domain contract                                                                                                                              |
+| A value with a closed set of variants                        | `sealed interface` + `record` variants  | value                       | Exhaustive `switch`, no `default`                                                                                                                                                                                    |
+| An entity: identity, lifecycle, mutable state                | class with an explicit identity policy  | identity                    | Application-assigned stable ids simplify equality; generated ids need lifecycle/hash-collection care (`java-object-contracts`). A record cannot be a portable JPA `@Entity`.                                         |
+| An immutable snapshot of an entity                           | `record`                                | by default, all components  | Snapshots of one identity with different state are unequal by default. Custom identity equality is possible but needs an explicit `equals`/`hashCode` contract; event sourcing does not make entity state immutable. |
+| Significant operation with no natural entity/value owner     | named policy/function or domain service | no entity identity required | Define its business input/output and side-effect contract; application orchestration is a separate responsibility.                                                                                                   |
+| Ordinary parameter with no additional model role             | existing type or primitive              | existing type's contract    | `java-code-smells`, Primitive Obsession, carries the budget for when a wrapper earns its place.                                                                                                                      |
 
 A record is only shallowly immutable; its default equality uses each component's equality.
 For example, a `byte[]` component remains mutable and uses array identity, not byte content,

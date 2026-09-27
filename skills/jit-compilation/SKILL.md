@@ -76,6 +76,10 @@ Compiler.codecache` for `full_count` and the `Compilation:` line, `fullCount` in
   threshold fired. The 1-versus-24-CPU counts in the reference are one JDK 25 reproduction.
 - Tier 3 carries fuller profiling instrumentation than tier 1. That adds runtime work to collect
   data C2 can use, but “tier 3 is always slower” is not a workload-level guarantee.
+- A compilation-log header records an attempt, not successful installation or current execution.
+  For disputed progress, correlate the compile ID with its outcome and current nmethod state;
+  an OSR entry is distinct from a normal method entry. Use the tiered-model reference and
+  `compilation-and-inlining-logs` before concluding that a hot path has usable tier-4 code.
 - `-XX:-TieredCompilation` does **not** mean interpreted-only; on the standard server HotSpot it
   selects non-tiered high-tier compilation. `-Xint` disables JIT. On the examined JDK 25 build,
   disabling tiered compilation or stopping at level 1 also changed code-cache ergonomics from

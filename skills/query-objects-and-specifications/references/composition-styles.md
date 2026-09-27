@@ -118,6 +118,27 @@ An allowlist controls exposed fields and query cost. A validated Spring Data pro
 not automatically raw SQL injection, but concatenated identifiers or unsafe sort expressions
 can be; never insert untrusted SQL fragments.
 
+### Literal text versus patterns
+
+Choose the search contract before translating it. Use equality for exact literal matching;
+prefix/substring search and user-authored patterns have different semantics and costs.
+Binding a value protects the SQL structure but leaves `LIKE` metacharacters active.
+For a literal substring, escape the chosen escape character itself and the supported wildcard
+characters before adding the surrounding `%`; use the same explicit escape character in the
+query. For PostgreSQL `LIKE :pattern ESCAPE '!'`, literal input `50%_off!` becomes the bound
+pattern `%50!%!_off!!%`. Do not interpolate that value into SQL. Other dialects can have
+additional pattern syntax; verify the actual operator and database.
+
+Avoid escaping twice. Spring Data JPA 3.5.2's derived string `Containing`, `StartingWith` and
+`EndingWith` parameter preparation already escapes `%`, `_` and its configured escape character;
+a custom `LIKE` translation must establish its own behavior. Preserve the user's wildcards
+when an explicit pattern mode is intended, with documented syntax and bounded cost. Define
+empty-string, case/accent and collation behavior separately; escaping does not define them.
+
+Sources: [PostgreSQL 17 pattern matching](https://www.postgresql.org/docs/17/functions-matching.html)
+and [Spring Data JPA 3.5.2 parameter preparation](https://github.com/spring-projects/spring-data-jpa/blob/3.5.2/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/ParameterMetadataProvider.java)
+with its [escape implementation](https://github.com/spring-projects/spring-data-jpa/blob/3.5.2/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/EscapeCharacter.java).
+
 ## 3. Specifications — for criteria reused across queries
 
 The justification is a business criterion used in several places that must stay consistent.

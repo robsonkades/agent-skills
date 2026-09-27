@@ -18,14 +18,15 @@ Distinguish four mechanisms that look like “carriers are busy” but require d
 - CPU-ready virtual threads waiting for scheduler capacity;
 - normal unmounted waiting, with pressure at a dependency/resource;
 - carrier capture by a blocking operation that cannot unmount but for which the runtime may compensate;
-- native/foreign or VM-frame pinning, for which scheduler expansion is not a promised remedy.
+- native/foreign or VM-frame pinning (also monitor pinning on older/legacy-locking runtimes), for which scheduler
+  expansion is not a promised remedy.
 
 Introductory adoption belongs to `thread-sizing-and-virtual-threads`; evidence collection to
 `concurrency-diagnostics`; work-stealing in general to `forkjoinpool-and-work-stealing`.
 
 ## Diagnostic workflow
 
-1. Record exact JDK/vendor/build, effective CPU, scheduler properties and whether tasks truly execute
+1. Record exact JDK/vendor/build, effective CPU, locking mode, scheduler properties and whether tasks truly execute
    as virtual threads (`Thread.currentThread().isVirtual()`). Inspect project toolchains/runtime
    images; Java 25 is the reference target, not authorization to upgrade an older project.
 2. Define the regression: throughput, scheduler queue, dependency wait, CPU, memory/GC or tail latency.
@@ -35,8 +36,10 @@ Introductory adoption belongs to `thread-sizing-and-virtual-threads`; evidence c
    other captured-carrier operations, CPU-ready tasks and ordinary parked dependency waits.
 5. Correlate event duration/rate with scheduler queue and useful completion. A pin that has no capacity
    impact is not automatically worth a rewrite.
-6. Test one mechanism-specific intervention: update/isolate native code, bound CPU phase, change I/O
-   path, reduce admission or tune scheduler only with proven headroom.
+6. For a findings-only diagnosis, return a mechanism-specific recommendation and test plan. For
+   requested remediation, test one intervention: update/isolate native code, bound CPU phase,
+   change I/O path, reduce admission or tune scheduler only with proven headroom. Keep experiments
+   within the authorized environment and change scope.
 7. Return the observed mechanism and its evidence, remaining causal hypothesis, selected change or
    no-change decision, and comparable validation. If capture is unavailable, name the missing evidence
    and the next discriminating check rather than reporting a confirmed cause or completed fix.
@@ -85,7 +88,10 @@ notably many file-system paths, may capture a carrier and cause the scheduler to
 platform-thread count up to its configured maximum. This compensation is not the same as pinning.
 
 Java 24 JEP 491 removed pinning caused solely by `synchronized` monitor ownership/acquisition and
-`Object.wait`. Native/foreign frames still prevent unmounting, including when native code calls
+`Object.wait` under the default locking configuration. Legacy `-XX:LockingMode=1` retains monitor
+pinning in HotSpot 24 GA and tested Temurin 25.0.3; inspect effective flags before applying a
+version-only rule. This deprecated option is not a recommended workaround. Native/foreign frames
+still prevent unmounting, including when native code calls
 back into Java that blocks or acquires a monitor. JDK 25 also reports residual VM-frame cases,
 including class initialization; inspect the event's reason instead of assuming every pin is JNI.
 If such a virtual thread blocks, it retains its carrier. JEP 444 explicitly states the
@@ -133,7 +139,17 @@ Prefer resource-local admission when many normally unmounted threads retain too 
 overwhelm a dependency. Prefer a bounded CPU executor/gate for long CPU phases. Prefer observation
 when pin volume is low and scheduler queue/SLO remain healthy.
 
-Do not replace `synchronized` with `ReentrantLock` for Java 24+ pinning. Lock choice still affects
+On runtimes retaining monitor pinning (Java 21–23 or a verified legacy-locking configuration),
+when blocking while holding a monitor is a measured carrier bottleneck, compare moving the blocking
+work outside the critical section with a targeted `ReentrantLock` conversion. For legacy mode,
+first establish why it was selected and compare the supported default in an isolated test.
+Preserve the guarded invariant, all participating lock users and any `wait`/`notify` protocol;
+moving I/O outside the lock is unsafe when its ordering/atomicity is part of that invariant.
+Validate correctness as well as reduced pin impact. Short or infrequent harmless monitor use
+does not justify conversion, and an upgrade is a separate project decision.
+
+With Java 24+ default locking, do not replace `synchronized` with `ReentrantLock` merely to avoid
+monitor-only pinning. Lock choice still affects
 contention, timeouts, interruption, fairness and conditions; route that decision to
 `concurrent-collections-and-synchronizers`.
 
@@ -163,5 +179,6 @@ contention, timeouts, interruption, fairness and conditions; route that decision
 - [Pinning and carrier diagnostics](references/pinning-diagnostics.md) — when collecting JFR/MXBean evidence or choosing an intervention.
 - [JEP 444: Virtual Threads](https://openjdk.org/jeps/444)
 - [JEP 491: Synchronize Virtual Threads without Pinning](https://openjdk.org/jeps/491)
+- [Java 21 monitor-pinning guidance](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html) — use the pre-JEP 491 branch only for the corresponding runtime.
 - [Java 25 virtual threads](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)

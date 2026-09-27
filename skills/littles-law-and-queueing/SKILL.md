@@ -41,6 +41,8 @@ headroom factor.
 1. **Draw the boundary.** Define admission and departure events, population/outcomes, time window
    and whether `L` includes queued plus executing work. Use effective departure flow (including
    whichever terminal outcomes the cohort defines) for `λ` and mean residence `W` for that cohort.
+   For disjoint classes/instances at the same boundary, sum their `λ_i W_i`; total throughput
+   times an unweighted average of their mean latencies can misstate total occupancy.
 2. **Classify state.** In steady operation, reconcile long-run averages. During ramp, drain or
    overload, report inventory change and finite-window edge effects; do not force a stationary
    formula onto a growing queue.

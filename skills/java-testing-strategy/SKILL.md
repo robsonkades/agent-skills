@@ -50,6 +50,10 @@ reproduction, state a proposed selection and its evidence gap, not a verified di
 5. **Check detection**, preferably against the unfixed bug or a controlled defect. A passing
    test alone does not establish that it detects the intended failure. If a red run is
    unavailable, report that limitation; do not alter production merely to manufacture one.
+6. **Confirm execution in the intended gate.** Inspect the actual CI task/phase, selected
+   modules, profiles, test engines and filters. Read fresh reports for the intended test's
+   identity, executed/skipped counts and failure propagation. Compilation, a green exit code
+   or a passing unrelated suite does not prove this regression runs or can fail that gate.
 
 Return the risk, chosen scope, decisive assertion or reproduction, uncovered boundary and
 how it is covered or accepted, plus commands/results actually observed. A short paragraph
@@ -92,8 +96,9 @@ is enough for a single change.
 - **What each level proves and cannot prove** — `references/test-levels.md`. Unit,
   integration, Spring slice, contract, end-to-end and characterisation, each with the Java
   tooling, typical feedback latency, and the specific failures it is blind to. Read when
-  choosing a level or when deciding what a mocked boundary still obliges you to verify.
-- **Worked selection scenarios** — `references/selection-scenarios.md`. Five changes — a
-  pricing rule, a new query, a third-party call, a schema migration, a bug report — taken
-  from risk to chosen level, with the tests deliberately not written and why. Read when the
-  rules above match but the level is still not obvious.
+  choosing a level, deciding what a mocked boundary still obliges you to verify, or checking
+  whether the build actually executes and enforces the selected tests.
+- **Worked selection scenarios** — `references/selection-scenarios.md`. Pricing, queries,
+  third-party calls, schema migrations, a bug report and a green build missing its regression
+  test — taken from risk to chosen scope, with work deliberately omitted and why. Read when
+  the level is unclear or green CI conflicts with a known failing test.

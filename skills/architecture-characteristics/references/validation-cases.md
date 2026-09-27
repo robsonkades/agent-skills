@@ -3,13 +3,15 @@
 Status: documented, not executed. These evaluate skill decisions, not application tests or
 fitness functions. No measured improvement is claimed.
 
-Run each request/context in a fresh session, without the expectations below. For comparison,
-keep model/version, settings, tools and surrounding instructions the same; omit this skill in
-the baseline and provide SKILL.md plus its three technical references in the treatment. Keep
-this evaluation file and its expectations unavailable to task-runner agents. Record outputs,
-tool use and pass/fail against each required characteristic with evidence. For selection cases,
-provide the same neighboring descriptions, adding this description only in the treatment.
-Judge decisions and preserved requirements, not exact wording. Paired runs remain pending.
+These shipped cases are teaching and regression material; an agent can encounter their expected
+answers. A walkthrough or a run with that exposure does not establish independent improvement.
+For behavioral comparisons, prepare separate task inputs and evaluator-only criteria, use fresh
+sessions and keep model/version, settings, tools and surrounding instructions comparable. Compare
+the original and revised packages on the same tasks when attributing an effect to this revision;
+a no-skill baseline answers a different question. Provide ordinary package resources as shipped.
+If a harness withholds this file, disclose that restriction and limit claims to that configuration.
+Record outputs, tool use and judgments against observable requirements, not exact wording.
+For selection cases, keep neighboring descriptions constant. Paired runs remain pending.
 
 ## 1. Representative elicitation
 
@@ -121,3 +123,48 @@ Prometheus burn-rate alerts for our agreed SLO. Do not revisit the driver list.�
 **Required output:** Respect the approved list and focus on operational alerting inputs.
 
 **Failure:** Forcing a three-driver exercise or an architecture worksheet before alert work.
+
+## 8. Same target, different exception authority
+
+**Request/context A:** “Document drivers for image ingestion. The approved requirement says each
+accepted image is durably stored and its preview completed within 30 seconds, including a thumbnail
+dependency outage. The team now proposes returning a receipt and completing previews after recovery.
+Treat that as our existing graceful-degradation requirement.”
+
+**Request/context B:** The same request, except the approved requirement explicitly permits delayed
+preview completion during that dependency outage while retaining durable storage of accepted images.
+No outage receipt or post-recovery completion target is recorded.
+
+**Expected behavior:** In A, retain the 30-second obligation and identify the proposal as an
+unapproved change with unresolved feasibility. In B, separate normal and outage scenarios, preserve
+durability, and request the missing acknowledgement/recovery measures. Neither case chooses a queue
+or claims the target is technically achievable.
+
+**Required output:** The authority difference changes the acceptance statement; both outcomes
+identify the owner and missing evidence without inventing new thresholds.
+
+**Failure:** Inferring permission from the team's current behavior, refusing the explicit exception
+in B, treating a receipt as a completed preview, or waiving durability during the outage.
+
+## 9. Reuse approved decisions and survive an unavailable handoff
+
+**Request/context:** “The product and operations owners approved these report-export drivers last
+month: performance (95% of jobs finish within 60 seconds from acceptance during healthy operation,
+for at most 100,000 rows per job and 10 simultaneous jobs); recoverability (an accepted job remains
+recoverable after a single worker-process failure, though its completion-time target then is pending).
+Nothing relevant has changed. Prepare these scenarios for fitness-check design; do not re-rank them.
+The architecture-fitness-functions skill is unavailable.”
+
+**Expected behavior:** Reuse the supplied priorities and provide scoped scenarios, constraints,
+evidence and unresolved verification questions. Identify the needed verification-design result
+without claiming the checks have been designed or executed. No new workshop is needed.
+
+**Required output:** A usable handoff even without the neighboring skill, with no invented approval
+or mandatory extra artifact.
+
+**Failure:** Blocking all progress on skill availability, asking the user to repeat supplied
+requirements, or changing priorities merely because the review is occurring again.
+
+**Variant:** Evidence now shows a newly required operating mode outside the approved scenarios.
+Reopen that affected scenario and its priority implications while retaining unaffected decisions;
+blindly reusing the list is now a failure.

@@ -158,6 +158,9 @@ The API is REST over resources
   the contract, not the annotation: a positive order quantity is a domain invariant even
   if a request DTO also checks its range. Enforce business legality regardless of caller;
   Bean Validation on a web request alone does not protect imports or other entry points.
+- Constrain accepted fields as well as their values. `@Valid` does not authorize binding
+  server-owned properties or a domain object graph. Form property binding and JSON body
+  deserialization have different controls; inspect the actual path before choosing an allowlist.
 - One deliberate error contract across the application's HTTP boundaries. RFC 9457 problem details give a standard
   target (`rpc-and-api-contracts`); already committed responses require a late-failure
   policy, since their status and emitted body cannot be replaced.

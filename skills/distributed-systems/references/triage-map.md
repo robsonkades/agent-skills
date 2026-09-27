@@ -1,8 +1,8 @@
 # Triage map
 
 Each entry is a pair of symptoms that look alike and route to different owners, the question that
-separates them, and the cheapest evidence that answers it. Use this only when the routing table
-gave two candidates.
+separates them, and the cheapest evidence that answers it. Use this when candidates compete or
+the routing table has no direct match. These are discriminators, not an exhaustive failure catalogue.
 
 ## Duplicates appeared
 
@@ -53,6 +53,18 @@ write replace the authoritative value?
   demonstrated partition skew routes to `hot-partitions-and-rebalancing`.
 - Slow only on fan-out requests, fine on simple ones → `scatter-gather` (max-of-N).
 - Slow and spreading across services, error rate rising with it → `cascading-failures`. Time-critical.
+
+## Memory grows with admitted work
+
+**Separating question:** is live work accumulating, or is memory retained after that work ends?
+
+Compare accepted/completed work, pending futures/queue age and retained bytes over the same window.
+Unbounded waiting or fan-out despite bounded active calls routes to
+`concurrency-limiting-and-bulkheads`; an ingress shedding decision also involves
+`rate-limiting-and-load-shedding`. If work and payload sizes remain bounded but retained memory
+keeps growing, route to `java-performance` for attribution. An executor's class name, or a
+semaphore alone, proves neither overload nor a leak. Missing occupancy data warrants that
+capture before prescribing a replacement executor.
 
 ## A background job misbehaved
 

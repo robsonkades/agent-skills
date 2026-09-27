@@ -46,6 +46,30 @@ or an operational check can expose it within the recovery window. Do not invent 
 latency or assume a metric can detect an externally visible effect. Separate pre-release tests
 from runtime detection and label planned detection as unverified.
 
+## Check the control chain before reducing residual risk
+
+When a response is claimed to limit harm, trace failure → signal → notification → decision →
+effective action. Include acknowledgement, execution and propagation delays, not just the
+alert's evaluation interval. Compare evidence for that chain with the time until unacceptable
+harm or an irreversible effect; averages alone do not establish a response bound. Record
+unknown timings as unknown rather than assuming an immediate operator response.
+
+Check whether the failure also disables the signal, control interface or fallback dependency,
+and whether the responder has the necessary access and capacity. A dashboard's existence or a
+runbook's happy-path demonstration does not establish those conditions during the failure.
+Reuse applicable drill/incident evidence; request a targeted check only for material gaps.
+
+Separate **containment** (stop further exposure) from **recovery** (repair effects already
+produced). A rollout stop can limit new writes without repairing corrupt records or recalling
+delivered messages. Credit only the consequence actually reduced. If response is too late,
+compare prevention, a smaller exposed population or a reversible hold before the effect;
+route mechanism design to its specialist. Detection can still aid diagnosis and recovery
+without making the original harm reversible.
+
+[Google SRE's alerting analysis](https://sre.google/workbook/alerting-on-slos/) demonstrates
+the timing limit for error budgets: a notification can arrive after the budget is exhausted.
+Apply the same timing question to this feature's actual consequence, not a borrowed SLO.
+
 ## Risks that are actually design findings
 
 Separate vague concerns from concrete events, while preserving links to upstream work:

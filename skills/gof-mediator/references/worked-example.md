@@ -102,6 +102,12 @@ unknown outcome; the sketch is not a complete retry protocol. Even when both par
 return normally, that does not establish completion of their asynchronous business effects.
 Keep completed-state retention/deduplication bounded with a defined late-event policy.
 
+This sketch assumes one fulfilment instance per `OrderId`. Eviction must not let a late callback
+from that instance update newly created state under the same key. If an order can be fulfilled
+again, distinguish the fulfilment instance in state and callbacks, and route late effects to their
+original instance's outcome/recovery policy. Merely serializing both callbacks does not distinguish
+them; silently discarding a late reservation can leak its external resource.
+
 Cancellation must be ordered against the packing claim: this model closes cancellation when
 packing is requested. A contract allowing cancellation until physical packing starts needs an
 additional participant handshake, not merely this flag.

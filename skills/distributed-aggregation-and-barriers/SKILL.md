@@ -35,7 +35,11 @@ review or implementation change.
 1. **Write the aggregate contract.** Define identity, accumulator, merge, finish, input
    domain, units/window/population, overflow/error policy and whether encounter order matters.
    Associativity is required for arbitrary grouping; commutativity is required only when
-   partials may be reordered. Neither prevents double-counting a repeated attempt.
+   partials may be reordered. Merging separately accumulated partitions must also match
+   accumulating their combined input under the result contract; merge algebra alone is
+   insufficient. For keyed work, define business key equality and verify that the engine's
+   encoding, grouping and partitioning preserve it. Neither law prevents double-counting
+   a repeated attempt.
 2. **Rewrite aggregates that lack a mergeable sufficient state.** Average becomes a
    `(sum, count)` pair; variance becomes `(n, mean, M2)`; a pooled percentile needs a mergeable
    distribution summary. A ratio needs a denominator with the correct exposure semantics.
@@ -55,7 +59,9 @@ review or implementation change.
    fail the job, retry the failed tasks, or emit a partial result with an explicit
    completeness record.
 8. **Check algebra and recovery.** Property-test regrouping/reordering allowed by the
-   contract, inject duplicate attempts and crashes at commit boundaries, and compare against
+   contract, including accumulator/merge compatibility and serialized-state round trips.
+   Test equivalent and distinct keys across workers. Inject duplicate attempts and crashes
+   at commit boundaries, and compare against
    a trusted sequential oracle. Report the schedules and faults actually tested; finite trials
    support the contract but do not prove every distributed execution safe.
 
@@ -159,7 +165,9 @@ Speculatively re-execute a straggler only when attempts satisfy the same result 
   epochs/writers; an atomic overwrite alone does not prevent checkpoint regression. Validate
   authority and publication as one decision, including after a precondition failure. Optimize
   checkpoint interval from write cost, failure rate and recovery work, then validate under
-  injected failure.
+  injected failure. Bind reusable outputs to the input snapshot, aggregate definition and
+  compatible key/state schemas; successful deserialization does not prove that a checkpoint
+  still answers the same question after a deployment or input change.
 - Never claim unqualified "exactly-once aggregation". State the boundary: at-least-once task execution
   plus one selected output per logical partition can provide one committed contribution per
   stage. External side effects and source/sink commits need their own boundary proof.
@@ -171,7 +179,8 @@ Speculatively re-execute a straggler only when attempts satisfy the same result 
 - [HyperLogLog original analysis](https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf)
 
 - [Aggregation correctness](references/aggregation-correctness.md) — identity,
-  associativity, conditional commutativity and duplicate-attempt separation, with the
+  associativity, accumulator/merge compatibility, grouping-key semantics, conditional
+  commutativity and duplicate-attempt separation, with the
   safe/unsafe operation table and floating-point
   non-associativity problem and its three fixes, non-reducible aggregates rewritten with
   mergeable state, summaries with what each approximates and its error, and a

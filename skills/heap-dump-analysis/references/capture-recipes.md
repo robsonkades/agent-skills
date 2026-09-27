@@ -42,9 +42,19 @@ jcmd <pid> help GC.heap_dump
 ```
 
 If attach processing or safepoint progress is stuck, `jcmd` and `jmap` can wait indefinitely.
+A timeout or termination of the client bounds the caller's wait, not necessarily the accepted
+heap-dump operation inside HotSpot. In JDK 25 the Attach Listener runs the command handler before
+completing its response; do not infer cancellation from a lost connection. Check target health,
+dump/log progress and completion before retrying, moving, deleting or trusting the artifact.
+Avoid stacking another capture behind a request whose target-side state is unknown. A stable
+file size alone is not proof of success; retain command/log outcomes and parser warnings.
+
 A blocked native thread or application deadlock alone does not prove safepoints are
 impossible: a thread in native state can already be safepoint-safe. Inspect thread/VM
-state before escalating to SA.
+state before escalating to SA. First distinguish wrong PID/namespace, credentials, disabled
+attach or inaccessible attach/output paths from VM cooperation failure. Use an exact target PID;
+`jcmd 0` or a main-class selector can reach several JVMs and is inappropriate for a one-instance
+capture. Inspect namespace visibility and permissions rather than broadening privileges blindly.
 `jhsdb jmap --binaryheap` reads process memory externally (a ptrace-equivalent mechanism)
 without a normal target-VM safepoint handshake, but live-process SA attach is invasive: it
 suspends the target and concurrent serviceability attaches can corrupt the investigation or
@@ -158,7 +168,23 @@ exposure. Two stable snapshots or absence of an immediate OOM do not prove the f
 MAT index memory can be comparable to or greater than dump size; “2×” is only a planning
 heuristic and varies with object count, identifiers, parser version and indexes. Run a
 representative parse with disk/RAM headroom and record the tool version. Beyond local
-capacity:
+capacity, first consider the existing MAT on an approved larger analysis host. Its batch mode
+can parse and generate reports without the interactive UI; it still needs enough RAM and disk
+for the parser, indexes and output. Work on an artifact copy with write access, using an installed
+MAT and a runtime supported by that MAT release. Protect generated indexes/reports under the
+same data policy as the source: reports can expose application values and system properties.
+
+```bash
+# Linux/macOS example with an existing MAT installation; generates indexes and a report.
+./mat/ParseHeapDump.sh /analysis/copy.hprof org.eclipse.mat.api:suspects
+```
+
+On Windows the corresponding launcher is `ParseHeapDump.bat`; verify the installed distribution's
+launcher and JVM-memory configuration. The generated Leak Suspects report remains a triage aid,
+not proof of a leak. If batch parsing still exceeds the available budget, report that limit;
+do not treat a failed parse or a missing report as a clean heap.
+
+Other analyzers can be considered when their capabilities and data-handling terms fit:
 
 - **HeapHero.io** — online `.hprof` analysis; the heap-dump sibling of GCeasy.io.
 - **jxray.com** — commercial, aimed at very large dumps, with common leak patterns
@@ -173,6 +199,9 @@ OQL/retained-set workflow or of enough capacity for a particular large dump.
 ## Primary reference
 
 - [HotSpot 25 heap dumper: safepoint capture, virtual-thread roots and subsequent merge](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/heapDumper.cpp)
+- [HotSpot 25 Attach Listener: command execution precedes response completion](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/attachListener.cpp)
+- [JDK 25 jcmd target selection, permissions and command options](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
 - [HotSpot 25 VM-reported OOME once-only guard](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/utilities/debug.cpp)
 - [JMC 9.1.0 JOverflow HPROF editor registration](https://github.com/openjdk/jmc/blob/9.1.0-ga/application/org.openjdk.jmc.joverflow.ui/plugin.xml)
 - [MAT comparison workflow and limits of cross-dump object identity](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/comparingdata.html)
+- [MAT batch analysis and supported report identifiers](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/tasks/batch.html)

@@ -23,6 +23,30 @@ stream, multiplexed versus dedicated connections, and JDK versions can differ.
 - native/foreign calls and library-specific abort handles;
 - reactive subscription cancellation.
 
+## Waiting choices that change cancellation behavior
+
+These JDK 25 contracts distinguish common in-process waits; provider I/O still needs the
+inventory above.
+
+- **Monitor entry (`synchronized`):** interruption does not abort acquisition. An interrupt
+  check inside the block cannot bound time spent entering it. Preserve short adequate monitor
+  regions; consider interruptible/timed locking only when the waiting contract requires it.
+- **`ReentrantLock.lockInterruptibly()`:** interruption can throw before acquisition, clearing
+  status. Acquire before the `try/finally` that unlocks, or track successful acquisition; never
+  unlock merely because acquisition was attempted.
+- **`Future.get()` / `CompletableFuture.join()`:** `get` exposes interruption of the waiter;
+  `join` has no interruptible waiting contract. Choose `get` when the waiter must abandon on
+  interruption. Separately decide whether it owns and should cancel the producer.
+- **`LockSupport.park()`:** may return from interrupt, unpark or spuriously, without clearing
+  status or identifying the cause. Recheck the condition and interrupt status. Re-parking with
+  status still set can spin; honor cancellation or deliberately record/clear and later restore
+  only for a bounded non-cancellable region.
+
+An interruptible condition wait still reacquires its lock before returning or throwing. A
+test that holds that lock while awaiting the waiter's cancellation can deadlock itself; release
+the lock before asserting termination. This also means an interruptible API alone is not an
+end-to-end latency bound when reacquisition or cleanup is unbounded.
+
 ## Adapter state machine
 
 When a callback/handle API completes a Future:
@@ -99,6 +123,9 @@ only exceptional completion of the caller future.
 ## Authoritative references
 
 - [Java concurrency APIs](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [JLS monitor acquisition](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.1)
+- [ReentrantLock acquisition and condition contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html)
+- [LockSupport park contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/LockSupport.html)
 - [CompletableFuture execution and timeout contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html)
   — non-async callback execution, receiver mutation and derived-future construction; checked 2026-09-19.
 - [InterruptibleChannel](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/channels/InterruptibleChannel.html)

@@ -20,6 +20,10 @@ review work on the _real_ dependency graph. The failure modes it exists to preve
 restructuring packages by aesthetics or by metric thresholds, and filing findings
 from numbers alone without an observed cost or explicit boundary requirement.
 
+For a review, deliver findings and justified corrections; apply code changes only when the
+request includes implementation. Choosing package boundaries does not itself authorize a
+module migration or a public API break.
+
 ## Workflow
 
 Inspect compiler release/toolchains, resolved dependencies, production artifacts, module
@@ -63,8 +67,10 @@ inventory the whole application.
   from a widely-depended-on contract into a structurally unstable package. Martin's
   instability metric describes dependency shape, not empirical volatility; corroborate it
   with change history and contract compatibility before calling the target volatile.
-- Common closure is stronger evidence than conceptual similarity, but balance it with reuse,
-  ownership, release and dependency direction. Classes that merely share a noun do not
+- Repeated changes required by the same rule or contract are stronger cohesion evidence than
+  conceptual similarity. Inspect representative diffs and their reasons: formatting, generated
+  output and batched releases can make unrelated classes change together. Balance verified
+  common closure with reuse, ownership, release and dependency direction. Classes that merely share a noun do not
   automatically belong together — `util`, `common` and `helpers` often group by category and
   accrete dependants from everywhere.
 - A package's exported surface is its coupling budget. Under JPMS, an unexported
@@ -72,6 +78,11 @@ inventory the whole application.
   `opens`, services, reflection flags and command-line `--add-exports/--add-opens` create
   distinct edges, so unexported is strong encapsulation under the supported launch contract,
   not metaphysical isolation. The module system rejects cyclic `requires`.
+- Package-name hierarchy grants no access: `shop.stock.internal` is a different package from
+  `shop.stock`, and exporting or opening the latter does not include the former. Before a move,
+  check package-private and protected access and the exact module directives. Do not widen
+  visibility merely to make the relocation compile; reconsider the boundary or an intentional
+  narrow API. See the relocation checks in `references/dependency-graphs.md`.
 - Temporal cohesion in lifecycle code — init, shutdown, migration ordering — is
   unavoidable and not a finding. Flag it only when unrelated business logic hides
   inside the lifecycle sequence.
@@ -82,12 +93,22 @@ inventory the whole application.
   investigation; a finding needs a violated boundary, credible failure/change cost, or an
   explicit preventive architecture objective.
 
-## References
+## Deliverable and completion
 
 For each finding, report the actual edge and artifact/command that exposes it, observed
 change cost or violated policy, proposed move and compatibility checks. If compiled artifacts,
 dependencies or history are unavailable, label the graph incomplete and the migration benefit
 conditional; do not claim an absent edge or measured improvement from source inspection alone.
+Stop when the scoped boundary decision and affected contracts are supported, or name the
+specific evidence or migration work still missing. Keeping the current structure is a valid result.
+
+For dependency inversion, pass the observed edge, contract owner and caller constraints to
+java-dependency-inversion; expect a justified port and wiring decision. For a published move,
+pass old signatures, consumers and release constraints to java-api-design; expect a compatibility
+plan. If unavailable, state those contracts and checks locally and keep unverified migration
+claims conditional.
+
+## References
 
 - [Coupling and cohesion taxonomy](references/taxonomy.md) — each type translated
   to what it looks like in Java, with detection heuristics and false positives.
@@ -96,5 +117,5 @@ conditional; do not claim an absent edge or measured improvement from source ins
   and edge selection, with a worked package-level example. Read when working a
   real graph.
 - [Metrics and their limits](references/metrics-and-limits.md) — Ca, Ce,
-  instability, what they can and cannot see, and when not to apply this skill at
-  all. Read before citing any metric in a finding.
+  instability, interpreting change history, what they can and cannot see, and when not to apply
+  this skill at all. Read before citing a metric or co-change evidence in a finding.

@@ -22,8 +22,9 @@ description: >
 Explain a JVM safepoint interval that the GC operation line does not fully account for. Safepoint `Total` is
 `Reaching + At + Leaving` on the illustrated JDK 25 build. GC pause timers have their own
 boundaries and need not equal `At` exactly —
-but endpoint p99 also includes queueing, blocking and dependencies. Correlation must prove
-that a request gap overlaps process-wide loss of progress before calling the residual TTSP.
+but endpoint p99 also includes queueing, blocking and dependencies. Establish TTSP from
+synchronization evidence; attribute request impact separately using aligned progress and
+intervals. A latency residual alone establishes neither.
 
 The second thing this prevents is a fix that changes nothing. The flags most often
 prescribed for high time-to-safepoint are either already the default (accepted silently,
@@ -36,6 +37,8 @@ Use the steps needed for the question. A mechanism explanation or adequate exist
 can support a narrow keep/change conclusion without new diagnostics. The executed 25.0.3
 observations below are historical build-specific evidence; inspect the actual target build,
 collector and options before applying them. JDK 25 GA source is identified separately.
+For diagnosis or review, return supported findings and next evidence; implement changes only
+when the request includes remediation.
 
 1. **Establish a candidate interval when attributing a pause.** Align request/thread progress, GC/safepoint events and
    OS scheduling. A latency value minus summed GC durations is not a valid decomposition when
@@ -43,12 +46,14 @@ collector and options before applying them. JDK 25 GA source is identified separ
 2. **Inspect adequate existing safepoint evidence; collect missing coverage if needed.**
    `-Xlog:safepoint=info` with a usable clock mapping is one option. Inspect all operations in
    the relevant window, including non-GC work; exact dump, deoptimisation and class-operation
-   paths determine whether a global safepoint occurs.
+   paths determine whether a global safepoint occurs. The summary line reports a completed
+   cycle; do not treat its timestamp as the cycle's start (see the instrumentation reference).
 3. **Split the pause.** `Reaching safepoint` is elapsed synchronization time; a late required
    thread can dominate it, but coordination and scheduling also contribute.
    `At safepoint` covers VM work after synchronization; `Leaving` covers release work.
    A high `At` points to the VM operation/cleanup rather than TTSP. Correlate matching GC or
    VM-operation intervals instead of equating their timers or subtracting percentiles.
+   A high `Leaving` needs release/disarm and collector-end investigation, not a poll-frequency fix.
 4. **Seek late-thread evidence when diagnosing dominant sync time:**
    `-XX:+SafepointTimeout -XX:SafepointTimeoutDelay=<ms>` (default 10000) logs
    `Threads which did not reach the safepoint:` with each late thread's name and state,
@@ -76,6 +81,10 @@ collector and options before applying them. JDK 25 GA source is identified separ
 - HotSpot emits polls at selected returns/back-edges and other transition points; optimization
   can move/elide candidates. Threads in JVM-recognized blocked/native-safe states need not run
   Java code to acknowledge, but state transitions and OS scheduling still affect timing.
+- **Cycle duration is not every thread's suspension time.** Early arrivals can wait while a
+  late thread keeps running during `Reaching`; ordinary native work can continue. Release
+  makes threads eligible to resume, not simultaneously scheduled. Interpret `Total` as cycle
+  elapsed time, then establish the affected thread/request's delay separately.
 - **C2 strip mining is one counted-loop polling strategy.** It splits a
   counted loop into an outer loop advancing in strips of `-XX:LoopStripMiningIter` and an
   inner loop that runs a whole strip without a poll; the poll sits on the outer back-edge.

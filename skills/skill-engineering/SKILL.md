@@ -41,6 +41,10 @@ a narrow review can conclude that no change is needed, with its scope and limits
    inspect the current skill before asking. Clarify only unresolved information that
    materially changes the work; continue independent authorized work in the meantime.
 2. **Fix the boundary.** Identify what it does, excludes, activates for and hands off.
+   Establish its domain, intended users and responsibility before changing the workflow.
+   Preserve the appropriate outcome: diagnosis may end with findings, and a review must
+   distinguish requested findings from requested fixes. The authoring/review procedure
+   should not automatically become the skill's ordinary workflow.
    Four explicit lists can help a new design; a small review need not produce them.
    Change only the assigned scope and report neighboring issues without editing them.
 3. **Review the frontmatter early.** It is the discovery summary, though explicit user

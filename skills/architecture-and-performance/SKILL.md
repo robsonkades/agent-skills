@@ -21,6 +21,11 @@ with unchanged SQL. Neither that effect nor an end-to-end gain follows from loca
 
 ## Workflow
 
+Match the requested role: diagnosis or review produces findings and checks; implement changes
+only when the request includes fixes. Inspect endpoint contracts, tests, configuration and prior
+decisions before treating a current pattern as a requirement. Ask only for unresolved constraints
+that change the choice; continue with reversible analysis using explicit assumptions.
+
 1. **Define the operation and workload.** Obtain the latency/throughput objective, measurement
    boundary, request mix and rate, page/payload sizes, data distribution, concurrency and cache
    state. Identify the relevant code, SQL/call graph and deployment/framework versions.
@@ -30,7 +35,7 @@ with unchanged SQL. Neither that effect nor an end-to-end gain follows from loca
    and bytes returned, serial versus parallel dependencies, retries, queue waits and resource
    hold intervals. Compare expected work with observed work. Read
    [request-path-budget.md](references/request-path-budget.md) when attributing a slow path,
-   estimating occupancy or checking whether measurements support a proposal.
+   estimating occupancy, translating ingress into dependency demand or checking a proposal.
 3. **Locate the multiplier or limiting resource.** Correlate representative normal and slow
    requests with SQL, pool, downstream and CPU evidence. A growing call count suggests a
    repeated-access problem; low CPU or any nonzero pool wait alone does not identify its cause.
@@ -53,6 +58,11 @@ with unchanged SQL. Neither that effect nor an end-to-end gain follows from loca
   queries. There is no universal query-count threshold proving an architectural defect.
 - Separate time on the critical path from total resource consumption. Parallel calls can
   shorten elapsed time while increasing downstream concurrency, queues and failure exposure.
+- Before adding replicas or parallelism, account for total dependency attempts across callers,
+  including fan-out, cache misses and retries. More callers do not add capacity to a shared
+  database or quota. Use bounded parallelism only when independent work and downstream headroom
+  support it; when the shared dependency is saturated, compare reducing work and limiting
+  admission before increasing concurrent demand. Request rate alone does not measure capacity.
 - Distinguish method duration, transaction lifetime, connection hold time and lock hold time.
   Changing one does not guarantee that the others change.
 - Before adding a cache, quantify source demand and representative hit/miss behavior, lookup
@@ -70,6 +80,11 @@ For a small review, report evidence or gap, architectural hypothesis, consequenc
 adjustment and a confirming/refuting check. For a design, add the workload assumptions,
 cost/budget comparison and correctness constraints. Separate measured results from estimates
 and tests still to run; leave unsupported conclusions open.
+
+For specialist handoffs, pass the operation/versions, required semantics, scoped evidence and
+the unresolved decision. Request the corresponding mechanism, experiment or configuration
+check, then bring its result back into the whole-path comparison. If that skill or tool is
+unavailable, give the specific check and limit the conclusion; do not fabricate its result.
 
 For worked decision boundaries or when reviewing this skill's behavior, use
 [validation-cases.md](references/validation-cases.md). These teaching cases include expected

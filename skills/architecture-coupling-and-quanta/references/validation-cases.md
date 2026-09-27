@@ -145,3 +145,36 @@ or an exact quantum count unsupported by the supplied scope and boundary convent
 
 **Failure:** Generalizing the short warm test to cold start or indefinite operation, dropping
 the structural prerequisite, or inventing test results beyond the supplied observations.
+
+## 9. The same binaries, different activation constraints
+
+**Request/context A:** “Writer and Reader deploy separately. Reader v1 accepts format A;
+Reader v2 accepts A and B. Writer v2 emits A with its new-format flag off, and B with it on.
+The flag is off, the activation guard prevents B writes, and mixed-version plus rollback
+tests with production-representative A records passed. Keep the current rollout or merge
+the services because there is a flag?”
+
+**Expected behavior/output:** Retain the supported separate deployment targets for the
+flag-off change. Record effective configuration and the activation guard as evidence;
+the flag alone is not a reason to merge. Identify the reader prerequisite for future B
+activation without inventing a new rollout framework.
+
+**Decisive change B:** “Everything else is unchanged, but the flag is now on and B records
+have been written. Reader v1 can still be restored by the rollback job. Turning the flag
+off makes rollback safe because the binaries are the same as in the successful test.”
+
+**Expected behavior/output:** Reject that rollback claim: v1 cannot read retained B records.
+Map the activation/rollback constraint and require a supported recovery target or evidence
+for a compatible recovery path. Turning off future B writes does not remove existing B.
+Separate this finding from whether the service binaries require simultaneous deployment.
+
+**Failure in either case:** Ignoring the flag state because artifact digests did not change,
+applying A's test results to B, treating flag-off as data reversal, demanding every unrelated
+flag combination be tested, or deriving a permanent quantum count from this migration.
+
+**Missing-evidence follow-up:** “Only the control panel's intended setting is available;
+consumer caches may lag, and no effective-state or guard evidence exists.”
+
+**Expected behavior/output:** Keep effective activation and excluded mixed states unknown.
+Request configuration propagation/guard evidence before claiming safe independent rollout;
+continue mapping the known binary and reader-format dependencies.

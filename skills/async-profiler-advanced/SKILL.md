@@ -39,6 +39,11 @@ profiler or dependencies merely to make an example fit.
 - Use `ebpf-for-jvm` when the question is system-wide or cannot be answered from the JVM
   process alone.
 
+Pass the question, runtime/tool versions, capture command, event weights, affected window,
+artifacts and coverage limits to the owning skill; expect a domain diagnosis or next
+discriminating check. If unavailable, return that evidence and the unresolved question without
+claiming the handoff or diagnosis occurred.
+
 ## Start with a question contract
 
 | Question                              | Primary event                        | Weight means                                 | Major blind spot                                          |
@@ -137,6 +142,10 @@ profiler, but configuration and event replacement semantics must be checked in t
 Clock domains, timestamp preservation, chunking, conversion, and rate limits determine
 whether cross-event temporal claims remain valid. A collapsed stack file destroys most event
 metadata and timestamps. Preserve the original JFR plus exact command before conversion.
+Select the conversion population explicitly: a default CPU/wall mixture or an overriding state
+filter can change the question being answered. Time/latency filters can also discard matching
+native frees or treat a wall batch as one timestamp. Read the conversion protocol before
+claiming precise incident-window attribution or full-recording native survival.
 
 ## Differential evidence
 

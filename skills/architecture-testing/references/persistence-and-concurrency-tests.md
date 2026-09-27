@@ -57,7 +57,9 @@ For a cold-path N+1 test:
    query caches. Use several roots and related rows, plus the actual pagination shape.
 2. Isolate the factory from parallel tests/background jobs, or use an operation-attributed datasource
    counter with demonstrated coverage. Resetting a global counter is not isolation.
-3. Prove instrumentation is live using a known query outside the measured operation.
+3. Prove instrumentation is live using a known query outside the measured operation. If that
+   control loads measured entities or results, restore the declared cold cache/context state
+   before capturing the baseline; resetting statistics does not evict caches.
 4. Capture the baseline; execute the operation and consume/map/serialize the fields the caller
    actually uses, within the intended transaction/session boundary. Include lazy loads triggered
    by response rendering if the promise is endpoint cost.
@@ -147,6 +149,43 @@ create more database connections.
 Sources: [Java 21 ExecutorService lifecycle](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html)
 and [Java 17 API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorService.html).
 For the concurrency policy itself, see `offline-concurrency-control`.
+
+## Invariants spanning multiple rows
+
+A version check on each updated entity need not protect a predicate over several entities.
+Identify the read set, write set and invariant before reusing the same-row test. For example,
+with two active duty assignments and a promise that at least one remains active, each worker
+can read both assignments and deactivate a different one. Separate entity versions need not
+conflict; checking only versions or individual successful updates misses the invalid total.
+
+For this schedule, commit the seed, use independent transactions, synchronize after both have
+read the predicate and before either writes, then observe the committed predicate from a fresh
+transaction. Retain the time bounds, worker-outcome checks and cleanup above. If the accepted
+protocol locks a shared guard before the read, do not require both workers to reach a barrier
+while one legitimately waits for that guard; instrument the acquisition/wait instead.
+
+Test the chosen mechanism's outcomes, not a universal exception:
+
+- Independent edits with no shared constraint may both commit; do not introduce a shared lock
+  or an exactly-one-winner assertion merely because two workers are involved.
+- A shared version/guard protocol must include every participating write path; exercise the
+  distinct-child updates that could otherwise bypass it. An aggregate name or a versioned
+  parent does not establish that updating a child checks or advances the parent version.
+- For PostgreSQL 17, Repeatable Read permits serialization anomalies; Serializable can abort
+  a transaction with a serialization failure. When the accepted policy retries, test a bounded
+  retry of the whole transaction with fresh reads and business validation, then assert the
+  invariant and public outcomes. Do not classify that failure as an optimistic version conflict.
+
+Choosing the guard/isolation policy belongs to `enterprise-transactions` or, across user
+interactions, `offline-concurrency-control`. Pass the invariant, read/write sets, engine/isolation,
+retry policy and counterexample; request the accepted coordination protocol. Until resolved,
+report the coverage gap rather than silently changing isolation to make a test pass.
+
+Sources checked 2026-09-25: [Jakarta Persistence 3.2, sections 3.5.1–3.5.2](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2)
+defines entity version checking, not aggregate-wide predicates;
+[PostgreSQL 17 isolation](https://www.postgresql.org/docs/17/transaction-iso.html)
+documents serialization anomalies and whole-transaction retry. The duty-assignment schedule is
+a derived test-design example, not an executed database result or a guarantee for other engines.
 
 ## Bulk updates and deadlocks
 

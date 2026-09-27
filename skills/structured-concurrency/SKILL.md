@@ -85,6 +85,11 @@ an existing disciplined executor may already satisfy the task without a new prev
 - In JDK 25, `fork` on a cancelled scope returns an `UNAVAILABLE` subtask without starting
   its thread. A `finally` inside that task cannot release a resource acquired before `fork`.
   Acquire and release inside the task, or retain owner cleanup until after scope close.
+- Scope closure waits for threads; it does not close `AutoCloseable` values returned by
+  subtasks. Prefer returning materialized values after task-owned resource cleanup. Racing or
+  failing fast with live handles requires an explicit ownership-transfer and discarded-result
+  policy, including results produced after cancellation. A joiner callback alone cannot cover
+  that case on JDK 25; see `references/patterns-and-pitfalls.md` before returning live resources.
 - Owner `Subtask.get()` before joining throws; reading a successful task inside a joiner
   callback is valid. It never waits and fails without a successful result. Joining with a
   partial-result policy does not make every subtask successful. In JDK 25, a timeout before

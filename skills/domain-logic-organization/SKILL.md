@@ -68,6 +68,9 @@ upgrading it to copy a sketch.
    decisions and change history; inspect callers and observed change or load costs before
    asking for missing evidence. Retain an adequate organization when no material problem
    or new requirement justifies changing it.
+   Include required effects of each transition (audit, events, externally visible outcomes)
+   and the effective time/version of its inputs; equal final row values alone may not mean
+   equivalent business behavior.
 2. **Check for shared state across operations.** If six operations must each maintain the
    same invariant, identify one logical owner: a shared policy may suffice, while a Domain
    Model can own interacting state transitions. Check all writers, not just public methods.
@@ -147,6 +150,10 @@ Cannot tell yet, module is new and small
 - Transaction Scripts often fail through duplicated or inconsistent rules. Even two occurrences
   can be material when correctness or change frequency is high; use divergence and change cost,
   not an occurrence threshold.
+- A shared calculation or significant domain operation can belong to a policy/domain service
+  when no entity naturally owns it. That is not automatically leaked application logic. Confirm
+  that similarly named rules have the same meaning, input timing and change owner before merging
+  them; quote-time pricing and a refund of an earlier charge may deliberately use different rates.
 - Domain Models fail in three ways worth watching for: aggregates too large to load, logic
   that leaked into services anyway, and read paths forced through the write model.
   Load amplification is visible in traces/query logs; leaked business decisions require
@@ -155,6 +162,10 @@ Cannot tell yet, module is new and small
   access. A Java service owning table-level policy may adapt the former with set-based SQL,
   but a bulk statement alone does not establish that organization. Trace who chooses the
   business predicates and calculations (`data-source-patterns`).
+- Before replacing entity transitions with set-based work, account for required callbacks,
+  audit records and events as well as invariants. Read the effect-equivalence check in
+  `references/transaction-script-and-table-module.md`; do not treat matching row counts as
+  proof that callers and downstream consumers observe the same behavior.
 - Reads and writes may use different organisations when their forces differ. Preserve write
   invariants; use projections or SQL when they avoid unnecessary model loads, and retain bounded
   entity reads when appropriate (`query-objects-and-specifications`).

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-strategy
-version: 1.2.3
+version: 1.2.4
 description: >-
   Strategy in modern Java, separated into three things that are usually conflated: the design
   concept (an algorithm varies), the classical class hierarchy, and the lambda or functional

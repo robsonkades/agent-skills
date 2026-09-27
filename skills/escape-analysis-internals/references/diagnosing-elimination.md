@@ -43,7 +43,7 @@ Suspicion: this object should be eliminated and is not
      +-- no ......... continue at 3
   |
   3. -XX:+PrintInlining, tier-4 tree: a refusal on the chain that carries the object?
-     |-- yes -> 3a. Callee bytecode size (javap -c -p) against MaxBCEAEstimateSize (150)
+     |-- yes -> 3a. Matched callee code bytes (PrintInlining) against MaxBCEAEstimateSize (150)
      |          |-- fits, reads but never stores the argument
      |          |     -> ArgEscape via BCEA if the summary succeeds: allocation stays;
      |          |        lock elision remains subject to graph shape and compiler policy
@@ -54,7 +54,8 @@ Suspicion: this object should be eliminated and is not
                 -> 3b. Match the shape against the "why did this allocation survive"
                        table below, then trace the edge (connection-graph.md).
   |
-  4. Fix the cause, never the symptom. Repeat 1 and 2 on the same load.
+  4. Report the supported cause or remaining uncertainty. If optimization is in scope and
+     justified, test a targeted change and repeat 1 and 2 on the same load.
 ```
 
 ## Why did this allocation survive
@@ -151,7 +152,12 @@ Error: Unrecognized option 'PrintEscapeAnalysis'
 ```
 
 There is no per-method form even on a debug build: the flag is global. Narrow the output there
-with `-XX:CompileCommand=compileonly,Class::method` instead. On the examined product build, either
+with a controlled toy compilation using `-XX:CompileCommand=compileonly,Class::method`.
+This changes compilation policy, not merely logging: it excludes other methods from compilation
+and can change profiles, caller context and timings. For a representative workload, retain normal
+compilation and filter its captured output; recheck any result from the restricted experiment
+without that restriction. See the [JDK 25 compileonly contract](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html).
+On the examined product build, either
 invalid command prevents startup; confirm option availability with `CompileCommand=help` on the
 target runtime. Inspect the child process exit status and whether `-version` or the application's
 main actually ran; parser error text alone does not establish startup failure on another build.
@@ -162,8 +168,8 @@ these work on a product build:
 
 ```bash
 -XX:CompileCommand=dontinline,lab.Bench::readWithoutStoring   # force an inlining boundary
--XX:CompileCommand=inline,lab.Bench::helper                     # remove one
--XX:CompileCommand=compileonly,lab.Bench::target                # shrink any global print
+-XX:CompileCommand=inline,lab.Bench::helper                     # request inlining; verify the result
+-XX:CompileCommand=compileonly,lab.Bench::target                # restrict compilation for a toy experiment
 ```
 
 ## LogCompilation: the product-build verdict
@@ -235,7 +241,7 @@ jfr print --events jdk.ObjectAllocationSample --stack-depth 8 /tmp/alloc.jfr | g
 
 | Event                             | `default.jfc`        | `profile.jfc`        | Correct use                                                                                      |
 | --------------------------------- | -------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
-| `jdk.ObjectAllocationSample`      | **enabled**, `150/s` | **enabled**, `300/s` | The production source for "who is allocating", including for inferring that EA failed            |
+| `jdk.ObjectAllocationSample`      | **enabled**, `150/s` | **enabled**, `300/s` | Estimate pressure by type/stack from weights; establish the C2 mechanism separately              |
 | `jdk.ObjectAllocationInNewTLAB`   | `enabled=false`      | `enabled=false`      | Off in **both** stock files since JDK 16 (JDK-8257602). Enable explicitly or its zero is nothing |
 | `jdk.ObjectAllocationOutsideTLAB` | `enabled=false`      | `enabled=false`      | Same                                                                                             |
 
@@ -251,9 +257,13 @@ Two readings that go wrong:
 
 - A few samples of the type from early in the recording can come from interpreter/C1 execution
   before tier 4; correlate rather than assuming that cause. Historical observation: 120 `Point` samples for the escaping variant
-  against 1 for the eliminated one over the same 20 M calls. Judge the steady-state rate, or
-  filter by start time.
-- `jdk.ObjectAllocationSample` is throttled sampling weighted by bytes. It cannot prove absence
+  against 1 for the eliminated one over the same 20 M calls. Those counts are not a 120:1
+  allocation-pressure ratio. Filter the relevant steady-state interval and compare the sum of
+  sample `weight` for matching types/stacks, normalized to comparable time or useful operations.
+  Record event settings and sample support; a sparse result remains uncertain.
+- `jdk.ObjectAllocationSample` represents bytes through its `weight` field, as defined by
+  [JDK 25 event metadata](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml).
+  It cannot prove absence
   of a small allocation; in the lab `gc.alloc.rate.norm` or `getThreadAllocatedBytes` remains
   the primary metric.
 
@@ -316,7 +326,8 @@ than inferring no rematerialisation from an empty trap stream.
 **An ArgEscape that BCEA should have classified**
 
 - [ ] `-XX:+PrintInlining` tier-4 tree confirms the refusal for the relevant callee
-- [ ] Callee bytecode size from `javap -c -p`, compared with `MaxBCEAEstimateSize` (150)
+- [ ] Callee bytecode bytes from the matched inlining entry or `Code.code_length`, compared
+      with `MaxBCEAEstimateSize` (150); disassembly used to inspect behavior, not count instructions
 - [ ] Callee neither stores, returns nor forwards the argument to a call it cannot summarise
 - [ ] EA lock eligibility is checked against a balanced compiled region and effective
       `EliminateLocks`; an ArgEscape verdict alone does not establish lock removal

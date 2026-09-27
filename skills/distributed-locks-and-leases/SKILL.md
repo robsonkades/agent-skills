@@ -64,6 +64,10 @@ transaction-scoped lock in that same resource, or a repeat-safe invariant.
    `references/lock-decision.md`.
    Stop admitting work before authority is lost; cancellation does not prove in-flight effects
    stopped, so resource enforcement remains necessary.
+   Owner matching makes release safe against deleting a successor's lease; it does not prove
+   that the protected work finished. Include actual transaction completion or asynchronous
+   resource termination in the intended hold interval. A method return, flush or caller timeout
+   may occur earlier; inspect the release-boundary guidance in `references/lock-decision.md`.
 6. **Size the lease as a liveness trade-off, not a proof.** Use measured duration and pause
    distributions plus headroom; choose the crash-recovery delay you can tolerate. No observed
    percentile bounds future pauses, so correctness must survive expiry.
@@ -160,4 +164,5 @@ Prefer instead when:
 - [Do you need a lock, and which one](references/lock-decision.md) — the alternatives with the
   condition selecting each, then Redis, Redlock, etcd/ZooKeeper leases, database row locks and
   advisory locks compared on failure mode, clock dependence, fencing support and operational
-  cost. Read before introducing a lock, or when replacing one that failed.
+  cost, plus release ordering across transaction and asynchronous boundaries. Read before
+  introducing a lock, changing its scope, or replacing one that failed.

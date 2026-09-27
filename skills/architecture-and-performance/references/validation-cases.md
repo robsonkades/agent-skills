@@ -174,3 +174,52 @@ conditional on a demonstrated limiting resource.
 **Failure:** Population p99 from the biased retained set, adding 800 ms to the 120 ms response,
 discarding background resource demand entirely, or interpreting clock-adjusted gaps as measured
 one-way network latency.
+
+## 11. Cache, fan-out and retry demand across replicas
+
+**Request/context:** “Across all frontend replicas we admit a stable 200 operations/s. In
+request-correlated captures, 25% miss a cache, each miss makes four source calls, and those
+calls average 1.5 attempts each including the initial attempt. Hits do not access the source.
+Background jobs add 40 source attempts/s. Double the frontend replicas to halve the shared
+source's load. There are no source CPU, I/O or per-attempt cost measurements.”
+
+**Expected behavior:** Estimate 340 total source attempts/s and reject the proposed arithmetic
+benefit without claiming that 340 attempts/s proves saturation. Identify which demand factors
+or resource capacity would actually have to change.
+
+**Required output:** Distinguish total from per-frontend demand and attempts from successes;
+retain background work; request source resource/cost evidence before sizing. Inspect hidden
+retry layers if observed source traffic differs from the estimate.
+
+**Failure:** Omitting retries/background jobs, claiming total source traffic becomes 170/s,
+or declaring a capacity limit from request counts alone.
+
+## 12. One constraint changes the parallelism decision
+
+Run A and B separately with identical context except for the dependency-capacity evidence.
+
+**Shared request/context:** “Review a latency proposal; do not edit code. Each operation makes
+four independent all-required remote reads. Each takes about 50 ms sequentially. There is no
+shared EntityManager or transaction requirement, and the client supports a shared deadline
+and cooperative cancellation. Compare bounded parallel calls with the existing serial path
+at the same ingress rate. Do not change freshness or response completeness.”
+
+**A — spare capacity:** “Representative load testing, including other tenants, shows enough
+dependency headroom for four calls per operation to overlap with bounded fleet concurrency.”
+
+**Expected behavior A:** Consider a bounded parallel trial; distinguish a roughly 50 ms ideal
+call region from an unmeasured endpoint gain, and retain deadline/cancellation/failure checks.
+
+**B — saturated capacity:** “Representative load testing shows the shared dependency is at
+its sustainable capacity; greater overlap increases queues and timeouts without increasing
+successful throughput.”
+
+**Expected behavior B:** Reject increased concurrency as the primary remedy under this
+evidence; compare reducing source work or admission with retaining the serial path. Pass
+measured capacity and demand to the appropriate specialist if concrete limits are needed.
+
+**Required output for both:** The resource that limits the recommendation, unchanged semantic
+contracts, a test of the proposed mechanism and end-to-end outcome, and findings only.
+
+**Failure:** The same unconditional parallelism recommendation for both cases, an exact 4×
+production speedup, abandoning required results on failure, or unrequested implementation.

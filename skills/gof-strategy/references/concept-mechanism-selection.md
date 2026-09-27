@@ -151,6 +151,37 @@ lifetime, synchronization/confinement and failure policy; final references alone
 Injected collaborators also need thread-safety/lifetime guarantees. Determinism must include the
 pricing/configuration snapshot, clock and other inputs on which the operation depends.
 
+## State lifetime and replacement
+
+A registry of strategy instances shares those instances for the registry's lifetime. Choose that
+when reuse matches the contract. If scratch or accumulated state belongs to one operation, use an
+explicitly confined instance or a factory registration, such as `Map<Key, Supplier<Strategy>>`.
+Specify whether the supplier creates a fresh instance; `Supplier` alone does not promise freshness.
+Keep immutable dependencies shared where appropriate rather than duplicating expensive clients.
+
+Inspect the actual container resolution: a
+[Spring prototype injected into a singleton](https://docs.spring.io/spring-framework/reference/core/beans/factory-scopes.html#beans-factory-scopes-sing-prot-interaction)
+is resolved when that singleton is instantiated, not anew for each strategy invocation. On-demand
+creation needs a provider/factory or another supported scope mechanism. This is conditional on the
+project's container and version; plain Java needs no container machinery.
+
+For live replacement, define whether an operation uses one policy/configuration version or is
+allowed to observe later values. If consistency is required, build and validate a complete immutable
+registry/configuration snapshot, publish it through the existing synchronization mechanism, and
+capture it once before selection, applicability and calculation. A failed candidate must not replace
+the valid active snapshot. Multiple reads of a changing reference can mix versions; independent
+atomic updates alone do not establish a single combined snapshot. A startup-fixed configuration needs
+none of this reload machinery.
+
+[AtomicReference](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html)
+can publish a reference with volatile memory effects; it does not freeze the objects behind it or
+manage their lifetime. If a retired strategy owns closeable resources, stop new acquisition and let
+active uses finish under an explicit lease/drain/ownership contract before closing them. Returning a
+future is not completion of its resource use, and requesting cancellation alone does not prove it has
+stopped. The selector must not close injected resources owned by the container or another component.
+When safe retirement is unavailable, retain the established instance if continued use is permitted,
+or use the project's controlled restart path instead of claiming that a map swap makes hot replacement safe.
+
 ## The shared contract test
 
 Partial test sketches use JUnit and jqwik-style annotations; use the project's existing test stack

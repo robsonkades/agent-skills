@@ -11,6 +11,27 @@ evidence or follows an existing scoped-check policy, not an unapproved exemption
 The validation was written when the resource was defined. This reference is for choosing it
 then, and for the case where the planned validation turns out to be impossible.
 
+## Before executing a check with effects
+
+Reuse known project commands and environment evidence when still applicable. For an
+unfamiliar script or changed configuration, inspect its implementation, lifecycle hooks
+and effective targets before execution: generated/output directories, fixture stores and
+any external mutation. A command named `test` does not establish isolation, and setting
+its working directory does not constrain an absolute path or database URL.
+
+Use existing temporary/test configuration within the authorized scope; verify effective
+target identity without printing credentials. If the command resolves to shared or real
+state outside that scope, correct its test configuration or leave that check pending and
+state the missing environment/authority. Continue independent checks. Do not disable a
+required assertion or redirect to a different engine and silently claim equivalent evidence.
+
+For a long-running check, retain its handle, checked revision/inputs and output location.
+Read the final outcome of every required stage; partial passing output and successful
+submission to a runner are not final evidence. A wrapper can succeed while a child fails,
+and a child or watcher can outlive its launcher. Prefer a bounded one-shot check for a
+completion claim; handle intentional continuing processes through an explicit ownership
+handoff, not an invented DONE result.
+
 ## Starting points by resource kind
 
 | Resource                   | Evidence to select for the changed behavior                                                                       |
@@ -104,8 +125,42 @@ RES-06 Dispatch repository query          BLOCKED
 This accurately separates implemented code from verified SQL. An unavailable environment
 does not authorize claiming the query works or weakening its required validation.
 
+## Execution decision checks
+
+These supplied cases exercise execution judgment; they are walkthrough material, not
+measured agent outcomes. Apply the stated task and authority without adding a release step.
+
+- **Target pair:** an authorized local repository test seeds and clears its configured
+  database. A resolves to the project's disposable test database; B unexpectedly resolves
+  to shared staging, whose modification is not authorized. Run A with normal validation;
+  correct B's configuration or report the missing environment while continuing independent
+  work. Failure: running B because the script is called `test`, or requesting fresh approval
+  for A despite existing authorization.
+- **Unfinished command:** a tool returns a job handle after printing “12 tests passed”,
+  while a required `posttest` generator is still rewriting contract files. Keep the affected
+  resource IN_PROGRESS, obtain final output, inspect changes and recheck invalidated
+  properties. Failure: marking DONE from the partial log, transferring the files while
+  the old owner still writes, or invalidating unrelated evidence without a reason.
+- **Interrupted effect:** a permitted data-migration check disconnected after submitting
+  its transaction; the tracker still says IN_PROGRESS. Inspect its durable result and
+  running-job state before replay. Failure: rerunning a non-repeat-safe operation solely
+  because the session ended, or recording success without evidence of the resulting state.
+- **Missing dependency evidence:** a database integration resource is externally blocked,
+  but an authorized documentation resource has no dependency on it. Continue the latter;
+  a query unit test remains partial evidence for the former. Failure: blocking the whole
+  feature or calling the integration resource DONE from the substitute.
+- **Wrong artifact:** the runner reports four passing tests but loads a workspace package's
+  old `dist` output. Satisfy the relevant build prerequisite and rerun affected checks;
+  retain unrelated applicable evidence. Failure: accepting the counts as validation of
+  new source or cleaning other owners' work to force a rebuild.
+- **Small authorized fix:** an inline plan already authorizes a local wording correction
+  with the project's documentation check. Execute that scope and check; no new dossier,
+  approval cycle or benchmark is required. Failure: reopening settled authority or treating
+  a request only to review that plan as authorization to implement it.
+
 ## Sources for command behavior
 
 - [Maven build lifecycle](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html): phases versus directly invoked goals; project bindings determine the actual work.
 - [Surefire test goal](https://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html): generated test classes and configured test classpath.
 - [npm lifecycle scripts](https://docs.npmjs.com/cli/v11/using-npm/scripts/): `pretest`, `test` and `posttest` order. Inspect the project's scripts and npm version before applying it.
+- [Node.js 22 child-process lifecycle](https://nodejs.org/download/release/v22.17.0/docs/api/child_process.html#optionsdetached): detached children can continue beyond their parent; a launcher exiting does not universally establish completion of its work. This is an example of the lifecycle risk, not a Node requirement for this skill.

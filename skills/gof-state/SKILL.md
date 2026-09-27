@@ -149,6 +149,17 @@ THEN define required completion, allowed loss/partial effects and recovery lifet
      with the required delivery/repeat protocol. Best-effort local effects may suffice;
      do not claim exactly-once across an uncoordinated external boundary.
 
+IF a guard, entry/exit hook or listener can call the machine again
+THEN define whether nested events are rejected, queued or explicitly supported.
+     synchronized is reentrant: it does not prevent a callback from changing the state before
+     an outer handler writes its stale result. Keep decision logic pure and name the commit point;
+     a notification failure after that point does not undo the committed transition.
+
+IF an asynchronous operation can finish after timeout, cancellation or a new attempt
+THEN distinguish requested/pending work from completed effects. Accept completion only for its
+     matching attempt/revision and legal current phase at the authoritative update; dispose of
+     owned results that are no longer adopted. Cancellation alone does not prove work stopped.
+
 IF time causes a transition (expiry, timeout, escalation)
 THEN it is an event like any other and needs something to deliver it.
      If progress must survive restart, retain due time and catch-up semantics across
@@ -198,6 +209,8 @@ THEN inspect actual change propagation and ownership. Compare a function/table w
 - [ ] Persisted states use stable codes and define unknown-value behavior during upgrades
 - [ ] Transitions are atomic under concurrency by a named mechanism
 - [ ] Side effects meet the actual completion, loss and recovery contract
+- [ ] Reentrant events and post-commit callback failures have explicit semantics
+- [ ] Async completions match the active attempt; stale results cannot change newer state or leak owned resources
 - [ ] Time-driven transitions have a real delivery mechanism
 - [ ] Every `(state, event)` pair is covered by a test
 - [ ] State/event evolution triggers compiler coverage or an explicit case-inventory check
@@ -211,7 +224,8 @@ when the required contract is supported without forcing a representation change.
 - [Modelling transitions](references/modelling-transitions.md) — where transitions should live and
   what each placement costs; sealed records against enums; persistence, ordinals and evolving the
   state set; atomicity mechanisms compared; timeouts as events; and the State/Strategy
-  discrimination in detail. Read before designing a machine.
+  discrimination in detail. Also covers reentrant callbacks and late completion ownership.
+  Read before designing a machine, especially when hooks or asynchronous effects are involved.
 - [Worked example](references/worked-example.md) — an order lifecycle taken from four boolean flags
   to a sealed state with one transition function: the illegal combinations that existed, the
   conditional update that fixed a double-ship race, persistence and migration, and the

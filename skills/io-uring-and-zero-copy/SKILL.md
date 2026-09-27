@@ -74,6 +74,13 @@ binding or external component behind an "io_uring in Java" claim.
   wait for the notification CQE marked `IORING_CQE_F_NOTIF`. Keep memory valid and unchanged
   until the operation's documented release point, including cancellation/shutdown. A zero-copy
   request can fall back to copying; a completion alone does not prove copy elimination.
+- For an owned binding, distinguish operation completion, cancellation result and memory release.
+  Classify the CQE by request kind and flags before interpreting `res`; notification usage flags
+  are not transferred-byte counts or ordinary negative-errno results.
+  Multishot operations and zero-copy sends can produce multiple CQEs; do not recycle request
+  identifiers or buffers on the first event. Bound outstanding operations and retained bytes,
+  and keep draining completions under backpressure; available SQ slots are not a memory budget.
+  Read the lifecycle and capacity guidance in `references/choosing-the-mechanism.md` for these cases.
 - Do not impose a global ban on heap buffers. Prefer transfer APIs when their channel semantics
   fit; otherwise choose direct versus heap buffers from measured copy cost, buffer size,
   pooling, lifetime and native-memory limits.
@@ -106,6 +113,8 @@ expectations from measured benefits.
 ## References
 
 - [Choosing the mechanism](references/choosing-the-mechanism.md) — selection criteria, adoption
-  costs, Netty API eras and a bootstrap whose transport and channel fallback agree.
+  costs, completion/ownership contracts, Netty API eras and a bootstrap whose transport and channel
+  fallback agree. Read when selecting a route, reviewing an owned binding or changing file lifetime.
 - [Diagnosing the I/O path](references/diagnosing-the-io-path.md) — syscall, ring and outcome
-  evidence, including what those signals cannot prove.
+  evidence, including what those signals cannot prove. Read for an attribution claim or unavailable
+  transport; use its decision cases to check restraint, lifecycle and evidence gaps.

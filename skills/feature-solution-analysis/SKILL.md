@@ -49,12 +49,21 @@ identify the smallest check that could settle it and keep dependent selection co
 3. **Keep the options comparable.** Describe complete alternatives for the same behavior, boundary
    and operating conditions. A library, pattern and service label alone are not comparable,
    but complete solutions using different technologies can be; split choices that can coexist.
+   When interaction changes, trace the same representative use and failure through each option:
+   when success becomes observable, how incomplete or failed work is discovered, and what the
+   consumer must do. Faster acknowledgement does not establish faster completion. Changing an
+   accepted consumer obligation is a proposed contract/scope change, not an equivalent optimization.
 4. **Eliminate on constraints first.** An option ruled out by a mandatory technology, a
    prohibition or a compatibility obligation is eliminated before any evaluation — record it as
    eliminated, with the constraint and source, not as rejected on merit. Record pass/fail/unknown;
    inspect target compiler/runtime, resolved dependencies and contract versions where relevant.
    Analysis does not authorize upgrades or new dependencies to make an option feasible.
-5. **Evaluate only the axes this feature is sensitive to** (`references/evaluation-axes.md`).
+   For an existing feature, also establish a feasible transition within accepted delivery,
+   downtime, compatibility and data/in-flight-work constraints. A feasible target does not prove
+   a feasible release; unknown transition feasibility keeps dependent selection conditional.
+5. **Evaluate only the axes this feature is sensitive to.** Load
+   [evaluation axes](references/evaluation-axes.md) to choose discriminating criteria or check
+   comparisons that change consumer outcomes or transition obligations.
    Scoring every axis for every option produces a table that reads the same at every company.
 6. **Recommend one when supported**, with the decisive trade-off and evidence. Otherwise return
    a conditional recommendation or unresolved choice with its next check; do not manufacture a winner.
@@ -63,6 +72,11 @@ identify the smallest check that could settle it and keep dependent selection co
 8. **Separate uncertainty from preference.** If evidence cannot distinguish viable options and a
    bounded pass/fail experiment would change the recommendation, hand one hypothesis to
    `feature-feasibility-experiment`; do not choose by confidence or prototype enthusiasm.
+   Pass the affected option, required property and threshold/source, current evidence and relevant
+   environment, authorized test scope, and how each outcome changes the choice. Expect a
+   supported/refuted/inconclusive result with its limits. If the specialist is unavailable,
+   identify the smallest check and keep the dependent conclusion pending until evidence exists;
+   an analysis-only request returns a check plan, while existing execution authorization carries over.
    Stop when remaining uncertainty is unlikely to change the choice materially; a routine
    preference does not need a prototype. Keep unresolved mandatory feasibility explicit.
 

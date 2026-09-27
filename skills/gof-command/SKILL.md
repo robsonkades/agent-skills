@@ -82,7 +82,8 @@ The set of operations is open and must be dispatched uniformly
 - **A class per method with no queue, no undo, no log.** Reification with no consumer of the
   reification.
 - **`Runnable`, `Callable` or a method reference is enough.** They are commands. A class adds
-  value only when the command carries data worth naming and inspecting.
+  value when inspectable data, receiver binding or a behavior/lifecycle contract merits a named
+  type; an execute/undo contract can justify it without an additional payload.
 - **The "command" is a CQRS query with no reason to be reified.** GoF Command can return a result,
   so mutation is not the discriminator. Use a method when the query needs no deferred lifetime,
   uniform dispatch, composition or audit (`query-objects-and-specifications`).
@@ -153,6 +154,12 @@ THEN it holds a live reference, not a creation-time snapshot; unsynchronised cha
      or an explicit confined live-receiver lifetime. A record does not freeze its
      components: copy mutable state to the required depth under consistent ownership.
 
+IF commands are grouped into one action
+THEN establish whether failure permits a completed prefix or requires atomic visibility.
+     A loop is not a transaction. For reversible sequential effects, capture each inverse
+     against that step's pre-state and undo in reverse order; an immutable candidate or
+     boundary-wide memento may be simpler. External partial effects need owned recovery.
+
 IF undo must address an effect outside the reversible state/transaction boundary
 THEN model compensation where the business permits it: refunds, cancellations and
      other operations with their own failure modes; some effects cannot be compensated
@@ -197,6 +204,7 @@ THEN restrict selection to accepted types through a closed registry or equivalen
 - [ ] Captured values, identifiers or live receivers have explicit state and lifetime ownership
 - [ ] Untrusted type selection is allowlisted; payload validation and caller authorization remain enforced
 - [ ] Undo stays within its reversible boundary; compensation has its own accepted postconditions
+- [ ] Composed actions specify partial-failure behavior and preserve the right pre-state for undo
 - [ ] A permanently failing command has a defined terminal path
 
 ## References
@@ -207,5 +215,6 @@ THEN restrict selection to accepted types through a closed registry or equivalen
   by inverse, memento or compensation. Read when designing a command type or a bus, or choosing
   how a deferred command captures state.
 - [Worked example](references/worked-example.md) — two uses of the same pattern: an editor undo
-  stack where the inverse is exact, and a durable command queue where it is not — with the
-  versioning, idempotency and dead-letter decisions each forced. Read when implementing.
+  stack where the inverse is exact, compound edits and their failure boundary, and a durable
+  command queue where exact undo is unavailable — with the versioning, idempotency and
+  dead-letter decisions each forced. Read when implementing or grouping commands into one action.

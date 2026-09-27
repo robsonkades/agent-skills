@@ -71,6 +71,11 @@ a model's prose tests phrasing, not competence, and the suite rots on the first 
 rewording. Assert behavior: did it use existing evidence and authorization, preserve scope,
 qualify uncertainty and ask only when the unresolved information mattered?
 
+For a consequential conditional rule, a useful case pair keeps the task similar while
+changing one decisive constraint: should the recommendation change, or should it remain
+stable? Define the expected distinction before running. This can expose a preference copied
+from one example as a universal rule without requiring an exhaustive scenario matrix.
+
 Write the input, expected behavior and failure conditions before execution. If no suitable
 runner is available, return reproducible written cases and mark behavioral evaluation as
 pending. A mental walkthrough or an agent's self-score is not an executed comparison.

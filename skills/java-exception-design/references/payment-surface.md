@@ -86,6 +86,9 @@ public final class GatewayContractException extends GatewayException {
     public GatewayContractException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    // This example cannot establish the remote effect from an unusable response.
+    public RemoteOutcome remoteOutcome() { return RemoteOutcome.UNKNOWN; }
 }
 
 public final class GatewayCancellationException extends CancellationException {
@@ -101,6 +104,11 @@ public final class GatewayCancellationException extends CancellationException {
 
 Translation happens once in the adapter. A general `IOException` is conservatively an unknown
 remote outcome; interruption stops the operation's retry flow but also leaves that outcome unknown.
+An unusable response can likewise follow an applied authorization: parsing failure is not proof
+of rejection. In this example `GatewayContractException` retains `UNKNOWN` for reconciliation,
+while retry policy still distinguishes a protocol failure from a transport failure. Where a real
+provider's contract supplies definitive outcome evidence, retain it rather than downgrading it
+to unknown. The illustrated 402 decline mapping relies on that provider contract, not HTTP alone.
 The default Java 21 HttpClient only attempts to cancel the exchange: the request may still reach
 the server. A cancellation signal is not an acknowledgment that an authorization was reversed:
 
@@ -180,7 +188,10 @@ cancellation representation when it already preserves these facts through the op
   that cause; interruption restores the flag and produces cancellation with its original cause
   and `UNKNOWN` outcome, including when a stub applies the remote effect before throwing.
   Assert no repeat authorization and retained recovery facts after cancellation; contract failures are
-  not blindly retried; an unknown transport outcome is retried only with the configured stable
+  not blindly retried. A gateway stub that applies authorization then returns an unparseable response
+  produces a contract failure with `UNKNOWN`, preserves the parser cause and keeps the operation
+  identifier for recovery; a confirmed decline follows the distinct decline path.
+  An unknown transport outcome is retried only with the configured stable
   idempotency key/status-reconciliation policy.
 
 ## Authoritative references

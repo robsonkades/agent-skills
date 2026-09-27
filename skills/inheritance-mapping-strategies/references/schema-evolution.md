@@ -159,6 +159,8 @@ Use the project's provider, transaction setup and real database dialect to test:
 - Rename a Java class while preserving stored discriminator/table names; reload existing rows.
 - Submit invalid subtype rows directly to the database to test CHECKs, required fields,
   sibling exclusivity and base-row completeness separately.
+- Try the same business key in two different subtypes, including concurrent writers; assert
+  acceptance or rejection according to the declared uniqueness scope, independently of their IDs.
 - Exercise old/new readers during subtype introduction and concurrent backfill/update/delete,
   including a dual-write failure and rollback before the contract point.
 - Warm a context and any configured caches before reclassification or SQL migration; verify

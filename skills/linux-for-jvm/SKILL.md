@@ -57,6 +57,9 @@ within the established containment and availability deadline.
    `throttled_usec` accumulates throttled run-queue time and can overlap across CPUs.
    Its delta divided by elapsed microseconds is not lost CPU capacity or request stall
    percentage and can exceed 1. Correlate with demand, ancestor quotas and latency.
+   Zero relevant throttle deltas do not rule out runnable CPU delay: compare cgroup CPU PSI,
+   competing demand, relative weights and effective per-thread CPU placement before raising
+   a quota. Idle host CPUs may be unavailable to the affected threads.
 6. **Check descriptor and thread counts against their limits** before believing a resource
    is exhausted.
 

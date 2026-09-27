@@ -76,6 +76,25 @@ discoverable. External-only mapping or supported programmatic configuration can 
 Apply the specification's element-level override/default rules and metadata-complete settings;
 do not assume omitted XML values always preserve annotations or that XML alone selects tenants.
 
+Before diagnosing an ignored override, establish the effective metadata:
+
+- Check the packaged persistence unit and bootstrap registration. Standard discovery includes
+  `META-INF/orm.xml` in the unit root or referenced JARs; other classpath resources need
+  `mapping-file` registration or the framework's equivalent. A loose `orm.xml` is insufficient.
+- XML can override annotations, but multiple XML files defining the same entity have
+  undefined results under Jakarta Persistence. File ordering is not a portable override
+  mechanism; select one effective entity definition.
+- Entity `metadata-complete="true"` ignores that entity's mapping annotations; omitted
+  settings use defaults. Unit-wide `xml-mapping-metadata-complete` ignores persistence
+  annotations across the unit. A table-only override and a complete mapping are different
+  contracts: do not toggle completeness to fix one column without auditing what is lost.
+- Confirm field/property access before moving metadata. Mixed annotation placement without
+  explicit access can be undefined; XML access settings also participate in resolution.
+
+Verify the packaged unit's effective mapping and exercise affected SQL with representative
+values. Bootstrap success alone cannot show that the intended override won. For example,
+check the actual table used, not merely that both possible tables exist.
+
 ## Programmatic mapping
 
 A hand-written Data Mapper, Spring Data JDBC's conventions, MyBatis or jOOQ. The mapping is
@@ -190,6 +209,8 @@ Do column or attribute names appear as strings anywhere?
 ```
 
 Sources: [Jakarta Persistence 3.2 XML descriptor rules](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#use-of-the-xml-descriptor),
+[Mapping-file discovery](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#a12305),
+[Access type](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#a113),
 [MapStruct 1.6 reference](https://mapstruct.org/documentation/1.6/reference/html/),
 [JDK 23 annotation-processing change](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html),
 [Explicit processing options and older-JDK support](https://inside.java/2024/06/18/quality-heads-up/),

@@ -40,6 +40,26 @@ release-sensitive. Preserve `asprof -v`, exact command, profiler log/metrics, an
 Current VM-aware stack walking and virtual-thread limitations differ from historical
 AsyncGetCallTrace assumptions. Follow `async-profiler-advanced`.
 
+### Collection can change the behavior being explained
+
+Collector overhead need not appear as a wide profiler frame: recording can change compilation,
+allocation, scheduling or pauses in application/runtime frames. A large sample count does not
+remove this bias. For example:
+
+- [Oracle's JDK 21 JFR guidance](https://docs.oracle.com/en/java/javase/21/troubleshoot/troubleshoot-performance-issues-using-jfr.html)
+  describes application-dependent overhead and old collections triggered by Heap Statistics.
+- [async-profiler 4.2 method profiling](https://github.com/async-profiler/async-profiler/blob/v4.2/docs/ProfilingModes.md#java-method-profiling)
+  warns that first runtime instrumentation of a Java method may deoptimize compiled methods.
+  A compiler-heavy capture after that event may include collection-induced recompilation.
+
+Inspect the actual producer settings and lifecycle markers before using these as explanations;
+neither effect follows merely from the presence of a JFR file. If matched outcome measurements
+already rule out a material effect at the scale of the decision, continue the analysis. Otherwise
+ask the collection owner for a bounded control comparison or a less intrusive capture, passing
+the suspected mechanism and outcome to compare. Do not subtract an assumed overhead percentage
+from a graph or silently change production settings. Without a control, state that the graph
+describes the profiled execution and leave the unprofiled effect unresolved.
+
 ## Orientations are two independent choices
 
 Separate **aggregation direction** from **drawing direction**:
@@ -69,6 +89,24 @@ Whole-process CPU graphs include JVM service, GC, compiler, and native threads i
 samples them. Whole-process wall graphs can be dominated by idle workers. Split by thread ID/
 role/state using original metadata; a frame-name include filter is not necessarily a thread
 collector filter.
+
+### Asynchronous handoffs
+
+A physical worker stack records execution ancestry, not necessarily the request that submitted
+the work. For example, a [ThreadPoolExecutor](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
+can queue tasks from different submitters and execute them on a reused worker. Bottom-up
+aggregation cannot reconstruct a submitter link discarded at that boundary. A queued task has
+no executing stack during its queue residence; a worker parked waiting for a task is a different
+wait from a task waiting for an available worker.
+
+Two workloads can produce the same `worker;runTask;decode` execution aggregate while having
+different request owners and queue delays. Reuse trustworthy task IDs, enqueue/start timings,
+or [propagated trace context](https://opentelemetry.io/docs/concepts/context-propagation/)
+to connect them. Check that any displayed logical/async ancestry was actually captured by the
+producer and survives conversion. If that evidence is missing, report the local decode cost
+and unresolved request/queue attribution; do not assign it to an endpoint from a thread name
+or infer queue residence from worker CPU weight. Context-instrumentation changes belong to the
+tracing/collection owner and require the requested scope; interpretation can finish conditionally.
 
 ### Virtual threads
 

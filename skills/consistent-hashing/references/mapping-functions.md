@@ -1,19 +1,20 @@
 # Choosing the mapping function
 
-Four functions solve "which node owns this key". They differ on one axis that matters —
-what happens when membership changes — and on three that decide the engineering.
+Choose the mapping function by membership model, disruption budget, lookup cost and balance.
+Logical bucket IDs and replaceable physical nodes are different inputs to that decision.
 
 ## Comparison
 
-| Function                     | Keys moved on equal-node join / removal    | Lookup cost         | Distribution quality                               | Complexity                                            |
-| ---------------------------- | ------------------------------------------ | ------------------- | -------------------------------------------------- | ----------------------------------------------------- |
-| `hash(key) % N`              | Often a large fraction                     | O(1)                | Depends on hash and key population                 | Trivial                                               |
-| Ring, one point per node     | About K/(N+1) / K/N                        | O(log N)            | High variance — random gaps differ widely          | Small, but collision and wrap-around handling matter  |
-| Ring with V virtual nodes    | About K/(N+1) / K/N                        | O(log(V×N))         | Tunable: raise V until measured skew is acceptable | V and membership handoff require engineering          |
-| Rendezvous (HRW)             | About K/(N+1) / K/N                        | O(N) hashes per key | Probabilistically even; no virtual-point tuning    | Framing, unsigned order and deterministic ties matter |
-| Bounded-load consistent hash | Algorithm-specific, plus load displacement | Algorithm-specific  | Configured capacity bound under its assumptions    | Placement depends on agreed live state                |
+| Function                     | Keys moved on equal-node join / removal    | Lookup cost         | Distribution quality                               | Complexity                                             |
+| ---------------------------- | ------------------------------------------ | ------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| `hash(key) % N`              | Often a large fraction                     | O(1)                | Depends on hash and key population                 | Trivial                                                |
+| Ring, one point per node     | About K/(N+1) / K/N                        | O(log N)            | High variance — random gaps differ widely          | Small, but collision and wrap-around handling matter   |
+| Ring with V virtual nodes    | About K/(N+1) / K/N                        | O(log(V×N))         | Tunable: raise V until measured skew is acceptable | V and membership handoff require engineering           |
+| Rendezvous (HRW)             | About K/(N+1) / K/N                        | O(N) hashes per key | Probabilistically even; no virtual-point tuning    | Framing, unsigned order and deterministic ties matter  |
+| Jump                         | About K/(N+1) / K/N for tail changes       | Expected O(log N)   | Equal logical buckets                              | Constant placement memory; no arbitrary bucket removal |
+| Bounded-load consistent hash | Algorithm-specific, plus load displacement | Algorithm-specific  | Configured capacity bound under its assumptions    | Placement depends on agreed live state                 |
 
-K is the number of keys, N the number of nodes.
+K is the number of keys; N counts placement targets (nodes, or logical buckets for jump).
 
 ## Modulo
 
@@ -27,6 +28,20 @@ depend on both divisors and the node-index mapping. The two useful stable arrang
   whole logical partitions and never rehashes a key. This is the standard escape hatch, and
   it converts the placement problem into an assignment problem you can solve by hand or by
   policy — including pinning a large partition to its own node.
+
+## Jump hashing for contiguous buckets
+
+[Lamping and Veach's jump consistent hash](https://arxiv.org/abs/1406.2294) maps a 64-bit key
+to `[0, N)` with constant placement memory and expected logarithmic lookup work. Consider it
+for equal logical shards that grow or shrink at the tail. The bucket-to-physical-node map and
+replication still need state; the algorithm does not eliminate them.
+
+Do not index a sorted live-server list and renumber it after an arbitrary removal: surviving
+bucket numbers then refer to different servers, defeating the intended movement bound.
+Keep logical bucket identity across physical replacement, or choose ring/rendezvous for an
+arbitrary member set. Jump alone supplies neither weighted ownership nor distinct replicas.
+Pin arithmetic/overflow behavior and golden vectors when porting; benchmark the actual port
+rather than transferring the paper's performance results to a Java service.
 
 ## Rendezvous, and why it is often the better choice
 

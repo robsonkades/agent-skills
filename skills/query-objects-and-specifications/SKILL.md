@@ -132,6 +132,9 @@ The query returns entities that are only read
 - Allowlist sortable fields, directions and supported null semantics. Validated ORM property
   paths are not inherently raw SQL injection, but interpolated identifiers and unsafe sort
   expressions can be. Bind values and choose SQL fragments from trusted constants.
+- Define text search as literal equality, prefix/substring or an intentional pattern language.
+  Binding a `LIKE` parameter does not escape wildcards. For literal matching, coordinate escaping
+  with the query/framework exactly once; keep explicit pattern semantics when required.
 - Distinguish generated SQL shapes from values bound to one shape. Driver preparation,
   parameter types and database plan policy determine reuse; data skew can make one plan
   unsuitable for some values. A dedicated statement is an option when observed shape/plan

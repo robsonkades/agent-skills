@@ -100,6 +100,10 @@ Prefer changing the application instead when:
   pointed across a datacentre.
 - Containers in a pod **share the port space**. Conflicting address/port/protocol bindings
   collide; different addresses or protocols can coexist. Allocate listeners explicitly.
+- Match each listener's bind address to its callers and probe origin. Kubelet HTTP probes
+  normally target the Pod IP; an app's successful loopback call does not prove that path
+  works. If `hostNetwork` is enabled, loopback and port space are shared with the node,
+  changing both collision and exposure assumptions.
 - Ordinary containers have **no ordering guarantee**. The kubelet does not wait for one app
   container to become ready before starting the next, and gives no defined termination order
   between them. An explicit bounded application readiness/retry and shutdown protocol can

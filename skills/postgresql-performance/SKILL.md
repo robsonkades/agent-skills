@@ -80,6 +80,9 @@ or blocking rewrites.
   by workers again or treat the calculation as process RSS. Inspect the plan and concurrency first.
 - Read `EXPLAIN (ANALYZE, BUFFERS)` from the deepest estimate divergence and include loops, reads,
   batches, disk sort, heap fetches, and rows removed. A sequential scan alone is not a defect.
+- For consequential cardinality errors, distinguish stale planner statistics, sampling resolution,
+  correlated predicates and parameter visibility before changing indexes or cost constants. Choose
+  a targeted statistics remedy and verify the affected plan; fresh statistics alone need not fix it.
 - Prepared planning has two layers: pgjdbc's named-statement threshold and PostgreSQL's custom-versus-
   generic decision. Warm-up can change the plan without a deploy; through a pooler, reuse of one JDBC
   connection does not establish the same backend or server plan history.
@@ -107,8 +110,8 @@ and `database-bulk-loading` when those are the actual decisions.
 - [MVCC, VACUUM, and indexes](references/mvcc-vacuum-indexes.md) — read for bloat, blocked cleanup,
   freeze/wraparound, HOT/fillfactor, visibility map, BRIN, or partial-index behavior.
 - [Plans, memory, WAL, and concurrency](references/plans-memory-wal-concurrency.md) — read for plan
-  evidence, statistics sampling, work memory/spills, JIT, checkpoints/WAL, locks, isolation, or instance
-  configuration.
+  evidence, planner statistics versus monitoring counters, work memory/spills, JIT, checkpoints/WAL,
+  locks, isolation, or instance configuration.
 - [pgjdbc and PgBouncer](references/pgjdbc-and-pgbouncer.md) — read when plans change after warm-up,
   fetch/batch does not behave as expected, pool mode conflicts with session state, or timeout recovery
   depends on whether the server canceled a statement or terminated the session.

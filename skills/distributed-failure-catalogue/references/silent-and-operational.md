@@ -21,6 +21,29 @@ patterns error-rate monitoring cannot show, or that appear only around a deploy 
 - **Owner** — `slo-and-alerting` (freshness alerts); `task-queues-and-competing-consumers`
   (oldest-message-age).
 
+## Missing effect / acknowledged-work loss window
+
+- **Symptom** — an input was reported accepted or processed, yet its required durable effect
+  is absent after the expected completion/visibility window. Other inputs may keep flowing.
+- **Mechanism** — progress can become durable before the effect: after a crash, recovery skips
+  unfinished input. Alternatively, the reported acknowledgement may cover only transport or
+  broker acceptance, so completion was never established. These require different diagnoses.
+- **Where it hides** — acknowledging before a database commit; advancing a consumer offset
+  after dispatch to an asynchronous worker; swallowing handler failures while committing later
+  progress; interpreting a publisher confirmation as proof of downstream business completion.
+- **Discriminator** — trace one stable logical ID through acceptance, consumer recovery position
+  and authoritative effect state. Compare read-replica/index lag, filtering, expected delay,
+  DLQ/retention state and telemetry gaps. Progress past unfinished work supports a loss window;
+  a publisher confirm alone does not. When an external effect cannot be reconciled, retain
+  unknown rather than declaring non-application or recommending blind replay.
+- **Owner** — `delivery-semantics` (ack/effect boundary and recovery); `idempotency` when
+  recovery must tolerate already-applied effects.
+
+Evidence: [Kafka 4.1 consumer progress versus processing](https://kafka.apache.org/41/design/design/#semantics)
+describes the crash window when position is saved first;
+[RabbitMQ 4.2 acknowledgements and publisher confirms](https://www.rabbitmq.com/docs/4.2/confirms)
+distinguishes publisher-to-broker confirmation from consumer processing acknowledgement.
+
 ## Expected versus unexpected errors
 
 - **Symptom** — an error-rate alert fires and nothing is broken, or a real incident never

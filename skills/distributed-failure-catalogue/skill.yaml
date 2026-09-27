@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: distributed-failure-catalogue
-version: 1.3.3
+version: 1.3.4
 description: >-
   Evidence-oriented recognition index for recurring distributed failure shapes: overload
   amplification, gray and asymmetric failure, split ownership, stale work, mixed versions,
-  correlated faults, silent stagnation and destructive automation. Use to turn incident
+  correlated faults, silent stagnation, missing effects and destructive automation. Use to turn incident
   observations into discriminable hypotheses and route each to the skill owning diagnosis
   and remediation. It is not a substitute for the owner skill or causal evidence.
 

@@ -121,8 +121,8 @@ emergency procedure; it is the normal way a projection changes shape.
 4. Delete the old one once the switch is proven.
 ```
 
-This is a blue/green deployment for derived data, and it is why the pattern's flexibility is
-real: a new query shape costs a replay, not a migration script.
+This is a blue/green deployment for derived data. A new query shape can be built by replay
+when retained facts contain the information it needs; replay cannot supply absent history.
 
 Use a distinct generation key or separate schema/tables for both its data and checkpoints.
 Reusing an old checkpoint with empty new tables skips history; sharing target rows while old
@@ -132,8 +132,12 @@ before reusing it.
 
 “Catches up” needs a race-free protocol: capture a high-water position, consume through it,
 continue tailing while routing switches, then atomically publish the active projection version.
-Keep the old view until parity/invariants and rollback are proven. Rebuild consumers must not
-re-emit emails, integration events or other historical side effects.
+Keep the old view until correctness and rollback are established. Compare equivalent results
+at the same covered position when semantics are unchanged. For a new query or a corrected
+fold, state the expected differences and check independent domain invariants and curated
+historical cases; an old buggy projection is not the oracle. Counts or matching checkpoints
+alone do not validate balances, joins or event coverage. Rebuild consumers must not re-emit
+emails, integration events or other historical side effects.
 
 **Measure the replay against production volume, and keep measuring.** Rebuild time grows with
 history and is the metric that quietly turns event sourcing from an asset into a liability.
@@ -149,6 +153,36 @@ When it exceeds the acceptable window:
 Archiving accessible history differs from deleting it. Deleting a prefix makes retained
 checkpoints/carry-forward facts authoritative for whatever information they preserve;
 name the changed replay/audit contract. A balance snapshot cannot reconstruct past transactions.
+
+### Restoring the authoritative log
+
+If the log is intact and only a derived view was lost, rebuild that view in a new generation.
+If recovery restores the event store to an older point, first establish the recovered committed
+prefix and any missing acknowledged writes. The remaining snapshots, command indexes, read models
+and consumer checkpoints may describe history no longer present. An apparently newer checkpoint
+is not evidence that the restored source contains its effects.
+
+Within the authorized recovery plan:
+
+- Keep writers and effect-producing consumers from mixing old and recovered authority until the
+  recovery boundary is established. Follow the deployed store's supported backup/restore
+  procedure; a collection of copied event files is not automatically a consistent backup.
+- Verify that saved cursors and snapshots belong to the recovered history, not merely the same
+  endpoint/stream name. Restore aligned data/checkpoints or rebuild derived generations from
+  their documented start. Resetting a cursor against already-populated rows can double-apply
+  non-idempotent folds; retaining an ahead cursor can omit recovered/new work.
+- Reconcile acknowledged commands and external effects against the recovered log before
+  accepting retries or replaying integrations. A missing dedup record does not prove a payment
+  or notification never happened. Do not fabricate replacement events from a lossy projection;
+  recover authoritative records or explicitly account for loss and repair with domain owners.
+- For recovery readiness, exercise the mismatch in an isolated drill: source backup older than a read model,
+  snapshot or dedup index, with an external effect already applied. Check the supported recovery
+  objective, absence of duplicate effects and handling of missing facts; use the results to define
+  reopening criteria, reusing applicable evidence during an incident.
+
+These are application consistency checks derived from source authority and cursor semantics,
+not guarantees supplied by event sourcing. For example, KurrentDB 25's restore procedure requires
+a stopped node and coordinated database/checkpoint files; match the actual server version.
 
 ### Read-your-own-writes
 
@@ -308,5 +342,6 @@ conditions and exceptions, not an unconditional technical deletion recipe.
 
 ## Sources for projection recovery and visibility
 
+- [KurrentDB 25 backup and restore](https://docs.kurrent.io/server/v25.0/operations/backup) — store-specific backup components and restore prerequisites; application-state alignment remains an application obligation.
 - [KurrentDB Java 1.2 catch-up subscriptions](https://docs.kurrent.io/clients/java/v1.2/subscriptions) — complete positions, beginning markers and exclusive resume semantics.
 - [PostgreSQL 18 transaction isolation](https://www.postgresql.org/docs/18/transaction-iso.html) — a repeatable-read snapshot does not advance when another transaction commits; verify the actual database and isolation level.

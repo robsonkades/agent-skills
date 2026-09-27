@@ -90,9 +90,9 @@ build, training coverage and validation of the claimed use/benefit; label untest
   compatibility constraint.
 - JEP status names the integration/release target, not proof that a particular vendor image,
   platform or deployed build implements it. Check release/GA availability separately. As of
-  2026-09-11, JEP 544 (AOT code compilation) is Candidate with no target release listed; the
-  Leyden overview still lists that work as in progress. JDK 25 profile caches must not be
-  described as containing compiled application methods.
+  2026-09-27, JEP 544 (AOT code compilation) is Proposed to Target JDK 28, not delivered.
+  A proposed target is neither a release commitment nor proof of vendor availability.
+  JDK 25 profile caches must not be described as containing compiled application methods.
 - With the default `AOTMode=auto`, `-XX:AOTCacheOutput=<file>` selects training followed by
   assembly. An ordinary serving command consumes with `-XX:AOTCache=<file>`. An intentional
   finite train-then-launch deployment phase can use `AOTCacheOutput` with explicit stop,

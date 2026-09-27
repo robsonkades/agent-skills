@@ -44,9 +44,10 @@ final class PdfFamily implements ReportFamily { /* three matched products */ }
 final class HtmlFamily implements ReportFamily { /* three matched products */ }
 ```
 
-This is correct and, for three stateless products, more machinery than the guarantee needs:
-three interfaces, two implementations each, plus the family interface and its two
-implementations.
+This can supply matched products through trusted implementations. For a stateless bundle with
+no extension or creation contract, the family interface and its two implementations may be
+unnecessary. The record below replaces that family layer; the product abstractions and their
+format-specific behavior remain. Neither representation alone prevents callers from mixing products.
 
 ## After — the family as a value
 

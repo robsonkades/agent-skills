@@ -27,6 +27,11 @@ classpath does not by itself hide public internal classes. Account for `opens`, 
 and launch-time export overrides separately. Package-private access protects one exact
 Java package, not its subpackages or the whole component tree.
 
+JPMS requires Java 9+. Resolve the project's target and existing ArchUnit/JUnit versions;
+there is no universal application JDK or test-library baseline for this architectural skill.
+Do not upgrade the application merely to copy an enforcement example. On the classpath,
+use an appropriate existing build/architecture check for the rule the compiler cannot enforce.
+
 ## Enforcement mechanisms, cheapest first
 
 | Mechanism                           | Catches                                                       | Cost                                                |
@@ -112,6 +117,25 @@ component-surface rules when needed. Reflection/configuration wiring needs separ
 | app → web            | Nothing                                                                       | A service returning a `ResponseEntity` or throwing a web exception                                                      |
 | transaction scope    | Use-case scope covering the required atomic work                              | Independent commits where the use case requires atomicity; inspect interception/propagation (`enterprise-transactions`) |
 
+## Data crossings that import rules cannot see
+
+A repository in `orders` can issue SQL against a table owned by `pricing` without a bytecode
+dependency on a pricing class. The rules above can all pass while a foreign update bypasses
+pricing invariants or a column change breaks orders. Inspect SQL, ORM associations, query
+projections and migration ownership alongside the class graph.
+
+Distinguish an approved read projection/view with an owner and compatibility contract from
+incidental access to another module's base tables. A permitted reporting query may intentionally
+cross data ownership; preserve its authorization, tenant filtering and transaction assumptions.
+For writes, identify who enforces the invariant on every supported path. Do not introduce
+per-module databases just to repair an import rule's blind spot.
+
+Choose evidence matching the policy: focused SQL/mapping checks and integration tests with
+an attempted forbidden access or bypass, plus an allowed query/update control. Database
+permissions can enforce role-level limits when identities are separated; one shared credential
+cannot distinguish the Java modules using it. Without a suitable check or fixture, report the
+unverified data boundary rather than claiming isolation from an ArchUnit or JPMS pass.
+
 ## The seven recurring leaks
 
 1. **JPA entity as the HTTP payload.** Persistence-model changes can alter the public
@@ -163,3 +187,4 @@ Ask, in this order:
 - [Hibernate 6.6 Formula annotation](https://docs.hibernate.org/orm/6.6/javadocs/org/hibernate/annotations/Formula.html) — an example of a provider package outside the illustrative denylist.
 - [Spring transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html) — REQUIRED versus independent transaction scopes; match the deployed release.
 - [Java 25 JLS, modules](https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.7) — exports and opens.
+- [PostgreSQL 18 privileges](https://www.postgresql.org/docs/18/ddl-priv.html) — an example of database permissions granted to roles, not to Java packages; use the deployed database's equivalent.

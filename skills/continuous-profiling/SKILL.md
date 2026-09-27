@@ -39,6 +39,11 @@ retention, comparison protocol, security, and operational health. Delegate:
 
 ## Define the retroactive questions
 
+Inspect the existing collection/export configuration, backend ingestion contract, runtime
+inventory and incident artifacts before proposing a new pipeline. Reuse sound calibration
+and coverage evidence. Ask only for missing constraints that change signal selection, retention
+or allowable loss; proceed with reversible query/design work while those remain unresolved.
+
 Start with decisions, not a vendor:
 
 | Question                                            | Required evidence                                              | Common missing dimension                            |
@@ -168,6 +173,12 @@ Bound aggregate local disk use separately, including concurrent recordings, dump
 spools. None of these local controls guarantees export, cluster-wide retention, or survival of
 pod/node loss. Define behavior for disk full, clock change, restart/PID reuse, exporter outage,
 backend throttling, partial upload, duplicate delivery, schema change, and encryption-key loss.
+
+Successful upload does not establish complete, durable, or duplicate-free query data. Replays
+can inflate weights, and distinct rolling snapshots can contain the same observations. Keep
+incident archives separate from additive ingestion unless overlap handling is verified. Read
+[export and replay accounting](references/setup-and-queries.md#export-and-replay-accounting)
+before designing retries or using recovered backlog in a regression comparison.
 
 Retention must preserve deploy markers and enough pre/post history for the comparison cadence.
 Long retention without symbol/build provenance can leave undecodable addresses; retain image

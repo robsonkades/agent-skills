@@ -153,6 +153,38 @@ concurrency policy. Therefore —
 - Version columns must be handled deliberately — a bulk update outside an entity's version
   policy can let stale entity writers overwrite it (`offline-concurrency-control`).
 
+### Equivalent effects, not just equivalent rows
+
+Trace what the existing transition does besides changing fields: domain methods may produce
+events, listeners may record audit data, and application code may arrange notifications.
+The direct `JdbcClient` update above does not invoke entity methods or JPA lifecycle callbacks.
+Database triggers are a separate mechanism to inspect. Framework repository event hooks depend
+on the actual API and version: Spring Data's aggregate-event documentation ties publication to
+specified repository calls carrying aggregate instances, not to arbitrary SQL changing a row.
+Do not infer hook behavior just from a method name containing "batch".
+
+Compare two otherwise identical jobs archiving old records:
+
+- If the contract requires only the new state and its existing database-enforced invariants,
+  a bounded, concurrency-safe set update can be the simplest implementation.
+- If each archived record must also produce an audit entry and a downstream event, row-only
+  SQL is not equivalent. Use an existing mechanism that captures effects for the actual changed
+  records with the required commit/retry semantics, or retain the per-entity path until one is
+  established. Events do not inherently require object hydration, and set-based work does not
+  inherently preserve events.
+
+For an implementation change, compare both paths on eligible and ineligible records, a repeated
+invocation, and a failed/conflicting update. Assert resulting state, required effect identities
+and multiplicity, failure outcomes and version behavior; a matching update count is insufficient.
+Use the target database for dialect/transaction claims and measure load cost separately from
+semantic equivalence. Do not label this comparison executed unless it ran.
+
+If effect capture and state commit cannot yet be coordinated, pass the existing writer paths,
+transaction boundary, retry behavior and required external observations to `enterprise-transactions`
+and `service-layer-design`. The needed result is an explicit commit/delivery contract. Keep the
+bulk recommendation conditional if that evidence or expertise is unavailable; organizing logic
+does not authorize changing delivery guarantees or adding an event infrastructure by default.
+
 ### The honest limitation
 
 Table ownership may obscure a business concept that spans several tables. Identify whether
@@ -167,3 +199,5 @@ compare the model's benefits and load costs (`domain-model.md`).
 - [Spring proxying](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — final classes and proxy/self-invocation boundaries.
 - [Fowler: Table Module](https://martinfowler.com/eaaCatalog/tableModule.html) — record-set organization, distinct from a gateway's persistence responsibility.
 - [Fowler: Table Data Gateway](https://martinfowler.com/eaaCatalog/tableDataGateway.html) — table-level database access, which does not by itself assign business-policy ownership.
+- [Jakarta Persistence 3.2 specification](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2) — entity lifecycle callbacks and the separate direct-database bulk-operation path.
+- [Spring Data aggregate event publication](https://docs.spring.io/spring-data/jpa/reference/repositories/core-domain-events.html) — hooks depend on the repository operation and aggregate instances; check the deployed version.

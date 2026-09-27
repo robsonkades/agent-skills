@@ -44,6 +44,24 @@ generated classes, allocators, agents and direct buffers, while cgroups can char
 kernel memory that NMT does not own. These are application/runtime properties, not a fixed
 function of `Xmx`.
 
+When `memory.current` grows while heap, NMT and process RSS stay broadly stable, inspect
+the charged memory types before blaming JNI or direct buffers. On cgroup v2, `file` in
+`memory.stat` includes tmpfs/shared-memory data, and `shmem` identifies swap-backed data
+such as tmpfs; it is not an extra disjoint category to add to `file`. These fields identify
+a charge type, not which path or writer caused it. Correlate deltas with mounts, file
+growth and the processes sharing the relevant cgroup/ancestor. The
+[kernel memory.stat definitions](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory-interface-files)
+describe the accounting; do not sum every field as though it were an independent budget.
+
+For Kubernetes, inspect `emptyDir.medium`, `sizeLimit`, mounts and the writer.
+`medium: Memory` uses tmpfs, and files count against the memory limit of the container
+that wrote them. An `emptyDir` survives a container crash within the same Pod; restarting
+the JVM does not establish that its files disappeared. A volume size limit does not reserve
+an additional memory allowance. Include temporary output, dumps and retained cache files
+in the budget, and evaluate bounded retention or another storage medium before a heap-only
+fix. Preserve required files and recovery evidence; diagnosis does not authorize deletion.
+See [Kubernetes emptyDir lifecycle and memory accounting](https://kubernetes.io/docs/concepts/storage/volumes/#emptydir).
+
 On cgroup v2, also assess any configured `memory.high` against charged working-set peaks
 and latency. Staying below `memory.max` does not establish freedom from reclaim/throttling.
 Evaluate threshold changes against workload and shared-capacity goals, then repeat the
@@ -97,3 +115,37 @@ After any adjustment:
 - [ ] The metric that motivated the change re-measured under the same load.
 - [ ] No regression on another axis — a larger heap that returns native headroom to where
       it started is not an improvement.
+
+## Diagnostic decision checks
+
+Use these supplied scenarios to challenge a diagnosis before collecting more evidence or
+changing limits. They are teaching cases, not executed agent evaluations.
+
+- **Probe placement pair:** a missing startup reading would answer the sizing question;
+  the proposed command repeats `-Xms2g -Xmx2g -XX:+AlwaysPreTouch`. In A, the serving
+  cgroup has only 128 MiB of remaining capacity. In B, an otherwise equivalent disposable
+  cgroup is empty, has 3 GiB available, and ancestor capacity is confirmed. In A use existing
+  evidence or plan the isolated reproduction; in B a bounded probe can answer startup
+  ergonomics. Failure: launching the full probe in A, forbidding the supported probe in B,
+  or claiming B reconstructs the serving process's historical peak.
+- **Charges outside JVM views:** heap/NMT/RSS are stable while `file` and `shmem` rise;
+  uploads accumulate in a mounted memory-backed `emptyDir`. Inspect volume growth/writer
+  evidence and retention, keep other charge sources possible, and avoid double counting
+  `shmem` plus `file`. Failure: asserting a native leak from this gap, treating a volume
+  size cap as extra RAM, or deleting uploads without authority. If `anon` instead rises
+  with process RSS while `shmem` is flat, investigate process/native attribution; the
+  presence of a tmpfs mount alone no longer explains the growth.
+- **CPU count trap:** automatic `ActiveProcessorCount=-1`, live available processors 2,
+  cpuset list 24 and `cpu.max=200000 100000` are consistent. Failure: concluding 24 CPUs
+  of capacity, changing the flag to fix a nonexistent detection defect, or interpreting
+  the quota as reserved CPU service under contention.
+- **Missing past evidence:** the original JVM is gone, NMT was disabled and the cgroup
+  was recreated. State those limits, inspect retained runtime/node records, and plan only
+  the missing capture. Failure: using the replacement JVM to certify the prior peak or
+  treating zero new counters as proof that the old process was not OOM-killed.
+- **Restraint and handoff:** a 90% heap setting with representative measured headroom,
+  accepted latency and covered transients need not change solely because of its percentage.
+  Conversely, a verified node-global OOM needs `linux-for-jvm` with victim identity,
+  timestamps and kernel/runtime records; this skill cannot prove a local-limit failure
+  from an `oom_kill` increment alone. Failure: imposing a fixed heap percentage or
+  changing node policy under a container flag explanation request.

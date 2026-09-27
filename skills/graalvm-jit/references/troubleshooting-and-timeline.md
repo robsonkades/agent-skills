@@ -23,6 +23,40 @@ Messages quoted below were produced on GraalVM CE 25.0.2 (`25.0.2+10-jvmci-b01`)
 | `[engine] WARNING: The polyglot engine uses a fallback runtime that does not support runtime compilation`      | A Truffle language on a JDK without Graal as the host compiler                                      | Which JDK: see the runtime matrix below                                                                                              | Run on GraalVM 25.1+, or run the language as a polyglot isolate on OpenJDK; interpreter-only is the alternative |
 | Oracle JDK upgrade 24 → 25 lost the Graal JIT                                                                  | Oracle JDK 25 removed the optional Graal JIT                                                        | Oracle JDK 25 release notes, "Removed Features and Options"                                                                          | Move to a GraalVM distribution or to C2; there is no flag to bring it back                                      |
 
+## Compilation failure or incorrect results
+
+First distinguish the observed failure; the remedies differ:
+
+- A failed `jdk.Compilation` attempt is not an exception thrown by application code.
+  Inspect the method, level and subsequent successful compilations. On JDK 25, a captured
+  `jdk.CompilationFailure` carries `failureMessage` and `compileId`; join it within the same
+  process to obtain the reason, or inspect compiler logs when that event was not recorded.
+  A bailout can reflect a compiler limit rather than a bug; on CE 25.0.2, `CompilationBailoutAsFailure=false`
+  keeps such bailouts separate from failure diagnostics. Establish hot-path impact before
+  treating an isolated bailout as a migration blocker.
+- A Java exception inside Graal can abort that compilation while the application continues
+  using interpreted or previously compiled code. CE 25.0.2 defaults to
+  `CompilationFailureAction=Silent`; a quiet console is not proof that all compilations
+  succeeded. `Print` exposes the exception without retry; `Diagnose` retries with diagnostics.
+  Repeated initialization/upcall failures in the table above are a different failure path;
+  do not assume that either case switches tier 4 automatically to C2.
+- A wrong application result or VM crash needs correctness diagnosis, even when throughput
+  improved. Preserve the reproducing inputs, exact image/options, `hs_err` and available
+  compilation evidence. Compare with the validated C2 launch and reduce the reproducer.
+  A JVMCI-compiled problematic frame identifies where execution failed, not conclusive
+  attribution: native memory corruption or timing-sensitive application races can also
+  appear there. Keep adoption blocked by an unexplained result mismatch, without declaring
+  a Graal defect from compiler correlation alone.
+
+Use the [operations manual](https://docs.oracle.com/en/graalvm/jdk/25/docs/reference-manual/compiler/operations/)
+for compiler-exception and crash evidence. The
+[25.0.2 failure handler](https://github.com/oracle/graal/blob/vm-25.0.2/compiler/src/jdk.graal.compiler/src/jdk/graal/compiler/core/CompilationWrapper.java)
+defines the bailout, retry and exit branches; check the target version before choosing a
+diagnostic action. The operations manual's legacy examples do not establish current defaults.
+See [diagnostic options](enabling-and-comparing.md#graal-side-diagnostic-and-tuning-options)
+for the interaction between `Dump`, `MethodFilter` and failure retries. Prepare a minimal
+report with the supported facts; external submission is a separate user decision.
+
 ## Production and scale behaviour
 
 **Compiler threads.** HotSpot sizes `CICompilerCount` ergonomically (12 on a 12-core host in
@@ -109,7 +143,7 @@ has a different runtime and cannot be treated as a pure host-JIT swap.
 | GraalVM 25.1 (2026)                | Monthly innovation releases with quarterly CPUs; `graal.` prefix accepted again without a warning; Truffle optimising runtime only on GraalVM 25.1+; record/replay of compilations                                                             | GraalVM 25.1 release notes; compiler CHANGELOG GR-69280           |
 | GraalVM 25.3                       | Priority inlining becomes the default inliner (`UsePriorityInlining`); loop vectorisation in CE (`VectorizeLoops`)                                                                                                                             | GraalVM 25.3 release notes; compiler CHANGELOG GR-77137, GR-28213 |
 | March 2026                         | Galahad dissolved by the HotSpot Group: "unnecessary in light of the September 2025 announcement"                                                                                                                                              | openjdk.org/projects/galahad                                      |
-| GraalVM 25.4                       | Duplication and pull-through-phi phases added to the community configuration — in the compiler changelog; not verified as released at the time of writing                                                                                      | compiler CHANGELOG GR-79029                                       |
+| GraalVM 25.4 (2026-09-22)          | 25.4.4.1.1 released; duplication and pull-through-phi phases added to the community configuration, enabled by default                                                                                                                          | GraalVM 25.4 release notes                                        |
 
 Two consequences for a 2026 decision follow directly. First, the dissolved Galahad project
 is not a delivery plan for putting Graal into a future OpenJDK release; decide from software
@@ -120,6 +154,7 @@ the number, the way the JDK build is recorded for C2.
 ## Authoritative sources
 
 - [GraalVM 25.3 release notes](https://www.graalvm.org/release-notes/25.3/)
+- [GraalVM 25.4 release notes](https://www.graalvm.org/release-notes/25.4/)
 - [GraalVM 25.1 release notes](https://www.graalvm.org/release-notes/25.1/)
 - [GraalVM release calendar](https://www.graalvm.org/release-calendar/)
 - [Oracle JDK 25 significant changes](https://docs.oracle.com/en/java/javase/25/migrate/significant-changes-jdk-25.html)

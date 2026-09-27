@@ -42,7 +42,9 @@ diagnostics require an alternative evidence source, not an assumed result.
    correlate existing `-Xlog:jit+compilation`/`PrintCompilation` records by compilation ID, level, OSR,
    invalidation and timestamp. One tier-1/3 line does not prove the method's final/current
    state; later versions can coexist or be made non-entrant. A method may execute inlined
-   in callers without a standalone nmethod. Capture missing evidence only when it can change
+   in callers without a standalone nmethod. Distinguish normal-entry and OSR compilations:
+   an object allocated before OSR entry already exists when that compiled loop begins;
+   its missing `Allocate` node does not demonstrate scalar replacement. Capture missing evidence only when it can change
    the diagnosis; an explanatory question need not trigger a new JVM run.
 2. **If it is stuck in tier 3, inspect policy eligibility and compiler capacity.** Compare
    counters with effective tier-4 thresholds, including queue feedback, and check compilation
@@ -138,6 +140,9 @@ diagnostics require an alternative evidence source, not an assumed result.
   benchmark. Each can falsify different hypotheses and none substitutes for all others.
 - For graph comparisons, identify the compilation and phase: node IDs can be renumbered,
   and an absent `Allocate` after macro expansion can mean lowering rather than elimination.
+  Load the graph-capture recipe only when phase evidence can distinguish the remaining
+  hypotheses. A product JVM's unavailable debug diagnostics are a reason to use logs or
+  generated code, not to infer an optimization outcome.
 - Test semantic edge cases before refactoring for the compiler: exceptions, overflow, NaN,
   aliasing, concurrency/publication and uncommon paths can be the guards preventing an opt.
 - Validate end-to-end throughput/tail/CPU/code-cache effects. A microbenchmark win under forced
@@ -146,6 +151,9 @@ diagnostics require an alternative evidence source, not an assumed result.
 Deliver the relevant compile ID and artifact location, the observed decision, the inferred
 blocking mechanism, and one confirming or falsifying check. For a proposed change, include
 the semantic constraints and before/after metric; say explicitly when it remains untested.
+For a handoff, pass the runtime, compilation/OSR identity, source/BCI, artifacts and unresolved
+question. If the named specialist is unavailable, retain these findings and identify the
+next evidence needed; do not replace missing analysis with a tuning recommendation.
 
 ## References
 
@@ -154,8 +162,9 @@ the semantic constraints and before/after metric; say explicitly when it remains
   the inlining size limits and the three escape states. Read when locating a decision in
   the pipeline, interpreting graph changes, or identifying an inlining refusal's limit.
 - [JIT diagnosis recipes](references/jit-diagnosis-recipes.md) — the exact flag combinations
-  for tier, inlining and escape diagnosis, the factor-isolation runs, and the correct threshold
-  tuning flags. Read when you are about to run the JVM to answer one of these questions.
+  for tier, inlining and escape diagnosis, debug-build ideal-graph capture with product-build
+  fallbacks, the factor-isolation runs, and the correct threshold tuning flags. Read when you
+  are about to run the JVM to answer one of these questions.
 
 Authoritative sources: [OpenJDK 25.0.3+9 C2 sources](https://github.com/openjdk/jdk25u/tree/jdk-25.0.3%2B9/src/hotspot/share/opto),
 [HotSpot compiler control](https://docs.oracle.com/en/java/javase/25/vm/compiler-control1.html),

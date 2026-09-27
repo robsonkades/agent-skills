@@ -155,12 +155,16 @@ Nested use cases where the inner must survive the outer's rollback
 - If an inner participating boundary marks the shared transaction rollback-only, catching
   its exception does not restore commitability. The outer commit attempt can raise
   `UnexpectedRollbackException`; verify persisted state from outside that transaction.
+- After-commit work is outside the completed atomic unit. A local callback alone is not durable
+  delivery, and still-accessible resources do not guarantee a new commit for its writes.
+  Choose best-effort follow-up or durable intent/recovery from the business requirement;
+  an error after commit does not undo the committed work or justify blindly retrying it.
 
 ## References
 
 - [Boundaries and propagation](references/boundaries-and-propagation.md) — the propagation
   modes with what each actually does to connections and rollback, self-invocation and the
-  other silent no-ops, batch chunking, the outbox at a network edge, and how to verify at
+  other silent no-ops, post-commit listeners, batch chunking, the outbox at a network edge, and how to verify at
   runtime which transaction a piece of code ran in. Read when demarcating, or when a
   rollback did not happen.
 - [Isolation, anomalies and recovery](references/isolation-and-recovery.md) — the anomaly

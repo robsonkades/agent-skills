@@ -54,13 +54,17 @@ contaminate the next phase. Randomize or use fresh environments when order effec
    the upper boundary is the authorized question, seek a reproducibly failing point within
    the load/impact limits. If the authorized ceiling passes, report that conditional tested
    lower bound and the unlocated upper boundary; do not exceed the ceiling to complete a bracket.
-3. With both endpoints, search between them using discrete steps or adaptive bracketing. Keep workload/state
+3. Admit an endpoint only after checking achieved starts against the declared arrival-fidelity
+   tolerance. A run that misses that process is inconclusive at the intended rate; retain its
+   overload/generator evidence, but do not use the intended rate as a target-capacity endpoint.
+   Delivered starts followed by target rejections can be a valid failing SLO point.
+   With both valid endpoints, search between them using discrete steps or adaptive bracketing. Keep workload/state
    constant and use independent repetitions near the decision boundary. Use a bracket only
    where pass/fail is consistent with monotonicity; otherwise publish the tested points and
    investigate state changes or multiple operating regimes.
 4. When that ordering holds, report highest tested reproducible pass to lowest tested fail.
    The “last passing step” is not an exact breakpoint.
-5. If a point failed, classify why and verify the generator still produced its intended process.
+5. If a valid point failed, classify the target/dependency failure separately from generator limits.
 6. For an overload/recovery claim or when overload affected subsequent phases, verify recovery
    after load removal; queues, breakers, caches or instances left unhealthy are a separate finding.
 

@@ -17,6 +17,8 @@ Turn an agreed architectural promise into a test that exercises its actual mecha
 fails for the intended violation. A green functional test does not establish transaction,
 dependency, concurrency or compatibility properties it never observes. This skill owns
 test design and implementation, not architecture selection or governance policy.
+Match the requested mode: a findings-only review reports corrections and experiments without
+editing the application; an implementation request authorizes the focused tests and checks.
 
 Before choosing version-sensitive test APIs, inspect compiler release/toolchains, resolved
 framework/test-library versions, runner configuration and the JDKs used by tests and deployment.
@@ -29,7 +31,9 @@ dependencies, preview features and toolchain upgrades require their own justific
 1. **Name the promise and failure.** Obtain the relevant implementation, existing tests,
    package/contract or transaction boundary, dependency versions and build command. For data
    tests, also obtain engine/version, migrations, isolation and cache settings. For a budget,
-   identify the operation and what is counted. If the promise or threshold is unknown, propose
+   identify the operation and what is counted. Distinguish agreed contracts from observed
+   conventions: a current annotation, package layout or passing test does not establish policy.
+   If the promise or threshold is unknown, propose
    a conditional test design and request the missing contract; do not invent the architecture.
 2. **Choose the smallest setup that retains the mechanism.** Use the table below. Fakes and
    mocks can isolate behavior but do not establish database or network semantics. A full context
@@ -39,10 +43,13 @@ dependencies, preview features and toolchain upgrades require their own justific
    scope, cleanup and time bounds. Check required modules as well as selected classes/tests
    or observed operations: a nonempty selection can still omit an entire module, and disabled
    instrumentation can produce a false green.
-4. **Prove the test detects the defect.** Use a small violating fixture or a temporary mutation:
+4. **Prove the test detects the defect.** For a new or changed guard, use a small violating fixture
+   or a temporary mutation within the authorized scope:
    forbidden dependency, missing transaction, lazy fetch regression or stale write. Observe the
    intended assertion fail, then restore the valid state and rerun. A compile/setup error is not
-   that proof. Keep mutations isolated and preserve unrelated work.
+   that proof. Keep mutations isolated and preserve unrelated work. Reuse adequate recorded
+   sensitivity evidence for unchanged guards; in a findings-only review, specify any missing
+   experiment without claiming to have executed it.
 5. **Report evidence and limits.** Name the command, actual tests run and result, plus what
    remains untested. A configuration inspection is evidence of intent; a runtime result proves
    only the tested state/interleaving/version. For diagnosis, separate the suspected blind spot
@@ -88,6 +95,9 @@ a pure domain assertion.
   and diagnosis to `architecture-and-performance`.
 - An overlap test covers a chosen schedule, not all races. A single-threaded sequence using stale
   detached state can verify optimistic version checks; it cannot establish concurrent lock behavior.
+- A same-row conflict test does not establish an invariant spanning different rows. Derive the
+  competing reads/writes from that invariant and assert the combined committed result; independent
+  changes may legitimately both succeed when there is no shared constraint.
 - Keep accepted exemptions narrow, named and explained. Do not widen imports, disable empty-rule
   failures, reset a baseline or weaken an assertion simply to make the build green.
 
@@ -100,5 +110,9 @@ is needed for one guard.
 
 Choosing thresholds and consequences belongs to `architecture-fitness-functions`; transaction
 design to `enterprise-transactions`; contract policy to `rpc-and-api-contracts`.
+When a missing policy blocks the assertion, pass the observed boundary, proposed promise,
+environment and failing scenario to that specialist; request a contract and accepted outcomes.
+If unavailable, provide a conditional test plan and identify the unresolved decision. Continue
+independent checks whose contracts are already known.
 Use [Validation cases](references/validation-cases.md) when evaluating this skill or rehearsing
 a difficult review. Those cases evaluate agent decisions, not the application under test.

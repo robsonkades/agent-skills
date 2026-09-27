@@ -141,6 +141,11 @@ Prefer a startup probe instead when:
   not prevent a node crash or direct delete, and workload controllers are not constrained by
   it during rollout. `minAvailable: 1` with one healthy replica blocks compliant eviction;
   operators can still bypass it or time out, so call it unavailable by policy, not immortal.
+- For a Deployment rollout, set `maxUnavailable` and `maxSurge` against the serving-capacity
+  requirement and schedulable spare capacity. `minReadySeconds` delays counting a ready pod
+  as available to that controller; it does not delay Service traffic. A progress deadline
+  reports a stalled rollout, not an automatic rollback. Use the rollout decision section in
+  `references/probe-and-shutdown-configuration.md` before attributing a stall to probe timing.
 - Never claim a rolling update is zero-downtime because the manifest has a readiness probe.
   When making or verifying that availability claim, validate the stated SLO with an open-loop
   client through repeated deploys: record offered
@@ -159,8 +164,8 @@ answers short and separate executed checks from rollout or fault tests still nee
 - [Probe and shutdown configuration](references/probe-and-shutdown-configuration.md) — a
   correct three-probe manifest fragment with the timing arithmetic derived, the
   preStop/grace-period/drain budget as one sum, and the Spring Boot properties and Actuator
-  health groups behind it. Read when writing or reviewing a Deployment, or when a probe
-  setting is being changed.
+  health groups behind it, plus Deployment availability and spare-capacity decisions. Read
+  when writing or reviewing a Deployment, changing a probe, or diagnosing a stalled rollout.
 - [Draining work that is not an HTTP request](references/draining-non-http-work.md) —
   Kafka consumers, `@Scheduled`, executor shutdown, Spring's stop ordering, and a concrete
   test that proves a shutdown actually drains. Read when the service consumes a queue, runs

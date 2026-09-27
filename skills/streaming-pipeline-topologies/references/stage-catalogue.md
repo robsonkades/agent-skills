@@ -56,7 +56,9 @@ semantic steps when useful without forcing each implementation into one category
   volume, unless the earlier key is needed to parallelize expensive work or bound state.
 - **Name a join's physical strategy.** A partitioned keyed join needs compatible key/partition
   mapping on both sides; a broadcast or external lookup join has different state and consistency
-  costs. A union does not automatically require a join-key shuffle.
+  costs. Separately choose current-value, event-time as-of or continuously updated result
+  semantics (`stateful-stages.md`); physical placement alone does not establish them.
+  A union does not automatically require a join-key shuffle.
 - **Separate semantic reasoning from physical stages.** "Filter and route" combines filtering
   and splitting; a stream-backed lookup adds join/consistency concerns. Name those contracts,
   but retain a useful fused operator when its ordering, state, effects and isolation fit.

@@ -69,7 +69,8 @@ Then, at runtime, on the current version:
 
 ```bash
 # Print a completed recording; this command does not enable events or lower thresholds.
-# JDK 21-23 can pin while holding a monitor; 24+ removes that cause, not native-frame pinning.
+# JDK 21-23 and retained legacy locking can pin while holding a monitor.
+# JDK 24+ removes that cause under default HotSpot locking, not native-frame pinning.
 jfr print --events jdk.VirtualThreadPinned recording.jfr
 ```
 
@@ -123,9 +124,13 @@ or seasonally matched baseline:
 | Scheduler MXBean estimates (JDK 24+) | explained and SLO-safe                     | sustained causal pressure/exhaustion                |
 | `jdk.VirtualThreadPinned`            | measured/impact understood                 | pins causally breach the accepted workload envelope |
 
-Include monitor pinning on JDK 21–23 in that decision; on 24+ monitor use alone no longer pins,
-but native/foreign frames can still do so. The scheduler MXBean is unavailable before JDK 24;
-use supported JFR/dump evidence with carrier, admission and resource signals for those releases.
+Include monitor pinning on JDK 21–23 or retained legacy locking in that decision. On 24+, default
+HotSpot locking removes monitor-only pinning, but native/foreign frames can still pin. HotSpot 24 GA
+still supports legacy `LockingMode=1`; verify the target's effective flags and supported modes.
+Compare a supported default configuration in an isolated check before attributing such pins to the
+application's lock design; do not silently change production flags. The scheduler MXBean is
+unavailable before JDK 24; use supported JFR/dump evidence with carrier, admission and resource
+signals for those releases.
 For its pool, mounted and queued counts, `-1` means unknown, not zero. Missing or unknown
 scheduler data cannot establish an empty queue or healthy scheduler; record the coverage gap
 and use corroborating evidence appropriate to the runtime.
@@ -194,3 +199,5 @@ removed pin diagnostics are gone, and the baseline/canary/rollback record is dur
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
 - [JEP 444](https://openjdk.org/jeps/444)
 - [JEP 491](https://openjdk.org/jeps/491)
+- [OpenJDK 24 GA locking modes](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/globals.hpp) — default lightweight and deprecated legacy modes.
+- [OpenJDK 24 GA continuation freeze](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp) — legacy held-monitor pinning path.

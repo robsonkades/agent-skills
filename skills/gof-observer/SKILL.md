@@ -129,6 +129,14 @@ THEN choose defined iteration semantics (for example a CopyOnWriteArrayList snap
      Removal excludes future snapshots, not callbacks already captured or running.
      State whether close waits for in-flight callbacks; avoid self-close deadlock.
 
+IF a new listener needs the current state followed by updates
+THEN define the handoff between the initial snapshot and subsequent notifications.
+     Separate get-state/register calls can lose updates or apply an older snapshot last;
+     a thread-safe registry does not make that compound operation atomic.
+     Use a coordinated handoff only when required; future-only listeners need no replay.
+     State when callbacks may begin, including before subscribe returns, and initialize
+     their required state before registration exposes them.
+
 IF a listener throws
 THEN decide: fail the publisher (fine when the listener is essential),
      or isolate and record (fine when it is not). Silently swallowing
@@ -188,6 +196,7 @@ THEN state it explicitly and test it, or remove the dependency.
 ## Review checklist
 
 - [ ] Every registration has an owner and end condition, including deliberate co-lifetime retention
+- [ ] Registration activation and any initial-state/update handoff match the consumer's contract
 - [ ] The listener collection is safe to iterate while listeners are added or removed
 - [ ] Notification locking, reentrancy and snapshot visibility are explicit and deadlock-reviewed
 - [ ] Concurrent publishers cannot violate the listener thread-safety/order contract
@@ -202,7 +211,7 @@ THEN state it explicitly and test it, or remove the dependency.
 
 - [Observer variants and lifecycle](references/observer-variants.md) — in-process, reactive and
   distributed compared in full; the listener leak with weak-reference pitfalls; ordering, error
-  and reentrancy policies with code; notification outside locks; and Spring's event phases with
+  and reentrancy policies with code; registration/initial-state races; notification outside locks; and Spring's event phases with
   what each guarantees. Read when designing a notification mechanism.
 - [Worked example](references/worked-example.md) — an in-process domain listener migrated to a
   broker: what the outbox changed, why the consumer needed an idempotency key, the ordering

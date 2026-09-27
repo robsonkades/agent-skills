@@ -27,7 +27,10 @@ Before selecting continuous spin, identify the producer/consumer threads, allowe
 siblings and the capacity left for GC, JIT and OS work. Affinity restricts where a thread may run;
 it does not reserve execution time. For Linux cgroup v2 under the fair scheduler, inspect effective
 `cpu.max` limits, including ancestors, and timed `cpu.stat` throttling deltas. A wide CPU set can
-still share a small bandwidth budget. Missing host/quota evidence leaves the isolation claim
+still share a small bandwidth budget. Check the deployed kernel's counter scope: a child's
+`cpu.stat` bandwidth counters can omit throttling inherited from ancestors. Collect deltas along
+the relevant ancestry too; zero child deltas do not establish that the workload was unthrottled.
+Missing host/quota evidence leaves the isolation claim
 unverified; it does not justify assuming dedicated cores.
 
 | Policy                  | Candidate when                                                                                                 | Reason to reconsider                                                                                 |

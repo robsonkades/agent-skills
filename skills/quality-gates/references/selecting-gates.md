@@ -133,6 +133,15 @@ cancelled, missing or unexpectedly skipped results. Accept an out-of-scope skip 
 successful, trusted selection decision explains it. Test both legitimate non-selection and an
 upstream failure that must block merging.
 
+Check whether an earlier step already hid the failure. With step-level `continue-on-error`,
+`steps.<id>.outcome` can be `failure` while `steps.<id>.conclusion` is `success`; a successful
+job result alone then does not prove its checker passed. Prefer leaving required checkers
+blocking and using explicit failure/always conditions for report upload or cleanup. If the
+design must continue collecting evidence after a failure, inspect the original step outcome
+within that job and propagate failure to an enforcing step and the required result. Do not
+make that enforcement non-blocking as well. Test a known violation with the actual error-handling
+options enabled; a report artifact is insufficient. See [GitHub step outcome and conclusion](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#steps-context).
+
 Verify which commit the required result covers (head, test merge or merge-group commit). If a
 merge queue requires this Actions check, include the `merge_group` trigger; a pull-request run
 alone does not supply that result. Confirm the configured required check name and source.

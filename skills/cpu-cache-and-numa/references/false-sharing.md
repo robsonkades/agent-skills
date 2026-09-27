@@ -17,6 +17,14 @@ causes; it does not select false sharing as the diagnosis. Parking is not always
 Shrinking lock scope or partitioning requires checking the protected invariant; a lock-free
 replacement needs its own correctness and progress argument, not just absence of blocking.
 
+Classify named access pairs rather than requiring the whole application to have no logical
+contention. Several writers may contend on one counter while its writes also invalidate a
+different core's frequently read neighboring field. Separating that neighbor can reduce false
+sharing without fixing the counter's true contention. The Linux kernel's
+[false-sharing guide](https://docs.kernel.org/kernel-hacking/false-sharing.html) describes related
+lock/data and writer/reader interference. Preserve synchronization while testing one mechanism;
+padding a shared logical variable does not make its competing updates independent.
+
 ## The shape of the bug
 
 ```java
@@ -40,8 +48,8 @@ volatile as either a cache-flush instruction or a fix for an atomic read-modify-
 ## Detection procedure
 
 - [ ] Full scaling curve and competing CPU/GC/lock/queue hypotheses captured
-- [ ] Throughput worsens as independent writers are added in a controlled comparison
-- [ ] Lock contention and true sharing ruled out first
+- [ ] Scaling, tail latency or CPU cost compared under equivalent useful work and concurrency
+- [ ] Same-variable contention distinguished from independent writer/writer or writer/reader pairs
 - [ ] MPKI compared against the **application's own baseline**, not a published threshold
 - [ ] Coherence evidence collected with a supported PMU/`perf c2c`; LLC misses not used alone
 - [ ] Relative layout measured with compatible JOL; absolute line alignment remains explicit
@@ -76,11 +84,18 @@ Re-run JOL if you enable it.
 
 ## Correction options by mechanism and contract
 
-1. **Move the metric to a separate object.** Often resolves the conflict and improves cache
-   density of hot state; validate the extra indirection and allocation/lifetime cost. Two
-   separately allocated objects may still share a line; verify independent hot locations.
+1. **Move the metric to a separate object.** Can reduce interference; validate cache density,
+   extra indirection and allocation/lifetime cost. Two separately allocated objects may still
+   share a line; verify independent hot locations.
 2. **`LongAdder` instead of `AtomicLong`** for contended statistics when a non-linearizable
-   aggregate is acceptable. It does not replace an atomic sequence/value contract.
+   aggregate is acceptable. It does not replace an atomic sequence/value contract. Inspect all
+   reads, resets and control decisions, not just the increment path. The
+   [Java 25 API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/LongAdder.html)
+   requires absence of concurrent updates for reliable `reset()` and gives no final-value-before-reset
+   guarantee for concurrent `sumThenReset()`. An approximate cumulative dashboard may use an adder;
+   an exact interval cutover must retain `AtomicLong.getAndSet(0)` or a verified coordination
+   protocol. Quiescent aggregation between completed computations is a different case. Include
+   aggregation frequency and striped-state footprint in the comparison, not only writer throughput.
 3. **`@Contended`** when physical separation is justified. HotSpot commonly defaults
    `ContendedPaddingWidth` to 128; verify the effective flag and resulting layout. Application
    code directly using `jdk.internal.vm.annotation.Contended` needs a compile-time export

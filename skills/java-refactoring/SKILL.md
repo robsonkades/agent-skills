@@ -32,6 +32,14 @@ supports pattern switches but not the final Java 25 flexible-constructor-body fe
 upgrade or enable preview to make a refactoring example fit. Snippets elide imports, enclosing
 classes and domain helpers; they are illustrations rather than standalone compilation units.
 
+Establish the requested improvement and action scope before choosing a technique. For a review
+or plan, report the supported steps, risks and verification needs; implement only when requested
+or already authorized. Inspect relevant callers, tests, configuration and prior decisions to
+distinguish required contracts from incidental patterns. If a missing fact would change the
+safe step (for example, an external consumer or active transaction mode), seek repository evidence
+first and ask a focused question only if it remains unresolved. Continue independent safe work;
+state consequential assumptions and what evidence would permit the blocked step.
+
 1. **Establish and record the baseline.** Run the affected tests. They should be green;
    if unrelated failures already exist, record them precisely and require the
    same baseline after each step rather than claiming an all-green suite. If the changed path
@@ -46,8 +54,8 @@ classes and domain helpers; they are illustrations rather than standalone compil
    assertion from that handoff; successful construction alone is not the net.
 2. **Classify the boundary.** Private or package scope lowers source-compatibility risk, but
    does not remove concurrency, reflection, persistence or serialization contracts. If a
-   framework reaches the name at runtime (JPA field access, Jackson, JPQL, reflective config), in
-   which case it is case 4 of `references/compatibility.md` whatever the modifier says.
+   framework reaches the name at runtime (JPA field access, Jackson, JPQL, reflective config),
+   use case 4 of `references/compatibility.md` whatever the modifier says.
    Public within the codebase: every caller moves in the same change. Exported from a
    module or published to external clients: read `references/compatibility.md` before
    touching any signature — some steps must stop or become deprecation cycles.
@@ -82,12 +90,15 @@ classes and domain helpers; they are illustrations rather than standalone compil
 
 ## Rules
 
-- A refactoring commit contains no behaviour change. A bug discovered mid-refactoring
-  is recorded and fixed in its own commit, before or after — never inside.
+- Keep behavior correction separate from the refactoring step. A discovered bug is recorded
+  and fixed in a separate change before or after, within the authorized scope; if commits are
+  requested, separate those commits too. Characterisation is not permission to release a known
+  security or data-integrity defect (see `references/safety-workflow.md`).
 - Each commit is coherent, buildable and revertible in reverse order. If rollback needs an
   unrelated semantic repair or data recovery, the step crossed more than a code-refactoring boundary.
-- A new failure after a step is diagnosed against the recorded baseline. Revert when the step
-  caused it; do not patch production or dismiss a flaky/external failure without evidence.
+- A new failure after a step is diagnosed against the recorded baseline. Undo the changes
+  introduced by that step when it caused the failure, preserving unrelated work; do not patch
+  production or dismiss a flaky/external failure without evidence.
 - Do not weaken a contract assertion merely to get green. Implementation-coupled assertions may
   need mechanical updates while externally observable behavior stays fixed; explain why the
   assertion was not part of the contract and retain stronger outcome evidence.

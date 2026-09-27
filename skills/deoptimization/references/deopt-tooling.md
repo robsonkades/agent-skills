@@ -34,11 +34,23 @@ One line per uncommon trap (`Deoptimization::uncommon_trap_inner`, `deoptimizati
 [2026-09-02T12:56:04.262-0300][0.280s] cid=1640 osr level=4 DeoptLab.osrLoop(I)J trap_bci=6 osr_bci=4 unstable_if reinterpret pc=0x00000186906635ec relative_pc=0x00000000000002ec
 ```
 
-`cid` is the compile id that `PrintCompilation` and `jdk.Compilation` use — the join key.
-`osr` and `osr_bci=` mark an on-stack-replacement compilation; a long loop in a method
-invoked once (a `main`, a batch driver) deoptimises through OSR code and shows here as the
-enclosing method. The method name is the JVM descriptor form, not the `Class::method` form
-of `PrintCompilation`.
+`cid` is the enclosing nmethod's compile id, shared with `PrintCompilation` and
+`jdk.Compilation`; join within the same JVM. The printed method and `trap_bci` identify the
+trapping bytecode scope, which can be an **inlined callee**, not that compilation's root method.
+JFR's deoptimization `method`/`bci` have the same scope. An apparent mismatch with the compilation
+event's method is therefore not necessarily corrupt data or a missing compilation.
+
+`osr` and `osr_bci=` describe entry into the enclosing compiled root. An OSR loop in a batch
+driver can trap in an inlined helper: do not interpret the root's `osr_bci` as an index into
+that helper. The printed method uses JVM descriptor form, not `Class::method`.
+
+Retain both identities when investigating recurrence. One helper/site can occur in several
+compiled roots or multiple inline contexts within one root; its aggregated count need not be
+a single nmethod repeatedly failing. Resolve the inline chain with LogCompilation's nested
+`jvms` scopes or `TraceDeoptimization` when that distinction changes the diagnosis. If a
+`jdk.Compilation` join is missing, inspect capture start and event filtering before drawing a
+conclusion; when a new JFR capture needs those joins, explicitly enable
+`jdk.Compilation#enabled=true,jdk.Compilation#threshold=0ms` within the capture budget.
 
 Three things the levels do:
 
@@ -157,8 +169,10 @@ This partial Java 11+ consumer snippet needs `java.nio.file.Path`, `java.util.*`
 `jdk.jfr.consumer.*` imports and an enclosing method that handles `IOException`. Streaming
 avoids retaining every event; the aggregation still grows with unique sites. Class IDs separate
 same-named classes in this recording; descriptors separate overloads. For fleet/long-window
-analysis include JVM identity, time buckets and compile ID as additional dimensions. Counts alone
-do not prove decay, and IDs are not stable identities across JVM restarts.
+analysis include JVM identity, time buckets and compile ID as additional dimensions. This snippet
+aggregates the trap sites, not the enclosing compiled roots or full inline contexts; use the joins
+above to separate them. Counts alone do not prove decay, and IDs are not stable identities across
+JVM restarts.
 
 Group by site (method **and** bci), not by method: forty sites trapping once and one site
 trapping forty times need different histories. Neither count alone proves convergence,
@@ -205,8 +219,18 @@ java -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -XX:LogFile=comp.xml -ja
 <make_not_entrant thread='6056' reason='not used' compile_id='18' compiler='c1' level='3' stamp='0.022'/>
 ```
 
-`count` and `state` are the MDO's per-bci record — the value `Compile::too_many_traps` reads
-on the next compilation. JITWatch reads this file.
+On the examined C2 path, the outer `<uncommon_trap count='...'>` is the trapping method's
+MethodData total for that reason, logged before this trap's update; it is **not a per-bci event
+count**. `state` instead describes history at the trapping bci. Earlier traps at other bcis and
+interpreter updates can contribute to the method total. Do not use `count` as the rate at this
+site, a capture-window count or a direct remaining-cutoff calculation. Count actual captured
+events by identity and time for those observations, keeping collection limits explicit.
+
+An isolated Temurin 25.0.3+9 check on 2026-09-25 exercised two compiled callers with an inlined
+`helper(II)I`. JFR and unified logs named `helper` at bcis 3 and 10, while their compilation IDs
+joined to `rootOne` and `rootTwo` respectively. The second XML trap already had `count='1'`
+although it was the first trap at bci 10. This verifies the attribution/counter distinction in
+that fixture, not a production event rate or performance effect. JITWatch reads the XML file.
 
 ## The live process
 
@@ -246,8 +270,8 @@ DEOPT PACKING thread=0x000001c6c7701fa0 vframeArray=0x000001c6efb43dc0
 DEOPT UNPACKING thread=0x000001c6c7701fa0 vframeArray=0x000001c6efb43dc0 mode=2
 ```
 
-One `VFrame` per inlined level is what it adds over `-Xlog:deoptimization`: it shows which
-inlined callee the trap actually sits in. Unlike the unified log it also prints the packing
+One `VFrame` per inlined level adds the reconstruction chain beyond the trap method already
+named by `-Xlog:deoptimization` and JFR. Unlike the unified log it also prints the packing
 block for a dependency invalidation, since that goes through the same frame reconstruction.
 Its volume is proportional to every deoptimisation in the process, so it belongs to a single
 deep-dive session and never to continuous production.
@@ -346,7 +370,9 @@ request/service evidence, not timestamp coincidence, decide which contributed.
 
 ## Authoritative sources
 
-- [JDK 25 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/deoptimization.cpp)
+- [JDK 25.0.3+9 HotSpot `deoptimization.cpp`](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/deoptimization.cpp)
+  — `log_deopt`/`post_deoptimization_event` separate the nmethod ID from the trap scope;
+  `uncommon_trap_inner` logs the method reason count and the bci state separately.
 - [JDK 25 compilation installation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/ci/ciEnv.cpp) — replacement can retire an existing entry without identifying a tier transition.
 - [JDK 25 OSR installation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/oops/instanceKlass.cpp) — lower-level OSR invalidation at the same bci.
 - [JDK 25 JFR event definitions](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/jfr/metadata/metadata.xml)

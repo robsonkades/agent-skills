@@ -4,6 +4,24 @@ Use the concerns relevant to the feature. Distinguish supported findings, "not f
 paths", "not examined" and "unavailable"; name meaningful coverage limits without turning a
 small change into a whole-repository survey.
 
+## Search population and evidence collection
+
+Before treating a missing match as a finding, establish what was searched. `rg` normally
+filters hidden and ignored paths, and repository contents may also depend on sparse checkout,
+uninitialized submodules or generated sources. Inspect only the relevant exclusions: for
+example, `rg --files --hidden .github` lists files under an existing CI configuration directory.
+Inspect the generator declaration or an existing output when a runtime adapter is generated. Record
+missing checkout/generated artifacts as coverage gaps rather than declaring the capability absent.
+Use targeted paths/options instead of disabling all exclusions across the whole repository.
+
+An existing report also needs provenance: module, profile/configuration, revision and whether
+the relevant build inputs have changed since it was produced. A stale report may suggest a lead
+without resolving today's dependency version. If a fresh report is needed, inspect the wrapper,
+task/plugin and relevant build configuration before execution. Gradle evaluates build scripts
+during configuration, even before the selected task runs; dependency reporting can also require
+artifact/repository access. Keep command effects within the authorized investigation and report
+unavailable evidence without running initialization or deployment merely to make the report complete.
+
 ## Ground truth first
 
 | Question                                    | Where to look                                                                           |
@@ -34,6 +52,10 @@ rather than silently selecting a version.
 - Where do business rules live today — entity, service, or spread?
 - What are the naming conventions for the kinds of file this feature will add?
 - Is there an existing abstraction for the thing the feature needs?
+- Is that candidate reachable from the feature's module and runtime configuration, or only from
+  tests, an optional profile or a different deployment? Follow a real caller/configuration path.
+  Record contract mismatches such as tenant context, resource ownership, synchronous versus
+  asynchronous completion or retry/error behavior; the same class name is not reuse evidence.
 - What does the last handful of commits touching this area show about how work is done here?
 
 ## Persistence and data
@@ -92,6 +114,19 @@ Retries          Not found in src/ and pom.xml after searching retry annotations
 decision phase establishes it or a cited existing policy/contract already requires it. Record
 the policy separately from observed implementation; either may disagree with the other.
 
+For example, a client in `testImplementation` can establish a test capability without establishing
+runtime availability. If the same client is resolved on the target runtime configuration and wired
+into a representative production path, it becomes a stronger reuse candidate. Neither finding
+authorizes selecting it. If the resolved graph or wiring cannot be inspected, record that precise
+gap and the next artifact needed instead of asking the user to restate facts already in source.
+
+When sources conflict, separate questions before closing a `U-*`: a README's intended Java target,
+a CI compiler toolchain, its `--release` setting and a deployed JVM are distinct claims. Link the
+conflicting facts and preserve their scope. Route an unresolved intended-policy decision to
+`feature-decision-analysis`, or a missing feature requirement to `feature-requirement-clarification`,
+with the input revision, affected `U-*`, sources and what changes if either answer holds. If those
+skills are unavailable, include that same bounded question in the handoff; do not invent a decision.
+
 ## Two traps
 
 **Reading the wrong project.** In a multi-project working directory, confirm the paths you are
@@ -108,3 +143,5 @@ enumerate the full population only when the needed claim requires that coverage.
 - [Maven dependency mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html): mediation, management, inheritance and scopes.
 - [Gradle dependency reports](https://docs.gradle.org/current/userguide/viewing_debugging_dependencies.html): resolved configuration graphs and selection reasons; use the project's wrapper version.
 - [Gradle Java toolchains](https://docs.gradle.org/current/userguide/toolchains.html): compiler/toolchain selection and the separate `--release` target; inspect task-specific settings.
+- [ripgrep filtering](https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md#automatic-filtering): hidden and ignored paths affect the searched population.
+- [Gradle build lifecycle](https://docs.gradle.org/current/userguide/build_lifecycle_intermediate.html): build scripts are evaluated during configuration before task execution.

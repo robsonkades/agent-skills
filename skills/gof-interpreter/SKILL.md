@@ -109,6 +109,12 @@ THEN audit the evaluation context and reachable capabilities. Full reflection/ty
      method access can become arbitrary code execution; a documented restricted mode
      may be acceptable after adversarial tests.
 
+IF evaluation fails or exhausts a budget
+THEN apply the language's explicit error and short-circuit contract. Do not silently turn
+     a failed comparison into false: NOT would turn that failure into a successful match.
+     Keep failure distinct from a defined missing/null value and ordinary false; the outer
+     application boundary decides how to reject or report the failed decision.
+
 IF grammar complexity exceeds what a small, bounded recursive-descent parser can maintain
 THEN consider a generator or combinators. Precedence alone does not mandate a dependency;
      every option needs full-input consumption, position errors and adversarial limit tests.
@@ -166,6 +172,7 @@ THEN revisit parser/runtime, resource accounting, stack behavior, debugging and
 - [ ] An existing expression language was considered and rejected for a stated reason
 - [ ] Any user-influenced engine input runs with an audited allowlist/capability model or isolation
 - [ ] Text/token sizes, AST depth/nodes, expensive primitive work and result sizes have enforced bounds
+- [ ] Operand validation depends on the field AND operator; failures remain distinct from boolean values
 - [ ] Evaluation exposes only authorized, bounded capabilities; the pure filter design excludes I/O, reflection and ambient host access
 - [ ] Parsing is separated; any AST cache is measured, bounded and resistant to key-cardinality abuse
 - [ ] AST nodes are immutable; evaluation state lives in a per-call context

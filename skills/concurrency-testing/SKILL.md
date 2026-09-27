@@ -37,9 +37,12 @@ do not upgrade Java or enable preview merely to use this skill.
 1. **Identify the contract and reuse its existing tests.** Separate pure logic where useful:
    a same-thread executor can test it, while controlled queued execution or real workers test
    asynchronous boundaries. Do not change the executor model when that changes the contract.
-2. **Select missing failure-path tests** for the actual lifecycle: cancel mid-flight,
-   interrupt, time out, reject at the limit, fail the dependency. Establish the expected
+2. **Select missing failure-path tests** for the actual lifecycle: reject before acceptance,
+   cancel while queued or mid-flight, interrupt, time out, fail the dependency. Establish the expected
    caller outcome, physical work lifetime and resource owner before writing the oracle.
+   Inspect the actual returned cancellation handle and executor rejection policy; similar API
+   shapes can promise different effects. Use a queued executor when direct execution would
+   erase the accepted-but-not-started state.
 3. **Replace sleeps used for coordination with an observable checkpoint** — a latch, a
    barrier or a bounded poll. Checkpoint placement must expose the intended race rather than
    accidentally order away the conflicting accesses. A controlled delay can still model a slow dependency.
@@ -69,8 +72,11 @@ do not upgrade Java or enable preview merely to use this skill.
   `@Disabled` deletes the only evidence you had.
 - **Test cancellation explicitly, and assert the effect, not the flag.** `f.cancel(true)`
   returning `true` does not prove work stopped. Assert the connection returned to the pool, the permit was
-  released, the file was closed, within the owning contract's bound. Confirm acquisition/start
-  first; zero active work is not evidence of cancellation if no operation ever started.
+  released, the file was closed, within the owning contract's bound. For running-work cases,
+  confirm acquisition/start first; zero active work is not evidence that running work stopped.
+  Separately test cancellation before start: a task-body `finally` cannot release a resource
+  acquired before submission if the body never executes. Check recovery without double release,
+  including a cancel-versus-start race when ownership changes there.
 - **Test interruption explicitly.** Interrupt a task mid-blocking-call and assert it
   terminates within a bound and handles interruption according to its ownership contract:
   propagate, restore at a boundary, or deliberately consume at a terminal owner.
@@ -85,8 +91,8 @@ do not upgrade Java or enable preview merely to use this skill.
   scheduling at all. Keep the concurrent tests for what actually needs concurrency.
 - **Stress tests find bugs probabilistically.** Vary the thread count, run many iterations,
   and repeat in CI — but never report "the stress test passed" as "there is no race". For an
-  ordering claim about a specific pair of accesses, the tool is `jcstress`
-  (`java-memory-model`).
+  ordering claim about a specific pair of accesses, derive allowed outcomes with
+  `java-memory-model`, then exercise them with `jcstress`; its results do not replace that argument.
 - **Use soak to expose accumulating leaks**, while retaining focused unit tests for individual
   ownership paths. Sample after comparable quiescent phases; elapsed time alone does not give
   coverage, and a requested full GC is not a portable guarantee of complete reclamation.
@@ -109,9 +115,9 @@ commands actually run. State remaining untested schedules/providers rather than 
 ## References
 
 - [Deterministic tests](references/deterministic-tests.md) — injecting executors, the
-  same-thread executor, latch and barrier patterns, and worked tests for cancellation,
-  interruption, timeout, rejection and a structured scope. Read when writing tests for
-  concurrent code.
+  same-thread executor, queued/running lifecycle checkpoints, latch and barrier patterns,
+  and worked tests for cancellation, interruption, timeout, rejection and a structured scope.
+  Read when writing tests for concurrent code.
 - [Stress, soak and fault injection](references/stress-and-soak.md) — the stress harness with
   invariant assertions, choosing the invariant, leak detection, fault injection against a
   limit, CI budgets, and how to read a green run. Read when the risk justifies more than a

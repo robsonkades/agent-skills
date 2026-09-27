@@ -120,6 +120,40 @@ alone were undone, the inverse would target a shape that no longer exists. The `
 the ordering; selective undo needs an explicit dependency/conflict or transformation protocol,
 not merely a list of immutable commands.
 
+### A compound command is not automatically atomic
+
+Group edits when the consumer needs one action or one undo entry; keep a plain sequence when
+separate outcomes are sufficient. Establish whether a failed child must leave no visible change
+or may leave a completed prefix before choosing the implementation.
+
+For this confined, immutable `Diagram`, apply children to a temporary candidate in order and
+publish the final diagram/history entry only after every child succeeds. No child may publish
+external effects or mutate shared state. A retained pre-state or memento can restore the whole
+boundary when that is simpler than composing inverses. This provides local failure isolation,
+not durability or a transaction across other resources.
+For mutable state, capture/restore also needs the required ownership or synchronization boundary;
+restoring later cannot hide intermediate changes already observed by other readers.
+
+If composing inverses, capture each against its own pre-state, then apply them in reverse order.
+For a shape initially at x=0, `Move(+5)` followed by `Delete` must retain the deleted shape at x=5.
+Undo restores it at x=5 before moving it back to x=0. Capturing every inverse against the original
+diagram instead restores x=0 and then moves it to x=-5. Preserve redo's forward order and the
+existing branch-invalidation rule. Java's
+[CompoundEdit](https://docs.oracle.com/en/java/javase/17/docs/api/java.desktop/javax/swing/undo/CompoundEdit.html)
+also specifies reverse undo and forward redo; an application using Swing should inspect its
+existing history support before creating another manager.
+
+If the first child publishes an external effect and the second fails, discarding a local candidate
+cannot undo the first effect. Report the completed or uncertain steps and define owned recovery;
+do not retry the whole group unless each repeated effect obeys its retry contract. Pass that
+effect/outcome evidence to `distributed-transactions-and-sagas` when compensation is required;
+if unavailable, retain explicit partial/unknown status without promising automatic rollback.
+
+Check a dependent pair such as move-then-delete, failure at an intermediate child, inverse
+failure, redo and a new edit after undo. Assert the visible state and both history branches, not
+just whether an exception was thrown. For external steps, verify the declared partial-outcome
+and recovery policy instead of asserting exact restoration.
+
 ## 2. A durable command queue for outbound settlement
 
 Persisted, redelivered, executed minutes or hours later, against an external system. Almost every

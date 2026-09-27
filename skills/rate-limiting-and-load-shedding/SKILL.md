@@ -114,16 +114,22 @@ Do not use shedding as a substitute for capacity when:
   request: one round trip added to every call, and a decision about what happens when it is
   unavailable. Fail-open admits everything during the outage; fail-closed rejects everything.
   Pick deliberately; a local fallback is valid only within the accepted overage/reservation policy.
-- With local escrow/leases, the error bound is the sum of outstanding grants that can still be
-  spent, plus protocol failure/clock uncertainty—not a universal `replicas × burst`. A shared
-  allocator must never issue overlapping budget across failover. State the exact grant,
-  expiry and partition behavior; strict monetary/security quotas may require centralized or
-  reservation-based enforcement.
+- With escrow, correctly reserved, non-overlapping grants can preserve the original global
+  budget during a partition; unused credit is stranded, not excess quota. Outstanding grants
+  do limit how quickly a lower quota or revocation takes effect while they remain spendable.
+  Reallocate only reconciled, unspent credit after revocation/expiry is enforced at the
+  spending path; unknown spending cannot be refunded within the same accounting window.
+  Independently refilling local buckets have a different overage bound, dependent on refill
+  rates and outage duration—not a universal `replicas × burst`. State grant, clock, expiry and
+  allocator-failover assumptions; strict monetary/security quotas require enforcement that
+  preserves their declared budget under those failures.
 - The response is part of the mechanism. **429 usually means the request exceeded a policy
   limit; 503 means the service is temporarily unable to serve.** Another replica may share the
   same bottleneck/quota, so blind failover amplifies load. Use `Retry-After` when meaningful;
   client backoff/jitter and an end-to-end deadline remain required. A limiter that returns 500 is
   indistinguishable from a defect; whether it is retried depends on the client's retry contract.
+  HTTP 429 responses must not be stored by a cache (RFC 6585 §4); inspect gateway error-cache
+  rules so one client's rejection cannot be replayed to another or survive the quota reset.
 - Rejection consumes capacity too: response encoding, logging and connection handling can
   become the bottleneck. Keep ordinary 429/503 feedback; when measurements show that rejection
   itself prevents recovery, consider earlier edge/listener admission and bounded diagnostics.

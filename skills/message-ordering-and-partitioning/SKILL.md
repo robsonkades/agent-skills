@@ -60,7 +60,8 @@ validation. A supported existing ordering design can remain unchanged.
    dispatch, republished retries, DLQ skips, and rebalance overlap
    (`references/where-ordering-breaks.md`).
 6. **Audit the producer**: a missing key, concurrent producers for one key, and in-flight
-   retries that can be overtaken.
+   retries that can be overtaken. Separate internal client retries from an application's
+   new `send`/outbox replay of an older event after a newer one was admitted.
 7. **Validate the affected contract.** When relaxing order or changing dispatch, retries or
    mapping, use relevant shuffle, completion/failure and concurrent-effect cases. Assert
    final state and every required intermediate/external invariant. A narrow explanation or
@@ -118,7 +119,7 @@ Require a global total order only when:
   one with a sequencer and ordered application, or enforce a narrower causal order. State
   that protocol explicitly; carrying sequence metadata alone does not enforce sink order.
 - **Consumer, parallel dispatch**: unordered concurrent execution of polled records can break
-  per-partition completion order. Keyed dispatch — `hash(key) % workers`, one queue per worker —
+  per-partition completion order. Keyed dispatch — `Math.floorMod(stableKeyHash, workerCount)`, one queue per worker —
   preserves _per-key_ order only with stable mapping, FIFO admission and completion before
   the next task (including effects), and makes one slow key block every key that shares its
   worker. Choose it knowingly.
@@ -142,6 +143,13 @@ Require a global total order only when:
   order within its producer session subject to documented configuration; it does not order
   independent producer instances or business events. Current defaults and allowed in-flight
   limits are version-specific.
+- **Producer, application resend**: idempotence does not make a new `send` of an older event
+  resume its original log position or restore source order. A wait timeout does not prove the
+  original send failed. Preserve event identity/version, inspect the actual outcome contract,
+  and gate dependent same-key events or enforce sink sequencing/gap repair when transitions
+  must commit in source order. Complete snapshots with skippable effects may instead use the
+  established atomic version guard. See the producer retry distinction in
+  `references/where-ordering-breaks.md`.
 - Ordering and skew pull the key in opposite directions. When one entity is hotter than a
   partition, a version guard can reject stale final-state updates but does not preserve every
   intermediate transition or external effect. Decide whether coalescing, aggregation, a

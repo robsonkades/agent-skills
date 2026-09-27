@@ -10,13 +10,28 @@
 | Thread dump        | Captured thread stacks and supported lock information       | Past execution; threads omitted by the mechanism | **Lost on restart** | Target/thread-count dependent    |
 | Heap dump          | Captured objects and reference graph                        | Allocation history without other evidence        | **Lost on restart** | Potential long pause, large file |
 | JFR recording      | Configured events/samples over the retained window          | Disabled, thresholded or unsampled observations  | Rolling buffer      | Settings/workload dependent      |
-| Database state     | What was actually committed                                 | What was attempted and rolled back               | Mutating            | Low; beware read locks           |
+| Database state     | Snapshot-visible data; supported activity/lock state        | Full history of writes and rolled-back attempts  | Mutating            | Query/isolation dependent        |
 | Deployment history | What changed and when                                       | Whether the change is the cause                  | Retained            | Free                             |
 
 The two rows in bold are the ones people destroy. A restart is the standard first response to
 an incident, and it takes the thread and heap state with it permanently.
 
+For database evidence, record the endpoint (primary/replica), query interval, isolation/snapshot
+and visibility permissions. An absent row can reflect a stale snapshot, replica lag, filtering,
+deletion or an unsuccessful write; the capture alone does not distinguish them. Activity and
+lock views can expose in-flight work even when table contents do not. For example,
+[PostgreSQL 17 snapshot rules](https://www.postgresql.org/docs/17/transaction-iso.html) distinguish
+statement and transaction snapshots; verify the actual engine's semantics before reconstructing
+a timeline. Use retained audit/transaction evidence when available rather than inventing history
+from current contents.
+
 ## Collection order during an incident
+
+When choosing a live capture/mitigation sequence is the main task, use `incident-evidence-capture`.
+Pass the fault signature, affected targets, existing artifacts, customer impact and authorized
+recovery deadline; request a bounded capture plan with collection failures recorded. If unavailable,
+use the budget-aware fallback below and state any missing coverage. Artifact analysis remains with
+the relevant specialist; no handoff extends the incident's recovery budget.
 
 Mitigation and diagnosis compete. Choose cheap, relevant evidence within the incident budget;
 this order is a candidate, not a prerequisite to mitigation:

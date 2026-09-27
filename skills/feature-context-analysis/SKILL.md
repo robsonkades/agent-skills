@@ -48,6 +48,9 @@ absence throughout the system.
 4. **Close the unknowns it can close.** Walk the discovery ledger and mark each unknown this
    sweep answered, with the evidence. This is the phase's main product.
 5. **List reusable components** by name and location, with what each would have to change.
+   Trace a representative caller and its wiring: target module/configuration availability,
+   lifecycle, input/output and failure contracts can rule out a superficially similar component.
+   Distinguish a plausible candidate from verified compatibility; choosing it remains a decision.
 6. **List the conflicts** — anything in the request that the codebase makes awkward, expensive
    or impossible, and what the code says about why.
 7. **Separate observed technologies from required constraints.** A technology mandate needs
@@ -77,7 +80,15 @@ THEN distinguish declared, resolved for the target configuration and observed ac
 
 IF no implementation was found in the inspected scope
 THEN state paths, search terms and limits; deployment/platform behavior may live elsewhere.
+     Check whether relevant hidden/ignored or generated paths were outside the search population;
+     an empty default search is not evidence that those paths contain no implementation.
      Report "not found here", not "the project does not need it".
+
+IF documentation, configuration, tests or implementation disagree
+THEN retain the competing claims with their revisions and target environments. Establish what
+     each source proves; desired policy and observed behavior can both be real and inconsistent.
+     Do not resolve the unknown by selecting the newest file or the first example. Name the
+     discriminating check, or pass the conflict to clarification/decision with its consequence.
 
 IF the feature needs a capability and something close already exists
 THEN name it, say precisely what it lacks, and let the decision phase choose between
@@ -99,6 +110,11 @@ THEN inspect compiler release/toolchain and resolved dependency evidence for the
   whether there is a counter-example; it does not conclude.
 - **Do not report what you did not read.** "The codebase appears to use X" without a path is
   the failure mode this phase exists to prevent.
+- **Inspect collection commands before running unfamiliar build logic.** A dependency-report
+  task can evaluate project/plugin configuration and resolve artifacts; its name does not make
+  it a passive file read. Prefer applicable existing reports, then understood commands within
+  the task's authorized effects. Do not edit build files or lockfiles just to obtain a finding;
+  report unavailable resolution and continue independent static inspection instead.
 - **Do not fix anything.** Defects found during the sweep are reported, not repaired — they are
   either in scope, in which case the scope phase adds them, or they are someone else's change.
 
@@ -113,6 +129,7 @@ Existing patterns          <pattern, count within inspected scope, counter-examp
 Existing technologies      <name, version, where used, observed>
 Reusable components        <name -> what it would need>
 Potential conflicts        <request item vs what the code makes hard, with evidence>
+Source disagreements       <competing claims, revision/target, consequence and next check>
 Constraints from the code  <enforced/documented requirement vs change cost, with evidence>
 Questions answered         <U-* -> F-*, evidence>
 Still unknown              <U-nn, search limits/access gaps, smallest next evidence or question>

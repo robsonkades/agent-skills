@@ -34,6 +34,13 @@ usable capacity can also recover the system when it does not amplify the bottlen
 
 ## Workflow
 
+Apply this as diagnosis, design review or incident response according to the request. A review
+returns findings and proposed controls; operating an existing runbook or changing configuration
+requires that scope in the request or existing authority. Reuse available runbooks, acceptance
+bounds and prior fault tests before asking for information. Ask only when an unresolved contract
+(such as permitted stale data or durable acceptance) changes which intervention is valid; continue
+independent evidence gathering and state conditional options meanwhile.
+
 Inspect the deployed JDK/toolchain, server/client libraries, retry owners, queue/pool limits,
 deadline/cancellation behavior and autoscaling/probe configuration before recommending an API
 or configuration change. The topology guidance has no Java baseline; the executor reference
@@ -47,8 +54,8 @@ capacity number or diagnose metastability solely because recovery is slow.
 2. **Name the amplification point.** Retries (system-level storm — the policy is
    `retries-and-backoff`), an unbounded queue, an exhausted thread or connection pool, or a
    timeout stack. Also check whether crashes or ejections shift load onto fewer healthy instances
-   (`load-balancing-and-routing`). Rank edges by amplification and reversibility; incidents can
-   have several loops.
+   (`load-balancing-and-routing`), or cache bypass and failover transfer more work to another
+   bottleneck. Rank edges by amplification and reversibility; incidents can have several loops.
 3. **Stabilize offered work before scaling blindly.** Shed at the entry point
    (`rate-limiting-and-load-shedding`), bound active work and waiting admission at the saturated resource
    (`concurrency-limiting-and-bulkheads`), trip breakers on the failing dependency
@@ -122,6 +129,10 @@ Restart when:
   A non-critical dependency on the request path with no fallback is critical in practice.
   Degrade with a defined response—a default, a stale value
   (`caching-strategies`), a skipped enrichment — and make the degraded state observable.
+- A correct fallback can still overload its destination. Treat cache bypass and regional failover
+  as load transfers: use measured headroom under the failed mode and cap transferred work.
+  When that headroom is absent, preserve isolation and shed or serve an approved cheaper response;
+  do not turn a partial outage into a global one. See both references for containment and tests.
 - A readiness probe that calls a downstream dependency can convert its slowdown into fleet-wide
   removal. Include a dependency only if the pod cannot correctly serve any admitted traffic
   without it, and test threshold/hysteresis. Probe design is `kubernetes-service-lifecycle`, ejection is
@@ -139,11 +150,17 @@ Record what actually improved versus what remains a hypothesis. A design review 
 the fault-injection scenario and acceptance bounds; configuration checks alone do not prove
 cancellation, isolation or recovery under load.
 
+For a specialist handoff, pass the candidate edge, resource/traffic evidence, deadline and durable
+work constraints, and ask for the scoped control plus its verification. If that skill is unavailable,
+retain the bounds here and identify the unresolved implementation detail rather than inventing settings.
+
 ## Primary sources
 
 - [Google SRE — Addressing Cascading Failures](https://sre.google/sre-book/addressing-cascading-failures/)
 - [Google SRE — Handling Overload](https://sre.google/sre-book/handling-overload/)
 - [AWS Builders' Library — Avoiding insurmountable queue backlogs](https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/)
+- [AWS Builders' Library — Caching challenges and strategies](https://aws.amazon.com/builders-library/caching-challenges-and-strategies/):
+  cache dependence, origin overload on cache failure, and testing with caching disabled.
 - [Java 17 ThreadPoolExecutor contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [Java 17 Semaphore contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Semaphore.html):
   timed acquisition bounds each caller's wait, not the total number of waiting callers.

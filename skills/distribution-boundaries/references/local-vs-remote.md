@@ -55,6 +55,31 @@ every remote call needs a timeout within
 the caller's own deadline (`timeouts-and-deadlines`). A remote call with no timeout is not a
 slow call; it is an availability incident waiting for the downstream to hang.
 
+## Trust at the new entry point
+
+An in-process operation may rely on a guard in its only caller. Extraction creates a new
+reachable entry point: inspect gateways, service callers, batch jobs and message consumers
+before assuming that guard still covers every path. Separate service identity from any
+end-user delegation and tenant/resource authority. Caller-supplied identity headers are
+claims until their issuer, integrity and permitted delegation are established. Encryption
+or membership in the internal network does not settle those questions.
+
+Reuse verified project controls. Edge-only enforcement can fit a controlled topology when
+bypass is prevented and all required rules are enforced; do not invent that guarantee or
+require a duplicate policy engine everywhere. The resource operation must remain protected
+across every reachable path, including retries and alternative transports. OWASP's
+[microservices security guidance](https://cheatsheetseries.owasp.org/cheatsheets/Microservices_Security_Cheat_Sheet.html)
+distinguishes edge enforcement, service enforcement, identity propagation and service
+authentication; choose from the actual trust model, not a transport name.
+
+For a protected operation, include a direct call with forged actor/tenant claims and a
+valid caller targeting another tenant's resource without permission in acceptance checks.
+Both must be denied under the stated access contract. Pass reachable paths, trusted identity sources, resource
+rules and these cases to `rpc-and-api-contracts` for the wire contract, or
+`java-application-security-basics` for code-level enforcement. If unavailable, retain those
+required properties and mark enforcement unverified; do not substitute new crypto or a
+framework upgrade. This skill defines the boundary obligation, not security configuration.
+
 ## The module as rehearsal
 
 Rehearsing responsibilities in a module lets code-only boundary changes remain local.

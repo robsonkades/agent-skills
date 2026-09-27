@@ -72,9 +72,14 @@ For a small fix, return the temporal meaning, chosen conversion/policy, changed 
 checks run. A boundary review should additionally identify the first lossy or ambiguous
 conversion, show an input that exposes it, and state any unresolved product or storage
 contract. Do not label a hypothetical driver round trip as tested.
+For a review-only request, return findings and a reproducing input without making changes.
+Preserve an existing representation or policy when it already satisfies the contract.
 
 Operational deadlines, timeout propagation and cancellation belong to
 **timeouts-and-deadlines**. Public format changes may also need **rpc-and-api-contracts**;
 broader database mapping decisions belong to **orm-structural-mapping**. These are optional
 handoffs, not prerequisites for an ordinary temporal fix. Calendar job scheduling is outside
 this skill; choosing a civil-time policy does not implement a scheduler.
+For a handoff, pass the temporal meaning, target versions, reproducing input and unresolved
+contract; request the relevant timeout, compatibility or mapping decision. If the specialist
+is unavailable, keep that decision conditional and finish the independent temporal analysis.

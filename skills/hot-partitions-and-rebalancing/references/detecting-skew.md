@@ -43,6 +43,39 @@ Two supporting views:
   several times the mean request rate may carry hot keys or costlier requests; extra keys may indicate placement or tenant
   skew. Confirm with key/tenant samples before selecting a repair.
 
+## Locate the constrained resource
+
+Join the logical partition inventory to physical nodes, leader/replica roles, disks and shared
+capacity. Sum comparable work on each owner; do not allocate the same node's full capacity to
+every resident shard. A balanced replica count also does not establish balanced leader work,
+bytes or request cost. Inspect supported placement/leadership controls before changing keys.
+[Kafka's balancing guidance](https://kafka.apache.org/43/operations/basic-kafka-operations/)
+distinguishes leadership from replica placement and replication/storage work.
+
+Synthetic capacity example: eight partitions each offer one work unit per second. Two nodes
+each sustain five such units per second, but six partitions reside on one and two on the other.
+The per-partition max/mean is 1 while owner demand/capacity is 1.2 and 0.4. Moving two eligible
+partitions yields 0.8 on each in this simplified model. It says nothing about actual copy cost
+or SLO success; verify those before moving. If the six units instead belong to one indivisible
+hot key, moving its owner cannot fit it into a five-unit node. The decisive fact is the workload
+that can move independently, not the aggregate ratio.
+
+Trace derived writes too. A secondary index can partition differently from its base table, so
+an evenly distributed primary key can still update one hot index key/range. In
+[DynamoDB GSI back pressure](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/gsi-throttling.html),
+an index bottleneck can throttle base-table writes; inspect the reported reason and resource
+identifier. `IndexWriteKeyRangeThroughputExceeded` points to a different constraint from an
+index's total provisioned/configured capacity limit. In Spanner, a non-interleaved index with a
+monotonic leading key can recreate the base-table hotspot problem; see its
+[schema design guidance](https://cloud.google.com/spanner/docs/schema-design).
+
+Measure the named resource and its key/work distribution before selecting capacity, placement,
+admission or key changes. Salting the base key does not redistribute an unchanged index key.
+For an index-key redesign, pass the constrained resource, write mix and required index query,
+ordering/uniqueness semantics to `sharding-and-partitioning`; expect a layout and migration
+choice with read costs. If that specialist or provider evidence is unavailable, retain a
+conditional diagnosis and bounded mitigation rather than promise a base-table rebalance fixes it.
+
 ## Signatures
 
 | Signature                                                                  | Candidate class                    | Investigation / repair direction                                                                      |
@@ -113,12 +146,12 @@ if (ThreadLocalRandom.current().nextInt(SAMPLE_RATE) == 0) {
 
 ```text
 Tail latency/errors rise
-  ↓ compare offered, accepted and rejected work by shard and capacity
-One shard differs?
-  ├─ no → fleet capacity, dependency or common-mode incident
-  └─ yes → compare CPU/IO, queue, storage, replication lag and request mix
+  ↓ compare offered, accepted and rejected work by shard and physical owner/capacity
+One logical or physical resource differs?
+  ├─ no → inspect index/dependency scopes, then fleet capacity or common-mode incident
+  └─ yes → compare placement/roles, local faults, CPU/IO, queue, storage and request mix
              ↓
-           bounded top-K by count, bytes and service time
+           if workload-driven: bounded top-K by count, bytes and service time
              ↓
            identify logical key/range/tenant and retry amplification
              ↓

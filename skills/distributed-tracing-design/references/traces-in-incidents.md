@@ -45,6 +45,10 @@ clock skew and missing spans can distort apparent ordering and gaps. A gap can b
 uninstrumented work, export loss or clock error; confirm with queue metrics, clocks and logs.
 Missing service edges likewise need export/sampling/resource-identity checks before changing
 SpanKind merely to make a backend service map look connected.
+For missing ancestry at ingress, also inspect deliberate trace-restart policy and context
+provenance. A root created at a trust boundary can be correct; a retained external link is
+correlation evidence, not authenticated proof of the caller or cause. Do not reconnect traces
+by overriding that policy to improve a visualization.
 
 Known probabilistic inclusion can support weighted estimates; tail-sampling policies usually
 require policy-aware analysis rather than raw counts.

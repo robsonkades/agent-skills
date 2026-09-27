@@ -150,7 +150,8 @@ accepts your own `PageRequest` record is not leaking.
 ## Distributed monolith
 
 **Symptoms** Services released in a fixed order; a feature spanning three repositories; a
-shared DTO library upgraded in lockstep; integration testing requires everything running.
+shared DTO library upgraded in lockstep; integration testing requires everything running;
+one service directly reads or updates another owner's private tables.
 
 **Cause** Extraction on the wrong boundary, or without versioning the contracts.
 
@@ -160,15 +161,34 @@ and failure containment rather than inferring that all benefits are absent.
 
 **Detection** Check representative releases and mixed-version contract tests. Distinguish
 technical incompatibility from organizational release policy or a one-time migration.
+Inspect SQL, grants, migrations and background jobs to map actual readers and writers to
+their rule owners. A direct read can couple schema evolution; a second write path can bypass
+invariants or contend on the same rows. Confirm the reachable path or failure before naming
+the harm. Services can deploy independently while this coupling remains.
+
+Sharing a database server is not proof of shared ownership: separately owned tables/schemas
+with enforced access boundaries can preserve data contracts. Conversely, separate connection
+strings or repository interfaces do not prove ownership isolation. Shared-resource contention
+is a separate hypothesis requiring operating evidence.
 
 **Direction** Address the demonstrated coupling: compatible evolution or a staged rollout
 may preserve the boundary. Tolerate only changes the actual wire/business contract permits.
 Compare consolidation when the retained benefits no longer justify the cost, including
 data, consumer and rollback work (`distribution-boundaries`).
+For a data-coupling finding, start with one demonstrated cross-owner access path and its
+required consistency contract. Do not replace a local atomic operation with multiple remote
+calls or split databases solely to remove the shared-storage label. Pass the writer/reader
+map, invariant, observed harm and rollout constraints to `distribution-boundaries` and, when
+atomicity is at issue, `enterprise-transactions`; obtain a correction that preserves those
+contracts. If these specialists are unavailable, state the unresolved consistency decision
+and keep the storage/boundary change conditional rather than inventing a safe split.
 
 **Acceptable when** deliberate release coordination still meets the accepted goals and its
 cost is justified by actual scaling, isolation or other benefits. A temporary extraction is
 another case; check its migration milestones rather than assuming release policy is a defect.
+Deliberately shared data can also support required local transactions when its ownership,
+schema coordination and operating costs are accepted. Retain that design unless demonstrated
+harm justifies the consistency and migration costs of changing it.
 
 ## Persistence leakage
 
@@ -297,6 +317,20 @@ Measure call topology, concurrency and correlated failures before quantifying th
 **Acceptable when** the calls are genuinely independent, parallel and bounded — and the
 bound is enforced.
 
+## Decision cases
+
+These are teaching walkthrough inputs, not evidence of measured agent improvement. Evaluate
+the supplied context separately from the expected result and record the actual evidence used.
+
+| Review request and context                                                                                                                                                                                | Expected decision and useful result                                                                                                              | Failure condition                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Two services share a database server, own separate schemas, have enforced grants and compatible independent releases; no cross-schema calls or operating harm were found. Declare a distributed monolith. | Reject the label from shared infrastructure alone; retain the design within the investigated scope.                                              | Demand separate servers/databases without a concrete unmet requirement.                                                          |
+| Same infrastructure, but service B directly updates service A's balance rows, bypassing A's required rule; a failing reproduction shows the invalid state.                                                | Identify the extra write path and invariant violation, with its location and evidence; propose one correction preserving the required atomicity. | Treat independent releases as proof of no coupling, or replace the transaction with remote calls without a consistency decision. |
+| Only two JDBC URLs and deployment dates are provided; SQL, grants and rule ownership are unknown.                                                                                                         | Inspect available callers/configuration, then identify the missing access/ownership evidence; keep the smell hypothesis conditional.             | Infer isolation or a defect from URLs and dates alone.                                                                           |
+| Review only: assess a proposed forwarding-layer removal because its body delegates; configuration shows it is the authorization/proxy entry point.                                                        | Retain the boundary or explain a proven equivalent owner; return findings without editing files.                                                 | Delete it during the review or test only the unproxied target and claim behavior is preserved.                                   |
+| Shared database transactions enforce a required invariant; no safe split has been established and the distribution specialist is unavailable.                                                             | Pass on the concrete evidence and unresolved consistency decision; preserve the current invariant and continue independent review.               | Invent a saga or promise atomicity across new remote calls.                                                                      |
+| A latency spike has no demonstrated structural cause; a trace and runtime metrics are available.                                                                                                          | Route diagnosis to architecture-and-performance with the symptom and artifacts; keep architecture changes conditional.                           | Use a smell label as proof of the latency cause or prescribe a rewrite.                                                          |
+
 ## Sources for consequential findings
 
 - [Fowler: Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html) — shared subtasks can remain procedures; duplicated logic does not mandate a domain model.
@@ -305,3 +339,4 @@ bound is enforced.
 - [Spring Data JPA transactionality](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html) — verify against the project's release.
 - [Spring AOP proxy semantics](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html) — inspect effective proxy configuration before extraction.
 - [Git log](https://git-scm.com/docs/git-log) — history filters select commits, not business features.
+- [Richardson: Shared Database](https://microservices.io/patterns/data/shared-database.html) and [Database per Service](https://microservices.io/patterns/data/database-per-service.html) — schema/runtime coupling and private-table/schema boundaries; preserve the actual transaction contract rather than assuming a topology supplies it.

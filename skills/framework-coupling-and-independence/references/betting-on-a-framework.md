@@ -23,12 +23,14 @@ framework replacement scenario with the more immediate cost of upgrades within t
 
 ## Questions that predict upgrade pain
 
-Ask these before adopting, and re-ask them at each major version. They predict cost far better
-than any architectural principle.
+Use these questions before adopting or planning a major upgrade to expose concrete cost drivers.
+Reuse answers already established by the project; investigate unknowns that could change the decision.
 
 **Support and cadence**
 
-- What is the support window for a given major version, and does a commercial extension exist?
+- Which exact release lines and runtime/dependency combinations remain supported over the
+  system's required operating horizon? Distinguish community maintenance from contracted
+  coverage; verify eligibility, scope and end dates rather than assuming an extension applies.
 - How often do majors ship, and what has the last two majors' migration actually required?
 - Does the project publish a migration guide and tooling, or a release note and good luck?
 
@@ -48,9 +50,24 @@ than any architectural principle.
 
 **Exit**
 
-- If it were abandoned tomorrow, what would the system do? For a large framework the honest
-  answer is usually "stay on it, unsupported, and plan a multi-year replacement" — which is
-  fine, provided it was known.
+- If maintenance ended, which required capabilities or support obligations would become
+  unsatisfied, and when? Inspect accepted requirements and support terms; do not infer a
+  mandatory support policy, or permission to disregard one, from the code's current age.
+- Compare feasible options: retain through retirement, use confirmed support coverage, upgrade
+  within the framework, stage a replacement, or retire the capability. A wrapper does not
+  restore missing maintenance or make an incompatible dependency supported. Continued use
+  with a gap needs a bounded rationale consistent with existing requirements and authority;
+  otherwise report the unmet constraint and the evidence needed to choose a feasible route.
+- Estimate only from the resolved stack, migration guidance and a representative slice.
+  Unknown feasibility or duration is a reason for a focused investigation, not an invented
+  multi-year estimate or an immediate rewrite.
+
+For example, keeping a stable application can be the least costly choice when its confirmed
+support coverage and compatibility extend through its scheduled retirement. With the same
+application and retirement date, if required support expires earlier and no extension is
+available, unchanged operation no longer satisfies that constraint. Compare a supported upgrade
+or earlier retirement before paying for whole-framework replacement; test a representative
+upgrade path before committing to its cost. A postponed retirement reopens the first decision.
 
 ## What real migrations turn out to cost
 
@@ -139,8 +156,9 @@ Stated plainly, because the literature on this topic under-weights it:
 ## When isolation genuinely pays
 
 - **The domain is complex and long-lived** — rules with real invariants, expected to outlast
-  two framework generations. Here the mapping cost is repaid by being able to reason about,
-  and test, the rules on their own (`humble-objects-and-functional-core`).
+  two framework generations. Independent reasoning and tests can repay mapping cost; verify
+  that the proposed boundary actually removes the constraints on those rules
+  (`humble-objects-and-functional-core`).
 - **The integration has a concrete contract or failure boundary.** A payment, messaging or cloud
   adapter can contain external semantics and permit focused failure tests. Inspect the actual
   surface and replacement scenario; a vendor SDK is not inherently small or cheap to replace
@@ -153,6 +171,9 @@ Stated plainly, because the literature on this topic under-weights it:
 
 ## Primary sources
 
+- [Spring support policy](https://spring.io/support-policy/): version mapping and support scope
+  matter; verify current dates and the coverage applicable to the target system. This policy
+  does not establish that a particular organization has purchased or qualifies for support.
 - [Java 17 Collections.sort with a Comparator](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#sort(java.util.List,java.util.Comparator)>):
   a library may invoke application-provided behavior without owning the application's lifecycle.
 - [Spring Boot 3.0 migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide):

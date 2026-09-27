@@ -173,6 +173,9 @@ map.put(…)` is a race. Use `mappingCount()` when an approximate `long` count i
   callback, listener or guarded object's method can self-deadlock and is not represented as an
   ownable-lock cycle. An optimistic read must not act on a potentially inconsistent snapshot before
   successful validation; copy only safe fields into locals, validate, then use them.
+  For read-to-write conversion, zero means failure, not release of the read hold. Keep the old
+  stamp until success; release before blocking for write and recheck the predicate afterward.
+  Read the conversion protocol in `references/locks.md` before implementing an upgrade.
 - Reach for `AbstractQueuedSynchronizer` only when a reusable blocking synchronizer needs a novel
   acquisition/release protocol. First compare the relevant existing primitive or `ReentrantLock`
   with conditions; an application-level state machine rarely needs its own queue machinery.

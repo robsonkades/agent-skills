@@ -28,10 +28,17 @@ Options that matter for reading and steering (the full list is `help`): `exclude
 `compileonly`, `inline`, `dontinline`, `log`, `print`, `PrintInlining`, `PrintCompilation`,
 `PrintAssembly`, `PrintIntrinsics`, `BackgroundCompilation`, `CompileThresholdScaling`,
 `DisableIntrinsic`, `ControlIntrinsic`, `RepeatCompilation`, `MaxNodeLimit`, `MemLimit`,
-`MemStat`, `blackhole`. An option inherits the class of the flag it scopes:
-`PrintInlining`, `PrintAssembly` and `log` need `-XX:+UnlockDiagnosticVMOptions`, and the
-error is the same `must be enabled via -XX:+UnlockDiagnosticVMOptions` wrapped in
-`CompileCommand: An error occurred during parsing`.
+`MemStat`, `blackhole`. Scoped `PrintInlining` and `PrintAssembly` need
+`-XX:+UnlockDiagnosticVMOptions`; without it, the diagnostic-option error is wrapped in
+`CompileCommand: An error occurred during parsing`. On 25.0.3 these commands are parsed after
+the VM arguments, so an unlock later on the line works. Direct `-XX:+PrintInlining` instead
+requires the unlock before it. Keep the unlock first in examples without confusing the two
+parser contracts.
+
+Lowercase `CompileCommand=log` does not itself require a diagnostic unlock on this build.
+Without `-XX:+LogCompilation` it is accepted with a warning and produces no log file. The
+global `LogCompilation` producer is diagnostic and requires the preceding unlock. Distinguish
+failure to start from an accepted selector whose recording mechanism is disabled.
 
 Patterns:
 
@@ -40,12 +47,17 @@ Lab::hot                     Lab.hot                      package/Class.method
 *::hot          Lab::*       *ackage/Clas*.*etho*         Lab::hot(I[LLab$Shape;)I
 ```
 
-Wildcards only lead or trail a class or method name; the signature, when given, is literal.
+Wildcards only lead or trail a class or method name. On the examined implementation, a
+provided signature is matched as a literal **prefix**, not validated as a complete descriptor.
+Use `javap -s` and the full descriptor, including the return type, to select one overload.
+Quote a complete shell argument containing parentheses, semicolons or `$`, for example
+`'-XX:CompileCommand=dontinline,Lab::hot(I[LLab$Shape;)I'` in Bash or PowerShell.
 Three things the echo line does **not** tell you:
 
 - `CompileCommand: dontinline Lab.hot bool dontinline = true` confirms the command
-  **parsed**, not that it will ever match. `Lab::hot(I` — a truncated signature — is echoed
-  the same way and matches nothing.
+  **parsed**, not that it matches the intended set. `Lab::hot(I` can match both `(I)I` and
+  `(IJ)J`; a wrong class name can match nothing. Check the target compilation and a nearby
+  overload that should remain unaffected.
 - `exclude`, `inline`, `dontinline` and `compileonly` on the same method are documented as
   undefined behaviour ("no priority of commands").
 - `exclude` removes the method from top-level compilation **and** from inlining;
@@ -76,7 +88,7 @@ java -XX:+UnlockDiagnosticVMOptions -XX:CompilerDirectivesFile=directives.json \
 ```json
 [
   {
-    "match": ["com/myapp/Service.process", "com/myapp/Service.process(Ljava/lang/String;)V"],
+    "match": "com/myapp/Service.process(Ljava/lang/String;)V",
     "inline": ["+com/myapp/Parser.parseHeader", "-com/myapp/Metrics.*"],
     "c1": { "Exclude": false },
     "c2": { "PrintInlining": true, "MaxNodeLimit": 120000 }
@@ -88,7 +100,10 @@ java -XX:+UnlockDiagnosticVMOptions -XX:CompilerDirectivesFile=directives.json \
 ]
 ```
 
-- **`match`** is a string or an array. `Class.method`, `Class::method`, `*.method`,
+- **`match`** is a string or an array of alternatives (logical OR). Adding an exact descriptor
+  alongside `com/myapp/Service.process` still selects every overload. The example selects only
+  `process(String): void`; omit the descriptor only when all overloads are intended.
+  `Class.method`, `Class::method`, `*.method`,
   `Class.*` and a full descriptor `Class.method(I[LLab$Shape;)I` (with or without a space
   before the parenthesis) all matched in the lab. A wildcard **inside** the signature is a
   parse error the JVM refuses to start on: `Method pattern error:  Wildcard * not allowed
@@ -247,3 +262,9 @@ Views that read them without scripting: `jfr view compiler-statistics`,
 - [JDK 25 `jfr`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html)
 - [JDK 25.0.3+9 compiler directives source](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerDirectives.cpp)
 - [JDK 25.0.3+9 task initialization and directive capture](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compileTask.cpp)
+- [JDK 25.0.3+9 command parsing and option checks](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/compilerOracle.cpp)
+- [JDK 25.0.3+9 descriptor-prefix and alternative matching](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/compiler/methodMatcher.cpp)
+  — unlock ordering, the inactive `log` selector, descriptor prefixes and array alternatives
+  were reproduced on Temurin 25.0.3+9 on 2026-09-25. Overloads `(I)I` and `(IJ)J` were both
+  excluded by `(I`, while `(I)I` excluded only the first; installed `<nmethod>` records were
+  checked in isolated runs. These checks establish option/matching behavior, not performance.

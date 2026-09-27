@@ -60,6 +60,13 @@ Read "0 files changed" in context. Confirm scope and attribution first:
 The same trap hides in generated sources, in modules excluded from the reactor, and in
 source sets the plugin was never pointed at.
 
+Some exclusions are intentional: Maven plugin 6.24.0 filters Java sources under the configured
+build directory from recipe results. Check the pinned runner's behavior; this is not a universal
+rule for every generated file or plugin version. Do not move derived files into maintained source
+roots merely to make the recipe match. Follow `tool-capabilities.md`'s authoritative-input path
+and validate fresh generation plus consumer compilation; attribution repairs alone cannot make
+an output-only edit survive regeneration.
+
 ## Composing a declarative recipe
 
 Most real work is a YAML recipe in `rewrite.yml` composing existing ones plus a few
@@ -160,6 +167,7 @@ a recipe attached, and they need the upgrade's testing, not a refactoring's.
 
 Primary references: [Maven plugin goals and lifecycle](https://docs.openrewrite.org/reference/rewrite-maven-plugin),
 [6.24.0 dry-run property and failure behavior](https://github.com/openrewrite/rewrite-maven-plugin/blob/v6.24.0/src/main/java/org/openrewrite/maven/AbstractRewriteDryRunMojo.java),
+[6.24.0 Maven source selection](https://github.com/openrewrite/rewrite-maven-plugin/blob/v6.24.0/src/main/java/org/openrewrite/maven/MavenMojoProjectParser.java),
 [declarative precondition scope](https://docs.openrewrite.org/reference/yaml-format-reference),
 [visitor identity and immutability](https://docs.openrewrite.org/authoring-recipes/recipe-conventions-and-best-practices),
 [recipe testing](https://docs.openrewrite.org/authoring-recipes/recipe-testing).

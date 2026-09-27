@@ -52,7 +52,9 @@ Connector/J version and effective prepared/batch/fetch/TLS/time-zone properties:
    - client: statement rewrite/cache, server prepare, fetch materialization, timeout/TLS behavior.
 3. For a runtime diagnosis, select relevant `performance_schema`, `sys`, `SHOW ENGINE INNODB STATUS`,
    plan and counter evidence from a comparable interval. A configuration value without its workload
-   signal is not a diagnosis; a version-matched contract can support an API explanation.
+   signal is not a diagnosis; a version-matched contract can support an API explanation. Distinguish
+   cumulative counters from current gauges, use the same server/window, and reject rate calculations
+   spanning a restart or counter reset. Missing counters remain unknown, not zero.
 4. If an intervention is justified, predict the counter or plan work it should move. Change one
    scoped variable, query/index, transaction boundary, or driver behavior at a time. A supported
    keep-current conclusion is valid.
@@ -69,8 +71,13 @@ Connector/J version and effective prepared/batch/fetch/TLS/time-zone properties:
   trade their durability settings as if they were interchangeable.
 - Redo capacity absorbs bursts and changes checkpoint/recovery behavior; it does not create storage
   throughput. Size from measured peak redo generation and acceptable recovery time.
+- Separate redo log-buffer waits, checkpoint-space pressure and durable commit synchronization.
+  `Innodb_log_waits` is a log-buffer wait counter, not proof that redo files need more capacity.
+  Use the storage reference's evidence mapping before changing either log buffer or redo capacity.
 - Buffer pool sizing starts from the actual memory/container budget after global and per-connection
   consumers. “80% of RAM” is not a rule, and MySQL cannot be assumed to protect a cgroup automatically.
+  A high hit ratio does not rule out slow physical reads or waits to flush dirty pages for reuse;
+  correlate interval read/flush/wait evidence before adding memory or increasing I/O settings.
 - Plain `SELECT` is normally a consistent read. Blocking investigations must identify the locking
   read/DML, searched index interval, and isolation semantics. A missing index can widen the locked
   range to nearly the table.

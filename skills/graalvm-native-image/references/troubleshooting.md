@@ -27,7 +27,10 @@ deprecated/no-op. For older maintained releases it is a useful correctness guard
 | loader error or missing shared library       | OS/libc/architecture mismatch or unshipped native dependency                                        | `file`, `ldd`/platform equivalent, linker output, base-image comparison                 | build for target ABI; ship dependency; use supported static strategy after validating behavior   |
 | value from CI appears at runtime             | build-time-initialized static state captured host config/secret/time/path                           | initialization report; value changes only after rebuild                                 | ordinary runtime construction or narrow runtime initialization; rotate leaked secret and rebuild |
 | fails before/around `main` only in container | target ABI, certificate store, locale/time-zone data, filesystem permissions, or resource inclusion | reproduce in release container; inspect linked libs/resources and effective environment | package/register required material or change base/linking strategy                               |
-| TLS/security provider fails                  | provider initialized/registered differently, certificates absent, algorithm/resource excluded       | provider list and trust-store behavior in exact artifact/container                      | use documented JCA configuration, include required resources/providers, avoid blanket metadata   |
+| TLS/security provider fails                  | provider registration, embedded roots, runtime store settings, excluded algorithm/resource          | provider/store source, file access and accepted/rejected chains in release container    | repair provider/store configuration; preserve validation; see trust-store guidance below         |
+
+For embedded versus runtime JSSE stores and rotation, use
+[trust-store ownership](closed-world-and-metadata.md#jsse-trust-store-ownership).
 
 ## Runtime-only correctness failures
 

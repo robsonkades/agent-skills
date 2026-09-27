@@ -1,14 +1,14 @@
 schemaVersion: 1
 
 name: jvm-ml-inference
-version: 1.0.3
+version: 1.0.4
 description: >-
   Engineering CPU and accelerator-backed ML inference from JVM applications: choosing in-process
   versus remote serving, bounding native sessions and predictors, coordinating engine and request
   parallelism, batching under a latency deadline, reusing direct buffers, warming deployments and
   diagnosing native memory outside NMT. Use when DJL, ONNX Runtime or another native inference
   engine loses throughput as concurrency rises, leaks RSS, overloads a model pool or needs graceful
-  degradation. Model quality and training pipelines are outside scope.
+  degradation. Training and choosing model quality targets are outside scope.
 license: Apache-2.0
 authors:
   - name: agent-skills contributors

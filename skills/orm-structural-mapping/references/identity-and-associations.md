@@ -111,6 +111,32 @@ No public setter for the collection, no public setter for `order` on the line. T
 same discipline that keeps the aggregate's invariants enforceable
 (`domain-logic-organization`).
 
+### Cardinality in both directions
+
+A single-valued Java reference does not distinguish `@ManyToOne` from `@OneToOne`.
+Decide whether the target may be shared by multiple referencing rows. For a foreign-key-based
+one-to-one, enforce uniqueness of the complete referencing key, or use a shared primary key
+when identity and lifecycle justify it. A many-to-one permits repeated references to the
+same target. Mapping annotations describe the intended shape; inspect deployed constraints.
+
+For each referencing row, `NOT NULL` plus a foreign key requires an existing target.
+Uniqueness adds an upper bound on how many rows can reference that target. Neither requires
+every target row to be referenced: a parent's existence does not force insertion of its
+child, even with a non-null unique child FK. If that minimum cardinality is required,
+identify the transaction boundary or database mechanism that enforces it across all writers.
+
+For optional relationships, check the database's treatment of nulls in unique constraints;
+do not assume all databases permit the same number of absent references. See
+[PostgreSQL 17 constraints](https://www.postgresql.org/docs/17/ddl-constraints.html)
+for foreign-key, uniqueness and null semantics. Before tightening uniqueness, inspect existing
+duplicates and define their resolution from domain rules rather than deleting an arbitrary row.
+
+Test two different referencing rows using the same target, an absent relationship and a
+nonexistent target. Assert the allowed/rejected outcomes at flush or commit and after reload;
+use direct SQL when checking enforcement outside the ORM. Include an unreferenced parent
+when claiming that every parent must have a child. A successful ordinary save proves none
+of those rejection or minimum-cardinality contracts.
+
 **Inverse `@OneToOne`:** optional-child existence may require a secondary query with
 ordinary proxies. Hibernate 6.6 documents lazy state initialization enhancement as a way
 to defer this load. Inspect enhancement, provider and optionality, then test with and without

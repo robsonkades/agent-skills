@@ -38,7 +38,9 @@ transition, or a review finding; it need not be a new full ADR.
    alternatives actually considered, including the downside accepted. Missing material
    evidence stays visible with a next step; do not invent measurements, rejected options,
    consensus or historical motives. A significant forced choice may still deserve a record
-   explaining the constraint and its consequences.
+   explaining the constraint and its consequences. When rationale depends on another ADR,
+   link the specific premise it supplies and the scope where it holds; a related-record link
+   alone does not express that dependency.
 4. **Resolve analysis gaps without fabricating a verdict.** If asked to compare options,
    use `architecture-trade-off-analysis` for that work and return here to record its result.
    If quality goals are vague, use `architecture-characteristics` for observable drivers.
@@ -57,7 +59,9 @@ transition, or a review finding; it need not be a new full ADR.
    and the expected outcome will each be checked. For material uncertainty, specify an
    assumption, an observable review trigger, who observes it and what review follows.
    New evidence can justify review even without a previously written trigger. A trigger
-   opens reconsideration; it does not automatically reverse the decision.
+   opens reconsideration; it does not automatically reverse the decision. When a supporting
+   decision changes, check whether dependent records still have their required premises;
+   do not automatically supersede them or assume their old rationale remains valid.
 7. **Check the result.** Verify IDs, links, status consistency, preserved history and the
    relationship to actual implementation. Read [evidence and tooling](references/evidence-and-tooling.md)
    when reviewing an existing set, selecting a checker or adding governance. Separate
@@ -73,6 +77,14 @@ For delivering a refusal or resolving stakeholder conflict, use `engineering-com
 this skill records the supported outcome and reasons. Designing enforcement policy and
 responses to failed checks belongs to `architecture-fitness-functions`.
 
+For a handoff, pass the bounded question, known drivers and constraints, relevant evidence,
+authority and consequential unknowns. Bring back the supported finding, its assumptions
+and validation limits before recording an outcome. If the specialist skill is unavailable,
+use available project evidence for a bounded analysis and keep unsupported conclusions
+unresolved; continue the record portion. Ask only for missing information that can change
+the decision, after inspecting available context. A named handoff does not require a new
+agent, an installation or a new approval process.
+
 Do not start a fresh architecture comparison merely to repair an ADR link or typo. Do not
 require a new ADR for every commit, every implementation phase, or every rejected suggestion.
 Split records when choices have independently changing scope or rationale; link tightly
@@ -86,6 +98,11 @@ or revisit conditions where material. Identify unresolved facts and authority ex
 For a review: location, evidence, consequence, proposed adjustment and validation per
 actionable finding. For a trivial choice: a concise rationale and why an ADR adds no value
 under local policy is enough.
+
+Stop when the requested record or review is accurate for its stated scope, its material
+links/status relationships have been checked, and remaining evidence or authority gaps
+have a concrete next step. A complete proposed ADR can await a decision; producing it
+does not require executing the migration, proving every forecast or obtaining acceptance.
 
 For worked lifecycle boundaries or when evaluating this skill's selection or decisions, use
 [validation cases](references/validation-cases.md). These teaching cases include expected

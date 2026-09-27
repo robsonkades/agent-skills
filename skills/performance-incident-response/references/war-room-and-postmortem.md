@@ -37,6 +37,22 @@ SLI population; lower latency after shedding most traffic does not establish rec
 Cancellation is not proof that in-flight work stopped or resources were released. Separate restored
 interactive service from residual replay/backlog recovery, and retain an owner for each.
 
+### Execution state and uncertain outcomes
+
+An accepted configuration, restart or routing request may still be pending or only partly applied.
+Record the operation/revision identity where available and verify effective state on the intended
+targets. During a rolling change, distinguish old and new version/configuration cohorts and their
+traffic; an aggregate improvement can hide instances still affected. Deployment completion is one
+check, not proof of sustained user recovery. Keep the action owner and next check until its state
+is resolved, including when a replacement action supersedes it.
+
+After a mutation times out, use operation status, audit evidence and target state within the
+incident budget to determine whether it applied or remains active. If the API supports a documented
+idempotent retry, preserve its request identity and parameters as required by that contract; a new
+request ID can mean a new operation. If outcome and retry safety remain unknown, state that
+uncertainty and choose a bounded alternative or the existing escalation path. Do not automatically
+repeat a restart, increment, replay or failover on the premise that no response means no effect.
+
 ## Command handoff and temporary controls
 
 Distinguish a prepared handoff from an accepted transfer. Identify the incoming commander,
@@ -73,3 +89,9 @@ on mitigation before complete root-cause analysis and scalable response roles;
 [Managing Incidents](https://sre.google/sre-book/managing-incidents/)
 on coordination, working records and handoff. Apply these as response guidance, not proof that
 a particular process reduced recovery time in the current organization.
+
+For execution-state decisions, [Kubernetes Deployment status](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#deployment-status)
+illustrates desired state, rollout progress and completion; use the target platform/version's actual
+status contract. [AWS Builders' Library: safe retries](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/)
+explains ambiguous outcomes and request-identity contracts; it does not make every operational API
+safe to repeat.

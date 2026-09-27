@@ -39,19 +39,27 @@ durability/failover policy. Product references here cover etcd 3.6 and ZooKeeper
 verify Consul modes against the deployed version. Do not upgrade Java or the store to match
 a reference. Missing membership, durability or read-contract evidence prevents a safety claim.
 
+Use the steps relevant to the requested design, diagnosis or review. Inspect membership/status,
+deployment placement, client call sites and existing tests before asking for information already
+available. Separate configured voters from reachable voters and suspected failure from confirmed
+state loss. Ask only for missing facts that change the recommendation; keep independent conclusions
+and reversible investigation moving. An adequate deployment can remain unchanged.
+
 1. **Ask whether anything must be agreed at all.** If a _single-key conditional write_ in the
    existing database meets the required atomicity, durability and failover contract, reuse it.
    Consensus is for decisions that must be single-valued fleet-wide and survive their author's
    death; the existing database may already implement the necessary agreement.
-2. **Size the cluster from `f`, the number of simultaneous failures you tolerate.** `2f+1`
-   voting members with majority quorums tolerate `f`, assuming the survivors can communicate
+2. **Size the cluster from `f`, the number of simultaneous failures you tolerate.** For an
+   unweighted majority configuration, `2f+1` voting members tolerate `f`, assuming the survivors can communicate
    and retain required durable state. Exclude learners/observers from the voter count. For a
    membership change, check the intermediate quorum and catch-up states as well as the final size.
+   If the product uses weighted or hierarchical quorums, use its actual quorum policy instead
+   of applying the headcount formula; see `references/quorum-arithmetic.md`.
 3. **Place voters and price the commit path.** Account for leader routing, network RTT,
    replication, durable-log latency, batching and the fastest quorum. Placement sets correlated
    failure tolerance and latency (`references/quorum-arithmetic.md`).
-4. **Decide, in writing, what each side of a partition does.** The minority side cannot form a
-   quorum for new consensus decisions; separately specify any permitted stale/local reads.
+4. **Decide, in writing, what each side of a partition does.** A side lacking the configured
+   quorum cannot commit new consensus decisions; separately specify any permitted stale/local reads.
    Do not bypass quorum safety to restore writes. CAP itself is `consistency-models`.
 5. **Choose product-specific read semantics per call site.** etcd linearizable and serializable
    reads differ; ZooKeeper member-local reads are not linearizable. Measure the actual path.
@@ -59,10 +67,14 @@ a reference. Missing membership, durability or read-contract evidence prevents a
    needs a measured rate/retention/latency case and accepted outage behaviour. Cache a decision
    only when its freshness and authority contract permits it; some decisions must fail closed
    instead (`references/coordination-stores.md`).
-7. **Exercise failure behaviour in an isolated cluster with fixed voting membership.** With
-   `2f+1` configured voters, stop or isolate `f` and assert eventual write progress within the
+7. **For deployment validation, reuse adequate failure evidence or exercise an isolated cluster
+   with fixed voting membership.** A sizing explanation or findings-only review can specify the
+   missing experiment without running it. Execute only within the authorized scope. For an
+   equal-weight majority with `2f+1` configured voters, stop or isolate `f` and assert eventual write progress within the
    recovery budget. Stop or isolate `f+1` in total and verify newly initiated writes cannot be acknowledged
-   as committed without a quorum. Do not remove members through the membership API for this
+   as committed without a quorum. For weighted or hierarchical policies, choose surviving sets
+   that satisfy or fail the actual quorum rule; headcount alone does not select those cases.
+   Do not remove members through the membership API for this
    test: that changes the required quorum. In-flight writes may have committed before disruption;
    timeouts retain unknown outcomes. Test each minority read/fail-fast policy and restore the fixture.
 
@@ -138,16 +150,20 @@ Prefer instead when:
   unique attempt with supported strong reads/history; retain unknown if evidence is ambiguous
   (`failure-models`). A matching holder name alone does not establish current authority.
 
-Deliver the voter/failure-domain map, quorum arithmetic, commit/read assumptions, unknown-outcome
-policy and bounded failure tests. A successful kill test is evidence for that topology and run,
-not proof of consensus correctness or external fencing.
+Deliver the evidence and decision relevant to the request: a sizing task needs voter/domain
+arithmetic; a read/watch review needs the actual client contract and counterexample; recovery needs
+the authoritative history, potential loss and stale-authority controls. State consequential
+assumptions and which checks ran or remain proposed. Stop when that decision is supported or its
+specific blocker is clear. A successful kill test is evidence for that topology and run, not proof
+of consensus correctness or external fencing.
 
 ## References
 
 - [Quorum arithmetic and placement](references/quorum-arithmetic.md) — `2f+1` and `R + W > N`
   worked through with examples, the even-node result, cluster sizing, cross-AZ and cross-region
   placement with the latency cost per decision, and what each side of a partition can do. Read
-  when choosing a cluster size, adding a node, or spreading voters across failure domains.
+  when choosing a cluster size, adding a node, spreading voters across failure domains, or
+  deciding whether lost quorum requires disaster recovery.
 - [Coordination stores in practice](references/coordination-stores.md) — the primitives
   (compare-and-swap, leases with TTL, watches), the operations these stores are wrong for,
   their throughput and failure characteristics, snapshot/watch continuity, and the policy for

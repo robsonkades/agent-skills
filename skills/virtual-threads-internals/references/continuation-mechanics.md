@@ -68,7 +68,7 @@ Because a virtual thread can remount elsewhere:
 
 JEP 444 distinguishes blocking operations that cannot unmount but for which the scheduler may expand
 from pinning, where a virtual thread cannot unmount because of protected execution. On Java 21,
-monitor ownership and native/foreign execution pin. JEP 491 removes monitor-only pinning in Java 24;
+monitor ownership and native/foreign execution pin. JEP 491 removes monitor-only pinning with Java 24's default locking configuration;
 native/foreign frames remain, including callbacks into Java. Blocking in or waiting for class
 initialization can also encounter a residual VM-frame restriction on JDK 25.
 
@@ -84,14 +84,21 @@ queued VTs + CPU saturation                      -> candidate CPU starvation
 
 ## Version ledger
 
-| Release | Relevant status                                                                                                   |
-| ------- | ----------------------------------------------------------------------------------------------------------------- |
-| Java 21 | virtual threads final; monitor and native/foreign pinning described by JEP 444                                    |
-| Java 24 | JEP 491 removes monitor-only/`Object.wait` pinning; native/VM-frame cases remain; scheduler MXBean since 24       |
-| Java 25 | same residual native/foreign pinning model in official guide; scoped values final; structured concurrency preview |
+| Release | Relevant status                                                                                                                  |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Java 21 | virtual threads final; monitor and native/foreign pinning described by JEP 444                                                   |
+| Java 24 | JEP 491 removes monitor-only/`Object.wait` pinning with default locking; native/VM-frame cases remain; scheduler MXBean since 24 |
+| Java 25 | same residual native/foreign pinning model in official guide; scoped values final; structured concurrency preview                |
 
 Vendor backports and runtime flags can vary. Store this ledger with the deployed runtime facts, not as
 a timeless assumption.
+
+In HotSpot 24 GA, deprecated `LockingMode=1` selects legacy stack locking, and the continuation
+freeze path still rejects held monitors. A virtual thread sleeping inside `synchronized` on
+Temurin 25.0.3 emitted pin events with this option and none with default locking; that observation
+is build-specific.
+Inspect effective flags before ruling monitor pinning out. Establish why a nondefault mode is
+present and verify the supported default before proposing a lock rewrite or configuration change.
 
 ## References
 
@@ -100,3 +107,5 @@ a timeless assumption.
 - [Java 25 virtual-thread scheduling](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [OpenJDK 25 continuation header (implementation reference)](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/continuation.hpp)
 - [OpenJDK 25 pinned-event reasons](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/runtime/javaThread.cpp)
+- [OpenJDK 24 GA locking mode defaults and values](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/globals.hpp)
+- [OpenJDK 24 GA continuation freeze and legacy monitor guard](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp)

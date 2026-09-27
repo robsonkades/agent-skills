@@ -113,6 +113,13 @@ revision numbers alone do not identify one continuous history. Rebuild before se
 cache again and follow the deployed version's recovery procedure, including its revision-bump
 and compaction controls where applicable. See [etcd 3.6 revision recovery](https://etcd.io/docs/v3.6/op-guide/recovery/#revision-difference).
 
+Recovery also changes the authority question. A restored holder key is not proof that an old grant
+remains valid. A revision bump that repairs watch caches does not by itself fence external effects.
+If grants/tokens derive from the restored history, pass the old/new cluster identity, possible
+revision rollback and resource's accepted-token state to `distributed-locks-and-leases`; require a
+recovery contract that rejects obsolete owners before resuming their effects. If that specialist
+is unavailable, retain this obligation as unresolved rather than treating a healthy quorum as proof.
+
 For example, if one transaction changes keys A and B at revision 42, saving 42 after only A and
 restarting at 43 loses B. Uniqueness within a watch does not make external effects exactly once;
 their retry/reconciliation contract belongs to `idempotency`. ZooKeeper standard watches need

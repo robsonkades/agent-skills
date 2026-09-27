@@ -24,9 +24,17 @@ way to tell whether the change helped or moved the failure somewhere quieter.
 
 ## Workflow
 
+Start with the requested outcome: diagnosis, mitigation or repair. Inspect the report, affected
+call path, documented contract, existing tests and effective configuration before accepting the
+report's explanation. Reuse adequate evidence; ask only about missing expectations or context
+that could change the conclusion. Diagnosis can finish with a supported finding without editing
+code. Behavior consistent with the accepted contract may call for clarification rather than a fix.
+
 1. **Restate the fault as an observation.** "Customer 88123 saw a negative balance at 14:02"
    is an observation. "The refund logic is broken" is a hypothesis wearing a report's clothes,
    and adopting it early is how the wrong subsystem gets investigated for a day.
+   State the expected behavior and its source too: an allowed overdraft is not evidence of a
+   violated invariant. Separate requirements and established contracts from assumptions.
 2. **Reproduce it.** Deterministically if possible, intermittently if not — but know which,
    because "I cannot reproduce it" and "it reproduces one time in ten" lead to different work.
    If it only happens in production, collect evidence within the mitigation budget
@@ -38,14 +46,18 @@ way to tell whether the change helped or moved the failure somewhere quieter.
    the missing time zone, then the row written at 23:30 local will carry yesterday's date."
    Also name an observation that would refute it. Explaining existing evidence is useful;
    a discriminating prediction makes the next experiment useful.
-5. **Test it by changing exactly one thing**, and record the result whether it confirms or
-   refutes. Two changes at once means a confirmed hypothesis is still ambiguous.
+5. **Run a controlled, discriminating experiment**, normally changing one variable. Preserve
+   comparable state and a baseline control; record confirming and refuting outcomes. When an
+   interaction is suspected, compare the relevant combinations deliberately instead of treating
+   a successful batch of changes as an isolated cause (`references/method.md`).
 6. **Check the explanation against the distribution** — frequency, timing, affected and unaffected
    users. Record remaining contradictions and uncertainty instead of forcing one cause to explain
    unrelated failures.
-7. **Write the failing test, then fix, then verify** (tdd). The reproduction from step 3 is
-   a candidate test. Use the narrowest level preserving the failure; a race may need controlled
-   scheduling or integration coverage. Record when reproduction remains intermittent.
+7. **When repair is in scope, verify it against the original fault.** Turn the reproduction
+   into regression coverage when it earns lasting value (tdd); confirm it detects the original
+   failure before accepting the corrected result. Reuse existing adequate tests. A race may need
+   controlled scheduling or integration coverage. Record intermittent outcomes and relevant
+   unaffected cases; do not make extra changes merely to finish a diagnosis-only task.
 
 Inspect deployed versus source JDK/toolchain, dependencies, JVM flags, configuration and data
 versions before version-sensitive diagnostics or changes. This workflow has no universal Java

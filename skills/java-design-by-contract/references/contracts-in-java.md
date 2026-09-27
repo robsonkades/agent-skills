@@ -52,6 +52,34 @@ The contract is the promise, not a description of the current code:
   actual type and annotation scope with compliant tooling; outside a declared convention,
   silence is ambiguity, not a portable non-null contract. Annotations alone do not add runtime checks.
 
+## Exceptional outcomes and observation points
+
+A normal-return postcondition says nothing by itself about the state after an exception.
+For each anticipated failure, document what the caller may observe and do next. A mutable
+interval promising `lower <= upper` and "unchanged on rejected replacement" must validate both
+new endpoints before assigning either. A batch operation that instead promises a valid accepted
+prefix may retain that progress; imposing rollback would add a different contract and cost.
+Neither guarantee follows from the exception class or the presence of a `throws` clause.
+
+The distinction occurs in the standard library: `System.arraycopy` leaves the destination
+unchanged for invalid bounds, but an incompatible reference element can cause
+`ArrayStoreException` after a prefix was copied. Read the exact failure condition before
+equating "throws" with "nothing happened". These are specified outcomes, not evidence that
+every API should permit partial progress.
+
+Check every observation point, including a listener, comparator or overridable method invoked
+mid-operation. Java monitors are reentrant: a callback on the same thread can reenter another
+`synchronized` method on the object and observe an intermediate invariant violation. Establish
+valid state before calling out, and specify the outcome if the callback throws after the change
+has committed. Moving a callback does not roll back its external effects. For shared state,
+validating before field assignments alone is not a concurrent atomicity guarantee; inspect the
+ownership/synchronization contract separately.
+
+Verify rejection and injected callback failure by reading the object afterward, not merely
+checking the thrown type. Do not add blanket `catch (Throwable)` rollback to claim recovery
+from arbitrary VM failure. The recovery mechanism belongs to java-exception-design; this review
+establishes the promise it must satisfy.
+
 ## Behavioural subtyping — the rules and their concrete violations
 
 An override stands in for the supertype's contract wherever the supertype is expected.
@@ -135,6 +163,8 @@ Violations that compile cleanly:
 - [JEP 513: Flexible Constructor Bodies](https://openjdk.org/jeps/513)
 - [JLS §8.8.7: constructor bodies](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.8.7)
 - [JLS §14.10: assertions](https://docs.oracle.com/javase/specs/jls/se25/html/jls-14.html#jls-14.10)
+- [JLS §17.1: monitor reentrancy](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.1)
+- [System.arraycopy: unchanged destination versus copied prefix on failure](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html#arraycopy(java.lang.Object,int,java.lang.Object,int,int)>)
 - [JLS §11.2.3: exception checking](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html#jls-11.2.3)
 - [JLS §8.4.8.3: overriding requirements](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3)
 - [JLS §13.4.21: binary compatibility of throws clauses](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html#jls-13.4.21)

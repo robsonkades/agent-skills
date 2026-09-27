@@ -33,8 +33,9 @@ Ask only for unresolved facts that change correctness, attribution or the next e
 adequate sequential path or pool; a narrow contract review need not reopen sizing or collect new
 profiles. During an incident, keep investigation within the authorized recovery window.
 
-1. Identify the actual pool and entry path: `invoke`, external submission, `fork`, parallel stream,
-   or an executor-less async API.
+1. Identify the actual pool, calling thread and entry path: `pool.invoke(task)`, `task.invoke()`,
+   external submission, `fork`, parallel stream, or an executor-less async API. A pool variable near
+   `task.invoke()` does not associate that task with the pool; direct invocation starts on its caller.
 2. Describe the task DAG: parent/child dependencies, joins, exceptional paths, and unowned work.
 3. Establish workload character: CPU, memory bandwidth, allocation, lock contention, managed wait,
    unmanaged I/O, or mixed phases.
@@ -59,6 +60,10 @@ a universal commandment. Use a dedicated pool when fault/capacity ownership diff
 latency matters, or shared consumers interfere. A dedicated pool adds lifecycle, thread and tuning
 costs and does not by itself make blocking safe.
 
+`asyncMode` changes local queue policy; it does not guarantee event completion order across workers.
+If one account's updates must finish in order, model that dependency or use serial dispatch per key.
+Keep independent keys parallel only when their state and failure handling permit it.
+
 ## Task-graph rules
 
 - Fork one branch, compute another locally, then join is a useful binary-recursion pattern because it
@@ -68,6 +73,9 @@ costs and does not by itself make blocking safe.
   task still needs a lifetime, exception and shutdown owner. “Never joined” must be intentional.
 - Return partial results and combine after completion. Sibling tasks that mutate common non-thread-safe
   state race; belonging to one pool does not establish ordering between them.
+- Treat request context as task input. A stolen child does not inherit its parent's `ThreadLocal`
+  values. Prefer explicit immutable context; if the project uses context wrappers, cover child tasks
+  and restore the executing thread's prior context in `finally`, including caller-thread execution.
 - Do not claim a special fork-to-task happens-before rule that the `ForkJoinTask` API does not state.
   Publication and result visibility follow the documented task/Future completion APIs and the JMM;
   intermediate shared state still needs its own synchronization.
@@ -80,6 +88,10 @@ costs and does not by itself make blocking safe.
 - Exceptions surface through `join`/`invoke`/`get`; an event task with no observer can fail without
   reaching a request owner. Worker uncaught-exception handlers are not a substitute for observing
   task outcomes.
+- Choose the wait separately from cancellation: `join()` does not abort when the waiter is
+  interrupted. An external owner that must stop waiting can submit and use interruptible/timed
+  `get`, while retaining ownership of unfinished work. A wait timeout neither cancels a task nor
+  preempts work executed by a helping caller; inspect that path when a return-time budget matters.
 
 ## Blocking and compensation
 

@@ -164,6 +164,10 @@ written without the old field; old readers need tested meaningful defaults/adapt
   folklore), and unknown-field retention was dropped in 3.0 and **restored in 3.5.0**, so a proxy
   that preserves the parsed binary message can retain fields it never heard of. JSON conversion,
   field-by-field copying or explicit discarding can lose them; test every intermediary.
+- **Adding `optional` to an existing field does not establish end-to-end presence.** An old
+  intermediary that recognizes it as an implicit scalar can drop an explicit default when
+  reserializing; unknown-field retention cannot protect that known field. Test presence as well as
+  values through the deployed path before making absent-versus-default significant.
 - **An open JSON schema may already allow incompatible values for a newly declared property.**
   Under a backward STRICT gate, adding a restrictive property can fail; an unconstrained property
   need not narrow the accepted language. Do not edit published v1 to erase the problem. Use a tested

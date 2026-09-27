@@ -40,14 +40,15 @@ Performance              round trips, transaction duration, read/write
                          asymmetry
 Availability             what still works when a dependency does not
 Integration              systems you cannot change and cannot trust
+Security                 who may act on which data, through which entry paths
 Organisation             who owns what, who deploys when
 Maintainability          the system will be edited by people who did not
                          write it, for a decade
 Operability              what happens at 3 a.m., and who can diagnose it
 ```
 
-Every decision below trades some of these against others. A design that claims to satisfy
-all of them has deferred a cost, not avoided one.
+Identify actual conflicts between the required outcomes before claiming a trade-off.
+Some choices improve several forces together; verify their assumptions and remaining costs.
 
 ## The decisions that determine everything else
 
@@ -86,6 +87,9 @@ new module, inspect the surrounding contracts and supported framework before inv
    does not override a requirement or establish that a deviation was accepted. Inspect the
    project's Java/framework/database versions before handing off version-sensitive advice;
    this routing skill imposes no Java baseline or upgrade.
+   Where access differs by actor, tenant or operation, trace the trusted identity, protected
+   data and authorization owner across web, job and message entry paths. A package/process
+   boundary or controller guard alone does not establish the required access contract.
 2. **Identify the application's kind** (`references/application-types.md`) — a batch-heavy
    integration hub and a transactional web application have different right answers, and
    applying one's architecture to the other is a common source of accidental complexity.
@@ -103,6 +107,9 @@ confirm or change the choice. Stop routing once the bounded question, owner and 
 an explanation or supported no-change outcome is valid. A routed plan is not implemented architecture.
 If workload or implementation evidence is unavailable, keep the architecture proposal conditional
 and identify the smallest missing trace, representative use case or owner answer needed.
+At a handoff, specify what the specialist should return: a justified retained/changed boundary,
+its contract and an appropriate verification. If that skill is unavailable, retain the evidence
+and unresolved decision with the smallest next check; do not claim the specialist work occurred.
 
 ## Decision rules
 
@@ -148,6 +155,16 @@ A rewrite is being proposed
 A pattern name is being used as a justification
         → identify the force or binding constraint it answers
           (architecture-decision-making).
+
+The requirement is only "scalable", "secure" or "reliable"
+        → clarify the affected operation, conditions and required outcome
+          (architecture-characteristics) before selecting mechanisms.
+
+The concern is who can read or change which data
+        → locate authorization ownership and alternate entry paths
+          (java-application-security-basics); route payload exposure to
+          remote-facade-and-dto. Do not select another service merely
+          because a trust boundary exists.
 ```
 
 For shared-memory races or task-lifecycle questions inside one JVM, hand off to

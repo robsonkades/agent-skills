@@ -71,6 +71,8 @@ p99 / p99.9 worse than the GC logs explain
 │       "Reaching safepoint" high → step 3
 │       "At safepoint" high       → safepoint time dominated by operation/cleanup, not TTSP
 │                                    (collector tuning, or the deoptimisation cause)
+│       "Leaving safepoint" high  → inspect disarm/release and collector-end work, thread population
+│                                    (time until a particular thread next runs is a different measure)
 │
 ├─ 3. Which thread is late?
 │       existing evidence or a suitably derived SafepointTimeoutDelay → remaining-thread snapshot

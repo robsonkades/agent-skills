@@ -2,16 +2,57 @@
 
 ## Selection table
 
-| Shape of the type                                                    | Use                                         | Why                                                                 |
-| -------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
-| Small, required, semantically distinct components                    | Record canonical constructor                | Compiler checks arity and types; positional readability is adequate |
-| Repeated or weakly typed components                                  | Stronger types, named factories, or builder | Prevents positional mistakes; choose the smallest clear API         |
-| 2–3 recurring, nameable configurations                               | Static factories on the record              | `Retry.none()`, `Retry.exponential(3)` — intent in the name         |
-| Many or substantially optional components                            | Builder                                     | Simulates named arguments and centralizes defaults                  |
-| Required subset + optional subset, must not compile without required | Staged builder                              | Moves "you forgot X" from runtime to compile time                   |
-| Deriving a near-copy of an existing instance                         | `withX()` methods                           | One call, no partial state, no builder round trip                   |
-| Building from streamed or parsed input                               | Builder                                     | No single point where all arguments exist                           |
-| Test fixtures                                                        | Test data builder                           | Valid defaults; tests name only what matters                        |
+| Shape of the type                                                    | Use                                         | Why                                                                     |
+| -------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
+| Small, required, semantically distinct components                    | Record canonical constructor                | Compiler checks arity and types; positional readability is adequate     |
+| Repeated or weakly typed components                                  | Stronger types, named factories, or builder | Prevents positional mistakes; choose the smallest clear API             |
+| 2–3 recurring, nameable configurations                               | Static factories on the record              | `Retry.none()`, `Retry.exponential(3)` — intent in the name             |
+| Many or substantially optional components                            | Builder                                     | Simulates named arguments and centralizes defaults                      |
+| Required subset + optional subset, must not compile without required | Staged builder                              | Moves "you forgot X" from runtime to compile time                       |
+| Deriving a near-copy of an existing instance                         | `withX()` methods                           | One call, no partial state, no builder round trip                       |
+| Building from streamed or parsed input                               | Local accumulator + factory, or builder     | Incremental arrival needs temporary state, not necessarily a public API |
+| One construction process, several representations                    | GoF builders or shared model + renderers    | Choose using retention, inspection and output requirements              |
+| Test fixtures                                                        | Test data builder                           | Valid defaults; tests name only what matters                            |
+
+## GoF representation builders: process, completion and ownership
+
+Use this variant when a parser or director drives representation-independent steps. Keep
+the traversal/order in that process and representation choices in builders; a director may
+be an existing parser or function, not necessarily another class. Do not force unrelated
+outputs behind a shared protocol with meaningless operations.
+
+Compare a simpler baseline: build one intermediate model, then compose it with renderers.
+That supports inspection, editing and repeated rendering without rerunning construction.
+Direct builders become attractive when representations differ substantially or the model
+cannot be retained within the actual memory budget. Streaming can reduce retained state,
+but check buffering, nesting and sink behavior; the pattern alone provides no memory bound.
+If only one representation is needed, a local accumulator and a validating factory may suffice.
+
+The construction session needs a contract:
+
+- Keep an incomplete in-memory product private. Completion checks structural obligations
+  such as balanced nesting and required sections before returning it. If the result is
+  mutable, transfer ownership or detach it so resetting/reusing the builder cannot mutate
+  the previously returned product.
+- On a parsing, callback or output failure, propagate the failure and discard or explicitly
+  abort the session. Put cleanup at the owning call boundary, not only in the normal completion
+  callback. Define who closes owned resources; borrowed sinks follow their caller's contract.
+  Prefer a fresh session unless reset also clears all stacks, errors and retained references.
+- Writing directly to a visible stream can expose an incomplete prefix before failure.
+  If consumers require all-or-nothing output, stage the result and publish through an
+  appropriate commit boundary; this may conflict with retention or latency constraints.
+  Otherwise specify how consumers detect and handle truncation. A method named `build()`
+  does not roll back emitted bytes or external effects.
+
+For example, Java 17 SAX may throw after a fatal error without calling `endDocument()`.
+Its `characters()` events may split contiguous text, so collect the indicated slices rather
+than treating one callback as a complete value. An `Attributes` object is valid only during
+`startElement()`; copy needed values before retaining them. These are callback-source
+contracts, not properties every Builder automatically has.
+
+Verify with a mid-construction failure and a second session: no invalid completed product,
+no leaked owned resource or prior-session state, and no mutation of a previous result.
+For event input, vary legal callback chunking and test the declared partial-output policy.
 
 ## Where validation must live
 
@@ -146,6 +187,11 @@ The safe default: create the builder, build, discard, within one method.
 
 ## Sources
 
+- [SAX ContentHandler, Java 17](https://docs.oracle.com/en/java/javase/17/docs/api/java.xml/org/xml/sax/ContentHandler.html):
+  completion may be absent on fatal failure; text can arrive in chunks and callback attributes
+  have a limited lifetime. [SAX ErrorHandler](https://docs.oracle.com/en/java/javase/17/docs/api/java.xml/org/xml/sax/ErrorHandler.html)
+  defines the fatal-error boundary. Cleanup and publication rules above are design consequences
+  of those contracts, not parser-provided rollback guarantees.
 - [JLS 17 record constructors](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.4):
   canonical-constructor invariant placement; inspect framework-specific reconstruction separately.
 - [JLS 17 method result types](https://docs.oracle.com/javase/specs/jls/se17/html/jls-13.html#jls-13.4.15):

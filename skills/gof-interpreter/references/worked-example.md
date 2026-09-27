@@ -138,6 +138,14 @@ The evaluator is exhaustive with no `default`. Adding a `Between` node exposes m
 these folds are recompiled. Independently released old binaries and folds with covering fallbacks
 still need compatibility checks; the compiler does not verify their new-node semantics.
 
+For this filter, a reached comparison failure aborts evaluation; the caller reports the failed
+search instead of returning unfiltered results. Keep the exception (or an explicit error result)
+through negation and composition. Catching a comparison error and returning false would make
+`Not(comparison)` match. This differs from the deliberately defined missing-value rule above.
+An unreached branch remains unevaluated under `&&`/`||`, but validation still examines its structure,
+types and permissions. Preserve these outcomes in the compiled form; do not catch a budget failure
+at a node and continue evaluating other branches.
+
 ## Fold 2 — compile to SQL
 
 This is why the AST exists. Evaluating in memory would mean loading every document.
@@ -192,13 +200,24 @@ static List<Issue> validate(Filter filter, Set<Field> permitted) {
                 yield List.of(Issue.forbiddenField(c.field()));
             }
             var issues = new ArrayList<Issue>();
-            if (!c.field().supports(c.operator())) issues.add(Issue.badOperator(c.field(), c.operator()));
-            if (!c.field().type().accepts(c.value())) issues.add(Issue.typeMismatch(c.field(), c.value()));
+            if (!c.field().supports(c.operator())) {
+                issues.add(Issue.badOperator(c.field(), c.operator()));
+            } else if (!c.field().accepts(c.operator(), c.value())) {
+                issues.add(Issue.typeMismatch(c.field(), c.operator(), c.value()));
+            }
             yield issues;
         }
     };
 }
 ```
+
+The project-specific `Field.accepts(operator, value)` checks the complete operand contract.
+For example, if `tags EQ` means ordered collection equality, it takes a list of strings, while
+`tags CONTAINS` meaning element membership takes one string. Both use the same field; a check
+against the field type alone either rejects valid membership or accepts an invalid equality.
+Choose these semantics explicitly, validate both accepted and rejected combinations, and make
+`compare()` and `sqlComparison()` implement the same contract. Unsupported operators have no
+defined operand contract here, so report that issue without inventing an expected type.
 
 `permitted` is per-caller, so field-level authorisation is enforced on the filter itself — a
 client without access to `internalNotes` cannot use it as an oracle by filtering on it and
@@ -269,6 +288,10 @@ For a forbidden field, use operator/type checkers that fail if invoked; validati
 the field without calling them, while still reporting allowed-field errors in other branches.
 Also test public diagnostics for guessed hidden fields and mutation of caller-owned literal
 containers after AST construction; parser and response serialization require their own fixtures.
+For collection fields, test equality with a collection and membership with an element, then reject
+the reversed operand shapes. For error behavior, use a comparison that throws: negation must
+propagate it in both the tree walker and closure, while a short-circuited branch must not execute it.
+A reached budget-exhaustion signal must likewise propagate in both forms.
 
 ## What was rejected
 
@@ -282,7 +305,8 @@ containers after AST construction; parser and response serialization require the
 - **Unvalidated String identifiers.** A closed enum simplifies structural validation, but both
   enum and string designs still need current authorization, type checks and trusted SQL mappings.
 
-## Sources for the value and diagnostic contracts
+## Sources for the value, diagnostic and evaluation contracts
 
 - [Java 21 Record](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Record.html): shallow immutability and defensive copying of mutable components.
 - [OWASP GraphQL guidance](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html#secure-configurations): validation and field suggestions can disclose schema information. The filter's public-error policy applies the same disclosure concern; this example is not a GraphQL implementation.
+- [JLS 21 evaluation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.6): abrupt completion propagates from a reached subexpression; sections 15.15.6, 15.23 and 15.24 define negation and conditional boolean evaluation. The filter deliberately retains those Java evaluation semantics.

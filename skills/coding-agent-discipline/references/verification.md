@@ -31,6 +31,13 @@ For valid cache reuse, report reuse rather than claiming the task executed again
 
 - **Exit code 0 with zero tests.** A misconfigured filter, a wrong path, a module that did not
   build — the runner exits successfully having run nothing. Always read the count.
+- **Success belongs to a different step.** A shell sequence, pipeline, wrapper or report upload
+  can finish successfully after the required command failed. Inspect each required step's
+  result and relevant summary. A launched background process or accepted CI request supplies
+  no completion result; follow the actual run to completion or report it pending. If a wrapper
+  hides results, invoke the same required check directly when its prerequisites and effects are
+  understood, or report the missing evidence. Selecting or repairing CI gates belongs to
+  `quality-gates` when that work is in scope.
 - **Skipped tests.** `@Disabled`, an unmet assumption, a missing container runtime. Report
   "12 passed, 40 skipped" and identify whether required coverage was skipped; a successful
   runner status does not establish the skipped behavior.
@@ -88,6 +95,21 @@ pass", which is true, misleading, and will be discovered in a review or in produ
 Report the failure first with the relevant error excerpt. Redact credentials and private payloads
 while preserving the error, context and assertion meaning; identify material omissions.
 
+Inspect where the failure occurred: product behavior, assertion, fixture/setup, tool launch or
+external dependency. A connection refusal before any assertion does not prove a product defect;
+an assertion failure does not by itself prove the expectation is correct. Preserve the failed
+attempt when retrying a transient failure and explain what changed. One later green attempt
+does not establish that a sporadic failure is resolved.
+
+Calling a failure **pre-existing** requires a prior artifact or a safe baseline comparison
+showing the same relevant failure before these changes, with comparable inputs and environment.
+An unchanged test file or a stack trace outside the diff is insufficient: changed shared code
+or configuration may affect it. Compare failure cause and coverage, not only a test's name or
+the number of failures. If no comparable baseline is available, report attribution as unknown
+and identify the discriminating check; do not reset, stash or overwrite shared work to get one.
+Even a confirmed pre-existing failure can block required verification or be made worse by this
+change. Its age does not grant permission to waive the check or expand the fix's scope.
+
 > `RenewalPolicyTest.windowBoundaries` fails at the `2026-03-09` case: expected `false`, got
 > `true`. The window is inclusive of the end date, which contradicts the acceptance criterion
 > as I read it. I have not changed the test — this looks like a real defect in the policy, but
@@ -96,6 +118,17 @@ while preserving the error, context and assertion meaning; identify material omi
 What that does: quotes the actual output, states the interpretation, says what was **not**
 changed, and asks the one question that resolves it. What it avoids: making the test pass and
 mentioning nothing.
+
+### Similar outputs, different supported claims
+
+These synthetic cases are reporting examples, not results from a real project:
+
+| Available evidence                                                                              | Supported report                                                                 | Failure to avoid                                                       |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Required test step exits 7; a later upload succeeds; wrapper exits 0                            | Required check failed; upload success is separate                                | Claiming the suite passed from the wrapper status                      |
+| The same sequence preserves the test step's exit 7                                              | Required check still failed; the wrapper now exposes it                          | Claiming propagation fixed the failing test                            |
+| A test fails after the change; comparable pre-change evidence shows the same cause and coverage | That failure also existed at baseline; report its current effect on verification | Calling the whole change verified merely because this failure is older |
+| The same current failure, but no comparable pre-change result                                   | Failure observed; attribution unresolved; name the baseline check needed         | Calling it pre-existing because its file was untouched                 |
 
 ## Never do this to a red test
 
@@ -143,6 +176,10 @@ and mean inference, which is precisely the ambiguity that destroys trust.
 
 ## Sources for tool interpretation
 
+- [PowerShell automatic variables](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables?view=powershell-7.6#lastexitcode):
+  `$LASTEXITCODE` records the last native program's exit code, not every earlier step's
+  outcome. Capture required results before a later command replaces them; other shells
+  and wrappers require checking their own propagation rules.
 - [Gradle build cache](https://docs.gradle.org/current/userguide/build_cache.html): task
   input/output caching and `FROM-CACHE`; check the project's Gradle version and task setup.
 - [Node test runner](https://nodejs.org/api/test.html): filtering, skipping and reporting;

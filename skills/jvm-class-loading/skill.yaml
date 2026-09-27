@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jvm-class-loading
-version: 1.4.3
+version: 1.4.4
 description: >-
   Class loading, class identity and classloader leaks: parent-first delegation,
   {defining loader, binary name} identity, loading versus linking versus initialisation, Metaspace retention,

@@ -5,6 +5,23 @@ probes its own binary, flags and cgroup; use the application's binary/options, i
 environment-injected options, or inspect the live JVM. A debug container may have a different
 cgroup. `jcmd` requires a compatible tool, target attach access and the actual JVM PID.
 
+Before a fresh-JVM probe, inspect the resolved startup options and available headroom.
+`-version` does not make JVM startup resource-free: a large `-Xms`, particularly with
+`-XX:+AlwaysPreTouch`, can consume substantial additional charged memory before exiting.
+Agents and environment-injected options may add startup work too. Under pressure, reuse
+existing application metrics, startup logs and proc/cgroup reads. Attaching with `jcmd`
+also has overhead; missing attach access is not a reason to launch repeated heavyweight
+probes or install tools into the production image.
+
+When the serving container cannot accommodate a necessary probe, use a bounded disposable
+environment with equivalent binary, options and effective limits, checking ancestor
+capacity as well. If options or cgroup conditions differ to reduce probe cost, identify
+what the result can still answer;
+an explicitly smaller probe heap cannot verify the application's ergonomic heap maximum.
+Do not present that reproduction as evidence of the live process's configuration or peak.
+The [launcher contract for AlwaysPreTouch](https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html#advanced-garbage-collection-options-for-java)
+explains why touching heap pages is real startup work, even when no application is run.
+
 ## One question, one command
 
 | Question                               | Command                                                                            |

@@ -13,6 +13,13 @@ Pin or record:
   environment variables that affect the builder, and target `-march`;
 - build duration, peak builder RSS/CPU, build report, SBOM, binary hash, symbols, and signing result.
 
+Native Image building can execute initializers and build-time integration code. Inspect relevant
+entry points and use controlled build inputs, credentials and dependencies; a build command is
+not evidence that application code cannot run. Keep deployment secrets out of the builder, as
+recommended by the [JDK 25 Native Image security guide](https://www.graalvm.org/jdk25/security-guide/native-image/).
+Record required non-secret configuration and test deployment-specific reads at runtime rather
+than granting the builder production access to make initialization succeed.
+
 The builder is a JVM and whole-program analysis is memory intensive. In constrained CI, set the
 builder heap with `-J-Xmx...` and parallelism with `--parallelism=...` from measurements. In Unix
 shell/container reporting, exit 137 commonly represents SIGKILL; it does not prove an OOM kill.

@@ -14,6 +14,14 @@ be attached by a node collector when its metadata association is reliable. Inspe
 collector configuration, permissions and version before claiming either capability is available.
 Reject enrichment if it can associate a record with the wrong workload after a restart.
 
+Distinguish per-workload capacity isolation from an access boundary. Containers in a Pod share
+the network namespace and port space: binding an application endpoint to `localhost` permits
+access by its sidecar. Do not approve an untrusted adapter on the premise that loopback isolates
+it from the application. Inspect exposed endpoints and mounted credentials; if the requirement
+is network separation, reconsider shared-Pod placement and provide a deliberately limited
+collection interface. Delegate detailed container controls to `sidecar-pattern` after resolving
+that placement constraint. See [Kubernetes Pod networking](https://kubernetes.io/docs/concepts/workloads/pods/#pod-networking).
+
 For ordinary stdout/stderr logs, first assess the existing runtime-to-node-agent path. A peer
 container does not automatically receive another container's stdout. File-only output may
 justify a shared-volume sidecar that translates to its own stdout for node collection, or one

@@ -249,7 +249,7 @@ after the maximum planned snapshot age.
 - [JEP 514 assembly process and memory requirements](https://openjdk.org/jeps/514)
 - [Spring Framework checkpoint/restore](https://docs.spring.io/spring-framework/reference/integration/checkpoint-restore.html)
 - [Spring Framework 6.2.0 lifecycle implementation](https://github.com/spring-projects/spring-framework/blob/v6.2.0/spring-context/src/main/java/org/springframework/context/support/DefaultLifecycleProcessor.java)
-- [CRaC 1.4.0 API](https://javadoc.io/doc/org.crac/crac/1.4.0/org/crac/package-summary.html)
+- [CRaC 1.4.0 API contract in tagged source](https://github.com/CRaC/org.crac/blob/1.4.0/src/main/java/org/crac/package-info.java)
 - [Spring Boot checkpoint/restore](https://docs.spring.io/spring-boot/reference/packaging/checkpoint-restore.html)
 - [AWS Lambda SnapStart Java runtime hooks](https://docs.aws.amazon.com/lambda/latest/dg/snapstart-runtime-hooks-java.html)
 - [Azul CRaC runtime requirements](https://docs.azul.com/crac/usage/running-crac)

@@ -80,6 +80,22 @@ can still change remaining effort and risk. Include future abandonment/cleanup, 
 parallel-running and opportunity costs where they differ between options. Do not charge the
 original rewrite budget again or treat its spent portion as a benefit of continuing.
 
+### When uncertainty changes the choice
+
+Test the material assumptions against plausible ranges: future change frequency, retirement
+date, repair effort and migration risk. If the same option remains preferable, state the
+assumptions and proceed within authorization. If the choice changes, identify which assumption
+causes it. Inspect available history and plans; ask a focused question or run a bounded probe
+only when the answer could affect the decision. When evidence remains unavailable, return a
+conditional choice and a review trigger instead of inventing a midpoint or requiring certainty.
+
+For an illustrative effort-only comparison, a repair taking 20 engineer-hours including testing
+and release, and saving 2 hours per future change, breaks even at 10 changes within the agreed
+horizon. Two expected changes favor retention; 20 favor repair on effort alone. Check that the
+repair removes that cost and that the planned changes will happen. Timing, displaced work and
+change risk can reverse this comparison; engineer-hours are neither calendar duration nor
+monetary return. Applicable mandatory controls still bind regardless of the payoff.
+
 ## Repayment strategies
 
 **Opportunistic** — improve it within an authorized change when shared context and checks reduce
@@ -139,3 +155,4 @@ not a reason to declare the cost zero.
 
 - [Fowler: Technical Debt](https://martinfowler.com/bliki/TechnicalDebt.html) — carrying cost, repayment and uncertainty in effort estimates.
 - [HM Treasury: The Green Book (2026), sunk costs](https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-government/the-green-book-2026#sunk-costs) — the appraisal distinction between unrecoverable past spending and future opportunity costs; this does not import government approval procedures into a debt decision.
+- [The Green Book (2026), sensitivity analysis and switching values](https://www.gov.uk/government/publications/the-green-book-appraisal-and-evaluation-in-central-government/the-green-book-2026#sensitivity-analysis-and-switching-values) — testing which uncertain inputs change the preferred option; use this decision principle proportionately, without importing the document's mandatory appraisal process.

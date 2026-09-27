@@ -216,6 +216,28 @@ selection. An attempt that cannot plausibly finish within the remaining time sho
 Retries after partial request-body/stream transmission need protocol evidence; reconnecting
 does not prove the peer failed to apply a write.
 
+## Reproduce the request and finish the failed response
+
+Semantic replay safety and a reproducible request are separate requirements. A one-shot stream
+can be exhausted on the next attempt even when the operation has a sound idempotency contract.
+In Java 17's HTTP client, a repeated `BodyPublisher` subscription must produce the same data;
+`BodyPublishers.ofInputStream` uses its supplier again because it does not buffer the content.
+Return a fresh open stream over stable content, not the same consumed stream. Reopening a file
+that changed between attempts is also insufficient. Prefer an existing replayable source;
+buffer or spool only within explicit size, storage, lifetime and deadline bounds. If those
+bounds cannot be met, stop/reconcile or use a supported resumable transfer instead of replaying.
+Keep the intent ID and intended payload stable; credential/signature refresh follows its own
+protocol contract and must not silently create a different business operation.
+
+The adapter behind `Op.call` also owns unsuccessful responses. With
+`BodyHandlers.ofInputStream()`, an `HttpResponse` can arrive before its body finishes. Capture
+the status/headers needed for classification, then consume within byte/time bounds or close
+the stream before returning an outcome that starts backoff. Java's stream subscriber requires
+reading to EOF or closing it; early close may prevent reuse of that connection. Do not drain
+an unbounded or stalled error body just to preserve keep-alive. For other clients, use their
+release/cancel contract and keep outstanding work accounted for until cleanup actually ends.
+The successful streaming response's owner and the no-retry-after-delivery rule still apply.
+
 ## Primary references
 
 - [RFC 9110 §9.2.2: idempotent methods and automatic retry](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.2)
@@ -229,5 +251,7 @@ does not prove the peer failed to apply a write.
 - [Resilience4j 2.3.0 RetryConfig](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-retry/src/main/java/io/github/resilience4j/retry/RetryConfig.java)
 - [Resilience4j 2.3.0 breaker classification and admission](https://github.com/resilience4j/resilience4j/blob/v2.3.0/resilience4j-circuitbreaker/src/main/java/io/github/resilience4j/circuitbreaker/internal/CircuitBreakerStateMachine.java)
 - [Java 17 Duration conversions](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html)
+- [Java 17 request body replay contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.net.http/java/net/http/HttpRequest.BodyPublisher.html) and [input-stream supplier](<https://docs.oracle.com/en/java/javase/17/docs/api/java.net.http/java/net/http/HttpRequest.BodyPublishers.html#ofInputStream(java.util.function.Supplier)>)
+- [Java 17 streaming response timing](<https://docs.oracle.com/en/java/javase/17/docs/api/java.net.http/java/net/http/HttpResponse.BodyHandlers.html#ofInputStream()>) and [stream cleanup contract](<https://docs.oracle.com/en/java/javase/17/docs/api/java.net.http/java/net/http/HttpResponse.BodySubscribers.html#ofInputStream()>)
 - [Java 21 record patterns](https://docs.oracle.com/en/java/javase/21/language/record-patterns.html)
 - [Java 21 virtual-thread scheduling and pinning](https://docs.oracle.com/en/java/javase/21/core/virtual-threads.html)

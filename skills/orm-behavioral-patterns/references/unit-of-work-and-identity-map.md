@@ -47,6 +47,25 @@ transactions can also be valid; define ownership, loaded state and conflict hand
 `merge` copies into a managed target rather than reattaching the argument. Use that returned
 target for subsequent tracked writes; the detached object remains usable as detached data.
 
+### Merge input is state, not a patch
+
+Before merging, inspect how the input was produced, which attributes were loaded, what the
+caller may change and which relationships cascade MERGE. An entity reconstructed from only
+an ID, version and new status can also carry null email or empty collections: those values can
+overwrite existing state. A current version token does not distinguish omission from intent.
+
+JPA excludes provider-tracked, unfetched LAZY fields from merge. That exception does not mean
+all nulls, default values or empty collections are ignored; request deserialization does not
+automatically preserve ORM loaded-state metadata. Retain merge for deliberately edited detached
+state when those contracts are known. For a partial command, load in the receiving unit, apply
+only explicitly supplied allowed fields and retain the client's expected-version check; loading
+the latest row must not silently discard a stale-edit precondition (`offline-concurrency-control`).
+
+Verify with fresh-context reads after commit: contrast a real detached graph whose lazy
+collection was never fetched with a reconstructed object containing an explicitly empty
+collection, and check an unrelated stored field survives the partial-command path. Inspect
+orphan removal/cascades before experimenting; use an isolated fixture.
+
 ## Failed flush and rollback
 
 A constraint violation at flush or an optimistic write conflict is a failed unit of work,

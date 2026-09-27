@@ -24,7 +24,11 @@ reopened when evidence makes a downstream artefact stale.
 
 ## Workflow
 
-1. **Run definition intake before depth.** Identify the accepted Product intent and available
+1. **Run definition intake before depth.** Establish the requested endpoint and existing
+   authorization from the request and session: analysis, a plan, implementation, or a review.
+   A planning-only or findings-only task ends with that deliverable; the lifecycle does not
+   authorize subsequent implementation. Reuse authorization already supplied for full delivery.
+   Identify the accepted Product intent and available
    Engineering Analysis, or an engineering-owned Tech Feature; concise session input can establish
    a Light baseline. Missing analysis is work to route, not a reason analysis cannot start.
    If the input is still an idea, route
@@ -34,8 +38,9 @@ reopened when evidence makes a downstream artefact stale.
 2. **Classify depth and persistence separately** — Light, Standard or Deep; Inline or Dossier
    ([depth and phases](references/depth-and-phases.md)). State every driver; the highest evidenced
    driver wins.
-3. **Follow the forward spine with explicit returns.** A phase may be skipped by the depth rule; it
-   may never be faked. When evidence changes an accepted baseline, apply the artefact contract's
+3. **Follow the forward spine to the authorized endpoint, with explicit returns.** A phase may be
+   skipped by the depth rule; it may never be faked. When evidence changes an accepted baseline,
+   apply the artefact contract's
    invalidation rules and return to the owner of the affected stage.
 4. **Hold the gates.** A BLOCKING question prevents dependent implementation. Continue independent
    analysis or resources only when their own readiness is satisfied and they do not prejudge the
@@ -48,11 +53,11 @@ reopened when evidence makes a downstream artefact stale.
 
 ## Depth and persistence
 
-| Depth        | Fits when                                                                                                                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Light**    | One local outcome, known behavior, one authority domain, reversible, no new dependency or boundary/schema change and no material choice                                                    |
-| **Standard** | Several components, compatible shared/internal contract change, meaningful choice, or established and contained regulatory obligations                                                     |
-| **Deep**     | New technology/integration, public or breaking contract, migration, decision-relevant PoC, material security/privacy/compliance consequence, costly reversal, or several authority domains |
+| Depth        | Fits when                                                                                                                                                                                                                                |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Light**    | One local outcome, known behavior, one authority domain, reversible, no new dependency or boundary/schema change and no material choice                                                                                                  |
+| **Standard** | Several components, compatible shared/internal contract change, meaningful choice, or established and contained regulatory obligations                                                                                                   |
+| **Deep**     | New runtime technology, infrastructure component or external integration, public or breaking contract, migration, decision-relevant PoC, material security/privacy/compliance consequence, costly reversal, or several authority domains |
 
 An unknown material driver prevents Light until resolved. Use the detailed driver list in
 [depth and phases](references/depth-and-phases.md); a small diff does not imply low consequence.
@@ -108,6 +113,15 @@ The spine is not a one-way checklist. Use these returns:
 | Implementation departs from an accepted decision    | Impact, decision, contract/plan, then readiness |
 
 Only traced downstream artefacts are invalidated. A return is focused, not a restart.
+
+Route a phase with its bounded question, accepted revisions, relevant evidence and expected output;
+inspect the returned artefact before using it downstream. Naming another skill does not mean a
+different reviewer performed the work. Unless the request or local policy requires a distinct
+reviewer, the current agent can perform a separate readiness pass; state its actual provenance.
+If a specialist is unavailable, use the available criteria only where the phase can still be
+performed responsibly. A missing mandatory review blocks
+its dependent transition; report what is needed and continue independently ready work. Do not invent
+a PASS or require another person merely because the phase has a different skill name.
 
 ## Decision rules
 
@@ -165,8 +179,8 @@ or evidence of measured improvement.
 
 ## Output
 
-Open with input revisions, depth, persistence, and their drivers. Then report current phase, decisions,
-stale artefacts, accepted gaps, blockers, and next transition. Normalize readiness to:
+Open with the requested endpoint, input revisions, depth, persistence, and their drivers. Then report
+current phase, decisions, stale artefacts, accepted gaps, blockers, and next transition. Normalize readiness to:
 
 - PASS;
 - PASS WITH ACCEPTED GAPS;
@@ -174,7 +188,8 @@ stale artefacts, accepted gaps, blockers, and next transition. Normalize readine
 - RETURN TO ENGINEERING;
 - DECOMPOSE BEFORE PROCEEDING.
 
-Only the first two advance the stated scope. Readiness does not establish completion or authorize
+Only the first two can advance the stated scope within existing authorization. Readiness does not
+establish completion, turn a planning request into permission to implement, or authorize
 deployment/publication. At completion, report **Complete: yes/no** against the accepted baseline,
 with the Required criteria's observed evidence and any missing or failed checks, using
 feature-readiness-review. Accepted gaps remain gaps; an authorized scope amendment changes the

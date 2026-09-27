@@ -32,7 +32,8 @@ inspect which execution paths and contracts actually change.
 
 Inspect the compiler/toolchain, deployed JDK/vendor/build, framework/client versions and effective
 executor configuration. Standard virtual threads require Java 21+; Java 17 cannot use the virtual
-factory examples. Java 24 removes monitor-only pinning, and ScopedValue is final only in Java 25.
+factory examples. Java 24 removes monitor-only pinning under default HotSpot locking, and
+ScopedValue is final only in Java 25. Check effective locking configuration as well as JDK version.
 Do not upgrade Java/frameworks or enable preview merely to perform this migration.
 
 Apply the stages needed for the requested decision and affected execution paths. A narrow API,
@@ -48,7 +49,7 @@ already authorized recovery through a validated rollback/drain path.
    callers whose demand changes. For each: how many threads,
    what resource sat behind it, and what happens if that number becomes unbounded. This
    inventory supports the migration decision; include queues, ordering, context and lifecycle ownership.
-3. **Audit for blockers** — monitor pinning on JDK 21–23, native/foreign pinning,
+3. **Audit for blockers** — monitor pinning on JDK 21–23 or retained legacy locking, native/foreign pinning,
    carrier-capturing or file-heavy paths, `ThreadLocal` caches, thread-name dependencies,
    executors that encode ordering.
    The greps are in the playbook.
@@ -90,14 +91,20 @@ already authorized recovery through a validated rollback/drain path.
 - **Separate waiting capacity from dependency latency.** Cheaper waiting can be a valid objective
   when the dependency has measured headroom and demand remains bounded. It does not make an
   individual slow call faster. More concurrency against a saturated dependency is not a remedy.
-- **Check the JDK baseline before auditing locks.** On JDK 21–23 a virtual thread that blocks while
-  holding a monitor can pin; on 24+ (JEP 491) monitor use/`Object.wait` no longer causes pinning, and
-  `-Djdk.tracePinnedThreads` was removed and does nothing. Migrating on 21 and migrating on
-  25 are different projects.
+- **Check the JDK and effective locking mode before auditing locks.** On JDK 21–23 a virtual thread
+  that blocks while holding a monitor can pin. JEP 491 removes monitor-only pinning under default
+  HotSpot locking in 24+; nondefault legacy locking can retain it. For example, HotSpot 24 GA's
+  `LockingMode=1` retains monitor pinning; verify whether the target still supports and uses that mode.
+  Do not rewrite locks or change runtime flags from the version number alone. In JDK 24+
+  `-Djdk.tracePinnedThreads` was removed and does nothing; use supported target diagnostics.
   Blocking with a native/foreign frame still present can pin on 24+, including Java callbacks.
 - **Keep or introduce bounded platform execution where evidence requires it**: CPU parallelism,
   thread affinity/priority, or causal native/foreign/file paths that the current JDK cannot handle
   efficiently. A migration need not be total.
+- **Recheck cancellation against the actual I/O contract.** Interrupting a virtual thread in
+  a system-default socket read closes that socket; a read timeout has different semantics.
+  Audit pool reuse, shared-resource ownership and retry classification before widening;
+  see `references/what-breaks.md`.
 - **Rollback should be fast and rehearsed.** A per-workload runtime/configuration switch is ideal;
   where architecture prevents it, staged deployment rollback must still preserve task ordering,
   drain and compatibility.

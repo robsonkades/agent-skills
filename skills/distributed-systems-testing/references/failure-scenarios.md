@@ -106,6 +106,20 @@ and the **wrong assertion** that makes the test pass without proving anything.
 - **Wrong assertion** — that all requests eventually succeeded without observing arrival,
   queue age/size and completion bounds. Eventual success alone does not establish bounded load handling.
 
+## 10. Client-visible consistency during a partition
+
+- **Inject** — partition relevant paths while clients record reads/writes, then heal and observe
+  recovery. Include a response lost after an applied write; preserve its indeterminate outcome.
+- **Invariant** — the recorded history satisfies the promised consistency model and operation
+  scope, with progress checked against the separate availability/recovery contract. For a
+  linearizable register with no intervening write, a read invoked after a successful write
+  completes cannot return the previous value. An eventual-consistency contract may permit that
+  stale read; use its actual convergence/session requirements instead.
+- **Wrong assertion** — replicas agree after healing, therefore every earlier read was legal.
+  Final state cannot expose every transient violation. Use the history-checking guidance in
+  [techniques.md](techniques.md#checking-client-visible-histories), and report missing history or
+  inconclusive analysis rather than claiming the consistency guarantee passed.
+
 ## Auditing coverage
 
 For each component, fill this in; a blank cell is a decision, not an oversight.
@@ -121,6 +135,7 @@ crash mid-operation
 lease expiry under a stall
 mixed versions
 overload
+client-visible consistency under partition
 ```
 
 Two closing rules. **A scenario with no invariant does not need a test yet** — it needs the

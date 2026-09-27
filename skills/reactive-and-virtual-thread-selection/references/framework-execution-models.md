@@ -36,6 +36,12 @@ For a proposed flag change, check the affected components:
   affected trigger type when evidence is needed. Preserve an adequate serial execution
   contract; add a single-flight guard only if required non-overlap is otherwise lost. Do not
   infer the current guarantee from a historical pool size.
+- **Check what keeps the process alive.** Virtual threads are daemon threads. A non-web
+  application relying on its scheduler to remain resident may exit after this flag change.
+  For an intentionally resident application, Boot 3.5 documents `spring.main.keep-alive=true`
+  to keep the JVM alive when no non-daemon owner remains. Verify the resolved version and
+  startup/shutdown behavior. A finite command or batch job should await its owned work and
+  then exit; indefinite keep-alive is not a substitute for completion tracking.
 
 Verify rather than assume:
 
@@ -192,6 +198,7 @@ Apply the relevant checks to the affected paths, reusing adequate existing evide
 - [ ] Required properties of removed limits survive through equivalent controls
 - [ ] Active execution, admission and waiting bounds are established, not inferred from a property alone
 - [ ] Required job non-overlap survives through a supported scheduler contract or guard
+- [ ] Resident services retain a process-lifetime owner; finite jobs await owned work and exit
 - [ ] No blocking call reachable from a WebFlux/Vert.x event-loop thread
 - [ ] Scheduler caps/queues and aggregate downstream budgets fit the claimed workload
 - [ ] Actual-execution claims have relevant runtime evidence; source/configuration claims state their limits
@@ -199,6 +206,7 @@ Apply the relevant checks to the affected paths, reusing adequate existing evide
 ## Sources
 
 - [Spring Boot 3.5 task execution and scheduling](https://docs.spring.io/spring-boot/3.5/reference/features/task-execution-and-scheduling.html) — auto-configuration and custom executors.
+- [Spring Boot 3.5 virtual threads](https://docs.spring.io/spring-boot/3.5/reference/features/spring-application.html#features.spring-application.virtual-threads) — daemon-thread process lifetime and `spring.main.keep-alive`.
 - [SimpleAsyncTaskScheduler 6.1 API](https://docs.spring.io/spring-framework/docs/6.1.0/javadoc-api/org/springframework/scheduling/concurrent/SimpleAsyncTaskScheduler.html) — fixed-delay scheduler thread and concurrency limit.
 - [Jakarta Concurrency 3.1 specification](https://jakarta.ee/specifications/concurrency/3.1/jakarta-concurrency-spec-3.1.pdf) — managed context, transaction boundaries and virtual-thread configuration.
 - [JEP 491](https://openjdk.org/jeps/491) — JDK 24 monitor pinning change; not a general absence-of-blocking guarantee.

@@ -1,13 +1,13 @@
 schemaVersion: 1
 
 name: java-build-and-dependencies
-version: 1.0.0
+version: 1.0.1
 description: >-
   Diagnose and repair Maven or Gradle builds when a managed dependency is missing,
   a transitive version wins unexpectedly, compilation and runtime classpaths differ,
   or the launcher JDK, toolchain and release target disagree. Use for dependency
-  conflicts, missing runtime artifacts, plugin classpath failures and unreliable
-  dependency resolution. Covers focused build repairs and reproducibility checks;
+  conflicts, missing runtime artifacts or generated code, plugin classpath failures
+  and unreliable dependency resolution. Covers focused build repairs and reproducibility checks;
   intentional JDK upgrades, classloader internals and published-library governance
   belong to neighboring skills.
 

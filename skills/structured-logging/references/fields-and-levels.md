@@ -21,6 +21,29 @@ retention/access/integrity:
 Use stable machine fields plus a concise human message. Do not force all services into
 fields that are meaningless; establish a common envelope and event-specific schemas.
 
+## Time and exact values
+
+Define which clock and boundary each timestamp represents. Preserve source occurrence time
+when known; keep observation/ingestion time separate when delay or replay affects the query.
+If source time is unknown, label the available observation time rather than inventing an
+occurrence time. Map existing fields to these meanings instead of requiring new names or
+duplicate timestamps everywhere. OpenTelemetry's `Timestamp` and `ObservedTimestamp` are
+one established distinction; source `Timestamp` may be absent.
+
+A record created at 08:00 and collected at 08:10 did not necessarily occur during an 08:09
+incident. Clock skew and untrusted caller timestamps also limit ordering and delay claims:
+use correlation, recorded durations and clock evidence before treating timestamp subtraction
+as latency or timestamps as causal order. Keep caller-supplied time separate from trusted
+envelope time under the same collision policy as other caller fields.
+
+For opaque IDs, prefer a string when precision, leading zeros or downstream numeric coercion
+would change identity. JSON permits larger numbers, but binary64 consumers do not preserve
+every integer beyond `2^53 - 1`: numeric `9007199254740993` can become `9007199254740992`.
+Check exact values through the actual parser/index/query path at representative boundaries.
+Keep genuine quantities numeric with explicit units/ranges when the consumer supports their
+required precision; do not stringify every field to solve an identifier problem. Changing an
+existing numeric ID to string is a schema migration, with the reader/rollback obligations below.
+
 ## Correlation
 
 Possible identifiers:
@@ -75,3 +98,6 @@ sensitive logs and protect integrity for security/audit evidence.
 
 See [RFC 8259 section 4](https://www.rfc-editor.org/rfc/rfc8259#section-4) for duplicate-member
 interoperability; test the producer and actual downstream parser together.
+See [RFC 8259 section 6](https://www.rfc-editor.org/rfc/rfc8259#section-6) for numeric precision
+limits and the [OpenTelemetry log timestamp model](https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-timestamp)
+for occurrence versus observation semantics. These references do not prescribe a new logging stack.

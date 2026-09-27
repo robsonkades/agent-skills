@@ -30,6 +30,11 @@ keeping it true rather than about writing it well the first time.
 1. **Assemble, do not re-decide.** Relevant sections use existing artifacts or accepted session evidence:
    scope, impact map, decisions, resources, risks. If a section needs a new decision, the plan
    is incomplete for dependent work — route that decision while assembling independent parts.
+   Check cited paths, contract/toolchain revisions and validation entrypoints against the current
+   repository. Separate accepted inputs from proposals, incidental implementation patterns and
+   assumptions. If accepted inputs conflict or implementation has drifted, identify affected
+   resources and resolve from available decision history; ask the responsible owner only when
+   that evidence cannot settle the issue. A newer file alone does not supersede an accepted decision.
 2. **Order the resources** from their dependencies, and mark which arrows are forced. The order
    is a dependency graph, not necessarily one chain. Validate IDs/cycles and identify ready work;
    preserve each dependency's stage and condition: implementation input, validation prerequisite
@@ -39,7 +44,9 @@ keeping it true rather than about writing it well the first time.
    messaging — in a discoverable section or compact labelled entry. These are the entries
    people search for, and a change buried in a resource description is not found.
 4. **State the test strategy per resource kind**, not as a paragraph. What level, against what,
-   and what it must establish.
+   and what it must establish. Name the executable check or manual procedure and its prerequisites;
+   when a test or fixture must first be created, link the responsible resource rather than implying
+   that the check already exists or has passed.
 5. **Write migration, deployment and rollback as sequences**, with the ordering constraint
    spelled out. "Deploy then migrate" and "migrate then deploy" are different plans. For material
    operational steps, carry accepted prerequisites, success/stop conditions, recovery checks and
@@ -74,9 +81,12 @@ THEN check it against the schema section. Once a migration has run, reverting th
      code is not reverting the change.
 
 IF implementation contradicts the plan
-THEN distinguish a defect from evidence invalidating the plan. Fix a defect against the
-     accepted contract; otherwise revise affected artifacts and readiness with existing
-     authority or obtain a genuinely missing decision. Do not reapprove unchanged work.
+THEN distinguish a code defect from evidence invalidating the plan. For a defect, record the
+     required correction against the accepted contract for feature-execution or the existing
+     execution workflow, carrying affected resources, evidence and current authorization.
+     For an invalidated plan, revise affected artifacts and readiness with existing authority
+     or obtain a genuinely missing decision. Do not reapprove unchanged work. A planning-only
+     request stops at the plan/findings.
 
 IF the feature spans sessions
 THEN the plan must be readable cold. Assume the reader has none of the conversation.
@@ -88,8 +98,11 @@ THEN the plan must be readable cold. Assume the reader has none of the conversat
   Preserve operational facts that constrain execution — migration windows, batch limits,
   retention periods, rollout intervals, and externally committed deadlines — and label their
   provenance instead of deleting them from the plan.
-- **No design arguments.** The plan says what will be built; why it was chosen lives in the
-  decision records, and duplicating it means two documents that disagree later.
+- **Do not reopen accepted design.** Link an accessible, revision-qualified decision record
+  instead of duplicating its argument. When accepted decisions exist only in session context,
+  retain the minimum accepted rationale, decisive constraint and provenance needed by the next
+  reader in the plan; do not require a separate ADR. Missing rationale stays unknown, not invented.
+  A conversation reference alone is insufficient for a reader who cannot access that conversation.
 - **Preserve selected scope.** Executable resources come from the accepted delivery baseline.
   Optional or Recommended classification alone does not select an item for implementation;
   keep unselected suggestions as proposals outside the execution order.

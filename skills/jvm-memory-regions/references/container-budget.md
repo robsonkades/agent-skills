@@ -37,6 +37,13 @@ include all relevant categories and be remeasured at the candidate heap/thread s
 Identify container versus pod/ancestor scope: a sidecar in a sibling cgroup is not normally
 charged to the application container's leaf limit, but can contribute at a shared ancestor.
 
+If the effective limit or JVM-detected memory is unknown, pass the deployment limits, live
+flags, PID/start identity and cgroup path/controller evidence to `container-awareness`; the
+needed result is the applicable capacity scope and detected memory value. If that skill or
+access is unavailable, keep the subtraction symbolic and identify the missing read. A cgroup
+v2 leaf's `memory.max=max` does not exclude an ancestor constraint or establish a safe workload
+budget. Do not substitute a Kubernetes request, host RAM or a guessed percentage for that decision.
+
 Choose `-Xms` separately from startup, residency/uncommit and SLO evidence; equality with
 `-Xmx` is not implied by this capacity arithmetic. The percentage is derived from the
 subtraction, never chosen first. In Windows Temurin 25.0.3 startup probes with `-XX:MaxRAM`
@@ -48,8 +55,14 @@ on small-memory systems**, not `-Xms`. In that same build, `MaxRAM=200m` with
 206 MiB after alignment. A percentage alone does not guarantee the calculated ceiling.
 
 Verify the effective `MaxHeapSize` with the candidate flags and target build/collector,
-then repeat inside the actual container. These startup probes do not test cgroup detection
-or workload fit:
+then validate the actual deployment's detected memory and workload fit. The synthetic probes
+below do not test cgroup detection. Prefer a disposable reproduction with matching resource
+configuration for new JVM launches: a second JVM in a pressured cgroup adds its own heap,
+native and diagnostic overhead and can trigger a kill. Near a hard limit, first use available
+telemetry, logs and bounded OS/cgroup reads; even attach clients need overhead allowance.
+Do not copy a large application `-Xms` or pre-touch setting into an incident probe.
+
+Run these small ergonomics probes only where their additional footprint is acceptable:
 
 ```bash
 java -XX:MaxRAM=200m -XX:MaxRAMPercentage=10 -XX:+PrintFlagsFinal -version

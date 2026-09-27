@@ -101,6 +101,38 @@ requests per connection to one, or enable the idempotent producer, which preserv
 order across retries within its in-flight window. Read your client's documented limit for that
 window rather than copying a number.
 
+That guarantee concerns the client's internal retry of an admitted send. An application
+calling `send` again, or an outbox relay replaying the same event, makes a new send
+invocation. For example, appending source versions `v2, v3` and then resending `v2` can produce
+`v2, v3, v2` in one perfectly ordered partition. Producer idempotence does not deduplicate
+that application resend or establish authoritative source order. A new producer session
+does not restore the missing ordering protocol either. See the
+[Kafka 4.1 producer contract](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html).
+
+First distinguish a caller's wait timeout from a terminal send failure: a timed
+`Future.get` can expire while the send remains pending. Inspect the callback/Future and
+the pinned client's exception/recovery contract; keep an unknown append outcome unknown
+until authoritative evidence resolves it. Do not translate every timeout into "not sent".
+
+Choose recovery from the required effect history:
+
+- For predecessor-dependent transitions, retain the same logical event identity and source
+  version. Gate dependent same-key admission while resolving the predecessor, or use
+  authoritative sink sequencing with bounded gap repair. Deduplication alone cannot repair
+  the order of two distinct operations; retries must not acquire a new business version.
+- If all required effects commute, duplicate-safe atomic application may suffice without
+  sequencing. Keep every required delta; a newer-version snapshot guard would discard some.
+- For complete snapshots with deliberately skippable intermediate effects, the atomic
+  newer-version guard can reject a late older resend; preserve equal-version conflict checks.
+- When source order is required, a concurrent outbox relay also needs per-key scheduling/
+  recovery or sink resequencing. Inspect relay claims, retries and completion order rather
+  than inferring order from outbox insertion alone.
+
+Pass event identity/version, pending send evidence, later admitted events and the required
+effect history to `delivery-semantics`, `idempotency` or `retries-and-backoff` for the matching
+recovery mechanism. If unavailable, retain the bounded ordering finding and specify the
+missing outcome/recovery check; do not invent an outcome or retry policy.
+
 **7 — Concurrent producers for one key.**
 
 ```java
@@ -146,6 +178,8 @@ Consequences to plan for at creation:
 
 - [Kafka 4.1 introduction: partition ordering](https://kafka.apache.org/41/getting-started/introduction/)
 - [Kafka 4.1 producer configuration: idempotence and in-flight requests](https://kafka.apache.org/41/configuration/producer-configs/)
+- [Kafka 4.1 producer API: application resend and session boundaries](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)
+- [Java 17 Future: timed waiting versus cancellation](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Future.html)
 - [Kafka 4.1 consumer API: offsets, assignment and transactional reads](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
 - [Kafka 4.1 operations: partition-count changes](https://kafka.apache.org/41/operations/basic-kafka-operations/)
 - [Kafka 4.1.0 built-in key mapping](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/producer/internals/BuiltInPartitioner.java) — implementation example; inspect the target client's partitioner.

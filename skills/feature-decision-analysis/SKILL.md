@@ -31,8 +31,9 @@ prevent documenting a proposal or continuing independent work.
 1. **Notice consequential choices**, including defaults that affect the feature's contracts
    or constraints. Inspect the relevant existing log, accepted baseline and policy before adding an
    entry. Do not inventory every naming alternative; the categories are below.
-2. **Assign provenance** from the four classes. This is a question of fact and it is checkable
-   (`references/provenance-and-authority.md`).
+2. **Assign provenance** from the four classes. This is a question of fact and it is checkable.
+   Read [provenance and authority](references/provenance-and-authority.md) when establishing
+   sources, resolving conflicting claims, or reconstructing a historical decision.
 3. **Assign accountable authority** from the consequence: Product, Engineering, Architecture,
    Security, Data, Operations, Compliance, Finance, or another named role. Participation is not
    approval.
@@ -40,13 +41,19 @@ prevent documenting a proposal or continuing independent work.
    authority can already cover the choice. Reuse that evidence without asking again. If a
    material choice lies outside it, record a proposal and the specific unresolved authority;
    prepare a concrete option and continue independent work before asking a focused question.
-5. **If it is agent-owned**, take it, state it and move on. Agent ownership is limited to local,
+   When sources conflict, first compare their applicable scope, effective revision and evidenced
+   exceptions. A newer message, repeated pattern or senior role alone does not settle which
+   commitment applies; keep only the unresolved dependent action pending.
+5. **If it is agent-owned**, take it and move on; record it only at the depth warranted below.
+   Agent ownership is limited to local,
    reversible choices inside accepted constraints, plus choices explicitly delegated by the
    user or applicable policy. Escalating every low-impact decision is
    its own failure: it trains the user to stop reading.
 6. **Record proposals and outcomes as they arise**, with their actual status. Use the depth rule below
    to decide whether a log entry suffices or an ADR is warranted. Link pending feasibility checks;
    recording a proposal does not authorize its dependent commitment.
+   Preserve the accepted scope and conditions: permission for an experiment, a limited cohort or
+   a future transition does not by itself authorize unrestricted production use now.
 7. **When later evidence contradicts it**, first determine whether the premise is invalidated or the
    implementation violates a still-valid decision. Within the authorized task scope, correct the
    deviation or supersede the decision with supported authority and evidence; preserve history.
@@ -141,6 +148,12 @@ inspect resolved versions, toolchains and compatibility evidence before classify
 The test is not importance. It is **whether the next person would otherwise have to re-derive
 it, and get it wrong**.
 
+For option comparison, pass `feature-solution-analysis` the bounded choice, constraints, evidence
+and unresolved premises; bring back alternatives, separating reasons and validation limits. For ADR
+format or lifecycle, pass the supported outcome and scope to `architecture-decision-making`.
+If either is unavailable, use the local record convention, preserve the supported facts and name
+the missing analysis; a handoff never supplies acceptance or requires installing another skill.
+
 ## Output
 
 Use the existing decision log and identifier convention, appended to as the feature proceeds. A small
@@ -170,7 +183,9 @@ ED-05 Dispatch retry policy within the accepted 30s request deadline
       Record:      this log entry; within ED-03/CT-02, no separate ADR required by local policy
 ```
 
-Every entry carries provenance, authority evidence and status. Keep unknown historical provenance
+Every entry carries provenance, authority evidence, applicable scope and status. Link any material
+conditions or effective date to their source; use existing fields rather than inventing a new status
+vocabulary. Keep unknown historical provenance
 explicit without discarding independently evidenced acceptance or its scope. An unsupported outcome
 remains pending; never invent a mandate or relabel someone else's choice as yours.
 
@@ -179,3 +194,7 @@ and implementation verification are separate: an authorized choice is not proof 
 passing test does not supply approval. Material feasibility gaps keep dependent commitment blocked
 unless valid accepted-gap authority covers it. Report the missing evidence, next check and affected
 work; record observed validation separately from planned checks.
+
+The requested record or review is complete when its sources, scope and outcome are truthful and
+material gaps have a concrete next step. A complete proposal may still await acceptance; completing
+this skill does not require obtaining approval, executing the feature or proving a planned check.

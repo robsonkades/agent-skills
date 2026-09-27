@@ -48,7 +48,11 @@ socket/file I/O and thread sleep. Inspect the active recording configuration: ev
 enablement and thresholds vary. Short filtered events and unfinished duration events may be
 absent; absence is not proof that blocking or pinning did not occur.
 
-JDK 24+ removes pinning caused solely by monitor usage through JEP 491. A `jdk.JavaMonitorEnter` contention event is
+JEP 491 removes monitor-only pinning on JDK 24+ with default locking. Check effective locking mode
+before ruling this cause out: HotSpot 24 GA retains it with deprecated `LockingMode=1`, unlike the
+default `LockingMode=2`; it was also observed on Temurin 25.0.3 with legacy mode. Establish why a
+nondefault mode was selected and compare the supported default in an isolated test before proposing
+a configuration change or lock rewrite. A `jdk.JavaMonitorEnter` contention event is
 still relevant for latency even though it is not a pin. Inspect remaining pin reasons/operations and
 stacks, including native/foreign callbacks and residual VM frames such as class initialization on
 HotSpot 25. Do not infer application JNI merely from a VM-frame pin. Confirm impact with scheduler
@@ -115,5 +119,7 @@ signal change, make one reversible intervention, and validate useful progress pl
 - [Java 25 `VirtualThreadSchedulerMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/jdk/management/VirtualThreadSchedulerMXBean.html)
 - [Java 25 `HotSpotDiagnosticMXBean`](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.management/com/sun/management/HotSpotDiagnosticMXBean.html)
 - [JEP 491](https://openjdk.org/jeps/491)
+- [HotSpot 24 GA locking modes and default](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/globals.hpp)
+- [HotSpot 24 GA legacy monitor pinning guard](https://github.com/openjdk/jdk/blob/jdk-24-ga/src/hotspot/share/runtime/continuationFreezeThaw.cpp)
 - [OpenJDK class-initialization preemption change](https://github.com/openjdk/jdk/pull/27802) —
   explains VM-frame pinning paths; check the deployed build rather than assuming later changes apply.

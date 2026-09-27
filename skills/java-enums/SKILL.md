@@ -78,6 +78,8 @@ enum, lookup, switch or external encoding rather than turning every review into 
   internally and iterates in declaration order; workload and representation costs still matter.
   It is not thread-safe and it is mutable. A wrapper is a live unmodifiable view; copy then
   wrap for a snapshot, including the empty ordinary-set case described in the patterns reference.
+  `allOf` and `complementOf` include newly declared constants when evaluated against the new
+  enum version; use explicit membership when new values require approval before admission.
 - Prefer `EnumMap` for suitable enum-keyed maps. It is array-backed with declaration-order
   iteration and avoids hand-maintained index mappings that can diverge when constants change.
   A correctly initialized internal array is not invalid merely because it uses `ordinal()`.
@@ -102,9 +104,12 @@ enum, lookup, switch or external encoding rather than turning every review into 
   switches may fall through; enhanced exhaustive switches can synthesize a runtime failure for an
   unforeseen constant. When the enum comes from another artifact, separate compilation means a
   new constant can reach old bytecode, so test the exact switch form and deployment policy.
+  Exhaustiveness does not cover null: even a plain `default` does not match a null selector.
+  Preserve the caller's absence policy with a guard, or `case null` on Java 21+ without preview;
+  an unknown decoded value and an absent value need not have the same meaning.
 - An enum with a mutable static field is shared mutable state with a nicer name; the constants
   are singletons for the whole class loader, reachable from every thread. Constants may hold
-  immutable data freely, a lazily built lookup map safely (build it in a static initialiser),
+  immutable data freely, a lookup map built safely in a static initialiser,
   and mutable state only under the same discipline as any other shared object.
 - A single-element enum provides serialization/class-initialization guarantees useful for some
   process/class-loader singletons—see java-object-construction—and an
@@ -125,7 +130,8 @@ performance from assumptions; written deployment cases are not executed verifica
 
 - [Enum patterns](references/enum-patterns.md) — read when deciding between constant-specific
   bodies, strategy enums and an interface; when replacing a `switch` chain; or when an enum is
-  becoming a state machine or a registry.
+  becoming a state machine or a registry. Also read for `EnumSet`/`EnumMap` changes, including
+  empty copies and policies governing new constants.
 - [Enums across boundaries](references/enums-across-boundaries.md) — read before an enum
   reaches a database column, a JSON contract, a message schema or another team's code, and
   whenever adding or removing a constant needs a deployment plan.

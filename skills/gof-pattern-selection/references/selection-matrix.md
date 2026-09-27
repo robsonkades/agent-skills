@@ -5,14 +5,15 @@ before the second. The columns suggest candidates, not measured win rates or aut
 
 ## Creation
 
-| Design problem                                            | Candidates                                          | Simpler alternative                                    | What decides                                                                                |
-| --------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Construction has many or optional parameters              | Builder                                             | Constructor/named factory; record if its contract fits | Consumer naming, defaults, invariants and ownership; count alone does not decide            |
-| Several related objects must stay mutually consistent     | Abstract Factory                                    | Existing DI family configuration                       | Family invariant, selection timing and construction ownership; DI and factories can coexist |
-| An inherited algorithm must not know the concrete product | Factory Method                                      | Injected `Supplier` / `Map<Key, Supplier>`             | Existing extension contract and ownership of construction                                   |
-| A new object must be built from an existing one's state   | Prototype                                           | Copy constructor; immutable sharing                    | Required distinct identity, subtype and aliasing semantics                                  |
-| Exactly one instance is needed                            | Singleton                                           | One bean, injected                                     | "One per what?" — class loader, process, or cluster                                         |
-| Which concrete type depends on runtime data               | Factory/registry; Factory Method for subclass hooks | Map of suppliers or compatible switch                  | Registration ownership, extension and creation lifecycle                                    |
+| Design problem                                             | Candidates                                          | Simpler alternative                                    | What decides                                                                                |
+| ---------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Construction has ambiguous or optional inputs              | Fluent value builder                                | Constructor/named factory; record if its contract fits | Consumer naming, defaults, invariants and ownership; count alone does not decide            |
+| Same process must construct different representations      | Builder (GoF)                                       | Separate assembly functions/factories                  | Shared step protocol, representation variation and completion/ownership contract            |
+| Several related objects must stay mutually consistent      | Abstract Factory                                    | Existing DI family configuration                       | Family invariant, selection timing and construction ownership; DI and factories can coexist |
+| Subclasses must select the product through a creation hook | Factory Method                                      | Injected `Supplier` / `Map<Key, Supplier>`             | Supported creator/product types, arguments, failures and lifecycle                          |
+| A new object must be built from an existing one's state    | Prototype                                           | Copy constructor; immutable sharing                    | Required distinct identity, subtype and aliasing semantics                                  |
+| Exactly one instance is needed                             | Singleton                                           | One bean, injected                                     | "One per what?" — class loader, process, or cluster                                         |
+| Which concrete type depends on runtime data                | Factory/registry; Factory Method for subclass hooks | Map of suppliers or compatible switch                  | Registration ownership, extension and creation lifecycle                                    |
 
 ## Structure and boundaries
 
@@ -40,7 +41,7 @@ requirements cannot be met clearly (`gof-decorator`).
 | One operation has interchangeable algorithms            | Strategy                | A lambda; configuration                     | Do the variants differ in behaviour or only in constants?                                   |
 | Behaviour changes with the object's own status          | State                   | Enum/status plus transition function        | State-dependent legality/behavior; transitions may be externally driven                     |
 | An algorithm's skeleton is fixed; steps vary            | Template Method         | A class taking composed steps               | Existing hook/SPI and lifecycle contracts; who owns the extension set                       |
-| A request must be offered to several possible handlers  | Chain of Responsibility | A `switch` over a sealed kind               | Is the handler set open to other modules?                                                   |
+| A request must be offered to several possible handlers  | Chain of Responsibility | Ordered loop; compatible switch             | First-match vs required stages, precedence, fallthrough/failure and extension ownership     |
 | An invocation must be queued, logged, retried or undone | Command                 | Call the method                             | Does anything actually consume the reification?                                             |
 | Prior state must be restorable                          | Memento                 | Immutable capture; exact inverse            | Restoration ownership, intervening changes and effects; cheap inverse alone is insufficient |
 | Dependents must be told something changed               | Observer                | Direct calls                                | Subscription ownership, lifecycle and decoupling; known listeners can qualify               |
@@ -48,6 +49,15 @@ requirements cannot be met clearly (`gof-decorator`).
 | Several operations must run over one object structure   | Visitor                 | Compatible exhaustive dispatch              | Type ownership, operation growth, target Java and extension contracts                       |
 | A structure must be traversed without exposing it       | Iterator                | Return an unmodifiable collection           | Is the sequence computed, unbounded, or paged?                                              |
 | A small language must be evaluated                      | Interpreter             | Existing bounded evaluator or configuration | Grammar/semantics, translation needs, security and maintenance cost                         |
+
+An open handler set is one reason for a chain, not its defining condition. Fixed overlapping
+rules can still need ordered fallback; a switch requires a discriminator or guards that preserve
+that precedence. If all checks must succeed before an effect, use an explicit validation pipeline
+and failure policy; first-success handling would skip required checks. Pass an overlapping-request
+example, required ordering and fallthrough/failure behavior to `gof-chain-of-responsibility` for
+the detailed contract. The [original GoF chain](https://www.informit.com/articles/article.aspx?p=1398601)
+offers candidate receivers and can leave a request unhandled; the name alone guarantees neither
+all-stage execution nor atomic effects.
 
 ## The rows that most often resolve to "no pattern"
 
@@ -77,6 +87,25 @@ Six problems that look like pattern problems and usually are not:
 ```
 
 ## Worked selections
+
+**"Our plugin creator only exposes `newDecoder(config)`; clients call it directly."**
+Subclasses choosing the concrete decoder through that overridable method can be Factory Method
+without an inherited workflow. Preserve supported subclasses, arguments, checked failures and
+product lifecycle. A `Supplier` is a simpler candidate only if it preserves the actual contract;
+do not remove a published hook merely because the creator has no other algorithm.
+
+**"The value has only three fields, so its builder must be redundant."**
+If all three are required, available together and clearly typed, retain the constructor or a
+named factory. With the same count, repeated weak types, conditional defaults or incremental input
+may justify stronger types, named factories or a fluent builder. Compare an ordinary call and a
+likely swapped/missing-input call; validation must survive every public construction path.
+
+**"One document construction process must produce both a tree and a compact summary."**
+A GoF Builder can keep the step sequence while varying the representation being assembled;
+this is different from fluent setters for one value. Compare separate assembly functions and
+existing parser/output hooks before adding the protocol. If there is only one straightforward
+representation, direct construction may suffice. Pass step order, partial-failure cleanup and
+valid-completion requirements to `gof-builder`; no director class is required merely for the name.
 
 **"Adding a payment provider touches five classes and a switch in each."**
 Variation: one axis (provider), each variant a whole set of related behaviours — authorise,
@@ -118,3 +147,8 @@ different mechanisms whose guarantees must be stated, even when the same concept
 Sources: [JEP 441, finalized in Java 21](https://openjdk.org/jeps/441) and
 [Spring REST client configuration](https://docs.spring.io/spring-framework/reference/integration/rest-clients.html).
 Apply framework guidance to the project's resolved version; the current reference is not an upgrade request.
+
+The [GoF authors' introduction, catalog intents](https://www.grch.com.ar/docs/unlu.poo/Gamma-DesignPatternsIntro.pdf)
+distinguishes Builder's construction/representation separation from Factory Method's subclass-based
+product creation. Those intents motivate the separate creation rows; fluent value builders need
+the additional caller-ergonomics test above.

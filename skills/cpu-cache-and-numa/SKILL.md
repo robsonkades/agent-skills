@@ -36,9 +36,11 @@ For a scaling investigation, select the following checks to resolve the remainin
 2. **Check the signature.** Throughput that worsens as writers are added is consistent with
    coherence, but also with locks, queueing, GC, bandwidth saturation, scheduler overhead or
    a downstream limit. Use competing hypotheses.
-3. **Rule out lock contention and true sharing first** — see the distinction table in
-   `references/false-sharing.md`. JFR can expose qualifying blocking events; it has no dedicated
-   false-sharing event, and missing lock events do not rule out spinning or below-threshold waits.
+3. **Classify the contending accesses** — see the distinction table in
+   `references/false-sharing.md`. Lock/true sharing can coexist with false sharing; distinguish
+   access to the same logical variable from interference with an independent neighbor. JFR can
+   expose qualifying blocking events, but has no dedicated false-sharing event; missing lock
+   events do not rule out spinning or below-threshold waits.
 4. **Measure relative field layout with JOL**; offsets do not prove absolute cache-line placement.
 5. **Measure coherence on supported hardware.** Prefer `perf c2c`, HITM/cache-to-cache or
    vendor PMU events when available; LLC misses alone do not prove false sharing. Normalize
@@ -63,6 +65,8 @@ unavailable, state the gap and keep the diagnosis provisional.
 - A write must obtain coherent ownership of the line and invalidates other cached shared
   copies when present. Repeated ownership transfer between writers to independent fields is
   false sharing; a write to a line already held exclusively need not broadcast the same work.
+  A writer can also invalidate readers of unrelated data on the line; read-only sharing does
+  not cause this invalidation mechanism.
 - **The JMM does not specify cache flushes, MESI or store-buffer draining.** A volatile write
   has release/order and visibility semantics; a volatile read has acquire semantics. HotSpot
   maps those guarantees differently by architecture. Hardware coherence can serve a valid
@@ -91,9 +95,11 @@ unavailable, state the gap and keep the diagnosis provisional.
   solely for VM annotation recognition. Actual runtime access to the internal type is a separate
   module-access question. See `references/false-sharing.md` before proposing this option.
 - Prefer `LongAdder` for highly contended statistics only when a non-atomic `sum()` snapshot
-  is acceptable. `AtomicLong` provides linearizable updates/reads and can win at low
-  contention; padding protects independent fields. These solve different contracts and must
-  not be ordered as universal alternatives.
+  is acceptable. Audit reset/interval semantics too: `sumThenReset()` does not supply an atomic
+  boundary like `AtomicLong.getAndSet(0)`. Keep atomic operations or explicit coordination when
+  exact counter transitions matter. Keep `AtomicLong` as the simple baseline, especially at low
+  contention. Compare update and read costs; padding protects independent fields and does not
+  remove contention on the same logical counter.
 - Consider moving metrics out of hot state objects or partitioning ownership; measure remaining
   sharing, extra indirection and footprint. Separate allocation alone does not prove isolation.
 - `Particle[]` stores a contiguous sequence of references in conventional HotSpot layouts;

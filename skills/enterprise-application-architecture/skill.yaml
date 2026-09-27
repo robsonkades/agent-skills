@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-application-architecture
-version: 1.2.5
+version: 1.2.6
 description: >-
   The entry point for reasoning about an enterprise application's architecture: what makes
   these systems distinctive (data that outlives the code, concurrent users, integration,
@@ -40,6 +40,12 @@ files:
   - references/
 
 dependencies:
+  - name: architecture-characteristics
+    version: ^1.0.0
+  - name: distributed-transactions-and-sagas
+    version: ^1.0.0
+  - name: java-application-security-basics
+    version: ^1.0.0
   - name: pattern-selection-and-composition
     version: ^1.0.0
   - name: layering-and-boundaries

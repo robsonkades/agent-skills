@@ -18,6 +18,20 @@ cost. Apply the cheapest one that removes the obstacle, and no more.
 | **Adapt Parameter**          | 326 | The parameter's type is untestable (`HttpServletRequest`, a vendor SDK type); wrap it in a narrow interface you own | Keep the adapter narrow, but check argument mapping, exceptions and ownership; delegation alone does not prove them |
 | **Primitivize Parameter**    | 385 | Add a free function operating on primitive data, so new logic is testable even though the class is not              | Feathers labels it "ugly, but temporary" himself. Use only with a deletion ticket                                   |
 
+**Keep resource lifetime at the seam.** Injecting a long-lived collaborator can be appropriate;
+injecting one connection or stream is different from opening and closing a resource on each call.
+For per-operation acquisition, prefer an existing provider or a narrow factory invoked at the
+original acquisition point, retaining the operation's cleanup. State that the factory returns an
+operation-owned usable resource; `Supplier<T>` alone does not promise a fresh instance, and its
+`get()` cannot declare checked exceptions. Keep an existing checked acquisition failure contract
+with an appropriate factory interface instead of wrapping it merely to fit `Supplier`.
+
+If a resource is borrowed from a caller or shared owner, the seam must not silently transfer
+closing responsibility. Compare the production and injected paths for acquisition frequency,
+argument/effect order, failure timing and cleanup on success and failure. A fake that tolerates
+reuse after `close()` can hide a broken lifetime. Use a recording/failing test resource for these
+checks, and qualify what remains untested about the real adapter.
+
 ## Hierarchy techniques
 
 | Technique                               | p.  | What it does                                                                                                     | Cost / caveat                                                                                                              |
@@ -103,5 +117,12 @@ not the book's.
   invoking a static method still initializes its declaring class.
 - [JLS 21, static-method binary compatibility](https://docs.oracle.com/javase/specs/jls/se21/html/jls-13.html#jls-13.4.19):
   changing instance/static status can break existing binaries.
+- [Java 21 Supplier](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Supplier.html)
+  does not guarantee a distinct result and declares no checked exception on `get()`;
+  [AutoCloseable](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/AutoCloseable.html)
+  defines cleanup and does not require repeated `close()` calls to be harmless.
+- [JLS 21, method invocation](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.12)
+  distinguishes compile-time overload selection from runtime method dispatch; compile success
+  alone does not prove the selected target was preserved.
 - [Martin Fowler, Legacy Seam](https://martinfowler.com/bliki/LegacySeam.html):
   an enabling point must actually select the alternate behaviour for the consumer.

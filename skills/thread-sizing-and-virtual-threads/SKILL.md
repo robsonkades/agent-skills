@@ -41,7 +41,9 @@ adequate executor when the expected benefit does not justify changing its contra
 4. Inventory the limits and correctness guarantees the old executor supplied: sequential execution,
    state confinement, context propagation and task ownership as well as capacity. A virtual thread
    per task does not preserve a single-worker executor's serialization. Preserve required contracts
-   and intentional admission at each scarce resource before migration.
+   and intentional admission at each scarce resource before migration. Trace actual execution of
+   nested async stages and callbacks: they need not inherit the submitting thread's executor or model.
+   Size and limit the executor that runs the work, not just the request entrypoint.
 5. Test the relevant peak, sustained overload/recovery, slow dependency, cancellation, shutdown,
    rollout and resource-exhaustion cases on the deployed JDK/container limits. Define acceptable
    rejection/expiry and resource/backlog recovery before comparing results.
@@ -122,9 +124,11 @@ latency-sensitive request work.
 ## Pinning and version boundaries
 
 - Virtual threads are final in Java 21 (JEP 444).
-- Java 24 JEP 491 removes pinning caused by monitor acquisition/holding and `Object.wait`; choosing
-  `ReentrantLock` merely to avoid monitor-only pinning is obsolete on 24+. Blocking with a
-  native/foreign frame still on the stack can remain pinned, including callbacks into Java.
+- Java 24 JEP 491 removes pinning caused by monitor acquisition/holding and `Object.wait` under
+  default locking. Legacy `LockingMode=1` retains monitor pinning in HotSpot 24 GA and tested
+  Temurin 25.0.3; inspect effective flags/build before applying a version-only rule. With default
+  locking on 24+, choosing `ReentrantLock` merely to avoid monitor-only pinning is obsolete.
+  Blocking with a native/foreign frame still on the stack can remain pinned, including callbacks into Java.
 - Native methods, foreign functions and residual VM-frame paths can still pin. On HotSpot 25,
   class initialization can expose VM-frame pinning without application JNI. Inspect the event's
   reason/operation and exact build; correlate with scheduler queue/latency before calling it a

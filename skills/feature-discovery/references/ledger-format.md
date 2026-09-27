@@ -17,6 +17,7 @@ ASSM   A-01  "Asynchronous" means the caller receives an acknowledgement and the
              may complete after the initial response.
              Basis: provisional reading of the request, not an accepted contract.
              Falsified by: the required response must wait for completed processing.
+             Reliance: current outcome wording; no implementation decision yet.
 
 UNK    U-01  Whether the caller needs to observe completion, and how.
              Impact: HIGH — decides whether a callback, a status endpoint or nothing
@@ -71,6 +72,31 @@ consequence of choosing incorrectly. Mark an affected prior claim as disputed wh
 its history, and identify downstream entries that relied on it as needing revalidation.
 Hand off the unresolved conflict to context or clarification instead of silently picking a
 source, replacing the old claim, or reopening a resolution already supported by the input.
+
+## Evidence coverage and changed assumptions
+
+Use these checks when importing a prior ledger or a supplied investigation result. They
+classify the available evidence; they do not authorize a new repository sweep or experiment.
+
+**The same zero with different coverage.** A supplied sample of request logs contains zero
+retry events. Record that observation with its time range, sampling and detection limits;
+whether any retries occurred outside that coverage remains unknown. If instead the supplied
+evidence establishes a complete audit of all client attempts for that interval, with a method
+that detects retries, the narrower claim "no retries occurred in that audited population and
+interval" can be a fact. Neither supports "the client can never retry" or "retries are forbidden".
+Do not infer complete coverage just because the query returned zero rows or exited successfully.
+
+**The carried-forward estimate.** A prior estimate E-01 relies on assumption A-02 that traffic
+resembles last month's workload. New input adds bulk imports. Retain A-02's basis and falsifier,
+link E-01 as known reliance, and mark its applicability to the new workload for revalidation.
+The estimate is not newly verified by having a source, nor necessarily disproved; the available
+evidence no longer justifies carrying it forward unchanged. Preserve unaffected sourced facts.
+If nothing yet relies on an assumption, say so or omit the reliance field; do not invent tasks.
+
+This use of traceability to identify affected conclusions draws on
+[NASA's requirements-management guidance](https://www.nasa.gov/reference/6-2-requirements-management/).
+It supports following dependencies when inputs change, not imposing NASA's lifecycle or an
+approval process on this feature ledger.
 
 ## Two failure shapes to check the ledger against
 

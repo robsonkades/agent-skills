@@ -56,6 +56,9 @@ Start)`, `Concurrent Mark From Roots`, `Pause Remark`, `Pause Cleanup` and, on J
 5. **Classify the failure mode from the log line, not from the full GC.** Mark stack
    overflow, evacuation failure and humongous pressure produce different upstream evidence.
    Use the table in `references/marking-pathologies.md`.
+   A completed mark need not produce mixed collections: check candidate availability and
+   policy before calling it a failed cycle. A normal `Concurrent Undo Cycle` also differs
+   from an aborted full marking attempt. The cycle reference explains both paths.
 6. **Separate humongous allocated from humongous reclaimed** before calling it pressure —
    eager reclaim returning regions every young GC is healthy behaviour, not a leak.
 7. **Re-measure any region-size or IHOP change under the same allocation and promotion
@@ -120,6 +123,9 @@ application budgets do not require tuning.
   leads people to read "no longer serial" as "no longer expensive".
 - Separate object-graph marking, remembered-set rebuilding and evacuation heap-root scanning.
   A large RSet alone does not show that `Concurrent Mark From Roots` scans that RSet.
+- Marking identifies liveness; it does not make live objects reclaimable. When cycles finish
+  but reclaim little, distinguish dense/live old regions, candidate policy and old allocation
+  during reclamation from late initiation. Lower IHOP is not a remedy for every high live set.
 - Validate barrier/RSet overhead with phase-aligned CPU evidence and controlled workload trials.
   JMH `-prof gc` reports allocation/GC metrics; it does not isolate barrier instruction cost.
 
@@ -148,7 +154,8 @@ and expire them like other production telemetry.
 - [The cycle, its log and its flags](references/marking-cycle-log-and-flags.md) — the phase
   sequence with correct names, an annotated log of a complete cycle, the logging and
   diagnostic flags with their defaults, JFR events, and the HotSpot source paths. Read when
-  configuring marking instrumentation or reading a marking log for the first time.
+  configuring marking instrumentation, interpreting missing mixed collections or reading a
+  marking log for the first time.
 - [Marking pathologies](references/marking-pathologies.md) — symptom-to-hypothesis-to-
   instrument table, the SATB buffer and overflow mechanism, evacuation-failure reconciliation,
   and the humongous threshold and eager-reclaim decision. Read when a cycle

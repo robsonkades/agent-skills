@@ -83,6 +83,24 @@ justify change; several low-risk signals in a closed stable hierarchy may not.
 - **Lifetime and ownership**: holding a delegate does not make the wrapper its owner.
   Preserve who may close resources or cancel work, including shared/borrowed delegates and
   failure cleanup. Forwarding `close()` or returning a delegate can change that contract.
+- **Synchronization**: an inherited `synchronized` instance method locks the subclass
+  instance; forwarding to a synchronized delegate method locks the delegate instead.
+  Existing callers locking the public object across several calls can lose exclusion.
+  Check wrapper-owned state, compound operations and every alias to the delegate;
+  wrapper-local locks alone cannot coordinate callers using different wrappers around
+  the same delegate.
+  Preserve one protocol for the relevant invariant, or retain the hierarchy until a
+  compatible migration is supported. A confined wrapper need not gain locks just for using
+  composition. Verify the changed protocol with a controlled competing-call test; sequential
+  tests cannot exercise the lost exclusion. The receiver rule is specified by
+  [JLS 21 §17.1](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.1);
+  [synchronizedList](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collections.html#synchronizedList(java.util.List)>)
+  is a concrete API whose traversal contract depends on locking a particular public object.
+
+If preserving synchronization requires deeper analysis, pass the state/alias map, old and
+proposed lock protocols, caller invariants and failing interleaving to
+`java-thread-safety-contracts`; request a contract and verification plan. If unavailable,
+document the same reasoning locally and leave safety conditional until it is established.
 
 For example, a default bulk method may loop through single-item calls while the delegate's
 override validates the whole batch before writing anything. Forwarding only the single-item

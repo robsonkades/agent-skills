@@ -153,6 +153,27 @@ mutable entities as application-cache values without an explicit lifecycle contr
 AspectJ mode has different interception semantics. Verify caching is enabled and the actual
 cache manager implements the intended behavior.
 
+**Composition gap:** `@CacheEvict` with the default `beforeInvocation=false` follows successful
+method invocation, not necessarily transaction commit. An outer transaction may roll back
+after that method returns. Inspect the actual transaction boundary, advice order and cache
+manager before claiming that annotation composition keeps cache publication consistent with
+database commit. `beforeInvocation=true` deliberately evicts regardless of method outcome.
+
+When publication must follow successful commit, first inspect existing transaction-aware
+cache integration. Spring's `TransactionAwareCacheDecorator` defers `put`, `evict` and `clear`
+through active transaction synchronization; without it they execute immediately. Immediate
+operations such as `putIfAbsent`, `evictIfPresent` and `invalidate` are not deferred. Verify the
+actual operation and test successful commit and outer rollback. Keep an adequate integration;
+do not add transaction machinery to a cache whose contract does not require it. This mechanism
+alone supplies neither atomic database/cache commit nor durable invalidation after a process
+failure. For those requirements, pass the transaction topology, cache provider, stale-data
+tolerance and failure window to `caching-strategies` / `enterprise-transactions`; if unavailable,
+report the missing guarantee and required recovery check rather than assert consistency.
+
+These distinctions follow the [Spring 6.2.10 CacheEvict contract](https://github.com/spring-projects/spring-framework/blob/v6.2.10/spring-context/src/main/java/org/springframework/cache/annotation/CacheEvict.java)
+and [transaction-aware cache implementation](https://github.com/spring-projects/spring-framework/blob/v6.2.10/spring-context-support/src/main/java/org/springframework/cache/transaction/TransactionAwareCacheDecorator.java).
+They are verification baselines; use the deployed version when assessing an application.
+
 ## Not provided at all
 
 | Pattern                      | Why a framework cannot supply it                                                                          |

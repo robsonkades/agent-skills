@@ -31,6 +31,7 @@ The table summarizes risks, not proof that every client fails.
 | Widen a parameter type (`ArrayList` → `List`)                                           | **breaks** (`NoSuchMethodError`)                                                                            | OK for callers; existing overriders silently become overloads (`@Override` turns that into a compile error) | risk (a recompiled subclass that meant to override no longer does)            | The method descriptor changed; source-compatible changes can still be binary breaks                                                                                                                                      |
 | Change a return type                                                                    | breaks if the old erased descriptor no longer resolves                                                      | depends on callers and overrides                                                                            | risk                                                                          | Same-erasure generic changes need not break linkage; covariant overrides may retain a bridge. A narrower return can preserve ordinary source callers while breaking overriding subclasses                                |
 | Add a checked exception to `throws`                                                     | OK                                                                                                          | breaks callers                                                                                              | —                                                                             | `throws` has no linkage effect — it is checked only at compile time                                                                                                                                                      |
+| Remove or narrow a checked exception in `throws`                                        | OK                                                                                                          | can break callers' checked catches and implementations declaring the old exception                          | review the failure contract                                                   | A checked catch can become unreachable; an overriding method cannot declare broader checked exceptions than the revised method. Existing binaries still link                                                             |
 | Remove or rename a public member                                                        | **breaks**                                                                                                  | breaks                                                                                                      | —                                                                             | Rename = remove + add; deprecate-and-delegate instead                                                                                                                                                                    |
 | Make a class `final`                                                                    | **breaks** existing subclasses (`IncompatibleClassChangeError` at load)                                     | breaks                                                                                                      | —                                                                             | Same for making it `sealed` against foreign subclasses                                                                                                                                                                   |
 | Make an overridable instance method `final`                                             | **breaks** existing overriders (`IncompatibleClassChangeError` at load)                                     | breaks                                                                                                      | —                                                                             | A static method cannot be overridden; JLS treats adding `final` there differently                                                                                                                                        |
@@ -71,18 +72,26 @@ module consumers, but classpath use, reflection/open packages, service providers
 subclassing and public signatures can still create dependencies. “Internal” documentation reduces
 the compatibility promise; it does not erase observed ecosystem coupling or operational risk.
 
-Verification: run a binary-compatibility checker (japicmp or Revapi) against the previous
-release in CI, and gate the version bump on its report rather than on memory of the table
-above. Behavioural compatibility has no checker; it is guarded by keeping the old
-version's test suite passing against the new implementation.
+Verification: use an available binary-compatibility checker (such as the project's configured
+japicmp or Revapi) against the supported previous release. Inspect its configuration and findings;
+its report informs the compatibility decision but does not establish behavioural compatibility.
+Keep the old contract suite and representative consumer tests running against the new implementation;
+passing covers those exercised cases, not every unknown consumer.
 
 Also test source compatibility by compiling representative downstream source, and run old client
 binaries without recompilation. A binary checker cannot prove overload resolution, reflection,
 annotation-processing, serialization, JPMS access or behavioural compatibility.
 
+If the checker is unavailable, use supported source/binary comparisons and isolated caller checks
+that can run, then report their limited coverage. If the previous artifact or downstream binaries
+are missing, identify that evidence gap; recompiling everything against the new API does not test
+old-binary compatibility. Do not report the missing gate as passed or introduce CI tooling solely
+to complete a small design review. Follow the repository's actual release gates before release.
+
 ## Authoritative references
 
 - [JLS Chapter 13: Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se25/html/jls-13.html)
+- [JLS 8.4.8.3: Requirements in Overriding and Hiding](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.4.8.3) and [JLS 11.2.3: Exception Checking](https://docs.oracle.com/javase/specs/jls/se25/html/jls-11.html#jls-11.2.3) — source hazards when narrowing checked exceptions.
 - [MatchException, Java SE 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/MatchException.html)
 - [Java SE 17 switch-expression execution](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.28.2)
 - [Record deserialization, Java SE 25, step 11](https://docs.oracle.com/en/java/javase/25/docs/specs/serialization/input.html#the-objectinputstream-class)

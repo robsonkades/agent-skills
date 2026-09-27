@@ -49,6 +49,46 @@ A bounded set of application-lifetime listeners may intentionally remain registe
 subject's whole lifetime. Confirm that it does not capture shorter-lived state or accumulate
 across reloads; no separate removal API is needed solely to satisfy the pattern.
 
+## Registration and initial state
+
+Choose whether subscription observes only future notifications, includes the current state, or
+replays history. The pattern and a thread-safe listener list provide no replay contract. Preserve
+future-only registration when it meets the consumer's needs; do not add history or buffering just
+to make the API look complete.
+
+If current state plus subsequent updates is required, two naive handoffs can fail:
+
+```text
+read state v0 -> writer commits/notifies v1 -> register listener
+  v1 was missed before registration; the consumer remains at v0
+
+register listener -> capture baseline v0 -> callback applies v1 -> install baseline v0
+  registration succeeded, but the consumer regresses to an older state
+```
+
+CopyOnWriteArrayList snapshots membership, not subject state and its relationship to registration.
+An existing owner thread or serialized dispatcher can order registration, initial delivery and
+updates, provided all those operations participate. Otherwise coordinate registration and immutable
+snapshot/version capture with state mutations, then gate or buffer callbacks until the baseline is
+installed. Atomic version checks can reject stale **replaceable snapshots**; they cannot repair a
+missed required delta. For delta/effect events, preserve required order and effects, with bounded
+buffering and an explicit gap/resynchronization policy when needed. Keep callbacks outside state
+locks unless the stronger locking contract is deliberate; atomic capture alone does not serialize
+delivery after unlock.
+
+Define callback activation separately from return of the subscription handle. A callback may run
+during registration (for immediate initial delivery) or on another publishing thread before
+`subscribe` returns. Do not expose a partially constructed listener, or let that callback assume
+the returned handle has already been assigned. If early self-close is required, use an existing
+activation/handle protocol that makes the handle available first. Define cleanup if initial
+delivery fails before a handle is returned, so a failed subscription does not leave an unowned
+registration.
+
+Test these handoffs with deterministic scheduling barriers or controlled interleavings, not sleeps:
+an update between read and registration, a callback before baseline installation, and a callback
+before handle assignment. Check final state **and required event effects**; eventual equality alone
+can hide a lost delta. Also test the future-only case so a fix does not silently add replay.
+
 ## Ordering, errors, reentrancy
 
 ```java
@@ -274,6 +314,7 @@ handles. System.gc() is a request, so failure to observe collection is inconclus
 and bounded soak tests are more useful than a flaky GC assertion (heap-dump-analysis).
 
 Primary sources: [CopyOnWriteArrayList](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html),
+[JLS 17 publication and initialization](https://docs.oracle.com/javase/specs/jls/se17/html/jls-17.html#jls-17.5),
 [SubmissionPublisher](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/SubmissionPublisher.html),
 [PropertyChangeSupport](https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/beans/PropertyChangeSupport.html),
 [Spring transaction events](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/transaction/event/TransactionalEventListener.html),

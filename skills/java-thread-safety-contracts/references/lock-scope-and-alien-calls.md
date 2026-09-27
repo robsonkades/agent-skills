@@ -89,6 +89,27 @@ and same-object handling.
 - lock-free structures trade blocking for retry/coherence/reclamation complexity; route to their
   algorithm/progress owner, lock-free-patterns, when that design is actually required.
 
+## Waiting and cancellation contracts
+
+Entering `synchronized` has neither a timed nor an interruptible acquisition mode. When the
+contract requires abandoning a contended acquisition, consider `ReentrantLock.lockInterruptibly()`
+or timed `tryLock`; inspect the concrete implementation if using another `Lock`. On interruption
+or timeout, do not execute the protected operation as if acquisition succeeded. Release an acquired
+explicit lock in `finally`; never unlock after an unsuccessful acquisition.
+
+Condition waiting is different: check the guarded predicate in a loop, because a signal or spurious
+wakeup does not establish that the predicate now holds. Coordinate predicate changes and wakeups
+under the same protocol, including waking affected waiters on close when that lifecycle is supported.
+`Object.wait` releases only its monitor; a lock's `Condition.await` releases its associated lock,
+not unrelated outer locks. Reacquisition precedes continuation, including an interrupted wait's
+exception, so timeout/interruption alone does not guarantee prompt return while another thread
+holds that lock. Account for acquisition, predicate waiting and reacquisition in the caller's
+deadline/progress contract.
+
+For cancellation spanning tasks or resources, pass the wait chain, ownership, required termination
+behavior and residual side effects to `cancellation-and-interruption`; request a supported stop/cleanup
+protocol. If unavailable, keep any termination guarantee conditional and identify the unresolved wait.
+
 ## Troubleshooting
 
 ```text
@@ -104,6 +125,8 @@ timeouts but no deadlock
 
 ## Authoritative references
 
+- [JLS 25 monitor acquisition and wait sets](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html) — monitor ownership, wait loops and reacquisition.
+- [Lock acquisition contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Lock.html) and [Condition waits](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/Condition.html) — supported modes, implementation caveats and predicate waiting.
 - [`java.util.concurrent.locks`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/package-summary.html)
 - [`ConcurrentHashMap`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html)
 - [`StampedLock`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/locks/StampedLock.html)

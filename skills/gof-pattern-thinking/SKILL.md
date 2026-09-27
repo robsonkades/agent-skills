@@ -77,7 +77,9 @@ state minor reversible assumptions and continue independent investigation.
    the forces with lower lifecycle/debugging cost, keep it.
 3. **Identify axes of variation and evidence.** Two present variants are strong evidence, but a
    single implementation can still sit behind a justified external, ownership, security or testing
-   boundary. Price forecast variation explicitly (`java-dry-kiss-yagni`).
+   boundary. Check supported combinations and the invariants that forbid others before calling
+   axes independent; two configurable fields alone do not prove independent variation. Price
+   forecast variation explicitly (`java-dry-kiss-yagni`).
 4. **Compare relevant alternatives** below, starting with the direct implementation. The ladder
    is a search aid, not a universal cost ranking: configuration, DI and function values can compose.
    Include materially different ownership, extension or lifecycle choices even when a lower rung

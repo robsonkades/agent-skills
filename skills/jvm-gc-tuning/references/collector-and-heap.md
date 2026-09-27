@@ -75,6 +75,19 @@ covers the budget and the `MaxRAMPercentage` arithmetic. On the JDK 25 HotSpot b
 vendor/build and explicit options can change effective `-Xmx`. Read `MaxHeapSize`,
 container logs and flags on the target rather than multiplying the pod limit blindly.
 
+Before increasing the heap after a failure, classify its domain. A `Java heap space`
+`OutOfMemoryError` identifies a failed heap allocation, not necessarily a leak. Native allocation
+failures or an externally killed process require process/container evidence; lack of a Java heap
+dump does not prove a GC problem. Increasing `-Xmx` can worsen pressure on the same hard memory
+limit. Hand `jvm-memory-regions` the failure, flags, memory peaks and limiting cgroup scope and
+use its feasible heap ceiling as an input to the live-set calculation below. Do not duplicate
+its native-memory diagnosis or declare the remaining budget validated without peak evidence.
+
+For cgroup v2, limits apply through the hierarchy. `memory.events` includes descendant events;
+`memory.events.local` separates local events. An `oom_kill` counter increment identifies an OOM
+victim in that scope, not by itself the responsible allocation or this JVM as the victim. Correlate
+process identity, termination time and memory evidence before turning the event into a heap change.
+
 ### Sizing from the live set
 
 The number the heap is sized from is the **live set**: what survives a complete
@@ -167,6 +180,9 @@ resource reclamation as well as request latency. Route native-memory pressure to
 ## Validating a change
 
 - [ ] Equivalent workload, JDK/container limits, warm-up and operating regimes before/after
+- [ ] Preserve offered-load/request mix and report admitted/completed useful work plus
+      errors, timeouts and rejection. State which requests the latency distribution includes;
+      losing slow requests or reducing work must not masquerade as a collector improvement.
 - [ ] Measure the declared objective and relevant guardrails: pause frequency/tails and
       STW share for latency; GC CPU and useful work for throughput; residency and live-set
       headroom for footprint. Check stalls/fallback collections when the collector can
@@ -197,3 +213,7 @@ resource reclamation as well as request latency. Route native-memory pressure to
 - [JEP 490: removal of non-generational ZGC](https://openjdk.org/jeps/490)
 - [JEP 521: generational Shenandoah](https://openjdk.org/jeps/521)
 - [Java 25 Native Memory Tracking](https://docs.oracle.com/en/java/javase/25/vm/native-memory-tracking.html)
+- [Java 25 memory-failure diagnosis](https://docs.oracle.com/en/java/javase/25/troubleshoot/troubleshooting-memory-leaks.html)
+  — heap versus native allocation failure, and why an OOM does not itself prove a leak.
+- [Linux cgroup v2 memory controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory)
+  — hierarchical limits, local versus hierarchical events and OOM-kill counter scope.

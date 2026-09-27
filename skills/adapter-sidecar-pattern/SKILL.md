@@ -61,12 +61,21 @@ but incorrect output when either contract changes.
   mechanism the target protocol supports; adding a field does not force consumers to reject
   incompatible data.
 
+For a handoff to the named specialists, pass the source/consumer contract, supported versions,
+access path, chosen placement and unresolved constraint. Request the missing result (container
+lifecycle plan, probe policy, instrumentation change or series budget), not another general
+review. If the specialist is unavailable, retain this skill's essential contracts and identify
+the unverified wiring or sizing; do not invent platform behavior or block independent analysis.
+
 ## Deliverable
 
 For a small review, a concise finding is enough: evidence (or gap), consequence, proposed
 adjustment and confirming/refuting check. For a design or implementation, also provide the
 placement rationale, field/semantic mapping, failure policy and compatibility tests. State
 what ran and what remains unverified; do not claim a deployment fix from static analysis.
+Stop when the requested decision or finding is supported and its material risks have a check;
+for implementation, require those applicable checks to pass or report the concrete blocker.
+A request for review alone does not authorize deploying a replacement adapter.
 
 For worked decision boundaries or when evaluating this skill's decisions, use
 [validation-cases.md](references/validation-cases.md). These teaching cases include expected

@@ -36,13 +36,18 @@ A p50 of 15 ms and p99 of 3 s identifies a long tail worth tracing, but does not
 contribution or root cause. Use timer sum/count for mean hold time and inspect outstanding borrows
 that have not completed. Compare slow endpoints/transactions, lock waits, driver behavior and leaks.
 
-## 3. Is there non-database work inside the transaction?
+## 3. Is a connection held without useful SQL?
+
+Verify the capture can see the target sessions. PostgreSQL restricts activity details for other
+roles; missing/null fields or an empty filtered result are inconclusive without visibility.
+Obtain an appropriately scoped capture from an authorized operator when access is insufficient.
+See [PostgreSQL 17 activity visibility and states](https://www.postgresql.org/docs/17/monitoring-stats.html#MONITORING-STATS-VIEWS).
 
 ```sql
 SELECT pid, state, now() - state_change AS idle_duration,
        now() - xact_start AS transaction_age, backend_xmin, wait_event_type, wait_event, query
 FROM pg_stat_activity
-WHERE state = 'idle in transaction'
+WHERE state IN ('idle in transaction', 'idle in transaction (aborted)')
 ORDER BY idle_duration DESC;
 ```
 
@@ -53,6 +58,13 @@ logic inside `@Transactional`. Confirm that a connection is held across the exte
 transaction annotations alone do not prove physical checkout timing. Snapshot/cleanup impact
 depends on isolation, locks and transaction state; READ COMMITTED does not retain one query
 snapshot for the entire transaction. Check `backend_xmin` and blockers before assigning that cause.
+
+`idle in transaction (aborted)` adds a different lead: an earlier statement failed. Inspect
+exception handling, transaction rollback and connection-return paths; distinguish brief normal
+cleanup from an application stuck after the error. Neither state alone proves a permanent leak.
+Conversely, database state `idle` does not prove a connection is available in Hikari: application
+code can hold a checked-out connection outside a database transaction. Correlate pool ownership
+with the database session before treating database idleness as spare local pool capacity.
 
 In default Spring proxy mode, `this.method()` bypasses that method's transaction advice. An outer
 transaction may still exist; inspect propagation and caller context, and distinguish AspectJ mode.
@@ -122,6 +134,11 @@ slow queries and nested acquisition can contribute. Their presence does not prov
 pool is adequate. A bounded increase can be justified by measured database headroom, aggregate
 session budgets and request SLOs, including as a temporary mitigation; compare useful throughput,
 waits and database health with explicit rollback bounds. Keep an adequate pool unchanged.
+
+Acquisition timeout is also not a reason to retry immediately. Repeated attempts at a locally
+exhausted pool can consume its recovery budget; classify the failure and inspect remaining
+deadline, retry amplification and safe replay before enabling retry. The overload risk follows
+the [Google SRE retry guidance](https://sre.google/sre-book/handling-overload/#deciding-to-retry).
 
 Primary references: [PostgreSQL 17 statistics](https://www.postgresql.org/docs/17/pgstatstatements.html),
 [transaction isolation](https://www.postgresql.org/docs/17/transaction-iso.html), and

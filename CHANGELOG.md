@@ -10,6 +10,20 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.7.1] — 2026-09-27
+
+### Fixed
+
+- Completed the review of all 280 skills: corrected 263 packages and retained 17
+  without changes, preserving useful examples and technology baselines.
+- Corrected API, concurrency, resource-lifecycle, persistence and runtime guidance,
+  including shared timeout ownership, legacy-locking pinning and message framing.
+- Clarified specialist responsibilities, evidence requirements, conditional decisions
+  and optional handoffs; regenerated catalog versions and integrity hashes.
+- Recorded technical checks, per-skill limitations and 18 bounded agent responses.
+  The nine resumed original/revised/no-skill runs showed no comparative advantage
+  under their predefined criteria; example tests and walkthroughs remain distinct.
+
 ## [1.7.0] — 2026-09-22
 
 ### Added
@@ -329,7 +343,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.7.1...HEAD
+[1.7.1]: https://github.com/robsonkades/agent-skills/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/robsonkades/agent-skills/compare/v1.6.0...v1.7.0
 [1.2.0]: https://github.com/robsonkades/agent-skills/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/robsonkades/agent-skills/compare/v1.0.0...v1.1.0

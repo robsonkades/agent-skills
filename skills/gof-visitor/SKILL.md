@@ -4,8 +4,8 @@ description: >
   Visitor in modern Java: adding operations over a stable set of element types without editing
   them, and how a sealed hierarchy with an exhaustive switch competes with the classical
   double-dispatch version. Covers the expression problem—new operations cheap
-  versus new element types cheap — the cases where classical Visitor still wins (types you do not
-  compile, libraries whose API is accept()), stateful visitors that are unsafe to share, recursion
+  versus new element types cheap — the cases where classical Visitor still wins (encapsulated
+  dispatch, libraries whose API is accept()), stateful visitors that are unsafe to share, recursion
   depth on deep structures, and unknown element types from a newer producer. Use when several
   operations must run over one object structure, when instanceof chains grow over a closed
   hierarchy, when adding an operation means editing every element class, or when an accept/visit
@@ -140,6 +140,11 @@ THEN missing specialization may stop being a compile error. State whether the fa
      rejects, handles generically or preserves unknowns; verify semantics with tests.
      Check separately compiled old consumers as well as rebuilt source.
 
+IF a subclass inherits accept but needs a specialized visit
+THEN inspect the inherited body's selected method: overloads use compile-time argument types,
+     not the runtime type of this. Override accept to reach the specialized operation when
+     required; otherwise document intentional base-type handling. Test calls through the base API.
+
 IF the visitor holds mutable state across visits
 THEN document order, reset and confinement. Prefer an accumulator or fresh visitor;
      a deliberately synchronized/shared visitor is possible but changes semantics.
@@ -166,6 +171,11 @@ THEN follow the traversal/container mutation contract. In-place transforms can b
 IF one visitor needs a different traversal order than another
 THEN traversal is a variation point of its own — separate walking from
      the operation rather than duplicating both.
+
+IF nodes can be shared or revisited
+THEN define each operation's unit: an occurrence/path, object identity or domain identity.
+     Global deduplication and node-only memoization can change the result, especially when
+     inherited context affects it. Do not confuse cycle detection with skipping all repeated nodes.
 ```
 
 ## Cross-cutting checks
@@ -206,8 +216,8 @@ THEN traversal is a variation point of its own — separate walking from
 
 - [Visitor against pattern matching](references/visitor-vs-pattern-matching.md) — the expression
   problem with both directions worked through; where classical Visitor still wins and why; double
-  dispatch mechanics and its boilerplate count; stateful visitors and the fold that replaces them;
-  and traversal separated from operation. Read when choosing between the two forms.
+  dispatch mechanics and inherited-accept traps; stateful visitors and the fold that replaces them;
+  and traversal/identity semantics. Read when choosing between the two forms or reviewing dispatch.
 - [Worked example](references/worked-example.md) — a document model with four operations: the
   classical visitor it started as, the sealed fold alternative and the compile-time
   guarantee each gives, the unknown-node decision when documents began arriving from another

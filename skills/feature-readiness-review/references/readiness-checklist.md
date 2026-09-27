@@ -33,11 +33,16 @@ and existing authority; do not treat acceptance as permission to skip a declared
 
 ## Scope
 
-| #   | Item                                                                     | Blocking |
-| --- | ------------------------------------------------------------------------ | -------- |
-| 6   | In scope is listed, and every item traces to a requirement or constraint | yes      |
-| 7   | Out of scope is listed, each with a reason and who excluded it           | yes      |
-| 8   | The creep check has been run over Required and Recommended               | no       |
+| #   | Item                                                                                       | Blocking |
+| --- | ------------------------------------------------------------------------------------------ | -------- |
+| 6   | Selected scope is listed with its classification, basis and applicable selection authority | yes      |
+| 7   | Out of scope is listed, each with a reason and who excluded it                             | yes      |
+| 8   | The creep check covers Required, Recommended and selected Optional work                    | no       |
+
+For item 6, Required work traces to an obligation or necessary constraint. Other selected work
+traces to an evidenced benefit or risk and existing selection authority; do not invent a
+requirement merely to justify an authorized Optional improvement. Unselected proposals are not
+implementation commitments. All selected work retains its necessary correctness and validation.
 
 ## Constraints and decisions
 

@@ -207,6 +207,7 @@ ProblemDetail body = ProblemDetail.forStatusAndDetail(
         HttpStatus.TOO_MANY_REQUESTS, "Rate limit exceeded for this API key");
 return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
         .header(HttpHeaders.RETRY_AFTER, Long.toString(Math.max(1, seconds)))
+        .header(HttpHeaders.CACHE_CONTROL, "no-store")
         .body(body);
 ```
 
@@ -221,6 +222,9 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
   client may retry it under its policy. The error format itself belongs to `rpc-and-api-contracts`.
 - Document both statuses, the header, and the limit's unit and key in the API contract. An
   undocumented limiter does not shift load, it just relocates the failure into the client.
+- RFC 6585 §4 forbids caching 429 responses even without an explicit cache directive. The
+  sketch also sends `Cache-Control: no-store`; verify intermediaries respect the contract
+  instead of caching all errors by URL and spreading a tenant-specific denial to other users.
 - The sketch assumes enough headroom to construct and send the response. If error encoding,
   logging or connection handling dominates under extreme load, use the policy reference's
   "When rejection itself overloads the service" decision before changing transport behavior.
@@ -252,6 +256,7 @@ return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
 
 ## Primary references
 
+- [RFC 6585 §4: 429 response semantics and cache prohibition](https://www.rfc-editor.org/rfc/rfc6585#section-4)
 - [Java `Semaphore` API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)
 - [Bucket4j reference documentation](https://bucket4j.com/)
 - [Resilience4j RateLimiter documentation](https://resilience4j.readme.io/docs/ratelimiter)

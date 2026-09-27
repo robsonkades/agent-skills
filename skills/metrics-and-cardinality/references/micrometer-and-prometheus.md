@@ -89,6 +89,32 @@ deliberately (for example denial), test first-seen-value behavior, and record ov
 a separate bounded meter outside the rejected family. Normalize before registration where
 preserving totals is required; do not retain every raw input in an unbounded normalization cache.
 
+## Counter aggregation and recording rules
+
+For a fleet request rate, retain each counter's reset history until after rate calculation:
+
+```promql
+sum by (job) (rate(http_requests_total[5m]))
+```
+
+This can be recorded as a derived rate for cheaper repeated queries. Do not record
+`sum by (job) (http_requests_total)` and later apply `rate` to that cumulative aggregate:
+one replica's reset may be hidden by another's growth, or interpreted as the whole fleet
+resetting. A subquery around the same sum does not restore the lost identities. Once only
+the aggregate remains, the original resets generally cannot be reconstructed; recover
+per-source series or qualify the result instead of claiming the query repairs history.
+
+Distinguish this from recording events directly into one owned source counter with a
+defined lifetime, and from summing additive current-state gauges such as queue depths.
+Those gauges may legitimately decrease; applying counter `rate` semantics misreads the
+decrease as a reset. Recording rules also retain the original ingestion cost unless a
+separate storage/ingestion policy changes it.
+
+Test steady traffic and a reset of only one replica, including a case where another replica's
+growth masks the aggregate decrease. Assert the expected rate, not just that PromQL parses.
+Use the deployed version's `promtool test rules` with synthetic series when available;
+otherwise state that the reset scenarios were inspected without executing the query engine.
+
 ## Prometheus distributions
 
 Classic histogram query:
@@ -148,3 +174,5 @@ dashboards, alerts, autoscalers and external consumers can all change atomically
 - [Micrometer meter filters](https://docs.micrometer.io/micrometer/reference/concepts/meter-filters.html)
 - [Prometheus histograms and summaries](https://prometheus.io/docs/practices/histograms/)
 - [Prometheus metric types](https://prometheus.io/docs/concepts/metric_types/)
+- [Prometheus rate and reset handling](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate)
+- [Prometheus rule and expression tests](https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/)

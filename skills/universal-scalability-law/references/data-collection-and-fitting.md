@@ -121,6 +121,25 @@ If only relative variance weights are defensible, `absolute_sigma=True` gives un
 absolute intervals; estimate the error scale/model and report that uncertainty. Correlated
 run blocks need their covariance or block-aware inference, not a diagonal sigma vector.
 
+### Mean-curve uncertainty versus a future run
+
+Evaluating joint parameter/bootstrap samples at `N0` gives uncertainty in the fitted mean
+`X(N0)`. A prediction interval for a new run must also include the new run's variation.
+For an independent new observation under an adequate additive-error model:
+
+```text
+prediction-error variance ≈ fitted-mean variance at N0 + run-error variance at N0
+```
+
+Use the run-level error model at that N, not request-latency spread or one pooled residual
+variance when the noise changes with N. A bootstrap prediction needs new-run errors as well
+as parameter variation; respect the design's blocks and dependence. Even perfectly known
+coefficients do not make a noisy future run deterministic. Conversely, comparing expected
+capacity or expected marginal gain needs joint mean-curve uncertainty, without adding an
+individual future observation's noise. State the target, population and interval construction;
+neither type repairs model bias or promises SLO compliance. Use held-out runs to check the
+claimed predictive behavior when it supports the decision.
+
 ## Identification checks
 
 `α(N−1)` and `βN(N−1)` can trade off over a narrow low-N range.
@@ -222,3 +241,4 @@ bounded descriptive prediction need not generate a new reporting or experiment p
 - [SciPy 1.15.2 nonlinear least squares documentation](https://docs.scipy.org/doc/scipy-1.15.2/reference/generated/scipy.optimize.curve_fit.html)
 - [NumPy 1.26 floating-point error handling](https://numpy.org/doc/1.26/reference/generated/numpy.errstate.html)
 - NIST/SEMATECH, [nonlinear least-squares regression](https://www.itl.nist.gov/div898/handbook/pmd/section1/pmd142.htm)
+- NIST/SEMATECH, [prediction of a new response](https://www.itl.nist.gov/div898/handbook/pmd/section5/pmd512.htm) — fitted-mean uncertainty and new-observation variation are distinct components.

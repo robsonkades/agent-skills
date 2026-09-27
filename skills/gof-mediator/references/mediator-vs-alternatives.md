@@ -118,11 +118,26 @@ Immutable state + CAS
     can be applied after the swap
 ```
 
-Choose confinement when its latency/capacity contract fits. Offloaded effects still need ordered
-completion, cancellation and failure handling; returning from a handler does not release resources
-still used by that work. Close only owned resources after actual use ends, and define how late
-completions are handled after cancellation/shutdown. CAS publication does not atomically deliver an effect;
-use claimed effect identities and a delivery/recovery policy (`littles-law-and-queueing`).
+Choose confinement when its latency/capacity contract fits. Separate submission order, completion
+order and the order in which outcomes may change protocol state. A single consumer processes
+arrivals one at a time; it does not make offloaded work finish in submission order. For example,
+[ExecutorCompletionService](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/ExecutorCompletionService.html)
+queues completed tasks. Require sequence only where the protocol needs it; independent outcomes
+may commute, while a dependent step must wait for its prerequisite rather than merely its dispatch.
+
+Correlate each callback with the operation/protocol instance that created it and check whether the
+current state still accepts that outcome. A generation token can prevent an old search preview
+from replacing a newer one, or a disposed dialog's callback from updating its replacement. Dropping
+that local result is valid only under a latest-result contract. A late payment or reservation
+outcome still belongs to its original operation and may require reconciliation or compensation;
+discarding its callback does not undo the effect. Retrying that effect retains its deduplication
+identity; creating a new protocol generation must not bypass the participant's retry contract.
+
+Cancellation and shutdown also need failure and resource ownership rules: returning from a
+handler does not release resources still used by offloaded work. Close only owned resources after
+actual use ends, and define how late completions reach their recovery owner after the hub closes.
+CAS publication does not atomically deliver an effect; use claimed effect identities and a
+delivery/recovery policy (`littles-law-and-queueing`).
 
 ## Orchestration versus choreography
 

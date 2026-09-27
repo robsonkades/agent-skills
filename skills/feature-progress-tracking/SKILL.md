@@ -46,7 +46,7 @@ TODO ──► IN_PROGRESS ──► DONE
   ├──► SKIPPED ◄┘
   └──► CANCELLED
 
-DONE ──► IN_PROGRESS     only when a later change reopens it; say what reopened it
+DONE ──► IN_PROGRESS     when evidence or a change invalidates completion; record why
 ```
 
 The normal path is TODO → IN_PROGRESS → DONE. A direct TODO → DONE transition is acceptable for an
@@ -66,6 +66,10 @@ resumption, not workflow accounting for its own sake.
    edits into an event stream that costs more than the work.
 3. **Require relevant acceptance evidence for DONE.** Link what ran, results and the checked
    code/contract revision and environment; a command name alone is not a passing result.
+   Keep enough durable evidence in the established record for the next owner to substantiate
+   that status. A mutable "latest" badge or expiring artifact link alone is insufficient. If an
+   artifact becomes unavailable, assess the remaining evidence before reopening affected work;
+   losing a link does not prove that the check failed or never ran.
 4. **Record a blocker's question or missing condition**, affected work, resolution owner,
    evidence needed to unblock, and what continues meanwhile. If the owner is unknown, say so
    instead of assigning decision authority by assumption.
@@ -77,8 +81,8 @@ resumption, not workflow accounting for its own sake.
    and mark `EV-*` stale only where their coverage is invalidated; a new revision label or reordered
    plan alone does not invalidate a passing check. Name what triggered each state change.
 
-Formats for both files, and the resumption procedure, are in
-`references/artefact-formats.md`.
+Load [artefact formats](references/artefact-formats.md) when creating or resuming records, or
+when evidence access or retention puts a completion claim in doubt.
 
 ## Decision rules
 

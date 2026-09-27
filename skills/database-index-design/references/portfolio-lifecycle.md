@@ -11,6 +11,12 @@
 - Define the signal expected to move: reads/buffers, rows examined, sort/spill, lookup count, lock
   footprint, or latency under the same workload.
 
+Validate constraint behavior separately from read-plan improvement when changing a unique index:
+exercise duplicates within and across partition keys, relevant null/collation cases, and
+referencing-key or application conflict behavior. Use an authorized disposable fixture with
+bounded execution. Existing duplicate-free data or successful index creation alone does not
+prove that the replacement enforces the required invariant.
+
 ## Safe creation
 
 The terms are not equivalent:

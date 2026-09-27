@@ -59,6 +59,14 @@ Use when the question is creation rate/site. Determine whether weight is estimat
 actual bytes, event count, TLAB event, or sampled object. Allocation is not retention. Compare
 per work and verify whether GC/user outcome changes.
 
+If post-GC growth makes retention the question, class counts and shallow-byte histograms can
+locate growing populations, but a large array class does not identify the object keeping those
+arrays alive. Reuse those statistics when the decision needs only population/growth evidence.
+For owner, retaining-path or retained-size attribution, pass the existing heap graph, capture
+population/GC context and suspected lifecycle to `heap-dump-analysis`; expect reference-path
+evidence, not attribution from the allocation stack. If that skill or a suitable graph is
+unavailable, state the ownership gap and propose a capture only within the incident budget.
+
 ### Lock events
 
 Use when contention is supported by monitor/park/thread evidence. Thresholded lock profiles
@@ -199,6 +207,8 @@ Artifact validation and owning analysis skill:
 
 ## Sources for visibility and clock limits
 
+- [Eclipse MAT shallow versus retained heap](https://help.eclipse.org/latest/topic/org.eclipse.mat.ui.help/concepts/shallowretainedheap.html)
+  distinguishes an object's own bytes from the graph of objects retained through it.
 - [JDK 25 `Event` API](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/Event.html)
   specifies begin/end versus commit and threshold behavior.
 - [OpenJDK 25 `Unsafe_Park`](https://github.com/openjdk/jdk/blob/jdk-25%2B36/src/hotspot/share/prims/unsafe.cpp)

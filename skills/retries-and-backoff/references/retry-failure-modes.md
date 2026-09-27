@@ -140,6 +140,11 @@ induce an outage or run every scenario. The following are validation options, no
   after caller timeout until it actually finishes. Validate unknown outcomes survive budget exhaustion.
 - **Statistical jitter.** With a deterministic random source in unit tests verify range and
   saturation/overflow; at fleet scale inspect retry-arrival histograms for synchronization.
+- **Request replay and response cleanup.** Repeat publication/attempts against a fresh stable
+  source and an exhausted or changing source; compare the complete intended payload, not just
+  the intent key. Exercise an error response whose body stalls or exceeds the drain limit;
+  verify cleanup before backoff/new attempts without an unbounded read. Keep cancellation and
+  actual-completion accounting separate.
 
 ## Troubleshooting path
 

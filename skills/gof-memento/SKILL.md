@@ -124,9 +124,10 @@ public final class Editor {
         if (!(snapshot instanceof State state) || state.owner() != owner) {
             throw new IllegalArgumentException("foreign or null snapshot");
         }
+        var restoredMarks = new ArrayList<>(state.marks()); // prepare before changing live fields
         this.text = state.text();
         this.caret = state.caret();
-        this.marks = new ArrayList<>(state.marks());
+        this.marks = restoredMarks;
     }
 }
 ```
@@ -158,6 +159,12 @@ IF the source can be mutated while it is being captured
 THEN the capture may hold fields from two different states. Capture
      under the same lock as the mutators, or from an immutable value.
 
+IF the caretaker provides undo/redo
+THEN serialize live state and history transitions together. Prepare fallible restore work
+     before changing live state; a rejected restore must not consume the history entry.
+     A new successful edit discards obsolete redo in linear history; retained branches
+     need an explicit selection and retention policy instead.
+
 IF an undo stack holds full captures of a large object
 THEN estimate independent copy cost from depth and capture size, then inspect shared/variable
      retained state. Compare full copies, exact inverses, diffs and persistent structures;
@@ -187,6 +194,11 @@ THEN consider event sourcing before building a snapshot history that
   an immutable state value swapped through a single `volatile`/atomic reference—in which case
   capture/restore of that state reference is atomic, provided no related state lives outside it
   (`java-memory-model`).
+- **Failure.** A lock prevents concurrent observation, not partial mutation after an exception.
+  Check ownership, compatibility and invariants and prepare replacement state before publishing
+  it. Define recoverable failures to leave state and history unchanged; if an edit or external
+  callback can leave partial effects, report/recover that state explicitly instead of treating
+  capture/restore as a transaction. Do not promise recovery from arbitrary VM failure.
 - **Distribution.** A persisted memento is also a serialized snapshot with a schema identity
   and evolution policy. Reject unsupported meaning rather than assuming tolerant reading is safe;
   added fields need validated defaults or a migration. Distributed checkpointing across processes
@@ -215,6 +227,7 @@ and compatibility conditional; enumerate fields and external effects before prop
 - [ ] The capture type is opaque to the caretaker
 - [ ] Retained captures cannot be mutated through live state after capture or restore
 - [ ] Capture and restore are atomic with respect to concurrent mutation
+- [ ] Rejected restore leaves state/history unchanged; undo/redo and new-edit transitions have a defined policy
 - [ ] Independent semantic observations cover every restorable field; capture equality alone is insufficient
 - [ ] History bounds cover actual retained state, including variable capture sizes and redo/branch history
 - [ ] A durable capture has an explicit schema identity/evolution strategy and corruption handling
@@ -225,8 +238,9 @@ and compatibility conditional; enumerate fields and external effects before prop
 
 - [Memento, snapshot and event sourcing](references/memento-snapshot-eventsourcing.md) — the three
   compared on durability, schema, history and cost; Java encapsulation techniques for an opaque
-  capture; memory strategies for undo stacks (inverses, diffs, persistent structures); and
-  versioning rules once a capture becomes durable. Read when choosing between them.
+  capture; caretaker failure and branching rules; memory strategies for undo stacks (inverses,
+  diffs, persistent structures); and versioning rules once a capture becomes durable. Read when
+  choosing between them or implementing history transitions.
 - [Worked example](references/worked-example.md) — a multi-step form with undo built on an opaque
   memento, converted to an immutable state with structural sharing when the stack grew, plus a
   batch job checkpoint that deliberately is a versioned snapshot rather than a memento. Read when

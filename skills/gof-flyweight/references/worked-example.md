@@ -86,6 +86,10 @@ admission-cap path; correctness must not depend on shared identity. Literal-only
 this bug. An implementation test may assert reuse within a pool to verify the optimization without
 making identity an application contract.
 
+Also use distinct colliding keys such as `"Aa"` and `"BB"`: the pool must preserve both values.
+For descriptor pools, vary one semantic dimension (flags, tenant or schema version) while keeping
+the display name fixed; verify the corresponding behavior, not merely the number of entries.
+
 ## Acceptance evidence and alternatives
 
 Run the same representative load before and after; report live bytes, distinct object counts,

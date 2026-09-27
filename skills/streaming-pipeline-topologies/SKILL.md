@@ -113,6 +113,11 @@ Consider separate pipelines when:
   value joins may retain current state per live key and tombstones may remove it; fixed-size
   aggregates need less per-key bytes than raw-event joins. Bound by semantic retention and
   measure distinct keys, unmatched events, bytes and compaction/checkpoint amplification.
+- **Specify a table enrichment's time and update contract.** Choose current reference data,
+  the version effective at the event time, or a result that must change when either input
+  changes. Retained version history, join triggers and sink correction support differ;
+  timestamps and checkpoints alone do not make mutable lookups reproducible. See
+  `references/stateful-stages.md` before choosing the join or its replay policy.
 - A **copier**—a second consumer group—decouples offsets/failure but adds broker read/network/
   cache and downstream cost. Kafka groups have independent offsets, but share topic retention
   and compaction; another group does not preserve expired input or create independent retention.
@@ -168,6 +173,7 @@ serializer compatibility are part of the contract.
   rules and semantic steps within fused operators. Read when designing a topology
   or reviewing whether a stage may be parallelised.
 - [Stateful stages](references/stateful-stages.md) — window types with their state cost,
-  watermarks and late-data policy options, the unbounded-state failure with the metrics that
-  catch it before OOM, state store sizing, and how to test a windowed join deterministically on
-  controlled event time. Read before building a join, or when state is growing.
+  temporal enrichment and update contracts, watermarks and late-data policy options, the
+  unbounded-state failure with the metrics that catch it before OOM, state store sizing, and
+  how to test a windowed join deterministically on controlled event time. Read before building
+  a join, replaying enriched events, or when state is growing.

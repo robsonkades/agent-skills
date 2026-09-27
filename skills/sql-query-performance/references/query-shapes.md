@@ -74,6 +74,33 @@ If arbitrary page jumps are required, a cheaper total count alone does not imple
 Consider bounded OFFSET, cached/materialized page anchors or a snapshot result set, preserving the
 navigation contract. Approximate/capped totals separately change what the UI can claim.
 
+## Join multiplicity versus existence
+
+Establish whether the result needs one outer row, every matching pair, or an aggregate over
+matches. Multiple inner matches can legitimately multiply rows; neither `DISTINCT` nor a new
+index fixes an incorrect join condition. If the requirement is only membership and no inner-row
+values/counts are needed, consider a correlated `EXISTS`:
+
+```sql
+-- one row per qualifying order; ? is a client-bound tenant parameter
+SELECT o.id FROM orders o
+WHERE o.tenant_id = ?
+  AND EXISTS (
+    SELECT 1 FROM payments p
+    WHERE p.tenant_id = o.tenant_id AND p.order_id = o.id AND p.status = 'settled'
+  );
+```
+
+Keep every qualifying and authorization predicate. `EXISTS` preserves outer-row multiplicity
+without emitting one row per inner match. Replacing `JOIN` plus `DISTINCT` is equivalent only
+when projected duplicates are handled the same way: two distinct orders with the same projected
+label remain two rows with `EXISTS`, whereas `DISTINCT label` returns one. Preserve that final
+deduplication if it is required; verify uniqueness constraints rather than assuming them.
+Test zero/one/many inner matches, repeated outer projections and tenant boundaries. A semijoin
+can avoid unnecessary matching/deduplication work, but the optimizer may already choose an
+equivalent plan; compare actual work before claiming a speedup. Do not replace an item listing
+or child aggregate with an existence test.
+
 ## `OR` across different columns
 
 `WHERE a = ? OR b = ?` may scan, combine indexes or use other engine-specific paths. A union rewrite

@@ -46,6 +46,11 @@ permits, or identify what must be learned before a number is useful.
    when task durations are independent. Model precedence, capacity and calendars separately
    from statistical dependence; simulation does not infer them. A sum of effort is not
    automatically elapsed project duration.
+   Task percentiles do not generally add, and the largest branch P80 is not automatically
+   the project's P80. Derive the completion-time distribution for the actual schedule first;
+   marginal task ranges alone do not determine it. Use the exact counterexample in
+   [Methods and arithmetic](references/methods.md#task-percentiles-are-not-project-percentiles)
+   when reviewing a deadline assembled from task percentiles.
 5. **Calibrate against comparable history.** Record sample count, start/end definitions,
    changed team conditions and omissions. Three examples can anchor discussion, not establish
    reliable tail percentiles. Compare forecasts with later outcomes without replacing old estimates.

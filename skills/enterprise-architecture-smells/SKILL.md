@@ -27,6 +27,11 @@ A smell is not a defect. It is a **symptom that warrants investigation**, and it
 finding only when a concrete harm can be named: a change that is riskier, a caller that can
 break, a test that cannot be written, a cost that is being paid for nothing.
 
+Return findings and proposed corrections for a review request. Implement a correction only
+when fixes are within the user's requested scope; the removal procedures in the references
+do not extend that scope. An authorized fix should preserve the same contracts the review
+uses to judge the design.
+
 ## Workflow
 
 1. **Observe, do not diagnose.** Record what is actually there: file counts per change,
@@ -91,6 +96,11 @@ Two services must be deployed together
         → distinguish contract incompatibility from release policy or a
           temporary migration; assess lost deployment independence and
           actual operational cost (distribution-boundaries).
+
+Two services use the same database
+        → distinguish shared infrastructure from shared data ownership.
+          Trace cross-owner readers/writers and invariants; independent
+          deployment alone does not rule out data coupling.
 
 A persistence type appears in a controller signature or an API payload
         → inspect exposed fields, serialization and lazy access; mapping
@@ -160,7 +170,8 @@ Illustrative finding; replace these names and counts with inspected evidence:
 
 - [Smell catalogue](references/smell-catalogue.md) — each smell with symptoms, cause,
   consequences, a detection command or query, the refactoring direction, and the situation
-  in which it is actually acceptable. Read when investigating a specific suspicion.
+  in which it is actually acceptable. Read when investigating a specific suspicion; its
+  decision cases exercise false positives, hidden coupling and review scope.
 - [Pattern overuse](references/pattern-overuse.md) — the abstractions that cost more than
   they return: interface-per-class, generic repositories, mapping chains, speculative
   plugin points, premature services and premature domain models; with the questions that

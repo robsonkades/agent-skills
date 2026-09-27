@@ -23,6 +23,12 @@ rewrite. Confirm by server/protocol evidence rather than configuration intent.
 staging when rejects need broad classification. For client-side data use STDIN/`CopyManager`; do not
 grant server file access merely to avoid streaming.
 
+`COPY FROM` maps fields positionally to its column list; `HEADER true` discards a header rather
+than mapping by its names. In PostgreSQL 18, `HEADER MATCH` validates names and order but does not
+reorder fields. Use the intended column list and verify the input schema. With default CSV
+options, an unquoted empty field is SQL NULL and a quoted empty field is an empty string;
+custom NULL/FORCE options change this. Pin encoding and date interpretation for exported text.
+
 `COPY FROM` does not invoke rules and is unsupported when row-level security applies to the caller.
 Use a supported policy-enforcing path such as `INSERT`; do not bypass required tenant/access
 checks merely to select the bulk API. Test with the actual loading role, not only the table owner.
@@ -35,6 +41,10 @@ allocations and the sequence's increment/range, and avoid blindly resetting a li
 
 Unlogged/new-table and WAL optimizations have strict backup/replication/recovery implications.
 Measure WAL generation and replica lag rather than assuming a `COPY` variant is minimally logged.
+
+A failed `COPY FROM` can leave already processed rows invisible but still consuming storage.
+Account for that space before retrying a large failed load; arrange appropriate vacuum/reuse
+within the operational policy. Transactional rollback is not proof of immediate disk reclamation.
 
 ## MySQL LOAD DATA
 
@@ -74,6 +84,15 @@ For direct `SQLServerBulkCopy`, default `FireTriggers` and `CheckConstraints` ar
 direct-API defaults blindly to the driver's batch-insert optimization; verify that route's
 documented options for the installed driver.
 
+Without column mappings, `SQLServerBulkCopy` associates columns by ordinal. Validate both schemas
+or use explicit `addColumnMapping` entries, especially when reusing the object for another source
+or target. Name-compatible source data does not establish position-compatible data; compare stored
+values, not just counts. Match source metadata/types to the target to avoid unintended conversions.
+
+For direct Bulk Copy, default `KeepNulls=false` substitutes destination defaults where applicable.
+Choose `KeepNulls=true` when explicit source nulls must remain null; retain default substitution
+only when that is the input contract. Missing/unmapped fields are a separate mapping decision.
+
 When bulk loading bypasses `CHECK` or foreign-key validation, inspect both enabled and trusted
 constraint state afterward; primary/unique keys are still enforced. Re-enabling a constraint alone
 does not validate existing rows. Validate the affected constraints with the appropriate
@@ -92,13 +111,13 @@ bottleneck even when the loader is fast.
 
 ## Sources
 
-- [PostgreSQL 18 COPY](https://www.postgresql.org/docs/18/sql-copy.html) — validation and conversion-error handling; check the deployed major version.
+- [PostgreSQL 18 COPY](https://www.postgresql.org/docs/18/sql-copy.html) — field/header/null interpretation, validation, conversion-error handling and failed-load storage; check the deployed major version.
 - [PostgreSQL 18 sequences](https://www.postgresql.org/docs/18/sql-createsequence.html) — post-COPY sequence adjustment, cached allocations and rollback limits.
 - [MySQL 8.4 LOAD DATA](https://dev.mysql.com/doc/refman/8.4/en/load-data.html) — LOCAL, warnings and interpretation semantics.
 - [MySQL 8.4 REPLACE](https://dev.mysql.com/doc/refman/8.4/en/replace.html) — delete/insert semantics, defaults and multiple unique-key conflicts.
 - [MySQL 8.4 foreign keys](https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html) — referential actions and absence of historical validation when checks are re-enabled.
 - [MySQL 8.4 SHOW WARNINGS](https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html) — session diagnostics and retained-warning limits.
-- [Microsoft JDBC bulk copy](https://learn.microsoft.com/en-us/sql/connect/jdbc/using-bulk-copy-with-the-jdbc-driver) — options and transaction participation.
+- [Microsoft JDBC bulk copy](https://learn.microsoft.com/en-us/sql/connect/jdbc/using-bulk-copy-with-the-jdbc-driver?view=sql-server-ver17) — mappings, null/default options and transaction participation.
 - [Microsoft JDBC batch-insert bulk optimization](https://learn.microsoft.com/en-us/sql/connect/jdbc/use-bulk-copy-api-batch-insert-operation) — eligibility and route-specific behavior.
 - [SQL Server bulk constraint handling](https://learn.microsoft.com/en-us/sql/t-sql/statements/bulk-insert-transact-sql?view=sql-server-ver17#check_constraints) — skipped CHECK/foreign-key checks and trust state.
 - [SQL Server constraint revalidation](https://learn.microsoft.com/en-us/sql/relational-databases/tables/disable-foreign-key-constraints-with-insert-and-update-statements?view=sql-server-ver17) — enabling, validating and restoring trust are distinct.

@@ -3,7 +3,7 @@ name: delivery-semantics
 description: >
   Precise end-to-end delivery and processing semantics: acknowledgement placement, loss and
   duplicate windows, Kafka transactions, visibility leases, ambiguous outcomes and external
-  side effects. Use when reviewing "exactly once", consumer commits, redelivery or a handler
+  side effects. Use when reviewing "exactly once", consumer commits, publisher confirms, redelivery or a handler
   that writes outside its broker. Idempotent handler design belongs to idempotency; retries,
   ordering, poison messages and fault assumptions have their own skills.
 ---
@@ -12,9 +12,10 @@ description: >
 
 ## Purpose
 
-Decide which delivery guarantee a path needs, and place the acknowledgement so the code
-actually provides it. The guarantee is not a broker setting; it is the position of the ack
-relative to the side effect, plus whatever the application does about duplicates.
+Decide which delivery guarantee a path needs, and place each acknowledgement so the code
+actually provides it. The guarantee composes publication acceptance, broker durability and
+retention, consumer progress, effect completion and duplicate handling; no one setting covers
+the entire path.
 
 The failure this prevents is the system designed against a guarantee nobody implemented:
 a team believes the platform gives "exactly-once", the handler is not repeat-safe, and the
@@ -38,6 +39,9 @@ configuration. Existing project versions govern implementation; do not upgrade t
    a loss window; completing first opens a duplicate window. Starting async work is not
    completion. Auto-commit safety depends on the client/framework lifecycle, not a timer
    label: inspect the Kafka coupling below.
+   At the publication boundary, distinguish local enqueue, broker confirmation and consumer
+   completion. Trace callbacks/Futures, routing failures and outbox sent markers as well as
+   consumer offsets; an async send returning is not confirmed publication.
 3. **Choose the loss/duplication trade explicitly.** Ask what the business does with a lost
    record versus a duplicated one. Even telemetry can require completeness; use the actual
    acceptance/reconciliation contract rather than assuming its loss is free.
@@ -61,6 +65,12 @@ configuration. Existing project versions govern implementation; do not upgrade t
 
 - Write `at-most-once`, `at-least-once`, `effectively-once`, or "exactly-once **within**
   \<named boundary\>". A guarantee with no named boundary is a marketing claim.
+- Publisher confirms and consumer acknowledgements cover different boundaries. Before retiring
+  retained publication intent, verify the send result, required routing and the configured
+  durability contract; transactional sends also require transaction commit. Read
+  [publication progress](references/ack-placement.md#publication-progress)
+  for Kafka's async completion and RabbitMQ's confirmed-but-unroutable case. Neither confirms
+  the downstream business effect.
 - A timeout alone cannot resolve an **ambiguous outcome**. A confirmation proves only what
   its protocol acknowledges: broker acceptance need not mean downstream application.
   Track each effect and progress update separately, retaining known partial completion and
@@ -117,6 +127,10 @@ Deliver the input identity, durable effects and progress store, chosen guarantee
 and rationale, relevant loss/duplicate/unknown windows, and a bounded recovery test or test
 plan. Distinguish documented behavior from executed tests; missing provider or lifecycle
 evidence keeps the claim conditional. Scale the artifact to the actual decision.
+When handing off repeat-safe handler design to `idempotency`, pass the stable input identity,
+effect/progress stores, concurrent replay sources and retention/recovery horizon. Request an
+outcome invariant and atomicity/provider contract. If unavailable, keep the guarantee conditional
+on those obligations rather than supplying a check-then-act dedup shortcut.
 
 ## References
 
@@ -124,10 +138,10 @@ evidence keeps the claim conditional. Scale the artifact to the actual decision.
 - [Jakarta Messaging 3.1 specification](https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.pdf)
 - [Amazon SQS visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html)
 
-- [Ack placement](references/ack-placement.md) — the three ack positions in a Kafka
+- [Ack placement](references/ack-placement.md) — publication confirmation and the three ack positions in a Kafka
   consumer and in a visibility-timeout queue, each with the guarantee it yields and the
   concrete loss or duplication it produces. Read when reviewing or writing a consumer loop,
-  or when deciding where a commit goes.
+  or when deciding where a commit or outbox sent marker goes.
 - [The exactly-once boundary](references/exactly-once-boundary.md) — what a Kafka
   transactional producer covers and what it does not, and the transactional outbox and
   idempotent-consumer reductions for a side effect outside it. Read before claiming a path

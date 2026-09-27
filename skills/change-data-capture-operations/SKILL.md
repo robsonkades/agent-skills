@@ -35,6 +35,9 @@ distinguishes offset storage by runtime and the connectors that require internal
 
 If versions, positions or retention evidence are missing, continue with read-only inventory and
 a conditional recovery decision. Do not assert continuity or prescribe a reset from connector status alone.
+Apply the requested scope: a diagnosis or review can finish with supported findings and the next
+discriminating check. Execute recovery changes only within the task's authorization; an operational
+skill does not turn a findings-only request into permission to restart production capture.
 
 ## Choose the operational path
 
@@ -69,11 +72,38 @@ and sink commit time separately. A heartbeat demonstrates its own path, not ever
 publication/filter/key correctness. Use the deployed connector's metric definitions with
 [Debezium monitoring](https://debezium.io/documentation/reference/3.3/operations/monitoring.html).
 
+For the Debezium 3.3 PostgreSQL and MySQL Kafka Connect connectors, raising `tasks.max` does
+not parallelize source capture: each uses one task. More workers or topic partitions do not
+divide that task's decoding work. Check the [PostgreSQL task contract](https://debezium.io/documentation/reference/3.3/connectors/postgresql.html#postgresql-property-tasks-max)
+and [MySQL task contract](https://debezium.io/documentation/reference/3.3/connectors/mysql.html#mysql-property-tasks-max).
+If capture is limiting, examine source transactions, decoding, transformations and publication
+throughput. If capture is current and sink application is limiting, keep source progress intact
+and tune the downstream stage. Splitting capture into multiple connectors is an architectural
+change: prove independent table ownership, source identities/slots, routing and required ordering;
+account for extra source load and retained state before choosing it.
+
 Estimate retention runway using actual source log generation and reclamation, including traffic
 outside captured tables. For illustration, 120 GiB usable headroom / 6 GiB per hour **net** growth
 gives 20 hours before the reserve is consumed if the rate persists. Subtract response and recovery
 time; monitor changing rates and disk free space. Catch-up requires sustained drain capacity above
 arrival rate. Record/byte/age lag cannot be interchanged without a measured conversion.
+
+## Verify what reaches the sink
+
+When rows remain after deletion or a rebuild appears complete, compare a representative raw CDC
+event, the event after configured transformations, and the sink's actual apply behavior. A raw
+`op=d` record and a same-key, null-value tombstone serve different contracts: the tombstone enables
+Kafka compaction; neither proves deletion from an external store.
+
+For `ExtractNewRecordState`, inspect the deployed `delete.tombstone.handling.mode` and any predicates.
+`drop` removes both delete and tombstone records; `rewrite` keeps a flattened deletion marker that
+the sink must interpret, and removes the tombstone. Choose a representation the sink supports,
+then verify its durable effect. Preserve the envelope if existing consumers need its semantics;
+flattening is not a recovery prerequisite. See [Debezium event flattening](https://debezium.io/documentation/reference/3.3/transformations/event-flattening.html).
+
+Exercise deletes and, if the application permits them, key changes through the full configured
+path. A connector restart or resnapshot cannot repair a transform that keeps discarding deletes.
+Use the engine reference when source identity or incomplete row values are involved.
 
 ## Close the continuity claim
 
@@ -90,6 +120,10 @@ exactly-once effects in an external sink. Distinguish documented behavior, obser
 inferences and tests still pending.
 
 ## Handoffs
+
+Pass the affected boundary, deployed versions, positions, observed events and required outcome.
+Request a concrete contract or verification plan from the receiving specialist. If unavailable,
+retain this skill's continuity guards and identify the unresolved downstream obligation explicitly.
 
 - `delivery-semantics` owns acknowledgment/transaction boundaries and transactional outbox design;
   `idempotency` owns repeat-safe sink effects.

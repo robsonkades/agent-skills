@@ -108,6 +108,11 @@ compatibility rather than inventing a no-op to make compilation pass.
 ## Decision rules
 
 ```text
+IF matching signatures would lose a required guarantee such as atomicity, ordering or repeatability
+THEN establish a supported primitive/protocol that preserves it, or report the incompatibility.
+     Do not silently weaken the port, discard data or invent success; a contract revision needs
+     the responsible owner's agreement. Check partial effects as well as the successful result.
+
 IF a vendor type, exception or enum appears above a domain-facing adapter
 THEN decide whether consumers now depend on vendor semantics. Translate when the
      port is meant to protect that boundary; shared standards or deliberately thin
@@ -186,7 +191,8 @@ also report what changed and what actually ran; missing provider evidence remain
 - [Decision and alternatives](references/decision-and-alternatives.md) — object versus class
   adapters, Adapter set against Facade, Decorator, Proxy and the anti-corruption layer, the
   error-translation rules, how to tell a translator with business rules from a mechanical
-  adapter, and how to remove a passthrough safely. Read when classifying or deleting a wrapper.
+  adapter, and how to remove a passthrough safely. Read when classifying or deleting a wrapper,
+  or checking whether the target's guarantees can be implemented.
 - [Worked example](references/worked-example.md) — a vendor payment SDK adapted to a domain
   port: model translation, exception translation, timeout ownership, unknown-status handling
   from a newer API version, and the test split between a fake for the application and a

@@ -67,6 +67,15 @@ by their element type, so this graph needs `java.lang.Object`; that exact patter
 every subclass. Element classes are checked separately. Test the expected graph and an unlisted
 element with a harmless read hook; admitting the container must not admit that element.
 
+On OpenJDK 25, pattern filters leave arrays with primitive base components `UNDECIDED` when
+limits pass, even with `!*`; `rejectUndecidedClass` also preserves that exception. Use an
+explicit programmatic array-class check when those arrays are forbidden, while retaining
+graph limits. After reading, verify the expected root type and null policy before use: neither
+the pattern nor a class filter proves the message's root contract. This semantic check cannot
+undo hooks that already ran. See the
+[OpenJDK pattern-filter implementation](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/io/ObjectInputFilter.java)
+and the API contracts below.
+
 ```properties
 # 2. JVM-wide baseline in conf/security/java.security.
 # java.base/* is broad; narrow it when the application's graph is known.
@@ -81,14 +90,15 @@ ObjectInputFilter.Config.setSerialFilterFactory(new PerContextFilterFactory());
 
 For a command line, pass the complete `-Djdk.serialFilter=...` argument quoted for the shell
 so semicolons stay in the property. Install process-wide policy only in application-owned
-startup configuration, and test factories in isolated JVMs. Close input streams on success
-and failure; per-stream filters must be installed before the first object read.
+startup configuration before any `ObjectInputStream` is constructed, and test factories in
+isolated JVMs. Close input streams on success and failure; per-stream filters must be installed
+before the first object read.
 
 Rules for writing one:
 
-- **Allow-list, then reject everything**: patterns are evaluated in order and `!*` at the end
-  is what makes the filter closed. A filter that only lists forbidden classes stops yesterday's
-  gadgets.
+- **Close the class allow-list**: patterns are evaluated in order; `!*` rejects unmatched
+  reference types covered by class matching. It does not close the string/primitive-array
+  exceptions above. A deny-list cannot exclude as-yet-unknown gadget classes.
 - **Set the limits too**: `maxdepth`, `maxarray`, `maxrefs`, `maxbytes` defend against the
   denial-of-service variant. Bound compressed input and expanded output separately, before
   unbounded buffering; a small compressed payload can expand past the deserialization byte cap.
@@ -97,7 +107,14 @@ Rules for writing one:
   RMI Registry/DGC, JMX and frameworks can supply their own entry-point filters. Inspect the
   effective policy at each sink. With the built-in factory,
   setting a stream filter can replace the static JVM filter. If both constraints matter, install
-  and test a factory that intersects/composes them. Factory/global configuration is process-wide
+  and test a factory that retains both policies. `ObjectInputFilter.merge` (Java 17+) gives
+  rejection precedence; otherwise an `ALLOWED` from either filter wins over `UNDECIDED`.
+  For a context policy that must reject all other reference classes, close it with `!*` or
+  `rejectUndecidedClass(contextFilter)` **before** merging with a broader policy. Wrapping the
+  merged result cannot undo a broad `ALLOWED`. A limits-only filter may legitimately remain
+  `UNDECIDED` for types; do not reject every metrics-only callback with `serialClass() == null`.
+  Concatenating pattern strings is not an intersection either: first matching class rule wins,
+  and the last occurrence of a repeated limit wins. Factory/global configuration is process-wide
   startup policy; a stream filter may be set only once and before reading objects.
 - **Treat rejection as a rate-limited security signal.** Record context, rule/limit and class when
   available, but not raw payloads or secrets. A flood of rejected inputs must not become a logging
@@ -110,6 +127,9 @@ Rules for writing one:
 - Include an oversized serialized string, primitive arrays above the configured limit, and a
   harmless denied class with an observable read hook. The denied hook must not execute, and
   the outer byte cap must reject oversized input even when the class filter receives no callback.
+- Exercise a class allowed globally but forbidden in this context, including the open-versus-closed
+  context-filter pair. Also test an in-budget primitive array and a null root against the actual
+  message contract; filter acceptance alone must not imply an acceptable message.
 
 Filters reduce the reachable surface. They do not make deserialization of hostile input safe:
 if any allowed class is itself a usable gadget, the filter passes it. A filter is invoked zero or

@@ -77,6 +77,8 @@ Use actual repository evidence; the counts in this illustrative finding are not 
   thread-safety/nullness guarantees, and equality policies that become asymmetric across
   subclasses. New subtype methods must also preserve inherited invariants and history
   constraints. A more specific exception for the same documented failure is not a violation.
+  Include ownership and permitted failure effects: the same returned value is insufficient if
+  the override closes a borrowed resource or leaves state changed where failure promised no change.
 - ISP: judge an interface by its clients, not its method count. The evidence is a
   client harmed by capabilities/changes it does not need, or an implementor unable to honor
   required operations. Unused methods or `UnsupportedOperationException` are signals, not

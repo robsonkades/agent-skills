@@ -96,6 +96,11 @@ Prefer instead when:
 
 ## Rules
 
+- Verify the effective election scope and participant identity before tuning timeouts. All
+  contenders for overlapping work must coordinate in the same store/key/namespace; a key per
+  replica or release elects multiple independent owners. Identity-based clients also need distinct
+  contender incarnations. Scope, owner identity, ordered fence and work identity serve different
+  purposes; see `references/election-mechanisms.md` before changing any of them.
 - **One leader does not guarantee one execution per work item or schedule interval.** A successor
   with a valid new term can replay an already committed effect after a crash before checkpointing.
   When replay needs deduplication, keep work identity stable across terms. Define replay and

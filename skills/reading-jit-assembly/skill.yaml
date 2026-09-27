@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: reading-jit-assembly
-version: 1.2.3
+version: 1.2.4
 description: >-
   Reading the machine code HotSpot actually emitted: installing hsdis, driving
   -XX:+PrintAssembly and JMH perfasm, telling the verified entry point and prologue from the
@@ -50,12 +50,14 @@ suggests:
   - compilation-and-inlining-logs
   - deoptimization
   - g1-internals
+  - java-memory-model
   - jfr-and-async-profiler
   - jmh-advanced
   - lock-inflation
   - object-layout-and-footprint
   - safepoints
   - simd-and-vector-api
+  - varhandles-and-memory-ordering
   - zgc-generational-internals
 
 capabilities:

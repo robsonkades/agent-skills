@@ -10,7 +10,7 @@ Application allocates in Eden
 Pause Young (Concurrent Start)     STW, piggybacked on a young GC —
                                    marks roots, arms the SATB write barrier
 Concurrent Mark Cycle              wrapper line; "Concurrent Undo Cycle" instead means
-                                   eager reclaim already resolved the trigger (JDK 17+)
+                                   policy no longer needs full marking (JDK 17+; see below)
 Concurrent Scan Root Regions       concurrent — scans recorded root memory ranges above TAMS,
                                    including survivor and old regions
 Concurrent Mark                    concurrent — contains:
@@ -25,7 +25,8 @@ Concurrent Rebuild Remembered Sets
 Pause Cleanup                      STW — finalises the candidate list
 Concurrent Clear Claimed Marks     concurrent — bookkeeping
 Concurrent Cleanup for Next Mark   concurrent — resets the bitmap for the next cycle
-  |
+  |  only if marking candidates are available at Cleanup;
+  |  otherwise resume young-only collections
   v
 Pause Young (Prepare Mixed)        one more young GC
 Pause Young (Mixed) × N            selects candidates using the bitmap's liveness data
@@ -34,6 +35,12 @@ Pause Young (Mixed) × N            selects candidates using the bitmap's livene
 `Pause Cleanup` duration depends on workload and environment. `Concurrent Cleanup for Next Mark`
 is, by definition, not a pause; a report calling it a short STW pause is self-contradictory.
 `Concurrent Cleanup` without a suffix is a pre-JDK-20 name.
+
+On JDK 25, a humongous-triggered concurrent-start pause rechecks whether marking is still
+needed after the pause. It can choose `Concurrent Undo Cycle`, for example after eager reclaim
+reduces occupancy. Undo cleans up the prepared cycle without the normal tracing, Remark or
+Cleanup sequence; its presence alone is not an aborted-marking failure. Inspect the trigger,
+post-pause occupancy and subsequent headroom rather than assuming which objects were reclaimed.
 
 ## A complete-cycle excerpt, previously captured on JDK 25
 
@@ -90,6 +97,33 @@ Here the parenthesized percentage divides the effective threshold by current tot
 For predictor updates and `prediction active`, use `gc+ihop=debug`: its basic and adaptive rows
 use different denominators (target occupancy versus internal target occupancy). Compare bytes,
 the named denominator and predictor state; no ergo line is not proof that a cycle was unnecessary.
+
+## Completed marking without useful mixed reclaim
+
+First distinguish a complete cycle from a log that merely ends before the next pause. Cleanup
+can legitimately request young-only collections when there are no marking candidates. A completed
+mark is liveness information, not a promise of reclaimable garbage or a fixed number of mixed GCs.
+
+On the pinned JDK 25 build, ordinary marking candidates need live bytes strictly below the
+region-size-scaled `G1MixedGCLiveThresholdPercent`, suitable remembered-set information and other
+eligibility checks. Candidate pruning uses `G1HeapWastePercent` before grouping while preserving
+minimum progress; mixed continuation then depends on remaining marking candidates. Do not import
+an older release's per-pause waste-threshold stopping formula. `G1MixedGCCountTarget` spreads work;
+it does not guarantee that many pauses. These are diagnostic mechanisms, not proposed flag values.
+
+Alongside the base log, use `-Xlog:gc+ergo=debug,gc+ergo+cset=debug` for candidate creation,
+pruning and policy decisions. For example, JDK 25 can report
+`request young-only gcs (candidate old regions not available)` after successful marking.
+Correlate those decisions with region liveness, old allocation and actual reclaimed space:
+
+- No candidates with sufficient headroom and acceptable application outcomes supports no change.
+- Little reclaim with sustained pressure requires distinguishing genuinely retained live data,
+  expensive/ineligible candidates and allocations consuming reclaimed space. Earlier marking
+  cannot reclaim objects that remain live; candidate admission changes can add copying work.
+
+Pass the cycle, effective policy, candidate evidence, headroom and application budget to
+`g1-tuning-for-slo` if selecting an experiment is needed. If unavailable, report the supported
+mechanism and next discriminating measurement without guessing replacement values.
 
 ## Humongous allocation in the log
 
@@ -227,12 +261,19 @@ jfr print --events jdk.GCPhasePause g1.jfr
 jfr print --events jdk.GCHeapSummary g1.jfr
 ```
 
-Do not quote G1-specific region or marking event names without confirming they exist on the
-runtime in use. Discover them instead:
+Do not quote G1-specific region or marking event names without confirming their availability.
+Use the target JDK's tool for runtime metadata; inspect the recording separately:
 
 ```bash
+jfr metadata
+jfr metadata g1.jfr
 jfr summary g1.jfr | grep -i g1
 ```
+
+Without a file, `metadata` describes the JDK containing that tool, not another running JVM.
+`summary` reports recorded counts: zero events or no matching row does not establish that the
+target lacks the event. Check metadata, recording settings/thresholds and whether the relevant
+activity occurred during the recording before concluding that evidence is unavailable.
 
 ## HotSpot source paths
 
@@ -260,3 +301,8 @@ Pinned checks for the consequential implementation details:
 - [SATB filtering/enqueue paths](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/shared/satbMarkQueue.cpp).
 - [Initiation checks and cycle timing](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1Policy.cpp)
   and [adaptive threshold and logging denominators](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1IHOPControl.cpp).
+- [Candidate admission and pruning](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectionSetChooser.cpp)
+  and [live-byte threshold](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1CollectionSetChooser.hpp).
+- [Concurrent mark and undo paths](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/gc/g1/g1ConcurrentMarkThread.cpp)
+  and [JDK 25 cycle overview](https://docs.oracle.com/en/java/javase/25/gctuning/garbage-first-g1-garbage-collector1.html).
+- [JDK 25 jfr command](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jfr.html) — metadata provenance versus recording counts.

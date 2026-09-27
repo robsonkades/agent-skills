@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: gof-state
-version: 1.2.3
+version: 1.2.4
 description: >-
   State in modern Java: making an object's behaviour depend on an explicit state, with the
   transitions themselves modelled rather than implied by scattered flags. Covers the intent
@@ -43,6 +43,7 @@ files:
 dependencies: []
 
 suggests:
+  - cancellation-and-interruption
   - distributed-locks-and-leases
   - distributed-transactions-and-sagas
   - event-driven-architecture

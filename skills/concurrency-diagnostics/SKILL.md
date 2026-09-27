@@ -34,7 +34,8 @@ recording or a policy change.
 1. Freeze the incident interval: timestamps, deployment/JDK build, traffic, CPU quota, changes and
    affected operation/tenant.
 2. Define progress numerically: completions, queue age, successful state transitions or durable
-   offsets—not “threads look stuck.”
+   offsets—not “threads look stuck.” Scope it to the affected operation/resource cohort; healthy
+   traffic elsewhere does not refute a partial deadlock or a starved tenant.
 3. Capture application state: accepted/started/completed/failed/cancelled/rejected counts, queue age
    and depth, in-flight work, resource permits/connections and downstream latency.
 4. When progress or ownership remains uncertain, capture thread views at suitable intervals. Use
@@ -45,8 +46,10 @@ recording or a policy change.
 6. Form competing hypotheses and list the signal each predicts. Preserve evidence before a
    targeted fix. If restoring service cannot wait, record a reversible mitigation and its
    expected effects; recovery after a restart alone does not establish the root cause.
-7. When a change is warranted, apply the smallest reversible remediation, then validate progress,
-   latency, residual work and resource recovery.
+7. For diagnosis or findings-only requests, return the supported cause and proposed next action.
+   When remediation is authorized, apply the smallest reversible change and validate progress,
+   latency, residual work and resource recovery. Existing incident authority still applies;
+   this skill does not authorize a restart or a pool/parallelism change by itself.
 
 Sampling twice does not prove a thread is permanently stuck: long waits and slow operations can show
 identical stacks. Use a duration appropriate to the operation deadline and corroborate ownership and
@@ -75,7 +78,7 @@ not make a simple dump atomic or supply every synchronizer/resource ownership ed
 
 | Candidate                       | Progress/CPU shape                                    | Evidence that strengthens it                                            | Evidence that weakens it                                         |
 | ------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| lock deadlock                   | relevant completions flat; usually low CPU            | stable wait-for cycle with owners, or platform detector output          | stacks move and operation completions continue                   |
+| lock deadlock                   | relevant completions flat; usually low CPU            | stable wait-for cycle with owners, or platform detector output          | implicated owners release resources and affected tasks complete  |
 | liveness wait on external event | completions flat; low CPU                             | waiters share a resource/event whose producer is absent or failed       | owner/producer continues signalling successfully                 |
 | starvation/unfairness           | some class progresses while another ages              | per-class queue age/service counts diverge with sustained contention    | all classes degrade together at a saturated resource             |
 | executor/resource saturation    | completions continue below arrivals; queue age grows  | utilization, queueing and protected-resource occupancy correlate        | queue remains empty and capacity idle                            |
@@ -88,6 +91,12 @@ Thread state alone is not classification. `BLOCKED` specifically means monitor e
 `RUNNABLE` is a JVM state, not proof of CPU consumption: a native socket read can appear there.
 Confirm CPU execution with per-thread CPU deltas/profiles, or elapsed blocking with wall/I/O evidence. Virtual
 threads can be unmounted while waiting; OS thread count is not their concurrency count.
+
+An enabled JFR duration event with no samples does not exclude an ongoing wait. For example,
+HotSpot 25.0.3 platform `ThreadPark` and contended `JavaMonitorEnter` events are committed after
+the wait ends/acquisition succeeds. During a hang, pair recordings with current stacks, owner
+state and task age. See [JFR completion timing](references/thread-dump-reading.md#jfr-and-profiles)
+before interpreting a zero count as evidence against contention.
 
 ## Virtual-thread evidence
 
@@ -132,6 +141,11 @@ Fix the wait-for graph: ordering, ownership, nested acquisition or alien calls.
   running or physically terminated within a defined accounting interval. Track caller-result
   cancellation separately: a cancelled Future can still have running work and held resources.
   Rejection is outside accepted work; snapshot races, retries and resets require explicit accounting.
+  For one owner and physical-work identity over the same interval, check
+  `outstanding_start + accepted = outstanding_end + physically_terminated`.
+  Include the starting backlog and distinguish attempts from logical requests. A mismatch is an
+  instrumentation/ownership hypothesis, not proof of a leak; conservation can also hold while
+  one task remains stuck indefinitely.
 - Track queue _age_ as well as depth. A short deep burst and one ancient item require different action.
 - Use monotonic deadlines for waits and correlate caller timeout with actual provider cancellation.
 - Preserve incident artifacts before tuning parallelism, capacity or retries.
@@ -157,12 +171,16 @@ Fix the wait-for graph: ordering, ownership, nested acquisition or alien calls.
 - [ ] Platform and virtual-thread visibility limitations are explicit.
 - [ ] Material competing hypotheses have discriminating signals, or decisive evidence already answers the scoped question.
 - [ ] Queue age, lifecycle counts and scarce-resource occupancy accompany stack evidence.
-- [ ] Absence of JFR/detector events is not treated as absence without configuration coverage.
-- [ ] Remediation was validated for useful progress, tail latency, residual work and resource return.
+- [ ] Absence of JFR/detector events accounts for configuration, visibility and unfinished waits.
+- [ ] Any authorized remediation was validated for useful progress, tail latency, residual work and resource return.
 
 Deliver the affected progress metric and incident interval, artifact/setting locations, supported
 diagnosis versus remaining hypotheses, and one discriminating check or measured remediation result.
 For a straightforward interpretation, keep this to the relevant finding rather than a full report.
+When handing off, pass the affected task/resource IDs, runtime and artifact settings, established
+wait/ownership edges and unresolved alternatives; request the specific repair or capacity decision.
+If the named specialist is unavailable, preserve that evidence and give a bounded next check,
+without replacing an unresolved diagnosis with speculative tuning.
 
 ## References
 

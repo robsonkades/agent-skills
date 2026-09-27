@@ -62,19 +62,25 @@ The gains require design and operational evidence; a separate process alone guar
 3. **Draw the data ownership line.** Name the authority for each invariant and write path,
    including replicas and migration writers. Shared storage is not automatically shared
    ownership; direct access to private tables creates schema and deployment coupling.
+   Map who can invoke the extracted operation, which service/user/tenant identity is
+   trusted, and where access is enforced. An internal network or authenticated calling
+   service does not by itself authorise its user's requested effect.
 4. **Shape the interface from caller use cases.** A bounded lookup may already be adequate.
    Coarsen or batch chatty navigation when the round-trip benefit justifies payload,
    consistency and compatibility costs (`remote-facade-and-dto`).
 5. **Decide the consistency story explicitly.** What is atomic, what is eventual, what is
-   the visible intermediate state, and what compensates a partial failure.
+   the visible intermediate state, and what compensates a partial failure. Distinguish a
+   stale read used for display from one that authorises a write; specify freshness and
+   revocation requirements before choosing replication or a fallback.
 6. **Bound call duration and capacity.** Define a deadline, retry policy (including no retry),
    and safe failure behaviour. Some operations must fail closed. Repeated writes need
    idempotency or reconciliation of an unknown outcome (`timeouts-and-deadlines`,
    `retries-and-backoff`, `idempotency`).
 7. **Verify the intended gain.** Persistent lockstep releases undermine independent
    deployment; they do not disprove scaling or isolation benefits. For a proposed extraction,
-   define relevant mixed-version, dependency-outage and migration/rollback checks; distinguish
-   those plans from executed validation.
+   define relevant mixed-version, dependency-outage and migration/rollback checks, plus
+   unauthorised-caller and cross-tenant cases when access rules apply. Distinguish those
+   plans from executed validation.
 
 With missing workload, dependency or ownership evidence, keep extraction conditional and
 identify the next discriminating check or material question. Retain an adequate existing boundary
@@ -164,10 +170,11 @@ A synchronous chain would be three or more hops deep
 - [Local versus remote boundaries](references/local-vs-remote.md) — the concrete arithmetic
   of a chatty interface, the failure modes a local call does not have, why an in-process
   module is the right rehearsal for a service, the distributed monolith's detectable
-  symptoms, and how to run an extraction so it can be abandoned halfway. Read before
-  proposing or reviewing an extraction.
+  symptoms, trust and identity across the new entry point, and how to run an extraction
+  so it can be abandoned halfway. Read before proposing or reviewing an extraction.
 - [Distribution strategies](references/distribution-strategies.md) — synchronous request,
   asynchronous messaging, event-carried state transfer and replication compared on
   coupling, consistency and failure; sagas and compensation; the outbox; fan-out and its
   latency; and choosing per interaction rather than per system. Read when designing the
-  interaction between two services.
+  interaction between two services, or use its decision checks when reviewing a proposed
+  boundary's freshness, authority or failure assumptions.

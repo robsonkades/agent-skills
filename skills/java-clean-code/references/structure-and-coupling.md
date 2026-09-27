@@ -37,8 +37,20 @@ conventions and lifetime, not a blanket prohibition on test helpers.
 **Fix directions**, when the order is accidental: make the first step a constructor or static
 factory if construction legitimately owns that work; return the intermediate state from
 `a()` and take it as a parameter in `b()`; encode phases as distinct types
-(`UnvalidatedOrder` → `ValidatedOrder`, records make this cheap); merge the methods when
+(`UnvalidatedOrder` → `ValidatedOrder`); merge the methods when
 callers never legitimately separate them.
+
+Before treating a phase type as proof of validation, inspect every construction path and
+the lifetime of the validated facts. A public record has a public canonical constructor:
+a validating factory alone cannot prevent `new ValidatedOrder(invalidOrder)`. Enforce
+local invariants in the constructor, or use an appropriately controlled representation.
+Records are shallowly immutable; a mutable `Order` alias can invalidate a wrapper after
+construction. Use stable validated values or preserve the existing ownership/checking
+contract. A type recording successful validation cannot guarantee that external stock,
+balance or authorization remains unchanged until use; retain the relevant action-time
+check and consistency boundary. Verify bypass attempts and mutation after validation,
+not just the successful factory call. Keep simple runtime checks when a new type does
+not reduce a real caller error or comprehension cost.
 
 **False positives:**
 
@@ -138,3 +150,6 @@ Fowler's [official catalog](https://refactoring.com/catalog/), but the decision 
 are stricter than applying a named refactoring mechanically.
 For lifecycle claims, consult [`Iterator`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Iterator.html),
 especially the separate contracts of `next()` and `remove()`.
+For phase-type limits, see [JLS 25 §8.10.4](https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html#jls-8.10.4)
+on canonical-constructor accessibility and [`Record`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
+on shallow immutability.

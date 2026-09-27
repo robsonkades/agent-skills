@@ -1,8 +1,9 @@
 # Review prompts, grep patterns and verification
 
-The questions to ask about code in this area, ordered by how often the answer is wrong. Each
-one is checkable against a diff; where a mechanical signal exists it is given. Findings from
-this pass are recorded, not silently fixed.
+The questions to ask about code in this area. Each is checkable against code and its relevant
+runtime contract; where a mechanical signal exists it is given. Record findings for a review-only
+request; implement scoped corrections when fixes are authorized. Use synthetic fixtures, not
+discovered live credentials, for verification.
 
 ## Password storage
 
@@ -25,7 +26,9 @@ this pass are recorded, not silently fixed.
 5. **How do existing credentials adopt the new policy?** Trace successful-login rehash or an
    explicit reset/migration path, preserving old verification until retirement. A grep for
    `upgradeEncoding` is only a lead: the named PBKDF2 encoder inherits `false` (§3 of
-   `password-storage.md`), and other designs can implement their own policy comparison.
+   `password-storage.md`), while a changed delegating id can trigger its migration. Preserve
+   the original verifier for each id; bare PBKDF2 bytes do not describe their cost or pepper.
+   Replacing the old id's configuration can break login before any rehash decision runs.
 6. **Does registration cap input at 72 bytes if bcrypt is in use?** Spring Security ≥ 6.3.8 /
    6.4.4 **does** check on `encode` and throws
    `IllegalArgumentException("password cannot be more than 72 bytes")` — the CVE-2025-22228
@@ -114,7 +117,9 @@ this pass are recorded, not silently fixed.
     distinguish fixtures and placeholders. File and content filters can miss credentials,
     so this is a triage lead, not a complete scan. A literal value may expose a credential
     in history.
-    Revoke or rotate an exposed credential first and verify the old value no longer works.
+    Authorized incident handling should revoke or rotate an exposed credential before history
+    cleanup and verify rejection of the old value. Report the incident need without using the
+    credential or changing production state merely because it was discovered during a code review.
     History cleanup reduces residual exposure but cannot revoke copies in clones or backups.
 25. **Is a secret in an environment variable being treated as sufficient?** OWASP's Secrets
     Management Cheat Sheet discourages it in its _Containers & Orchestrators_ section: visible
@@ -135,6 +140,9 @@ this pass are recorded, not silently fixed.
 30. **Are bearer credentials lifecycle-safe?** Reset tokens and API keys need adequate entropy,
     digest-at-rest, purpose/subject binding, expiry, atomic single use or revocation, and rate
     limiting. Searching only for `SecureRandom` misses replay and database-disclosure failures.
+    For short codes, assess the finite guessing space separately: hashing six digits does not
+    make them resistant to offline enumeration. Check attempt limits across resends and concurrent
+    submissions; a per-request limit is not an account-level guessing budget (`password-storage.md` §5).
 
 ## Reversible cryptography
 
@@ -154,6 +162,13 @@ this pass are recorded, not silently fixed.
     envelope, old-key read/new-key write, auditable re-encryption, rollback semantics and a
     retirement criterion. Plaintext data keys must not accompany ciphertext; wrapped data keys
     may, provided the wrapping key remains separately protected.
+36. **Does authentication failure reach the caller before any plaintext is accepted?** Inspect
+    `CipherInputStream` as well as `Cipher`: the [Java 21 stream contract](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/javax/crypto/CipherInputStream.html)
+    warns that integrity-check exceptions may be caught without informing the caller. Prefer the
+    direct `Cipher` API or a vetted authenticated-encryption facility with verified failure
+    semantics. Do not publish output from `update` before successful authentication completion.
+    Large encrypted objects need bounded handling or an established streaming-AEAD protocol,
+    not an unbounded buffer or invented chunk framing. This contract was checked **2026-09-25**.
 
 ## What not to raise
 
@@ -176,15 +191,17 @@ this pass are recorded, not silently fixed.
 
 Design changes in this area are verifiable, and each one should be:
 
-| Change                                  | Verification                                                                                             |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Authorisation enforced by the operation | Call the protected method with a foreign actor; assert refusal and no mutation, including aliased claims |
-| Dummy-hash on the not-found path        | Compare latency distributions across warm/cold paths; no class should omit a KDF run                     |
-| Constant-time comparison                | Review the verifier contract and input lengths; test matching and same-length unequal values             |
-| Parameters raised to OWASP              | Check the algorithm and cost recorded for a newly persisted credential                                   |
-| Successful-login migration              | Verify an old credential, then check the persisted target policy and password verification               |
-| Secret removed from a type              | Assert `toString()` of the type does not contain the value                                               |
-| Single-use token lifecycle              | Race two redemptions against the real datastore; exactly one transition succeeds                         |
+| Change                                  | Verification                                                                                                   |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Authorisation enforced by the operation | Call the protected method with a foreign actor; assert refusal and no mutation, including aliased claims       |
+| Dummy-hash on the not-found path        | Compare latency distributions across warm/cold paths; no class should omit a KDF run                           |
+| Constant-time comparison                | Review the verifier contract and input lengths; test matching and same-length unequal values                   |
+| Parameters raised to OWASP              | Check the algorithm and cost recorded for a newly persisted credential                                         |
+| Successful-login migration              | Verify an old credential, then check the persisted target policy and password verification                     |
+| Secret removed from a type              | Assert `toString()` of the type does not contain the value                                                     |
+| Single-use token lifecycle              | Race two redemptions against the real datastore; exactly one transition succeeds                               |
+| Short-code guessing controls            | Verify exhausted attempts remain exhausted across resend and concurrent attempts; report offline hash limits   |
+| Authenticated decryption                | Alter ciphertext, tag and AAD; use a wrong key; assert rejection and no accepted plaintext or protected effect |
 
 For migration, decode the stored parameters or resolve the row's explicit policy version;
 a changed hash alone proves nothing about the cost because a new salt changes it too.
@@ -192,13 +209,17 @@ Assert that a wrong password leaves the row untouched and that migration's condi
 write cannot overwrite a concurrent password reset. Cover the old format's encoding and
 length boundaries. A vetted library verifier is valid without a visible `MessageDigest.isEqual`
 call; functional tests alone do not establish a constant-time guarantee.
+For PBKDF2, test that an old id still verifies under the original settings, signals migration
+under the new write id, and remains untouched after a wrong password. Verify that new credentials
+use the new id and that missing/unknown ids reject without falling back to plaintext comparison.
 
 Two further signals, both cheap:
 
 - **Callers covered.** Trace the required policy and actual guard for each relevant caller;
   more actor parameters alone do not prove better enforcement.
-- **Files touched to change one parameter.** Raising a cost factor should touch one file. If it
-  touches several, the parameters are scattered and the next raise will miss one.
+- **Policy ownership.** Trace each credential format's authoritative parameter definition and
+  migration rule. Independent duplicated settings can drift; coordinated edits to configuration,
+  tests and deployment capacity are not themselves a defect.
 
 Validation activation was checked against the [Spring MVC validation reference](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html)
 on 2026-09-10. Framework wiring remains outside this skill; use the project's resolved version.

@@ -57,6 +57,27 @@ solely to hide excess demand.
 HikariCP logs the effective configuration at startup at `DEBUG` level. Confirm bound values rather
 than trusting the file — a property in the wrong prefix may be silently ignored.
 
+### Fixed or elastic idle capacity
+
+In [HikariCP 6.3.3](https://github.com/brettwooldridge/HikariCP/blob/HikariCP-6.3.3/README.md#frequently-used),
+omitted `minimumIdle` defaults to `maximumPoolSize`; the pool tries to maintain that total
+capacity. It does not merely open a new connection on each demand spike. `idleTimeout` trims
+excess idle connections only when the minimum is below the maximum, with delayed retirement;
+it neither shrinks below the minimum nor reclaims checked-out connections.
+
+Keep a fixed warm pool when measured connection creation would breach burst deadlines and
+the aggregate session budget permits it. Consider a lower idle floor for sparse traffic or
+scarce idle-session capacity, then test growth from that floor under cold bursts, simultaneous
+replica starts and database recovery. Do not choose elasticity from average traffic alone or
+assume setting the maximum instantly creates usable connections. Both choices retain the same
+worst-case maximum-session budget.
+
+Hikari's `keepaliveTime` operates only on connections idle in the pool. A connection checked
+out by application code but idle at the database is outside that mechanism; trace hold time
+and driver/network behavior instead of expecting pool keepalive to protect it.
+
+### Configuration example
+
 Illustrative Spring Boot properties, not portable production settings. The lifetime below assumes
 a verified connection-age cutoff above 280 seconds; the acquire timeout requires a request budget
 above three seconds plus execution/cleanup. Verify binding and version support before adapting.
@@ -117,6 +138,7 @@ behavior separately; compare hold time and database load as well as statement co
       peak instances, admin/recovery reserve, workload classes and failover
 - [ ] Candidate pool size validated at intended offered load, including failed/rejected work and
       wait/error budgets; margin justified by evidence
+- [ ] Idle floor and growth delay tested against burst deadlines and aggregate session budget
 - [ ] `connection-timeout` inside the endpoint's latency budget, never 0
 - [ ] `max-lifetime` derived from connection-age cutoff; in-use retirement and idle drops handled separately
 - [ ] Effective `keepalive-time` verified for the resolved HikariCP version and kept below `max-lifetime`

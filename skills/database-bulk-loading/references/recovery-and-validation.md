@@ -1,5 +1,20 @@
 # Failure, restart, and validation
 
+## Decode and verify records before scaling
+
+Use a small representative corpus through the chosen loader: null, empty and omitted values;
+delimiters, quotes and embedded newlines; non-ASCII text; precision/scale limits; and relevant
+date/time offsets. Include a changed column order whose types still convert successfully. Check
+stored values by stable business key against the declared transformations; counts alone can pass
+after a column swap or lossy conversion. Compare checksums only after defining the same ordering,
+null representation and normalization on both sides.
+
+Distinguish malformed file structure, type-conversion errors and domain/constraint failures.
+Text staging can postpone type validation, but does not automatically repair malformed quoting
+or prove where the next record starts. Do not recover an arbitrary malformed CSV record by
+skipping one physical line. Stop or quarantine the affected input according to a bounded policy
+when record boundaries cannot be established. Test rejection thresholds as well as isolated rejects.
+
 ## Chunk transaction contract
 
 Chunk commits permit partial durable progress; use them only when the visibility/recovery contract
@@ -21,6 +36,13 @@ chunk/source identity with the data, then acknowledge externally. A crash in bet
 which must be deduplicated. Fence concurrent workers or use disjoint checkpoint ownership; a
 high-water mark must not advance past uncommitted lower ranges. An offset alone is unsafe if source
 order can change; use stable source identity and a versioned input snapshot.
+
+For delimited files, physical lines and byte chunks are not necessarily records: quoted CSV
+fields can contain newlines, and arbitrary byte boundaries can split encoded characters. Partition
+and checkpoint at parser-confirmed record boundaries with the source version and decoding contract.
+Resume only where the reader can reconstruct its parsing state; otherwise reparse the stable
+source and deduplicate committed records. Verify a restart beside a quoted multiline field and
+reject a replaced input rather than applying its old offsets to new contents.
 
 Connection loss during commit means the outcome may be unknown, not necessarily rolled back.
 Reconnect and reconcile the durable chunk identity before resuming. A missing record, even from
@@ -67,7 +89,7 @@ matters, encode and compare a source sequence/version; arrival order is not a co
 At minimum reconcile:
 
 - source, accepted, rejected, warning, duplicate, inserted, updated, and unchanged counts;
-- null/type/range/domain constraints and representative samples or checksums;
+- null/type/range/domain constraints, field mapping and representative values or canonical checksums;
 - generated keys, sequence/identity state for subsequent application writes, and source-to-target identity;
 - statistics freshness and representative executed plans;
 - replica/CDC convergence and lag recovery;
@@ -85,6 +107,8 @@ should preserve the same final state and repeat no protected effects under the d
 
 ## Source
 
+- [RFC 4180 CSV description](https://www.rfc-editor.org/rfc/rfc4180)
+  — quoted delimiters/newlines and format variation; informational, not a universal loader dialect.
 - [JDBC BatchUpdateException contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/BatchUpdateException.html)
   — continuation, sentinel counts and large-batch counts; verify the actual driver's behavior.
 - [PostgreSQL unique-index checks](https://www.postgresql.org/docs/17/index-unique-checks.html)

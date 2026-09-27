@@ -36,6 +36,8 @@ cover JDK 17–25; they do not authorize another upgrade, preview use or unrelat
 changes. A JEP's delivery/target release does not establish what is active in the deployed
 build. Return observed failures, fixes and checks, unresolved compatibility evidence, and
 the measured result or the explicit absence of a performance baseline.
+For an assessment, deliver the evidence and rollout plan; execute changes or a rollout only
+within the requested scope.
 
 1. **State both versions and the reason.** "Security support ends", "we want compact object
    headers", "the vendor image moved" are different reasons with different success criteria. An
@@ -93,9 +95,11 @@ Security Manager` during VM initialisation. It became permanently disabled in JE
   caught up. Each one should have an owner and a reason recorded, because the set only ever grows
   otherwise, and a build that needs a dozen of them has an upgrade problem it has not addressed.
 - **Find `sun.misc.Unsafe` before it finds you.** The memory-access methods were deprecated for
-  removal in JEP 471 (JDK 23) and warn on first use from JEP 498 (JDK 24). Run with
-  `--sun-misc-unsafe-memory-access=deny` in a test environment: it turns a warning you will
-  ignore into a failure you cannot.
+  removal in JEP 471 (JDK 23) and warn on first use from JEP 498 (JDK 24). Use the destination
+  JDK's `jdeps` to inventory static internal-API references with dependency-resolution checks;
+  reflection can escape that scan. Then exercise affected paths with
+  `--sun-misc-unsafe-memory-access=deny` in a test environment when the target supports it.
+  See `references/verification-and-rollout.md` for the complementary scan and runtime checks.
 - **Check third-party bytecode support early.** Instrumentation agents, mocking frameworks,
   generators and proxy libraries may reject unsupported class-file versions when loaded or
   exercised. Use documented compatible versions; separate upgrades when they also support the

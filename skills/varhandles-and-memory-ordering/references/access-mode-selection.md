@@ -44,12 +44,17 @@ sides do not both receive the strongest mode named.
 Examples of coordinate shapes:
 
 ```text
-instance field: (DeclaringClass) -> T
+instance field: (receiver type reported by the handle) -> T
 static field: () -> T
 array element: (T[], int) -> T
 byte-array/buffer view: (byte[] or ByteBuffer, int byteOffset) -> primitive
 memory layout: (MemorySegment, long, ...open path coordinates) -> carrier
 ```
+
+Inspect `varType()`, `coordinateTypes()` and `accessModeType(selectedMode)` instead of rebuilding
+the descriptor from a field declaration. A protected instance-field lookup from a subclass in a
+different package narrows the receiver to that accessing subclass. The base-class object is not
+therefore an accepted receiver. Include the return type and actual `Class` identity, not only names.
 
 Call-site types are checked dynamically because access methods are signature-polymorphic. Default
 invoke behavior can adapt types as MethodHandle.asType permits; exact behavior cannot. For example,
@@ -60,6 +65,25 @@ lifetime/thread access and supported modes for foreign-memory handles under thei
 These layout coordinates use Java 25's final FFM API, not earlier incubator signatures. A successful
 CAS does not extend an arena lifetime or prove exclusive ownership; closure/reclamation and ABA
 remain separate protocol obligations.
+
+### Dynamic invocation and lookup authority
+
+Reflective `Method.invoke` on `VarHandle` access-mode methods does not perform a polymorphic
+variable access: the reflective placeholder throws `UnsupportedOperationException` even when the
+mode is supported by the handle. For a dynamic adapter, obtain `vh.toMethodHandle(selectedMode)`
+and deliberately adapt or invoke that bound method handle using the inspected descriptor. Keep
+the selected memory mode and unsupported-mode checks; type adaptation does not supply ordering.
+
+Member-access checks occur when the lookup creates the handle. Diagnose a lookup failure using
+the lookup class, target member and module/access context, separately from invocation typing.
+Possession of a handle to a non-public field conveys its access capability; a later caller is not
+rechecked as if it had performed the original lookup. Keep that handle within its intended trust
+boundary or expose a narrower operation. Opening modules or changing memory modes is not an
+automatic fix for an access failure.
+
+For adapter changes, check normal and rejected receiver/return descriptors, a protected receiver
+from another package, and lookup failure separately from invocation failure. These API checks
+do not prove a concurrent protocol's ordering.
 
 ### Byte views depend on the runtime and backing storage
 
@@ -130,6 +154,7 @@ Can expected value recur (ABA), wrap, or be reclaimed/reused?
 ## Authoritative references
 
 - [Java 25 `VarHandle`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/VarHandle.html)
+- [OpenJDK 25 VarHandle API source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/java/lang/invoke/VarHandle.java) — actual descriptors, reflective placeholders, bound invokers and lookup-time capability checks.
 - [`MethodHandles` VarHandle factories](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/invoke/MethodHandles.html)
 - [JDK 23 removal of aligned heap-view access modes](https://www.oracle.com/java/technologies/javase/23-relnote-issues.html#JDK-8318966)
 - [Java 17 factories](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/MethodHandles.html) — older aligned-access contract; inspect the actual target runtime.

@@ -54,6 +54,35 @@ Consequence: a metric may open an investigation and may corroborate a finding
 written from the graph and the change history. A finding whose only evidence is a
 threshold ("instability must stay under 0.8") should be rejected in review.
 
+## Interpreting change history
+
+Use co-change to locate a relationship to investigate, not to decide a merge from correlation.
+Inspect representative diffs and the requirement or defect each addressed. Ask whether a change
+to one contract actually required the companion edit, or whether independent work merely shared
+a commit/release. Separate mechanical formatting, generated output and bulk upgrades from the
+domain changes they accompany; do not discard a large change solely by file count, because a
+real cross-cutting contract change can be large too.
+
+For example, pricing and stock files touched by every license-header sweep provide no common
+closure evidence. The same pair repeatedly changing to keep a valuation invariant consistent
+does establish a relationship worth examining. Even then, it may favor an explicit shared
+contract or moving valuation rather than merging both capabilities; use the actual owners and
+consumer compatibility to choose.
+
+Record the inspected time range, paths/revisions and history limitations when a recommendation
+depends on them. Squashed releases, shallow history, renamed paths and filtered merge history
+can hide or combine independent changes. `git log --follow -- path/to/File.java` can investigate
+one file across renames; it is not a complete package-history analysis. When provenance is
+missing, use current contract/ownership evidence and keep the historical conclusion conditional.
+Absence of observed co-change does not establish independence, especially for rarely exercised
+failure paths or recent boundaries.
+
+Sources: [Zimmermann et al., Mining Version Histories to Guide Software Changes](https://thomas-zimmermann.com/publications/files/zimmermann-icse-2004.pdf)
+discusses noisy merged transactions and treats mined associations as evidence rather than universal
+implications; its historical CVS filtering thresholds are not a policy for this review.
+[Git log documentation](https://git-scm.com/docs/git-log) describes rename following and history
+simplification; check the query's coverage before drawing an absence conclusion.
+
 ## When not to apply this skill
 
 - **Small codebases and single teams.** A full metric program may not repay its cost, but package

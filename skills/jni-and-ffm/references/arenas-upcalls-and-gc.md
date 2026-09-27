@@ -16,6 +16,33 @@ interacts with a call into native code.
 | Automatic-arena segment passed to native code that retains the address                | native retention does not keep the Java arena/segment reachable; cleanup may race later native use                                                            | keep an explicit strong owner for the full native lifetime, or use a closeable shared arena                                          |
 | Heap segment (`MemorySegment.ofArray`) passed to a plain downcall                     | Rejected — heap segments need `Linker.Option.critical(true)` (verified: the same call succeeds with it)                                                       | Copy into an arena, or `critical(true)` under the constraints in critical-and-decision-matrix.md                                     |
 
+## Native thread affinity is not arena confinement
+
+A confined arena belongs to a Java `Thread`. Native thread-local storage and handles that
+require an OS-thread owner follow a different identity. A virtual thread may resume on a
+different carrier between downcalls while remaining the same Java thread and arena owner.
+Neither switching to a shared arena nor propagating Java `ThreadLocal`/`ScopedValue` context
+makes native per-thread state follow it.
+
+Inspect whether the native function uses state only within one call, carries an explicit
+thread-independent context handle, or expects later calls to reuse the same OS thread.
+The last case can break even with short, non-blocking calls: native pinning during a call
+does not bind future calls to that carrier. Native TLS can also retain state between unrelated
+virtual callers using the same carrier; do not use it as virtual-request identity.
+
+For a thread-affine session, one option is to run its entire open/use/close sequence inside
+one platform-worker task. A longer-lived session may require an explicitly owned platform or
+native thread and a bounded dispatch protocol. A generic multi-worker pool preserves neither
+session affinity nor native TLS across separate tasks. Define cleanup and what happens to
+handles if the owning worker terminates or is replaced; do not silently reuse them on a new
+worker. Keep independent calls on an adequate existing execution path when the native contract
+has no cross-call affinity requirement.
+
+Verify both Java and native thread identity at the relevant call boundaries, with suspension
+and multiple workers where applicable. A run that happens to reuse one carrier does not prove
+affinity. Separately test Java segment accessibility and native session cleanup; passing one
+does not establish the other.
+
 ## JNI thread and reference ownership
 
 When moving work across threads, do not cache the caller's `JNIEnv*` for a worker. A
@@ -140,6 +167,9 @@ only for its extremely-short/no-upcall contract; no fixed nanosecond threshold i
 
 ## Primary references
 
+- [Java 25 virtual threads: platform versus virtual thread identity](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+- [Java 25 `Thread`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
+- [Windows native thread-local storage](https://learn.microsoft.com/en-us/windows/win32/procthread/thread-local-storage)
 - [Java 25 `Arena`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Arena.html)
 - [Java 25 `Linker`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.html)
 - [Java 25 `Linker.Option`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/foreign/Linker.Option.html)

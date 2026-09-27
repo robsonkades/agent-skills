@@ -42,6 +42,8 @@ decision. Keep a representative existing workload model rather than forcing open
 2. **Write the stage and clock model.** Count scheduled/offered, generator-admitted, started,
    server-accepted and every terminal outcome. Preserve scheduled time, actual start, response
    completion and deadline so generator lag and send-to-completion response time are separable.
+   For an open target, establish how due times exist independently of actual starts and responses;
+   a "scheduled" counter incremented only at send time cannot reveal missing schedule slots.
 3. **Check response coupling.** In a closed population at equilibrium, the interactive response
    law is `X = N/(R+Z)` for population `N`, response time `R` and think time `Z`. It explains why
    throughput falls as responses slow; `N ≥ λR` is a concurrency sizing estimate, not proof that
@@ -50,7 +52,9 @@ decision. Keep a representative existing workload model rather than forcing open
    observation cutoff, separating retries and future slots. A deficit identifies outstanding
    due starts (late, dropped or unresolved); it can come from
    response coupling, generator CPU/event-loop lag, connections, admission or an explicit drop
-   policy. Use timestamps and generator telemetry to distinguish them. See
+   policy. Check whether late slots were caught up, dropped or silently rescheduled; equal final
+   counts do not establish the intended arrival pattern. Use timestamps and generator telemetry
+   to distinguish causes. See
    `references/detection-and-generator-configuration.md`.
 5. **Re-run with generation-time fidelity when possible.** Use the workload model production
    requires, validate actual inter-arrivals and generator headroom, and retain drops/timeouts as
@@ -129,7 +133,8 @@ Decision:        representative / descriptive-only / rerun required
 - [Detection and generator configuration](references/detection-and-generator-configuration.md)
   — stage reconciliation, timestamp evidence, generator validation, and version-sensitive
   semantics for wrk2, k6, Gatling, JMeter and Locust. Read when auditing an existing result set
-  or configuring a run.
+  or configuring a run. Its decision cases provide teaching checks for schedule provenance,
+  recovery policy and correction restraint; they are not executed evaluation results.
 - [Post-hoc correction](references/post-hoc-correction.md) — the
   `recordValueWithExpectedInterval` algorithm with a worked example, HdrHistogram's own
   post-hoc API (`copyCorrectedForCoordinatedOmission`) and the double-correction rule, the

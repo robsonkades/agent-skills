@@ -23,6 +23,10 @@ accepted on behalf of unknown callers — publish deliberately, evolve deliberat
 
 ## Workflow
 
+Match the requested mode: a review produces findings and proposed contracts; design compares
+caller-facing alternatives; implementation changes code when authorized. A review request alone
+does not authorize migrating consumers or editing the published API.
+
 Before proposing code, inspect compiler release/toolchains, dependencies, CI/runtime versions,
 the previous public API and supported consumers. Use Java 25 without preview as the authoring
 default when no project target is specified; the record snippets require Java 16+.
@@ -83,6 +87,13 @@ conditional rather than declaring a safe minor release.
   contract, but do not expose an internal mutable collection. `List.copyOf` creates an
   unmodifiable shallow snapshot and rejects null elements; `Collections.unmodifiableList` is a
   live read-only view. Choose and document one rather than calling both “immutable.”
+- Choose eager versus lazy results from expected size, repeated traversal and resource lifetime.
+  A bounded snapshot is often simpler for callers; a resource-backed `Stream` is one-use and needs
+  an explicit close owner, including early exit and failed traversal. A terminal operation does
+  not itself call `close()`. State when work and failures occur rather than presenting a lazy
+  result as completed work. See the result-lifetime contrast in
+  [references/worked-example.md](references/worked-example.md); use java-resource-management for
+  implementation once acquisition, consumption and cleanup ownership are established.
 - Keep `exports` (compile/link access) distinct from `opens` (deep reflective access) in JPMS.
   Framework reflection may require a qualified `opens ... to ...`; exporting a package merely to
   make reflection work expands the caller API unnecessarily.

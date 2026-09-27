@@ -39,7 +39,9 @@ already authorized mitigation to complete intake or a design checklist.
 2. **Record the known fault assumptions and gaps.** Use `failure-models` when choosing a
    guarantee or when unknown outcomes are central. During an incident, do not delay a clear
    specialist handoff until a complete fault model has been written.
-3. **Route from the table below.** If it gives two candidates, use `references/triage-map.md`.
+3. **Route from the table below.** If candidates compete or the symptom has no direct match,
+   use `references/triage-map.md` for a separating question. Keep the route provisional if
+   the available evidence cannot distinguish owners; do not force a familiar diagnosis.
 4. **For a design or review rather than an incident**, select relevant sections from
    `references/design-review.md`; use their order where later decisions depend on earlier ones.
 5. **Hand off.** The specialist skill carries the workflow, the decision block and the Java.
@@ -122,7 +124,10 @@ or CDC contracts change; it does not establish the relational rollout contract.
 - During an incident, route from evidence without requiring a catalogue detour. More replicas, longer
   timeouts or more retries can deepen a cascade under specific saturation/recovery conditions;
   require evidence and a rollback trigger before changing them.
-- Do not stay in this skill once the owning skill is known. It carries no depth by design.
+- Once the owning skill is known and available, use it rather than repeating this intake.
+  If it is unavailable, report that limitation, retain the provisional owner and perform only
+  authorized evidence gathering supported here. Return the next discriminating check and the
+  unresolved specialist decision; do not invent a protocol, guarantee or installation requirement.
 - Two neighbouring families own what this one does not: JVM latency, GC, allocation and profiling
   are `java-performance` and the skills below it; in-process concurrency mechanics — executors,
   cancellation, structured concurrency, bulkheads — belong to the Java concurrency family, and a
@@ -144,8 +149,8 @@ state the evidence for no change and what would reopen that decision.
 - [Amazon Builders' Library: Timeouts, retries and backoff with jitter](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
 
 - [Triage map](references/triage-map.md) — the separating question for each pair of symptoms that
-  routes to two different owners, and the cheapest evidence that resolves it. Read when the table
-  above gives two candidates rather than one.
+  routes to different owners, and the cheapest evidence that resolves it. Read when candidates
+  compete or a symptom, such as growing retained work, needs classification before routing.
 - [Design review](references/design-review.md) — the questions to ask of a distributed design, in
   the order that makes each answerable, each routed to its owning skill. Read when reviewing or
   designing a component rather than diagnosing one.

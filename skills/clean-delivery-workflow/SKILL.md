@@ -28,6 +28,12 @@ The workflow establishes prerequisites, not a one-way pass. New evidence can sen
 back to clarification, risk assessment or test design; how much each step deserves depends
 on the change.
 
+The request determines which steps are actions now. A sequencing or review-only request
+produces a plan or findings; it does not authorize implementation merely because this workflow
+includes it. For an implementation request, carry already authorized work through the requested
+delivery boundary without asking again for routine reversible steps. Preparing a change,
+committing it and deploying it are distinct outcomes; establish which the user requested.
+
 ## Workflow
 
 1. **Understand.** Read the code that exists before proposing a change to it. Find relevant callers,
@@ -59,14 +65,20 @@ on the change.
    revise the remaining sequence when evidence changes. A small change needs no separate plan file.
 6. **Verify.** Run repository-required gates plus checks the risk warrants (quality-gates),
    and read the output. Risk-based selection does not waive a mandatory gate. Not "the
-   build should pass" — what it printed.
+   build should pass" — what it printed. Confirm the expected tests actually ran; inspect
+   zero-test results, skips and disabled jobs before treating an exit code or CI badge as evidence.
 7. **Review** at a depth set by the risk, not by the diff size (code-review). After review fixes,
-   rerun checks whose results the edits invalidate, plus any gates required for the final state.
+   generated-file changes or concurrent edits, inspect the delta and rerun checks whose results
+   it invalidates, plus any gates required for the final state. Preserve other contributors'
+   work and resolve overlapping ownership before editing it.
 8. **Record what the code cannot say**: assumptions, the trade you took, the decision and its
    alternatives (technical-debt-decisions, architecture-decision-making).
-9. **Deliver.** Connect the implemented outcome to observed checks and state what remains
-   unverified or deferred. A completed plan or a green pipeline alone does not establish
-   that the requested behavior was delivered.
+9. **Deliver.** For edited work, compare the final staged, unstaged and untracked content with
+   the starting state and requested scope; a working-tree check does not prove an intended
+   commit or artifact contains the same files. Connect the requested outcome to observed checks
+   and state what remains unverified or deferred. A completed plan or a green pipeline alone
+   does not establish that requested implementation was delivered; a planning task ends with
+   its justified sequence, checks and unresolved decisions.
 
 ## Rules
 
@@ -99,8 +111,10 @@ on the change.
 
 - **Workflow by risk** — `references/workflow-by-risk.md`. What each step actually collapses to
   at three risk levels, walked through on a configuration fix, a new endpoint and a schema
-  migration, plus incident mitigation before reproduction. Read when deciding how much
-  process a change warrants or when incident response changes the sequence.
+  migration, plus incident mitigation before reproduction and delivery checks. Read
+  when deciding how much process a change warrants, when incident response changes the sequence,
+  or when checking that the evidence covers the intended delivery. Its decision cases are
+  teaching exercises, not measured agent evaluations.
 - **Routing** — `references/routing.md`. Situation-to-skill map across this repository: the
   craftsmanship skills, the Java language and design skills, testing, concurrency, performance,
   architecture and operations. Read when you know the problem but not which skill owns it, or

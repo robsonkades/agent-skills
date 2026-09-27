@@ -34,6 +34,8 @@ advice about being careful.
    (`references/verification.md`).
 2. **Complete repository-required checks and those the change's risk warrants** and read the output
    rather than the exit code alone. Some runners can exit successfully with zero relevant tests.
+   For composed commands, inspect the required step's own result: a later successful reporter
+   can hide an earlier failure. Starting a background check is not observing its completion.
    Attribute existing local, CI or delegated evidence to its source and checked inputs; reuse it
    only when it satisfies the required check. Continue available required checks that remain;
    disclosing that they were not run does not finish them.
@@ -43,6 +45,8 @@ advice about being careful.
    contributor's change merely because it is unrelated to your task.
 4. **Make material failures and gaps prominent.** State their effect on the result alongside
    what worked; match detail to impact rather than burying the outcome in a command log.
+   Attribute a failure to the change, a pre-existing condition or infrastructure only with
+   supporting evidence; an untouched failing file alone does not establish its cause.
 5. **State what remains.** A partial result described accurately is useful; a partial result
    described as complete is worse than nothing.
 
@@ -57,9 +61,10 @@ advice about being careful.
   expect separately from what the available evidence establishes.
 - Report what you could not verify, explicitly and unprompted. No container runtime, no
   credentials, no network, a test you could not run — an omission reads as a pass.
-- Never weaken, delete, disable or narrow a test merely to make it pass. A failing test is either
-  finding a real defect or is itself wrong; both are reportable, and neither is fixed by
-  changing the assertion until it agrees. When the authorized requirement or verified API
+- Never weaken, delete, disable or narrow a test merely to make it pass. Distinguish a product
+  defect, an invalid expectation, a setup/infrastructure failure and nondeterminism using the
+  failure evidence; an unresolved failure remains unresolved. None is fixed by changing the
+  assertion until it agrees. When the authorized requirement or verified API
   contract changed, update obsolete expectations with that evidence and preserve relevant
   regression coverage. Ask only when the intended contract is materially unresolved.
 - Do not use an API from memory when the project pins a version. Check the actual dependency

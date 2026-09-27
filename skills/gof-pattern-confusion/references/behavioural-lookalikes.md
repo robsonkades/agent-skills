@@ -143,12 +143,37 @@ changing established consumer semantics to fit either label.
 An Iterator gives you elements and knows nothing about what you do with them. A Visitor gives you
 the operation and usually needs a traversal from somewhere.
 
+Separate traversal from dispatch. In classical Java Visitor, an element's `accept` selects the
+appropriate visitor operation for its concrete kind; the visitor implementation supplies that
+operation's behavior. The caller, element, visitor or a separate iterator can own traversal.
+Passing a `Consumer<Node>` to a walker establishes a callback contract, not by itself this
+element-specific dispatch protocol. Iterator and Visitor can therefore collaborate in one walk.
+
+**The dispatch trap:** with `Node n = new Text(...)`, calling `visitor.visit(n)` does not select
+an overload `visit(Text)` from `n`'s runtime type. Java overload resolution uses compile-time types.
+An appropriate `Text.accept` implementation calling `visitor.visit(this)` can select that overload.
+Inspect the actual call path and fallback; test subtype objects held through the base interface.
+Otherwise a supposedly specialized operation can silently run generic handling.
+
+The [Java 17 `ElementVisitor` contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/ElementVisitor.html)
+demonstrates element-directed dispatch; [JLS 17 §15.12.2](https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.12.2)
+defines overload selection. Framework names can be broader: Java 17
+[`FileVisitor`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/FileVisitor.html)
+is a file-tree callback protocol with directory, file and failure hooks. Preserve that public API
+and inspect continuation/error semantics; do not add `Path.accept` or rename it to force the
+classical structure.
+
 **The review candidate:** a "visitor" that walks the structure and does one thing, with one
 implementation.
 
 **Check:** a single visitor may implement a required public traversal API or keep operations
 outside a closed element model. If those constraints are absent, compare a direct method or
 baseline-compatible switch; operation count alone does not invalidate Visitor (`gof-visitor`).
+
+If dispatch or traversal needs redesign, pass the element/operation matrix, actual call path,
+fallback behavior and extension constraints to `gof-visitor` for a compatible design and checks.
+If that skill is unavailable, report the observed dispatch defect and required behavior here;
+classification alone does not authorize changing the hierarchy.
 
 ## Bridge vs Strategy
 

@@ -40,6 +40,21 @@ alone omits other time holding the connection.
 If estimates disagree, check window edges/inventory change, success-only metrics, retries, fan-out,
 clock endpoints and aggregation before adding a “safety factor”.
 
+For disjoint classes or instances with the same residence endpoints and observation window,
+apply the relation to each stable population before pooling:
+
+```text
+L_total ≈ sum(λ_i × W_i)
+W_pooled = sum(λ_i × W_i) / sum(λ_i)    # matching flow-weighted mean; nonzero total flow
+```
+
+For example, `900 request/s × 10 ms + 100 request/s × 100 ms = 19` requests on average.
+The pooled mean is `19 ms`, not the unweighted `55 ms`; multiplying `1000 request/s` by
+`55 ms` incorrectly predicts `55` requests. Equal traffic would make that average valid, but
+traffic skew changes the weights. Do not sum overlapping parent/child or retry populations as
+if they were disjoint requests. Keep per-class/instance checks: a correct pooled result can
+hide a saturated shard, and average occupancy still does not set a safe concurrency limit.
+
 For a wall-clock window `[a,b)` with tracked admission/departure events:
 
 ```text

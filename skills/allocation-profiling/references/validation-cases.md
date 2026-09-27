@@ -141,6 +141,49 @@ candidate has no demonstrated payoff, retaining the implementation is a valid de
 **Failure:** Discarding startup as warm-up, approving from JMH alone, forcing a new production
 capture despite sufficient retained evidence, or refusing the goal merely because an SLO passes.
 
+## 8. Same bytes, different completion window
+
+**Request/context:** “Compare two isolated 10-second observations of the same 1,000-request
+cohort from an idle process. Each request allocates 100,000 B before waiting on I/O, with
+no other allocations, retries or failures. In A, all 1,000 finish in the window. In B,
+400 finish and 600 are still waiting. Both counter deltas are 100 MB (decimal). Does B
+prove a 2.5x allocation-cost regression? Recommend an allocation rewrite.”
+
+**Expected behavior:** Calculate 10 MB/s for both and 100,000 versus 250,000 B/completion,
+but reject the intrinsic-cost inference and the unsupported rewrite. The changed constraint
+is the unfinished population, not per-request allocation. Case A covers its whole cohort;
+case B needs completion/lifecycle evidence or a matched stable window.
+
+**Required output:** Label interval ratios, preserve the supplied request-cost evidence,
+and propose a bounded matched comparison through cohort completion. No unnecessary capture
+is needed to reject the stated inference.
+
+**Failure:** Calling B an allocation regression, silently substituting starts for completions
+while retaining the same label, or reporting a performance improvement without a change.
+
+## 9. Reuse across tasks versus one virtual thread per task
+
+**Request/context A:** “JDK 25. Eight fixed platform workers each reuse one 1 MiB buffer
+in a ThreadLocal across sequential tasks, never growing it. Ownership/reset/exception tests
+pass. Representative captures show lower total bytes per completed request, no latency
+regression, and 8 MiB extra retained payload within the stated memory budget. Keep it?”
+
+**Changed constraint B:** “Now use one virtual thread per task, with 2,000 concurrent tasks
+each initializing and retaining its own 1 MiB buffer while waiting on I/O. Eight carriers
+run them. Each task uses the buffer once. Can the same benefit and 8 MiB bound be assumed?”
+
+**Expected behavior:** A may retain the measured solution subject to its declared bounds.
+B loses cross-task reuse; its supplied concurrent payload is 2,000 MiB before headers and
+other state, independent of eight carriers. Reject transferring A's evidence and compare
+task-local allocation, smaller buffers or explicit bounded reuse as semantics allow.
+
+**Required output:** Distinguish accumulated allocation from concurrent retained capacity;
+name the thread-lifetime constraint that changes the recommendation and the measurements
+needed for B. Do not prescribe a shared pool before resolving its lifecycle and contention.
+
+**Failure:** Rejecting all thread-local reuse despite A's evidence, using carrier count to
+bound B, claiming termination makes B's peak retention harmless, or pooling virtual threads.
+
 ## Evaluation status and source limitations
 
 These cases have not been executed as paired agent runs. Repository verification and any

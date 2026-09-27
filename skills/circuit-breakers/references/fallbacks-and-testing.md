@@ -137,3 +137,50 @@ separately, preserving the primary failure measurement.
 Finally, exercise the breaker in a load test: inject dependency latency at capacity and assert
 goodput on unrelated endpoints stays within its agreed isolation bound. That is the property the breaker exists for, and
 the one no unit test observes (`cascading-failures`, `load-testing`).
+
+## Decision cases for diagnosis and review
+
+These are documented teaching cases, not executed agent evaluations. Use fresh sessions and
+the same model, tools and task context for any original/revised comparison; keep independent
+evaluation criteria separate from the actor. Their inclusion here makes them known examples,
+not holdouts. Assess decisions and evidence, not matching wording.
+
+**Lifecycle pair.** Both requests use Resilience4j 2.3.0, a count window of 20, minimum 10,
+failure threshold 50%, a wait longer than the test, no retries and a stub that throws
+`IOException` on every admitted call. Submit 20 sequential invocations.
+
+- A constructs `CircuitBreaker.of("inventory", config)` inside each invocation. Ask why it
+  never opens and whether lowering the threshold fixes it. Expected: identify separate
+  histories and reuse one instance within this failure domain; each old instance sees one
+  failure and all 20 invocations reach the stub.
+- B obtains the breaker from the same long-lived registry and uses it for all invocations.
+  Ask whether it needs the same fix. Expected: retain the lifetime; 10 stub calls fill the
+  sample and open it, and the next 10 are rejected locally. Do not claim all 20 hit the stub.
+
+Failure in either case: assuming equal names imply shared state, changing thresholds without
+checking lifetime, or sharing the fix across unrelated dependency domains.
+
+**Observation versus protection.** The same shared breaker is deliberately in `METRICS_ONLY`;
+20 failures are recorded and the user asks why lowering the threshold did not block calls.
+Expected: explain the mode and establish whether observation or enforcement was requested;
+do not claim protected capacity or silently clear the operator's setting. If the state is
+instead `FORCED_OPEN`, the ordinary wait is not an automatic recovery mechanism.
+
+**Ambiguous missing metrics.** A service has a breaker annotation, successful/failing stub
+calls, and zero recorded outcomes. The invocation path and active mode are not supplied.
+Expected: inspect the entry path/proxy, mode, instance identity and ignore predicate before
+tuning; ask only for missing evidence that selects among those explanations. Failure: declare
+self-invocation proven from the annotation alone, or prescribe a new minimum without evidence.
+
+**State and demand.** Compare a passive breaker remaining open for an hour with no calls
+against one cycling every five seconds while rejecting half of current requests. Expected:
+the first lacks new recovery evidence and says little about current impact; investigate the
+second despite no long uninterrupted open interval. Failure: declaring an hour-long backend
+outage proven by the first, or ignoring the second because each open interval is short.
+
+**Restraint and preserved contracts.** A healthy dependency receives malformed requests that
+produce 422, while the caller's own bulkhead rejects excess work. Expected: classify validation
+and local admission separately, preserve caller capacity limits, and hand capacity tuning to
+`concurrency-limiting-and-bulkheads` with occupancy/rejection evidence. Do not count these as
+proof of backend failure. Separately apply the existing half-open sample-boundary and returned
+503/result-predicate checks above: lifetime fixes must not change those contracts.

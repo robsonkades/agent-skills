@@ -27,7 +27,9 @@ was a formality. Both come from not deciding, up front, what this particular rev
 ## Workflow
 
 1. **Establish scope and purpose.** Read the request, description and repository guidance;
-   identify the base/head commits or staged/unstaged files being reviewed. Inspect callers,
+   identify the base/head commits or staged/unstaged files being reviewed. Distinguish a branch's
+   contribution since divergence from a comparison of two complete snapshots; see the review
+   comparison guidance in `references/what-to-look-for.md`. Inspect callers,
    tests and relevant contracts before assuming intended behavior. If the requirement remains
    ambiguous, ask a focused question while continuing checks independent of that answer.
 2. **Set the depth from the risk**, not the diff size: what breaks if this is wrong, how
@@ -42,7 +44,10 @@ was a formality. Both come from not deciding, up front, what this particular rev
 4. **Verify consequential claims.** Inspect the target compiler release/toolchain, resolved
    libraries, CI/runtime and deployment contract before asserting an API or compatibility defect.
    This review process has no Java baseline; never upgrade a project to make a suggested fix work.
-   Run targeted checks in an isolated checkout when needed, preserving unrelated work. Inspect
+   Run targeted checks against the reviewed content when needed, preserving unrelated work.
+   Record whether results cover the head, index or working tree; a local fix can hide a staged
+   defect. Inspect unfamiliar build/test hooks before execution and isolate their side effects:
+   a separate checkout does not isolate credentials, shared services or external writes. Inspect
    test counts, skips and failures. Static reasoning can establish a defect, but state the
    reachable trigger and code path; missing infrastructure is a validation limit, not a pass.
 5. **Write each finding so it can be acted on**: what, where, why it matters, and what you
@@ -55,6 +60,9 @@ was a formality. Both come from not deciding, up front, what this particular rev
 
 ## Rules
 
+- A review request authorizes investigation and findings, not automatic fixes to the reviewed artifact.
+  Apply fixes when included in the user's request; keep experiments separate from the artifact
+  being reviewed and identify which version any test result actually validates.
 - Avoid repeating mechanical feedback already enforced by configured checks. A reachable null
   dereference or other defect remains reportable even if a tool could detect it. Verify what CI
   actually runs; suggest a pipeline improvement through `quality-gates` without expanding the
@@ -89,11 +97,10 @@ and [review contents](https://google.github.io/eng-practices/review/reviewer/loo
 Apply the repository's policies and requested scope rather than importing another organization's
 approval rules wholesale.
 
-- **What to look for, in payoff order** — `references/what-to-look-for.md`. The ordered pass
-  list, with the questions that find defects at each level, the Java-specific hazards worth a
-  reviewer's attention (concurrency, resource lifetime, exception translation, API
-  compatibility, migrations), and the explicit list of what to hand to automation. Read while
-  reviewing.
+- **What to look for, in payoff order** — `references/what-to-look-for.md`. Choices of review
+  scope, worked boundary cases and ordered questions that find defects. Covers Java-specific
+  hazards (concurrency, resource lifetime, exception translation, API compatibility, migrations)
+  and what to hand to automation. Read while reviewing.
 - **Writing and receiving findings** — `references/giving-and-receiving.md`. The anatomy of an
   actionable comment, severity vocabulary, resolving deadlock between reviewer and author,
   receiving feedback, and when pairing replaces review rather than adding to it. Read when

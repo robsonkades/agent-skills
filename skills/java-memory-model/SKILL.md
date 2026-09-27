@@ -69,6 +69,12 @@ test never failing, it is not yet a JMM proof.
   sequential-consistency guarantee described by JLS 17.4.5.
 - A racy execution is still constrained by the JMM, but ordinary sequential reasoning is not a
   valid proof. “It works on this CPU” does not narrow the language-permitted executions.
+- Ordinary reference reads/writes are atomic. Nonvolatile `long`/`double` accesses can tear under
+  [JLS 17.7](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.7), even if a
+  particular VM performs them atomically. Use volatile access or proper synchronization when
+  shared 64-bit state needs whole-value access; whole-value atomicity alone establishes neither
+  publication nor an atomic read-modify-write. Distinct fields/array elements must not corrupt
+  each other through word tearing (JLS 17.6); that is different from racing on the same location.
 
 Happens-before is stronger than “earlier in time” and subtler than “read B sees the last write A.” A
 read is allowed to observe a write only under the JLS rules; intervening/unordered writes and races
@@ -137,6 +143,13 @@ compound read-modify-write (`x++`) atomic, nor a multi-field invariant a snapsho
 can use one lock, an immutable aggregate published through one volatile/atomic reference, or another
 formally proven protocol.
 
+`volatile int[] values` makes access to the reference volatile, not access to `values[i]`.
+Publishing the reference orders preceding element initialization, not later unsynchronized
+mutation. For independent element updates, consider the documented element operations of an
+atomic array; they still do not provide a whole-array snapshot. A privately built, never-mutated
+array published as a replacement can instead use the single-read snapshot pattern in
+[the publication reference](references/happens-before.md).
+
 ## Final-field semantics
 
 For a final field written in a constructor, a freeze occurs when that constructor exits, normally
@@ -184,6 +197,13 @@ synchronized (lock) {
 Notification is not state; update the predicate under the lock. Define interruption, timeout,
 shutdown and `notify` versus `notifyAll` consequences. Prefer higher-level synchronizers/queues
 when their contract fits.
+
+`wait()` releases only the monitor of the object waited on; other held monitors remain locked.
+Check whether the producer needs a retained lock to make the predicate true. Notification does
+not unlock the monitor: the waiter must reacquire it before returning. The publication edge is
+the notifier's unlock to the waiter's later lock, not the notification call itself. See
+[Object.wait](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()>)
+and JLS 17.2 for the exact lifecycle.
 
 ## Architecture and code generation
 
@@ -241,4 +261,5 @@ merely because shared state exists.
 - [JLS 17: Threads and Locks](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html)
 - [JLS 17.4: Memory Model](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.4)
 - [JLS 17.5: Final Field Semantics](https://docs.oracle.com/javase/specs/jls/se25/html/jls-17.html#jls-17.5)
+- [Atomic array element semantics](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/atomic/package-summary.html) — when choosing per-element atomic operations rather than immutable replacement.
 - [OpenJDK jcstress](https://github.com/openjdk/jcstress)

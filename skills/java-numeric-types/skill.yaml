@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: java-numeric-types
-version: 1.2.3
+version: 1.2.4
 description: >-
   Choosing and using Java's numeric types correctly: binary floating-point limits for exact
   decimal amounts, BigDecimal construction, scale, rounding and the equals/compareTo split,
-  integer overflow and the exact-arithmetic methods, primitives versus boxed types, the
+  integer overflow, lossy conversions and exact arithmetic, primitives versus boxed types, the
   boxed-value caching that makes == appear to work for some values, unboxing NPEs,
   boxing cost in bulk paths, and what happens to a numeric value when it crosses JSON, a
   database column or a JavaScript client. Use when money or any exact quantity is held in

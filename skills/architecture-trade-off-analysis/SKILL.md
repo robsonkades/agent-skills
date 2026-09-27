@@ -19,10 +19,12 @@ not yet support selection. Always give an actionable next step; never manufactur
 ## Workflow
 
 1. **Frame the decision.** Identify the affected system/operation, decision owner, deadline,
-   current implementation and credible alternatives. Obtain requirements and constraints,
-   workload/change/failure scenarios, relevant deployment/data ownership, and the evidence
-   available. Separate measured facts, forecasts, assumptions and preferences. Ask only for
-   missing inputs that can change the conclusion; analyze known constraints while waiting.
+   current implementation and credible alternatives. Inspect available contracts, ADRs,
+   code, tests, configuration and operational evidence for requirements, workload/change/
+   failure scenarios and deployment/data ownership. Distinguish explicit obligations from
+   observed conventions; one implementation does not establish policy. Separate measured
+   facts, forecasts, assumptions and preferences. Ask only for missing inputs that can
+   change the conclusion; analyze known constraints while waiting.
 2. **Choose proportionate effort.** Use the modes below. Reversal cost depends on data,
    consumers, migration and commitments after adoption, not team size or a technology name.
    A small team can face a consequential decision; a clear, dominant feasible option does
@@ -32,13 +34,17 @@ not yet support selection. Always give an actionable next step; never manufactur
    and defer options where relevant; record material exclusions and their reasons.
    Components that can coexist are not necessarily rival architectures. Read
    [qualitative and quantitative analysis](references/qualitative-and-quantitative.md) when
-   constructing an option set, checking Java compatibility, building a matrix/numerical
-   model or designing an experiment.
+   constructing an option set, checking Java or transition compatibility, building a
+   matrix/numerical model or designing an experiment.
 4. **Establish feasibility before preference.** Test each option against mandatory
    constraints; mark pass, fail or unknown with evidence. A better score cannot compensate
    for a failed obligation. Keep nondifferentiating obligations as checks even if they leave
    the ranking matrix. If all options fail, expose the conflict and seek a revised option
-   or an authorized constraint change.
+   or an authorized constraint change. Where adoption changes running systems or data,
+   assess the transition as well as the destination: coexistence, cutover and recovery
+   must satisfy their applicable obligations. A code revert alone does not establish
+   recovery of changed state. An attractive target can still have no demonstrated feasible
+   path from the current system.
 5. **Explain the mechanisms.** For each material scenario, trace how a candidate changes
    dependencies, execution, state/transaction scope, failure/recovery, deployment and
    operating work. Use `architecture-coupling-and-quanta` when the dependency boundary
@@ -89,6 +95,13 @@ Use `architecture-characteristics` when stakeholders cannot yet say what “fast
 comparison inputs; an unresolved authority dispute cannot be settled by a score.
 Use `architecture-fitness-functions` to design ongoing checks for accepted risks, rather
 than embedding unvalidated monitoring thresholds here.
+
+When transition feasibility determines the choice, pass the current/target contracts,
+consumer and data ownership, downtime/recovery limits and evidence gaps to
+`architecture-refactoring-paths` for compatible checkpoints and recovery conditions.
+Keep selection conditional on that result. If the skill is unavailable, record the
+specific feasibility question and smallest compatibility check; do not invent a safe path
+or expand the comparison into migration implementation.
 
 For a small decision, a paragraph can suffice. For a material comparison, provide the
 decision/scope, feasibility findings, the few differentiating criteria/scenarios with

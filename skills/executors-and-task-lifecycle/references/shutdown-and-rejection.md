@@ -32,6 +32,27 @@ recursive rejection and stack overflow (reproduced on JDK 25.0.3). Prefer visibl
 bounded replacement/coalescing policy whose queue contract, race handling and result settlement
 are explicit; an unbounded resubmission loop is not recovery.
 
+### Caller-runs bypasses worker supervision
+
+Stock `CallerRunsPolicy` invokes the rejected Runnable directly. It does not enter the pool's
+worker loop, so `beforeExecute`, `afterExecute` and worker completion counters do not cover that
+execution. A hook-only context installer or failure observer may appear correct at low load and
+disappear under saturation. Inspect the actual handler and wrappers before generalizing; this path
+is visible in [OpenJDK 25.0.3's CallerRunsPolicy and runWorker](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/java.base/share/classes/java/util/concurrent/ThreadPoolExecutor.java).
+
+For a plain Runnable passed to `execute`, a caller-run body failure can escape synchronously to
+the submitter. With ordinary `submit`, the FutureTask still captures body failure even when run
+inline; its owner must inspect the Future. A worker uncaught handler or `afterExecute` alone
+observes neither path reliably. Separate task transitions from worker metrics.
+
+If caller-runs remains appropriate, put required context installation/restoration and observation
+around the application action on both paths. With ordinary `submit`, wrapping the action before
+submission lets the Future capture setup/body/cleanup failures; wrapping only the outside of a
+FutureTask can leave its result pending if setup fails. Restore the caller's previous context on
+inline or nested execution. Never fall back to running without required context after setup fails.
+Alternatively, use visible rejection when inline execution cannot satisfy affinity or context
+requirements; retaining caller-runs is not mandatory.
+
 ## Failures before the task body
 
 A `ThreadFactory` may refuse creation by returning `null`. `ThreadPoolExecutor` can then queue a
@@ -139,6 +160,29 @@ process termination/restart
 A pod termination grace shorter than unfinished application drain risks forced termination;
 durability/idempotency determine whether work is lost or replayed. A liveness endpoint
 that fails during drain can trigger premature kill; readiness and liveness have different roles.
+
+## Decision exercises
+
+These are teaching cases with visible expectations, not measured agent evaluations.
+
+- **Execution-path pair:** a task requires tenant context installed in `beforeExecute`, and
+  failures are counted only in `afterExecute`. Case A has an idle worker; case B changes only
+  saturation so stock CallerRunsPolicy executes the same task. A exercises the hooks; B bypasses
+  them. Require task-level context/observation or visible rejection for B. Failure: assuming all
+  Runnable execution passes through worker hooks or recommending context-free fallback.
+- **Failure-surface pair:** while saturated, run a throwing action through `execute`, then through
+  `submit`. Expect the direct caller to receive the first exception and the second Future to
+  retain the failure. Assert that caller context is restored in both cases. Failure: treating a
+  worker uncaught handler as sufficient or losing the Future's outcome.
+- **Stalled children:** each occupied worker submits a child to the same unbounded queue and
+  waits for it. Inspect the wait graph before proposing more maximum workers; accepted queued
+  children cannot make progress while all workers wait. Preserve the task's dependency/parallelism
+  contract when removing the wait or handing off execution-model design. Failure: calling this
+  an observed downstream slowdown or promising that `maximumPoolSize` alone repairs it.
+- **Restraint and missing evidence:** a closed producer already bounds queued/live work and has
+  tested shutdown. Preserve it unless the requirement changes. If crash survival is now required
+  but there is no durable job representation, identify the durable acceptance/recovery gap;
+  enlarging an in-memory queue or writing a shutdown hook is not proof of restart safety.
 
 ## Authoritative references
 

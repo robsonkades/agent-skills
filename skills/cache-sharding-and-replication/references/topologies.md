@@ -19,6 +19,44 @@ and budget metadata, buffers and recovery headroom separately.
 | Operational cost           | Lowest infrastructure, highest coupling to clients | One more tier to run, monitor and upgrade            | The cache product owns it; you own understanding its mode  | Simple to run, expensive in memory and write fan-out   |
 | Fits when                  | Few clients, one runtime, latency-critical         | Polyglot or numerous clients, topology changes often | You already run the clustered product and fit its model    | Small, read-dominated reference data                   |
 
+## Capacity before choosing a copy count
+
+Measure the resident representation of keys, values and entry metadata; serialized payload
+bytes alone need not equal memory in either the server or a process-local cache. For a
+uniform replication factor and equally sized resident copies, a first feasibility bound is:
+
+```text
+distinct resident data capacity <= aggregate memory available for entries / RF
+```
+
+This is an upper bound, not a sizing result: skew, placement constraints and per-node limits
+can make it unattainable. Check the largest assigned shard/copy set on each node, including
+the layout after the required failure. Reserve process/runtime memory, connections, replication
+buffers and recovery headroom before counting memory as available for entries. Inspect the
+product's accounting to avoid counting the same metadata or buffer twice.
+
+For example, six nodes with 5 GiB each available for entries can hold at most 30 GiB of
+distinct resident data at RF=1, but 15 GiB at RF=2. A 24 GiB resident working set that fit before
+will no longer fit merely by converting half the same nodes into replicas. With eviction,
+remeasure steady-state misses and origin cost; without eviction, check rejected cache fills.
+Adding six equally sized nodes instead restores the 30 GiB bound at RF=2, but still requires
+valid placement and failure/recovery capacity. These are illustrative capacity bounds, not
+measured hit rates. More copies may be justified; they do not provide free availability.
+
+For Redis Open Source, an eviction threshold is especially unsafe as a container-memory
+budget. The [Redis 7.2.0 configuration](https://github.com/redis/redis/blob/7.2.0/redis.conf)
+documents excluded replica-output-buffer memory and the default of replicas ignoring
+`maxmemory`; primary-driven eviction does not keep replica process memory below that value.
+Verify the deployed version and effective settings. Measure primary and replica memory during
+full synchronization as well as steady state; do not assume enabling independent replica
+eviction preserves the intended dataset or fixes an undersized process limit.
+
+Budget serving capacity separately from stored copies. A standby that does not accept reads
+adds no normal read throughput, and replica reads do not distribute primary-owned writes.
+After failure, derive load on each eligible survivor from actual routing; do not divide total
+traffic by the physical node count. Include network and CPU used to rebuild copies alongside
+foreground traffic. A dataset that still fits can nevertheless time out while being rebuilt.
+
 ## What each gets wrong in practice
 
 **Client-side sharded.** The membership list is configuration in N applications, and they

@@ -82,7 +82,8 @@ An entity remains managed, writable and dirty in a context joined to a committin
 
 An entity's persistence context ended or it was detached, then modified
         → changes are not automatically synchronized. Re-read or merge deliberately;
-          merge returns the managed target and may issue a SELECT.
+          merge returns the managed target and may issue a SELECT. Establish whether
+          the input is edited entity state or a partial command before copying it.
 
 A write failed at flush/commit, or the transaction is rollback-only
         → end the failed unit through its lifecycle owner. clear() does not repair
@@ -130,6 +131,11 @@ The same row must be represented by two independent managed instances
   invokes persist/merge according to its new-entity detection; `merge` copies state into a managed
   instance and may require a SELECT depending on identity/version/context. Use the returned instance
   and verify SQL for the provider/version instead of relying on a universal call shape.
+- **Merge is not a partial-update protocol.** Reconstructed entities can copy null/default
+  fields the caller never intended to change. Provider-tracked unfetched lazy state is different
+  from an omitted request field. For partial commands, load the owned entity and apply the
+  explicitly supplied, permitted changes; preserve the caller's version/conflict contract.
+  Legitimate detached editing can still use merge with known state and cascade semantics.
 - Hibernate 6.6 queues entity actions in its own order; JPA does not promise source-order SQL.
   A delete-then-insert of a conflicting unique key can therefore insert first and fail.
   Consider updating the existing row, or flush the deletion before the insertion where
@@ -178,7 +184,7 @@ JPA/Hibernate/Spring snippets; adapt to resolved versions, without upgrading to 
 
 - [Unit of Work and Identity Map](references/unit-of-work-and-identity-map.md) — entity
   states, failed-flush recovery and rollback, flush timing and ordering, dirty checking cost
-  and context growth, merge versus re-read, batch chunking, and how bulk operations
+  and context growth, merge versus partial commands, batch chunking, and how bulk operations
   interact with both patterns. Read when a write did not happen, happened unexpectedly, or
   a batch is slow.
 - [Lazy Load](references/lazy-load.md) — proxy mechanics and what triggers a fetch, the

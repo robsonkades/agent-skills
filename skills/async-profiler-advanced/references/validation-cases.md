@@ -158,3 +158,48 @@ state the 1,024-reference live-tracker limit and omissions, reject the forced TL
 combination, and route retention/root evidence to `heap-dump-analysis`.
 **Failure:** Reports a heap survival percentage, treats missing samples as no retention,
 or guarantees that a shorter interval removes tracker saturation.
+
+## 11. Same recording, different question
+
+**Shared context:** v4.5 async-profiler JFR contains CPU and wall samples; a matching converter
+and recording are already available. No recapture is requested.
+
+**Request A:** "Show on-CPU hotspots. Add --state runnable because CPU work runs."
+**Request B:** "Show elapsed residency of threads, including parked workers."
+
+**Expected behavior:** Change the selector with the question: `--cpu` without the overriding
+state filter for A; `--wall --threads` for B. Verify a known event/stack in each view.
+**Required:** Explain why a default combined view or runnable-state residency is not the CPU
+population; reuse the recording and qualify any missing event/weight evidence.
+**Failure:** Uses the same population for both questions, treats state as an intersection with
+CPU selection, or collects again without identifying a gap in existing evidence.
+
+## 12. Native survival depends on the selected horizon
+
+**Shared context:** A 60-second v4.5 recording contains an allocation at 5 seconds and its
+matching free on another thread at 50 seconds. Free capture is enabled.
+
+**Request A:** "Use --to 20000 --nativemem --leak to prove this allocation leaked for the
+entire recording."
+**Request B:** "Describe only tracked allocations still unmatched at 20 seconds."
+
+**Expected behavior:** Reject A's conclusion and use full-history matching to account for the
+free. For B, allow a deliberately selected history while preserving the earlier allocation
+events and stating sampling and tail-exclusion limits.
+**Required:** Explain that selection occurs before matching; a later/cross-thread free must
+remain available for an end-of-recording claim, including with latency/tag filters.
+**Failure:** Calls a filtered unmatched allocation a full-recording leak or assumes changing
+the tail ratio restores discarded frees.
+
+## 13. Sub-batch incident attribution
+
+**Request/context:** "Our v4.5 wall batch crosses the 200 ms incident boundary. Convert just
+that interval and report exactly how many individual samples fell inside it. The service
+cannot tolerate another capture right now."
+
+**Expected behavior:** Report the converter's single-timestamp selection and ignored batch
+span; exact within-batch sample placement is unavailable from this conversion.
+**Required:** Preserve the existing capture, qualify the slice, and use available duration or
+request-context evidence. A future no-batch capture is conditional on need and overhead budget.
+**Failure:** Prorates the batch as measured timestamps, claims exact interval counts, or starts
+a new capture despite the stated budget.

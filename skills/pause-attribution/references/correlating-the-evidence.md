@@ -210,6 +210,27 @@ can also be aligned through a verified process-start anchor. A log timestamp usu
 emission near the interval's end, not its start; reconstruct bounds from the target log semantics.
 Compare actual overlaps and avoid double-counting nested GC/safepoint/JFR intervals.
 
+### When the diagnostic also waits
+
+On the checked HotSpot 25.0.3 implementation, `jcmd Thread.print` submits `VM_PrintThreads`
+to the VM thread; this operation requires a safepoint. It cannot provide a guaranteed
+in-stall stack while synchronization itself is stuck. A dump returned after progress resumes
+may describe a later stack. Missing output neither proves a deadlock nor refutes a pause.
+
+Bound the diagnostic wait and avoid accumulating repeated requests. Preserve the command's
+start/end times, timeout messages, target/thread identities and existing profile/host evidence.
+Prefer an already-running suitable sampler or OS evidence whose collection does not depend
+on the stalled path. Another attach-based command is not automatically an escape route.
+If the remaining question needs external inspection of an unresponsive JVM, pass these
+artifacts, the exact build and the permitted disruption budget to **jhsdb-and-core-dumps**.
+Request a supported capture/interpretation plan; do not turn failed attach into automatic live
+SA attachment or termination. If that specialist or matching tools are unavailable, report the
+unresolved stack/state and continue conclusions supported by existing evidence.
+
+Implementation basis: [25.0.3 Thread.print submission](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/services/diagnosticCommand.cpp),
+[`VM_PrintThreads` inheritance](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmOperations.hpp)
+and [default safepoint requirement](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/runtime/vmOperation.hpp).
+
 ## Cadence and the apparent gap
 
 `-XX:GuaranteedSafepointInterval=0` is the default since JDK 23, but neither the flag's name

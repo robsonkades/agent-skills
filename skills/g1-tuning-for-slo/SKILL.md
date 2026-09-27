@@ -58,6 +58,9 @@ measurement, and at worst hides the actual cause behind a symptom that moved.
    young SLO; `G1OldCSetRegionThresholdPercent` and `G1MixedGCCountTarget` together from
    the mixed SLO; IHOP from old-generation allocation rate and observed marking time, with an explicit
    safety margin below the theoretical ceiling.
+   First check feasibility: non-copy work can already consume the pause goal, and a required
+   region size can exceed the runtime's supported range. Report an infeasible model or missing
+   measurement instead of clamping the arithmetic into a flag and promising the SLO.
 6. **Write the prediction down before running the validation.** A prediction recorded
    afterwards cannot be wrong, which makes the validation worthless.
 7. **Validate under load equivalent to the baseline**, evaluating young and mixed

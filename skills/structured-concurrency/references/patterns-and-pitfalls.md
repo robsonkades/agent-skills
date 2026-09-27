@@ -104,6 +104,36 @@ Two costs to evaluate: an eager second attempt can increase downstream request v
 only if it responds by exiting and releasing its resources. Measure actual attempts and residual
 work; cancellation timing and admission affect the load increase.
 
+### A result can still own a resource
+
+The price race above returns values. Racing calls that return an open response body, stream
+or connection adds another contract: who closes every acquired handle? A loser can finish
+normally near cancellation, or finish after ignoring/delaying interruption. Scope `close()`
+waits for its thread but does not call `close()` on its return value. The same leak can occur
+when one task returns a resource and a sibling fails before the owner adopts any results.
+
+Prefer consuming and closing each resource inside its callable, then returning an independently
+usable value, when response size and streaming needs permit it. Do not close a returned stream
+inside that callable and then hand its unusable view to the caller. If a live handle must cross
+the boundary, define explicit ownership for acquisition, publication, accepted result, discarded
+result, join failure and scope-close failure. Track acquired handles through a thread-safe
+protocol that remains reachable even if no result is delivered. After all producers terminate,
+clean up unadopted handles; transfer an accepted handle only when the return path commits to its
+caller-close contract. Prevent both leaks and double-close, including cleanup failures.
+
+On JDK 25, `Joiner.onComplete` is not invoked for completion after scope cancellation, so a
+custom joiner that closes losing results only in that callback is insufficient. Nor is a
+pre-return `isCancelled()` check an atomic resource transfer. Reuse a tested ownership protocol
+or avoid the resource-returning race when that protocol is unjustified complexity. For transfer
+design, pass the handle's close semantics, cancellation path and accepted/discarded-result
+contract to `java-resource-management`; if unavailable, keep that ownership gap explicit.
+
+Test both a loser that already acquired a resource and a late return after cancellation, plus
+failure before result adoption. Count actual releases after scope close, and verify an adopted
+result stays usable until its owner closes it. Thread termination alone does not prove cleanup.
+These distinctions follow the [JDK 25 scope close contract](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html#close()>)
+and [completion callback contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.Joiner.html).
+
 ## Bounding concurrency inside a scope
 
 A scope does not impose an admission limit. Cancellation can prevent later forks from

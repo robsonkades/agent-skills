@@ -26,8 +26,9 @@ and creation arguments can coexist with this pattern.
 That is a narrow pattern, and most code labelled Factory Method is not it. A `static of(...)` on
 the type itself is a **static factory method**: a named constructor with the freedom to cache,
 return a subtype and be given a meaningful name. It solves a different problem — naming and
-control over instantiation — and it involves no subclass and no hook. Both are useful; calling
-them the same thing is how a `Supplier` turns into a class hierarchy.
+control over instantiation — without overridable dispatch of the creation method. Returning a
+subtype does not make a static factory a GoF hook. Both forms are useful; distinguish their
+contracts before introducing a hierarchy.
 
 ## When it is the answer
 
@@ -132,6 +133,14 @@ THEN it is a static factory method. Judge it by naming and instance
 
 ## Cross-cutting checks
 
+- **Creation contract.** Preserve required arguments, null policy, invocation timing/count,
+  checked failures, freshness and ownership across the hook and its replacements. `Supplier.get()`
+  declares no checked exceptions and guarantees neither a fresh instance nor ownership transfer.
+  Retain a typed provider or hook when its declared failure contract matters; do not wrap checked
+  failures merely to fit `Supplier`. For an owned resource, the factory cleans up acquisition that
+  fails before transfer, and the recipient closes the successfully transferred product after its
+  last use, including failure paths. A borrowed shared product stays with its owner. If ownership
+  is unclear, establish it before adding cleanup or caching; see the worked example's owned variant.
 - **Concurrency.** The classic defect is a constructor invoking the overridable factory method:
   subclass state can be read before initialization; cross-thread exposure additionally requires
   the creator to escape. Avoid overridable constructor calls (`java-composition-over-inheritance`).
@@ -155,6 +164,8 @@ THEN it is a static factory method. Judge it by naming and instance
 For a review, return the concrete hook/call sites, creation frequency and ownership, chosen
 alternative or reason to retain the hook, and checks performed versus pending. If framework
 construction or external subclass usage is unknown, keep removal conditional until inspected.
+For an authorized refactor, preserve representative consumer and failure behavior and report
+the targeted checks. A findings-only review need not change production code.
 
 - [ ] Subclass-based creation has a concrete purpose; an inherited algorithm is one justification,
       not a required part of the pattern's definition
@@ -165,6 +176,8 @@ construction or external subclass usage is unknown, keep removal conditional unt
 - [ ] Any externally supplied product key is validated against the supported registry; reflective
       class loading is not driven directly by untrusted input
 - [ ] Lazy caching inside the hook, if present, is correctly published
+- [ ] Creation failures retain their declared semantics; owned and borrowed products have distinct
+      cleanup responsibilities, verified on relevant failure paths
 - [ ] Covariant return types are declared where callers depend on the product subtype
 - [ ] A `static of/from/valueOf` is described as a static factory, not as this pattern
 
@@ -176,4 +189,5 @@ construction or external subclass usage is unknown, keep removal conditional unt
   Method and Abstract Factory. Read before adding or removing a creation hook.
 - [Worked example](references/worked-example.md) — an import pipeline whose subclasses existed
   only to pick a parser, converted to an injected supplier and then to a keyed map, alongside a
-  framework case where the hook correctly stays. Read when refactoring a creator hierarchy.
+  framework case where the hook correctly stays. Read when refactoring a creator hierarchy or
+  preserving checked failures and resource ownership in a creation provider.

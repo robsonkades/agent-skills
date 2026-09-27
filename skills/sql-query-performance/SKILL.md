@@ -112,4 +112,5 @@ sequence/external effect. An estimated plan can support hypotheses when executio
   covering, the write cost, and when the correct answer is no index. Read before proposing,
   adding or removing one.
 - [Query shapes that fight the optimiser](references/query-shapes.md) — non-sargable predicates,
-  implicit conversion, pagination, and the semantics of rewrite, index or no-change decisions.
+  implicit conversion, pagination, join multiplicity and the semantics of rewrite, index or
+  no-change decisions. Read when comparing statement rewrites or checking their result contract.

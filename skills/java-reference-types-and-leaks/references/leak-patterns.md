@@ -24,12 +24,18 @@ roots" excluding weak/soft references — heap-dump-analysis. On a live process,
 `jdk.OldObjectSample` provides selected retained-object samples, not a heap census. In the
 OpenJDK 25.0.3 settings it is enabled in both shipped files, but `default.jfc` records **no stack trace** for
 it and `profile.jfc` does (`old-objects-stack-trace`), so a recording started with the
-defaults names the object and not the allocation site. The reference chain to a GC root is
-computed only when the recording is written with `path-to-gc-roots=true`
-(`jcmd <pid> JFR.dump filename=leaks.jfr path-to-gc-roots=true`, or the same option on
-`JFR.start`); that walk is itself a stop-the-world heap traversal, so ask for it once at
-dump time, not on a continuous recording. With those two settings the event answers the
-same broad question as a dump, but sampled and with different completeness.
+defaults names the object and not the allocation site. With the stock zero-cutoff settings,
+request root search on a chosen dump using
+`jcmd <pid> JFR.dump filename=leaks.jfr path-to-gc-roots=true`. This is not the only way to
+enable it: a nonzero `jdk.OldObjectSample#cutoff` also enables search. The shipped
+`memory-leaks=gc-roots` control sets it to `1 h` in this build. Inspect active settings rather
+than treating an omitted dump flag as proof that no root traversal can occur; the
+[25.0.3 emission code](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/jdk.jfr/share/classes/jdk/jfr/internal/OldObjectSample.java)
+uses the configured cutoff as well as the explicit option. Root search performs a
+stop-the-world traversal: prefer a deliberate diagnostic dump over enabling it for ongoing
+recording exports. Sample selection and search limits can still leave paths absent. With
+allocation stacks and available root paths, the event answers the same broad question as a
+dump, but sampled and with different completeness.
 
 **Settings do not establish runtime support.** OpenJDK [25.0.3](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/jfr/leakprofiler/leakProfiler.cpp)
 excludes Shenandoah; [25.0.4](https://github.com/openjdk/jdk25u/blob/jdk-25.0.4%2B7/src/hotspot/share/jfr/leakprofiler/leakProfiler.cpp)
@@ -161,18 +167,28 @@ admission and diagnostic retention without silently discarding authoritative sta
 
 For each finding, the fix names the owner and the removal point:
 
-| Pattern             | Fix                                                  | Verified by                                                             |
-| ------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
-| Obsolete slot       | null the slot on removal                             | unit test asserting the slot is null after `pop`                        |
-| Listener            | `AutoCloseable` registration handle                  | test that registers/closes N times and asserts registry size            |
-| ThreadLocal         | remove owned binding; restore outer scope            | reused-thread isolation and nested-scope restoration tests              |
-| Unbounded map       | capacity/lifetime policy preserving required state   | retained count/bytes within budget under representative arrivals        |
-| Inner-class capture | shorten registration or narrow retained references   | unwanted root path removed; callback behavior preserved                 |
-| Class loader        | release longer-lived registrations and owned threads | obsolete loader roots gone; unloading opportunity accounted for         |
-| Unbounded queue     | bounded admission/backpressure and consumer recovery | overload obeys buffer/delivery policy; work outside queue accounted for |
+| Pattern             | Fix                                                   | Verified by                                                             |
+| ------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| Obsolete slot       | null the slot on removal                              | unit test asserting the slot is null after `pop`                        |
+| Listener            | `AutoCloseable` registration handle                   | test that registers/closes N times and asserts registry size            |
+| ThreadLocal         | remove owned binding; restore outer scope             | reused-thread isolation and nested-scope restoration tests              |
+| Unbounded map       | capacity/lifetime policy preserving required state    | retained count/bytes within budget under representative arrivals        |
+| Inner-class capture | shorten registration or narrow retained references    | unwanted root path removed; callback behavior preserved                 |
+| Class loader        | release longer-lived registrations and owned threads  | obsolete loader roots gone; unloading opportunity accounted for         |
+| Unbounded queue     | bounded admission/backpressure and consumer recovery  | overload obeys buffer/delivery policy; work outside queue accounted for |
+| Reference tracking  | retire terminal wrappers/metadata; own queue draining | completed registrations removed; failed cleanup remains owned           |
 
 Acceptance is quantitative but pattern-specific: normalize load/duration/topology, show the
 unwanted retaining path or unbounded count has disappeared, and verify the replacement's
 capacity, latency and cleanup behavior where relevant. Reuse sufficient evidence; neither a
 fixed redeploy count nor a mandatory Full GC proves the contract. Post-reclamation floor is
 one signal, not the sole oracle.
+
+Separate deterministic lifecycle tests from collection observations. Exercise explicit removal,
+queue handling and `Cleanable.clean()` with controlled state; manually enqueued wrappers test
+the handler protocol, not GC or referent reclamation. `clear()` and `enqueue()` are distinct
+operations. A fixed sleep after [System.gc()](<https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/System.html#gc()>)
+cannot establish collection, notification or fallback-cleanup deadlines. If a controlled
+integration probe waits for collection, bound the wait, avoid accidentally retaining its
+referent, and report a timeout as inconclusive about the retaining path rather than proof of
+a leak. Keep direct owner/count assertions as the regression oracle where possible.

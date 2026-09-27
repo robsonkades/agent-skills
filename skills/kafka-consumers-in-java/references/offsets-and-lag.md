@@ -10,7 +10,7 @@ boundary, are `delivery-semantics`. What belongs here is the mechanical comparis
 | Strategy                                        | Guarantee                                                                 | Duplicate window                                                    | Cost                                                               |
 | ----------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `enable.auto.commit=true`, synchronous handling | at-least-once if every prior-poll record finishes before next poll/close  | Records since last auto commit                                      | Simple; boundary is implicit and unsuitable for escaped async work |
-| Commit before processing                        | at-most-once                                                              | None; loses instead                                                 | A crash silently drops the batch                                   |
+| Confirmed commit before processing              | at-most-once                                                              | None; loses instead                                                 | A crash after commit can drop the unprocessed batch                |
 | `commitSync()` after the batch                  | at-least-once                                                             | Since last successful commit                                        | One blocking round trip per batch                                  |
 | `commitAsync()` after the batch                 | at-least-once if callbacks/order are handled and effects precede commit   | Since last successful commit                                        | Non-blocking; failures are not automatically retried               |
 | Commit per record                               | at-least-once                                                             | One record if each explicit commit succeeds                         | A round trip per record — often the throughput ceiling             |
@@ -18,6 +18,17 @@ boundary, are `delivery-semantics`. What belongs here is the mechanical comparis
 
 Notes that decide the choice:
 
+- **Attempt versus confirmation.** `commitAsync()` returning is not a successful commit.
+  For deliberate at-most-once processing, confirm the checkpoint before starting its covered
+  effects; continuing after a failed/unconfirmed commit can permit redelivery of executed work.
+  For the usual effect-before-commit path, retrying a checkpoint must not itself repeat the effect.
+- **Commit errors need different recovery.** Handle `RebalanceInProgressException` in the
+  consumer's owner loop: poll to progress the rebalance, reconcile ownership/epochs and newly
+  delivered records, then recompute
+  the explicit safe offset map. A no-argument retry can include newly fetched, unfinished work.
+  `CommitFailedException` is not a generic retriable transport error: do not resubmit stale
+  ownership-based offsets. A timeout establishes no confirmed success; preserve that uncertainty
+  and retry only safe checkpoints within current ownership and the recovery budget.
 - **`commitAsync` plus a bounded final `commitSync`** is one production shape, not a proof.
   Track which async commits succeeded, commit only owned partitions in revocation, and accept
   that crash/eviction can bypass cleanup. Shutdown commits cannot recover unfinished effects.
@@ -127,6 +138,10 @@ reassignment, replay, transaction durability or no-loss behavior.
 - **Force a rebalance under load.** Start two consumers, produce continuously, then stop one.
   Assert no record is lost and that duplicates, if any, produced no second side effect. This
   test is what catches a handler that is repeat-safe only for retries and not for redelivery.
+- **Delay/fail commit confirmation.** A commit-before-effect path must not start effects
+  merely because `commitAsync()` returned. Exercise a rebalance during commit, with the next
+  poll delivering new records; a retry must neither commit their unfinished work nor reuse
+  lost ownership. Record callback/exception, assignment epoch, effects and broker checkpoints.
 - **Overrun the poll interval on purpose.** Set a small `max.poll.interval.ms`, make the handler
   slower than it, and assert the protocol-specific departure/reassignment timing and eventual
   replay from the safe checkpoint; static membership can delay it until session expiry. It documents
@@ -148,6 +163,7 @@ reassignment, replay, transaction durability or no-loss behavior.
 ## Primary references
 
 - [KafkaConsumer API: offset commits and auto commit](https://kafka.apache.org/41/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+- [Kafka 4.1 CommitFailedException](https://github.com/apache/kafka/blob/4.1.0/clients/src/main/java/org/apache/kafka/clients/consumer/CommitFailedException.java) — why lost-ownership commits cannot generally be retried.
 - [Kafka 4.1 consumer configuration: reset and isolation](https://kafka.apache.org/41/configuration/consumer-configs/)
 - [Kafka design: delivery semantics and transactions](https://kafka.apache.org/documentation/#semantics)
 - [Spring Kafka 3.3 container acknowledgement modes](https://docs.spring.io/spring-kafka/reference/3.3/kafka/receiving-messages/message-listener-container.html)

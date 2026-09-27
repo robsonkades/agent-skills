@@ -49,7 +49,9 @@ and checkpoint discipline, especially if multiple consumers can write the same c
 2. **Choose synchronous processing, manual offset tracking or a framework-managed ack mode.**
    Auto-commit can be at-least-once only when every record from the previous `poll()` finishes
    before the next `poll()`/close; disable it for asynchronous work or when the exact commit
-   boundary must be explicit.
+   boundary must be explicit. Distinguish requesting a commit from confirming its checkpoint;
+   callback/error handling must preserve the delivery boundary and partition ownership
+   (`references/offsets-and-lag.md`).
 3. **Measure the whole poll-cycle tail.** `records returned × per-record time` is a conservative
    estimate only for serial homogeneous work; include deserialization, queueing, retries,
    commits, batch overhead and correlated dependency latency against `max.poll.interval.ms`.

@@ -81,6 +81,18 @@ histogram rules, not a wire-format recipe for native histograms. See
 [Prometheus histogram exposition](https://prometheus.io/docs/instrumenting/exposition_formats/#histograms-and-summaries)
 and [OpenTelemetry's classic histogram conversion](https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#histograms-as-prometheus-histograms).
 
+Precomputed percentiles are a different source contract. Preserve their documented quantile,
+units, population and time window for per-source display; do not feed each percentile snapshot
+into a histogram as if it were a request observation. Percentiles alone do not recover bucket
+counts or the original distribution, and averaging instance p95s (even weighted by request
+counts) does not generally produce fleet p95. If the consumer needs an aggregate percentile,
+require compatible distribution data or underlying observations; otherwise state that the
+requirement cannot be met by translation alone. For classic histograms, check matching bucket
+boundaries before aggregation and preserve reset handling. A per-instance percentile dashboard
+can keep the existing source; a fleet percentile requirement changes the decision. Do not
+invent missing sum/count fields to make a source look like a complete summary. See
+[Prometheus quantile aggregation](https://prometheus.io/docs/practices/histograms/#quantiles).
+
 Distinct observed label combinations determine series count. The product of label-domain sizes
 is a worst-case combination bound, not necessarily the actual count:
 

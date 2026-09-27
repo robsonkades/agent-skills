@@ -43,9 +43,10 @@ silently replaces Boot's configured repository choice.
 - Neither JDK serialization nor generic JSON is automatically safe. Restrict allowed types and
   polymorphic deserialization, protect store writers and test the actual attributes, including
   security context types. JSON does not itself establish compatibility or a trust boundary.
-- The store is now on protected request paths. Give it a deadline/bulkhead and fail closed for
-  authentication/authorization state. A separately defined public/read-only degradation may
-  omit optional personalization; never treat unavailable auth state as authenticated.
+- For operations whose authentication/authorization requires this store, give it a
+  deadline/bulkhead and refuse access if required evidence cannot be obtained within its
+  freshness policy. Optional personalization can degrade independently when another valid
+  authority already establishes access; unavailable auth state itself never grants access.
 - Keep the session small. Measure repository access and save/flush behavior; not every request
   necessarily reads and writes it. Large attributes can amplify storage, serialization and
   concurrent-update costs.
@@ -80,6 +81,14 @@ record AccessClaims(String subject, Set<String> scopes, String tenantId, Instant
 - Local verification needs the required key locally available. Issuer key-set retrieval,
   introspection or remote key operations can add dependencies. Bound key-cache lifetime and
   rotation/revocation behavior rather than assuming either every request or none uses the network.
+- **Outage policy follows the required evidence.** A valid five-minute credential with known
+  trusted keys and an explicit validity-until-expiry policy may remain usable during issuer
+  unavailability. The same credential is insufficient if every access requires fresh
+  introspection or a revocation check that cannot complete. Do not introduce signature-only
+  fallback during the incident. Previously validated introspection results may be reused only
+  within the configured freshness window and never beyond their `exp` when present (RFC 7662
+  §4); a failed refresh must not restart that window. Expiry, cached key trust and every other
+  required validation still apply.
 - Signing alone does not conceal JWT claims from anyone who obtains the plaintext token,
   including its holder and terminating/logging readers. TLS can hide it from other network
   intermediaries; JWE adds recipient-dependent encryption. Never place secrets or unnecessary PII in claims.
@@ -137,8 +146,12 @@ evidence. A narrow interpretation or accepted loss policy does not require all t
   is zero.
 - **Key rotation/rollback test.** Run old and new signing keys/verifiers concurrently, rotate,
   roll back and revoke; assert issuer/audience/algorithm pinning and no cross-tenant replay.
-- **Store partition test.** Make the external session store unavailable and prove protected
-  actions fail closed while explicitly public degradation remains bounded.
+- **Store/issuer partition test.** With a valid credential and known trusted key, compare a
+  policy allowing local validation with one requiring fresh remote evidence. Verify the former
+  retains only its documented authority and the latter refuses protected actions when evidence
+  is unavailable. Exercise cached-decision expiry and failed refresh: neither extends access.
+  Check optional personalization degradation separately; a successful login before partition
+  is not proof that authorization remains valid indefinitely.
 
 ## Primary references
 
@@ -146,5 +159,6 @@ evidence. A narrow interpretation or accepted loss policy does not require all t
 - [Spring Session 3.4.7 SaveMode](https://github.com/spring-projects/spring-session/blob/3.4.7/spring-session-core/src/main/java/org/springframework/session/SaveMode.java) — write tracking and concurrent overwrite exposure are separate from placement.
 - [Servlet 6.0 session semantics](https://jakarta.ee/specifications/servlet/6.0/jakarta-servlet-spec-6.0) — section 7.7.1 permits concurrent requests and leaves attribute-object thread safety to the application.
 - [RFC 7519: JSON Web Token](https://www.rfc-editor.org/rfc/rfc7519)
+- [RFC 7662 §4: introspection caching and revocation trade-offs](https://www.rfc-editor.org/rfc/rfc7662#section-4)
 - [RFC 8725: JWT Best Current Practices](https://www.rfc-editor.org/rfc/rfc8725)
 - [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)

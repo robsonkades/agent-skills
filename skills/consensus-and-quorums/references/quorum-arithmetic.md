@@ -7,6 +7,12 @@ member. Protocol rules for terms, ballots and log prefixes use that intersection
 cannot safely choose a conflicting committed value. Intersection alone does not make a read fresh
 or survive Byzantine/corrupt members.
 
+The headcount calculations below assume equal-weight majority voting. Inspect the effective
+policy: ZooKeeper also supports weighted and hierarchical quorums. For those configurations,
+enumerate satisfying voter sets and test the stated failure-domain losses against that policy;
+neither total server count nor one surviving numeric majority establishes availability.
+See [ZooKeeper quorum policies](https://zookeeper.apache.org/doc/r3.8.4/zookeeperInternals.html#sc_quorum).
+
 To keep a majority available while `f` nodes are down you need `N - f > N/2`, which is
 `N > 2f`, which is `N = 2f+1` at minimum.
 
@@ -43,6 +49,25 @@ transitional during reconfiguration, but need a purpose other than majority avai
 Seven tolerates three unavailable voters; justify its failure-domain or other deployment benefit
 against five and its extra quorum/replication cost. Do not model nodes in one provider/control
 plane as independent merely because their instance lifecycles differ.
+
+## Unreachable quorum versus lost history
+
+If enough original members retain valid durable state, restore communication or recover those
+members through the supported procedure. A client's inability to reach a majority does not establish
+permanent loss. With a working quorum, use normal member replacement; do not restore an old backup
+to repair one failed replica. If quorum cannot be recovered, disaster recovery chooses a new
+authoritative history, rather than retroactively making a minority decision committed.
+
+For etcd 3.6 snapshot restore, record the snapshot revision and the known or unknown interval
+after it; acknowledged operations beyond its contents may be lost. Preserve original evidence.
+Restore all new members from the same selected snapshot using the supported tools: restoration
+creates new member and cluster identities. Fence the old deployment and prevent production clients
+from using mixed old/new endpoints before cutover. Do not treat `--force-new-cluster` as a routine
+partition remedy. See [etcd recovery](https://etcd.io/docs/v3.6/op-guide/recovery/).
+
+Validate the restored data and client routing separately from quorum health. Read the
+[coordination-store recovery guidance](coordination-stores.md#joining-an-etcd-snapshot-to-its-watch)
+for cache/watch reconstruction and the external-authority boundary after restoration.
 
 ## Adding capacity without changing the quorum
 

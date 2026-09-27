@@ -45,9 +45,19 @@ numa_foreign       18932         1204     intended here, allocated elsewhere
 interleave_hit      2048         2048
 ```
 
-`numa_miss / (numa_hit + numa_miss)` can describe how often preferred-node page allocation
-fell back system-wide. It cannot be attributed to this JVM and does not say which CPU later
-read the page. Baseline it for host pressure; do not convert it into a remote-access SLO.
+These counters accumulate pages, not allocation calls or memory accesses. For a current
+workload window, capture both endpoints with the same node set and units, then use
+`sum(delta(numa_miss)) / sum(delta(numa_hit) + delta(numa_miss))` across those nodes for
+the fraction of accounted pages allocated away from their preferred node. A single total
+mixes historical workloads; a ratio from one destination node has a different scope from
+the system-wide fraction. Neither can be attributed to this JVM or to later CPU reads.
+
+An unchanged denominator means no measured allocation activity, not zero remote traffic;
+report the fraction as unavailable. Reject intervals crossing counter resets or missing
+samples. Check the target's `vm.numa_stat` setting if counters look implausible: reduced
+statistics can compromise precision. Keep huge-page accounting and display-unit changes
+separate rather than combining unlike counters. See the [kernel counter definitions](https://docs.kernel.org/admin-guide/numastat.html)
+and [statistics control](https://docs.kernel.org/admin-guide/sysctl/vm.html#numa-stat).
 
 **Per process (`-p <pid>`)** — where _this_ process's memory currently sits. It produces no
 hit/miss counters:

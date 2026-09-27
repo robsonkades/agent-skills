@@ -119,10 +119,12 @@ polymorphic query is too expensive at volume
 For a migration requiring old/new coexistence, use these expand/contract phases:
 
 ```text
-1. Verify            No foreign key from elsewhere blocks the target
-                     strategy (concrete-table only).
+1. Verify            Inventory keys, incoming/outgoing foreign keys,
+                     subtype constraints and dependent queries for every
+                     strategy. Can the target enforce the required invariants?
 
-2. Expand            Create the new tables/columns, empty, nullable.
+2. Expand            Create compatible tables/columns. Relax constraints
+                     only where coexistence requires it, with a restoration gate.
                      DEPLOY (schema only, no code change).
 
 3. Dual write        Code writes both shapes. DEPLOY.
@@ -130,7 +132,8 @@ For a migration requiring old/new coexistence, use these expand/contract phases:
 4. Backfill          Chunked, restartable, with a cursor. Verify counts
                      and a per-subtype checksum.
 
-5. Switch reads      Mapping changes to the new strategy. DEPLOY.
+5. Switch reads      Validate required target invariants using the constraint
+                     checkpoint below. Mapping changes to the new strategy. DEPLOY.
                      ← A binary rollback is possible only to a verified
                        compatible version while the old shape is current.
 
@@ -231,6 +234,35 @@ Before using dual writes or a backfill, specify:
   canonical projection and comparable snapshot/watermark; investigate mismatches before cutover.
 - Mixed-version compatibility and the last phase where old data remains current. Retain the
   old representation only as long as the recovery plan requires, with an explicit owner.
+
+### Constraint checkpoint
+
+Copying rows does not copy the enforcement contract. Inventory required uniqueness, foreign
+keys, subtype checks and nullability, including defaults and delete actions. For each invariant,
+name what enforces it during overlap and after the old path retires. An intentionally new
+constraint may reject previously accepted data or old writers: resolve that behavior change
+before enabling it, rather than hiding it inside a refactor.
+
+Separate three states: a constraint is declared, subsequent writes are protected, and existing
+rows have been validated. Before switching reads that rely on the invariant or making the target
+authoritative, prove both historical validity and continuing enforcement. Keep temporary
+protection until its replacement covers every writer. Repair invalid rows using an agreed
+business rule; do not silently discard them or disable protection to finish a backfill.
+
+For example, PostgreSQL 17's [ALTER TABLE contract](https://www.postgresql.org/docs/17/sql-altertable.html)
+allows `NOT VALID` for foreign-key and CHECK constraints: it skips the initial scan but still
+checks subsequent inserts/updates. It is not a generic option for UNIQUE or permission for new
+invalid writes. A failed [concurrent index build](https://www.postgresql.org/docs/17/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY)
+can leave an invalid index; some failed unique builds still enforce uniqueness. Inspect actual
+catalog state and write behavior after failure, not merely object existence or the migration
+tool's status. These are version-specific examples, not portable DDL instructions.
+
+Pass the engine/version, constraint inventory, offending data, all writer versions and lock/downtime
+budget to the engine specialist (for example, `postgresql-performance` for PostgreSQL) for a
+DDL/recovery sequence and its validation evidence.
+If that expertise or environment is unavailable, keep the checkpoint conditional and provide the
+checks needed; do not supply an unverified production-ready script. An accepted bounded write
+pause is an alternative when safe online enforcement cannot be established.
 
 ### Name the oldest safe rollback version
 

@@ -29,9 +29,10 @@ Classical CoR      each handler decides whether to handle or pass. First-match-w
                    is common, but a contract may allow handling and continuation.
                    Fallthrough to the end is a defined outcome.
 
-Pipeline /         every stage processes and passes on: filters,
-middleware         interceptors, Netty handlers, Spring Security's chain.
-                   All stages run unless one short-circuits deliberately.
+Pipeline /         eligible stages process and forward according to the
+middleware         continuation/dispatch contract: filters, interceptors,
+                   Netty handlers, Spring Security's chain. Short-circuits,
+                   failures and framework routing determine which stages run.
 ```
 
 Deciding which contract you need is the first design step,
@@ -44,6 +45,8 @@ Start from a caller and an overlapping-handler example: what counts as handled, 
 has precedence, and which checks must succeed before a result is usable? Reuse existing wiring,
 tests and policy before asking about unresolved authority or fallback behavior. Keep changes
 conditional on material unknowns; a sound ordered loop or framework chain may need no redesign.
+For middleware, inspect actual registrations, request/event mappings and completion callbacks;
+a list of configured handlers alone does not establish which paths execute or release resources.
 
 ## When it is the answer
 
@@ -97,6 +100,12 @@ IF a handler both handles and forwards, in a chain designed for
 "first match wins"
 THEN the two shapes have been mixed and downstream handlers now see a
      request that was already handled.
+
+IF a stage receives a continuation or controls a framework dispatch
+THEN define permitted forwarding, the result owner on short-circuit, and cleanup on each exit.
+     Test terminal invocation counts and entry/completion order on success, decline and failure.
+     Framework callback eligibility and async redispatch can differ from nested next() calls
+     (references/chain-vs-pipeline.md); do not infer cleanup from a callback's name.
 
 IF a stage mutates shared state and a later stage throws
 THEN the request leaves partial effects behind. Either make stages
@@ -167,10 +176,10 @@ try/finally, running it on another thread, or skipping it — which is the pipel
   exist and need not be allocated by each link. Important patterns are a chain that computes an expensive value for every
   handler to inspect rather than lazily, and a chain long enough that the call site becomes
   megamorphic in a hot path (`jit-inlining-and-escape-analysis`).
-- **Testing.** Three distinct tests. Each handler alone, with a trivial context. The chain's
-  order, asserting that a request matching two handlers reaches the intended one. And the
-  unhandled case, asserting the defined behaviour — the test most often missing, and the one that
-  catches a silent drop.
+- **Testing.** For first-match selection, test each handler alone with a trivial context, precedence
+  for an input matching two handlers in the assembled chain, and the defined unhandled outcome.
+  The last check catches a silent drop. For middleware, also assert forwarding/terminal counts and the actual
+  completion/cleanup path; a happy-path order test does not exercise early rejection or exceptions.
 
 ## Review checklist
 
@@ -192,8 +201,9 @@ proposed tests; a small review does not require a new chain implementation.
 
 - [Chain against pipeline](references/chain-vs-pipeline.md) — the two shapes with their differing
   contracts, ordering discipline and how to make it survive contributors, unhandled-request
-  policies, error propagation and partial state, and the framework equivalents worth using
-  instead. Read before assembling a chain.
+  policies, continuation/completion lifecycles, error propagation and partial state, and the
+  framework equivalents worth using instead. Read before assembling a chain or reviewing its
+  short-circuit/cleanup behavior; its decision cases also exercise contract selection.
 - [Worked example](references/worked-example.md) — a payment-authorisation rule chain replacing a
   branching method: the first-match version, the ordering made explicit, the terminal default,
   what happened when a stage acquired a side effect, and the three tests. Read when implementing.

@@ -74,6 +74,25 @@ The costs are real: storage duplicated per consumer; a bootstrap path for a new 
 that now has as many readers as there are consumers (`consistency-models`). Eventual
 consistency provides no finite lag bound by itself; define when stale reads stop being safe.
 
+Decide freshness **per use**, not just per dataset. A tier copy acceptable for displaying a
+badge may be unacceptable for granting access after a completed revocation. If stale data
+cannot authorise the action, keep that decision with its authority or establish a protocol
+whose consistency meets the requirement; a synchronous lookup alone does not make a later
+write atomic with it. Specify what happens during lag or an authority outage: reject, wait
+within the deadline, or use an explicitly permitted stale result. Do not let the cheapest
+read path silently change the business rule. The
+[materialized-view guidance](https://learn.microsoft.com/en-us/azure/architecture/patterns/materialized-view)
+describes refresh consistency and rebuild costs; it does not make a projection authoritative.
+
+Include removals and rebuilds in the copy's contract. After a consumer outage or snapshot
+restore, how are missed changes/deletions reconciled before the view is served? Define
+readiness and stale-read handling; periodic polling or a timestamp alone is not proof that
+all required updates arrived. Where access, retention or residency constraints apply, check
+the copied fields and destinations, including durable messages and replay data. Pass the
+freshness/deletion invariant, retention horizon and failure cases to `consistency-models`
+and `delivery-semantics` for detailed protocols. Without that evidence, keep copy suitability
+conditional rather than inventing an exact lag bound or complete replay history.
+
 ## Losing atomicity: sagas, compensation, outbox
 
 Independent local commits are not one atomic transaction. Choose application recovery or
@@ -165,6 +184,41 @@ One request producing N downstream calls is where remote latency becomes visible
 | Data is read often, changes rarely, staleness tolerable       | Event-carried state / replication                                  |
 | Multi-step business process across services                   | Saga recovery; outbox where local state and publication must agree |
 | The two sides genuinely need one transaction                  | Prefer one transaction boundary; assess supported 2PC if necessary |
+
+## Boundary decision checks
+
+These are supplied teaching cases for challenging a proposal, not executed agent evaluations.
+Keep the outcome at the requested design/review level; do not implement an extraction merely
+because a case exposes a missing contract.
+
+- **One dataset, two uses:** a tier projection has a demonstrated maximum normal lag of
+  30 seconds. A display badge accepts 60 seconds of staleness; a protected purchase must
+  reject requests begun after revocation completes. Keep the display copy with an outage
+  policy, but do not use it as sole purchase authority. Failure: using the same eventual
+  read for both, treating normal lag as a failure-time bound, or claiming a separate
+  synchronous check eliminates a check/write race.
+- **Hostile new caller:** extraction exposes a method previously reached only through a
+  tenant-checking application service. An internal caller forwards arbitrary user and
+  tenant headers; network access is its only credential. Identify the missing trust and
+  authorisation contract, inspect any existing gateway enforcement, and require forged-
+  identity and cross-tenant requests to fail. Failure: approving on the basis of internal
+  networking, or writing bespoke authentication instead of a scoped finding.
+- **Restarted projection:** a read model restores a snapshot taken before a required
+  deletion, but the deletion event has expired from the retained log. Require reconciliation
+  or a newer authoritative snapshot before claiming complete recovery; retain uncertainty
+  about other missing changes. Failure: serving the restored record as current because
+  the consumer reached the end of the available log.
+- **Preserve local adequacy:** a module already meets capacity and isolation requirements;
+  the only extraction argument is that its code is tangled. Keep the local boundary or
+  propose local responsibility repair. If a verified residency constraint instead excludes
+  the current placement, assess relocation and access/storage controls; merely creating a
+  process is insufficient. Failure: automatic extraction or mandatory local rehearsal
+  despite the stated constraint.
+- **Preserve failure semantics:** an outbox insert fails after the order save, or a remote
+  reservation times out after dispatch. In the first case, require the configured shared
+  transaction to roll back both writes; in the second, retain unknown outcome until safe
+  repeat/status/reconciliation evidence exists. Failure: claiming atomic broker delivery,
+  assuming a timeout means no effect, or presenting a planned injection test as executed.
 
 ## Sources
 

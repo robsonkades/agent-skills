@@ -36,6 +36,8 @@ bounded gap; it need not prove that no answer exists anywhere.
 2. **Reuse supplied answers and the context report.** Check accepted session decisions and applicable
    policy/contract evidence before asking again. Run a focused repository check only when it could
    settle the remaining gap; a scope question needed to locate relevant code can come first.
+   Distinguish a missing requirement from missing evidence that a solution can meet it: an owner's
+   target answers the first, not the second.
 3. **Price each surviving question** by impact, and mark BLOCKING or NON-BLOCKING
    (`references/impact-and-blocking.md`). Assess consequences and the work about to start;
    high impact alone does not establish a blocker.
@@ -69,28 +71,34 @@ close it  NO     YES
        proceed   |
                  +-- YES -> reuse valid authority, otherwise ask;
                  |          block only work depending on the answer
-                 +-- NO  -> proceed within existing authority if reversible;
-                            otherwise resolve the missing decision
+                 +-- NO  -> a claim about actual behavior or capability needs applicable
+                            specifications, observations or a bounded evidence action;
+                            a delegated reversible choice can proceed with a stated basis
 ```
 
 Implementation evidence answers **what is**, not automatically **what must be**. An accepted,
 applicable policy, contract or decision stored in the repository can establish requirements;
 cite its authority, revision and scope. Resolve conflicts rather than choosing the most common code.
 
+An empirical unknown is not a preference poll. Check applicable specifications, existing tests or
+measurements before proposing new investigation. Ask the user only for missing intent, constraints,
+access or authority that changes the evidence action. If a bounded experiment is needed, hand off
+using `references/impact-and-blocking.md`; this clarification skill does not itself authorize a PoC.
+
 ## Question classes
 
-| Class            | Who can answer                                        | Typical impact |
-| ---------------- | ----------------------------------------------------- | -------------- |
-| Functional       | Product or domain owner                               | HIGH           |
-| Business rule    | Product, policy or domain owner                       | HIGH           |
-| Compatibility    | Repository, then accountable contract/product owner   | HIGH           |
-| Data and storage | Repository for shape, accountable data/policy owner   | HIGH           |
-| API contract     | Repository for style, contract owner for change       | HIGH           |
-| Security         | Accountable security/privacy role — never inferred    | HIGH           |
-| Operational      | Repository, then accountable Operations role          | MEDIUM         |
-| Performance      | Product/SLO owner for target; repository for baseline | MEDIUM         |
-| Technical        | Repository                                            | LOW to MEDIUM  |
-| Convention       | Repository                                            | LOW            |
+| Class            | Who can answer                                                       | Typical impact |
+| ---------------- | -------------------------------------------------------------------- | -------------- |
+| Functional       | Product or domain owner                                              | HIGH           |
+| Business rule    | Product, policy or domain owner                                      | HIGH           |
+| Compatibility    | Repository, then accountable contract/product owner                  | HIGH           |
+| Data and storage | Repository for shape, accountable data/policy owner                  | HIGH           |
+| API contract     | Repository for style, contract owner for change                      | HIGH           |
+| Security         | Accountable security/privacy role — never inferred                   | HIGH           |
+| Operational      | Repository, then accountable Operations role                         | MEDIUM         |
+| Performance      | Product/SLO owner for target; applicable measurements for capability | MEDIUM         |
+| Technical        | Repository, applicable specifications or observed behavior           | LOW to MEDIUM  |
+| Convention       | Repository                                                           | LOW            |
 
 Security, compliance and business rules need applicable authority, which may already be supplied.
 Code alone shows what was built, which may be the defect. Typical impact is a prompt to inspect
@@ -108,6 +116,10 @@ THEN read it, cite path:line and revision/scope, and close only the proposition 
 
 IF the question is about intent, policy, authority or a standard
 THEN reuse applicable accepted evidence; ask only for the unresolved decision or conflict.
+
+IF the requirement is settled but feasibility or actual behavior is unknown
+THEN keep the requirement and evidence gap separate. Route the smallest useful evidence action;
+     stakeholder confidence is not proof, and a successful prototype does not choose business policy.
 
 IF a question is BLOCKING
 THEN stop dependent work. Offer the focused next round or pause; do not start
@@ -160,3 +172,5 @@ Scale the record to the question; do not require the full block for a simple cla
 
 Then a one-line summary: how many questions, how many blocking, and what proceeds meanwhile.
 Also report the checkpoint recommendation and the decision area another round would resolve.
+List pending evidence actions separately when relevant: zero unanswered user questions does not
+establish that a dependent technical commitment is ready.

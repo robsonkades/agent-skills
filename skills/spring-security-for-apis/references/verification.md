@@ -41,6 +41,9 @@ the chain even though the request never calls it.
 - **Browser changes:** missing/invalid/valid CSRF token under accepted browser credentials;
   credential-free preflight from allowed/hostile origins; actual hostile requests; cookie
   credentials presented to a claimed header-only API. Assert no forbidden mutation occurs.
+- **Credential transport changes:** a valid token in the accepted header as control;
+  the same valid token in query/form parameters must not authenticate a header-only API.
+  Inspect ingress TLS, proxy hops and token redaction separately; MockMvc does not prove them.
 - **Opaque-token changes:** active/inactive/wrong-purpose results, malformed responses,
   introspection timeout/failure and any cache window. Never treat backend failure as an
   authenticated principal. Reuse the application's upstream error contract.
@@ -90,11 +93,16 @@ The fixture does not test key rotation, opaque introspection, a custom role conv
 custom error bodies, browser execution or a production container/ingress. It is a starting
 point for reproducing these specific checks, not a certification of an application's security.
 
-Recorded authoring check on 2026-09-22: compilation with `javac --release 17` passed and
-all **27 cases** passed using the dependencies above on Temurin **25.0.3**. The run used
+Recorded fixture check on 2026-09-27: compilation with `javac --release 17` passed and
+all **29 cases** passed using the dependencies above on Temurin **25.0.3**. The run used
 existing cached jars without downloads. This verifies Java 17 source/API compilation and
 behavior on the named runtime; it is not a recorded Java 17 runtime test or an evaluation
 of an agent applying this skill.
+
+Two temporary copies enabled query-token and form-token resolution separately. Each new
+transport assertion then failed with a successful response and a handler side effect,
+demonstrating that the cases detect those specific contract regressions. These checks do
+not verify TLS, proxy configuration or token redaction in a deployment.
 
 ## Sources and compatibility
 

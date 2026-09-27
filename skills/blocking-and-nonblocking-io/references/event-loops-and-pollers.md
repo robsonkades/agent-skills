@@ -45,6 +45,13 @@ The escape hatch is to move blocking work to a scheduler designed for it —
 that offloading has a concurrency limit, queue and rejection behavior. Reactive pipelines
 can already contain queues; offloading does not eliminate overload.
 
+For an application-owned offload executor, reject or apply bounded admission when saturated;
+`CallerRunsPolicy` would execute the rejected blocking task on the submitting event loop.
+Do not block that loop waiting for an admission permit either. Test saturation with the
+workers and queue occupied, checking both explicit overload handling and the actual thread
+executing the call. For an API-owned executor, first check its contract: asynchronous file
+channels require different queue handling, described in `what-unmounts.md`.
+
 For Reactor, defer the call with `Mono.fromCallable(() -> client.call())` and apply
 `subscribeOn(Schedulers.boundedElastic())` to that source. This is a partial expression
 using the project's Reactor dependency and client, not a standalone program.
@@ -131,13 +138,16 @@ what the model costs in diagnosability.
 - [ ] No blocking JDK call, JDBC call or lock acquisition on an event-loop thread
 - [ ] Blocking detection has exercised the relevant path; compatible BlockHound tests, if used,
       include the known-blocking control and a reviewed allow-list
-- [ ] Blocking work offloaded to a scheduler with a stated bound
+- [ ] Blocking work offloaded with a stated bound and saturation test; overload cannot
+      execute it on the loop or block the loop waiting for admission
 - [ ] `defaultBoundedElasticOnVirtualThreads` assessed with its retained caps and queues
 - [ ] Wall-clock, not CPU, profiling in the runbook for latency questions
 - [ ] Poller and scheduler internals used as explanation, never as configuration
 
 ## Sources
 
+- [Java 25 CallerRunsPolicy](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.CallerRunsPolicy.html):
+  rejected tasks run on the submitting thread, defeating event-loop isolation.
 - [OpenJDK 25 Poller modes](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/share/classes/sun/nio/ch/Poller.java)
   and the [Linux](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/linux/classes/sun/nio/ch/DefaultPollerProvider.java),
   [macOS](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/java.base/macosx/classes/sun/nio/ch/DefaultPollerProvider.java)

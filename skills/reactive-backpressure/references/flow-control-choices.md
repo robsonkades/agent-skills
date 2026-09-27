@@ -70,6 +70,36 @@ does not preserve records unless the source/consumer has a durable retry or ackn
 contract. `limitRate` batches upstream requests; it is not a requests-per-second limiter or
 proof that an HTTP driver's flow control reaches the database cursor.
 
+Operator order matters. In `source.limitRate(32).onBackpressureBuffer()`, the buffer's
+unbounded request is split into batches that replenish as the buffer receives values; a
+slow final subscriber does not bound that buffer. Moving `limitRate` after the buffer does
+not undo the buffer's unbounded upstream request either. For a demand-aware source, keep
+the demand path intact when no decoupling buffer is needed. Observe requests and retained
+items on both sides with zero downstream demand; a small request batch is not a backlog bound.
+
+## Adapting callback sources
+
+For Reactor 3.7.5, `Flux.create(callback)` defaults to `FluxSink.OverflowStrategy.BUFFER`,
+which can accumulate without an item limit when the producer outpaces demand. Choose an
+explicit loss/error policy only when the data contract permits it, or connect demand to an
+actual pause/poll/request API. `ERROR` is a subscription failure, not durable delivery;
+`IGNORE` bypasses demand and is not a bounded-admission solution.
+
+Use `create` for callbacks that may emit concurrently; `push` requires only one producer
+thread to invoke signals at a time. Their `onRequest` contracts differ: `create` can notify
+downstream demand increments (concurrent requests may be accumulated); `push` invokes this
+callback with `Long.MAX_VALUE`. Do not use `onRequest` on a `push` sink to drive demand-sized reads.
+For a pullable source, adapt via `create` and issue work only within the real request and
+resource budget; an observation from `requestedFromDownstream()` alone is not a reservation
+between competing producers. For an unpausable source, preserve the explicit overflow or
+durable-transfer decision rather than pretending the wrapper slows it down.
+
+Own each subscription's listener registration. `FluxSink.onDispose` handles completion,
+error and cancellation; `onCancel` is for cancellation-specific action and runs before
+disposal on that path. Arrange deregistration/cleanup once, including races during setup;
+check how late callbacks release their values using the discard policy below. Test zero
+demand, controlled requests and each terminal/cancel path with the actual callback API.
+
 ## Prefetch and concurrency limits
 
 Count demand in the element type at each boundary. With exact `buffer(100)`, a downstream
@@ -210,3 +240,5 @@ itself needs bounded waiters/deadlines, not an unbounded queue of waiting produc
 - [Reactor 3.7.5 bounded-buffer implementation](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/FluxOnBackpressureBuffer.java)
 - [Reactor 3.7.5 demand reshaping](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/subscribe-backpressure.adoc) — exact buffers change the unit of requested demand.
 - [Reactor 3.7.5 batching and grouping](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/advancedFeatures/advanced-three-sorts-batching.adoc) — group consumption, key cardinality and prefetch can form a progress cycle.
+- [Reactor 3.7.5 callback-source guide](https://github.com/reactor/reactor-core/blob/v3.7.5/docs/modules/ROOT/pages/producing.adoc) — source overflow defaults and producer concurrency.
+- [Reactor 3.7.5 FluxSink contract](https://github.com/reactor/reactor-core/blob/v3.7.5/reactor-core/src/main/java/reactor/core/publisher/FluxSink.java) — `create` versus `push` request callbacks and disposal hooks.

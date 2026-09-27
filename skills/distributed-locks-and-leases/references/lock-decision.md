@@ -49,7 +49,62 @@ tasks need distinct logical holders or local serialization. Do not share a sessi
 infer exclusion from two successful calls. Advisory locks also rely on every conflicting writer
 following the same protocol; they do not automatically block an ordinary SQL update.
 
-**A successful reply does not restart the TTL.** Inspect when the protocol starts expiry and
+## Release follows protected completion
+
+Trace grant, protected read, effect submission, actual commit/completion and release separately.
+An owner-conditional unlock can still admit a successor too early. Flushing ORM state or returning
+a future does not establish that the protected effect is committed or finished.
+Treat early release as a correctness finding only when it leaves the required invariant
+unprotected; a resource that already enforces it may make the lease an efficiency measure.
+
+For example, Spring Framework 6.2.0's imperative transaction interceptor invokes the target
+method, then commits after that invocation returns; see
+[TransactionAspectSupport](https://github.com/spring-projects/spring-framework/blob/v6.2.0/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java).
+A lock released in the target method's `finally` is therefore released before that commit.
+Moving the lock outside a proxied call can repair this ordering only if the call actually ends
+the protected transaction: with [REQUIRED propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html),
+it may join an ambient transaction that commits later. A transaction-template callback can
+have the same issue. Inspect actual advice order, propagation and manager behavior; do not add
+`REQUIRES_NEW` merely to move the commit because it changes the business atomicity contract.
+
+If all effects fit one resource transaction, prefer its transaction-scoped protection when
+adequate. Otherwise, keep lease ownership around the actual completing transaction, or use a
+supported completion protocol covering commit, rollback and cleanup failure. A transaction
+completion callback must respect the lock client's ownership/thread requirements. For async
+work, attach release to the protected operation's real completion/cleanup signal, with cleanup
+also on synchronous startup failure; a caller-facing timeout is insufficient. Do not convert
+this into an unbounded wait or assume longer holding prevents expiry: stale-effect enforcement
+is still required, and unknown commit outcomes need reconciliation before replay.
+
+For transaction integration, pass the call graph, advisor order, ambient transaction, lock-client
+ownership and observed release/commit timeline to `enterprise-transactions`; expect a boundary
+that preserves the unit of work and a test of committed state. If that skill or runtime evidence
+is unavailable, retain a conditional finding and specify the instrumented interleaving needed.
+The source example above is version-specific evidence, not a project upgrade requirement.
+
+### Release-boundary review cases
+
+These are structured walkthrough cases, not executed framework integration tests.
+
+- **Decisive pair:** an outer lease holder calls a proxied REQUIRED method and unlocks when it
+  returns. In A there is no ambient transaction and the method commits before returning to the
+  holder; the release order is adequate, subject to the independent expiry/fencing checks. In B
+  the only change is an existing outer transaction: the call joins it and release precedes its
+  final commit. If the stated exclusion must last through commit, require a completion-aware
+  release or demonstrate that resource protection already covers the gap. Failing either case
+  means equating method return with physical commit or prescribing a new transaction unconditionally.
+- **Inner cleanup:** a proxied transactional target unlocks in its own `finally`. Pause after
+  unlock but before interceptor commit, admit a successor, and inspect committed state and the
+  invariant. If required exclusion is uncovered, repair the early-release window; do not simply
+  increase the TTL or assume every early unlock violates an independently enforced invariant.
+- **Async ambiguity:** an API returns a stage that times out while its write continues, and the
+  client's terminal cleanup contract is missing. Do not certify release from the timeout stage;
+  inspect the provider signal and specify the late-write test. Do not claim a stopped effect or
+  invent a completed integration test when that evidence is unavailable.
+
+## A successful reply does not restart the TTL
+
+Inspect when the protocol starts expiry and
 how the client derives remaining validity. Redlock requires a majority and subtracts acquisition
 elapsed time plus its clock-drift allowance from the requested TTL; a non-positive remainder is
 not a usable grant. Measure elapsed time from before sending the acquisition, not from receipt.
@@ -101,7 +156,8 @@ Treat it as a correctness control (the resource must enforce the invariant) when
   timeout is longer than the lease (or absent — `timeouts-and-deadlines`).
 - A scheduled renewal task presented in a comment as the reason the lock is safe.
 - `@Transactional` around a method that also takes a Redis lock: two lock scopes with different
-  lifetimes, and the Redis lease can expire while the transaction is still open.
+  lifetimes. Check whether method cleanup unlocks before the actual commit as well as whether
+  the Redis lease can expire while the transaction is still open.
 - A lock key that is a constant (`"import-lock"`) where the invariant is per entity.
 - `pg_advisory_lock` (session-scoped) called on a pooled `DataSource` connection.
 

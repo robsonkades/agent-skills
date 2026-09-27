@@ -37,6 +37,34 @@
 | A transaction script over a table with no invariants              | CRUD. Adding behaviour methods to a bag of columns is ceremony; anemia without invariants is not a disease.                                                                                                       |
 | Accessors required by the chosen mapping (JPA, Jackson)           | Preserve mapping contracts and legitimate queries, including inputs to separately owned policies. Correct duplicated object-owned rules and unsafe mutation bypasses; a getter alone is not a defect.             |
 
+## Queries can expose mutation bypasses
+
+Removing `setLines` does not protect an order's owned rule if `lines().clear()` or
+`lines().get(0).setQuantity(...)` can violate it. A constructor retaining a caller-owned mutable
+collection can leave the same bypass. Inspect both directions of aliasing before claiming that
+commands are the only mutation path; a getter can be side-effect-free and still leak authority.
+
+Preserve the needed query, choosing its result contract deliberately. Under the existing
+confinement/synchronization protocol, `List.copyOf` provides an unmodifiable membership snapshot
+and rejects null elements; `Collections.unmodifiableList` provides a read-through view of its
+backing list. Neither protects mutable elements. Use immutable projections or an element API
+that cannot bypass the parent's rule when callers need only to observe those elements. A live
+view can remain appropriate when callers need updates and the backing state and elements have
+safe ownership; replacing it with a snapshot changes observable behavior. Copying alone does not
+establish a coherent snapshot under concurrent mutation.
+
+Check mutations through retained constructor inputs, returned containers and returned elements,
+then verify legitimate reporting still works. Do not add defensive copies to a freely mutable
+boundary DTO merely because it has getters: first establish the invariant and ownership that
+need protection. If a larger graph's ownership/copy strategy is the unresolved problem, use
+`java-immutability` with the alias paths, required live/snapshot semantics and compatibility
+constraints; expect an explicit copy/access boundary. If unavailable, trace those paths locally
+and state which mutable references remain exposed.
+
+These distinctions follow the Java 17 contracts for
+[`List.copyOf`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html#copyOf(java.util.Collection)>)
+and [`Collections.unmodifiableList`](<https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Collections.html#unmodifiableList(java.util.List)>).
+
 ## The costs of moving — count them before refactoring
 
 - **The domain type gains responsibilities and tests; the service loses them.** Good when

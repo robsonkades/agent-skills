@@ -87,6 +87,22 @@ threads or pages. Verify OS placement separately from JVM worker sizing.
 See the [JDK 25 java launcher specification](https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html#advanced-runtime-options)
 for the processor-count override; confirm behavior on the deployed build.
 
+### Affinity versus isolation
+
+Two unrelated workloads can both have affinity to the same CPUs. Affinity alone therefore
+does not establish dedicated capacity. If the objective is tenant isolation, inspect the
+platform's actual CPU reservation, effective masks, SMT sibling sharing and observed
+interference. On a supporting cgroup v2 host, a valid cpuset partition and its effective
+exclusive CPU set are relevant evidence; a requested mask or an invalid partition is
+insufficient. Even a valid partition does not by itself prove the absence of interrupt,
+shared-cache or memory-bandwidth interference. See [Linux 6.12 cpuset partitions](https://docs.kernel.org/6.12/admin-guide/cgroup-v2.html#cpuset).
+
+If reservation or scheduler changes are needed, pass the objective, measured interference,
+current masks, sibling topology and accepted capacity costs to `linux-for-jvm` or the
+platform owner. Request an effective placement plan with validation and rollback. If that
+owner is unavailable, retain the permitted placement, state that isolation is unverified,
+and recommend the missing checks; do not silently reconfigure shared host scheduling.
+
 ## Launch placement versus live changes
 
 For an existing JVM, `taskset -p <mask> <pid>` changes the named task's affinity, not every

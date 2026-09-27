@@ -50,6 +50,8 @@ JOL 0.17 ClassLayout.instanceSize, classic headers, compressed class pointers/oo
 For an estimate, state the assumed inputs and what evidence would change it. A narrow
 arithmetic explanation or adequate existing representation can close without a new run,
 population estimate, flag comparison or migration.
+For a review request, return the evidence and corrections to consider; implement a representation
+or configuration change only when the task includes those changes.
 
 ## The arithmetic
 
@@ -116,10 +118,12 @@ Three things the arithmetic gets wrong if you stop before the `alignUp`:
 
 - `record Point(int,int)` computes to 12 + 8 = 20 and **is 24**.
 - `byte[1]` computes to 17 and **is 24**. So do `byte[2]` through `byte[8]`.
-- **Declaration order is not the layout.** In the measured ordinary layouts, fields are grouped by descending size with
-  references placed last, and under classic headers a 4-byte field is hoisted into the
-  12–15 header hole ahead of the 8-byte group. You cannot compute an offset from source
-  order; you can compute a size.
+- **Declaration order is not the layout.** Primitive size groups, hole filling and inherited
+  fields determine placement. References trail in the `AllTypes` example, but the checked
+  JDK 25 algorithm considers a subclass's references before its primitives when its superclass
+  ends in a reference.
+  Under classic headers a 4-byte field can occupy the 12–15 hole ahead of an 8-byte group.
+  Derive offsets from target evidence, separately from the bounded size model.
 
 ## Workflow
 
@@ -240,6 +244,10 @@ it is the point of that reference.
   configured `Integer` cache (which can exceed 127). To model a real cached population,
   retain its sharing: JOL counts each reachable box once, not once per reference. Reachable
   bytes are not incremental allocation or retained bytes. See the JOL procedure's array-root trap.
+- **JOL's traversed graph is not GC strong reachability.** JOL 0.17 can follow weak/soft
+  referent fields, and keeping its `GraphLayout` result keeps encountered objects strongly
+  reachable. For reference-based caches or collection experiments, read the JOL procedure
+  before interpreting a graph total or retaining a snapshot.
 - **A per-object saving is not a heap saving until it is multiplied by the live population.**
   Eight bytes off `HashMap$Node` saves about 8 KB at a thousand entries and 320 MB at forty
   million. Compare with the required headroom; ask for N before estimating a total.

@@ -39,7 +39,9 @@ eligibility. Keep an adequate existing client or simpler composed class when no 
 ```text
 Behaviour must be added to some instances and not others, chosen at
 wiring time
-        → Decorator. Inheritance would decide it at compile time.
+        → Decorator composes independent layers per instance. A subclass can
+          also be selected at runtime, but its inherited combination is fixed
+          by its class definition.
 
 Several independent additions must combine, and combinations
 multiply (retry × cache × metrics × tracing)
@@ -125,6 +127,11 @@ THEN inspect the actual identity/equality contract. Interface instanceof still w
      checks may fail. Preserve registration identity; avoid automatic equality forwarding or an
      unrestricted unwrap path that bypasses access, transaction or lifecycle policy.
 
+IF an operation returns its receiver or another object of the component interface
+THEN inspect that return contract before forwarding: a fluent chain must not accidentally escape
+     to the delegate, and an immutable operation's new result must not be discarded by returning this.
+     Read the method-coverage guidance in references/ordering-and-composition.md.
+
 IF the decorator holds state — a cache, a counter, a breaker
 THEN determine whether it is shared or confined. Shared composition must protect each layer's
      invariants and relevant aliases; a thread-safe delegate does not protect wrapper state.
@@ -159,6 +166,10 @@ THEN compare the resulting outcome with the caller's documented contract. Permit
   future must not prematurely close shared resources or release a still-used permit. Inspect all
   entry points, including default/bulk methods and `close`/`flush`, for bypass or double application
   (`java-resource-management`, `cancellation-and-interruption`).
+- **Observation boundary.** A method returning a future can finish before the operation does.
+  Measure the boundary promised to callers, including synchronous throws and later failure;
+  an observation callback must not accidentally change the returned outcome. Read
+  `references/ordering-and-composition.md` for asynchronous and method-coverage checks.
 - **Performance.** Each layer adds a dispatch opportunity that HotSpot may inline at stable call
   sites. Costs that often matter more are allocation per call inside a
   layer (a new context object, a lambda capturing state, a `String` built for a log line that is
@@ -192,8 +203,8 @@ policies and actual validation. Separate proposed tests from executed checks; a 
 - [Ordering and composition](references/ordering-and-composition.md) — every common layer pair
   with its semantics, retry amplification arithmetic, deadline propagation through a stack,
   identity loss and unwrapping (`java.sql.Wrapper`, AOP proxies, listener deregistration), and
-  when a framework interceptor should replace a hand-rolled decorator. Read before assembling or
-  reordering a stack.
+  method/return coverage and asynchronous observation boundaries. Also covers when a framework
+  interceptor should replace a hand-rolled decorator. Read before assembling or reordering a stack.
 - [Worked example](references/worked-example.md) — an outbound pricing client decorated for
   metrics, breaking, retry, timeout and caching: the wiring with its order justified, the
   per-layer tests, the order test, and an illustrative amplification scenario. Read when

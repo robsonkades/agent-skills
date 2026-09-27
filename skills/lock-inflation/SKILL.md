@@ -97,6 +97,10 @@ align it to workload:
 - CPU, quota/throttle, GC/safepoint and remote/I/O inside the owner path;
 - key/tenant/shard skew without unsafe-cardinality production labels.
 
+Establish which identity each artifact records before grouping or joining: monitor class is not
+one lock instance, and a JFR address, dump address and `LockInfo` identity hash are not automatically
+interchangeable. See `references/measuring-contention.md` for a version-scoped example.
+
 Summed waits across threads overlap and can exceed wall-clock interval. Divide only by a compatible
 denominator (for example total request operations or total eligible thread-time) and state it.
 An acquisition-event percentile is not a per-operation percentile; the latter needs an operation

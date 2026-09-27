@@ -35,6 +35,8 @@ ScopedValue require their own target-release checks; do not upgrade or enable pr
 If retaining paths or comparable reclamation points are missing, report a hypothesis and
 the evidence needed rather than declaring a leak or verified fix. Reuse available captures
 and ownership requirements; ask only for missing information that changes the diagnosis or fix.
+Keep diagnosis and findings-only reviews read-only. Apply fixes when the request authorizes
+them; otherwise report the ownership correction and the evidence needed to verify it.
 
 1. **Confirm a retention hypothesis, not merely occupancy.** Compare equivalent
    post-reclamation points under normalized load/cache/topology. A rising floor means more
@@ -47,7 +49,7 @@ and ownership requirements; ask only for missing information that changes the di
    overhead and collector-specific behavior must be verified before continuous use.
 3. **Match the path against the catalogue** in `references/leak-patterns.md`. These are
    starting hypotheses; investigate an unlisted owner when the evidence points elsewhere.
-4. **Fix a demonstrated ownership mismatch.** Bound a disposable cache, deregister the
+4. **Choose the correction for a demonstrated ownership mismatch.** Bound a disposable cache, deregister the
    listener, remove or restore the owned ThreadLocal binding, or clear an obsolete array
    slot. Weaker references are appropriate only when collection matches the value's contract;
    a larger heap does not repair an unwanted retaining path.
@@ -77,6 +79,10 @@ and ownership requirements; ask only for missing information that changes the di
   retains it. Trace strong paths from all map values to any stored key, including paths
   across entries; weak keys cannot disappear while such a path keeps them strongly reachable.
   A weak value-to-key link has different reachability semantics from a strong one.
+- Own the lifetime of reference wrappers and their metadata, not only their referents.
+  Retain wrappers while notifications matter, drain the queue, then retire completed tracking
+  state. Explicit close/cancellation also needs a terminal path; `clear()` does not schedule a
+  later notification. Read `references/reachability-and-cleaners.md` for queue ownership and races.
 - Never use `finalize()`. It is deprecated for removal (JEP 421), can already be turned off
   at runtime with `--finalization=disabled`, runs on an unspecified thread with no ordering
   or timeliness guarantee, can resurrect objects and delay reclamation. Do not infer a portable
@@ -114,7 +120,8 @@ and ownership requirements; ask only for missing information that changes the di
 
 - [Reachability, reference types and Cleaner](references/reachability-and-cleaners.md) —
   read when choosing between strong, soft, weak and phantom references, when reviewing a
-  `WeakHashMap` or reference-based cache, or when writing or reviewing a `Cleaner`.
+  `WeakHashMap`, reference-based cache or custom reference queue, or when writing or reviewing
+  a `Cleaner`.
 - [The leak catalogue and how to prove one](references/leak-patterns.md) — read when the
   heap floor is rising, when Metaspace grows across redeploys, or when a suspected leak needs
   to be turned into a named retaining path and a verified fix.

@@ -63,6 +63,9 @@ new binary, capture or canary. Test and rollout gates apply when producing or pr
 2. **Reuse or build the framework-supported baseline.** Prefer the framework's AOT integration and
    Native Build Tools over a hand-written command. It may generate substitutions and reachability
    metadata that a raw agent run cannot infer.
+   The native build itself can execute application initializers and build hooks. Use an isolated,
+   authorized build environment without deployment secrets or unintended access to live dependencies;
+   tracing-agent runs are not the only phase that can perform application effects.
 3. **Audit dynamic behavior.** Combine library-provided metadata, framework-generated metadata,
    targeted manual entries, and tracing-agent runs over representative integration tests. The
    agent records observed accesses; it does not prove completeness. Use exact metadata handling
@@ -86,6 +89,8 @@ new binary, capture or canary. Test and rollout gates apply when producing or pr
    reflection/serialization/JNI/FFM, resources, locales/time zones, TLS/security providers,
    shutdown, signals, memory pressure, and the oldest deployment CPU. Run tests in the actual
    container/base image rather than only on the build host.
+   For JSSE TLS, distinguish the embedded build-time trust store from an explicit runtime store;
+   test rejection as well as acceptance and the intended certificate-update path.
 8. **Measure both candidates under the same experiment.** Compare time to first successful
    response, startup distribution, idle and loaded RSS, allocation/GC behavior, throughput,
    latency percentiles near saturation, CPU per operation, image size/pull time, and build cost.
@@ -176,7 +181,7 @@ build alone does not establish runtime correctness or migration benefit.
 - [Build and measurement recipes](references/build-and-measurement.md) — use while creating a
   reproducible artifact or performance comparison.
 - [Closed world and metadata](references/closed-world-and-metadata.md) — use when reasoning about
-  reachability, initialization, distribution features, or observability.
+  reachability, initialization, TLS trust-store ownership, distribution features, or observability.
 - [Troubleshooting](references/troubleshooting.md) — use when a build, binary, or measurement fails.
 - [Native Image reference manual](https://www.graalvm.org/latest/reference-manual/native-image/)
 - [Native Image release notes](https://www.graalvm.org/release-notes/)

@@ -50,6 +50,9 @@ guidance.
   consult its own sources and documentation; a newer JEP does not retroactively change that build.
 - A value class is about identity semantics. It does not by itself promise flattened storage in
   every field, array, generic container or calling convention.
+- Inspect declared storage type, generic erasure and mutability before a flattening hypothesis.
+  Equal contents do not make a concrete value-class array and an `Object[]` equivalent experiments;
+  preserve the consumer's permitted element types and mutation contract when comparing alternatives.
 - An ordinary record declaration or a library's “value-based” label is not evidence of a value
   class. Check the actual build and preview mode; value-based API contracts already discourage
   relying on identity even where their implementation still has it.

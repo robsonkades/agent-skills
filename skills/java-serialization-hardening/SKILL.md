@@ -35,6 +35,8 @@ references use Java SE 25. Standard `ObjectInputFilter` needs Java 9+ (older ven
 can differ), `@Serial` Java 14+, records Java 16+, and the filter factory Java 17+.
 Use target-supported mechanisms without upgrading or enabling preview. Missing forms/config
 mean compatibility or filter coverage remains unverified; state the needed evidence.
+Apply the workflow to the requested scope: a findings-only review returns proposed corrections
+and verification, without changing code or process-wide policy.
 
 1. **Find every deserialization entry point.** Direct `ObjectInputStream`, RMI/JMX paths,
    JNDI providers that can return serialized state, a distributed cache configured with a JDK serializer, session replication, a
@@ -46,6 +48,9 @@ mean compatibility or filter coverage remains unverified; state the needed evide
    `ObjectInputFilter` for expected classes and graph limits. Configure a JVM-wide backstop, then
    verify how the active filter factory combines it with stream filters—the built-in factory can
    replace the static filter when a stream-specific filter is set rather than intersecting both.
+   `UNDECIDED` permits reading to continue; merging an open context allow-list with a broad
+   global allow-list does not impose the context's intended restriction. Close that policy
+   before merging; see the filter reference for composition and array exceptions.
 4. **For each `Serializable` class you own**, decide the serialized form deliberately: default
    or custom, `serialVersionUID` declared, invariants revalidated on read, mutable components
    copied.

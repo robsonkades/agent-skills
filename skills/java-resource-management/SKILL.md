@@ -77,14 +77,23 @@ decision. Missing cancellation/close guarantees must remain explicit unknowns.
 - Make custom `close` idempotent where feasible. `Closeable` requires it and `AutoCloseable`
   strongly advises it, but third-party/reference-counted release protocols may reject double
   release. Never infer idempotence from use in a pool or decorator.
+- A composite owner must attempt all required releases even when one fails, in dependency order
+  (usually reverse acquisition). Preserve the primary failure and attach later failures; sequential
+  `first.close(); second.close();` skips the second when the first throws. Define partial-release
+  state and repeat-close behavior instead of treating a `closed` flag as proof of successful cleanup.
 - `close` must not block indefinitely and must not do work that can fail after the point of
   no return without an explicit partial-result/durability contract. Where the library can block
   indefinitely, document that limitation and the lifecycle escalation policy rather than promise
   bounded cleanup. A `close` that flushes over a network needs the same timeout discipline as any
   other remote call — see timeouts-and-deadlines.
-- Most streams need no closing; the ones backed by an I/O resource do—`Files.lines`,
-  `Files.walk`, `Files.find`, `Files.list`, and `Files.newDirectoryStream`. A method that returns such a
-  newly opened stream transfers its resource to the caller, and its Javadoc must say so.
+- Ordinary collection/array streams need no release, but an owned I/O stream or a meaningful
+  `onClose` handler does. `Files.lines`, `Files.walk`, `Files.find` and `Files.list` return streams
+  that must be closed; `Files.newDirectoryStream` returns a separately closeable `DirectoryStream`.
+  A terminal operation such as `findFirst`, `count` or `toList` does not itself call the pipeline's
+  `close()`. Keep its owning scope even after full consumption or early exit. When traversing with
+  `iterator()`/`spliterator()`, retain the owning stream: those traversal interfaces do not expose
+  its close obligation. A newly opened result needs an explicit caller-close contract; a view over
+  a borrowed reader does not automatically take ownership. Read closeable-design for the contrast.
 - `ExecutorService` has been `AutoCloseable` since Java 19, and its `close()` initiates an
   orderly shutdown and then _blocks until executor termination_. In
   `try`-with-resources that is a join point, not a cheap release: a long-running task makes
@@ -131,12 +140,17 @@ decision. Missing cancellation/close guarantees must remain explicit unknowns.
 
 Report the owner on success, partial acquisition, body failure, cancellation and close failure;
 include the targeted tests actually run and remaining guarantees that depend on a driver/runtime.
+For diagnosis, distinguish observed leak evidence from a long but legitimate lifetime; for a
+findings-only review, provide the correction without editing consumer code. An implementation is
+complete when the applicable ownership/failure paths have evidence, with unavailable driver or
+runtime checks reported explicitly rather than replaced by a happy-path test.
 
 ## References
 
 - [Designing an AutoCloseable](references/closeable-design.md) — read when writing a type
   that owns a resource, when wrapping or decorating one, when `close` can fail, or when
-  deciding what a method that returns a resource promises its caller.
+  deciding what a method that returns a resource promises its caller. Also read when stream
+  consumption, close handlers or reader views obscure who releases the underlying resource.
 - [Resources across async, pooled and shutdown boundaries](references/async-and-pooled-resources.md)
   — read when a resource is used by an executor task, a `CompletableFuture` chain or a
   structured-concurrency fork, when a pool is exhausted under load, or when resources must

@@ -59,7 +59,9 @@ nullable API or conditional rather than introducing Optional solely for uniformi
   that effect or failure is intended only for absence; making required work lazy is also a defect.
 - No-argument `orElseThrow()` communicates an assumed presence more clearly than `get()` and both
   throw `NoSuchElementException` when empty. Guarded/internal `get()` can be correct, but review
-  whether the invariant is actually established.
+  whether the invariant is actually established. Guard the same Optional value that is unwrapped:
+  a second lookup or mutable-field read may return a different result. Capture one observation
+  when the intent is to act on that result.
 - Optional is primarily a return type. It is not `Serializable` for native Java serialization;
   JSON/ORM/bean support depends on the actual tool and configuration. Fields and parameters can
   complicate consumer use and often lose

@@ -1,7 +1,27 @@
 # Access-token validation and authority mapping
 
-Read when selecting JWT versus introspection, changing decoder/introspector configuration,
-adding issuers or translating claims into permissions.
+Read when changing accepted credential transport, selecting JWT versus introspection,
+changing decoder/introspector configuration, adding issuers or translating claims into permissions.
+
+## Transport is part of the credential contract
+
+Bearer tokens authorize whoever possesses them. Require HTTPS at the API ingress and
+verify confidentiality on any proxy-to-service hop carrying the token; a signed JWT is not
+encrypted by its signature. Do not put access tokens in URLs, where logs, browser history
+and other URL consumers can disclose them. RFC 9700 forbids clients from sending access
+tokens in URI query parameters. Identify affected clients and migrate credential delivery
+instead of enabling query-token resolution as a compatibility shortcut.
+[Bearer transport protection](https://www.rfc-editor.org/rfc/rfc6750.html#section-5.2),
+[current query-token rule](https://www.rfc-editor.org/rfc/rfc9700.html#section-4.3.2).
+
+Inspect the actual `BearerTokenResolver` and gateway rewrites. Spring Security 7.1.0's
+`DefaultBearerTokenResolver` reads the Authorization header by default; query and form-body
+token support default to disabled. A custom resolver can change that contract. For a claimed
+header-only API, test the same otherwise-valid token in a header, cookie, query parameter
+and form body: only the header should authenticate. Do not infer this from `STATELESS` or
+the decoder configuration. Protect tokens from diagnostic logs as well; use
+`structured-logging` when changing request logging.
+[7.1.0 resolver contract](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-resource-server/src/main/java/org/springframework/security/oauth2/server/resource/web/DefaultBearerTokenResolver.java).
 
 ## Choose the validation contract
 

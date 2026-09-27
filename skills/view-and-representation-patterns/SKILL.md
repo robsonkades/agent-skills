@@ -151,6 +151,8 @@ Output must vary by tenant, brand or locale
 - Server-rendered fragments and a JSON API are different consumers with different contracts.
   Serving both from one handler by content negotiation is workable and can let the
   fragment's needs drive the API's shape when the contracts are conflated — decide deliberately.
+  Full pages and fragments can both be `text/html`; verify their distinct cache and history
+  behavior, not just media-type negotiation.
 - Test changed or uncertain responsibilities: the presentation model's construction in a unit
   test, and the rendered output's contract in a focused test (a snapshot of the JSON shape,
   or a check that the template's required attributes are present).

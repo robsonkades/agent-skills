@@ -72,6 +72,11 @@ With the initial configuration, preserve the existing prices: express uses the h
 above 20 kg, and `hundredKilogramUnits(weight)` retains `BigDecimal.valueOf(Math.ceil(weight / 100.0))`.
 Both flat methods read their configured rates, including a nonzero pickup rate if configured.
 
+The lambdas capture collaborator references, so this stage assumes those rates represent the fixed
+pricing snapshot stated above. If rates reload during a call, separately reading the threshold and
+price can mix versions. Capture one coherent configuration/strategy snapshot for the calculation;
+making the collaborator reference final does not freeze its contents.
+
 ## Step 3 — named types, when more was required
 
 Suppose three requirements make a cohesive named implementation useful (lambdas can capture

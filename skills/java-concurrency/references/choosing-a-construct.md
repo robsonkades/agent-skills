@@ -21,7 +21,9 @@
 Who owns tasks after the requester times out?
 Which exact resource bounds concurrency, and what happens at the bound?
 Can cancellation reach blocking/native/remote work, and are side effects reversible?
-Which executor/thread runs each callback/operator, including error paths?
+Which executor/thread runs each callback/operator, including inline, rejection and error paths?
+Which resources must remain on their owning Java thread, and can callbacks reenter the caller?
+Can a task hold a worker or permit while waiting for another task that needs the same capacity?
 How are context and security identity installed and removed?
 What is the ordering unit and can retries/parallelism violate it?
 How does shutdown drain, cancel, persist or abandon work?
@@ -38,6 +40,29 @@ reactive demand + bounded blocking bridge + explicit scheduler
 ForkJoin CPU phase + separate blocking I/O phase
 concurrent collection + atomic compound operation + invariant test
 ```
+
+An executor submission is not necessarily a thread handoff. A direct executor such as
+`Runnable::run` executes on the caller; supplying it to a `CompletableFuture` `Async` method does
+not establish background execution. Non-async continuations can also run inline. Inspect the
+actual executor/provider, caller-held locks and unfinished invariants before relying on deferred
+execution. Route stage placement to `completablefuture-composition`, rejection paths to
+`executors-and-task-lifecycle`, and reentrant/shared-object contracts to `java-thread-safety-contracts`.
+
+Check dependency waits as well as independent-task throughput. In a bounded executor, all workers
+can block awaiting children that are queued to that same executor; idle CPU then does not imply
+spare execution capacity. Prefer sequential execution when overlap adds no value, or compose
+completion without blocking a worker. If separate execution capacity is justified, prove that it
+breaks the wait cycle and preserves total admission bounds. More workers alone do not remove the
+dependency. The same issue can occur when a parent holds the last permit needed by its child.
+Verify the wait graph under saturation; route lifecycle and queue policy to
+`executors-and-task-lifecycle`, stage composition to `completablefuture-composition`, and incident
+evidence to `concurrency-diagnostics`. Do not assume every executor has identical join behavior.
+
+For thread-affine APIs, distinguish transferable immutable input from a live resource bound to
+its owning Java thread. Offload only the parts allowed by that resource's contract and return
+continuations through its required execution mechanism. Copying tenant/MDC context does not move
+a thread-bound session or transaction. If affinity is unknown, inspect the provider/framework
+contract before selecting a worker model; thread safety and context propagation are separate questions.
 
 Boundaries must preserve deadline, cancellation, context and error semantics. A future completed by
 a virtual-thread task does not automatically propagate cancellation to that task; a reactive
@@ -91,6 +116,8 @@ tests and observability:
 ## Authoritative references
 
 - [Java `java.util.concurrent`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/package-summary.html)
+- [Executor execution contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executor.html)
+- [ThreadPoolExecutor queueing and internal dependencies](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html)
 - [Flow API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Flow.html)
 - [Flow subscription demand](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Flow.Subscription.html)
 - [Semaphore fairness and acquisition](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Semaphore.html)

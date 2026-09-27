@@ -61,6 +61,9 @@ limits the claims that depend on it, not independently supported findings.
    evidence is insufficient, scoped `-XX:+SafepointTimeout` diagnostics can identify non-arrived
    threads by name/state, not supply their Java stacks. Use aligned stack evidence to investigate
    their paths and VM-operation evidence to name the waiting work; report any remaining gap.
+   Check the capture method's own progress requirements: classic `Thread.print` needs a
+   safepoint and may return only after the stall. Follow the collection limits in
+   [Correlating the evidence](references/correlating-the-evidence.md) if diagnostics also stall.
 7. **Classify the supported cause before proposing a flag**, using
    `references/attributing-time-to-safepoint.md`, and confirm every flag's effective value
    with `jcmd <pid> VM.flags -all`, or a matched invocation including all target flags, before prescribing or removing

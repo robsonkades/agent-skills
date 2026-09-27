@@ -20,6 +20,31 @@ The first is often skipped. A large reconciliation can use stable buckets or cla
 but throughput is not automatically N times higher: database contention, skew and downstream
 limits remain, and naive `hash(key) % N` remaps most keys whenever N changes.
 
+## Election scope is not contender identity
+
+Inspect the effective configuration on all candidates, including old and new deployments:
+
+- **Election scope** identifies the protected role: store/cluster, tenant or namespace, and
+  lock key/resource name. Candidates whose work overlaps must contend through one authority
+  for that role. For example, Kubernetes Leases `billing/reconciler-v1` and
+  `billing/reconciler-v2` are independent elections even if both mutate the same invoices.
+  Keep a suitable shared scope stable across rollouts, or migrate with a quiescence/fencing
+  protocol. Distinct scopes are appropriate for genuinely disjoint partitions with safe rebalance.
+- **Contender identity** identifies one live incarnation within that scope. For clients that
+  recognize ownership by identity, use the client's supported unique incarnation identity and
+  keep it stable for that participation. A shared application name, cloned configuration or a
+  reused host/pod name can conflate two overlapping processes. In client-go 0.33.0,
+  `IsLeader()` compares the recorded holder identity with the local identity; that match also
+  affects acquisition/renewal decisions. Reused identities therefore cannot be dismissed
+  as a metrics-only issue. Verify the actual Java client's semantics rather than importing this
+  algorithm by assumption.
+
+An owner identity is neither an ordered fencing token nor the stable work ID used for replay
+deduplication. Changing election scope can also reset token history; coordinate the transition
+with the sinks before admitting work. When changing these settings, test old/new candidates
+together and inspect resolved scope/identity as well as resource effects. Shorter leases cannot
+repair candidates that never contend with one another or are mistaken for the same holder.
+
 ## Comparing mechanisms
 
 | Mechanism                               | Where the decision lives                      | Fencing token                                                                                     | Typical failover                      | Adequate for                                                                                        |

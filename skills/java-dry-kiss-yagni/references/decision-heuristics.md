@@ -67,6 +67,27 @@ Duplication's price is divergent decisions: a fix applied N−1 times. That fail
 releases and caller-specific branches. Compare detectability, impact and rollback for this
 system rather than assuming either failure is visible.
 
+## YAGNI: preparation versus premature implementation
+
+Compare building now with adding the capability when needed. Identify the requirement's
+owner, expected use date and implementation lead time; a roadmap entry alone does not prove
+that work must start now. Include present delivery delay, ongoing complexity and later
+migration cost. Sketch the later change to test claims that it will be prohibitively hard.
+
+Prefer a local implementation when later extraction is cheap. Retain the smallest seam when
+a current test, integration or committed rollout already needs it; that does not justify a
+general plugin framework. A change that would later break published consumers or persisted
+data needs compatibility analysis before treating delay as cheap.
+
+For example, one storage provider and a possible future second provider do not establish a
+need for plugin discovery. If another team must integrate against an agreed provider contract
+now, an interface may already serve a current consumer. The deciding condition is current
+use and migration cost, not the number of implementations.
+
+[Fowler's Yagni discussion](https://martinfowler.com/bliki/Yagni.html) explains delay/carrying
+costs and why maintaining changeability is compatible with YAGNI; it does not establish the
+costs or schedule of a particular project.
+
 ## False positives — looks like a violation, is correct
 
 - **Test code.** Tests optimise for local readability and independent diagnosis. Repeated setup

@@ -121,6 +121,15 @@ outright (`clear_escape_info`, everything GlobalEscape) when the callee's byteco
 | Raising it   | no coherent effect       | Extends the summary to larger callees without inlining them — more objects reach ArgEscape instead of a pessimistic GlobalEscape |
 | Default      | 150                      | **150 bytes of callee bytecode**; `MaxBCEAEstimateLevel` 5 bounds the call depth the summary follows                             |
 
+For ordinary callees, the size refusal is strictly `code_size() > MaxBCEAEstimateSize`:
+150 bytes clears this size check at the default; 151 does not. Passing it does not guarantee
+a usable summary or lock elimination. `PrintInlining` prints the callee's `code_size()` in
+bytes. In a class file this is the `Code` attribute's `code_length`, not the file size,
+number of disassembled instructions or final BCI; instructions have different widths.
+See the [BCEA size check](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/ci/bcEscapeAnalyzer.cpp),
+[inlining printer](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/compiler/compileTask.cpp)
+and [JVMS Code attribute](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.7.3).
+
 Measured: a 236-byte callee that only reads its argument leaves a lock on that argument real
 (17.7 ns/op); `-XX:MaxBCEAEstimateSize=400` elides it (5.6 ns/op) and the allocation stays.
 

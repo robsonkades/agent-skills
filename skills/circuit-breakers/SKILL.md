@@ -48,6 +48,11 @@ existing traffic, outcome mappings, decorator configuration and test evidence be
 Keep tuning conditional when these are missing, ask only for decision-changing evidence, and
 continue independent classification or boundary checks.
 
+Before tuning an existing breaker, establish its identity, lifetime, active mode and actual
+call interception. A new breaker per request cannot accumulate shared history; an annotation
+or configured name alone does not prove the real call is protected. Use the lifecycle checks
+in `references/breaker-configuration.md` to distinguish wiring defects from threshold problems.
+
 1. **Check failures predict later calls within the proposed scope.** An invalid payload is
    request-specific; an independently failing tenant backend or endpoint may justify a bounded
    scoped breaker. Do not make unrelated callers share that failure history.
@@ -135,9 +140,12 @@ Prefer instead when:
   concurrency. Preserve real client deadlines/cancellation and add a bulkhead when that resource
   needs a concurrency limit. A fallback inside the recorded operation can mask every backend
   failure as success; record the primary outcome before applying fallback.
-- Instrument the breaker as a **dependency health signal**: state, transitions and the rates
-  it computed. Alert on time spent open, not on transitions. A breaker that has never opened
-  is an untested hypothesis.
+- Instrument state, transitions, recorded primary outcomes, rejections and degraded responses.
+  Interpret open duration alongside demand and caller impact: a quiet, lazily transitioning
+  breaker is not fresh evidence of an ongoing outage. Repeated short open/half-open cycles can
+  cause substantial rejection even without one long open interval. Use transitions to diagnose
+  that cycling, and alert according to sustained impact; one transition alone is not an incident.
+  A successful fallback must not erase primary-failure or degraded-response visibility.
 
 Deliver the recommendation, including keeping current settings or relying on an adequate timeout
 or bulkhead alone. When a breaker is warranted, give its scope, measured traffic/sample assumptions,
@@ -159,5 +167,6 @@ about dependency health; reuse valid checks and report those not executed.
   shared state. Read before configuring or reviewing a breaker.
 - [Fallbacks and testing](references/fallbacks-and-testing.md) — the fallback options with the
   condition making each honest, the wrong-data rule, and how to prove a breaker works: forcing
-  the trip, asserting the half-open probe count, asserting recovery. Read when writing the
-  fallback or its tests.
+  the trip, asserting the half-open probe count, asserting recovery, plus decision cases for
+  lifecycle, bypass and state interpretation. Read when writing the fallback or its tests,
+  diagnosing missing protection, or evaluating this skill's decisions.

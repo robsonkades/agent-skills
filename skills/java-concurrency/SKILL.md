@@ -46,31 +46,33 @@ concurrency/admission/queue bounds and overload policy:
 deadline, cancellation propagation and cleanup:
 failure aggregation, retry/partial result policy:
 context propagation and observability identity:
+required execution thread and inline/reentrant callback constraints:
 JDK/API status and framework constraints:
 ```
 
 ## Route by dominant decision
 
-| Decision                                              | Owning skill                               |
-| ----------------------------------------------------- | ------------------------------------------ |
-| executor ownership, queue, rejection, shutdown        | `executors-and-task-lifecycle`             |
-| platform-thread sizing and virtual-thread concurrency | `thread-sizing-and-virtual-threads`        |
-| virtual-thread scheduler, mounting/pinning            | `virtual-threads-internals`                |
-| migrating an existing service                         | `virtual-thread-migration`                 |
-| lexical fan-out/join/cancel/failure                   | `structured-concurrency`                   |
-| immutable dynamic context                             | `scoped-values`                            |
-| callback/stage graph                                  | `completablefuture-composition`            |
-| CPU-decomposable work/work stealing                   | `forkjoinpool-and-work-stealing`           |
-| demand-controlled stream                              | `reactive-backpressure`                    |
-| reactive versus thread-per-task                       | `reactive-and-virtual-thread-selection`    |
-| cancellation/interruption/cleanup                     | `cancellation-and-interruption`            |
-| admission/concurrency isolation                       | `concurrency-limiting-and-bulkheads`       |
-| JMM/publication/visibility/atomicity                  | `java-memory-model`                        |
-| collections/synchronizers                             | `concurrent-collections-and-synchronizers` |
-| CAS/nonblocking algorithm                             | `lock-free-patterns`                       |
-| deadlock/starvation/contention/dumps                  | `concurrency-diagnostics`                  |
-| correctness/stress/model tests                        | `concurrency-testing`                      |
-| quantitative queue/capacity model                     | `littles-law-and-queueing`                 |
+| Decision                                                      | Owning skill                               |
+| ------------------------------------------------------------- | ------------------------------------------ |
+| executor ownership, queue, rejection, shutdown                | `executors-and-task-lifecycle`             |
+| platform-thread sizing and virtual-thread concurrency         | `thread-sizing-and-virtual-threads`        |
+| virtual-thread scheduler, mounting/pinning                    | `virtual-threads-internals`                |
+| migrating an existing service                                 | `virtual-thread-migration`                 |
+| lexical fan-out/join/cancel/failure                           | `structured-concurrency`                   |
+| immutable dynamic context                                     | `scoped-values`                            |
+| callback/stage graph                                          | `completablefuture-composition`            |
+| CPU-decomposable work/work stealing                           | `forkjoinpool-and-work-stealing`           |
+| demand-controlled stream                                      | `reactive-backpressure`                    |
+| reactive versus thread-per-task                               | `reactive-and-virtual-thread-selection`    |
+| cancellation/interruption/cleanup                             | `cancellation-and-interruption`            |
+| admission/concurrency isolation                               | `concurrency-limiting-and-bulkheads`       |
+| caller-visible concurrent-use and compound-operation contract | `java-thread-safety-contracts`             |
+| JMM/publication/visibility/atomicity                          | `java-memory-model`                        |
+| collections/synchronizers                                     | `concurrent-collections-and-synchronizers` |
+| CAS/nonblocking algorithm                                     | `lock-free-patterns`                       |
+| deadlock/starvation/contention/dumps                          | `concurrency-diagnostics`                  |
+| correctness/stress/model tests                                | `concurrency-testing`                      |
+| quantitative queue/capacity model                             | `littles-law-and-queueing`                 |
 
 ## Selection principles
 
@@ -90,6 +92,10 @@ JDK/API status and framework constraints:
   work separately before claiming that resources are bounded.
 - **State ownership precedes primitive choice.** Prefer immutable snapshots/confinement when they
   match semantics; otherwise define atomic invariants and happens-before before locks/atomics.
+- **Execution placement is a contract.** Identify thread-affine resources and whether callbacks
+  may run inline or reenter the caller. An `Executor` need not move work to another thread, even
+  when passed to a `CompletableFuture` `Async` method. Propagating context does not transfer ownership or make a
+  thread-confined resource safe on another worker.
 - **Overload behavior is part of correctness.** Bound, reject, queue, shed, degrade, or backpressure
   deliberately; an unbounded queue transfers the bound to latency and heap.
   A semaphore or connection pool bounds active resource users, not the number of tasks waiting
@@ -113,7 +119,10 @@ deadline/cancellation outcome and abandoned work
 
 Low CPU plus high latency does not prove a queue, nor that adding concurrency helps. The system may
 be idle because of admission, timers, external wait, serial dependency, lost work, measurement scope,
-or traffic changes. Locate the wait and its owner.
+or traffic changes. Locate the wait and its owner. If all workers in a bounded executor wait for
+children queued to that same executor, investigate dependency starvation before changing its size;
+pass the worker stacks, queued task identities and submission/wait graph to
+`concurrency-diagnostics` and `executors-and-task-lifecycle`.
 
 ## Decision tree
 
@@ -155,6 +164,8 @@ observed waits from suspected causes. Carry known facts, constraints, recovery a
 remaining obligations into the handoff; continue authorized work with that owner rather than
 restarting intake. Report proposed checks separately from executed results, and do not expand
 a routing answer into implementation of every listed construct.
+If the owning skill is unavailable, retain the established classification and provide the bounded
+next check or handoff requirements; do not invent API behavior to bypass an unresolved contract.
 
 ## Review checklist
 

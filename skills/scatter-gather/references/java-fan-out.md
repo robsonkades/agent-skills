@@ -51,6 +51,35 @@ may respond with an error, and replicas may answer at different data versions. D
 the aggregate is exact, stale, a lower bound or otherwise partial; include compatible
 snapshot/version watermarks when consistency matters.
 
+## Merge semantics before dispatch
+
+Choose the leaf response shape from the query, not just the number of successful replies:
+
+- Count each logical data contribution once. Retried or hedged responses for the same slice
+  are alternatives, not additional rows or votes. Check partition coverage/epochs when owners
+  move; distinct server identities alone do not establish disjoint data.
+- For a mean over all matching observations, merge compatible `(sum, count)` state, then divide.
+  Averaging shard means gives each shard equal weight: one value of 100 on one shard and nine
+  zeros on another gives 50 that way, while the pooled mean is 10. Align filters, null/weight
+  rules and numeric precision; define the zero-count outcome.
+- Local truncation can discard a global winner. For top terms by total count, shard A can
+  contain `red:6, green:5` and shard B `blue:6, green:5`. Both local top-1 responses omit green,
+  although its combined count of 10 is globally first. Waiting for every shard cannot recover
+  information those responses excluded. Ordinary record ranking and ranking groups by a
+  combined statistic have different candidate requirements.
+
+Use sufficient bounded state, a query algorithm with justified candidate/error bounds, or an
+explicit approximate-result contract. Increasing a candidate count heuristically is not proof
+of exactness. If exact reconstruction exceeds the deadline or byte budget, expose that conflict
+and consider an index/precomputed view or a revised query contract rather than labelling the
+answer exact. Elasticsearch's [terms aggregation documentation](https://www.elastic.co/docs/reference/aggregations/search-aggregations-bucket-terms-aggregation)
+illustrates this distributed candidate-loss problem; inspect the deployed engine's guarantees.
+
+For a changed merge, compare against the same query over the combined fixture data. Include
+unequal partitions, duplicate attempts, truncated candidates and relevant empty/missing inputs;
+verify both the value and the advertised completeness/error status. This checks request-result
+semantics without requiring an offline aggregation engine or a new fan-out implementation.
+
 ## k successful leaves by one deadline
 
 The executor below is owned by a lifecycle-managed component and closed during shutdown. `leafLimit` is a

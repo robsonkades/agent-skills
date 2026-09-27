@@ -27,7 +27,9 @@ than treating failed reduction as proof of a cross-boundary cause.
 
 ## Differential diagnosis: what changed
 
-For a fault that appeared rather than always existed, the cause is in something that changed.
+First observation is not necessarily first occurrence or defect introduction. A latent defect
+may be exposed by new input or a rare schedule; changed monitoring may reveal existing behavior.
+Distinguish the underlying defect, its trigger and its detection before seeking a recent change.
 Enumerate systematically rather than starting with the most recent code change:
 
 | Candidate      | How to check                                                     |
@@ -43,6 +45,27 @@ Enumerate systematically rather than starting with the most recent code change:
 A fault that starts at exactly 00:00 UTC, on the 1st, or the Sunday a clock changed makes time
 boundaries worth testing. Compare clock/date handling with scheduled work and coincident changes;
 timing narrows hypotheses but does not by itself establish the cause.
+
+## Controlling an experiment
+
+Name the failure predicate, baseline, intervention and observation that would separate the live
+hypotheses. Reset or record relevant state: database contents, cache warmth, process lifetime,
+random seed, clock inputs and prior requests. Changing one configuration value while also
+restarting into an empty cache does not isolate that value. Recheck the failing control; if it
+no longer fails, investigate drift or a contaminated harness before crediting the intervention.
+
+For a suspected interaction between two flags, compare the four safe combinations with the same
+inputs and state. A failure only when both are enabled supports a joint condition; it does not
+establish which implementation violates the contract. For costly or unsafe combinations, retain
+the uncertainty and choose narrower instrumentation instead. A factorial comparison is a
+deliberate controlled experiment, unlike changing several things once and accepting the result.
+The choice of factors and controls follows [NIST experimental-design guidance](https://www.itl.nist.gov/div898/handbook/pri/section3/pri33.htm).
+
+For intermittent faults, choose comparable exposure before running baseline and candidate:
+attempts, duration, data and opportunity for the suspected schedule. Retain failures as well as
+successes; do not rerun only the failing candidate until it turns green. One successful run can
+be compatible with an unchanged failure rate. Report the observed counts and remaining detection
+limits instead of claiming that silence proves a correction.
 
 ## Bisection
 
@@ -96,8 +119,10 @@ Caused by: java.sql.SQLException: deadlock victim
   can also call `addSuppressed`. Read these alongside the primary exception without assuming origin.
 
 An exception rewrapped without its cause (`throw new X(e.getMessage())`) destroys this entire
-structure. If you meet one while debugging, fixing it is the fastest available progress
-(java-exception-design).
+structure. If repair is in scope, preserve the cause through the exception type's supported
+contract (`java-exception-design`) and verify callers' error handling. Otherwise record the
+evidence gap and seek an earlier capture; restoring diagnostics alone does not fix the original
+failure.
 
 ## Intermittent faults
 
@@ -143,5 +168,6 @@ After repeated refutations within the agreed timebox, inspect the model and expe
   request reached the service at all.
 - State the theory out loud to someone. Most of the value arrives before they answer.
 
-Sources: [Git bisect exit protocol](https://git-scm.com/docs/git-bisect)
+Sources: [Google SRE troubleshooting](https://sre.google/sre-book/effective-troubleshooting/),
+[Git bisect exit protocol](https://git-scm.com/docs/git-bisect)
 and [Throwable cause/suppression API](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Throwable.html).

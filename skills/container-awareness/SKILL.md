@@ -45,7 +45,9 @@ headroom and latency goals may need no change.
    options and cgroup, and prefer in-process `availableProcessors()` plus live flags.
    Use `-Xlog:os+container=trace` for the raw
    cgroup reads, `jcmd <pid> VM.flags -all` for ergonomically resolved flags. See
-   `references/reading-the-container.md`.
+   `references/reading-the-container.md`. A probe consumes memory and CPU too: near a hard
+   limit, prefer existing live metrics, logs and proc/cgroup reads over starting another
+   JVM with the application's large initial heap or pre-touch options.
 2. **Confirm the cgroup version before running any cgroup command.** v2 is a unified
    hierarchy with different file names _and_ different field names; a v1 command does not
    fail loudly on v2, it finds nothing.
@@ -61,7 +63,10 @@ headroom and latency goals may need no change.
    many JVM-native reservations/commitments but not all process or cgroup charges, and
    committed bytes are not identical to RSS. Compare heap, NMT, RSS/PSS, direct-memory
    metrics and cgroup `memory.stat`; lowering `-Xmx` may create headroom at the cost of more
-   GC, so validate both rather than calling it intrinsically wrong.
+   GC, so validate both rather than calling it intrinsically wrong. Rising cgroup charges
+   with stable JVM views also warrant inspecting other charged processes and memory-backed
+   volumes, not immediately declaring an untracked native leak. See the attribution cases
+   in `references/sizing-heap-and-cpu.md`.
 6. **For latency spikes with no matching GC pause, measure throttling**: `nr_throttled`
    over `nr_periods` from `cpu.stat`, at peak load, timestamp-correlated with the
    client-side spikes. When memory pressure is plausible on cgroup v2, also inspect
@@ -138,4 +143,5 @@ an empty command output is not a healthy reading.
 - [Sizing heap and CPU limits](references/sizing-heap-and-cpu.md) — the fixed `-Xmx`
   versus `MaxRAMPercentage` decision table, the NMT headroom procedure, and the throttling
   measurement procedure. Read when choosing or changing `resources.limits`, or when
-  deciding whether a latency problem is a CPU-quota problem.
+  deciding whether a latency problem is a CPU-quota problem. Its diagnostic decision
+  checks also cover missing captures, probe headroom and memory-backed volume attribution.

@@ -70,6 +70,11 @@ needs its assumptions and limits, not a new fleet budget, fault campaign or conf
 - RFC 9110 defines GET/HEAD/PUT/DELETE/OPTIONS/TRACE method semantics as idempotent, but a
   concrete server may violate them and an idempotent state effect can still return a different
   response. POST/PATCH can be made retry-safe by an operation key/conditional semantics.
+- Check request reproducibility separately from replay safety. A stable key does not rewind
+  a consumed upload stream or freeze a changing payload. Reopen a stable source or use a bounded
+  snapshot for the same intent; otherwise stop/reconcile or use an explicit resumable protocol.
+  Release each failed response body through the client's bounded consume/close/cancel contract
+  before backoff; receiving an error status does not imply its body has finished.
 - Do not hard-code HTTP status as retryability. 408/425/429/5xx may be retryable for one safe
   operation and ambiguous/terminal for another; 401 may succeed after one credential refresh,
   404 may be eventual, and 409/412 may require reread/recompute rather than replay. The API

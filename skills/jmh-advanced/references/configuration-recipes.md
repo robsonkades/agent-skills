@@ -4,7 +4,7 @@ The values below are experiment shapes, not mandatory counts. Derive durations a
 from pilot behavior, between-fork variance, minimum practical effect, and available budget.
 Java examples use Java 17 and JMH 1.37 annotations with its annotation processor enabled.
 Put public top-level classes in separate files under a named package; imports are omitted
-(`org.openjdk.jmh.annotations.*`, `org.openjdk.jmh.infra.ThreadParams`, and relevant `java.util`
+(`org.openjdk.jmh.annotations.*`, `org.openjdk.jmh.infra.ThreadParams`, `org.openjdk.jmh.infra.Control`, and relevant `java.util`
 and `java.util.concurrent` types). A plain javac compile without generated JMH harness code
 does not establish that a benchmark is runnable.
 
@@ -96,6 +96,50 @@ forms two independent queues/groups. Use complete group-size multiples and inspe
 thread/group summary. Increasing group count is not a same-queue contention sweep. Returned
 `1` values model occupancy only; they cannot detect item loss/duplication/order bugs. Use
 sequence identities and a separate correctness oracle when those are relevant.
+
+## Group termination is part of the experiment
+
+Keep the nonblocking `offer/poll` example when it models the operation. Replacing it with
+unbounded `put/take`, or a spin-until-success handshake, changes both the measured operation
+and the exit behavior. The harness does not promise paired calls: a peer may already have
+finished its last invocation. Longer measurement iterations do not repair that liveness gap.
+
+For a partner-dependent spin loop, JMH 1.37 can inject `org.openjdk.jmh.infra.Control`.
+Its experimental `stopMeasurement` flag supports cooperative exit, as shown by the
+[versioned Control sample](https://github.com/openjdk/jmh/blob/1.37/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_18_Control.java).
+This partial benchmark method assumes an existing group state with an
+`AtomicBoolean ready` and a matching peer that resets it:
+
+```java
+@Benchmark
+@Group("exchange")
+public boolean publish(Control control) {
+    while (!control.stopMeasurement) {
+        if (ready.compareAndSet(false, true)) return true;
+    }
+    return false; // iteration stop, not a successful handoff
+}
+```
+
+Apply a compatible escape path to every waiting role and validate the actual generated
+harness. The extra flag read affects the spin path; retain that context in the result.
+Classify stop-aborted calls separately from successes, observing the auxiliary-counter
+window rules below. Returning a boolean does not automatically classify the primary score.
+
+Checking a flag before entering `take()` cannot release a thread already blocked inside it.
+Use a justified bounded wait or an explicit cancellation/unblock protocol that matches the
+operation under study; timeouts and interruption must remain distinguishable from success.
+If that changes the intended operation too much, redesign the experiment instead of silently
+claiming it measures the original blocking contract. Exercise peer loss, full/empty state and
+iteration completion in a short controlled run before a long matrix.
+
+In JMH 1.37, `@Timeout` configures each iteration; the handler uses interruption in its
+timeout path. It is not a per-operation deadline or guaranteed hard process watchdog.
+Uninterruptible code or a stuck synchronization phase may still need external fork supervision.
+Retain timeout/failure diagnostics and invalidate affected decision claims rather than hiding
+the failure by extending the timeout. Sources: [Timeout annotation](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/annotations/Timeout.java),
+[Control API](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/infra/Control.java)
+and [benchmark handler](https://github.com/openjdk/jmh/blob/1.37/jmh-core/src/main/java/org/openjdk/jmh/runner/BenchmarkHandler.java).
 
 ## Auxiliary counter guardrails
 
@@ -240,6 +284,8 @@ mandatory full experiment.
 
 - [ ] Generated benchmark source and effective command are retained.
 - [ ] State graph and actor topology are diagrammed or stated precisely.
+- [ ] Waiting actors have a tested exit path; stop-aborted calls and timeout diagnostics do not
+      become successful operations or silently accepted decision results.
 - [ ] Success denominator and auxiliary counter invariants reconcile.
 - [ ] Matrix, seeds, fork/block order, failed runs, and exclusions are preserved.
 - [ ] Cold/reset claims have evidence at every named layer.

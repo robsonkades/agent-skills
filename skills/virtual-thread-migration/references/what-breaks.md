@@ -113,6 +113,27 @@ the enabling property and bean selection/backoff; custom executors can change th
 Virtual threads are daemon threads, so verify application keep-alive and shutdown ownership
 for scheduler/batch-only applications. Keep these checks distinct from choosing a framework flag.
 
+## Cancellation can change connection lifetime
+
+The Java 21 and 25 `Socket.getInputStream()` contracts make reads on a system-default socket
+interruptible when performed by a virtual thread: interruption closes the socket, the read throws
+`SocketException`, and interrupt status remains set. In contrast, expiration of `SO_TIMEOUT`
+throws `SocketTimeoutException` while leaving the socket valid. Valid at the socket layer does
+not prove the application protocol permits reuse. Socket-channel-backed I/O is already interruptible
+on platform threads; do not generalize this migration difference to every client or provider.
+
+Trace deadline/cancel/shutdown through the actual task handle to interruption or client abort;
+a method named `cancel` does not establish which signal reaches the I/O. Check whether the resource
+is task-owned, borrowed or shared, how closed connections are discarded, and whether catch/retry
+logic mistakes cancellation for a fresh downstream failure. Socket closure does not establish
+that a remote side effect was rolled back. Do not suppress cancellation merely to retain reuse.
+
+Exercise a blocked call with the relevant timeout and cancellation mechanisms; observe exception,
+interrupt status, task termination, resource/pool state and effects on other users of a shared
+connection. For cancellation redesign, pass that evidence and ownership/deadline requirements to
+`cancellation-and-interruption`; expect an explicit stop/cleanup contract and bounded tests. If
+unavailable, use the target client's documented behavior and retain unknown guarantees as gaps.
+
 ## Tests
 
 - Tests that assert on thread names, or count threads, or wait for a pool to become idle.
@@ -163,6 +184,7 @@ them from scheduler, allocation or provider effects; this ordering is not a freq
 
 - [Java 25 virtual-thread guide](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
 - [Java 25 `Thread` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html)
+- [Java 25 `Socket` contract](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/net/Socket.html) — stream interruption and read-timeout effects on socket lifetime.
 - [Java 25 executor factory contracts](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Executors.html)
 - [Java 25 `ScheduledThreadPoolExecutor`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ScheduledThreadPoolExecutor.html)
 - [Java 25 thread-local variables](https://docs.oracle.com/en/java/javase/25/core/thread-local-variables.html)

@@ -152,9 +152,12 @@ in earlier supported releases. Missing recovery or durability evidence is unknow
 supported conclusion, relevant authority/loss contract, checks performed and material gaps;
 include an affected-state inventory when the requested audit or change needs one.
 
-- Session/auth store failure must fail closed for protected actions. A separately authorized
-  public/read-only degraded mode is possible; never reinterpret unknown authentication as
-  authenticated.
+- Refuse protected actions when required session/auth evidence is unavailable or too stale.
+  Independently sufficient local token validation or a still-valid cached decision may remain
+  usable under the existing policy; a store outage does not authorize weakening that policy.
+  Never replace required live revocation/introspection with signature-only validation, extend
+  an expired decision, or reinterpret unknown authentication as authenticated. Optional
+  personalization can degrade separately from the authority required for access.
 - For replacement, stop admission and preserve the promised acceptance contract: finish or
   durably hand off/replay accepted queues/uploads before termination, with bounded drain and
   recovery. Explicit best-effort loss is a different contract. “No fields” does not prevent loss

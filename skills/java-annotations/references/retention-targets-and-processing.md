@@ -2,11 +2,11 @@
 
 ## Retention decides who can ever see it
 
-| Retention         | Kept in the class file | Visible to reflection | Use for                                                         |
-| ----------------- | ---------------------- | --------------------- | --------------------------------------------------------------- |
-| `SOURCE`          | no                     | no                    | compiler checks, lint, code generation, documentation-only tags |
-| `CLASS` (default) | yes                    | **no**                | bytecode tools, weavers, static analysers reading class files   |
-| `RUNTIME`         | yes                    | yes                   | anything a framework or your own code reflects over at runtime  |
+| Retention         | Kept in the class file | Visible to reflection | Use for                                                                 |
+| ----------------- | ---------------------- | --------------------- | ----------------------------------------------------------------------- |
+| `SOURCE`          | no                     | no                    | checks, lint, generation and documentation reading current source       |
+| `CLASS` (default) | yes                    | **no**                | bytecode tools, weavers and processors inspecting compiled declarations |
+| `RUNTIME`         | yes                    | yes                   | anything a framework or your own code reflects over at runtime          |
 
 These entries describe retained declaration metadata, not a discovery guarantee. Local-variable
 and lambda-parameter **declaration** annotations are never retained in the class file, even with
@@ -22,6 +22,21 @@ error anywhere. Declare the retention explicitly on every annotation you define.
 their work is finished at compile time. (Do not generalise from them: `@FunctionalInterface`
 and `@SafeVarargs` are `RUNTIME`, so retention cannot be inferred from "it is a compiler
 annotation".)
+
+**A later compilation is a different reader boundary.** A processor inspecting source in the
+current compilation can see `SOURCE` metadata. If a library was compiled separately, those uses
+are gone from its class files; a downstream build cannot recover them by invoking the processor
+again. For a checker inspecting that library's declarations through the compiler language model,
+`CLASS` can preserve the required metadata without enabling runtime reflection; `RUNTIME` also
+retains it but is needed only if a consumer requires reflective access. Inspect which artifacts
+the reader actually consumes, including generated sources or an existing metadata index.
+
+Verify this boundary with two compilations: compile the annotated library first, then run the
+consumer using only its binary output. A source-only test can conceal the defect. Retention does
+not automatically discover annotated dependencies or trigger a processor: configure its invocation
+and dependency traversal separately, and assert that its language-model query (for example,
+`Element.getAnnotationMirrors()`) sees the intended declarations before checking generated output
+or enforcement. Preserve a working generated index instead of increasing retention unnecessarily.
 
 ## Targets, and the record-component case
 
@@ -165,6 +180,10 @@ cannot tell that something happens. Two mitigations that cost little:
 
 ## Primary sources
 
+- [Java 17 RetentionPolicy](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/annotation/RetentionPolicy.html)
+  specifies which metadata survives compilation and is available to runtime reflection;
+  [Element](https://docs.oracle.com/en/java/javase/17/docs/api/java.compiler/javax/lang/model/element/Element.html)
+  exposes declaration annotations through the compiler language model.
 - [JLS 17 record members and constructors](https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.10.3)
   specifies propagation and explicit-member exceptions.
 - [JLS 17 annotation interfaces](https://docs.oracle.com/javase/specs/jls/se17/html/jls-9.html#jls-9.6.4.1)

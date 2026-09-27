@@ -105,13 +105,23 @@ more appropriate than terminal output, but measure file size and stop cost.
 
 ## JFR protocol
 
-First inspect active recordings and configuration. If the incident is already within a rolling
-recording, dump only the needed supported time range to a unique durable path while preserving
-the ongoing recording where possible.
+First inspect active recording identities, owners, settings, destinations and retention. If the
+incident is already covered by a rolling recording, dump the needed supported time range to a
+unique durable path while preserving the ongoing recording. Supply its verified `name` selector:
+on JDK 25, `JFR.dump` without `name` includes data from all recordings. A selected recording can
+still contain data enabled by another overlapping recording; its name is not a data filter.
+
+JFR combines settings from active recordings. A lower threshold or additional enabled event can
+increase process work and the event population retained by the baseline recording, even when
+the incident recording has a different name. Record overlap windows and inventory all active
+settings before interpreting size, privacy scope or overhead. Reuse adequate existing coverage;
+otherwise budget the combined effect of a narrowly targeted temporary recording. Detailed event
+configuration belongs to `jfr-and-async-profiler`, not an improvised fleet-wide profile.
 
 If starting a new recording:
 
 - choose settings/events from the symptom and target JDK;
+- give it a unique name and record the returned identity, owner and cleanup deadline;
 - include a finite duration/stop plan and output bound;
 - verify disk repository/destination and free space;
 - mark workload/incident/deploy window;
@@ -120,6 +130,20 @@ If starting a new recording:
 
 `settings=profile` is not a universal incident default. It collects more than `default` and can
 cost more; a custom JFC may be safer and more discriminating.
+
+On completion or abort, preserve the required artifact within the remaining recovery budget,
+then stop/close only the owned temporary recording and verify the baseline remains active.
+Record unresolved cleanup if the target cannot confirm it; a timed-out start/stop client is not
+proof of the target recording's state. Do not stop a shared recording to export its data or
+reset all JFR settings as cleanup. Changes to JVM-wide `JFR.configure` repository/buffer settings
+require a separate scope check; some cannot change after JFR initialization.
+
+Bounded drill: a baseline requests a synthetic duration event only above one hour; an incident
+recording requests the same event at zero threshold. Emit a short marker before, during and
+after overlap. On Temurin 25.0.3+9, the during marker appeared in both dumps, and the baseline
+continued after the temporary recording closed; the short before/after markers were excluded.
+This checks shared event production and lifecycle, not production overhead or a privacy guarantee.
+Use synthetic data and a disposable JVM with its repository/output inside the drill directory.
 
 ## NMT protocol
 
@@ -208,6 +232,7 @@ timeline.
 ## Authoritative references
 
 - [JDK 25 `jcmd`](https://docs.oracle.com/en/java/javase/25/docs/specs/man/jcmd.html)
+- [JDK 25 JFR setting combination](https://docs.oracle.com/en/java/javase/25/docs/api/jdk.jfr/jdk/jfr/SettingControl.html) — active recordings combine settings; a name does not isolate event production.
 - [OpenJDK 25.0.3 NMT commands](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/nmt/nmtDCmd.cpp)
   and [baseline replacement](https://github.com/openjdk/jdk25u/blob/jdk-25.0.3%2B9/src/hotspot/share/nmt/memBaseline.cpp) — existing comparisons must be preserved before a new baseline resets the saved state.
 - [OpenJDK 25 heap dumper source](https://github.com/openjdk/jdk/blob/jdk-25-ga/src/hotspot/share/services/heapDumper.cpp) — the safepoint walk and subsequent merge phases.

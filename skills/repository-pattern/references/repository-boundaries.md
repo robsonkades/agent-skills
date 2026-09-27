@@ -62,6 +62,26 @@ The Spring Data interface is package-private to the adapter. Nothing above it ca
 `deleteAll()`, `findAll()` or a `Specification`, and that narrowing — not the theoretical
 ability to swap the database — is the concrete benefit of the hand-written interface.
 
+## Absence, failure and read visibility
+
+Define `Optional.empty()` as no matching object visible under the declared lookup contract,
+not as a catch-all for timeouts, unavailable storage or mapping failures. Preserve meaningful
+failure semantics and causes when translating adapter errors; callers must be able to distinguish
+an expected missing object from a lookup that could not complete. Test both paths.
+
+State the required read visibility before adding a cache, replica or remote source behind an
+unchanged interface. For example, a confirmation lookup requiring its own committed write must
+not silently use a lagging replica, while a report may accept explicitly agreed staleness.
+Asynchronous PostgreSQL replication is one documented example of commit preceding standby
+visibility; that fact does not prescribe a database or consistency level for this application.
+
+Trace the actual routing, cache policy, transaction snapshot and managed-object lifetime; reading
+from a primary alone does not refresh an existing persistence context or snapshot. Pass the
+observable requirement and those facts to `consistency-models` when a distributed read protocol
+is needed. Expect a supported guarantee, failure behavior and discriminating check; if unavailable,
+keep the guarantee unverified and preserve a known adequate path. Verify required read-after-write
+behavior against the actual adapter/topology; a map fake cannot prove replica or cache semantics.
+
 ## What the aggregate boundary means for the methods
 
 ```text
@@ -214,6 +234,8 @@ existing evidence without adding a full database test campaign.
 ## Sources
 
 - [Fowler: Repository](https://martinfowler.com/eaaCatalog/repository.html)
+- [Spring Data Commons 4.1.1: CrudRepository](https://github.com/spring-projects/spring-data-commons/blob/4.1.1/src/main/java/org/springframework/data/repository/CrudRepository.java) — `findById` absence and `save` result contracts.
+- [PostgreSQL 17: streaming replication](https://www.postgresql.org/docs/17/warm-standby.html#STREAMING-REPLICATION) — asynchronous commit-to-visibility delay as a concrete read-contract concern.
 - [Spring Data JPA 4.1.1: persisting entities](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/entity-persistence.adoc)
 - [Spring Data JPA 4.1.1: transactionality](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc)
 - [Spring Data JPA 4.1.1: streaming execution](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/query/JpaQueryExecution.java) — `StreamExecution` requires a surrounding transaction.

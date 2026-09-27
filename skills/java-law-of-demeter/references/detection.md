@@ -17,6 +17,20 @@ against dot counts.
 - **Intermediate type use is evidence.** Trace why a `ShippingFeeCalculator` uses `Membership`:
   an import alone may be unused or refer to a directly constructed collaborator. Conversely,
   `var` and inferred chains need no explicit import. Inspect actual calls and declared contracts.
+- **Aliases do not change receiver provenance.** This partial Java 17 method body retains
+  the same navigation as `order.customer().contact().email()`:
+
+  ```java
+  var customer = order.customer();
+  var contact = customer.contact();
+  return contact.email();
+  ```
+
+  Locals can improve readability/debugging, but do not establish a new boundary. A helper
+  accepting `ContactDetails` can localize knowledge usefully only if the caller legitimately
+  owns that assembly; moving the walk into an arbitrary helper just relocates it. Verify which
+  internal shape change stops propagating, rather than whether the long expression disappeared.
+
 - **Shape changes ripple.** If renaming or splitting `Address` produces compile errors in
   files that do not mention shipping or addresses in their name or API, those files were
   coupled through chains.
@@ -38,6 +52,10 @@ against dot counts.
 The recurring distinction: **collaborators hide representation; data/projection types publish a
 shape.** The law guards encapsulation of the former. Data chains still carry schema coupling and
 edge cases; they are not automatically good, only a different review question.
+Check the returned values, not just the outer declaration: `record Response(Customer customer)`
+does not make a mutable/ORM `Customer` or its collaborators into immutable response data.
+Continue the boundary and I/O assessment at that hop; do not create a projection unless its
+consistency, consumer and ownership benefits justify the change.
 
 The `getFirst()` illustration requires Java 21 and throws on an empty list; Java 17 callers
 can use `get(0)` with an explicit empty-input contract. Stream callbacks can still navigate

@@ -35,6 +35,42 @@ faster inputs add records. Bound key/event
 cardinality, payload bytes and progress skew; consider alignment/admission limits. Processing-time
 TTL may cap retention but can discard valid late matches, so it is a correctness policy too.
 
+## Choose the table enrichment contract
+
+Inspect which reference version a record needs before choosing a lookup or temporal join:
+
+| Intended answer                                                       | Candidate approach                                             | Decisive conditions                                                                                        |
+| --------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Use reference data available when this execution processes the record | Current table or external lookup                               | Accept replay differences; specify cache freshness, missing matches and lookup failures                    |
+| Use the version effective at the business event's time                | Event-time as-of join or explicit version lookup               | Define timestamp meaning and ties; retain/reconstruct required history and control progress/late admission |
+| Keep past joined results consistent with subsequent input changes     | Updating table join or explicit correction/reconciliation path | Define triggering updates/deletes, retained dependencies and the sink's update/retraction protocol         |
+
+Illustrative contract pair: a device's mode is `A` from time 10 and `B` from time 20.
+An event at time 15 processed at time 25 needs `A` under an effective-at-event-time contract,
+but `B` under a current-value contract. Neither answer is universally correct. Replaying after
+mode `C` becomes current can change a live lookup again without changing the event timestamp.
+If the task is to reproduce the original decision rather than recompute with corrected history,
+retain the selected immutable version/value or pin the same reference inputs and selection
+policy for both executions.
+
+Verify the chosen engine/operator, not just the SQL or method name:
+
+- Kafka 4.1 `KStream`–`KTable` joins with a versioned table can select the latest reference
+  timestamp not exceeding the stream timestamp. Available history and join buffering/grace
+  constrain that lookup. Table updates alone do not revise already-emitted stream results;
+  a versioned store is not a retroactive correction mechanism.
+- Flink 1.20 event-time temporal joins use a versioned table and progress from both inputs;
+  processing-time lookup joins query a lookup source. Neither should be mistaken for a regular
+  join that keeps prior results updated when the reference side changes. Check supported
+  connector semantics, late versions and no-match behavior before promising completeness.
+
+History in an online state store and history needed for full replay are different budgets.
+A compacted latest-value topic or today's database snapshot may no longer contain versions
+needed by historical events. Do not label a newer fallback value historical truth. Obtain a
+suitable archive/snapshot or previously captured enrichment result; otherwise state the
+unavailable-history limit and the contract decision it blocks. Restore/cutover and sink effects still need the replay
+boundary below; do not run a repair against live outputs merely to test this hypothesis.
+
 ## The unbounded-state failure
 
 The classic pipeline death is a join or table whose state grows in **unmatched events or live
@@ -152,6 +188,10 @@ evidence; a narrow explanation need not execute this entire recovery matrix.
   timer beyond cleanup, and assert semantic state eviction. Allow documented asynchronous backend
   compaction/physical-byte reclamation. Also stall one input while another advances and verify the
   state/admission budget; a healthy-watermark run misses this failure.
+- **For enrichment, vary reference history as well as events.** Test an older event after a
+  newer reference version, a late reference update, a tombstone/missing historical version,
+  and replay after the current value changes. Assert the declared value and whether previous
+  output changes; a main-stream-only replay does not exercise this contract.
 - **Test recovery and evolution when affected or claimed.** Cover the relevant crash boundaries between input, checkpoint and sink commit; restore from
   checkpoint/savepoint; rescale/repartition; upgrade state serializers; add an idle partition;
   regress a watermark; and inject a record behind it. Assert no silent loss, duplicate effect or
@@ -180,3 +220,6 @@ audit replay/correction operations.
 - [Kafka 4.1 window semantics](https://kafka.apache.org/41/streams/developer-guide/dsl-api/#windowing) and [Kafka 4.1.0 SlidingWindows](https://github.com/apache/kafka/blob/4.1.0/streams/src/main/java/org/apache/kafka/streams/kstream/SlidingWindows.java) — event alignment and inclusive time difference.
 - [Flink 1.20.3 SlidingEventTimeWindows](https://github.com/apache/flink/blob/release-1.20.3/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/windowing/assigners/SlidingEventTimeWindows.java) — exact assignment to fixed-grid intervals.
 - [Flink 1.20 watermark generation](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/datastream/event-time/generating_watermarks/) — idleness and alignment for skewed progress. Verify deployed engine/connector support rather than assuming these source versions match it.
+- [Flink 1.20 joins](https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/dev/table/sql/queries/joins/) — event-time temporal, processing-time lookup and updating join distinctions.
+- [Kafka 4.1 Streams DSL joins](https://kafka.apache.org/41/streams/developer-guide/dsl-api/) — versioned `KStream`–`KTable` timestamp lookup, history/grace limits and which input triggers output.
+- [Kafka 4.1 log compaction](https://kafka.apache.org/41/design/design/) — latest-value reconstruction does not imply a complete retained history of changes.

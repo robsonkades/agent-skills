@@ -32,6 +32,11 @@ available separately in this catalog. Nor does it apply to a service
 with no credential store, no untrusted input and no per-instance ownership rule: threading an
 `Actor` through that domain is cost, no benefit.
 
+For a handoff, pass the resolved Java/framework versions, reachable entry paths, required
+policy and observed evidence; ask the owning specialist for the applicable configuration or
+validation result. If unavailable, retain the code-level findings and state what remains
+unverified; an untested framework annotation is not proof that a guard executes.
+
 ## Workflow
 
 Before recommending APIs or parameters, inspect the project's compiler release/toolchain,
@@ -39,6 +44,9 @@ resolved security-library versions, runtime image, credential format and binding
 Java 21 is this skill's example baseline, not permission to upgrade the target or add Spring
 or BouncyCastle. Version-specific facts below are dated examples; verify them against the
 resolved version. If evidence is missing, state the gap and keep the proposed change conditional.
+Respect the requested mode: report findings for a review, and implement scoped code corrections
+when authorized. Use synthetic credentials and isolated fixtures for adversarial checks; finding
+a possible live secret does not authorize using it, contacting its service or rotating it.
 
 1. **Name the asset and the reachable attacker.** "A leaked database backup" and "another
    tenant's authenticated user" lead to different code; "make it more secure" leads to none.
@@ -83,6 +91,12 @@ IF existing bcrypt at a measured adequate cost
 THEN keep verification support and migrate on successful authentication; schedule forced
      migration only when compliance, compromise evidence, an unacceptable cracking model,
      inactive accounts or the 72-byte legacy estate justify its user and operational cost.
+
+IF changing a credential's KDF parameters or pepper
+THEN retain verification under its original policy and version new writes. Bare Spring PBKDF2
+     hashes do not carry those settings: changing the verifier in place can reject every old
+     password before upgradeEncoding runs. Use immutable policy ids or trusted row metadata
+     to route old and new verifiers; see references/password-storage.md §3.
 
 IF a caller identity or resource owner is read from the request
 THEN it is a claim, not an identity: take the subject from the authenticated principal.
@@ -131,9 +145,12 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
   that includes tenant/owner and expected state. Returning `404` for both absent and forbidden
   resources hides detail from the caller but is not the authorisation control.
 - Password-reset and API-key flows are credential systems, not random-string helpers. Generate
-  at least the entropy required by the applicable standard, display the raw value once, store
-  only a domain-separated digest and enforce purpose/subject/expiry. Atomically consume reset
-  tokens; enforce revocation and rotation for reusable API keys.
+  at least the entropy required by the applicable standard, display the raw value once and
+  enforce purpose/subject/expiry. A domain-separated digest can protect a high-entropy random
+  token at rest; a six-digit code has only one million possibilities, so hashing it does not
+  provide comparable offline-guessing resistance. Short codes need an explicit attempt budget,
+  short validity and a reviewed verification/storage policy (`references/password-storage.md` §5).
+  Atomically consume reset tokens; enforce revocation and rotation for reusable API keys.
   Rate-limit redemption; do not log query strings containing bearer material.
 - Hash what only needs equality verification; encrypt only what the application must recover.
   With reversible data, `Cipher.getInstance("AES")` delegates mode and padding to the provider.
@@ -143,6 +160,9 @@ THEN define the threat model and key custody first; use a vetted AEAD constructi
   verification. Store algorithm, key version, nonce and ciphertext/tag so rotation is possible;
   never store a plaintext data-encryption key beside the ciphertext it protects. An encrypted
   (wrapped) data key may accompany the ciphertext when its wrapping key is separately protected.
+  Check the consuming API too: `CipherInputStream` may conceal integrity-check failures under
+  its documented contract. Use direct `Cipher` authentication completion or a vetted AEAD facility,
+  and verify tampered ciphertext, tag, AAD and wrong-key cases before claiming protected decryption.
 - A secret in an automatically generated record or Lombok `@Data` `toString()` can leak
   through `log.info("processing {}", request)`; check custom exclusions and renderers too.
 - Two moves make code worse. **Encrypting what only needs hashing** ("so we can support

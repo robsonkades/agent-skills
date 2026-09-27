@@ -63,7 +63,8 @@ from a shared concurrent pool.
 For expensive resources or repeatedly allocated large buffers, compare bounded reuse
 with ordinary allocation and streaming. Before implementing reuse, specify:
 
-- Maximum retained bytes and how oversized/idle entries are discarded.
+- Maximum retained bytes across all owners, including borrowed and idle entries, and how
+  oversized/idle entries are discarded. An idle-queue bound alone does not bound in-use bytes.
 - Exclusive ownership, return on exceptions/cancellation, and behavior at exhaustion.
 - State reset and clearing of references or sensitive contents before another borrower.
 - Measured construction/reset cost, hit/miss rate, contention and concurrency.
@@ -77,6 +78,27 @@ Validate total bytes/op **and** retained heap, CPU, throughput and tail latency 
 and burst concurrency. If reuse is implemented, tests must cover state isolation,
 exception/cancellation return paths, capacity limits and oversized objects. Reject reuse
 when ownership cannot be made correct or a repeatable benefit is absent.
+
+### Thread-local reuse depends on thread lifetime
+
+A `ThreadLocal` buffer can amortize construction across tasks on a fixed set of reused
+platform workers. Estimate retained capacity across every worker that initializes it,
+including grown buffers and multiple executor pools; resetting logical length does not
+necessarily shrink backing storage. Check reentrant calls and asynchronous escape before
+treating thread confinement as exclusive ownership of a reusable buffer.
+
+With a virtual thread per task, a thread-local value belongs to that virtual thread, not
+its carrier. Cross-task reuse is lost, and many waiting tasks can retain their own buffers.
+Do not estimate this memory from carrier count. Thread-local reuse within one task can
+still be useful if the task repeatedly needs the object; measure that narrower benefit.
+The [JDK 25 virtual-thread guidance](https://docs.oracle.com/en/java/javase/25/core/virtual-threads.html)
+explains why caching expensive reusable objects in thread locals does not transfer from
+pooled platform workers to a virtual thread per task.
+
+Compare ordinary task-local allocation, smaller streaming buffers and explicitly bounded
+shared reuse only when the measured cost warrants it. Shared reuse introduces contention,
+exhaustion and ownership decisions; it is not an automatic replacement. Re-evaluate at
+peak live-task count and cancellation paths, not just one warmed sequential request.
 
 ## Flags and representation changes
 

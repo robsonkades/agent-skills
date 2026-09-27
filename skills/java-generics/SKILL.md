@@ -104,7 +104,9 @@ fewer warnings or fewer wildcards alone do not justify changing the API.
 - Represent "a container of many types" with a class token as key (`Map<Class<?>, Object>`
   behind an API that casts with `type.cast(value)`), not with `Object` values that callers
   cast themselves. For reifiable keys, `Class.cast` performs a checked cast with no unchecked
-  suppression; `List.class` cannot distinguish lists by their element type.
+  suppression; `List.class` cannot distinguish lists by their element type. Choose this key
+  only when one value per exact class fits; multiple same-typed attributes need distinct typed
+  keys or domain fields. Define replacement and lookup semantics before adopting the container.
 - Generifying an existing API is often binary compatible because erasures remain, and raw source
   uses may still compile with warnings, but it is not automatically compatible: erasure clashes,
   changed bounds/return inference, overload resolution and generated bridge methods can affect

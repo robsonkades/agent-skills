@@ -4,6 +4,9 @@ Read this only after classifying the artefact as a Tech Feature.
 
 ## Required structure
 
+Use this structure for a proposal being pursued. For an accepted decision not to pursue it, use the
+compact `Not proceeding` closure record in `SKILL.md`; do not fill an abandoned feature's empty fields.
+
 ```markdown
 # <Tech Feature title naming the engineering outcome>
 

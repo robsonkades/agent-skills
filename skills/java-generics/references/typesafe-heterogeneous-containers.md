@@ -40,6 +40,22 @@ registries, per-type caches and metric registries, `ServiceLoader`-style lookups
 `DataSource.unwrap(Class<T>)`-style escape hatches in JDBC and Jakarta APIs. The JDK's own
 `AnnotatedElement.getAnnotation(Class<T>)` is the same pattern.
 
+## Key identity and multiplicity
+
+This map has one slot per exact `Class` key. Following the
+[Map.put contract](<https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html#put(K,V)>),
+`put(String.class, "billing")` followed by `put(String.class, "shipping")` replaces the first
+value. Decide whether replacement is intended or duplicate registration must be rejected.
+`get(CharSequence.class)` does not find an entry stored under `String.class`; assignable-type
+lookup is a separate policy that must resolve multiple matches, not something generics adds.
+
+Inspect actual consumers: if both billing and shipping addresses must coexist, use named domain
+fields when the keys are fixed, or a qualified typed key such as `Key<T>` when the set is open.
+Its identity must distinguish logical attributes without allowing the same key to mean
+incompatible types (for example, include both qualifier and type token in equality). Keep
+`<T>` linking key and value in the insertion API and preserve the runtime check for raw callers;
+a string-only `Map<String, Object>` merely moves casts back to consumers.
+
 ## The two limitations
 
 The `Attributes` sketch is thread-confined (`HashMap`); sharing it requires an explicit
@@ -47,7 +63,7 @@ concurrency contract. It permits null, so `get` cannot distinguish absent from s
 Use reference-class keys: `int.class.cast(Integer.valueOf(1))` fails; use `Integer.class`.
 
 **1. Non-reifiable types have no class literal.** `List<String>.class` does not exist, so a
-type token cannot distinguish `List<String>` from `List<Integer>`. The workaround is a _super
+class token cannot distinguish `List<String>` from `List<Integer>`. The workaround is a _super
 type token_: an abstract class whose generic supertype is recorded in the class file, captured
 by an anonymous subclass.
 
@@ -123,7 +139,9 @@ type when the set of values is known:
 
 Use the heterogeneous container when the key set is genuinely open — extensions, plugins,
 framework attributes, per-type caches — and keep it behind an API narrow enough that
-`Class.cast` is the only place a cast occurs.
+reifiable class keys need only checked `Class.cast` operations. Parameterized type-token keys
+need the separate insertion/validation invariant described above; a richer token alone cannot
+make their retrieval cast runtime-checkable.
 
 ## Across a serialisation boundary
 

@@ -309,8 +309,10 @@ the relevant paths between real instances, with direction and coverage verified.
 - **Leader election** — authority and accepted effects obey the protocol during the fault;
   assert convergence within the declared recovery bound after healing, rather than immediate
   agreement among local leader labels (`leader-election`).
-- **Client-visible consistency** — what a reader sees on the minority side
-  (`consistency-models`).
+- **Client-visible consistency** — record read/write histories on the exercised sides and check
+  the accepted model, including indeterminate writes. Convergence after healing alone does not
+  establish legal observations during the fault; see
+  [history checking](techniques.md#checking-client-visible-histories) and `consistency-models`.
 
 ## A note on determinism
 

@@ -54,6 +54,12 @@ deployment outcome. Deduplicate retries of the same deployment; distinguish roll
 no-op redeployments. Choose whether the unit of analysis is a rollout event or a change
 episode and use that unit consistently.
 
+For behavior controlled outside the artifact, correlate configuration/flag revisions and their
+effective state per target or cohort. An unchanged binary can acquire a new cross-service
+agreement. Record who owns activation and propagation; an intended global setting is not
+proof that every reader has observed it. Keep these changes visible instead of discarding
+them as no-op deployments, and do not mix their counts into a binary-rollout ratio silently.
+
 One useful exploratory statistic is:
 
     A episodes associated with a B rollout / eligible A episodes
@@ -116,6 +122,31 @@ These are reference editions, not a required project upgrade. Match the target J
 [Confluent compatibility modes](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
 distinguishes reader/writer direction and transitive history checks; verify the actual registry,
 schema format and effective mode. Schema acceptance alone does not validate business semantics.
+
+#### Deployment, activation and rollback states
+
+For a change that affects peers or retained data, inspect the intermediate states permitted
+by the rollout: consumer/provider versions, relevant flag settings, migration phase and
+records written so far. Check representative mixed states and rollback after new writes;
+passing tests only before and after an upgrade can miss the incompatible transition.
+Do not test every unrelated configuration combination. Prioritize combinations reachable
+in the named change, including partial rollout and recovery; record excluded states and
+the routing or sequencing guard that prevents them. Unknown guards cannot justify exclusion.
+
+A flag can let binaries deploy before a feature is activated. If all reachable readers must
+understand a new format first, mark activation's prerequisite separately from deployment.
+Turning the flag off may stop future writes without making existing records readable by old
+code. Record which rollback target remains supported after activation, or leave it unknown
+until evidence is available. A reversible staged change may preserve separate release targets;
+a forced coordinated activation is an obligation for that change, not proof that every future
+release must move together. Keep an adequate tested sequence rather than adding a flag system.
+
+Sources checked 2026-09-25: Sandeep Pokkunuri's
+[AWS rollback-safety account](https://d1.awsstatic.com/builderslibrary/pdfs/ensuring-rollback-safety-during-deployments.pdf)
+supports mixed-version upgrade/downgrade checks and separating reader preparation from new
+writes. Pete Hodgson's [Feature Toggles](https://martinfowler.com/articles/feature-toggles.html)
+explains behavior changes without code deployment and the need to validate relevant flag states.
+The edge classification above is this skill's reasoning, not a universal migration recipe.
 
 ## 3. Shared data: identify objects and access, not just connections
 

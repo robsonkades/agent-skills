@@ -180,8 +180,16 @@ Kubernetes version; do not rely on remembered defaults.
 Replay observed step and ramp demand against the controller and its bounds. Minimum
 replicas must carry demand during reaction time without violating the queue/deadline
 budget. Maximum replicas must respect database connections, broker partitions, API quotas,
-IP space and placement capacity. Treat the controller, scheduler and dependency limits as
-part of the system.
+IP space and placement capacity. Budget transient resource holders too: starting, surge and
+terminating pods can consume resources without contributing warm capacity. HPA's maximum
+is not a bound on all live processes during rollout; see
+[Kubernetes scaling controls](references/kubernetes-scaling-controls.md).
+
+For asynchronous work, matching the arrival rate only stops backlog growth. Require enough
+surplus capacity to drain it within the recovery objective while new work continues; check
+age/deadlines separately. Use the conditional bounds in
+[sizing arithmetic](references/sizing-arithmetic.md), including partition and retry limits.
+Treat the controller, scheduler and dependency limits as part of the system.
 
 ### 7. Forecast the decision date, not a single future
 
@@ -296,6 +304,19 @@ Before approval:
 Re-evaluate after material code/JDK/GC/resource/dependency changes, workload-mix shifts,
 new tenants/events, pricing or quota changes, forecast backtest degradation, and any
 incident that invalidates an assumption.
+
+## Specialist handoffs
+
+When test validity or missing scenario coverage prevents selection, pass the workload,
+configuration, SLO and existing artifacts to `load-testing-advanced`; request measured
+passing points and classified limits. For analytical wait/tail predictions, pass arrivals,
+service distributions, routing and observed waits to `queueing-models`; request assumptions
+and validation, not an unexplained percentile. For pool changes, pass fleet/rollout counts,
+connection occupancy and the database budget to `connection-pool-sizing`; request a feasible
+per-pool limit and its latency trade-offs. If a specialist is unavailable, retain these
+evidence requirements and provide conditional calculations or the smallest discriminating
+measurement plan. Do not mark an unvalidated cell feasible or change the system merely to
+complete a capacity review.
 
 ## References
 

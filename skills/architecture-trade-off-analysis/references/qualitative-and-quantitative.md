@@ -36,6 +36,35 @@ MECE language does not require every branded product, a mandatory hybrid, or a p
 vendor. A hybrid can be a distinct complete alternative even though it shares components
 with others. Check current product capability only where it could affect this decision.
 
+## Feasibility across a transition
+
+When replacing an existing architecture, compare **target plus credible adoption path**.
+Final-state compliance cannot establish that mixed versions, data movement or cutover meet
+the same obligations. Identify which requirements apply during transition and which begin
+at the target date; do not silently waive either. Include peak overlap resources, permitted
+write/read interruption, consumer compatibility and authoritative state ownership when
+they could exclude an option. A known violation fails the proposed path; missing evidence
+leaves it unknown. Neither proves that every possible path to that target is infeasible.
+
+Treat reversibility as a claim about a particular stage and recovery outcome. Determine
+what changes after new writes, consumer adoption or old-path retirement. To count rollback
+as a benefit, establish that the returning version can read the current state and retain
+the required acknowledged work, within the accepted recovery time and data-loss limits.
+Restoring a snapshot, switching traffic and reverting code are different operations.
+AWS's [blue/green data and schema guidance](https://docs.aws.amazon.com/whitepapers/latest/blue-green-deployments/best-practices-for-managing-data-synchronization-and-schema-changes.html)
+explains why rollback needs current data and compatible schemas, and how deletion can
+make the older application unusable. Apply those compatibility questions to the actual
+candidate; this does not require adopting blue/green deployment.
+
+Prefer an evidenced simpler path if it meets the constraints. A rehearsed maintenance-window
+cutover can be acceptable when downtime is allowed; staged coexistence can be necessary
+when it is not, but introduces its own ownership, synchronization and operating costs.
+If rollback is unavailable, evaluate an explicit forward-repair or restore path against the
+same requirements instead of declaring every irreversible change forbidden. Ask for the
+specific compatibility/recovery evidence that would change feasibility. Detailed sequencing
+belongs to `architecture-refactoring-paths`; this comparison needs enough of the path to
+support selection, not a mandatory complete migration plan.
+
 ## Build criteria before rating
 
 Split **mandatory obligations** from **preferences**. Record a source and acceptance test

@@ -110,6 +110,44 @@ Exercise ordinary and advanced consumer calls against the materially different b
 committing the interface. Starting with a costly remote path can reveal missing constraints, but
 does not replace the consumer contract or force every capability onto every implementation.
 
+## Backend binding and replacement
+
+Read this when "swappable" means more than wiring a different provider for a new object. Establish
+when selection may change and what survives it: a method call, session, cursor, resource handle,
+stored object or retry identity. Keep constructor injection when it already meets the requirement;
+a mutable backend field is not an improvement by itself.
+
+The decisive constraint is whether the operation carries provider-owned state:
+
+- A renderer that accepts portable input and returns a self-contained value can select a
+  compatible backend for each independent call, if the contract permits it. There is no need
+  to invent session migration; sharing and resource ownership still apply.
+- If rendering returns a document handle for subsequent edits, pages and closure, keep those
+  calls with the owning backend/session unless transfer is explicitly supported. Re-reading a
+  mutable `currentBackend` for each call can mix instances. Even two instances of the same
+  provider class need not share resources or identity namespaces.
+
+This distinction also occurs in standard APIs: a Java 17 `Path` identifies its creating file
+system through `getFileSystem()`, and `compareTo` rejects paths from different providers
+([Path contract](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html)).
+That is evidence against assuming arbitrary cross-provider interoperability, not a claim that
+every operation or every Bridge has the same restriction.
+
+For required live replacement, define admission to the new provider, the lifetime protection for
+old users, and who drains or terminates and closes the old provider. Capturing a reference once
+avoids mixed dispatch but does not prevent another owner closing it. Use the project's existing
+session/lease/ownership mechanism where adequate; do not prescribe a lock or hot-swap facility
+without the concurrency requirement. Test replacement between acquisition and use, including
+late cleanup, rather than only two successful calls before and after the switch.
+
+For storage or remote failover, establish retained-data access, identity and ambiguous-effect
+recovery separately. Retrying through a new provider is not safe merely because the original
+provider deduplicates that ID. Pass the affected operation, provider scopes and required outcome
+to `gof-patterns-and-distribution` for the boundary analysis; if unavailable, keep failover
+conditional and name the missing guarantee. Bridge provides the seam, not state migration or
+a cross-provider delivery guarantee. If several related products must share a provider/session,
+compare a coherent bundle or `gof-abstract-factory` rather than selecting each independently.
+
 ## The leak that ends a bridge
 
 ```java

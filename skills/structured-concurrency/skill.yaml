@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: structured-concurrency
-version: 1.3.3
+version: 1.3.4
 description: >-
   StructuredTaskScope as a lifetime guarantee for a fan-out: fork, join, close, and the rule
   that no subtask thread outlives the block. Covers the API as it stands on each JDK — still
@@ -49,6 +49,7 @@ dependencies:
     version: ^1.0.0
 
 suggests:
+  - java-resource-management
   - tail-latency-analysis
 
 capabilities:

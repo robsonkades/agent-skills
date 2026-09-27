@@ -13,6 +13,10 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
 - **Where it hides** — one fixed TTL over entries created in a bulk load; a job at `0 * * * *`
   on every replica; a fixed reconnect delay; a fleet restart with no stagger; a cache warmed
   on startup by every instance at once.
+- **Discriminator** — correlate request starts with the shared event and attempt identity.
+  Synchronized first attempts/cache misses support a trigger-driven herd; repeated attempts
+  after failures support retry amplification, and both can coexist. Compare logical arrivals
+  and available capacity before confusing demand growth or replica removal with a herd.
 - **Owner** — `cascading-failures` (recovery herd, staggered restart); `caching-strategies`
   (stampede, TTL jitter); `retries-and-backoff` (jitter).
 
@@ -84,11 +88,15 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
   `Too many open files`, `unable to create native thread`, heap growing with in-flight count.
   The blast radius is wrong for the trigger, which is the tell.
 - **Mechanism** — a finite resource (pooled connections, request threads, file descriptors,
-  memory per in-flight request) is consumed by calls waiting on something slow. The resource,
-  not the dependency, is what the rest of the system then fails on.
-- **Where it hides** — one pool shared across dependencies; a permit released outside a
-  `finally`; a retry sleeping while holding a pooled connection or an open transaction;
+  memory per in-flight request) is exhausted by waiting work, failed release or demand beyond
+  capacity. Other paths fail on the shared resource even if their own dependencies are healthy.
+- **Where it hides** — one pool shared across dependencies; ownership paths missing release
+  on cancellation/rejection/failure; a retry sleeping while holding a pooled connection or an open transaction;
   unbounded per-request fan-out after virtual threads removed the bounding pool.
+- **Discriminator** — compare acquisition/release counts and borrowed/in-use resources with
+  owned work lifetime. Recovery after work terminates supports transient occupancy; outstanding
+  borrows after verified quiescence suggest a leak or unaccounted work. Retained idle pool
+  capacity alone is not a leak, and missing lifetime evidence keeps the cause unresolved.
 - **Owner** — `concurrency-limiting-and-bulkheads`; `connection-pool-sizing` for the database
   pool; `cascading-failures` for the propagation.
 
@@ -100,6 +108,10 @@ produces it) → **Owner** (the skill with the fix). No entry contains a remedy.
   limit is not a limit on work when one request can cost a million times another.
 - **Where it hides** — a list field with no maximum length; a query with no `LIMIT` over a
   client-controlled filter; a batch endpoint with no cap; a date range defaulting to "all".
+- **Discriminator** — compare actual work per logical request with input size/depth/range,
+  separating fan-out from repeated attempts. Rising work with stable attempt counts supports
+  input amplification; a high aggregate request rate alone does not. Compare the input with
+  its accepted contract before classifying a legitimate large job as malformed.
 - **Owner** — `rpc-and-api-contracts` (bound it in the contract) and
   `rate-limiting-and-load-shedding` (cost-weighted limits).
 

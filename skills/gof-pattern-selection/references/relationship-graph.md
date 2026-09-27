@@ -10,7 +10,8 @@ adding another pattern. Type-pattern switch requires the Java compatibility cond
 ## Creational
 
 ```text
-Factory Method ──implies──► a creator with an inherited algorithm
+Factory Method ──implies──► overridable creation with subclass-selected product
+               ──may serve─► an inherited algorithm or a direct client call
                ──combines─► Abstract Factory  (family creation can use subtype hooks)
                ──replaced by─► Supplier / Map<Key,Supplier> / DI
                ──confused with─► static factory method (Effective Java Item 1)
@@ -21,8 +22,10 @@ Abstract Factory ──implies──► a family invariant, or it is not this pa
                  ──replaced by─► existing DI configuration when it preserves the family invariant
 
 Builder ──implies──► a construction/invariant contract; immutable output is optional
+        ──varies──► representation behind shared construction steps (GoF form)
+        ──or serves─► named/defaulted/incremental value construction (fluent form)
         ──combines─► Abstract Factory, Command (building a command)
-        ──replaced by─► record + static factories, when arity is small
+        ──alternatives─► direct assembly; constructor/record + factories when caller contracts fit
 
 Prototype ──implies──► a copy contract stating what is shared
           ──combines─► Abstract Factory (a registry of exemplars)
@@ -91,7 +94,7 @@ Command ──combines─► Memento (undo), Chain (offering a request),
         ──confused with─► Event (tense, ownership, rejectability)
         ──replaced by─► a method call, when nothing consumes the reification
 
-Chain of Responsibility ──implies──► an unhandled-request policy
+Chain of Responsibility ──implies──► handler/continuation, ordering and unhandled-request policy
                         ──combines─► Command (the request), Decorator (a
                                      pipeline stage that wraps the rest)
                         ──replaced by─► sealed switch; framework filters

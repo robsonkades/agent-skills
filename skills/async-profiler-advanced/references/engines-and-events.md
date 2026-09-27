@@ -231,8 +231,10 @@ miss rate or latency.”
 - Producer `--live` concerns Java allocations. For native memory, capture allocation **and
   free** activity and use converter `--nativemem --leak`; `--nofree` prevents meaningful
   matching of frees. The result is unmatched tracked allocations from this recording, not
-  RSS growth or a complete inventory. The converter's default tail exclusion is 10% of the
-  window, so record that setting before comparing runs.
+  RSS growth or a complete inventory. Record the converter's tail setting and admitted-event
+  time range before comparing runs; see the
+  [matching-horizon rules](output-and-conversion.md#native-and-instrumentation-sessions)
+  before filtering native leak candidates.
 
 These v4.5 details are verified in [lock tracing source](https://github.com/async-profiler/async-profiler/blob/v4.5/src/lockTracer.cpp)
 and [profiling modes](https://github.com/async-profiler/async-profiler/blob/v4.5/docs/ProfilingModes.md).

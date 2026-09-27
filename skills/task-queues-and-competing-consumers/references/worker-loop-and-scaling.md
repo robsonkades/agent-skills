@@ -50,6 +50,23 @@ RabbitMQ 4.2 AMQP 0-9-1 QoS prefetch does not limit `basic.get` polling; use the
 actually governs the selected delivery API. Changing prefetch with deliveries already in
 flight can temporarily exceed the new count.
 
+**Batch outcome accounting.** SQS `DeleteMessageBatch` and `ChangeMessageVisibilityBatch` can
+return HTTP 200 with both successful and failed entries. Correlate each response entry ID to
+the submitted delivery/receipt attempt; do not treat the batch as one acknowledgement or one
+renewed lease. Preserve successful entries and classify failed entries individually. Retry
+eligible failures within the recovery/renewal budget; a stale receipt needs broker-specific
+recovery, not an endless retry of that handle.
+
+For example, if renewal succeeds for A but fails for B, only A has a confirmed new interval.
+B needs recovery under its remaining known headroom and the effect contract. A request timeout
+instead leaves application of the extension uncertain; do not assume all entries failed or
+give them all a new deadline. Deletion failure after a committed effect calls for settlement
+or redelivery reconciliation, not automatically rerunning the business effect. Keep unresolved
+delivery outcomes in the finite recovery budget even after local handler capacity is released.
+An SQS delete reported successful with an old receipt can still leave the message present;
+the lease reference explains why success is not proof against redelivery. Match other brokers'
+batch/ack scope rather than copying SQS semantics to channel or session acknowledgements.
+
 Why each line is the way it is:
 
 - **`tryAcquire` before `receive`.** Fetching first and then blocking on a permit means the
@@ -155,6 +172,8 @@ permit, no unowned delivery and no false claim of handler termination.
 
 ## Primary references
 
+- [SQS DeleteMessageBatch](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_DeleteMessageBatch.html) and
+  [ChangeMessageVisibilityBatch](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ChangeMessageVisibilityBatch.html) — per-entry outcomes, including partial failure with HTTP 200.
 - [AWS scaling from SQS](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-using-sqs-queue.html) — backlog per InService instance and its workload assumptions.
 - [ThreadPoolExecutor, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadPoolExecutor.html) — bounded queues and rejection behavior.
 - [Future, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/Future.html) and [ExecutorService, Java 25](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ExecutorService.html) — cancellation, interruption and termination. Match the deployed JDK; these controls do not require adopting virtual threads.

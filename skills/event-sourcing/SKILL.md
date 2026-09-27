@@ -168,6 +168,10 @@ a long-lived account)
 - In classic event sourcing, snapshots are rebuildable optimization: deleting them must still
   permit correct replay from retained events. If a design compacts/deletes the prefix and makes
   a checkpoint authoritative, name that different retention/audit contract explicitly.
+- **Restoring the source log is not rebuilding a projection.** Establish the recovered
+  committed history before reusing snapshots, command identities or external checkpoints.
+  A view or external effect can be ahead of a restored log; replay cannot recreate missing
+  facts or undo that effect. Use the recovery checks in the projection reference.
 - **Read-your-own-writes is the user-visible cost**, and it is decided per screen rather than
   per system. The mitigations differ in what they cost and what they can actually deliver
   (`references/projections-and-evolution.md`, `consistency-models`).
@@ -201,6 +205,6 @@ a long-lived account)
 - [Projections, evolution and erasure](references/projections-and-evolution.md) — the atomic
   position advance and why a read-then-skip corrupts a fold, gapless-feed assumptions, rebuild
   and cut-over strategies, the five read-your-own-write mitigations with what each actually
-  delivers, event versioning through upcasting and copy-and-replace, and what crypto-shredding
-  does and does not erase. Read when building the read side or facing an event that must
-  change.
+  delivers, source-log restore, event versioning through upcasting and copy-and-replace,
+  and what crypto-shredding does and does not erase. Read when building the read side,
+  recovering authoritative history or facing an event that must change.

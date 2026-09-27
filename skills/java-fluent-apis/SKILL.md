@@ -67,11 +67,24 @@ unsupported migration claims conditional.
   binary compatibility when the old descriptor no longer resolves, even when callers compile.
   Covariant bridges/inherited methods require separate inspection. Choose the return type at
   first release.
+- Make the mutation model visible at call sites. An immutable fluent update must have its returned
+  value retained, including inside an `if`; a mutable builder's aliases share later changes.
+  For independent variants, use fresh builders or a documented copy operation, or derive each
+  variant from an immutable value. Do not infer copying or mutation from a `with...` name alone.
+- Define repeated-option behavior: replace, accumulate, reject duplicates or clear/reset. Distinguish
+  omission from explicit null/default when that affects behavior. Test repeated calls and both
+  orders of interacting options; named fluent calls do not make those semantics self-evident.
 - Setters may reject context-free invalid values immediately. `build()` is the authoritative
   completeness/cross-field check; enforcing a cross-field rule in the first setter makes validity
   order-dependent and is usually wrong.
   If other construction paths exist, put intrinsic product invariants at their shared constructor
   or factory boundary and delegate from `build()`; builder checks must not be the only protection.
+- A chain is not a transaction. Earlier mutations can survive a later setter or `build()` failure.
+  Validate before assigning where feasible; for bulk updates, stage and validate before committing
+  if the contract promises no change on failure. Otherwise document partial state and whether the
+  caller should repair or discard the builder. Do not retry a failed chain on reused state without
+  checking repeated-call semantics. Read the state-contract examples in the builder decision
+  reference when reviewing branching, conditional configuration or failure recovery.
 - Wither-style immutable APIs may create a new instance per changed value; no-op calls may
   return the receiver and unchanged immutable substructure may be shared. That is a cost mechanism,
   not a verdict: escape analysis may eliminate the copies, and only a profile of the real
@@ -96,7 +109,9 @@ unsupported migration claims conditional.
   justify an exception using concrete call-site needs rather than a numeric threshold.
 - Chaining the same conceptual object is different from navigating other objects' structure.
   Navigation needs a separate boundary assessment through java-law-of-demeter; dots alone do not
-  establish a violation, especially for an intentional data representation.
+  establish a violation, especially for an intentional data representation. Pass the chain, receiver
+  types and ownership context; seek a coupling assessment and smallest justified correction. If that
+  skill is unavailable, inspect exposed composition and keep the chain absent a demonstrated problem.
 
 ## Production failure modes
 
@@ -113,18 +128,24 @@ unsupported migration claims conditional.
 - **Published API evolution:** run source and binary compatibility checks. Additive overloads and
   fluent methods can still create source ambiguity, erasure clashes or lambda overload changes.
 
-## References
+## Deliverable and verification
 
-Deliver the caller risk, selected form and lifecycle (reuse, thread confinement, snapshot or
+For a design or review, deliver the caller risk, selected form and lifecycle (reuse, thread confinement, snapshot or
 ownership transfer), plus compatibility impact and checks executed. State which caller or evolution
 evidence would change the choice. Exercise invalid values,
-option ordering, repeated build, alias mutation and cleanup after chain-setup failure where
-applicable. Distinguish compilation
-from runtime/framework validation and unmeasured performance expectations.
+option ordering/repetition, repeated build, ignored immutable returns, alias mutation, failure state
+and cleanup after chain-setup failure where applicable. Implement when requested; a findings-only
+review should provide concrete corrections without changing the consumer's code. Stop when the
+requested caller contracts have proportionate evidence, reporting unavailable framework or published
+consumer checks as limitations. Distinguish compilation from runtime/framework validation and
+unmeasured performance expectations.
+
+## References
 
 - [Builder decision table](references/builder-decision.md) — read when deciding whether a
   type needs a builder at all, and for the false positives: framework-constrained classes,
-  test-data builders, telescoping pairs that are fine as they are.
+  test-data builders, telescoping pairs that are fine as they are. Also read for concrete mutable
+  versus immutable state contracts and failure recovery.
 - [Worked example: a charge-request API](references/worked-example.md) — read when
   introducing a builder or a staged builder into existing code: telescoping constructors to
   a builder, the staged variant, trade-offs, and how to verify the change.

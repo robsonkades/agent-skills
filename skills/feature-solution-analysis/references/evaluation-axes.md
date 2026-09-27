@@ -70,6 +70,33 @@ Right:
 
 The second one can be argued with, which is the point.
 
+## Checking the consumer outcome and the transition
+
+Suppose an export currently returns the completed file. An alternative responds with a job ID
+in 50 ms and makes the file available 30 seconds later. These hypothetical times measure different
+outcomes. HTTP `202 Accepted` indicates accepted, incomplete processing; it does not establish
+successful completion ([RFC 9110, section 15.3.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3)).
+
+If the accepted requirement is a completed file within two seconds, acknowledgement latency
+does not meet it. If the accepted contract instead permits later completion, compare complete
+solutions for that contract: result discovery, retained access, failure visibility and consumer
+effort where material. Do not require a particular polling or notification mechanism without
+evidence. If the meaning of "fast export" is unknown, inspect acceptance criteria and callers,
+then ask the focused outcome question before ranking options on latency.
+
+Likewise, a new storage representation may meet every steady-state target but fail a required
+rolling release because deployed readers cannot understand it. Include a credible compatible
+transition as part of the candidate and its cost, or record the candidate as conditional or
+eliminated under that release constraint. An authorized coordinated cutover could change the
+comparison. Do not treat incompatibility during deployment as a small scoring penalty, or expand
+this comparison into a migration implementation plan.
+
+These are feature-level applications of mandatory criteria, schedule and lifecycle consequences;
+the general comparison method remains with `architecture-trade-off-analysis`. The
+[NASA Systems Engineering Handbook, decision analysis](https://www.nasa.gov/reference/6-8-decision-analysis/)
+supports evaluating these criteria and reducing uncertainty when it could change the recommendation.
+Its organizational approval and reporting processes are not requirements for this repository.
+
 ## Recording an elimination
 
 Elimination on a constraint is not a judgement and should not be dressed as one:

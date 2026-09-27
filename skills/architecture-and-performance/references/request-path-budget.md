@@ -142,6 +142,45 @@ after connection return has no direct hold-time saving. In either case, CPU reli
 other queues: check borrow/return events, acquisition waits, CPU and offered work rather than
 inferring database execution improvement or a fixed p99 gain from the 30 ms local saving.
 
+## Translate ingress into shared dependency demand
+
+Account at the dependency boundary across all caller replicas, request classes and background
+jobs. Distinguish logical operations, physical attempts, admitted work and successful completions.
+For a stable workload, a useful demand estimate is:
+
+```text
+dependency attempts/s = sum over classes (logical operations/s × mean attempts/operation)
+
+Illustration: 250 operations/s, 20% miss the cache; each miss makes 3 source calls,
+with 1.4 attempts per source call on average, including its initial attempt.
+250 × 0.20 × 3 × 1.4 = 210 source attempts/s
+```
+
+This factorization assumes hits make no source calls and 1.4 describes those miss calls,
+not an unrelated fleet average. Prefer correlated counts when fan-out, misses and retry costs
+vary together. Count each attempt once, include nested client/proxy retries and timed-out work
+that continues at the server, and align measurement windows or cohorts. In a growing backlog,
+completed operations are not a valid proxy for arriving demand. A configured retry maximum is
+an upper bound for its scope, not the observed mean; attempt counts also do not measure the
+work each attempt consumes.
+
+With unchanged traffic, cache behavior and call policy, doubling frontend replicas splits the
+210 attempts/s among more callers but leaves the shared source's total unchanged. Increasing
+per-replica pools or concurrency limits may instead increase simultaneous pressure on it.
+Check whether the bottleneck is local compute, a shared dependency, a hot partition or a quota
+before claiming that scaling or extraction adds useful capacity. Compare resource use and
+successful completion at the same request mix: many cheap lookups and a few scans are not
+interchangeable units. See [Google SRE on request cost and overload](https://sre.google/sre-book/handling-overload/).
+
+If independent calls have downstream headroom, bounded overlap is a latency candidate. If the
+dependency is already saturated, first compare eliminating repeated work, coarsening calls,
+reducing payloads or admission control; moving the queue or launching calls sooner does not
+create dependency capacity. Recheck failure traffic: layered retries can amplify load when
+the source is least able to serve it. Their policy belongs to `retries-and-backoff`; pass the
+attempt graph, failure classes, deadline and replay-safety contract. Use
+`concurrency-limiting-and-bulkheads` for resource-local limits and `capacity-planning` for
+replica/headroom decisions, supplying the demand model and measured limiting resource.
+
 ## Transfer the comparison, not just the test result
 
 Compare production and test request mix, offered/achieved rate, errors, data skew/selectivity,

@@ -154,6 +154,19 @@ resolvers). Separate handler methods are one option; a single handler with negot
 converters is also valid. Verify unsupported types, actual Content-Type, and cache variation
 (e.g. `Vary: Accept` when appropriate). Do not manually branch while bypassing this contract.
 
+If one URL selects full HTML versus a fragment using `HX-Request`, `Vary: Accept` alone
+cannot distinguish them. Include `HX-Request` in `Vary` on both variants, alongside other
+headers that select the representation; distinct URLs or deliberately avoiding cache reuse
+are alternatives. Do not reuse a strong ETag across different full-page and fragment bytes.
+Test both request orders and conditional requests against the actual cache path.
+
+Direct navigation to a pushed URL and a history-cache miss must recover the required full
+page. Inspect the installed htmx version and history configuration: when `HX-Request` selects
+partials, the documented `historyRestoreAsHxRequest=false` setting prevents history restores
+from taking that partial-response path. An explicit restoration handler is another option,
+but its selectors and cache variation must agree. A successful fragment swap alone does not
+verify navigation or history restoration.
+
 Compatibility/version policy belongs to the API contract (`rpc-and-api-contracts`). A renderer or
 representation adapter may implement approved version-specific shapes or media types; it must not
 invent that policy independently. Preserve each selected version's field, error and cache contracts.
@@ -178,4 +191,6 @@ evidence. A narrow API/pattern explanation needs no fabricated endpoint or strea
 Sources: [Fowler Two Step View](https://martinfowler.com/eaaCatalog/twoStepView.html),
 [Spring 6.1.14 response exception handling](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/web/servlet/mvc/method/annotation/ResponseEntityExceptionHandler.html),
 [Spring 6.1.14 ProblemDetail](https://docs.spring.io/spring-framework/docs/6.1.14/javadoc-api/org/springframework/http/ProblemDetail.html),
+[htmx caching and history](https://htmx.org/docs/#caching),
+[RFC 9111 cache selection with Vary](https://www.rfc-editor.org/rfc/rfc9111.html#section-4.1),
 [Servlet 6 response buffering and commitment](https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse).

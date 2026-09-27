@@ -53,8 +53,9 @@ code/compiler-log evidence.
    context; absence alone is inconclusive.
    See `references/diagnosing-elimination.md`.
 4. **Find the inlining boundary.** `-XX:+PrintInlining`, tier-4 tree — is there a refusal on
-   the chain that carries the object? Confirm the callee's real bytecode size with
-   `javap -c -p`, never by eyeballing the source.
+   the chain that carries the object? Take bytecode size from the matched callee's
+   `PrintInlining` entry or class-file `Code.code_length`; use `javap -c -p` to inspect the
+   instructions. Instruction count and last bytecode offset are not byte length.
 5. **Decide which state is achievable, then set the expectation accordingly.** A callee that
    fits within `MaxBCEAEstimateSize` and receives a successful non-escaping BCEA summary
    can leave its argument ArgEscape — that
@@ -65,13 +66,15 @@ code/compiler-log evidence.
    survive" table — a merge with an unsupported user, an identity hash, a non-constant array
    index, a field or array limit, a taken rare branch — then trace the escaping edge to its
    sink. See `references/connection-graph.md`.
-7. **Choose a change only when the allocation matters to the workload.** Retain an adequate
+7. **When optimization is in scope, target allocations that matter to the workload.** Retain an adequate
    design within its budgets. Lifetime relocation, hot/cold splitting or inlining changes
    must preserve constructor effects, exception order, identity and caller contracts;
    semantic retention cannot be tuned away. Raising `MaxBCEAEstimateSize` is only a candidate
    for lock elision. Compare the relevant alternative and repeat steps 2 and 3 on the same load.
 8. **Investigate rematerialisation cost separately**, with `-Xlog:deoptimization=debug` or
-   `jdk.Deoptimization` over a real window, not with JMH. On the JDK 25 baseline these cover
+   `jdk.Deoptimization` over the relevant execution window. A controlled harness can probe a
+   trap and its rematerialisation; steady-state JMH scores do not establish production event
+   frequency or aggregate cost. On the JDK 25 baseline these signals cover
    uncommon traps, not all dependency invalidations; use the appropriate compilation/dependency
    evidence from `deoptimization`. Reuse available evidence and the authorized capture budget.
 
@@ -108,7 +111,9 @@ code/compiler-log evidence.
   `jdk.ObjectAllocationInNewTLAB` and `jdk.ObjectAllocationOutsideTLAB` are `enabled=false`
   in **both** `default.jfc` and `profile.jfc` on JDK 25 (JDK-8257602), so a zero count from
   them proves nothing unless the event was enabled by name. Even `ObjectAllocationSample` is
-  throttled sampling — in the lab, JMH `-prof gc` remains the primary metric.
+  throttled sampling: aggregate its `weight` by site/type over comparable windows, not event
+  counts. Corroborate the C2 mechanism separately; in the lab, JMH `-prof gc` remains the
+  primary metric.
 - Scalar replacement is not stack allocation. C2 decomposes the object into scalars;
   Graal's partial EA decides **when** to materialise on the heap, per path. Do not describe
   either as "stack allocation", and do not describe Graal's partial escape analysis as a

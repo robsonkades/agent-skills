@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: change-data-capture-operations
-version: 1.0.0
+version: 1.0.1
 description: >-
   Operating Debezium source CDC through snapshots, lag, restarts, log retention and failover.
   Use when PostgreSQL WAL or MySQL binlogs accumulate, a connector cannot resume, a snapshot

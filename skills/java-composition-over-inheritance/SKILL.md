@@ -82,6 +82,10 @@ delegating wrappers.
   An inherited interface default can also bypass the delegate's override of that operation.
   Inspect method dispatch and test those contracts before dismantling a working hierarchy;
   do not present delegation as free.
+- For shared mutable objects, preserve the synchronization contract as well as signatures.
+  Wrapper and delegate have different monitors; forwarding thread-safe methods does not
+  automatically protect wrapper state or multi-call invariants. Inspect external locking
+  and delegate aliases before claiming the replacement is safe (see the decision model).
 
 ## Deliverable
 

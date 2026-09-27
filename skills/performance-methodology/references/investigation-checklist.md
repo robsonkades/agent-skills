@@ -70,6 +70,8 @@ and a completed causal diagnosis support different claims; unfinished checks rem
       not proof that collection effects are isolated)
 - [ ] Treatment is defined and other differences controlled; interactions use a designed
       factorial experiment rather than an undocumented bundle
+- [ ] Shared-resource exposure and carry-over checked; assignment unit and rollout fraction
+      support the intended contrast, with interference limits reported
 - [ ] Independent experimental unit, sample-size rationale, run count, allocation/blocking,
       stopping rule and analysis are fixed in advance; every planned run is retained
 - [ ] CPU frequency policy, quota/period, cpuset, NUMA placement and noisy-neighbour exposure
