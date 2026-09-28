@@ -1,0 +1,45 @@
+schemaVersion: 1
+name: spring-boot-web
+version: 1.0.0
+description: >-
+  Implement, document and diagnose Spring Boot 4 MVC and Servlet APIs when HTTP binding,
+  validation, error responses, Tomcat capacity or complete springdoc OpenAPI contracts
+  need verification. Covers optional fields, examples and Swagger UI consumption.
+  Excludes WebFlux, identity providers and database query design.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-boot-web
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-boot-web
+keywords:
+  - java
+  - spring-boot
+  - spring-mvc
+  - openapi
+  - springdoc
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/contract-fixture/pom.xml
+  - assets/contract-fixture/README.md
+  - assets/contract-fixture/src/
+suggests:
+  - spring-boot
+  - spring-boot-jpa
+  - spring-security-for-apis
+  - rpc-and-api-contracts
+  - remote-facade-and-dto
+  - connection-pool-sizing
+  - thread-sizing-and-virtual-threads
+capabilities:
+  - reads-source
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Boot Web
+      short_description: MVC contracts, capacity and complete OpenAPI documentation

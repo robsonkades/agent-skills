@@ -10,6 +10,21 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-09-27
+
+### Added
+
+- Three specialist skills for Spring Boot 4.x and Java 25: `spring-boot`,
+  `spring-boot-web`, and `spring-boot-jpa`, bringing the catalog to 283 skills.
+- Context-sensitive bean composition, configuration and lifecycle guidance; complete
+  springdoc/OpenAPI contracts with optional fields, collections and shared application
+  errors; entity mapping, identity, fetching, transaction and pool decisions.
+- Runnable Java 25 fixtures with 34 passing contract tests, plus executed Swagger UI,
+  JSON Schema and Unicode boundary checks. Real SQL Server/PostgreSQL probes remain
+  explicitly unexecuted.
+- Creation and evaluation evidence distinguishing runtime results from six bounded
+  agent responses; no comparative behavioral advantage over controls is claimed.
+
 ## [1.7.1] — 2026-09-27
 
 ### Fixed
@@ -343,7 +358,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/robsonkades/agent-skills/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/robsonkades/agent-skills/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/robsonkades/agent-skills/compare/v1.6.0...v1.7.0
 [1.2.0]: https://github.com/robsonkades/agent-skills/compare/v1.1.0...v1.2.0

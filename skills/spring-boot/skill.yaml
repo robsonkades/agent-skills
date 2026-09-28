@@ -1,0 +1,48 @@
+schemaVersion: 1
+name: spring-boot
+version: 1.0.0
+description: >-
+  Configure, implement and diagnose Spring Boot 4 applications when bean composition,
+  auto-configuration, external properties, startup, shutdown or operational wiring
+  need evidence-backed decisions. Use existing project conventions and managed
+  dependencies. Excludes Boot 3 migration, endpoint contracts and ORM query design.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-boot
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-boot
+keywords:
+  - java
+  - spring-boot
+  - dependency-injection
+  - configuration
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/composition-fixture/pom.xml
+  - assets/composition-fixture/README.md
+  - assets/composition-fixture/src/
+dependencies: []
+suggests:
+  - java-build-and-dependencies
+  - spring-boot-web
+  - spring-boot-jpa
+  - spring-security-for-apis
+  - kubernetes-service-lifecycle
+  - structured-logging
+  - metrics-and-cardinality
+  - distributed-tracing-design
+  - event-driven-architecture
+capabilities:
+  - reads-source
+  - runs-commands
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Boot
+      short_description: Boot 4 composition, configuration and lifecycle decisions

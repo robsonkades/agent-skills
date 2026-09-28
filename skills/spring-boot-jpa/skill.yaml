@@ -1,0 +1,46 @@
+schemaVersion: 1
+name: spring-boot-jpa
+version: 1.0.0
+description: >-
+  Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when
+  entity state, Hibernate mappings, identifiers, fetching, transactions, locking or
+  datasource configuration need verification. Covers SQL Server and PostgreSQL
+  distinctions. Excludes reactive persistence and deep database execution-plan tuning.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-boot-jpa
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-boot-jpa
+keywords:
+  - java
+  - spring-boot
+  - jpa
+  - hibernate
+  - sql-server
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/persistence-fixture/README.md
+  - assets/persistence-fixture/pom.xml
+  - assets/persistence-fixture/src/
+  - assets/persistence-fixture/sql/
+suggests:
+  - orm-fetch-and-batching-performance
+  - orm-structural-mapping
+  - enterprise-transactions
+  - connection-pool-sizing
+  - sql-server-performance
+  - postgresql-performance
+  - online-database-schema-migrations
+capabilities:
+  - reads-source
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Boot JPA
+      short_description: Persistence contracts, SQL mappings, transactions and pools

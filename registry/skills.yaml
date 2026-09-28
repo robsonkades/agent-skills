@@ -5469,6 +5469,50 @@ skills:
       - version: 1.4.4
         path: skills/slo-and-alerting
         integrity: sha256-PK6PudTx4p6hwv5Pxx72eeOrnCg5PfQMoOdYszXMTzA=
+  - name: spring-boot
+    description: Configure, implement and diagnose Spring Boot 4 applications when bean composition, auto-configuration,
+      external properties, startup, shutdown or operational wiring need evidence-backed decisions. Use existing project
+      conventions and managed dependencies. Excludes Boot 3 migration, endpoint contracts and ORM query design.
+    keywords:
+      - java
+      - spring-boot
+      - dependency-injection
+      - configuration
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/spring-boot
+        integrity: sha256-zwGhtf9xFT9aeUuhFseO8lwpviuNCCj4M8CGcbIlzpE=
+  - name: spring-boot-jpa
+    description: Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when entity state, Hibernate
+      mappings, identifiers, fetching, transactions, locking or datasource configuration need verification. Covers SQL
+      Server and PostgreSQL distinctions. Excludes reactive persistence and deep database execution-plan tuning.
+    keywords:
+      - java
+      - spring-boot
+      - jpa
+      - hibernate
+      - sql-server
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/spring-boot-jpa
+        integrity: sha256-qG6n6iofGHEOSsLSmQvMa+Pxho5zPOMZ3CJaIihvqZo=
+  - name: spring-boot-web
+    description: Implement, document and diagnose Spring Boot 4 MVC and Servlet APIs when HTTP binding, validation, error
+      responses, Tomcat capacity or complete springdoc OpenAPI contracts need verification. Covers optional fields,
+      examples and Swagger UI consumption. Excludes WebFlux, identity providers and database query design.
+    keywords:
+      - java
+      - spring-boot
+      - spring-mvc
+      - openapi
+      - springdoc
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/spring-boot-web
+        integrity: sha256-E8/PuGCwvJALhV0OOFTfOE9P6tL/85WSOP04McdSDww=
   - name: spring-security-for-apis
     description: Configure and review Spring Security Servlet APIs when filter-chain matchers leave routes uncovered, bearer
       tokens need JWT or opaque-token validation, claim mapping produces unexpected authorities, method checks are

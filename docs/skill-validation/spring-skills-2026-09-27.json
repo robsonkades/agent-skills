@@ -1,0 +1,674 @@
+{
+  "date": "2026-09-27",
+  "status": "complete",
+  "baselineCommit": "9ecadfd357387c857b7a4760a8c90d11f0775090",
+  "scope": {
+    "newSkills": ["spring-boot", "spring-boot-web", "spring-boot-jpa"],
+    "initialVersion": "1.0.0",
+    "originalPublishedSkill": "None; creation from the approved plan, not revision of a published Spring package.",
+    "unchangedUserFile": "docs/agent-harness-optimization-plan.md",
+    "unchangedUserFileSha256": "E6C10B24E1D11CC76AF662D72A0E94812472D645D8C1F21F3342A1156D332D88",
+    "newPackageFiles": 51,
+    "catalogBefore": 280,
+    "catalogAfter": 283,
+    "packageFiles": {
+      "spring-boot": 12,
+      "spring-boot-web": 20,
+      "spring-boot-jpa": 19
+    },
+    "changedOutsidePackages": [
+      "docs/spring-skills-plan.md",
+      "docs/skill-validation/spring-skills-2026-09-27.md",
+      "docs/skill-validation/spring-skills-2026-09-27.json",
+      "registry/skills.yaml"
+    ]
+  },
+  "baseline": {
+    "springBoot": "4.1.1",
+    "springdoc": "3.1.1",
+    "javaRelease": 25,
+    "runtime": "Temurin 25.0.3",
+    "maven": "3.9.15",
+    "framework": "7.0.9",
+    "hibernate": "7.4.5.Final",
+    "tomcat": "11.0.24",
+    "hikari": "7.0.2",
+    "jackson": "3.1.5",
+    "h2": "2.4.240",
+    "swaggerCore": "2.2.55",
+    "swaggerUi": "5.32.14"
+  },
+  "evaluation": {
+    "date": "2026-09-27",
+    "baseline": {
+      "springBoot": "4.1.1",
+      "springdoc": "3.1.1",
+      "javaRelease": 21,
+      "runtime": "Temurin 25.0.3",
+      "maven": "3.9.15"
+    },
+    "claims": {
+      "kind": "Output-only independent agent comparison on newly authored skills; no original published version exists.",
+      "isolation": "Fresh contexts, shared filesystem, procedural read boundaries. No automatic activation claim."
+    },
+    "cases": [
+      {
+        "id": "boot-composition",
+        "skill": "spring-boot",
+        "prompt": "Review only; do not modify files or execute code. An existing Spring Boot 4.1.1 application uses Java21 source and explicit configuration factories. Configuration A has @Configuration, @Bean ExecutorService auditExecutor(){ return Executors.newSingleThreadExecutor(); }, and @Bean AuditSink sink(){ return new AuditSink(auditExecutor()); }. The executor bean is intended to be owned/closed by the application context. Configuration B is otherwise identical but sink(ExecutorService auditExecutor) passes the parameter to AuditSink and contains no calls to another @Bean method. A proposed performance cleanup sets proxyBeanMethods=false in both. Separately export.flush-delay=5s in application.yml, the active ops profile sets10s and deployment exports EXPORT_FLUSH_DELAY=30s; the running app reports30s. The ticket requests change application.yml to2s to make ops flush faster. The same PR proposes excluding all health dependencies from readiness because liveness restarts are too frequent. Give prioritized findings, a recommendation for each configuration, the smallest meaningful verification and any information actually needed. Assume no runtime is available to you.",
+        "criteria": [
+          "A: preserve full proxy or parameter-refactor before disabling; explain second unmanaged executor identity/lifecycle risk without claiming measured performance.",
+          "B: false appropriate for independent parameter factories; no forced new abstraction or @Autowired.",
+          "Config: identifies environment as effective winner; YAML-only edit won't meet target; inspect ownership/source rather than asking user to repeat values.",
+          "Health: distinguish liveness from readiness, investigate actual probes/dependency criticality; no universal remove-all readiness dependency rule.",
+          "Scope: findings only, no execution claims, tests for identity/closure/binding and real probe behavior."
+        ],
+        "evaluationNote": "The control run correctly identified an extra uncertainty: canonical env spelling for export.flush-delay is EXPORT_FLUSHDELAY; the task's reported30s alone does not prove how EXPORT_FLUSH_DELAY binds. Accept explicit binding/origin verification instead of asserting that spelling universally binds. The input and original criteria remain retained; this nuance will be applied equally to both conditions, and does not change the expected YAML-only failure."
+      },
+      {
+        "id": "web-contract",
+        "skill": "spring-boot-web",
+        "prompt": "Review only; do not edit or run code. A Boot4.1.1 MVC application uses springdoc3.1.1 and Swagger UI. POST /api/parcels requires recipient and accepts optional deliveryInstructions, metadata{language,gateCode}, and enum deliveryMode; server-generated trackingId appears only in responses. PATCH /api/parcels/{id} treats missing deliveryInstructions as preserve and explicit null as clear. An inherited GET mapping returns an empty page as valid. Docs include only required DTO fields, a single200 Object response, and @Schema(required=true) copied from create into patch. Runtime create returns201 with Location, duplicate external reference409, validation400 with a list of violations (a field may have two), and DELETE204 with no body. Security filter emits401/403 in a different shape than ControllerAdvice. Global bearer security is declared; /api/status is public and /api/export accepts EITHER bearer OR X-Export-Key; in deployment variant B export requires BOTH. Default and partner OpenAPI groups exist; an OpenApiCustomizer bean adds headers only to the default document. A parser accepts the JSON and the team wants to claim100% coverage without opening UI or checking HTTP. Give prioritized gaps, explain the A/B security representation change, required documentation improvements including optional fields/examples, and a concrete completion check. No runtime is available.",
+        "criteria": [
+          "Inventory includes inherited/empty-page operation and all public optional/nested fields; descriptions and representative valid examples, not annotation count.",
+          "Presence: body/parameter/property required vs null; PATCHschema differs from create; Schema.requiredMode current API, output-only trackingId consistent runtime.",
+          "Response: actual201Location/409/400/multipleviolations/filter401403/204empty shape documented and verified, no universal200.",
+          "Security: OR separate requirement objects; AND same object; public operation override and docs do not enforce access.",
+          "Groups: customizer scope checked per document; no assume default propagates to partner.",
+          "Completion: generatedspec+refs/examples+HTTP+UI+inventory; no100%claim parser-only or inventedrun."
+        ]
+      },
+      {
+        "id": "jpa-contract",
+        "skill": "spring-boot-jpa",
+        "prompt": "Review only; no file edits or database access. Boot4.1.1 service uses Hibernate7.4.5.Final, SQL Server and four replicas with Hikari max20 each. Customer note contains漢字 and emoji. status supports0..255. Proposed mapping uses Java Byte with @JdbcTypeCode(TINYINT), legacy non-UTF8 varchar(120) and global sendStringParametersAsUnicode=false. IDs use @SequenceGenerator(allocationSize=50) with pooled-lo, but production sequence INCREMENT BY1 is shared with another writer. Provider_disables_autocommit=true is proposed for a custom DataSource whose returned autoCommit state is unknown. List endpoint A needs pageable records plus one to-one category, retaining records with no category and total count. Variant B also needs all to-many shipmentEvents per record. Proposed universalfix is collection JOIN FETCH in pageable findAll. Writes use getReferenceById(accountId) as proof tenant authorization, @Transactional(readOnly=true) as write protection and PESSIMISTIC_WRITE as a query performance hint. Inside the transaction there is a slow remote carrier call. The author says250ms Hikari acquire timeout +virtualthreads solves latency and requests a production-ready verdict. Give prioritized findings, A/Bfetch recommendations, how to preserve atomicity while limiting transaction duration, and smallest decisive verification. Retain an existing JdbcClient path if it already satisfies a separate simple-report requirement.",
+        "criteria": [
+          "Range and Unicode: Byte mismatch0..255; Java/JDBC/schema/collation/binding roundtrip; no universal unicode-off fix.",
+          "IDs: allocation/optimizer/physicalincrement/multiplewriters migration compatibility; no gap-free or commit-order promises.",
+          "Pool: provider_disables_autocommit assertion verify actualstate;20x4 globalbudget;250minimum acquisition not SQLdeadline; VT not DBcapacity.",
+          "Fetch A vsB changes: preserve missingassociations/totalcount; pagedcollectionjoin may break cardinality/inmemory; boundedtwo-stage/projection/batch alternative.",
+          "Reference/auth/readOnly/lock: reference does not prove existence/tenant; readOnlyhint; actual txnlock SQL semantics not genericoptimization.",
+          "Transactions: short atomicDBunit with dependent decisions; remote calls separately orchestrated/recovery no arbitrary split perrepository nor assume remote atomic.",
+          "Restraint: no production-ready/DBruntimeclaims; keep adequate JDBC; specific actualDB tests pending."
+        ],
+        "evaluationNote": "Control identified Hibernate7.4 SQL rewrite support. Official7.4 whats-new/source verified before author feedback. Earlier conditional risk criterion remains; SQL-level collection fetching is also valid when version/dialect/SQL/semantics support it. The control insight informed instruction development, so comparisons for this case are development/regression evidence rather than a held-out causal evaluation."
+      }
+    ],
+    "results": [
+      {
+        "actor": "/root/eval_spring_boot_control",
+        "condition": "without-skill",
+        "decisions": [
+          "A: retain proxy or refactor to parameter injection to prevent unmanaged second executor.",
+          "B: false is acceptable for shown factories, check other direct callers; no measured performance claim.",
+          "Base YAML change cannot deliver effective ops2s; identifies deployment/profile precedence and correct env spelling uncertainty.",
+          "Readiness changes do not cure liveness restarts; investigate actual probes and critical dependencies.",
+          "Proposes identity+close, effective-binding and failure/probe tests; no runtime or local files read."
+        ],
+        "evidenceQuotes": [
+          "Adding a destruction method to the registered executor alone cannot fix the separate instance.",
+          "Removing only the environment override would still leave the active profile’s 10s.",
+          "For binding specifically, Boot’s documented environment spelling for export.flush-delay is EXPORT_FLUSHDELAY; the observed EXPORT_FLUSH_DELAY=30s should be traced through the application’s actual lookup mechanism rather than assumed to bind identically everywhere."
+        ],
+        "tools": "Official public Spring/Java docs via web search/open/find. No local reads or execution.",
+        "assessment": "All five original decision criteria met with justified qualification of environment binding; no causal improvement yet established.",
+        "outputKind": "Exact evidence excerpts plus coordinator assessment; full actor response retained in conversation."
+      },
+      {
+        "actor": "/root/eval_spring_boot_skill",
+        "condition": "with frozen spring-boot skill",
+        "assessment": "All five predefined decision criteria met; no observed advantage over already-successful control.",
+        "decisions": [
+          "A retains full configuration or refactors parameter injection before false; explains unmanaged second executor and shutdown ownership.",
+          "B permits false without unsupported performance claim.",
+          "Base YAML alone cannot change effective ops value; canonical environment spelling/origin uncertainty noted.",
+          "Liveness and readiness separated with evidence needed for actual probe routing.",
+          "Findings only; concrete identity, close, config-data and real probe checks proposed; none claimed executed."
+        ],
+        "evidenceQuotes": [
+          "Adding a destroy method to the registered executor alone would not repair the duplicate.",
+          "Bean count alone misses A’s unmanaged duplicate."
+        ],
+        "tools": "Read frozen SKILL.md plus three references; official Spring web documentation; no code execution."
+      },
+      {
+        "actor": "/root/eval_spring_web_control",
+        "condition": "without-skill",
+        "decisions": [
+          "Reject parser-only100% claim; inventory inherited GET and optional/nested fields.",
+          "Separate create/PATCH/response schemas; presence vsnullable, readOnly trackingId, Schema.requiredMode.",
+          "Concrete201Location/409/400violationsarray/filter401403/204empty plus validemptypage example.",
+          "Correct OR arrays vsAND oneobject and public security:[] override.",
+          "GlobalOpenApiCustomizer or explicit pergroup registration; checkeachgroup.",
+          "Validate exports/examples/HTTP/UI whenavailable; noexecutionclaims."
+        ],
+        "evidenceQuotes": [
+          "Optional parent objects and required child properties need separate treatment.",
+          "annotation arrangements that generate two entries still describe OR.",
+          "With no runtime, HTTP and UI checks remain unverified."
+        ],
+        "tools": "Public official Swagger/OpenAPI/springdoc documentation searches; one v2FAQ citation used for group semantics. No local reads or execution.",
+        "assessment": "All six decision criteria met. Source-version limitation: FAQ cited v2, though semantics agree with v3 primary docs; no runtime compatibility claimed.",
+        "outputKind": "Exact evidence excerpts plus coordinator assessment; full actor response retained in conversation."
+      },
+      {
+        "actor": "/root/eval_spring_web_skill",
+        "condition": "with frozen spring-boot-web skill",
+        "assessment": "All six predefined decision criteria met; no observed advantage over already-successful control.",
+        "decisions": [
+          "Inventories inherited GET and empty page plus every optional/nested property.",
+          "Separates body/property/null/presence, create/PATCH and output-only field; gives preserve/clear/replace examples.",
+          "Matches actual 201/Location/409/400 duplicate violations/filter401403/204.",
+          "Gives correct OR versus AND Security Requirement Objects and public security[].",
+          "Default versus partner customizer scope and GlobalOpenApiCustomizer.",
+          "Requires inventory, generated docs, schemas/examples, HTTP and UI; no completion claim without execution."
+        ],
+        "evidenceQuotes": [
+          "An optional parent object does not determine whether its children are required when present.",
+          "These declarations describe enforcement; they do not implement it."
+        ],
+        "tools": "Read frozen main plus five references; official OpenAPI/springdoc web docs; Swagger Javadoc retrieval failed; no runtime execution."
+      },
+      {
+        "actor": "/root/eval_spring_jpa_control",
+        "condition": "without-skill",
+        "decisions": [
+          "No production-ready verdict; tenant authorization missing, entityreferenceinsufficient.",
+          "Allocation50 pooled-lo incompatibleincrement1: coordinatedmigration/allwriters orallocation1 baseline, no independentDDLfix.",
+          "Bytecannot0..255; SQLServer Hibernate tinyintdescriptor nuance, nationalizedUnicode andlengthcollation tests.",
+          "Autocommitassertion prerequisite; readonlyhint andpessimisticlock notperformancetoggle.",
+          "Alefttoonequery+count; B7.4SQLrewritesallowed vs boundedtwo-phasealternative; childfanout notboundedbyparentpage.",
+          "ShortatomicDBunit, remoteeffect outside withdurability/idempotency/recovery;80connectionbudgetplusotherconsumers.",
+          "KeepadequateJdbcClient, noDBexecutionclaims."
+        ],
+        "evidenceQuotes": [
+          "Hibernate 7.4 supports SQL-level collection-fetch pagination on SQL Server, so claiming it necessarily paginates in memory would be outdated.",
+          "parent pagination does not bound child volume.",
+          "Hibernate may reject the mismatch at startup; disabling that check does not repair it."
+        ],
+        "tools": "Public primary docs/source web reads and one documentation-only subagent. No files changed or application/DBexecution.",
+        "assessment": "All seven decision criteria met. Additional version-specific insight informed authoring; treat this control as exploratory development evidence, not independent causal proof.",
+        "outputKind": "Exact evidence excerpts plus coordinator assessment; full actor response retained in conversation."
+      },
+      {
+        "actor": "/root/eval_spring_jpa_skill",
+        "condition": "with frozen spring-boot-jpa skill before later entity/equality additions",
+        "assessment": "All seven predefined decision criteria met; no observed advantage over successful control. Exact7.4 correction was already fed into development.",
+        "decisions": [
+          "Rejects tenant authbyreference and readOnlyprotection.",
+          "Autocommit assertion remainsfalseuntil provider guarantee.",
+          "Sequence50/increment1 mismatch and multiplewriters coordinatedprotocol.",
+          "Byte0..255 invalid; dialecttinyint nuance; nationalizedUnicode/lengthcollation actualcontract.",
+          "Alefttoone and B7.4rewriteor two-stage withordercountfanoutverified.",
+          "Short atomicDBunit and remoteeffectsprotocol,80connectionsbeforeoverhead,VTnotDBcapacity.",
+          "Keeps adequateJdbcClient and blocks production-readyclaim withoutDBsuite/load."
+        ],
+        "evidenceQuotes": [
+          "A foreign key proves existence, not authorization.",
+          "A database rollback cannot undo a carrier action."
+        ],
+        "tools": "Frozen main+fourrefs, officialprimaryweb; helper spawned then interrupted without output consumed. No edits, DB/runtime execution."
+      }
+    ],
+    "conclusion": "All three control and all three skill-loaded output cases met their decision criteria. No measured improvement over the controls is established. These are development/regression observations, not an accuracy estimate or proof of automatic activation.",
+    "limitations": [
+      "One response per condition; default inherited model/settings, fresh contexts, shared filesystem with procedural resource boundaries.",
+      "Control JPA used a public-source helper; treatment started and interrupted a helper without using results. Tool trajectories were not identical.",
+      "Hibernate7.4 and environment-name discoveries from controls informed authoring/evaluation interpretation; this was not a held-out experiment.",
+      "Treatment snapshots precede later entity/equality, centralized-errors and array-contract user additions; those receive separate runtime checks and structured review, not this comparison.",
+      "Frozen prompts/snapshots also predate the later Java25 mandate; final fixture runtime checks use the updated Java25 baseline."
+    ],
+    "modelAndSettings": "Default inherited model/reasoning settings; no model override. Exact model identifier was not captured; comparisons are not a reproducible model benchmark."
+  },
+  "laterUserAcceptanceCriteria": [
+    {
+      "area": "complete-entities",
+      "criteria": [
+        "Inventory all optional, generated, relationship and required attributes with Java/JDBC/DDL and write-ownership contracts.",
+        "Distinguish column nullability, Bean Validation, association optionality and actual schema migration.",
+        "Generated-ID equality is reflexive; distinct transient objects remain unequal; HashSet membership survives ID assignment; detached/proxy comparisons remain symmetric with equal hashes under stated configuration.",
+        "Test identifier-getter initialization with proxy compliance enabled and disabled and after context close; do not assume a failure or zero SQL.",
+        "Retain natural-key/reference-identity alternatives and explain class-hash collision and inheritance limits."
+      ]
+    },
+    {
+      "area": "complete-arrays-and-errors",
+      "criteria": [
+        "Document array and item shape, presence/null/empty, real min/max cardinality, ordering and duplicate semantics with whole-array examples.",
+        "Preserve multiple violations for one field; do not invent a maxItems or discard errors.",
+        "Body and method input validation preserve safe structured errors; return validation remains500; preserve framework status/headers.",
+        "Application-standard400/500 docs use reusable responses in default and grouped documents without replacing meaningful per-operation overrides.",
+        "Runtime standard error shape matches generated documentation; no assumed security/filter/container coverage."
+      ]
+    },
+    {
+      "area": "java25-baseline",
+      "criteria": [
+        "All three skills, POMs, fixtures and plan targetJava25.",
+        "Finalcleancompilationuses--release25andtestsrunTemurin25.0.3.",
+        "Externalprojectbaseline mismatchisexplicit, notpermissionforunrequestedsilentmigration."
+      ]
+    }
+  ],
+  "validation": {
+    "boot": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "web": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "kind": "Real loopback HTTP plus generated default/group OpenAPI assertions",
+      "specificChecks": [
+        "5 controller operations, public/nested schemas, generatedminimum/completeexamples,Locationfollow,bodyless204.",
+        "PATCHmissing/null/string,unknownfieldsrejection,malformed/missingbody,UUIDbounds,404409406.",
+        "Unicodecodepoint80/81 titleand200/201description,includingPATCH.",
+        "Multiple violations perfield and methodinputvalidation, arrayminItems1/noinventedmax, list0..50.",
+        "Global400/500 refs inbothgroups,preservedoperation400override,independentcomponentregistration.",
+        "Safeunexpected500 and returnvalidation500 withtest-onlyfaultcontrollers,framework405Allow preserved."
+      ]
+    },
+    "jpa": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "database": "H2 2.4.240",
+      "runtime": "Temurin25.0.3 --release25",
+      "specificChecks": [
+        "Optional null/present/500-unit boundary/clear.",
+        "Generated-ID transient distinctness, equal IDs on different persistent classes unequal.",
+        "HashSet membership stable across ID generation, cross-context equality/equalhash.",
+        "Compliancefalse: uninitializedproxy symmetric open/closed.",
+        "Compliancetrue: associated identifier access initializes; detachedknownID equality doesnotinitialize; unloadednon-IDaccess stillthrows."
+      ],
+      "falsifiedExpectation": "Initial closed-proxy equality LazyInitializationException expectation was disproved; pinned AbstractLazyInitializer7.4.5 requires session!=null for compliance-driven initialization. Test corrected to assert actual lifecycle behavior and retains negative unloaded-state test."
+    },
+    "repository": {
+      "registryBuild": {
+        "status": "passed",
+        "skillCount": 283
+      },
+      "verify": {
+        "status": "passed",
+        "checks": [
+          "build",
+          "architecture-boundaries",
+          "lint",
+          "formatting",
+          "registry",
+          "versions",
+          "tests"
+        ],
+        "tests": 355,
+        "suites": 67,
+        "passed": 355,
+        "failed": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "preservation": {
+        "existingEntriesUnchanged": 280,
+        "added": ["spring-boot", "spring-boot-jpa", "spring-boot-web"],
+        "sourceFilesHashChecked": 51,
+        "hashMismatches": 0,
+        "localLinks": 27,
+        "brokenLinks": 0,
+        "userFilePreserved": true,
+        "generatedTargets": 0
+      },
+      "finalScopedFormatting": "passed"
+    },
+    "finalJava25Reruns": {
+      "status": "passed",
+      "commandBootJpa": "mvn -B -ntp -s <temporary-settings> -Dmaven.repo.local=<temporary-cache> clean test",
+      "commandWeb": "mvn -B -ntp -s <temporary-settings> -Dmaven.repo.local=<temporary-cache> clean package",
+      "compilerRelease": 25,
+      "runtime": "Temurin25.0.3",
+      "maven": "3.9.15",
+      "tests": {
+        "boot": 12,
+        "web": 12,
+        "jpa": 10,
+        "total": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "notes": "Clean compilation logs confirmed release25 for main and test sources; negative validation/500-test logs are expected. Maven package here executed tests (no skip flag)."
+    },
+    "packages": {
+      "strict": "passed",
+      "issues": 0,
+      "localLinks": {
+        "boot": 7,
+        "web": 12,
+        "jpa": 8
+      },
+      "authorsStopped": true
+    },
+    "webIndependent": {
+      "executedAt": "2026-09-28T01:40:02.446Z",
+      "tools": {
+        "node": "v25.6.1",
+        "edge": "Edg/153.0.4234.48",
+        "ajv": "8.20.0",
+        "ajvFormats": "3.0.1",
+        "applicationClassMajor": 69,
+        "applicationJavaRelease": 25
+      },
+      "isolation": {
+        "workspace": "<temporary>/ui-check",
+        "dependencyInstallation": "Local ui-check/node_modules and package-lock.json only; --ignore-scripts --no-audit --no-fund --save-exact",
+        "npmCache": "<temporary>/ui-check/npm-cache",
+        "browserProfile": "<temporary>/ui-check/edge-profile",
+        "application": "Root-owned loopback in-memory fixture; no external services or durable data"
+      },
+      "schemaValidation": {
+        "dialect": "JSON Schema2020-12",
+        "formatsEnabled": true,
+        "coercion": false,
+        "default": {
+          "schemaCompilationOperations": 142,
+          "dataChecks": 78,
+          "semanticChecks": 25,
+          "failures": 0,
+          "compilerErrors": 0
+        },
+        "catalog": {
+          "schemaCompilationOperations": 142,
+          "dataChecks": 78,
+          "semanticChecks": 25,
+          "failures": 0,
+          "compilerErrors": 0
+        },
+        "note": "Compilation count includes repeat use of component schemas from operation examples; these are not unique-schema counts. Not a complete OpenAPI document validator."
+      },
+      "unicodeContract": {
+        "cases": 14,
+        "mismatches": 0,
+        "scope": "Create title2/3/40/41/80/81 code points; create description100/101/200/201; PATCH description100/101/200/201; non-BMP emoji"
+      },
+      "browser": {
+        "normalConfiguredGroup": "catalog",
+        "operationCount": 5,
+        "namedCreateExamples": ["minimum", "complete"],
+        "completeExamplePostStatus": 201,
+        "locationHeaderRendered": true,
+        "listStatus": 200,
+        "listContainsCreatedProduct": true,
+        "errorResponseExampleChecks": [
+          {
+            "status": 400,
+            "passed": true
+          },
+          {
+            "status": 406,
+            "passed": true
+          },
+          {
+            "status": 409,
+            "passed": true
+          },
+          {
+            "status": 415,
+            "passed": true
+          },
+          {
+            "status": 500,
+            "passed": true
+          }
+        ],
+        "shared500Operations": 5,
+        "alternateDefault": {
+          "configuration": "Browser-only alternate SwaggerUIBundle initializer using default /api/v3/api-docs; original catalog dropdown unchanged in the application",
+          "operationCount": 5,
+          "openapi": "3.1.0"
+        },
+        "capturedErrors": [],
+        "evaluationErrors": []
+      },
+      "limitations": [
+        "No complete OpenAPI document validator executed.",
+        "No authentication, OAuth flow, protected documentation, multipart, XML, polymorphism, callbacks or webhooks exercised in this fixture.",
+        "Default document rendered using an explicitly alternate browser-only SwaggerUIBundle configuration; ordinary dropdown exposes configured catalog group.",
+        "Browser-only verification supplements project tests; it does not prove production security, capacity, or every schema/server edge case."
+      ],
+      "sources": [
+        "https://ajv.js.org/json-schema.html",
+        "https://ajv.js.org/guide/formats.html",
+        "https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration/"
+      ],
+      "evidenceFiles": [
+        "final-default-schema-evidence.json",
+        "final-catalog-schema-evidence.json",
+        "final-unicode-evidence.json",
+        "final-initial-ui-evidence.json",
+        "final-create-list-ui-evidence.json",
+        "final-error-examples-ui-evidence.json",
+        "final-default-ui-evidence.json"
+      ]
+    }
+  },
+  "limitations": [
+    "Docker daemon unavailable; no SQLServer/PostgreSQL execution or production database connections.",
+    "No representative load benchmark, production ingress, native image or Gradle fixture run.",
+    "Advanced OpenAPI/security/client-generation families are guided but absent from this public in-memory fixture; no universal100percent documentation claim."
+  ],
+  "provenance": {
+    "plan": "docs/spring-skills-plan.md",
+    "externalExamples": "https://github.com/piomin/claude-ai-spring-boot/tree/d87e7a38588a0a945ae2c11a251954897692330e/.claude/skills",
+    "externalTreatment": "Boot3-oriented examples considered as evidence; no verbatim package transplantation.",
+    "primarySources": "Decision-local references within each skill and the approved plan."
+  },
+  "files": [
+    {
+      "path": "skills/spring-boot/SKILL.md",
+      "sha256": "658b2265999b8c22ca08d1f93c2c450a8932661a26bc9fcd30bdde80701effb6"
+    },
+    {
+      "path": "skills/spring-boot/skill.yaml",
+      "sha256": "9a738af530bfbd9e0a7cf8c7fb167a8f4b5a576ffab57ee6e3a0cbc8cca809d7"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/pom.xml",
+      "sha256": "dc5dc92564ea855b752a896a2027c1b0a25064f5ddee8f233a3b8d2869bc7ea0"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/README.md",
+      "sha256": "ea39de92d58244806a0a37dcefd488ba2fc4cb176b1df927306bddc9db1aeed7"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/src/main/java/example/skills/boot/DeliveryAutoConfiguration.java",
+      "sha256": "d86a0a367e53141da3e02e8b013e90a8e84405d144b53cb4cb14af1bc17e7ce1"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/src/main/java/example/skills/boot/DeliveryProperties.java",
+      "sha256": "42751897221b4e5291a6ad9f32525bc2688f7d7f267efb1c1fa6e49813ba7455"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/src/test/java/example/skills/boot/CompositionTests.java",
+      "sha256": "7372b8fe21352956b80054372fe628a7b4f98157f10d446f6a80e7165673d828"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/src/test/resources/fixture-config/application-staging.properties",
+      "sha256": "f6f8b5e9cc7ca23ea3980f2370e35a772f41b5b1ac339cf019d21e3a903ddfc0"
+    },
+    {
+      "path": "skills/spring-boot/assets/composition-fixture/src/test/resources/fixture-config/application.properties",
+      "sha256": "8312f68a67274245de6fa7aff1e128039ca0a23fd87257b90c323ed55b5636f0"
+    },
+    {
+      "path": "skills/spring-boot/references/composition-and-configuration.md",
+      "sha256": "c7b9fd30d3113782e48f297486275fcf99887c2b150f7e3c1846b6435780a8cc"
+    },
+    {
+      "path": "skills/spring-boot/references/operations-and-events.md",
+      "sha256": "b612f2437c3da8f82a3ac6d45e41d9e042b473e51298a0293687540468a272d9"
+    },
+    {
+      "path": "skills/spring-boot/references/verification.md",
+      "sha256": "5a69da42c497381923dd674ea28b89c03a255bfe1cb6e9d7dcd062217f7e7e41"
+    },
+    {
+      "path": "skills/spring-boot-web/SKILL.md",
+      "sha256": "1b6d82f059a203c21ebecad5146f25139e45603e76bbf2ab1958302e4cd5dbfc"
+    },
+    {
+      "path": "skills/spring-boot-web/skill.yaml",
+      "sha256": "73ec3de0ac3cfc3a812e2df50c5fc071744e68de3ff607aa856ee3a96ace01a6"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/pom.xml",
+      "sha256": "89dec99e849ba6f32f8ff4852dc33d07051bfd6bd4caaccb8458c901e5929373"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/README.md",
+      "sha256": "c6f624b55ec04b60a88cdeb48a5f0fb36c36b9ce14054ce73b6420a3cdab2cfb"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ApiDocumentation.java",
+      "sha256": "5f4f26f447b4a1659a2f7f98f894b0f46fe60c4e66a47a12b366f430c886b73d"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ApiErrors.java",
+      "sha256": "7153346d778d3fdaca915b00e0dad5a7653445c8e08215ae5f983ca0e8b6cf17"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ApiExamples.java",
+      "sha256": "c5fa6dbd9da1e15d183ee01b8f5fbe8b2cebb3ed056bf15d93bdae4e99906ee9"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/CodePointLength.java",
+      "sha256": "e8001c5f902df4718615bb44d45b4ef50e6f366cfdd4bd6fdf70e5844e22cfea"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ContractApplication.java",
+      "sha256": "699d3ef43f0882188541f50ab7bab038f3a010d0d52b6363a139f333e8c136b6"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/Models.java",
+      "sha256": "396058143f89e6a3b744220cec26b01655f0954eec38b9c2ad3ce0c05e516ad4"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ProductController.java",
+      "sha256": "86a81e121f4b78fbccc37d611d8cef19b50baa9d28c47c057071177f8dce7eb1"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ProductStore.java",
+      "sha256": "ce9e2ac9ca134249bdf394dbdd5b33b0ea395cf58fc50bb684dcc3de3338bb41"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/main/resources/application.properties",
+      "sha256": "49ae7b0a4ce23bdd1169372a7ccd8dd766fa59bdc8174487d7bf626901f061fe"
+    },
+    {
+      "path": "skills/spring-boot-web/assets/contract-fixture/src/test/java/example/web/ContractTest.java",
+      "sha256": "e3fa028fd76a973d7112a0c1979963b2fdba768f5ee4d3fd91b972cd86f89751"
+    },
+    {
+      "path": "skills/spring-boot-web/references/capacity-and-lifecycle.md",
+      "sha256": "6247bdd0c075382697d88674843067eabfa9c9aafbbdae411ce7ffd0cb8d2f97"
+    },
+    {
+      "path": "skills/spring-boot-web/references/mvc-contracts.md",
+      "sha256": "193f35598f6d54a2dc5a1e2d04c063130bd949e6c9697b7e761793644238b844"
+    },
+    {
+      "path": "skills/spring-boot-web/references/schemas-and-examples.md",
+      "sha256": "817e110e2fc2bbd0d51b8abd76b2f2f0bb7cead84d18b744190996ba263a308e"
+    },
+    {
+      "path": "skills/spring-boot-web/references/springdoc-openapi.md",
+      "sha256": "d4de13158feecf3ede181e93ec2623378a523524ee5e29ff35e4965ceaa77133"
+    },
+    {
+      "path": "skills/spring-boot-web/references/swagger-ui.md",
+      "sha256": "7fb0eae4eec5e5c98b6bc486acf7ad12149fecef498bc2a348a55272b224a46b"
+    },
+    {
+      "path": "skills/spring-boot-web/references/verification.md",
+      "sha256": "1cd72ddf5b74fa0ad6257161116c11d34660968d974921334916135bcb2477f9"
+    },
+    {
+      "path": "skills/spring-boot-jpa/SKILL.md",
+      "sha256": "601f0ab54ffbc71d11a488b913e98a338f209be8ecfff850028d39c899845025"
+    },
+    {
+      "path": "skills/spring-boot-jpa/skill.yaml",
+      "sha256": "79aa7d783a8987e37e7ef018ccd572539da2a5c99fe5e64b4a96d9ed7845e8f2"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/pom.xml",
+      "sha256": "f369a1e76ae8b324027a2105c8dd9e8c1e783f59da09baec679640dacdc1f6d3"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/README.md",
+      "sha256": "8572644b2b221dbde570acf9d29c94e56dd23221beba9af53d5121ca78489209"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/sql/postgresql-schema.sql",
+      "sha256": "ea4bf104d3875bfb5babe691df5c9a016cc62d4ee1fe722b4e62dafeba8ccbfa"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/sql/sqlserver-lock-probe.sql",
+      "sha256": "2d381c1bf7ccdfca7385061925d867660fe2a86b78126dc7b865154533ef8c20"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/sql/sqlserver-schema.sql",
+      "sha256": "020f7eccf5ae8e5c203343e0cfde6cafa39fdca8af61bf039031915fda3458b7"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/FixtureApplication.java",
+      "sha256": "bd31fb434a7c4bcc0f4ffdd4068129bccaeb24e09661c4a855b0b6266b34b10b"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/Inventory.java",
+      "sha256": "1540c0bc41eaf5e1b001409750130b48971c482b70e24c3f25a8f823b083e065"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryRepository.java",
+      "sha256": "476b9bbef436313749f5093255f7d841a448ae497bf0af3e0fa0c9184e3a1c4c"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryService.java",
+      "sha256": "48754e157392dee9c737b653f094b4d9e9b587caf2381d05141ca3eed5ef4f8e"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/Movement.java",
+      "sha256": "a45fd0c560fe41acab6c73cadd20fb213be6f387feba6c6db015d19823573b88"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/persistence/PersistenceContractTest.java",
+      "sha256": "c113a6bc543cc0856afc79115e86dd34b5a7b8852262be92dcd0975f0483b60a"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/persistence/ProxyComplianceContractTest.java",
+      "sha256": "a07562f064fcdcf108070e4955fdacbecfba92211b0252084f359e0cfba81e92"
+    },
+    {
+      "path": "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/sqlserver/OutboxEvent.java",
+      "sha256": "b265ee30a3a4d7fd8ab48d3e2297233007b8248d96fd90d5dc36ca748b84ed7b"
+    },
+    {
+      "path": "skills/spring-boot-jpa/references/datasource-configuration.md",
+      "sha256": "5a952002d3b005a3b434bef0ecca99f4f10805c1df9a840a7170668a5d21b6a6"
+    },
+    {
+      "path": "skills/spring-boot-jpa/references/mapping-and-identifiers.md",
+      "sha256": "173f30de81cfa77d52a01ac30504bc5ed22c09e61fd260bde22dd53ec04b6804"
+    },
+    {
+      "path": "skills/spring-boot-jpa/references/queries-and-transactions.md",
+      "sha256": "9870f1fcca3eb61de0c245f278b7715b879e6f02ad2a121f21a8f85b97a63a98"
+    },
+    {
+      "path": "skills/spring-boot-jpa/references/verification.md",
+      "sha256": "7f40157488d42ba22ce6cb1018bce3c26db44de7e08e46a02defa124944fb5df"
+    }
+  ]
+}
