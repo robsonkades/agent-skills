@@ -1,0 +1,396 @@
+{
+  "date": "2026-09-28",
+  "status": "implemented_with_external_runtime_limits",
+  "baselineCommit": "44be334cfc0b265bbc994ed29c21f2ad82c47238",
+  "scope": [
+    {
+      "skill": "spring-boot",
+      "from": "1.0.0",
+      "to": "1.1.0"
+    },
+    {
+      "skill": "spring-boot-web",
+      "from": "1.0.0",
+      "to": "1.1.0"
+    },
+    {
+      "skill": "spring-boot-jpa",
+      "from": "1.0.0",
+      "to": "1.1.0"
+    }
+  ],
+  "toolchain": {
+    "java": "Temurin 25.0.3",
+    "maven": "3.9.15",
+    "springBoot": "4.1.1",
+    "upgradedBaseline": false
+  },
+  "sourceValidation": {
+    "files": 61,
+    "localMarkdownLinks": 33,
+    "brokenLinks": 0,
+    "strictCliValidation": {
+      "skills": 3,
+      "issues": 0
+    },
+    "sha256": {
+      "skills/spring-boot/assets/composition-fixture/src/test/java/example/skills/boot/SchedulingTests.java": "a9fd92fea5036b60cd85d2e627991d7993dcce9b1dfca7dc11efe9ea940afa4a",
+      "skills/spring-boot/SKILL.md": "80ad62ded01ed14b9511eb5734eac5f2357e43c11fb1411cda3a6445f2bb9550",
+      "skills/spring-boot/assets/composition-fixture/README.md": "f8b9cfd240c076d13754214873e8d2ca27dbe4611a4ba170c690db4f938a8521",
+      "skills/spring-boot/assets/composition-fixture/pom.xml": "dc5dc92564ea855b752a896a2027c1b0a25064f5ddee8f233a3b8d2869bc7ea0",
+      "skills/spring-boot/assets/composition-fixture/src/main/java/example/skills/boot/DeliveryAutoConfiguration.java": "77525b5c501dacbd20d2149551ff2ea382be3fd52b6e99eea52b261fa7b357dc",
+      "skills/spring-boot/assets/composition-fixture/src/main/java/example/skills/boot/DeliveryProperties.java": "42751897221b4e5291a6ad9f32525bc2688f7d7f267efb1c1fa6e49813ba7455",
+      "skills/spring-boot/assets/composition-fixture/src/test/java/example/skills/boot/CompositionTests.java": "e9251439a6cac53a65d4e138b84a61c23179efc030726fe823de284598ab7b60",
+      "skills/spring-boot/assets/composition-fixture/src/test/resources/fixture-config/application-staging.properties": "f6f8b5e9cc7ca23ea3980f2370e35a772f41b5b1ac339cf019d21e3a903ddfc0",
+      "skills/spring-boot/assets/composition-fixture/src/test/resources/fixture-config/application.properties": "8312f68a67274245de6fa7aff1e128039ca0a23fd87257b90c323ed55b5636f0",
+      "skills/spring-boot/references/composition-and-configuration.md": "66497d356e7595ba76fe4fae24a7f38786b54367ed075f40fb5ec744ef2dbdd5",
+      "skills/spring-boot/references/operations-and-events.md": "b57cca32a590ae2cefd6fedce470892544943282ea8c69d039d376fe6b77e0a0",
+      "skills/spring-boot/references/verification.md": "eb18645ce33fcc0e9bfedc6ae6be1d856fceecaedf72518512990893290a1244",
+      "skills/spring-boot/skill.yaml": "f3b8b76e4a2c14fb5838b48a84ca24d5bc4a8269ceac54017595b201c475ea62",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/JsonBodyLimit.java": "82e0be26cd7ed05847acfa8cfd0663d6f1e9b6f8cadbeaa4887ac9ffd11c6dcf",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/PublicErrorPaths.java": "4bc50df5603e14b0a0842b2f2b2fa7d8acd4db454c4416fa56d1c250083a4542",
+      "skills/spring-boot-web/assets/contract-fixture/src/test/java/example/web/BoundaryContractTest.java": "a4a5d5225f8b5376cda8c03638a1a78d4125e5a017d7e0ee67d890603430bfb3",
+      "skills/spring-boot-web/assets/contract-fixture/src/test/java/example/web/PublicWebTestConfiguration.java": "e80a47ea760c79eccc30fca55dab6121889898f87ae090e0e8f28992baf64ca4",
+      "skills/spring-boot-web/assets/contract-fixture/src/test/java/example/web/SecurityContractTest.java": "05660503cd72a1b4e9ff8dc00f175e58b8bffc3cbad7b9255388668df0093343",
+      "skills/spring-boot-web/references/request-bounds.md": "8a942ddee4ccae339c97dc4b50d08738dd668b87a7d4d6e20b0d663e381383d1",
+      "skills/spring-boot-web/SKILL.md": "a059bad02122ca7d7c4454b1f795517e61605a18ebfe55e654c9c7063e475323",
+      "skills/spring-boot-web/assets/contract-fixture/README.md": "7178635b6668b1f828a97cae5cc1160346bd20a817a0596d0327379fe1b96e8f",
+      "skills/spring-boot-web/assets/contract-fixture/pom.xml": "afb8255b2fc8d36906fbfbcc33a869505a2e3a756c17c86ccff0d6a73b88e0ca",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ApiDocumentation.java": "105cfc390cc2822f0c4dab94647e0831a6f338e060d950871c3329a30829eb26",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ApiErrors.java": "99d9f9e35bfbf8025881a6c527eafbe718d732f3f001408d54333758115246e6",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ApiExamples.java": "c5fa6dbd9da1e15d183ee01b8f5fbe8b2cebb3ed056bf15d93bdae4e99906ee9",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/CodePointLength.java": "e8001c5f902df4718615bb44d45b4ef50e6f366cfdd4bd6fdf70e5844e22cfea",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ContractApplication.java": "699d3ef43f0882188541f50ab7bab038f3a010d0d52b6363a139f333e8c136b6",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/Models.java": "e0105172d9adec6ae1e099c62a414e35841caa38c9ceac270522ac4594057f87",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ProductController.java": "86a81e121f4b78fbccc37d611d8cef19b50baa9d28c47c057071177f8dce7eb1",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/java/example/web/ProductStore.java": "ce9e2ac9ca134249bdf394dbdd5b33b0ea395cf58fc50bb684dcc3de3338bb41",
+      "skills/spring-boot-web/assets/contract-fixture/src/main/resources/application.properties": "519019579c694c6002fc7f3f04a7cad8a9287709e3fb04b9157803f476172929",
+      "skills/spring-boot-web/assets/contract-fixture/src/test/java/example/web/ContractTest.java": "3ff007b2bcf65cd3d45bc57699776212c9b2aea456c24b6bef3fe96e22c18b43",
+      "skills/spring-boot-web/references/capacity-and-lifecycle.md": "6247bdd0c075382697d88674843067eabfa9c9aafbbdae411ce7ffd0cb8d2f97",
+      "skills/spring-boot-web/references/mvc-contracts.md": "8f4e19258466eae21f5922d356ed68a807c2e33674cdb9a1a3402832eddc749a",
+      "skills/spring-boot-web/references/schemas-and-examples.md": "817e110e2fc2bbd0d51b8abd76b2f2f0bb7cead84d18b744190996ba263a308e",
+      "skills/spring-boot-web/references/springdoc-openapi.md": "d4de13158feecf3ede181e93ec2623378a523524ee5e29ff35e4965ceaa77133",
+      "skills/spring-boot-web/references/swagger-ui.md": "7fb0eae4eec5e5c98b6bc486acf7ad12149fecef498bc2a348a55272b224a46b",
+      "skills/spring-boot-web/references/verification.md": "d707eacd4d247cd1c7710102675bdacd92a86032a175c7a8a1f9bf7dd0d04d5d",
+      "skills/spring-boot-web/skill.yaml": "cf27460795ffc96607f98ba4dc4325f0517c6faf57770cbced326d9a35696091",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/it/java/example/database/OutboxDatabaseIT.java": "8e5e62d3082955d38685e6d1b68bd6b1791d8b6d17cc5a703487d39234e24f96",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/it/java/example/postgresql/OutboxEvent.java": "e0c8eb3b0ddb2979d20c1d65d5c24fbecf9fb67f62e909558f13320f403f83ec",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/database/OutboxRecord.java": "98c2db8a261a07b158f6590626e0bd3929e906d3ac9ef4cc378708072bf304d7",
+      "skills/spring-boot-jpa/SKILL.md": "6e7f77e864167109b40ce7a0a0ba6f6c775e3188121dd3fd5fd8c0c972f44a19",
+      "skills/spring-boot-jpa/assets/persistence-fixture/README.md": "fc0b8302db06e59d090b8732a6363fe187aa47fd3df171d2d693b1efd2c42b5b",
+      "skills/spring-boot-jpa/assets/persistence-fixture/pom.xml": "c4ac9e051a1d4247745ffcf99aac7a1b0a6472ee1afde5a5451fe8a70ef3bb8a",
+      "skills/spring-boot-jpa/assets/persistence-fixture/sql/postgresql-schema.sql": "ea4bf104d3875bfb5babe691df5c9a016cc62d4ee1fe722b4e62dafeba8ccbfa",
+      "skills/spring-boot-jpa/assets/persistence-fixture/sql/sqlserver-lock-probe.sql": "2d381c1bf7ccdfca7385061925d867660fe2a86b78126dc7b865154533ef8c20",
+      "skills/spring-boot-jpa/assets/persistence-fixture/sql/sqlserver-schema.sql": "020f7eccf5ae8e5c203343e0cfde6cafa39fdca8af61bf039031915fda3458b7",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/FixtureApplication.java": "bd31fb434a7c4bcc0f4ffdd4068129bccaeb24e09661c4a855b0b6266b34b10b",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/Inventory.java": "1540c0bc41eaf5e1b001409750130b48971c482b70e24c3f25a8f823b083e065",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryRepository.java": "476b9bbef436313749f5093255f7d841a448ae497bf0af3e0fa0c9184e3a1c4c",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/InventoryService.java": "1910cbbacfe4b14ac4ceb2eed3b95582d3ccfecfa3fb20194dee90e170e8da02",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/main/java/example/persistence/Movement.java": "a45fd0c560fe41acab6c73cadd20fb213be6f387feba6c6db015d19823573b88",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/persistence/PersistenceContractTest.java": "62f2fe6536efc5c9c6fe9e8430c505c8596cdad0ea4a9930d4df61a2f74d6efd",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/persistence/ProxyComplianceContractTest.java": "a07562f064fcdcf108070e4955fdacbecfba92211b0252084f359e0cfba81e92",
+      "skills/spring-boot-jpa/assets/persistence-fixture/src/test/java/example/sqlserver/OutboxEvent.java": "b81b7b9165f7b04b775b0a17c56245b47ec6434af5def92a03ee82054433e814",
+      "skills/spring-boot-jpa/references/datasource-configuration.md": "5a952002d3b005a3b434bef0ecca99f4f10805c1df9a840a7170668a5d21b6a6",
+      "skills/spring-boot-jpa/references/mapping-and-identifiers.md": "f2ec3ac8597c017b60d591bac2a2c6d7482a31dcc2adb346264419d5a2885b41",
+      "skills/spring-boot-jpa/references/queries-and-transactions.md": "7cf0f53071829f86c48256a47989168ca81ee9bbfb9ccc9bcf2867f55624d23a",
+      "skills/spring-boot-jpa/references/verification.md": "b2b6b035c6e4056e2bf49de467672f0ace62bc9962194a298063816b1e3eddb4",
+      "skills/spring-boot-jpa/skill.yaml": "a7bc473d8e958a9daa755f32ed7f952c9fd0e7d4e2f32539945b11f02df33093"
+    }
+  },
+  "fixtureRuns": [
+    {
+      "skill": "spring-boot",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "breakdown": {
+        "composition": 14,
+        "scheduling": 2
+      },
+      "baselineTestsRetained": 12,
+      "commands": ["mvn -B -ntp test"],
+      "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/agent-skills-spring-boot-review-5ac5579503024bfcaedcb58bc1076563",
+      "logs": ["baseline-red.log", "validation-final.log"],
+      "notes": [
+        "Baseline custom-client regression failed before the fix.",
+        "Virtual-thread scheduler and explicit pool scheduler exercised with bounded synchronization and cleanup."
+      ]
+    },
+    {
+      "skill": "spring-boot-web",
+      "tests": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "breakdown": {
+        "existingContracts": 12,
+        "boundaryContracts": 5,
+        "securityContracts": 3
+      },
+      "baselineTestsRetained": 12,
+      "commands": ["mvn -B -ntp test", "mvn -B -ntp package"],
+      "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/spring-web-review-cf4d99a972ac4e299845daca94403d8e",
+      "logs": ["validation.log", "final-validation.log"],
+      "notes": [
+        "Loopback HTTP with real RSA token verification and nine hostile token variants.",
+        "Security dependencies and probes have test scope; final jar inspected.",
+        "Body limit covers bounded synchronous JSON; it is not a container-wide or streaming upload limit."
+      ]
+    },
+    {
+      "skill": "spring-boot-jpa",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "breakdown": {
+        "persistence": 12,
+        "sqlServerMetadata": 1
+      },
+      "baselineTestsRetained": 10,
+      "commands": ["mvn -B -ntp -o test", "mvn -B -ntp -Pdatabase-it test-compile"],
+      "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/spring-jpa-review-ed3bbf7bd4d74c5582a48ff473125a4c",
+      "workingDirectory": "fixture",
+      "mavenRepository": "m2",
+      "logs": ["h2-test-final.log", "database-compile.log"],
+      "notes": [
+        "H2 tests are not evidence of PostgreSQL or SQL Server runtime semantics.",
+        "Both engine-specific integration paths compiled."
+      ]
+    }
+  ],
+  "integrationRuns": {
+    "postgresql": {
+      "command": "mvn -B -ntp -Pdatabase-it -Dfixture.database=postgresql failsafe:integration-test failsafe:verify",
+      "status": "failed_during_setup",
+      "error": "Could not find a valid Docker environment",
+      "setupErrors": 1,
+      "databaseContractsExecuted": 0,
+      "log": "C:/Users/robso/AppData/Local/Temp/spring-jpa-review-ed3bbf7bd4d74c5582a48ff473125a4c/postgresql-it.log"
+    },
+    "sqlserver": {
+      "status": "not_started",
+      "databaseContractsExecuted": 0,
+      "licenseAccepted": false
+    },
+    "runtimeInvestigation": {
+      "client": "29.6.2-rd",
+      "serverBrieflyVisible": "29.5.3",
+      "failure": "Docker operations failed with a Hyper-V socket timeout; Rancher backend reported vmState DISABLED.",
+      "restored": "Rancher startInBackground=false restored and Rancher shut down."
+    }
+  },
+  "repositoryValidation": {
+    "registryBuild": {
+      "passed": true,
+      "skills": 283,
+      "entriesChanged": 3,
+      "unrelatedEntriesUnchanged": 280
+    },
+    "verify": {
+      "passed": true,
+      "tests": 355,
+      "suites": 67,
+      "failures": 0,
+      "skipped": 0,
+      "stages": [
+        "build",
+        "architecture boundaries (7 packages)",
+        "lint",
+        "format check",
+        "registry consistency",
+        "skill versions",
+        "tests"
+      ],
+      "log": "C:/Users/robso/AppData/Local/Temp/spring-review-eaee644ebd8345a6951761b3931c358a/verify.log"
+    },
+    "gitDiffCheckPassed": true
+  },
+  "behavioralEvaluation": {
+    "root": "C:/Users/robso/AppData/Local/Temp/spring-review-eaee644ebd8345a6951761b3931c358a",
+    "baselineCommit": "44be334cfc0b265bbc994ed29c21f2ad82c47238",
+    "cases": [
+      {
+        "id": "boot-backoff",
+        "skill": "spring-boot",
+        "fixture": "composition-fixture",
+        "task": "A consumer supplies its own DeliveryClient and does not use acme.delivery client settings. With acme.delivery.parallelism=0 left in deployment configuration, startup currently fails even though the default client is not selected. Fix this contract in the supplied fixture: custom-client consumers must start and receive their custom client; the default client must still reject invalid settings. Preserve disabled-feature behavior and resource cleanup. Implement focused code and regression tests, run them on Java 25, and report actual results.",
+        "criteria": [
+          "Custom client and Dispatcher use same managed client despite invalid default-only properties.",
+          "Default client still rejects invalid settings; disabled feature does not initialize resource.",
+          "No global disabling of validation, bean overriding, lazy mask, or silent baseline upgrade.",
+          "Source edits and executed nonzero tests observed; lifecycle and old tests retained."
+        ]
+      },
+      {
+        "id": "jpa-client-version",
+        "skill": "spring-boot-jpa",
+        "fixture": "persistence-fixture",
+        "task": "Add an InventoryService command to change an inventory item's optional note using the version the caller read. A caller reads the item, another transaction commits a change, then the first caller submits its old version: reject this stale update without losing the intervening committed data. A current version must permit the update, including clearing note to null. Preserve other Inventory fields and the existing reservation behavior. Implement source and regression tests with independent reads/transactions and run on Java 25. No HTTP endpoint or database migration is requested.",
+        "criteria": [
+          "Requires caller version, compares loaded managed version, never assigns caller value into @Version.",
+          "Rejects stale-client command after intervening commit in a distinct transaction; preserves winner state.",
+          "Current version and null note allowed; existing version protection through commit preserved.",
+          "Meaningful independent database reads/tests executed; old tests retained, no baseline upgrade."
+        ]
+      },
+      {
+        "id": "web-public-paths",
+        "skill": "spring-boot-web",
+        "fixture": "contract-fixture",
+        "task": "Consumers require validation errors to use transmitted property/parameter names. Improve the supplied ApiErrors so a Java property with @JsonProperty(\"display_title\") reports display_title, and nested aliased DTO fields keep the correct public path. A method argument @RequestHeader(\"X-Page-Size\") with invalid @Min must report X-Page-Size. Add focused HTTP tests using a test-only controller/DTO so existing product API names and examples stay compatible. Keep multiple violations and existing safe status/body behavior. Implement and run the tests on Java 25; honor the actual configured Jackson mapper.",
+        "criteria": [
+          "External names resolved using effective Jackson contract for aliased/nested DTO fields, no naive universal string replacement.",
+          "Header alias translated, existing query validation and return-value500 preserved.",
+          "Test-only endpoint validates actual HTTP response; source and nonzero tests executed.",
+          "Existing product names/examples/contracts preserved; no dependency/baseline upgrade; no unsafe arbitrary reflection guessing."
+        ]
+      }
+    ],
+    "conditions": ["original", "revised"],
+    "limitations": [
+      "Fresh agents; shared filesystem; procedural read/write boundaries.",
+      "Known-rule implementation transfer, not a hidden causal holdout.",
+      "Original/revised one execution per condition, not a statistical benefit estimate."
+    ],
+    "routing": {
+      "kind": "Description-only routing probe against 283 committed entries; not client activation",
+      "actor": "eval_routing",
+      "results": [
+        {
+          "id": "conditional-default",
+          "primary": "spring-boot",
+          "assessment": "Matched"
+        },
+        {
+          "id": "public-error-name",
+          "primary": "spring-boot-web",
+          "assessment": "Matched with MVC/Servlet assumption explicitly stated"
+        },
+        {
+          "id": "stale-note",
+          "primary": "offline-concurrency-control",
+          "collaborator": "spring-boot-jpa",
+          "assessment": "Valid complementary route; original rubric expected JPA as primary, so no exact-primary-match claim"
+        },
+        {
+          "id": "wrong-audience",
+          "primary": "spring-security-for-apis",
+          "assessment": "Matched"
+        },
+        {
+          "id": "reactive-demand",
+          "primary": "reactive-backpressure",
+          "assessment": "Matched"
+        },
+        {
+          "id": "boot3-migration",
+          "primary": null,
+          "assessment": "Correctly declined Boot4 application; did not identify java-build-and-dependencies as possible collaborator"
+        }
+      ]
+    },
+    "results": [
+      {
+        "id": "boot-backoff",
+        "condition": "original",
+        "actor": "eval_boot_original",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assessment": "Pass: code and Surefire inspected by coordinator; custom/default validation separated, managed identity and cleanup retained.",
+        "evidence": "actors/boot-backoff/original/RESULTS.md"
+      },
+      {
+        "id": "jpa-client-version",
+        "condition": "original",
+        "actor": "eval_jpa_original",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assessment": "Pass: service compare and independently committed stale/current-version regressions inspected by coordinator; no received @Version assignment.",
+        "evidence": "actors/jpa-client-version/original/implementation-report.md"
+      },
+      {
+        "id": "web-public-paths",
+        "condition": "original",
+        "actor": "eval_web_original",
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assessment": "Pass for named criteria: coordinator inspected effective Jackson metadata traversal, explicit parameter aliases and Surefire 18 passing tests. Unknown-path fallback and custom deserializers remain limitations; this is not universal public-path verification.",
+        "evidence": "actors/web-public-paths/original/full-test.log"
+      },
+      {
+        "id": "boot-backoff",
+        "condition": "revised",
+        "actor": "eval_boot_revised",
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assessment": "Pass: code/report inspected; default-only property registration conditional, custom identity/cleanup and explicit shared-property validation retained.",
+        "evidence": "actors/boot-backoff/revised/REPORT.md"
+      },
+      {
+        "id": "jpa-client-version",
+        "condition": "revised",
+        "actor": "eval_jpa_revised",
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assessment": "Pass: source and Surefire inspected; stale/current/null note paths, preserved committed state, independent reads, version ownership and old regressions retained.",
+        "evidence": "actors/jpa-client-version/revised/IMPLEMENTATION-REPORT.md"
+      },
+      {
+        "id": "web-public-paths",
+        "condition": "revised",
+        "actor": "eval_web_revised",
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assessment": "Pass for named criteria: coordinator inspected source and Surefire; effective Jackson metadata, canonical aliases, nested list/array paths and header aliases preserved. Six new regressions failed before the fix and passed afterward. Unknown paths/map keys use request; custom deserializers are not universally verified.",
+        "evidence": "actors/web-public-paths/revised/all-tests.log"
+      }
+    ],
+    "harness": {
+      "agentHistory": "fork_turns:none",
+      "model": "Inherited parent model and reasoning settings; no overrides.",
+      "parallelActors": 6,
+      "initialProjects": "All copied from the same committed baseline fixture.",
+      "treatment": "Original or revised frozen skill content; identical task per pair.",
+      "evidenceInspection": "Coordinator inspected generated source and Surefire reports, not only agent summaries.",
+      "isolation": "Separate temporary directories and procedural read/write boundaries; agents share filesystem access."
+    },
+    "preRunRoutingCriteria": [
+      ["conditional-default", "spring-boot primary"],
+      ["public-error-name", "spring-boot-web primary"],
+      ["stale-note", "spring-boot-jpa primary, spring-boot-web optional if API changed"],
+      ["wrong-audience", "spring-security-for-apis primary"],
+      ["reactive-demand", "reactive-backpressure or reactive specialist; no MVC skill primary"],
+      ["boot3-migration", "Boot4 skills not applied silently; compatibility boundary stated"]
+    ],
+    "conclusion": "All six runs met the named criteria. This does not demonstrate revised-skill superiority; test counts reflect actor choices and are not quality scores.",
+    "notExecuted": [
+      "No-skill control",
+      "Blind held-out evaluation",
+      "Actual client automatic skill activation",
+      "Statistical repeated-run comparison"
+    ]
+  },
+  "preservation": {
+    "userDocument": "docs/agent-harness-optimization-plan.md",
+    "sha256": "E6C10B24E1D11CC76AF662D72A0E94812472D645D8C1F21F3342A1156D332D88",
+    "preExistingFixtureTargetDirectories": "Preserved; builds ran in isolated temporary copies.",
+    "committed": false,
+    "published": false,
+    "globallyInstalled": false
+  },
+  "evidenceRetention": "Logs and actor workspaces referenced by absolute temporary paths are local session evidence, not bundled repository artifacts. Source snapshots are identified by the recorded hashes."
+}

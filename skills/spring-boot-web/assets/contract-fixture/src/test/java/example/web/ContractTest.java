@@ -6,10 +6,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -33,7 +35,7 @@ class ContractTest {
     private final String base;
     private final ObjectMapper mapper;
     private final RequestMappingHandlerMapping mappings;
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
     ContractTest(Environment environment, ObjectMapper mapper,
             @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping mappings) {
@@ -42,8 +44,14 @@ class ContractTest {
         this.mappings = mappings;
     }
 
+    @AfterEach
+    void closeClient() {
+        client.close();
+    }
+
     private HttpResponse<String> request(String method, String path, String body) throws Exception {
         return client.send(HttpRequest.newBuilder(URI.create(path.startsWith("http") ? path : base + path))
+                .timeout(Duration.ofSeconds(10))
                 .header("Content-Type", "application/json")
                 .method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body))
                 .build(), HttpResponse.BodyHandlers.ofString());
@@ -187,6 +195,10 @@ class ContractTest {
         assertEquals(body.path("status"), example.path("status"));
         assertEquals(body.path("detail"), example.path("detail"));
         assertEquals(2, example.path("violations").size());
+        HttpResponse<String> nested = request("POST", "/products",
+                "{\"sku\":\"NESTED-01\",\"title\":\"Nested input\",\"dimensions\":{\"width\":0,\"height\":80}}");
+        assertEquals(400, nested.statusCode(), nested.body());
+        assertEquals("dimensions.width", json(nested).at("/violations/0/field").asString());
     }
 
     @Test
@@ -205,9 +217,38 @@ class ContractTest {
         assertEquals(409, json(conflict).path("status").asInt());
         request("DELETE", created.headers().firstValue("Location").orElseThrow(), null);
         HttpResponse<String> unacceptable = client.send(HttpRequest.newBuilder(URI.create(base + "/products"))
-                .header("Accept", "text/plain").GET().build(), HttpResponse.BodyHandlers.ofString());
+                .timeout(Duration.ofSeconds(10)).header("Accept", "text/plain").GET().build(), HttpResponse.BodyHandlers.ofString());
         assertEquals(406, unacceptable.statusCode());
         assertEquals(406, json(unacceptable).path("status").asInt());
+    }
+
+    @Test
+    void bootParserConstraintsRejectInputBeforeItCanChangeTheProduct() throws Exception {
+        HttpResponse<String> created = request("POST", "/products",
+                "{\"sku\":\"PARSER-01\",\"title\":\"Parser limits\",\"description\":\"before\"}");
+        assertEquals(201, created.statusCode(), created.body());
+        String location = created.headers().firstValue("Location").orElseThrow();
+        try {
+            String nested = "{\"child\":".repeat(20) + "null" + "}".repeat(20);
+            for (String body : new String[]{
+                    "{\"description\":" + nested + "}",
+                    "{\"description\":\"" + "x".repeat(6000) + "\"}",
+                    "{\"description\":" + "1".repeat(101) + "}"}) {
+                HttpResponse<String> rejected = request("PATCH", location, body);
+                assertEquals(400, rejected.statusCode(), rejected.body());
+                assertEquals("Failed to read request", json(rejected).path("detail").asString());
+                assertFalse(json(rejected).has("violations"));
+                assertFalse(rejected.body().contains("StreamConstraintsException"));
+                assertEquals("before", json(request("GET", location, null)).path("description").asString());
+            }
+            HttpResponse<String> smallInvalidDto = request("POST", "/products",
+                    "{\"sku\":\"PARSER-02\",\"title\":\"\"}");
+            assertEquals(400, smallInvalidDto.statusCode());
+            assertEquals("Input validation failed", json(smallInvalidDto).path("detail").asString());
+            assertFalse(json(smallInvalidDto).path("violations").isEmpty());
+        } finally {
+            assertEquals(204, request("DELETE", location, null).statusCode());
+        }
     }
 
     @Test

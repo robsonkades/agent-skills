@@ -18,7 +18,7 @@ boundary; keep existing useful tests instead of replacing every mock with an int
 authorization test succeeds. Use the mock deliberately, and add real validation where the
 claim requires it. Default mock scopes can also invalidate a supposed "no authority" test;
 explicitly supply an empty authority collection or remove the relevant claims.
-[Spring OAuth2 test support](https://docs.spring.io/spring-security/reference/7.0/servlet/test/mockmvc/oauth2.html).
+[Spring OAuth2 test support](https://docs.spring.io/spring-security/reference/7.1/servlet/test/mockmvc/oauth2.html).
 
 Load the application's actual security configuration and filter chain in MVC tests. A
 standalone controller test, an unrelated test chain or `addFilters = false` does not cover
@@ -51,77 +51,98 @@ the chain even though the request never calls it.
 Report which cases ran and the exact boundary exercised. A check of one path does not prove
 the entire route inventory, and a server-side CORS check does not simulate browser behavior.
 
-## Executable fixture
+## Focused project tests
 
-[SecurityContractCheck.java](../assets/SecurityContractCheck.java) is an executable Java
-fixture for an in-process Spring MVC context. It generates ephemeral RSA keys, signs real
-tokens and routes requests through real security filters and the decoder. Its RFC 9068
-issuer contract is intentionally specific; do not apply it to an issuer with a different
-access-token profile. Its browser chain accepts only test-injected authentication and must
-not be copied as a login implementation.
+Use the [Boot example](boot-resource-server.md) only when its contract matches the application.
+Keep tests in the existing test suite, using the application's actual configuration and
+collaborators. A custom main-method runner, provider implementation or shared assertion
+hierarchy is not needed to test an authorization change.
 
-The fixture includes real mapped endpoints that must remain denied, a read/write scope
-split, a proxied service check, hostile JWTs, a deliberately accepted invalid `jwt()` mock
-that illustrates bypass, and separate CSRF/CORS checks. Every case asserts both status and
-the expected handler/service side-effect count; 401 cases also assert the bearer challenge.
+For example, a read permission must not authorize a write. This **partial test snippet**
+uses static MockMvc/Spring Security/Mockito imports, Spring's `SimpleGrantedAuthority`,
+and the project's mocked `orders` collaborator:
 
-Prerequisites for the recorded baseline:
+```java
+mvc.perform(post("/api/orders/7")
+        .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_orders.read"))))
+    .andExpect(status().isForbidden());
 
-- Java compiler supporting `--release 17`; Java 17+ runtime supported by the dependencies.
-- Spring Security **7.1.0**: config, core, crypto, web, oauth2-core, oauth2-jose,
-  oauth2-resource-server and test.
-- Spring Framework **7.0.8**: aop, beans, context, core, expression, web, webmvc and test.
-- Nimbus JOSE JWT **10.9**, Servlet API **6.1.0**, Micrometer observation/commons **1.17.0**,
-  Apache Commons Logging **1.3.5**, JSpecify **1.0.0**.
-
-Use an existing compatible project test classpath or already available dependencies in an
-isolated directory. This asset does not need Maven, a new build file, real credentials,
-network services or dependency upgrades. With the dependency classpath in `fixtureCp` and
-an owned output directory in `fixtureOut`, PowerShell invocation is:
-
-```powershell
-javac --release 17 -cp $fixtureCp -d $fixtureOut ./assets/SecurityContractCheck.java
-java -cp "$fixtureOut;$fixtureCp" SecurityContractCheck
+verifyNoInteractions(orders);
 ```
 
-On POSIX, use the platform classpath separator `:`. Compile output belongs outside the
-installed skill's assets. Do not install dependencies or mutate shared caches merely to
-run an example; if the classpath is unavailable, report the limit and implement relevant
-tests in the target project's existing infrastructure.
+Adapt the path, valid request body and collaborator to the real operation. Pair denial
+with a permitted write reaching that collaborator; otherwise malformed input or an
+unrelated rule could make every case fail closed. This test says nothing about signatures
+or whether the production converter creates that authority.
 
-The fixture does not test key rotation, opaque introspection, a custom role converter,
-custom error bodies, browser execution or a production container/ingress. It is a starting
-point for reproducing these specific checks, not a certification of an application's security.
+For a changed JWT trust rule, use the project's signing/test-token helper or an ephemeral
+test key to create a valid access token, then change only the relevant claim/key/profile.
+Send both tokens as bearer headers through the actual chain and decoder. Keep the signing
+key test-only and never use production credentials. A test override may replace the key
+endpoint; it must not replace the validator under test. If a custom decoder is unavoidable
+in the test, name the production configuration it no longer covers.
 
-Recorded fixture check on 2026-09-27: compilation with `javac --release 17` passed and
-all **29 cases** passed using the dependencies above on Temurin **25.0.3**. The run used
-existing cached jars without downloads. This verifies Java 17 source/API compilation and
-behavior on the named runtime; it is not a recorded Java 17 runtime test or an evaluation
-of an agent applying this skill.
+For a changed converter, invoke the actual converter with missing/empty claims, malformed
+types, allowed and unknown roles, and mismatched prefixes. Then send one valid signed token
+through the real chain to prove that converter is wired. For instance-policy integration,
+test the real service bean with another owner's ID, another tenant's ID, missing tenant
+identity and a nonexistent record. Assert no protected write occurs and include a permitted
+control. A proxy check does not prove transaction isolation; use the existing service and
+repository rather than inventing a second policy/store for the test.
 
-Two temporary copies enabled query-token and form-token resolution separately. Each new
-transport assertion then failed with a successful response and a handler side effect,
-demonstrating that the cases detect those specific contract regressions. These checks do
-not verify TLS, proxy configuration or token redaction in a deployment.
+## Remote-validation cases
+
+Use these only when changing key retrieval, introspection, caching or their failure policy.
+Reuse the project's maintained local HTTP stub/test-server facility and the real decoder
+or introspector with its configured client. A mocked `JwtDecoder` or `OpaqueTokenIntrospector`
+cannot establish these properties. Bind to loopback on an ephemeral port, use invented
+credentials, bound delayed responses and close the server/client resources after the test.
+
+| Changed boundary                  | Scenario and meaningful observation                                                                                                                                                                                                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JWKS retrieval and rotation       | Fetch key A, reuse it, publish A+B, then request B to exercise refresh. Remove A upstream and distinguish cached acceptance from rejection after refresh. Use an unknown key to prove rejection; count fetches according to the resolved cache/refresh contract.                                                     |
+| JWKS outage or malformed response | With a warmed cache, compare a retained known key with an unknown key that needs retrieval. Assert the unknown key never reaches the handler. A known cached key may remain valid; do not equate provider outage with revocation.                                                                                    |
+| Introspection and revocation      | Use the same token with active then inactive responses. Test missing `active`, malformed JSON/claim types, wrong audience/purpose where the provider requires them, failure and recovery. Verify actual client authentication and configured cache policy.                                                           |
+| Remote time bounds                | Delay response bytes beyond the configured read timeout. Assert the documented error, no business effect, bounded elapsed time with reasonable scheduling slack and expected outbound request count. A read-timeout case does not test DNS, TLS, connection stalls, pool acquisition or aggregate key-flood traffic. |
+
+Do not adopt an exact fetch count, cache lifetime or status from another application's
+probe. Record the dependency/configuration and the claim exercised. A forced refresh does
+not establish TTL expiry, and local HTTP does not prove production TLS or provider uptime.
+
+Keep invalid credentials separate from an unavailable validation service. For an API
+whose agreed policy is 401 for invalid tokens and sanitized 503 for backend failure, test
+both through the actual filter chain, including the bearer challenge for 401 and no leaked
+upstream content for 503. In Security 7.1.0 the default failure handler rethrows
+authentication-service exceptions; changing only the entry point is insufficient.
+[Token validation](token-validation.md) covers that version-specific behavior and malformed
+introspection response conversion. Do not install a custom failure handler merely to copy
+this example's optional status policy.
+
+If the project lacks a usable local HTTP test facility, first determine whether this remote
+boundary is actually changing. For an authorization-only change, use existing MVC tests.
+For a key-service/introspection change, add a focused integration test using a supported
+project test dependency or report the unavailable runtime check; a mocked remote success
+does not substitute for the missing evidence.
 
 ## Sources and compatibility
 
-Primary references were checked on **2026-09-22**. Spring's current documentation identified
-7.1.1 and the versioned 7.0 pages identified 7.0.7; code uses the locally available **7.1.0**
-artifacts and the **7.1.0 source tag**. The source baseline is Java 17, consistent with
-[Spring Security prerequisites](https://docs.spring.io/spring-security/reference/prerequisites.html).
-No claim of support for every older Security version follows from Java source compatibility.
+The Java API examples retain the **Java 17 source / Security 7.1.0 / Framework 7.0.8**
+reference baseline. The Boot example is partial configuration in the consuming project;
+it does not establish a new Boot dependency baseline or certify that project's property
+binding. Inspect its resolved version and effective beans.
 
-The executable fixture and English guidance were newly authored for this catalog. The
-earlier `spring-security-for-apis` in the local `java-skills` repository was inspected to
-establish intended scope; no prose or code was copied because its redistribution license
-was not established. It is not required to use this package. Official Spring source is
-Apache-2.0 licensed; links support API behavior without vendoring that implementation.
+The linked Security 7.1 guides may redirect to documentation for a later patch release;
+on this review they identified 7.1.1. Use the 7.1.0 source tags below for exact reference
+baseline behavior, and the consuming project's version for implementation. The 7.0
+migration guide is linked only for the change introduced in that major release.
 
-Consequential sources are linked beside their rules in the other references. The
-[7.1.0 JWT validator source](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/JwtValidators.java)
-establishes the fixture's RFC 9068 required-claim/type behavior;
-[NimbusJwtDecoder](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/NimbusJwtDecoder.java)
-establishes the named decoder builder behavior. Prefer the target version's official
-documentation/source when adapting it; similar method names on different builders do not
-establish API compatibility.
+The [7.1.0 validator source](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/JwtValidators.java),
+[decoder source](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/NimbusJwtDecoder.java),
+[introspector source](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-resource-server/src/main/java/org/springframework/security/oauth2/server/resource/introspection/SpringOpaqueTokenIntrospector.java)
+and [failure-handler source](https://github.com/spring-projects/spring-security/blob/7.1.0/web/src/main/java/org/springframework/security/web/authentication/AuthenticationEntryPointFailureHandler.java)
+support the version-sensitive mechanisms described here. Use the target version's official
+documentation/source when adapting; Java source compatibility does not establish framework
+or Boot compatibility.
+
+Source review, snippet compilation, local contract execution and agent evaluation are
+different evidence. Report only checks actually run, with their boundary and limitations.

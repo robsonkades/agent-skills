@@ -57,7 +57,7 @@ public final class Models {
 
     @Schema(name = "Violation", description = "One invalid input condition; the same field may have multiple entries.")
     public record Violation(
-            @Schema(description = "External field path or request for a global error.", example = "title", requiredMode = Schema.RequiredMode.REQUIRED)
+            @Schema(description = "Canonical public input path, with numeric collection indices where known; request for global or unmapped errors.", example = "title", requiredMode = Schema.RequiredMode.REQUIRED)
             String field,
             @Schema(description = "Constraint message without the rejected value.", example = "must not be blank", requiredMode = Schema.RequiredMode.REQUIRED)
             String message) {}

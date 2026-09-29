@@ -1,11 +1,11 @@
 schemaVersion: 1
 
 name: online-database-schema-migrations
-version: 1.0.0
+version: 1.1.1
 description: >-
   Planning and reviewing same-engine relational schema rollouts while old and new
   application versions coexist. Use for a hot-table column or constraint change,
-  resumable backfill, migration-runner failure, read/write cutover, or contraction
+  resumable backfill, migration-runner or Spring Boot startup failure, cutover, or contraction
   with a defined rollback boundary. Covers DDL execution risk and data correctness;
   not cross-engine migration, ingestion throughput tuning, or API/event schemas.
 
@@ -44,6 +44,7 @@ suggests:
   - mysql-innodb-performance
   - postgresql-performance
   - schema-evolution-and-compatibility
+  - spring-boot-jpa
   - sql-server-performance
 
 capabilities:

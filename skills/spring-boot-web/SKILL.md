@@ -19,6 +19,14 @@ Use **Java 25** as the authoring and example baseline. If the target project use
 release, state the compatibility difference and respect its constraints unless migration
 is authorized. A skill activation does not silently upgrade the application.
 
+Use the official [Spring Boot documentation](https://docs.spring.io/spring-boot/) for the
+resolved version as the starting authority for MVC auto-configuration and properties.
+When the HTTP contract crosses security, also consult the matching
+[Spring Security reference](https://docs.spring.io/spring-security/reference/); for persistence
+behavior behind an endpoint, route to JPA expertise with the matching
+[Spring Data JPA reference](https://docs.spring.io/spring-data/jpa/reference/jpa.html).
+Do not transplant a rolling reference's APIs into a different project release.
+
 ## Establish the actual contract
 
 Inspect only evidence that can change the decision:
@@ -45,6 +53,14 @@ configuration and requires accounting for Boot behavior that no longer applies.
 Inspect the resolved Jackson generation and extension APIs; do not transplant Jackson 2
 configuration or Boot 3 test imports into a Boot 4 project by resemblance.
 
+Start with Boot's MVC configuration, ordinary request/response DTOs and Jakarta validation.
+If standard MVC Problem Details satisfy the consumer, use `spring.mvc.problemdetails.enabled=true`;
+add `ResponseEntityExceptionHandler` overrides only for an actual representation requirement,
+such as a field-violation extension. Reuse the project's error policy when adequate. An example
+is evidence for its stated contract, not a checklist of infrastructure to copy: a plain public
+endpoint does not need a synthetic token issuer, a generic field-name translator or a new body
+buffering layer. Custom code needs a concrete contract that the existing facilities cannot meet.
+
 ## Make the HTTP boundary explicit
 
 | Decision             | Choose using these conditions                                                                                                                                                                                            | Verify the actual boundary                                                                                                                                           |
@@ -62,8 +78,15 @@ security integration, streaming, uploads or test selection. A uniqueness prechec
 a concurrency guarantee: coordinate a database constraint and map only its known conflict;
 do not translate every integrity exception into HTTP 409.
 
-When the application defines common 400/500 contracts, implement the MVC error policy once
-and publish reusable response components through a global customizer. Apply them only to
+Bound JSON before binding when request resource use is in scope: body bytes, parser depth/
+token sizes and DTO constraints are different controls. Form/multipart limits do not cap
+JSON bodies. Read [request bounds](references/request-bounds.md) for layer selection,
+unknown-length bodies and adversarial checks. Validation error paths must use the public
+input names, including nested JSON properties and header/query aliases; see the MVC reference.
+
+When many operations share an established 400/500 contract, reusable response components
+can avoid duplicate declarations. Prefer correct springdoc inference or existing annotations;
+use a global customizer when a real cross-group policy needs it. Apply it only to
 owned operations, preserve operation-specific responses/examples, and verify default plus
 grouped documents. Register referenced error schemas explicitly; do not depend on one
 controller annotation making a shared schema reachable. Keep unexpected failures observable
@@ -126,10 +149,14 @@ modules and APIs; `@MockBean`/`@SpyBean` were removed, with Framework `@MockitoB
 `@MockitoSpyBean` available for appropriate bean overrides. Mock identity does not test JWT
 validation. Test transactions do not roll back writes made by another server thread.
 
-For an executable starting example, load [the fixture guide](references/verification.md)
-and copy [the HTTP/OpenAPI fixture](assets/contract-fixture/) to an isolated temporary
-directory. Its tests exercise actual HTTP and generated contracts, not arbitrary applications.
-Do not claim its unexercised advanced families or browser checks passed.
+For a worked comparison of runtime behavior and generated documentation, load
+[the fixture guide](references/verification.md) and copy
+[the HTTP/OpenAPI fixture](assets/contract-fixture/) to an isolated temporary directory.
+Read only the relevant controller/model/test first. Its extra Unicode constraint and schema
+customizers serve explicit contracts; most controller tasks do not need them. The fixture is
+public and demonstrates no authentication or exact HTTP byte limit. Apply the conditional
+security/body-boundary guidance to the actual project when required; do not claim omitted
+boundaries, arbitrary applications or browser interaction were verified by its tests.
 
 Deliver changed behavior and consumer examples with targeted check results for implementation;
 for diagnosis/review, deliver prioritized evidence, competing explanations, corrections and
@@ -143,6 +170,15 @@ runner is unavailable, complete static work, state exactly which claim remains u
 and give the command or fixture needed to resolve it. Do not fabricate execution evidence.
 
 ## Composition
+
+If discovery establishes a WebFlux server, confirm the active stack and resolved Boot/Framework
+versions, then hand off to an available WebFlux specialist with the request contract, ingress
+limits, codec configuration and observed failure. Expect a reactive-stack decision and relevant
+project tests. If no specialist is available, use the matching official
+[Boot reactive](https://docs.spring.io/spring-boot/reference/web/reactive.html) and
+[Framework WebFlux](https://docs.spring.io/spring-framework/reference/web/webflux.html)
+references with the project's reactive tests; state any remaining evidence gap. Do not adapt
+Servlet filters, request-body advice or MVC exception hooks to the reactive pipeline by analogy.
 
 For Boot composition/version/property questions use `spring-boot`, passing resolved versions,
 the active configuration and observed condition report; expect a compatible wiring decision.

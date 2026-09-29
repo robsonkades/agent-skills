@@ -1,0 +1,48 @@
+schemaVersion: 1
+name: spring-http-clients
+version: 1.0.0
+description: >-
+  Implement and diagnose outbound Spring HTTP calls when RestClient, WebClient or
+  HttpExchange proxies lose Boot configuration, stall, buffer oversized responses
+  or retry uncertain mutations. Covers transport wiring and response ownership;
+  hands off general retry, deadline and idempotency policy. Excludes server endpoints
+  and automatic framework migration.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-http-clients
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-http-clients
+keywords:
+  - java
+  - spring-boot
+  - http-client
+  - restclient
+  - webclient
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+dependencies: []
+suggests:
+  - spring-boot
+  - spring-boot-web
+  - timeouts-and-deadlines
+  - retries-and-backoff
+  - idempotency
+  - circuit-breakers
+  - concurrency-limiting-and-bulkheads
+  - distributed-tracing-design
+  - spring-boot-observability
+  - java-application-security-basics
+capabilities:
+  - reads-source
+  - runs-commands
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring HTTP Clients
+      short_description: Boot client wiring, bounded responses and failure semantics

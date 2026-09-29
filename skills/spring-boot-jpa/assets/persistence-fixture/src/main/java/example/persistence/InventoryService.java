@@ -1,6 +1,7 @@
 package example.persistence;
 
 import java.util.NoSuchElementException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +20,16 @@ public class InventoryService {
     }
 
     @Transactional
-    public void reserveThenFail(String sku, int quantity) {
-        required(sku).reserve(quantity);
-        inventory.flush();
-        throw new IllegalStateException("Fixture failure after SQL execution");
-    }
-
-    @Transactional
-    public void reserveWithLock(String sku, int quantity) {
-        inventory.findForUpdate(sku).orElseThrow(NoSuchElementException::new).reserve(quantity);
+    public void changeNote(String sku, Long expectedVersion, String note) {
+        if (expectedVersion == null) {
+            throw new IllegalArgumentException("The client's expected version is required");
+        }
+        Inventory item = required(sku);
+        if (!expectedVersion.equals(item.getVersion())) {
+            throw new ObjectOptimisticLockingFailureException(Inventory.class, sku);
+        }
+        // Never assign expectedVersion to @Version. Hibernate still detects a race at commit.
+        item.changeNote(note);
     }
 
     private Inventory required(String sku) {

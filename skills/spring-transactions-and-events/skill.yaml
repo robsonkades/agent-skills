@@ -1,0 +1,43 @@
+schemaVersion: 1
+name: spring-transactions-and-events
+version: 1.0.0
+description: >-
+  Diagnose and implement Spring transaction interception and transaction-bound
+  listeners when rollback differs from intent, after-commit work disappears, or
+  persisted event publications need recovery. Verify proxy entry, rollback rules,
+  listener phases and repeat-safe republication. Excludes general isolation design,
+  ORM tuning and broker delivery topology.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-transactions-and-events
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-transactions-and-events
+keywords:
+  - java
+  - spring
+  - transactions
+  - events
+  - spring-modulith
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+suggests:
+  - enterprise-transactions
+  - spring-boot-jpa
+  - spring-boot-testing
+  - delivery-semantics
+  - idempotency
+  - gof-observer
+  - schema-evolution-and-compatibility
+capabilities:
+  - reads-source
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Transactions and Events
+      short_description: Interceptor, listener and persisted recovery contracts

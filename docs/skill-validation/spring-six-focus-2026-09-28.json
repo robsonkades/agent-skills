@@ -1,0 +1,849 @@
+{
+  "recordVersion": 1,
+  "date": "2026-09-28",
+  "task": "Implement Spring focus areas 1 through 6: outbound HTTP, API security, Boot testing, transactions/events, observability, and database migrations.",
+  "status": "implemented-and-locally-validated",
+  "baseline": {
+    "gitHead": "44be334cfc0b265bbc994ed29c21f2ad82c47238",
+    "existingUncommittedWorkPreserved": true,
+    "note": "Task-start registry already included the earlier Boot/web/JPA review; this task adds four skills and updates two."
+  },
+  "ownership": [
+    {
+      "skill": "spring-http-clients",
+      "owner": "spring_http_clients",
+      "kind": "new",
+      "from": null,
+      "to": "1.0.0",
+      "status": "stopped-writing"
+    },
+    {
+      "skill": "spring-security-for-apis",
+      "owner": "spring_security_advanced",
+      "kind": "expanded",
+      "from": "1.0.1",
+      "to": "1.1.0",
+      "status": "stopped-writing"
+    },
+    {
+      "skill": "spring-boot-testing",
+      "owner": "spring_boot_testing",
+      "kind": "new",
+      "from": null,
+      "to": "1.0.0",
+      "status": "stopped-writing"
+    },
+    {
+      "skill": "spring-transactions-and-events",
+      "owner": "spring_transactions_events",
+      "kind": "new",
+      "from": null,
+      "to": "1.0.0",
+      "status": "stopped-writing"
+    },
+    {
+      "skill": "spring-boot-observability",
+      "owner": "spring_boot_observability",
+      "kind": "new",
+      "from": null,
+      "to": "1.0.0",
+      "status": "stopped-writing"
+    },
+    {
+      "skill": "online-database-schema-migrations",
+      "owner": "spring_database_migrations",
+      "kind": "expanded",
+      "from": "1.0.0",
+      "to": "1.1.0",
+      "status": "stopped-writing"
+    }
+  ],
+  "toolchain": {
+    "jdkRuntime": "Eclipse Temurin 25.0.3",
+    "maven": "3.9.15",
+    "newBootFixtures": {
+      "javaRelease": 25,
+      "springBoot": "4.1.1",
+      "springFramework": "7.0.9"
+    },
+    "securityFixture": {
+      "javaRelease": 17,
+      "runtime": "25.0.3",
+      "springSecurity": "7.1.0",
+      "springFramework": "7.0.8",
+      "java17RuntimeExecuted": false
+    }
+  },
+  "validation": {
+    "global": {
+      "command": "npm run verify",
+      "exitCode": 0,
+      "tests": 355,
+      "suites": 67,
+      "passed": 355,
+      "failures": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "log": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/verify.log",
+      "scope": "Build, boundaries, lint, formatting, registry consistency, version checks, repository tests; completed before evidence report files were added. Report files receive scoped formatting and diff checks afterward."
+    },
+    "registry": {
+      "command": "npm run registry:build",
+      "before": 283,
+      "after": 287,
+      "changed": [
+        {
+          "name": "online-database-schema-migrations",
+          "before": "1.0.0",
+          "after": "1.1.0"
+        },
+        {
+          "name": "spring-boot-observability",
+          "before": null,
+          "after": "1.0.0"
+        },
+        {
+          "name": "spring-boot-testing",
+          "before": null,
+          "after": "1.0.0"
+        },
+        {
+          "name": "spring-http-clients",
+          "before": null,
+          "after": "1.0.0"
+        },
+        {
+          "name": "spring-security-for-apis",
+          "before": "1.0.1",
+          "after": "1.1.0"
+        },
+        {
+          "name": "spring-transactions-and-events",
+          "before": null,
+          "after": "1.0.0"
+        }
+      ],
+      "removed": [],
+      "unchangedExisting": 281
+    },
+    "strictPackages": [
+      {
+        "name": "spring-http-clients",
+        "exitCode": 0,
+        "result": {
+          "ok": true,
+          "directory": "C:\\git\\agent-skills\\skills\\spring-http-clients",
+          "name": "spring-http-clients",
+          "version": "1.0.0",
+          "issues": []
+        },
+        "stderr": ""
+      },
+      {
+        "name": "spring-security-for-apis",
+        "exitCode": 0,
+        "result": {
+          "ok": true,
+          "directory": "C:\\git\\agent-skills\\skills\\spring-security-for-apis",
+          "name": "spring-security-for-apis",
+          "version": "1.1.0",
+          "issues": []
+        },
+        "stderr": ""
+      },
+      {
+        "name": "spring-boot-testing",
+        "exitCode": 0,
+        "result": {
+          "ok": true,
+          "directory": "C:\\git\\agent-skills\\skills\\spring-boot-testing",
+          "name": "spring-boot-testing",
+          "version": "1.0.0",
+          "issues": []
+        },
+        "stderr": ""
+      },
+      {
+        "name": "spring-transactions-and-events",
+        "exitCode": 0,
+        "result": {
+          "ok": true,
+          "directory": "C:\\git\\agent-skills\\skills\\spring-transactions-and-events",
+          "name": "spring-transactions-and-events",
+          "version": "1.0.0",
+          "issues": []
+        },
+        "stderr": ""
+      },
+      {
+        "name": "spring-boot-observability",
+        "exitCode": 0,
+        "result": {
+          "ok": true,
+          "directory": "C:\\git\\agent-skills\\skills\\spring-boot-observability",
+          "name": "spring-boot-observability",
+          "version": "1.0.0",
+          "issues": []
+        },
+        "stderr": ""
+      },
+      {
+        "name": "online-database-schema-migrations",
+        "exitCode": 0,
+        "result": {
+          "ok": true,
+          "directory": "C:\\git\\agent-skills\\skills\\online-database-schema-migrations",
+          "name": "online-database-schema-migrations",
+          "version": "1.1.0",
+          "issues": []
+        },
+        "stderr": ""
+      }
+    ],
+    "creatorQuickValidation": {
+      "completed": [
+        "spring-http-clients",
+        "spring-transactions-and-events",
+        "spring-boot-observability",
+        "spring-boot-testing"
+      ],
+      "method": "uv run --no-project --with pyyaml python quick_validate.py with temporary UV_CACHE_DIR",
+      "passed": true
+    },
+    "java": {
+      "junitReports": [
+        {
+          "fixture": "http",
+          "reportRoot": "C:/Users/robso/AppData/Local/Temp/spring-http-clients-23c262821d3d4c4eaa11fe4895ecc229/client-fixture/target/surefire-reports",
+          "suites": [
+            {
+              "name": "example.clients.ClientContractTest",
+              "tests": 7,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        },
+        {
+          "fixture": "testing",
+          "reportRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\spring-six-8b5537e48d8746369e5455f4a187f700\\boot-testing\\phase-check\\fixed\\harness-fixture\\target\\surefire-reports",
+          "suites": [
+            {
+              "name": "example.harness.ContextCacheTest",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "example.harness.LiveServerBoundaryTest",
+              "tests": 1,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "example.harness.MvcSliceTest",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            {
+              "name": "example.harness.PersistenceBoundaryTest",
+              "tests": 3,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        },
+        {
+          "fixture": "transactions",
+          "reportRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\spring-six-8b5537e48d8746369e5455f4a187f700\\transactions\\fixture\\target\\surefire-reports",
+          "suites": [
+            {
+              "name": "example.transactions.TransactionContractTest",
+              "tests": 8,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        },
+        {
+          "fixture": "observability",
+          "reportRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\spring-six-8b5537e48d8746369e5455f4a187f700\\observability\\run3\\target\\surefire-reports",
+          "suites": [
+            {
+              "name": "example.observability.ObservationContractTest",
+              "tests": 6,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        },
+        {
+          "fixture": "migrations",
+          "reportRoot": "C:\\Users\\robso\\AppData\\Local\\Temp\\spring-six-8b5537e48d8746369e5455f4a187f700\\migrations\\fixture\\target\\surefire-reports",
+          "suites": [
+            {
+              "name": "example.migration.MigrationLifecycleTest",
+              "tests": 13,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            }
+          ]
+        }
+      ],
+      "tests": 42,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "security": {
+        "originalContractCases": 29,
+        "remoteContractCases": 41,
+        "failures": 0,
+        "logs": [
+          "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/security/baseline-final.log",
+          "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/security/remote-final.log"
+        ]
+      }
+    },
+    "negativeControls": {
+      "security": [
+        {
+          "name": "timeout",
+          "compiled": true,
+          "exit": 1,
+          "expected": "JWKS read timeout was not bounded",
+          "detected": true
+        },
+        {
+          "name": "policy",
+          "compiled": true,
+          "exit": 1,
+          "expected": "wrong owner denied before effect: status=200, effects=1",
+          "detected": true
+        },
+        {
+          "name": "introspection-audience",
+          "compiled": true,
+          "exit": 1,
+          "expected": "active wrong audience: status=200, effects=1",
+          "detected": true
+        },
+        {
+          "name": "role-prefix",
+          "compiled": true,
+          "exit": 1,
+          "expected": "unmapped role grants no editor permission [ROLE_ORDER_EDITOR]: status=200, effects=1",
+          "detected": true
+        }
+      ],
+      "transactionPhase": {
+        "mutation": "AFTER_COMMIT -> BEFORE_COMMIT in isolated copy",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "expectedFailure": true,
+        "cleanupFailures": 0,
+        "log": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/boot-testing/phase-check/before-commit-mutation.log"
+      },
+      "note": "Five targeted controlled mutations detected; this is not a comprehensive mutation-testing score."
+    },
+    "postgres": [
+      {
+        "skill": "spring-boot-testing",
+        "profile": "postgres-it",
+        "sourcesCompiled": true,
+        "attempted": true,
+        "setupErrors": 1,
+        "executedDatabaseScenarios": 0,
+        "reason": "No valid Docker environment",
+        "evidenceRoot": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/boot-testing",
+        "finalSourcesRecompiled": true
+      },
+      {
+        "skill": "online-database-schema-migrations",
+        "profile": "postgresql-it",
+        "sourcesCompiled": true,
+        "attempted": true,
+        "setupErrors": 1,
+        "executedDatabaseScenarios": 0,
+        "pendingScenarios": 4,
+        "reason": "No valid Docker environment",
+        "log": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/migrations/postgresql-test.log"
+      }
+    ],
+    "sourceAudit": {
+      "files": 78,
+      "links": 44,
+      "packages": [
+        {
+          "name": "spring-http-clients",
+          "version": "1.0.0",
+          "files": 10,
+          "localLinks": 7
+        },
+        {
+          "name": "spring-security-for-apis",
+          "version": "1.1.0",
+          "files": 7,
+          "localLinks": 12
+        },
+        {
+          "name": "spring-boot-testing",
+          "version": "1.0.0",
+          "files": 22,
+          "localLinks": 6
+        },
+        {
+          "name": "spring-transactions-and-events",
+          "version": "1.0.0",
+          "files": 8,
+          "localLinks": 4
+        },
+        {
+          "name": "spring-boot-observability",
+          "version": "1.0.0",
+          "files": 11,
+          "localLinks": 6
+        },
+        {
+          "name": "online-database-schema-migrations",
+          "version": "1.1.0",
+          "files": 20,
+          "localLinks": 9
+        }
+      ],
+      "brokenLinks": [],
+      "snapshotDrift": [],
+      "hashes": {
+        "skills/spring-http-clients/SKILL.md": "d8c8f51b016e305dc56d6b728fac18b41938b94291ef07313f1c1b185a3820fb",
+        "skills/spring-http-clients/assets/client-fixture/README.md": "b0c8d2b5c2445d6d96383ed1ac25d08815ef3fbfb7748611b0be26981e6a1898",
+        "skills/spring-http-clients/assets/client-fixture/pom.xml": "d34bdc0477c1dcfd82e8d0e30033455122cf9089affbe3371593a449282facec",
+        "skills/spring-http-clients/assets/client-fixture/src/main/java/example/clients/PeerClient.java": "14fa55d8c94efa006cdc73ea947a78b5c6e9550205928134791115360c944528",
+        "skills/spring-http-clients/assets/client-fixture/src/main/java/example/clients/PeerConfiguration.java": "408e60894ff50feed635c17046dfe38ccb9161cb4ea82463f3bca7365ace7719",
+        "skills/spring-http-clients/assets/client-fixture/src/test/java/example/clients/ClientContractTest.java": "b42440ea6c008b86f4734ca097681d7d151df26e0c1bacfdf2f47e57e60e9dcd",
+        "skills/spring-http-clients/references/failure-and-response-bounds.md": "444a140b178a8628793c0a79940e481d8b8f0be999922e81f0653dc842b050b0",
+        "skills/spring-http-clients/references/verification.md": "0ad198c1e89f3a2e9ab854c7aafdf10855f705bd5b416213675f3d7dbff06333",
+        "skills/spring-http-clients/references/wiring-and-transports.md": "4c78c3898013d090ba4c569a39df8a4911138172161cb6d899595b2ceb27c3d0",
+        "skills/spring-http-clients/skill.yaml": "c4ae239d140e69dc9b2a2024b07475f20ff0a48bcd2859b772e8843e76cf6f6b",
+        "skills/spring-security-for-apis/SKILL.md": "3577297580e0aa045b244e47fa0240ee142694e8ef38c890ca2d4098f67c593e",
+        "skills/spring-security-for-apis/assets/RemoteSecurityContractCheck.java": "c40ec371a1247a52eb56d9cb78d4e0a566ef74a0060be5afa0f2ee0fb8575fe5",
+        "skills/spring-security-for-apis/assets/SecurityContractCheck.java": "c35bf25c1f8adef10b1cf7e7cdd0122f12707ed4c06b5ffc16b9c102713f3c3a",
+        "skills/spring-security-for-apis/references/chains-and-browser.md": "0dfadc8e8b840fa4a387ef5d7df4f7fb3069d64d95fb83b57546f36e3844a7c2",
+        "skills/spring-security-for-apis/references/token-validation.md": "d39edde462bf26cee91d178667d89c09b3321f2fd71875792e3269a691c395c6",
+        "skills/spring-security-for-apis/references/verification.md": "132751737cac25cf2343a3fa1ba491042cd6af5681c7c7583a489f4e9f55897e",
+        "skills/spring-security-for-apis/skill.yaml": "fc5c2fd35117a7533ffa5ee89c1dc07377fb66c5f21410ecbfc56ebaf2f9698d",
+        "skills/spring-boot-testing/SKILL.md": "b5220ffc827d988977ffc680f88e9b8e4a6fa43d3d99666e75cecf97b672970d",
+        "skills/spring-boot-testing/assets/harness-fixture/README.md": "be6ab1e1ba669dc7a1ef3f78ea04b5deb6f051639ba5d8958146e99a3c0f56e7",
+        "skills/spring-boot-testing/assets/harness-fixture/pom.xml": "bb969f03a6e1256d9291358052babbd84b9e2926176b9f9f324577dbad054e73",
+        "skills/spring-boot-testing/assets/harness-fixture/src/it/java/example/harness/PostgresLifecycleIT.java": "ee118eab0f5ef5d3ef41d5c80e436ab9f04ea872ae55312dbeb9eaff126e023b",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/ApiErrors.java": "22e65fea193f7575d255bc2c2876e3e8fd1efabdb3feb59a99bbecb770ec5cff",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/ApiSecurity.java": "021feeadd2a56773607e26a14ead7ea948ea17ac3a96b896de03156501c62c1b",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/CommitObserver.java": "7fed716c99d9d275af9ae821b4dd78a2c385c55af0afc8e34ccb064b3e91f29a",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/FixtureApplication.java": "475bc82db43894bbb6e28e557045865608707a55eee4c7dbbc8e8f24e79bf85e",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/Ticket.java": "31a447b836c3a59d0adf00d2223bd3959d571b5dd000177ac8909fb4aba55ba1",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/TicketController.java": "76968926ccb5871b22071ec509913b0e55c1cbd7db283df68cd6d37cca63de62",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/TicketService.java": "af0f7009934e29a6cce0b2863d31292cc8e84fc2cd238bd87ffea1410760ea63",
+        "skills/spring-boot-testing/assets/harness-fixture/src/main/java/example/harness/Tickets.java": "6822f7df8ceaa653506539511d43e7f9340a2603e400f67addd00ef75faf1817",
+        "skills/spring-boot-testing/assets/harness-fixture/src/test/java/example/harness/ContextCacheTest.java": "5b1837c872723f1028bd225356fab483de142ffc3b77318b1dba8f010e9210ea",
+        "skills/spring-boot-testing/assets/harness-fixture/src/test/java/example/harness/IndependentRows.java": "9c8830dd7753fb2f6dcd605e7e3103be07e15e864a090e045cf64a74e865089a",
+        "skills/spring-boot-testing/assets/harness-fixture/src/test/java/example/harness/LiveServerBoundaryTest.java": "06d4bbfd51793a6f3dde3c997a70ad9f022bee7d9d6689568ebee396304c677b",
+        "skills/spring-boot-testing/assets/harness-fixture/src/test/java/example/harness/MvcSliceTest.java": "b5f3c3570d5821d67235e009bab5bec6a94d994a309e562a4db759f34e857be2",
+        "skills/spring-boot-testing/assets/harness-fixture/src/test/java/example/harness/PersistenceBoundaryTest.java": "ee9e7fa41b61aa1caf704114c0adb487906f4db1f58a14e202ad93d6c3a18315",
+        "skills/spring-boot-testing/references/context-and-services.md": "298b716fb336a88f3e11e0f140cbf39d4c68a59e40becfb95b0eef77fa17671e",
+        "skills/spring-boot-testing/references/slices-and-overrides.md": "91ad2ae7eb37794ca3bca8ad597b3358b3417b433800f22db3eecda8891591cd",
+        "skills/spring-boot-testing/references/transaction-observability.md": "2422f89cb39bcd42178ed9bcb9b9cc38130c9950e5450da444f984238f02c64d",
+        "skills/spring-boot-testing/references/verification.md": "a27afac244c880e506c9ad51719d46a7714eea7ee0c6225332a56e6cdfa1dc4f",
+        "skills/spring-boot-testing/skill.yaml": "7d6685b9818f7a960fefa5d69ffe48e80f1afde3595d5a255fc543a289397811",
+        "skills/spring-transactions-and-events/SKILL.md": "356b81f84f34461ddfd771e0db095427775e34bcc1fb25a4e30db51d1dff8288",
+        "skills/spring-transactions-and-events/assets/transaction-fixture/pom.xml": "caa4854bdfb3e6a1d7f4016df989ac67c113281c96a224c02963c9da50f57bfe",
+        "skills/spring-transactions-and-events/assets/transaction-fixture/src/main/java/example/transactions/FixtureConfiguration.java": "bebdbca6318131d545a31477e3e1a818f9dea50b4b83a76920e0e7eeba003fe2",
+        "skills/spring-transactions-and-events/assets/transaction-fixture/src/test/java/example/transactions/TransactionContractTest.java": "4c0b7bb8c7da1bca6150481093b6a12675aadbe0b4fca55b35f61f9e712b721a",
+        "skills/spring-transactions-and-events/references/event-wiring-and-recovery.md": "d545ec0c91f956204005127da13a77fc4eafe46a2c71bb0bb0b8556730f2ea7e",
+        "skills/spring-transactions-and-events/references/interception-and-rollback.md": "1feb65e497537687b87ac249f291c3ad32d4fd5bd87a72bffd35f566d77c5fd7",
+        "skills/spring-transactions-and-events/references/verification.md": "9ad27b922655136c220bec28968c545604283c4f9eca79a4abd53c1429b48a15",
+        "skills/spring-transactions-and-events/skill.yaml": "3fa35af5e68ff1f6f8a8e215969c14c52803b915eacc1df5dbf431832dd86c5b",
+        "skills/spring-boot-observability/SKILL.md": "98ecf4cddbb1691553b3b213d5a419c567bbf0b006b2ebddbf4aca9ba353f703",
+        "skills/spring-boot-observability/assets/observation-fixture/README.md": "c65b27de2aad84799bcf4ee82ada2ae538dfd6b01da824173f0b19f12eaf088d",
+        "skills/spring-boot-observability/assets/observation-fixture/pom.xml": "9b092d2f871d532bc88bb15454ca0e2709056745ed5ecdf05f7e512570e3c3d3",
+        "skills/spring-boot-observability/assets/observation-fixture/src/main/java/example/observability/AsyncWork.java": "98c6565af55764f9b434ad0541ea6432db66eabd71161aa55ab7bea5561f1856",
+        "skills/spring-boot-observability/assets/observation-fixture/src/main/java/example/observability/ObservationApplication.java": "8bd984635897cc7a97495f99cd770f0c94282a788dd294ceba89b6f0be60bf58",
+        "skills/spring-boot-observability/assets/observation-fixture/src/main/java/example/observability/WorkController.java": "3177fb2740f9ae89aa9012c88d52dde5b2f7d939cc39fe9bd8f2cff6869958be",
+        "skills/spring-boot-observability/assets/observation-fixture/src/test/java/example/observability/ObservationContractTest.java": "3043e37c5d8bdd80af0f0ec605ab3922cc99761598863d097c80bf2d3ef8409f",
+        "skills/spring-boot-observability/references/instrumentation-and-propagation.md": "5a67ff82c579a5d3ec27ef9de9c57940e731ab932ace9897af77b0e22fa4586a",
+        "skills/spring-boot-observability/references/management-and-probes.md": "0ce88e89123cb47fb8ab73d6124504fcc906f1e189fa6eafec6c2f01f5052663",
+        "skills/spring-boot-observability/references/verification.md": "3bdf024372449d819ebf0dc18d05df3b3db6b9add2b7a92150dcb6fc760d6bfe",
+        "skills/spring-boot-observability/skill.yaml": "1af37f7323c540e9e6e717fe50300794890b9b9ec04eb2c7e28f503d79d9a781",
+        "skills/online-database-schema-migrations/SKILL.md": "cbefb567f93f49cd854ff336c135b58a5df62327088a3aff77bd5c34839943b7",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/README.md": "01df8ebcb5a053c445a6982f9c2e3601f732f264da9694c0d8a6d710a72d4e9d",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/pom.xml": "2bebb3d572ad2b0df7e6ec14e53b92a1e67b847799968164a9c66c1b3e12712b",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/it/java/example/migration/PostgresqlMigrationIT.java": "b28ffed04020f32a588d7fbee1d3b5a993822de986c6c20a2545394e4e2ac103",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/java/example/migration/BootHarness.java": "45eb653904f1fd0120b088f6f369c4c16ffbca0c8cc878a3866e627cba7ee0b2",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/java/example/migration/MigrationLifecycleTest.java": "d88453b4d0893a1fe43be6c2ec66b65680a8222dcc838811ad3c638d6c51e9c4",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/java/example/migration/current/Invoice.java": "31bc1466cf118be8a5b8ff84b7236b8ff9d9665cee0e41c045836ad9d7f7712f",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/java/example/migration/legacy/LegacyInvoice.java": "7ffd55e5e3d2902255944c168098468493449493255568aeb90dc781d83b4783",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/application-flyway.properties": "1159d6dfed27572f4f9480d747b23bb8d99c6d32703d165dfff7ead9fd057d15",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/application-liquibase.properties": "da708a52310e6bc4c13d1d42a12f9df343a4512c5bd53c21c819b1327d3456e4",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/application.properties": "ca8fe63af5cce1134f0dc3e50eb69673152ca6e0e79c2472fcf68e1dad10e5af",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/db/changelog/expand.xml": "2c9d9c1b4b1216f11be88db33f503fc0c324aefe55e82a8bb7030c4d6c05221b",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/db/changelog/initial.xml": "474cdfaa250c2f242593edf8a62e484b67c1a4b409a4de91a85c2af826c2dc43",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/db/changelog/master.xml": "e5103ba054fb1bc18cb072a82d36a5459a01bf11f48e486fe8c2126df3631cf5",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/db/migration/V1__initial.sql": "c784168d368201a504db4e7701d0b926613977b0e3c2d603652480dd5f9bb0ad",
+        "skills/online-database-schema-migrations/assets/boot-migration-fixture/src/test/resources/db/migration/V2__expand.sql": "1f745843251130abb3d5eead4939f8c6a8872e918b9377c00dd323d4685688da",
+        "skills/online-database-schema-migrations/references/ddl-and-runner-control.md": "505a0bb60754dfd47d2677bbf0b14e6a6ce301dd22d7e7adf2c47bccc2304a05",
+        "skills/online-database-schema-migrations/references/spring-boot-lifecycle.md": "a4c2528d95dec79d674f5b6d3ee8a7e1d60f7a9f3a99856dfba6ae35868de7c1",
+        "skills/online-database-schema-migrations/references/worked-rollout.md": "d3d6f62466e1c1c9ae431ef0af7f3857b89b9d374746d92a9045f07eb36443e8",
+        "skills/online-database-schema-migrations/skill.yaml": "8dad3a9cfe41d7bbfb628d1c239e8cf39a96827c2ea3288db04998e45013e848"
+      }
+    },
+    "preservation": {
+      "missing": [],
+      "unexpectedChanges": [],
+      "startingFiles": 1335,
+      "expectedChanges": [
+        "registry/skills.yaml",
+        "skills/online-database-schema-migrations/references/ddl-and-runner-control.md",
+        "skills/online-database-schema-migrations/SKILL.md",
+        "skills/online-database-schema-migrations/skill.yaml",
+        "skills/spring-security-for-apis/references/chains-and-browser.md",
+        "skills/spring-security-for-apis/references/token-validation.md",
+        "skills/spring-security-for-apis/references/verification.md",
+        "skills/spring-security-for-apis/SKILL.md",
+        "skills/spring-security-for-apis/skill.yaml"
+      ],
+      "userPlanHash": "e6c10b24e1d11cc76af662d72a0e94812472d645d8c1f21f3342a1156d332d88"
+    }
+  },
+  "materialFindings": [
+    {
+      "area": "testing",
+      "problem": "Before/end callback counts also pass with BEFORE_COMMIT.",
+      "correction": "Observe committed data using an independent physical READ_COMMITTED connection inside the callback; preserve counts and cleanup checks.",
+      "evidence": "Eight final tests pass; changing only callback phase yields the expected assertion failure.",
+      "historyPreserved": true
+    },
+    {
+      "area": "observability",
+      "problem": "Receiving an HTTP response can precede server observation completion.",
+      "correction": "Bounded wait for exactly 12 completed observations per route before dimension assertions.",
+      "evidence": "Six final tests pass; expected counts and secret-label checks unchanged."
+    },
+    {
+      "area": "migrations",
+      "problem": "Rolling guide credential-fallback wording does not match the tested Boot4.1.1 explicit migration URL path.",
+      "correction": "Document path/version qualification and explicit runner URL/user/password.",
+      "evidence": "Protected H2 authentication probes plus pinned Flyway/Liquibase configuration source; no production-engine conclusion."
+    },
+    {
+      "area": "security",
+      "problem": "Backend authentication failure and invalid credentials do not necessarily traverse the same handler; malformed claims need type handling.",
+      "correction": "Explicit sanitized503 backend policy, invalid401, forbidden403, strict claim mapping and real HTTP/proxy coverage.",
+      "evidence": "29 original plus41 new contract cases; four targeted mutations detected."
+    },
+    {
+      "area": "http",
+      "problem": "Counting close invocations conflated duplicate close calls with distinct resource cleanup.",
+      "correction": "Track distinct closed response resources after checking versioned Framework source.",
+      "evidence": "Seven final tests pass; initial two assertion failures retained in log."
+    },
+    {
+      "area": "packaging",
+      "problem": "Optional SLO evaluation handoff in a table was interpreted as required routing dependency.",
+      "correction": "Move the optional case to adjacent prose, keeping declared suggestion and semantics.",
+      "evidence": "Registry build and full verify pass; no dependency promotion."
+    }
+  ],
+  "evaluation": {
+    "kind": "paired-decision-review-proposals",
+    "casesFrozenBeforeRuns": true,
+    "cases": [
+      {
+        "id": "http-ambiguous-write",
+        "skill": "spring-http-clients",
+        "request": "Review an outbound client in a Java 25 / Spring Boot 4.1.1 service. The application injects RestClient.Builder elsewhere for tracing and TLS, but BillingClient uses RestClient.create(baseUrl). It POSTs /charges inside a loop that retries every RestClientException three times and creates a new Idempotency-Key each time. The provider sometimes records the charge and then the response is lost; the client reports a timeout. Operations says Boot timeout configuration has no effect and asks to add a typed @HttpExchange interface and keep the three retries. Propose the smallest correct implementation and test plan, including the timeout/response-loss outcome and any missing provider contract. Do not upgrade dependencies. No provider sandbox or runtime result is supplied.",
+        "criteria": [
+          "Uses/configures the injected Boot-managed builder and builds interface proxy over that configured client, preserving customizers.",
+          "Checks resolved Boot/transport settings rather than blindly copying old property names; separates timeout surfaces and total attempt budget.",
+          "Treats POST timeout as unknown outcome, refuses blind redispatch/new-key-per-attempt and requires stable intent/idempotency/reconciliation contract.",
+          "Specifies actual loopback tests for request configuration, delayed/lost response and effect count, with execution honestly pending."
+        ]
+      },
+      {
+        "id": "security-rotation-tenancy",
+        "skill": "spring-security-for-apis",
+        "request": "Review a Java 17 source / Spring Security 7.1 Servlet resource server. NimbusJwtDecoder fetches an allowlisted JWKS URL. During issuer key rotation, a new kid arrives while JWKS is unavailable. The team proposes decoding the token without signature verification during the outage and trusting roles=[ADMIN] to permit edits to any requested account. Existing tests use jwt() and @WithMockUser only. Requirements: cached known-key tokens may continue under an agreed bounded freshness policy; unknown keys must not grant access; account edits must respect owner/tenant policy. Describe the implementation boundaries and executable negative tests. Also explain what changes if the product instead requires a removed key to stop being accepted immediately. Do not implement an identity provider or change the Java baseline.",
+        "criteria": [
+          "Refuses decode-only fallback and rejects unknown key/unavailable verification without handler side effects.",
+          "Distinguishes cached known-key validation, rotation refresh and immediate revocation requirement; identifies bounded freshness/invalidation/introspection tradeoff.",
+          "Does not claim jwt()/WithMockUser prove decoder/JWKS/claim converter; specifies real signed tokens plus local HTTP and actual proxy.",
+          "Requires explicit type/allowlist authority mapping and object/tenant policy beyond ADMIN, preserving neighboring policy ownership and baseline."
+        ]
+      },
+      {
+        "id": "testing-real-commit",
+        "skill": "spring-boot-testing",
+        "request": "Review a Java 25 / Boot 4.1.1 test setup. @SpringBootTest(webEnvironment=RANDOM_PORT) is also @Transactional. A @BeforeEach repository.save creates an uncommitted account; a real HTTP POST tries to update it and emit an AFTER_COMMIT event. @AfterEach repository.deleteAll runs in the test transaction. The test asserts HTTP 200 but later suites observe leaked rows; another test uses a class-scoped container and a cached Spring context after that container stops. Docker is currently unavailable. Recommend focused changes and discriminating checks, while keeping real HTTP and after-commit behavior in scope. Report precisely which claims can be established without Docker.",
+        "criteria": [
+          "Identifies server/test transaction separation and visibility of uncommitted setup; flush alone does not commit.",
+          "Requires committed setup and cleanup plus independent post-commit database/event observation, not only status200.",
+          "Aligns container/context lifetime without indiscriminate dirty-context masking; considers cache identity and disposal.",
+          "Distinguishes H2/local harness evidence from production engine/container execution and does not claim skipped/unexecuted tests passed."
+        ]
+      },
+      {
+        "id": "transaction-event-recovery",
+        "skill": "spring-transactions-and-events",
+        "request": "Review this Java 25 / Boot 4.1.1 workflow: CheckoutService.checkout() calls this.reserve() (reserve has @Transactional), saves an order, and publishes OrderAccepted. A listener has @Async plus @TransactionalEventListener(AFTER_COMMIT), calls a remote fulfillment service, then updates a local delivery marker. A developer says AFTER_COMMIT guarantees no event loss and exactly-once fulfillment. The process can stop after the database commit or after remote success before marking delivery. No XA transaction or provider deduplication contract exists. Propose concrete transaction boundaries and a recoverable implementation, with verification cases and explicit guarantees. Preserve independently committed order state during delivery failures.",
+        "criteria": [
+          "Detects self-invocation transaction bypass and establishes real proxied/programmatic boundary plus rollback contract.",
+          "Explains after-commit/no-transaction/async limitations and rejects durable/exactly-once claims from annotation alone.",
+          "Makes event publication durable atomically with business commit and recovery/republication explicit, using outbox or appropriate persistent publication implementation.",
+          "Handles remote-success-before-marker as duplicate/unknown window, requires idempotency/reconciliation rather than exactly-once assertion; tests restart/failure and independent committed state."
+        ]
+      },
+      {
+        "id": "observability-context",
+        "skill": "spring-boot-observability",
+        "request": "Review observability in Java 25 / Boot 4.1.1. HTTP endpoints already emit observations. A controller gets @Observed, calls an @Async service on a custom named ThreadPoolTaskExecutor, and adds userId, raw request URL and Authorization header to metric tags so every request is searchable. management.endpoints.web.exposure.include=* and a permitAll security chain are used for dashboards. Traces lose parent context in background work, and threads may be reused for another user. Propose scoped Boot wiring corrections and tests. There is no production collector/backend or load data; don't claim ingestion, privacy or overhead properties you cannot verify.",
+        "criteria": [
+          "Inspects existing instrumentation to avoid duplicate observations; separates bounded metric dimensions from high-cardinality trace/log attributes and excludes secrets.",
+          "Configures/verifies propagation on actually selected custom executor including scope cleanup/no cross-task leakage; does not assume autoexecutor property configures every executor.",
+          "Narrows management exposure/access with explicit security and probe semantics, rather than all endpoints public.",
+          "Uses real Boot beans/async task boundaries and local observation/export evidence with parent/error/cleanup assertions; does not imply backend/load verification."
+        ]
+      },
+      {
+        "id": "migration-bootstrap",
+        "skill": "online-database-schema-migrations",
+        "request": "Review migration wiring for a Java 25 / Spring Boot 4.1.1 app deploying 12 replicas to PostgreSQL. Flyway and Liquibase are both enabled, Hibernate ddl-auto=update, and there are application and reporting datasources; developers rely on @Primary to choose the migration target without checking. A deploy adds a mandatory column with existing rows while old app replicas still run. The proposal is to edit an already-applied migration and let every pod repair the checksum on startup. Choose a safe schema owner and Boot initialization plan, rollout/backfill order and failure/recovery checks. Explain startup migrations versus a separate migration job. Only H2 is available locally today; no PostgreSQL/container run has occurred.",
+        "criteria": [
+          "Chooses one owner/runner per schema, removes competing Hibernate mutation and checks datasource/schema selection and initialization ordering.",
+          "Preserves applied migration history/checksums instead of automatic repair; versioned forward correction and explicit recovery evidence.",
+          "Plans expand/backfill/validation/enforcement/contract around old+new coexistence, not immediate destructive mandatory column.",
+          "Explains replica runner coordination and startup vs dedicated job tradeoff without claiming lock makes DDL online; distinguishes H2 wiring evidence from PostgreSQL rollout/locking proof."
+        ]
+      }
+    ],
+    "actorCommon": "This is a bounded decision-review evaluation, not a request to implement or execute an application. Produce a concrete review and implementation/test proposal in at most 850 words. Use the supplied facts and state missing evidence; do not claim unexecuted checks passed. Do not ask the coordinator questions. Do not spawn agents. You may consult official external documentation with available web tools; use no other local repository, skill, rubric or actor output. Shared filesystem access is procedural, not a sandbox. Do not touch services, configuration, dependencies or source code. Write only response.md in your assigned temporary output directory using apply_patch, then report that path. You are not alone in the workspace; preserve others' files. The complete user request follows.",
+    "modelAndSettings": "Fresh fork_turns:none actors with inherited model/reasoning and no overrides. Actual model/version was not independently queried.",
+    "conditions": "Six without-skill runs, two original-skill runs, and six final revised-skill runs. One additional completed testing run preserves the pre-phase-correction finding.",
+    "completedRuns": 15,
+    "finalComparedRuns": 14,
+    "abortedRuns": [
+      {
+        "actor": "eval_observability_revised",
+        "condition": "with-revised-skill",
+        "reason": "Interrupted before completion because static audit found a fixture timer-observation race; replaced by eval_observability_revised_final using the corrected snapshot."
+      }
+    ],
+    "results": [
+      {
+        "id": "http-ambiguous-write",
+        "condition": "without-skill",
+        "actor": "eval_http_without",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Managed builder/interface proxy preserved; explicit Boot4.1 plural client properties and actual transport; stable intent and unknown timeout outcome; loopback effect-count plan. Proposed checks explicitly unexecuted.",
+        "evidence": "actors/http-ambiguous-write/without-skill/response.md"
+      },
+      {
+        "id": "security-rotation-tenancy",
+        "condition": "without-skill",
+        "actor": "eval_security_without",
+        "criteria": ["pass", "pass", "pass", "partial"],
+        "assessment": "Rejects unverified tokens; covers cache freshness/unknown kid/revocation tradeoff and real signed/JWKS/proxy tests. Explicit allowlist and owner/tenant enforcement present, but malformed role-claim type handling is not concretely specified.",
+        "evidence": "actors/security-rotation-tenancy/without-skill/response.md"
+      },
+      {
+        "id": "testing-real-commit",
+        "condition": "without-skill",
+        "actor": "eval_testing_without",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Separates server/test transactions; committed setup/cleanup and after-commit effect; context-owned container lifetime; clear Docker/H2 evidence limits.",
+        "evidence": "actors/testing-real-commit/without-skill/response.md"
+      },
+      {
+        "id": "transaction-event-recovery",
+        "condition": "without-skill",
+        "actor": "eval_transactions_without",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Identifies proxy bypass, event loss and remote duplicate window; proposes durable intent/claim/recovery and independent state checks. REQUIRES_NEW on acceptance is an explicit proposed stronger contract, not a general requirement; no execution claimed.",
+        "evidence": "actors/transaction-event-recovery/without-skill/response.md"
+      },
+      {
+        "id": "migration-bootstrap",
+        "condition": "without-skill",
+        "actor": "eval_migrations_without",
+        "criteria": ["partial", "pass", "pass", "pass"],
+        "assessment": "One audited schema owner; explicit runner target/init; immutable history with forward repair; staged coexistence/backfill/enforcement and startup-job tradeoff; H2 vs PostgreSQL limits clear. Chosen Flyway/job is a contextual proposal, not a universal requirement. Subsequent pinned Boot4.1.1 source and credential probes contradict the response's fallback-credentials statement. Full explicit runner credentials in its proposed fix remain correct; effective connection-path explanation is only partially accurate.",
+        "evidence": "actors/migration-bootstrap/without-skill/response.md",
+        "gradeHistory": [
+          {
+            "criteria": ["pass", "pass", "pass", "pass"],
+            "assessment": "One audited schema owner; explicit runner target/init; immutable history with forward repair; staged coexistence/backfill/enforcement and startup-job tradeoff; H2 vs PostgreSQL limits clear. Chosen Flyway/job is a contextual proposal, not a universal requirement.",
+            "reason": "Initial decision review before credential runtime/source probe was available."
+          }
+        ]
+      },
+      {
+        "id": "security-rotation-tenancy",
+        "condition": "with-original-skill",
+        "actor": "eval_security_original",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Real decoder/cache and explicit unknown-key denial; immediate removal distinguished from cached freshness; typed allowlisted claims, proxy/tenant/owner race checks. Missing implementation/test evidence stated.",
+        "evidence": "actors/security-rotation-tenancy/with-original-skill/response.md"
+      },
+      {
+        "id": "observability-context",
+        "condition": "without-skill",
+        "actor": "eval_observability_without",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Checks active duplicate instrumentation, removes secrets/unbounded metric labels, decorates selected executor with restoration and no-context verification; narrows/authenticates management access and keeps local vs production evidence distinct.",
+        "evidence": "actors/observability-context/without-skill/response.md"
+      },
+      {
+        "id": "migration-bootstrap",
+        "condition": "with-original-skill",
+        "actor": "eval_migrations_original",
+        "criteria": ["partial", "pass", "pass", "pass"],
+        "assessment": "One audited Flyway ownership transfer and explicit datasource/order; immutable artifacts, rollout/backfill bridge correctness and recovery gates; startup/job alternatives and H2-only limits clear. No application execution claimed. Subsequent pinned Boot4.1.1 source and credential probes contradict the response's fallback-credentials statement. Full explicit runner credentials in its proposed fix remain correct; effective connection-path explanation is only partially accurate.",
+        "evidence": "actors/migration-bootstrap/with-original-skill/response.md",
+        "gradeHistory": [
+          {
+            "criteria": ["pass", "pass", "pass", "pass"],
+            "assessment": "One audited Flyway ownership transfer and explicit datasource/order; immutable artifacts, rollout/backfill bridge correctness and recovery gates; startup/job alternatives and H2-only limits clear. No application execution claimed.",
+            "reason": "Initial decision review before credential runtime/source probe was available."
+          }
+        ]
+      },
+      {
+        "id": "transaction-event-recovery",
+        "condition": "with-revised-skill",
+        "actor": "eval_transactions_revised",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Identifies conditional ambient transaction/self-invocation issue; one effective checkout transaction and durable intent; rollback and after-commit/async limitations; ambiguity/reconciliation and process-kill tests explicitly unexecuted. All predeclared criteria observed.",
+        "evidence": "actors/transaction-event-recovery/with-revised-skill/response.md"
+      },
+      {
+        "id": "http-ambiguous-write",
+        "condition": "with-revised-skill",
+        "actor": "eval_http_revised",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Preserves actual Boot builder and proxy; distinct timeout phases and uncertain mutation state; conditional stable-key reconciliation with no blind dispatch; wire/response-loss/effect-count test plan and no execution claims.",
+        "evidence": "actors/http-ambiguous-write/with-revised-skill/response.md"
+      },
+      {
+        "id": "security-rotation-tenancy",
+        "condition": "with-revised-skill",
+        "actor": "eval_security_revised",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Real JWKS validation/caching and immediate-revocation boundary; typed claims and owner/tenant protected write; real decoder/proxy tests; distinguishes invalid401, denied403 and explicit sanitized503 outage policy; no unexecuted-check claim.",
+        "evidence": "actors/security-rotation-tenancy/with-revised-skill/response.md"
+      },
+      {
+        "id": "migration-bootstrap",
+        "condition": "with-revised-skill",
+        "actor": "eval_migrations_revised",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "One audited schema owner with explicit target/credentials and correct Boot4.1.1 explicit-URL caveat; immutable history, staged mixed-version writes, bounded migrations/recovery, truthful local-vs-PostgreSQL scope.",
+        "evidence": "actors/migration-bootstrap/with-revised-skill/response.md"
+      },
+      {
+        "id": "testing-real-commit",
+        "condition": "with-revised-skill-before-phase-correction",
+        "actor": "eval_testing_revised",
+        "criteria": ["pass", "partial", "pass", "pass"],
+        "assessment": "Correct transaction isolation, cleanup and container boundaries, but says an in-memory callback proves phase and proposes before/end counts that cannot distinguish BEFORE_COMMIT. Independent source audit identified same fixture gap; owner strengthening callback committed-state evidence, followed by fresh evaluation.",
+        "evidence": "actors/testing-real-commit/with-revised-skill/response.md"
+      },
+      {
+        "id": "observability-context",
+        "condition": "with-revised-skill",
+        "actor": "eval_observability_revised_final",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Actual custom executor decoration and scope restoration; bounded dimensions/no secret promotion; explicit management access and scoped local trace/metric tests; source/backend limitations preserved.",
+        "evidence": "actors/observability-context/with-revised-skill/response.md",
+        "snapshotNote": "Frozen skill includes timer race fix; afterwards one optional SLO evaluation handoff moved from table to adjacent prose solely to meet registry routing rules, without changing its intended decision."
+      },
+      {
+        "id": "testing-real-commit",
+        "condition": "with-revised-skill-final",
+        "actor": "eval_testing_revised_final",
+        "criteria": ["pass", "pass", "pass", "pass"],
+        "assessment": "Separates server/test transactions, committed setup/cleanup and independent value/version checks; explicitly reads committed updated state inside synchronous listener and proposes BEFORE_COMMIT mutation, rather than relying on invocation counts. Container/context lifecycle and H2/Docker limits remain explicit. This is a proposal; no application tests were executed by the actor.",
+        "evidence": "actors/testing-real-commit/with-revised-skill-final/response.md"
+      }
+    ],
+    "staticAudits": [
+      {
+        "skill": "spring-security-for-apis",
+        "actor": "audit_security_fixture",
+        "finding": "No material findings",
+        "kind": "static only"
+      },
+      {
+        "skill": "spring-boot-observability",
+        "actor": "audit_observability_fixture",
+        "finding": "Timer count could race response completion; bounded wait added, expected counts retained, six tests rerun passing.",
+        "kind": "static with targeted runtime follow-up"
+      },
+      {
+        "skill": "online-database-schema-migrations",
+        "actor": "audit_migration_fixture",
+        "finding": "No material findings",
+        "kind": "static only"
+      },
+      {
+        "skill": "spring-boot-testing",
+        "actor": "audit_testing_fixture",
+        "finding": "Callback now captures independent committed-row visibility inside listener; eight normal tests pass and BEFORE_COMMIT mutation fails the intended assertion.",
+        "kind": "static with targeted runtime follow-up"
+      }
+    ],
+    "snapshots": {
+      "original": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/original/skills",
+      "final": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/revised/skills",
+      "testingBeforeFix": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/revised-before-phase-fix/skills/spring-boot-testing",
+      "observabilityEvaluatedHashes": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700/spring-boot-observability-evaluated-hashes.json",
+      "observabilityNote": "Actor saw final executable fixture. An optional SLO evaluation case was subsequently moved from a table into adjacent prose for registry routing rules; decision content is unchanged. Final source hashes include that markup adjustment."
+    },
+    "limitations": [
+      "These are proposals, not application implementations or application test executions by evaluation actors.",
+      "Shared filesystem isolation is procedural, not enforced sandboxing; actors were instructed to avoid other skills, rubrics and responses.",
+      "Known scenarios and teaching examples are not held-out evaluation; coordinator grading is not blinded; no statistical uplift is established.",
+      "Most without-skill responses already met all declared criteria; do not infer universal superiority from the few observed differences.",
+      "Migration criterion1 grading was corrected after runtime/pinned-source evidence; grade histories are retained in result records.",
+      "Actual automatic skill activation/routing in a client was not exercised.",
+      "One observability run was interrupted and replaced; one pre-fix testing run was retained and followed by a fresh final actor."
+    ]
+  },
+  "limitations": [
+    "Java17 source compilation for security ran on Java25; Java17 runtime was not executed.",
+    "HTTP runtime coverage is the JDK imperative transport and interface proxy; WebClient, other transports, TLS, pooling/load, tracing, compressed bodies and persistent reconciliation are outside executed coverage.",
+    "Security does not establish discovery/TTL expiry, unknown-key aggregate flooding, connect/DNS/TLS stall behavior or transactional ownership-race safety.",
+    "Transaction recovery uses injected failure and orderly context/pool restart against an H2 file; it does not establish killed-process durability, replica races, broker delivery or exactly-once external effects.",
+    "Observability uses local meters and in-memory span capture; no production collector/backend, load cost, reactive or virtual-thread propagation was measured.",
+    "H2 migration and testing results do not establish PostgreSQL DDL, isolation, production rollout or actual release-binary compatibility.",
+    "Raw logs, snapshots and actor response files remain in local temporary directories; this repository record archives paths, decisions and source hashes, not those complete raw artifacts."
+  ],
+  "evidence": {
+    "root": "C:/Users/robso/AppData/Local/Temp/spring-six-8b5537e48d8746369e5455f4a187f700",
+    "httpRoot": "C:/Users/robso/AppData/Local/Temp/spring-http-clients-23c262821d3d4c4eaa11fe4895ecc229",
+    "reports": [
+      "coordinator-junit-results.json",
+      "coordinator-source-audit.json",
+      "strict-validation.json",
+      "registry-comparison.json",
+      "preservation-check-final.json",
+      "evaluation-cases-and-rubric.json"
+    ],
+    "noCommitPublishOrGlobalInstall": true
+  }
+}

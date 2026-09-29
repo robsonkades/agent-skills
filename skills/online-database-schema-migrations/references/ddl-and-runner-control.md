@@ -102,8 +102,11 @@ When using these products, verify the named control for the installed release:
   do not infer identical behavior for a different release/edition or native executor.
 
 Flyway documentation here is continuously updated; it is not a pinned-release compatibility
-test. Neither runner was executed in authoring this skill. Version-matched documentation and
-an isolated rehearsal of the project's actual runner remain necessary for executable advice.
+test. The engine-specific snippets and worked rollout are design examples, not recorded
+database rehearsals. Version-matched documentation and a rehearsal of the project's actual
+runner remain necessary. For Boot integration, use the
+[project-level checks](spring-boot-lifecycle.md#verify-the-change-in-the-consuming-project);
+successful framework initialization does not establish any of the DDL guarantees above.
 
 ## Resolve a failed or uncertain migration
 

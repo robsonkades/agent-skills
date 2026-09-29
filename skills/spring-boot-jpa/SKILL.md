@@ -34,6 +34,14 @@ tuning belong to their specialists.
    Hibernate 7.4.5.Final and BOM-managed dependencies. If an existing target uses an older
    Java baseline, identify the compatibility boundary before applying examples; do not
    silently upgrade that project. Hibernate annotations require Hibernate.
+   Use the official [Spring Data JPA reference](https://docs.spring.io/spring-data/jpa/reference/jpa.html)
+   for repository contracts and [Spring Boot documentation](https://docs.spring.io/spring-boot/)
+   for auto-configuration and test integration. Select versions matching the resolved
+   project, not simply the documentation's default release. When authorization or an
+   auditing principal affects the persistence path, consult the matching
+   [Spring Security reference](https://docs.spring.io/spring-security/reference/) for
+   that boundary; query filtering alone is not an authentication policy. Hibernate and
+   database primary sources complement these contracts where provider behavior matters.
 2. Trace one operation through repository, persistence unit, transaction manager and
    physical datasource. Inspect component/entity/repository scanning and custom beans
    before adding configuration that may make auto-configuration back off. With multiple
@@ -51,6 +59,12 @@ tuning belong to their specialists.
    isolated examples and assumptions. Follow the existing package/bean style when
    adequate. New code uses a single constructor or bean-method parameters without
    `@Autowired`; do not add both scanning and a factory for the same bean.
+   Prefer Boot-managed persistence and concrete Spring Data repositories. Keep entities
+   free of interfaces or factories introduced solely to share test code; retain mapping
+   overrides only when the storage contract requires them. Adapt an example only for the
+   operation being implemented: a normal update needs neither a provider-probe harness
+   nor failure methods in the production service. Add auditing, custom entity equality,
+   pessimistic locks or generator tuning only for an identified consumer requirement.
 5. Ask only for unknowns that change correctness, such as the atomicity requirement or
    unmanaged sequence writers. Continue reversible local work while gathering those
    facts. Without database access, review contracts and compile examples, but leave
@@ -80,6 +94,10 @@ pool sizing or property reviews, including the SQL Server scheduler case.
 
 ## Contracts that must survive optimization
 
+- For an edit conditioned on an earlier client read, compare `expectedVersion`/`If-Match`
+  with the loaded authorized entity before mutation; reloading current state alone loses
+  that precondition. Never assign client input to managed `@Version`; retain its commit-time
+  race protection. See the mapping reference for the API boundary and fixture cases.
 - `flush` synchronizes pending changes and can reveal constraints; it does not commit.
   A successful `save` can fail later at flush/commit. Check the result outside the first
   persistence context or transaction when durability/visibility is the assertion.
@@ -95,12 +113,12 @@ pool sizing or property reviews, including the SQL Server scheduler case.
 - Bulk JPQL/native updates can bypass callbacks, ordinary version checks and managed
   state. Account explicitly for optimistic predicates, auditing and stale entities.
   A smaller statement count is not proof of equivalent behavior.
-- Choose entity equality from actual lifecycle/collection use. Generated-ID equality must
-  distinguish transient objects, retain hash stability after persistence and handle proxies
-  symmetrically. The routed mapping reference and Movement fixture implement the requested
-  final methods with effective persistent class and non-null getter ID comparison, while
-  documenting proxy-compliance/inheritance limits. Do not include mutable state, associations
-  or every field through generated `equals`/`hashCode` methods.
+- Keep reference equality when no consumer needs logical equality across contexts. If a
+  real collection/caller contract needs it, first consider comparing stable IDs or an
+  immutable unique natural key. Generated-ID equality must distinguish transient objects,
+  retain hash stability and handle proxies symmetrically; the mapping reference explains
+  the conditional pattern and its limitations. Do not generate equality from mutable
+  state or associations, or add provider coupling merely to exercise a test.
 - `hibernate.connection.provider_disables_autocommit=true` asserts that supplied
   connections already have autocommit disabled. It does not disable it; an incorrect
   assertion can move writes outside the intended transaction.
@@ -110,11 +128,13 @@ pool sizing or property reviews, including the SQL Server scheduler case.
 
 ## Verification and completion
 
-Read [verification](references/verification.md) to choose tests and run the
-[isolated fixture](assets/persistence-fixture/README.md). The fixture demonstrates
-state/rollback/optimistic conflict on H2 and supplies SQL Server-specific mapping and SQL
-probes; the README states which checks need real databases. Never use a production
-database to make an example pass.
+Read [verification](references/verification.md) to choose tests. For a concrete managed
+update or conditional edit, the [Inventory example](assets/persistence-fixture/README.md)
+shows Boot configuration, a Spring Data repository and a transactional service, including
+rollback and version conflicts on H2. Reuse the project's existing test setup first;
+running this example is not a prerequisite for unrelated mapping or configuration work.
+Validate vendor-specific behavior in project tests with the actual schema and driver.
+Never use a production database to make an example pass.
 
 For implementation, finish with the requested working path, representative consumption,
 and targeted evidence: observed SQL/results for query changes; commit/rollback or two
@@ -138,12 +158,10 @@ and identify the missing evidence rather than asserting their result.
 - orm-fetch-and-batching-performance: statement amplification or batch effectiveness
   remains unresolved after locating the Spring Data call.
 - enterprise-transactions: isolation/atomicity spans several use cases or resources.
+- offline-concurrency-control: client edits span transactions and need a conflict/recovery
+  policy or aggregate coordination. This skill owns the JPA comparison and commit checks.
 - connection-pool-sizing: workload/capacity modeling beyond the Boot property binding.
 - sql-server-performance or postgresql-performance: a captured statement plan, session
   settings or database-specific locking requires deeper investigation.
 - orm-structural-mapping and online-database-schema-migrations: aggregate mapping or
   compatible rollout requires broader schema design. Do not silently migrate schema.
-
-The external piomin examples were considered for fetch, projections, auditing and tests.
-They are Boot 3-oriented evidence, not this skill's compatibility contract or authority:
-see the adaptation notes in [verification](references/verification.md).

@@ -36,7 +36,29 @@ validation/revocation requirements, not by counting dots. Default introspection 
 audience or token-use constraints required by the authorization server's contract; do not
 assume a generic active response means any API may consume it. Test inactive responses,
 wrong target/purpose, malformed responses and unavailable introspection.
-[Opaque-token support](https://docs.spring.io/spring-security/reference/7.0/servlet/oauth2/resource-server/opaque-token.html).
+[Opaque-token support](https://docs.spring.io/spring-security/reference/7.1/servlet/oauth2/resource-server/opaque-token.html).
+
+Supply an HTTP client with explicit connection/read timeouts and introspection client
+authentication. A custom `RestOperations` constructor does not add those credentials for
+you. In 7.1.0, response conversion can also fail outside the transport exception wrapper
+(for example, a string `exp` where a number is expected). Test that boundary and normalize
+known conversion failures to an unavailable-validation response; do not catch every runtime
+exception or manufacture a principal. A sanitized 503 for backend failures, 401 for
+invalid/inactive tokens and 403 for insufficient permissions is one explicit API policy;
+preserve the application's agreed contract. These are not universal Spring defaults.
+The default bearer failure handler rethrows authentication-service failures, so changing
+only the entry point is insufficient.
+[7.1.0 introspector](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-resource-server/src/main/java/org/springframework/security/oauth2/server/resource/introspection/SpringOpaqueTokenIntrospector.java),
+[failure-handler behavior](https://github.com/spring-projects/spring-security/blob/7.1.0/web/src/main/java/org/springframework/security/web/authentication/AuthenticationEntryPointFailureHandler.java).
+
+An active result delegates freshness to the authorization server; this introspector does
+not independently enforce `exp`. The library also coerces string `active` values, whereas
+RFC 7662 specifies a boolean. If strict wire-schema validation is required, validate the
+raw response before coercion; post-conversion principal checks cannot distinguish those
+types. Include malformed JSON, missing `active` and malformed expiry in the affected
+project's tests; these do not constitute exhaustive RFC schema enforcement. Do not add a
+cache without an explicit revocation window, expiry bound and outage policy.
+[RFC 7662 response contract](https://www.rfc-editor.org/rfc/rfc7662.html#section-2.2).
 
 An OAuth2 resource server validates **access tokens**. OIDC login validates an **ID token**
 for the relying-party client. A shared issuer or signing key does not make them interchangeable.
@@ -71,33 +93,45 @@ issuer; preserve issuer validation. A custom `JwtDecoder` or `.decoder(...)` ove
 default decoder: inspect it instead of assuming Boot properties still apply. Likewise,
 `setJwtValidator` replaces the validator; compose with defaults where using the generic JWT
 profile. Do not replace issuer/time validation with an audience-only predicate.
-[JWT configuration and validation](https://docs.spring.io/spring-security/reference/7.0/servlet/oauth2/resource-server/jwt.html).
+[JWT configuration and validation](https://docs.spring.io/spring-security/reference/7.1/servlet/oauth2/resource-server/jwt.html).
 
-For an issuer explicitly issuing RFC 9068 access tokens, the Java 17 / Security 7.1.0
-fixture uses this **partial configuration snippet** (imports and the trusted key source are
-in the [fixture](../assets/SecurityContractCheck.java)):
+For an issuer explicitly issuing RFC 9068 access tokens, this **partial configuration
+snippet** uses `org.springframework.security.oauth2.jwt.JwtValidators` from Security 7.1.0.
+Here `decoder` is an existing `NimbusJwtDecoder` configured with the trusted key source;
+`issuer` and `audience` are trusted application configuration, not incoming claims:
 
 ```java
 decoder.setJwtValidator(JwtValidators.createAtJwtValidator()
-    .issuer(ISSUER)
-    .audience(AUDIENCE)
+    .issuer(issuer)
+    .audience(audience)
     .build());
 ```
 
 This dedicated validator checks the access-token type and required profile claims,
 including expiry; it is not a universal replacement for every provider's token format.
-Security 7 moved type validation into its validator model. The fixture relies on the exact
-7.1.0 API/defaults and does not copy a `validateTypes` call from another decoder builder or
+Security 7 moved type validation into its validator model. This snippet relies on the exact
+7.1.0 API/defaults; do not copy a `validateTypes` call from another decoder builder or
 release. Verify any type-validation change against the resolved version.
 [7.1.0 validator implementation](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/JwtValidators.java),
 [7.0 migration](https://docs.spring.io/spring-security/reference/7.0/migration/servlet/oauth2.html).
 
 Use issuer-managed rotating public keys in production when that is the issuer's contract.
-The fixture's ephemeral public key avoids network access; it does not demonstrate discovery,
-JWKS caching, refresh or rotation. For a deployment change, test known-key cache use,
-new/unknown `kid`, key overlap/removal and key-endpoint failure with a local controlled
-JWKS service. Set bounded client timeouts; never add a decode-only fallback when refresh
-fails. State startup versus first-request discovery behavior from the actual version/config.
+For key retrieval changes, use the [remote-validation cases](verification.md#remote-validation-cases)
+with the application's real decoder: observe known-key cache reuse, refresh for a new
+`kid`, overlapping keys, removal and endpoint failures. Removing a key upstream does not
+immediately invalidate a cached copy. If immediate removal is required, design an explicit cache
+invalidation/freshness or online-validation contract; do not promise it from JWT signature
+verification alone. Planned rotation needs sufficient overlap for existing tokens and
+cache behavior, while compromised-key revocation may require rejecting affected tokens.
+
+Set bounded client timeouts; never add a decode-only fallback when refresh fails. Count
+outbound requests as well as asserting denial. The 7.1.0 builder disables Nimbus rate
+limiting, so a per-request timeout and one-fetch test do not bound aggregate traffic from
+an unknown-`kid` flood. Assess admission controls and any negative-key cache against
+legitimate rotation. An explicit JWKS URI, issuer discovery and customized caches can have
+different retrieval lifecycles; inspect the effective decoder. A test that triggers refresh
+via an unknown key does not measure cache TTL expiry or establish a startup guarantee.
+[7.1.0 decoder key-source wiring](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-jose/src/main/java/org/springframework/security/oauth2/jwt/NimbusJwtDecoder.java).
 
 ## Authorities are a schema contract
 

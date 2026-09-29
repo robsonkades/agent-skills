@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot-jpa
-version: 1.0.0
+version: 1.1.2
 description: >-
   Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when
   entity state, Hibernate mappings, identifiers, fetching, transactions, locking or
@@ -28,11 +28,11 @@ files:
   - assets/persistence-fixture/README.md
   - assets/persistence-fixture/pom.xml
   - assets/persistence-fixture/src/
-  - assets/persistence-fixture/sql/
 suggests:
   - orm-fetch-and-batching-performance
   - orm-structural-mapping
   - enterprise-transactions
+  - offline-concurrency-control
   - connection-pool-sizing
   - sql-server-performance
   - postgresql-performance

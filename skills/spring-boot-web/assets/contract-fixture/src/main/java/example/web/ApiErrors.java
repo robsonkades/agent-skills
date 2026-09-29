@@ -14,7 +14,6 @@ import org.springframework.validation.ObjectError;
 import org.springframework.validation.method.ParameterErrors;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -45,13 +44,9 @@ public final class ApiErrors extends ResponseEntityExceptionHandler {
             if (result instanceof ParameterErrors errors) {
                 errors.getAllErrors().stream().map(ApiErrors::violation).forEach(violations::add);
             } else {
-                var parameter = result.getMethodParameter();
-                var query = parameter.getParameterAnnotation(RequestParam.class);
-                String field = parameter.getParameterName();
-                if (query != null && !query.name().isBlank()) field = query.name();
-                else if (query != null && !query.value().isBlank()) field = query.value();
-                if (field == null) field = "request";
-                String publicField = field;
+                // The only constrained scalar is limit, also its public @RequestParam name.
+                String name = result.getMethodParameter().getParameterName();
+                String publicField = name == null ? "request" : name;
                 result.getResolvableErrors().forEach(error -> violations.add(new Violation(publicField, message(error))));
             }
         }
@@ -86,7 +81,10 @@ public final class ApiErrors extends ResponseEntityExceptionHandler {
     }
 
     private static Violation violation(ObjectError error) {
-        return new Violation(error instanceof FieldError field ? field.getField() : "request", message(error));
+        // These DTOs deliberately use the same Java and public JSON names, including nesting.
+        // A renamed field needs an explicit public mapping before reusing this representation.
+        String field = error instanceof FieldError rejected ? rejected.getField() : "request";
+        return new Violation(field, message(error));
     }
 
     private static String message(MessageSourceResolvable error) {

@@ -105,6 +105,51 @@ work may need `spring.main.keep-alive=true`; inspect whether other live componen
 keep the process alive and still implement explicit shutdown. Scheduling on each replica
 does not create a cluster singleton.
 
+For scheduled jobs, identify the actual `TaskScheduler` and the timing contract. On the
+Boot 4.1.1 baseline, an auto-configured scheduler with virtual threads is a
+`SimpleAsyncTaskScheduler`; pooling properties such as `spring.task.scheduling.pool.size`
+do not tune it. Its `fixedDelay` tasks run on one scheduler thread, so one blocking job
+can delay unrelated fixed-delay jobs. A virtual thread setting alone does not isolate them.
+The [scheduler API](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/scheduling/concurrent/SimpleAsyncTaskScheduler.html)
+documents this behavior for the managed Framework 7.0.9 version.
+
+If the requirement is to wait after the previous execution completes, retain `fixedDelay`.
+Compare an explicitly sized `ThreadPoolTaskScheduler` or separately selected schedulers
+when jobs need independence; budget threads/downstream work and retain container-managed
+shutdown. If the active scheduler is already Boot's pooled scheduler, adjust its
+`spring.task.scheduling.*` settings before declaring another bean. When replacing the
+virtual scheduler is justified, inject Boot's configured builder instead of assembling
+a scheduler and reapplying each property manually. This fragment belongs in an existing
+configuration with scheduling enabled:
+
+```java
+import org.springframework.boot.task.ThreadPoolTaskSchedulerBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+
+@Bean
+ThreadPoolTaskScheduler taskScheduler(ThreadPoolTaskSchedulerBuilder builder) {
+    return builder.build();
+}
+```
+
+Keep sizing in the application's configuration, for example
+`spring.task.scheduling.pool.size=2` for two jobs whose downstream budget permits that
+concurrency. The injected builder carries Boot's bound scheduler settings and customizers;
+the returned bean receives container lifecycle management. Inspect existing customizers
+and scheduler selections before replacing a bean. Two workers do not guarantee progress
+under arbitrary load, and preserving shutdown settings does not prove jobs can stop.
+The [Boot task guide](https://docs.spring.io/spring-boot/reference/features/task-execution-and-scheduling.html)
+describes both auto-configured scheduler variants and their builders. This change need
+not disable virtual threads elsewhere in the application.
+
+Use fixed rate or cron only when their timing and possible overlap match the requirement;
+offloading a fixed-delay body with `@Async` also changes what "completion" means. Validate
+the real job's scheduling boundary with a controlled blocked collaborator and bounded
+waits. Check peer progress, no self-overlap, the completion-to-next-start delay and
+cleanup when those are the changed requirements. A passing scheduler reproduction is
+not evidence of cluster coordination, downstream capacity or the application's drain.
+
 Choose an in-process event only when its observer relationship is useful. For the default
 synchronous listener path, listener failure can affect the publisher; with async execution
 the publisher cannot treat return as completed delivery. Pass an immutable payload/ID with

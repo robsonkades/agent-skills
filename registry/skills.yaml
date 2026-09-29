@@ -4614,9 +4614,9 @@ skills:
         integrity: sha256-h0jVx8GOKjpndJkXURdy13uezW8MPF0p5cCTRqzrn5M=
   - name: online-database-schema-migrations
     description: Planning and reviewing same-engine relational schema rollouts while old and new application versions
-      coexist. Use for a hot-table column or constraint change, resumable backfill, migration-runner failure, read/write
-      cutover, or contraction with a defined rollback boundary. Covers DDL execution risk and data correctness; not
-      cross-engine migration, ingestion throughput tuning, or API/event schemas.
+      coexist. Use for a hot-table column or constraint change, resumable backfill, migration-runner or Spring Boot
+      startup failure, cutover, or contraction with a defined rollback boundary. Covers DDL execution risk and data
+      correctness; not cross-engine migration, ingestion throughput tuning, or API/event schemas.
     keywords:
       - database
       - schema-migration
@@ -4624,11 +4624,11 @@ skills:
       - backfill
       - rollback
       - expand-contract
-    latest: 1.0.0
+    latest: 1.1.1
     versions:
-      - version: 1.0.0
+      - version: 1.1.1
         path: skills/online-database-schema-migrations
-        integrity: sha256-NnrgehREfFqhEePqfzKCpBePor3u84IRmGnqKg8Y/Bw=
+        integrity: sha256-kQl6ct8LcPg5LxQsaL0rIgqYP6c+LnjktkuH6qhAfQ4=
   - name: opentelemetry-performance
     description: "Designing OpenTelemetry tracing that remains causally useful within an explicit overhead and data-risk
       budget: auditing automatic/manual coverage, preserving context across asynchronous boundaries, choosing head/tail
@@ -5478,11 +5478,11 @@ skills:
       - spring-boot
       - dependency-injection
       - configuration
-    latest: 1.0.0
+    latest: 1.1.0
     versions:
-      - version: 1.0.0
+      - version: 1.1.0
         path: skills/spring-boot
-        integrity: sha256-zwGhtf9xFT9aeUuhFseO8lwpviuNCCj4M8CGcbIlzpE=
+        integrity: sha256-dpugZGR+RN9aqcxHjkzk6EoT4DFwPykMplb3WYkK56k=
   - name: spring-boot-jpa
     description: Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when entity state, Hibernate
       mappings, identifiers, fetching, transactions, locking or datasource configuration need verification. Covers SQL
@@ -5493,11 +5493,41 @@ skills:
       - jpa
       - hibernate
       - sql-server
+    latest: 1.1.2
+    versions:
+      - version: 1.1.2
+        path: skills/spring-boot-jpa
+        integrity: sha256-fLv3p4lRMX0VxR804lAzKSsuVW+K5qPxVZmKMFoP7qo=
+  - name: spring-boot-observability
+    description: Wire and diagnose Spring Boot metrics, observations, traces and Actuator when a managed HTTP client loses
+      trace context, asynchronous work detaches from its parent, instrumentation duplicates data, metric labels grow, or
+      management endpoints and health groups expose the wrong behavior. Owns Boot integration; metric schema, trace
+      topology, telemetry cost and SLO policy belong to specialists.
+    keywords:
+      - java
+      - spring-boot
+      - observability
+      - micrometer
+      - actuator
     latest: 1.0.0
     versions:
       - version: 1.0.0
-        path: skills/spring-boot-jpa
-        integrity: sha256-qG6n6iofGHEOSsLSmQvMa+Pxho5zPOMZ3CJaIihvqZo=
+        path: skills/spring-boot-observability
+        integrity: sha256-uHAf6qX8fVTzQ9Ni3ZaGC+RYjP6ExEHszhr9/obISVk=
+  - name: spring-boot-testing
+    description: Configure and diagnose Spring Boot test harnesses when slices omit real wiring, transaction rollback hides
+      behavior, live-server tests leak state, or cached contexts outlive test services. Use for executable harness and
+      lifecycle checks, not general test strategy, assertion design or application security policy.
+    keywords:
+      - java
+      - spring-boot
+      - testing
+      - testcontainers
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/spring-boot-testing
+        integrity: sha256-mThIow1ZgKc8Tg63DD+FEroxTG73hGpVXSCHYCctQkk=
   - name: spring-boot-web
     description: Implement, document and diagnose Spring Boot 4 MVC and Servlet APIs when HTTP binding, validation, error
       responses, Tomcat capacity or complete springdoc OpenAPI contracts need verification. Covers optional fields,
@@ -5508,11 +5538,27 @@ skills:
       - spring-mvc
       - openapi
       - springdoc
+    latest: 1.1.0
+    versions:
+      - version: 1.1.0
+        path: skills/spring-boot-web
+        integrity: sha256-ZrzEhRDvvPVOLDMkPfLifZyrrd5TeGdNtsE1dEntywo=
+  - name: spring-http-clients
+    description: Implement and diagnose outbound Spring HTTP calls when RestClient, WebClient or HttpExchange proxies lose
+      Boot configuration, stall, buffer oversized responses or retry uncertain mutations. Covers transport wiring and
+      response ownership; hands off general retry, deadline and idempotency policy. Excludes server endpoints and
+      automatic framework migration.
+    keywords:
+      - java
+      - spring-boot
+      - http-client
+      - restclient
+      - webclient
     latest: 1.0.0
     versions:
       - version: 1.0.0
-        path: skills/spring-boot-web
-        integrity: sha256-E8/PuGCwvJALhV0OOFTfOE9P6tL/85WSOP04McdSDww=
+        path: skills/spring-http-clients
+        integrity: sha256-y+NGo+OlqYhU7/FHxw7hZmnOM23tOS5G7Xaplqhkshk=
   - name: spring-security-for-apis
     description: Configure and review Spring Security Servlet APIs when filter-chain matchers leave routes uncovered, bearer
       tokens need JWT or opaque-token validation, claim mapping produces unexpected authorities, method checks are
@@ -5528,11 +5574,27 @@ skills:
       - authorization
       - csrf
       - cors
-    latest: 1.0.1
+    latest: 1.1.0
     versions:
-      - version: 1.0.1
+      - version: 1.1.0
         path: skills/spring-security-for-apis
-        integrity: sha256-t6wH+U5J1T34Cxf155Ney4KGHUNVQCNvLS8bGFeetuQ=
+        integrity: sha256-ST11jQzucXrQeYUHSGtF18P0wuE8jo+UBzdIp7en6zM=
+  - name: spring-transactions-and-events
+    description: Diagnose and implement Spring transaction interception and transaction-bound listeners when rollback
+      differs from intent, after-commit work disappears, or persisted event publications need recovery. Verify proxy
+      entry, rollback rules, listener phases and repeat-safe republication. Excludes general isolation design, ORM
+      tuning and broker delivery topology.
+    keywords:
+      - java
+      - spring
+      - transactions
+      - events
+      - spring-modulith
+    latest: 1.0.0
+    versions:
+      - version: 1.0.0
+        path: skills/spring-transactions-and-events
+        integrity: sha256-JdeDOQfqh+wPQTxnx9bgOodifKqJpBfnMhcOD79Yt8g=
   - name: sql-query-performance
     description: "Making one SQL statement fast, from its execution plan rather than a guess: reading estimated against
       actual rows, finding the operation that actually costs, whether a scan is wrong at all, index selectivity and

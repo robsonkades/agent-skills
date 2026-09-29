@@ -20,12 +20,20 @@ operation's authorization rule. A valid signature alone does not establish all t
 
 Inspect the resolved Spring Security, Spring Framework and Boot versions, Java toolchain,
 Servlet mappings, security beans, deployment ingress and test setup before proposing code.
-The example baseline is **Java 17 source, Spring Security 7.1.0, Spring Framework 7.0.8,
-Servlet 6.1**; it uses no preview features or Boot auto-configuration. This is a verified
-example target, not an instruction to upgrade. Match the project's managed dependencies;
+The API reference baseline is **Java 17 source, Spring Security 7.1.0, Spring Framework
+7.0.8, Servlet 6.1**; it uses no preview features. This does not select a Boot version for
+the target project or authorize an upgrade. Match the project's managed dependencies;
 do not mix a Security 7 example into a Boot 3 / Security 6 project without adapting and
 checking the APIs. Source and dependency evidence is in
 [verification](references/verification.md#sources-and-compatibility).
+
+Use the official [Spring Security reference](https://docs.spring.io/spring-security/reference/)
+and [Spring Boot documentation](https://docs.spring.io/spring-boot/) as the starting sources
+for their respective mechanisms, selecting the target project's version. Consult the
+[Spring Data JPA reference](https://docs.spring.io/spring-data/jpa/reference/jpa.html) when
+a JPA-backed authorization check requires the query/transaction handoff below; it does not
+replace the application's ownership policy. Supplement with version-tagged source when
+the reference does not settle consequential behavior.
 
 This skill owns Servlet `SecurityFilterChain`, OAuth2 resource-server validation,
 claims-to-authorities wiring, method-security interception and browser-facing controls.
@@ -35,6 +43,14 @@ make an API accept bearer tokens. An OIDC ID token is for the client that authen
 the user, not a substitute API access token.
 
 ## Workflow
+
+For a Boot application, start with its managed resource-server starter, externalized
+issuer/audience configuration and existing security beans. Keep the default decoder and
+scope converter when they meet the credential contract. One chain covering every request
+is enough for one security policy; introduce multiple chains only for distinct policies.
+Read [the Boot configuration example](references/boot-resource-server.md) when implementing
+this common path. Customize a component to satisfy a named missing requirement, not to
+reproduce framework setup from a diagnostic example.
 
 1. **Map the real request surface.** List ordered chains and their `securityMatcher`, then
    authorization rules within each chain. Include management contexts/ports, error/forward
@@ -105,9 +121,11 @@ implementation, include the changed configuration and tests with their prerequis
 Report actual execution separately from proposed cases, and separate framework facts from
 unverified deployment assumptions. An adequate existing configuration can remain unchanged.
 
-Read [the executable security fixture](references/verification.md#executable-fixture)
-when a local example would help reproduce real JWT rejection and matcher behavior. It is
-a test harness with ephemeral keys, not a production authentication service.
+Use [focused project tests](references/verification.md#focused-project-tests) for the
+changed contract. Load [remote-validation cases](references/verification.md#remote-validation-cases)
+only when key retrieval, introspection or their failure policy changes. Reuse the project's
+test facilities; a standalone provider, context bootstrap or generic assertion framework
+is not an application requirement.
 
 For adjacent tasks: secret-safe logs go to `structured-logging`, error bodies to
 `rpc-and-api-contracts`, and credential storage or framework-independent authorization to

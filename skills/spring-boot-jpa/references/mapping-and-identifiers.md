@@ -46,6 +46,16 @@ runtime HTTP schema annotations to entities as a substitute for persistence cont
 [Jakarta Column](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/column),
 [Jakarta Basic](https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/basic).
 
+For an optional unique value, decide whether multiple missing values are allowed. SQL
+Server's ordinary single-column unique index permits only one NULL; a filtered unique
+index can enforce uniqueness only where the value is present. PostgreSQL permits multiple
+NULLs by default; supported versions offer `NULLS NOT DISTINCT` for a different contract.
+Do not assume `@Column(unique=true)` has identical null semantics across engines. Verify
+two NULL inserts and duplicate present values against the actual migration.
+[SQL Server unique indexes](https://learn.microsoft.com/en-us/sql/relational-databases/indexes/create-unique-indexes),
+[filtered uniqueness](https://learn.microsoft.com/en-us/sql/relational-databases/tables/create-unique-constraints#create-a-unique-constraint-on-a-nullable-column),
+[PostgreSQL 18 constraints](https://www.postgresql.org/docs/18/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS).
+
 | Situation                                            | Decision and discriminating evidence                                                                                                                                                                                                                          |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | SQL Server status is 0–255                           | Java `byte`/`Byte` cannot express the full range. Use an adequate Java type, explicit domain validation and the actual dialect's binding. Test 0, 127, 128, 255 and rejection of -1/256.                                                                      |
@@ -54,12 +64,13 @@ runtime HTTP schema annotations to entities as a substitute for persistence cont
 | Decimal quantity or amount                           | Define range, scale and rounding policy, use an appropriate decimal Java/SQL representation, and test boundary/rounding behavior. A floating representation changes the numerical contract.                                                                   |
 | Text contains non-ASCII or supplementary characters  | Choose column/collation and national/non-national binding as one contract. Test write, read, equality, ordering and maximum encoded length, not just a literal SQL insert.                                                                                    |
 
-`@JdbcTypeCode(SqlTypes.TINYINT)` and `@JdbcTypeCode(SqlTypes.INTEGER)` are Hibernate
-mapping choices, not universally better annotations. Defaults may already match. SQL
+`@JdbcTypeCode` is a Hibernate mapping override, not a completeness requirement. Keep
+ordinary `Integer`/INTEGER and PostgreSQL `Short`/SMALLINT defaults when they match the
+schema. Conventional field names also need no repeated `@Column(name = ...)`. SQL
 Server TINYINT is unsigned 0–255; PostgreSQL does not have that TINYINT type. In the
-fixture's Hibernate **7.4.5.Final**, SQLServerDialect registers TinyIntAsSmallIntJdbcType
-for TINYINT, so its binder differs from the generic byte-based TinyIntJdbcType. The
-fixture uses `Short` for the Java range. Do not extrapolate this implementation detail
+baseline Hibernate **7.4.5.Final**, SQLServerDialect registers TinyIntAsSmallIntJdbcType
+for TINYINT, so its binder differs from the generic byte-based TinyIntJdbcType. `Short`
+can represent the required Java range. Do not extrapolate this implementation detail
 to other dialects/releases or claim an annotation alone proves a 255 round-trip.
 [SQL Server ranges](https://learn.microsoft.com/en-us/sql/t-sql/data-types/int-bigint-smallint-and-tinyint-transact-sql),
 [version-pinned dialect source](https://github.com/hibernate/hibernate-orm/blob/7.4.5/hibernate-core/src/main/java/org/hibernate/dialect/SQLServerDialect.java),
@@ -77,6 +88,28 @@ DDL or Microsoft connection flags there.
 [Collation and Unicode](https://learn.microsoft.com/en-us/sql/relational-databases/collations/collation-and-unicode-support),
 [driver parameter contract](https://learn.microsoft.com/en-us/sql/connect/jdbc/setting-the-connection-properties#sendstringparametersasunicode),
 [PostgreSQL character types](https://www.postgresql.org/docs/current/datatype-character.html).
+
+For an existing SQL Server `status TINYINT` and `payload NVARCHAR(1000)`, these partial
+Hibernate mappings express the exceptional binding choices; keep the rest of the entity
+as the project requires:
+
+```java
+@JdbcTypeCode(SqlTypes.TINYINT)
+@Column(nullable = false)
+private Short status;
+
+@Nationalized
+@Column(nullable = false, length = 1000)
+private String payload;
+```
+
+Use Jakarta persistence imports and Hibernate's `JdbcTypeCode`, `Nationalized` and
+`SqlTypes`; this is a mapping fragment, not a new model or executable database test.
+For PostgreSQL SMALLINT/VARCHAR with the same Java types, omit those two Hibernate
+overrides. Enforce a required 0–255 domain with validation and a schema CHECK there;
+SMALLINT alone allows more values. Match text length units and collation to each engine.
+These differences do not justify an outbox implementation, duplicate entities for every
+dialect, or changing an already adequate JDBC path.
 
 For `Instant`/offset/local time, establish whether the domain is an instant, wall-clock
 time or an offset-preserving value. Inspect Hibernate's chosen JDBC type and DDL rather
@@ -109,35 +142,50 @@ natural key established before persistence is another option; enforce its unique
 avoid nullable/mutable fields or lazy associations. Neither choice is universal. Composite
 identifier classes have their own value-equality contract.
 
-When generated-ID entity equality is required, the requested pattern is implemented in
-the runnable Movement fixture: final `equals`, identity fast path, null rejection, both
-effective classes resolved with `HibernateProxy.getHibernateLazyInitializer().getPersistentClass()`
-or `getClass()`, followed by non-null `getId()` and `Objects.equals(this.getId(), that.getId())`.
-Its final `hashCode` uses the same effective class's hash, not the generated ID. This keeps
-an object in the same hash bucket when its ID is assigned and prevents two new null-ID
-objects from being equal. It deliberately gives all instances of one class the same hash;
-large hash collections can therefore have poor distribution. Do not claim it improves
-collection performance or replace every adequate equality design with it.
+The Inventory example keeps reference identity: its callers neither put transient entities
+in hash-based collections nor compare detached copies. If that requirement changes, first
+consider keeping stable IDs at the comparison boundary. If entities themselves must compare
+by generated ID, the following is a **conditional partial implementation** for a Hibernate
+entity with no inheritance, a nullable generated `Long id` and a `getId()` getter. It is
+not part of the runnable example. It uses `org.hibernate.proxy.HibernateProxy` and
+`java.util.Objects`:
 
-The complete implementation lives in
-[Movement.java](../assets/persistence-fixture/src/main/java/example/persistence/Movement.java).
-Final methods keep a Hibernate subclass proxy from intercepting those methods; getters
-remain callable by the proxy. The effective-class step does not initialize the proxy just
-to obtain its declared persistent class. **ID getter access can still initialize it**:
+```java
+@Override
+public final boolean equals(Object other) {
+    if (this == other) return true;
+    if (other == null) return false;
+    Class<?> thisClass = this instanceof HibernateProxy proxy
+            ? proxy.getHibernateLazyInitializer().getPersistentClass() : getClass();
+    Class<?> otherClass = other instanceof HibernateProxy proxy
+            ? proxy.getHibernateLazyInitializer().getPersistentClass() : other.getClass();
+    if (thisClass != otherClass) return false;
+    Movement that = (Movement) other;
+    return getId() != null && Objects.equals(getId(), that.getId());
+}
+
+@Override
+public final int hashCode() {
+    return (this instanceof HibernateProxy proxy
+            ? proxy.getHibernateLazyInitializer().getPersistentClass() : getClass()).hashCode();
+}
+```
+
+The non-null ID check distinguishes new instances; the class hash preserves the bucket
+across ID assignment but distributes large sets poorly. Final methods avoid subclass-proxy
+interception of equality; the getter remains callable by the proxy. The effective-class
+lookup does not initialize the proxy, but **ID getter access can still initialize it**:
 `hibernate.jpa.compliance.proxy=true` can initialize a proxy still associated with its
 session when its identifier is accessed. In Hibernate **7.4.5**, AbstractLazyInitializer
-checks `session != null` before applying that rule. The fixture observes that closing the
-context detaches the proxy: equality can then use its known ID without initializing it,
-even though compliance was true. Access to unloaded non-ID state still fails. This
-counterexample means neither blanket zero-query nor blanket closed-context failure follows
-from the compliance flag. Do not turn compliance off solely to hide a
-failure. Test actual lifecycle/configuration, or compare known IDs outside the entity when
-that better expresses the caller's contract.
+checks `session != null` before applying that rule, so open versus detached lifecycle
+also matters. Neither blanket zero-query nor blanket closed-context failure follows from
+the flag. Test the actual lifecycle/configuration; do not disable compliance merely to
+make an equality test pass.
 [Hibernate proxy compliance](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/cfg/JpaComplianceSettings.html),
 [LazyInitializer API](https://docs.hibernate.org/orm/7.4/javadocs/org/hibernate/proxy/LazyInitializer.html),
 [version-pinned initializer](https://github.com/hibernate/hibernate-orm/blob/7.4.5/hibernate-core/src/main/java/org/hibernate/proxy/AbstractLazyInitializer.java).
 
-The example has no entity inheritance. A proxy obtained for a polymorphic base type may
+A proxy obtained for a polymorphic base type may
 expose that declared persistent class while the loaded object is a subtype; do not assume
 the exact-class rule implements the desired hierarchy equality. Establish the inheritance
 identity contract and test base/subtype/proxy combinations before reusing this pattern.
@@ -148,9 +196,8 @@ and relationships are not stable identity inputs.
 Required checks for this pattern: distinct transient instances, reflexivity/null/other type,
 HashSet insertion before ID allocation and lookup afterward, independently loaded/detached
 instances, proxy/concrete symmetry and equal hashes, and initialized/uninitialized proxies
-with open/closed contexts under the actual compliance configuration. The fixture exercises
-both proxy-compliance settings; this does not establish behavior for every provider or
-bytecode-enhanced/polymorphic model.
+with open/closed contexts under the actual compliance configuration. The runnable Inventory
+tests do not cover this conditional pattern, inheritance or bytecode enhancement.
 
 ## ID generation is a shared protocol
 
@@ -160,19 +207,20 @@ bytecode-enhanced/polymorphic model.
 | Sequence                      | Database supports it and identifier preallocation or batched inserts are useful | Coordinate physical increment, optimizer, all writers and migration sequencing. Reservations/restarts/rollbacks create gaps.                                                            |
 | Assigned business key or UUID | Offline creation or an established immutable identity needs it                  | Establish new-entity detection, collision/uniqueness contract, storage/index consequences and generation source. Random UUID locality and distributed uniqueness are separate concerns. |
 
-The concrete sequence example is the **SQL Server fixture**, not a global recipe:
+Only when a deployed sequence/writer contract requires explicit allocation, express it
+with a local generator mapping. For example, this partial mapping assumes that
+`movement_seq` and its writers have been configured for allocation 50:
 
 ```java
-// Partial mapping; complete class and DDL are in assets/persistence-fixture/.
 @Id
-@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "outbox_event_seq")
-@SequenceGenerator(name = "outbox_event_seq", sequenceName = "outbox_event_seq",
+@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "movement_seq")
+@SequenceGenerator(name = "movement_seq", sequenceName = "movement_seq",
                    allocationSize = 50)
 private Long id;
 ```
 
-For the fixture's `hibernate.id.optimizer.pooled.preferred=pooled-lo`, the database
-sequence increments by 50. The optimizer interprets a returned value as the start of
+If `hibernate.id.optimizer.pooled.preferred=pooled-lo` selects that optimizer, the matching
+database sequence increments by 50. The optimizer interprets a returned value as the start of
 an allocated range. Check schema qualification, initial/current sequence state,
 `allocationSize`, optimizer selection and physical increment before deployment; a
 live sequence change needs a coordinated rollout and existing-writer analysis.
@@ -204,3 +252,22 @@ need particular care. `merge` copies state into a managed instance; use its retu
 and do not treat the detached input as attached. For PATCH, load the permitted entity
 and apply only present fields, preserving omitted values and version conflict behavior.
 [Spring Data entity persistence](https://docs.spring.io/spring-data/jpa/reference/jpa/entity-persistence.html).
+
+For a conditional edit based on an earlier client read, carry `expectedVersion` (or an
+HTTP `If-Match` value translated at the API boundary). After loading the authorized entity,
+compare that expectation with its current version **before** applying the patch. Reloading
+current state and relying only on `@Version` loses the client's older observation: it guards
+the database race after this load, not the interval since the client's original read.
+Never assign the received version into the managed `@Version` field. Preserve the provider's
+version check through flush/commit to cover a writer racing after the comparison. Missing
+preconditions and stale values need an explicit API policy; do not retry a stale human edit
+automatically with a freshly loaded version. An unconditional business command may have a
+different contract and need no client version.
+
+The fixture's `InventoryService.changeNote` and stale/current/missing-version tests demonstrate
+this persistence boundary. They do not implement HTTP header parsing or status mapping. If
+using `If-Match`, implement its HTTP semantics at that boundary rather than assuming Spring
+Data REST's behavior applies automatically to a custom controller. Test both a stale client
+request arriving after another commit and overlapping database transactions.
+[Jakarta optimistic locking](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#optimistic-locking),
+[Spring Data REST conditional operations](https://docs.spring.io/spring-data/rest/reference/etags-and-other-conditionals.html).

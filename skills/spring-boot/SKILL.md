@@ -32,8 +32,12 @@ handoffs below when it owns the decision.
    report the compatibility difference before recommending version-sensitive changes;
    do not silently retarget it. Preserve its build tool. Selecting this skill does not
    authorize an upgrade, preview feature or new dependency.
-   The executable fixture uses Boot **4.1.1**, Java **25** source/release and Maven;
-   its successful execution does not establish compatibility with every 4.x patch.
+   The worked guidance uses Boot **4.1.1** and Java **25**. Code fragments explain
+   individual changes to an existing project; they are not a standalone application
+   or a compatibility guarantee for every 4.x patch.
+   Ground Boot decisions in the [official Spring Boot documentation](https://docs.spring.io/spring-boot/),
+   selecting the release that matches the resolved project. A rolling documentation
+   link is an entry point, not permission to assume its current defaults apply.
 2. Locate bootstrap/package scanning, explicit imports, configuration classes, similar
    components and deployment configuration. Separate explicit requirements, documented
    standards, consistent conventions, isolated examples and hypotheses. Preserve
@@ -63,6 +67,12 @@ For missing beans, conflicting properties, bootstrap changes or new starters, re
 `@Autowired` remains a Spring API; avoiding it is the authoring convention of this
 skill, not a claim of removal. Do not rewrite unrelated existing injection to enforce it.
 Spring-managed singleton scope does not itself make mutable application state thread-safe.
+When a default factory backs off, check whether its properties remain registered and
+validated. Their ownership decides whether replacement should disable that binding.
+For an ordinary application, use its existing components, typed settings and Boot
+properties/builders/customizers. Add conditional library wiring only when independent
+consumers actually need default/override behavior. A demonstration client, dispatcher
+or custom context harness is not a prerequisite for configuring a real component.
 
 ## Operational and conditional decisions
 
@@ -86,6 +96,8 @@ When changing Actuator, health, logging, execution or lifecycle, read
   keep-alive are conditional on versions and active beans. Virtual threads do not
   create CPU, database connections or downstream capacity. Verify the executor used
   by the caller before tuning properties that may no longer apply.
+  With `SimpleAsyncTaskScheduler`, `fixedDelay` jobs share one scheduler thread;
+  preserve the required completion-to-next-start delay when resolving interference.
 - Prefer a direct call when the caller needs an immediate result/failure. In-process
   events are useful for a defined decoupling need; asynchronous or after-commit
   listeners do **not** establish delivery after a process crash. Decide transaction
@@ -96,10 +108,11 @@ When changing Actuator, health, logging, execution or lifecycle, read
 
 ## Validate, deliver and stop
 
-Read [verification and the runnable fixture](references/verification.md) when adding
-tests or substantiating a configuration claim. It routes the executable
-[composition fixture](assets/composition-fixture/pom.xml); read its
-[run instructions](assets/composition-fixture/README.md) before executing it in a copy.
+Read [verification by claim](references/verification.md) when selecting checks for a
+configuration change. Adapt a focused check to the project's actual bean, settings or
+job; create a separate framework reproduction only when an unresolved mechanism needs
+isolation. Passing a reproduction establishes that mechanism under its stated versions,
+not the behavior of the application that motivated it.
 
 Choose the smallest check that observes the changed contract: plain unit test for a
 pure collaborator, `ApplicationContextRunner` for binding/conditions/bean identity,
@@ -126,10 +139,15 @@ cause; pass the build, resolved graph, toolchain and failure and expect a minima
 repair. Use `spring-boot-web` for HTTP/MVC contracts or container capacity and
 `spring-boot-jpa` for persistence behavior; pass exact versions, configuration and
 observed request/SQL failure and expect a component-specific correction.
+For that persistence work, use the corresponding version of the
+[official Spring Data JPA reference](https://docs.spring.io/spring-data/jpa/reference/jpa.html).
 
 Use `spring-security-for-apis` for management/application authorization policy with
 actual chain matchers, paths, principals and access expectations; expect access rules
-and adversarial checks. Use `kubernetes-service-lifecycle` for rollout/probe timing with
+and adversarial checks grounded in the matching
+[official Spring Security reference](https://docs.spring.io/spring-security/reference/).
+These specialist references are conditional on the task; they do not require unrelated
+JPA or security changes. Use `kubernetes-service-lifecycle` for rollout/probe timing with
 startup/shutdown traces and deployment budgets; expect a verified drain/probe design.
 
 Use `structured-logging`, `metrics-and-cardinality` or `distributed-tracing-design` when

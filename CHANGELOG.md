@@ -10,6 +10,32 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-09-28
+
+### Added
+
+- Four Spring Boot specialist skills: `spring-http-clients`, `spring-boot-testing`,
+  `spring-transactions-and-events`, and `spring-boot-observability`, bringing the
+  catalog to 287 skills.
+- Focused decisions for managed HTTP clients, test boundaries, transaction-bound
+  events, durable publication and observability, with version-matched official
+  Spring Boot, Spring Data JPA and Spring Security references.
+
+### Changed
+
+- Reviewed nine Spring-related packages and simplified their resources around
+  native framework facilities and existing application code. Removed artificial
+  migration, Outbox, security, client and event scaffolding; retained useful JPA,
+  HTTP, testing and trace-propagation examples.
+- Preserved conditional guidance for concurrency, response limits, token trust,
+  callback phases, recovery and mixed-version database rollouts. Examples now
+  state when additional mechanisms and real-engine checks are necessary.
+- Recorded 39 passing Java tests, 13 focused security cases and six detected
+  mutations. Real PostgreSQL/SQL Server and production recovery remain unexecuted.
+- Recorded 22 bounded agent responses without claiming a general comparative
+  improvement; an explicit WebFlux handoff remains an observed response omission.
+- Excluded Java `target/` output and `.class` files from Git tracking.
+
 ## [1.8.0] — 2026-09-27
 
 ### Added
@@ -358,7 +384,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/robsonkades/agent-skills/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/robsonkades/agent-skills/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/robsonkades/agent-skills/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/robsonkades/agent-skills/compare/v1.6.0...v1.7.0

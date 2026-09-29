@@ -34,6 +34,14 @@ in the UI. Read-only schema metadata does not reject a client-supplied ID by its
 
 ## Validation and errors
 
+Choose the smallest error policy that satisfies the API. For standard MVC Problem Details,
+Boot's `spring.mvc.problemdetails.enabled=true` supplies the framework exception handling;
+it does not require a custom advice just to reproduce those responses. A promised `violations`
+array, stable domain codes or a legacy envelope justifies narrow application handling. Reuse
+an existing advice before creating another one. The fixture extends `ResponseEntityExceptionHandler`
+because its consumers need the documented violations extension and safe unexpected-error policy.
+It is an example of that conditional contract, not the minimum configuration for a controller.
+
 Use Jakarta Bean Validation for constraints expressible on the transport model and validate
 nested structures explicitly. Verify method validation selection: class `@Validated` uses
 AOP; built-in MVC method validation introduced in Framework 6.1 uses another path. Depending
@@ -45,6 +53,26 @@ per field, including global errors; a map collector without a merge rule can tur
 error into 500. Do not echo passwords, tokens or rejected private values. Stable codes are
 often better machine contracts than localized prose; follow the existing error format.
 
+Define the public location convention for violations. Bean Validation property paths name
+Java properties; `FieldError.getField()` does not automatically apply Jackson `@JsonProperty`
+or naming strategies. For JSON bodies, keep Java and public names aligned when that fits
+the existing contract; otherwise map the affected public paths explicitly or reuse the
+project's supported mapping. Mapper metadata can help a genuine generic API framework, but
+a reflective path translator is not a prerequisite for one renamed DTO property. Query,
+header, cookie and path-variable errors use the binding annotation's public name; form/model
+attribute errors follow their own binder contract. Test both argument and method-validation
+paths, changing only an external property name to expose accidental coupling to Java names.
+
+For example, `@JsonProperty("display_name") String displayName` must not publish
+`displayName` when the consumer expects JSON field locations: an explicit mapping to
+`display_name` solves this local contract without general traversal machinery. Preserve
+nested indices where meaningful; do not echo private map keys. A documented `request`
+fallback is appropriate only where the consumer permits global errors, not as a substitute
+for required field locations. Test aliases/naming strategies with the actual mapper when
+present. Custom deserializers and unwrapped/polymorphic values need their own public mapping.
+The fixture's Java/JSON names and query parameter names intentionally match; its simple
+advice relies on that verified condition and must be adapted if the public names change.
+
 ProblemDetail can carry standard fields and controlled extensions. When extending it, test
 the actual flattened JSON and document those public extensions, not its internal Java
 properties map. Set status/media type consistently and avoid blanket advice that catches all
@@ -54,6 +82,17 @@ classification; an existence precheck cannot eliminate simultaneous insertion ra
 Failures from authentication entry points, access-denied handlers, container parsing or a
 filter before DispatcherServlet may not reach controller advice. Identify and test each
 owned boundary; do not promise a universal ProblemDetail response from advice alone.
+
+When a resource-server chain publishes Problem Details, preserve its bearer status and
+`WWW-Authenticate` challenge before writing the safe body. Test no credentials/invalid token
+(401), valid token without the required permission (403), and permitted access with a real
+decoder when token validation is claimed. Assert rejected requests do not mutate state and
+compare these responses with generated security requirements and response components in
+each published group. Use the application's real protected operation and configured chain;
+do not add a test issuer or a second security chain to an otherwise public MVC example merely
+to demonstrate the mechanism. JWT trust, chain design and browser policy remain owned by
+`spring-security-for-apis`; pass the credential contract, actual response headers/bodies and
+documented requirements. Its result should be a compatible tested policy, not an invented issuer.
 
 `ResponseEntityExceptionHandler` is an appropriate base when adopting MVC Problem Details:
 override the specific hooks that need different representation, retaining framework status,
@@ -91,7 +130,8 @@ arbitrary X-Forwarded-Host merely because it makes a local example work.
 
 For uploads, bound request/file size, parts, headers and disk/memory use; validate content
 and storage names, and clean temporary resources after rejection/disconnect. Servlet and
-application limits may produce different errors. For streaming/SSE, establish event encoding,
+application limits may produce different errors. JSON needs its own [pre-binding bounds](request-bounds.md).
+For streaming/SSE, establish event encoding,
 heartbeat, reconnect/resume expectations, authentication lifetime, backpressure or bounded
 buffering, timeout and client disconnect cleanup. Once headers/body are committed, a later
 failure cannot always become an ordinary JSON error response. For async dispatch, account for
@@ -118,5 +158,7 @@ Sources: [Boot Servlet integration](https://docs.spring.io/spring-boot/reference
 [MVC validation](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-validation.html),
 [MVC error responses](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-ann-rest-exceptions.html),
 [method-validation exception contract](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/web/method/annotation/HandlerMethodValidationException.html),
+[validation field paths](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/validation/beanvalidation/SpringValidatorAdapter.html),
+[resource-server processing](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html),
 [Boot test boundaries](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html),
 [Boot 4 migration](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide).

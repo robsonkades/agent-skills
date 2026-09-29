@@ -1,0 +1,49 @@
+schemaVersion: 1
+name: spring-boot-observability
+version: 1.0.0
+description: >-
+  Wire and diagnose Spring Boot metrics, observations, traces and Actuator when a
+  managed HTTP client loses trace context, asynchronous work detaches from its
+  parent, instrumentation duplicates data, metric labels grow, or management
+  endpoints and health groups expose the wrong behavior. Owns Boot integration;
+  metric schema, trace topology, telemetry cost and SLO policy belong to specialists.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-boot-observability
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-boot-observability
+keywords:
+  - java
+  - spring-boot
+  - observability
+  - micrometer
+  - actuator
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/observation-fixture/pom.xml
+  - assets/observation-fixture/README.md
+  - assets/observation-fixture/src/
+dependencies: []
+suggests:
+  - spring-boot
+  - metrics-and-cardinality
+  - distributed-tracing-design
+  - opentelemetry-performance
+  - structured-logging
+  - slo-and-alerting
+  - kubernetes-service-lifecycle
+  - spring-security-for-apis
+capabilities:
+  - reads-source
+  - runs-commands
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Boot Observability
+      short_description: Boot telemetry wiring, context and management contracts

@@ -10,7 +10,7 @@ specific authorization rules before overlapping general rules. A final chain wit
 `securityMatcher` covers otherwise unmatched requests. An API-only application's fallback
 can deny everything; a combined UI/API application instead needs the UI's own authentication
 and browser protections. Do not blindly append a deny-all chain ahead of existing chains.
-[Spring's multiple-chain contract](https://docs.spring.io/spring-security/reference/7.0/servlet/configuration/java.html).
+[Spring's multiple-chain contract](https://docs.spring.io/spring-security/reference/7.1/servlet/configuration/java.html).
 
 Build a small route table: method, path, dispatcher/servlet context, winning chain,
 credential mechanism, authority and expected denial. Include actual management exposure;
@@ -45,7 +45,7 @@ error/challenge semantics. When a custom API body is required, preserve their HT
 and protocol headers, set the intended content type, and avoid token/claim leakage. Do not
 replace every denial with 401 or a login redirect. `@ControllerAdvice` alone does not own
 failures emitted before MVC in the filter chain. Test both status/headers and absence of
-handler side effects. [Resource-server processing](https://docs.spring.io/spring-security/reference/7.0/servlet/oauth2/resource-server/index.html).
+handler side effects. [Resource-server processing](https://docs.spring.io/spring-security/reference/7.1/servlet/oauth2/resource-server/index.html).
 
 ## Method checks and the protected operation
 
@@ -55,7 +55,7 @@ callers. In proxy mode, a call through `this` bypasses the proxy; private/final 
 final classes can prevent intended interception depending on proxy type. JDK proxies expose
 interface methods; class proxies have subclassing constraints. Test an external invocation
 of the Spring bean with insufficient authorities, then inspect internal call paths.
-[Method security](https://docs.spring.io/spring-security/reference/7.0/servlet/authorization/method-security.html),
+[Method security](https://docs.spring.io/spring-security/reference/7.1/servlet/authorization/method-security.html),
 [proxy limitations](https://docs.spring.io/spring-framework/reference/core/aop/proxying.html).
 
 Use a bean boundary that callers actually cross, or a deliberate explicit authorization
@@ -64,6 +64,17 @@ existing check. `@PostAuthorize` runs after the method; it is unsuitable as the 
 against a forbidden mutation or external side effect. Post-filtering a result collection
 also does not establish query-level tenant isolation or correct pagination. These policy
 and consistency questions belong to the neighboring application/query skills.
+
+Keep an adequate guard in the existing business service. When a separate policy bean is
+needed, `@PreAuthorize` can call it, but a generic policy framework or a second repository
+does not follow from using method security. Test the real Spring service with a permitted
+caller, a wrong owner, a wrong tenant and a missing record; denied calls must leave the
+protected state unchanged. Include a non-HTTP caller if it reaches this service. Identity
+comes from validated authentication, never an untrusted `X-Tenant` override. For mutable
+ownership, pass the read/check/write sequence and transaction evidence to
+`java-application-security-basics` or `service-layer-design`; expect a consistent authorized
+write, not just a proxy check. If those skills are unavailable, retain the guard and report
+the unresolved race instead of inventing an atomicity guarantee.
 
 ## Browser decision table
 
@@ -85,7 +96,7 @@ For a cookie/browser application, use the version's supported CSRF token reposit
 request-handler pairing; test missing, invalid and valid tokens. A CSRF token cookie must
 be paired with a request token comparison, not accepted merely because the cookie exists.
 SPA handling depends on deferred tokens, BREACH masking and refresh after login/logout;
-read the version-specific [SPA integration](https://docs.spring.io/spring-security/reference/7.0/servlet/exploits/csrf.html)
+read the version-specific [SPA integration](https://docs.spring.io/spring-security/reference/7.1/servlet/exploits/csrf.html)
 before transplanting a cookie-token snippet. `SameSite` can complement this contract.
 
 ## CORS is a browser permission policy
@@ -102,4 +113,4 @@ Origin reflection can still grant untrusted origins credentialed response access
 intentional uncredentialed public API can have a wider origin policy. CORS is not server
 authorization: non-browser clients are unconstrained, and browser requests may cause effects
 even when JavaScript cannot read a response. Test allowed and hostile preflight and actual
-requests independently. [Spring CORS integration](https://docs.spring.io/spring-security/reference/7.0/servlet/integrations/cors.html).
+requests independently. [Spring CORS integration](https://docs.spring.io/spring-security/reference/7.1/servlet/integrations/cors.html).

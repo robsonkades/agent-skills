@@ -1,8 +1,8 @@
 # Composition and configuration
 
 Use for bootstrap, missing/duplicate beans, conditions, property binding and library
-auto-configuration. Examples in the asset are executable on the pinned baseline;
-the diagnostic sequences here are decision guidance, not a script to run wholesale.
+auto-configuration. The fragments below explain changes to existing project types;
+they are not a standalone application or a script to run wholesale.
 
 ## Trace the composition before changing it
 
@@ -46,8 +46,23 @@ dependency without that interception. Existing full configuration can legitimate
 retain `true`; a flag change is not a performance fix without a relevant measurement.
 Test the consumer's reference against the context's bean and observe cleanup. The
 [Framework configuration contract](https://docs.spring.io/spring-framework/reference/core/beans/java/configuration-annotation.html)
-defines this distinction; the fixture tests both flag values and the parameter-injected
-alternative.
+defines this distinction. For example, change the factory consuming an existing client:
+
+```java
+// Before: a plain Java call when proxyBeanMethods=false.
+@Bean
+Processor processor() { return new Processor(client()); }
+
+// After: the container supplies its registered client.
+@Bean
+Processor processor(Client client) { return new Processor(client); }
+```
+
+These are alternative method fragments; `Processor`, `Client` and the `client()`
+factory are the application's existing types. Keep one implementation. If the existing
+configuration needs full interception elsewhere, retain it until those dependencies
+are accounted for. Verify the real consumer's identity and owned-resource close rather
+than adding a fake client with a close counter to production code.
 
 For lifetime mismatches, a singleton injected with a prototype does not acquire a new
 instance on every invocation. Choose an explicit factory/provider or scoped proxy only
@@ -70,6 +85,39 @@ Use a user-defined bean for a required replacement, then inspect which configura
 back off. An exclusion must name the configuration, why its effect is unwanted, and
 who now supplies the lost capability. Bean-definition overriding is a different, wider
 mechanism than conditional backoff; do not enable it to suppress an unexplained collision.
+
+Check what else survives a factory's backoff. A method-level `@ConditionalOnMissingBean`
+does not disable its enclosing class's `@EnableConfigurationProperties`: those settings
+can still bind and fail validation after a user replaces the client. Decide ownership:
+
+- If the properties configure only the default implementation, place their registration
+  and factory in a nested configuration conditioned on the missing client. Keep consumers
+  outside that condition so they can use the replacement.
+- If the properties describe an application-wide contract or another consumer still needs
+  them, retain registration and validation. Do not disable validation merely to start.
+
+Check other registration paths, including properties scanning. Test the same invalid
+value with and without the replacement, then with explicitly shared properties.
+See [bean conditions](https://docs.spring.io/spring-boot/reference/features/developing-auto-configuration.html#features.developing-auto-configuration.condition-annotations.bean-conditions)
+and [properties validation](https://docs.spring.io/spring-boot/reference/features/external-config.html#features.external-config.typesafe-configuration-properties.validation).
+
+For example, a library's default archive client needs an endpoint, while the application
+owns a retention setting. A service supplying its own client should not need the unused
+endpoint. Move the default factory and its `@EnableConfigurationProperties` registration
+into the same nested `@Configuration(proxyBeanMethods = false)` guarded by
+`@ConditionalOnMissingBean(ArchiveClient.class)`. Keep the retention settings and the
+services consuming the client outside that condition:
+
+| Configuration supplied by the consumer | Expected outcome | Reason                                                                     |
+| -------------------------------------- | ---------------- | -------------------------------------------------------------------------- |
+| No client, invalid endpoint            | Startup fails    | The default still needs valid connection settings.                         |
+| Custom client, invalid unused endpoint | Startup succeeds | Default-only settings are no longer registered through that configuration. |
+| Custom client, invalid retention       | Startup fails    | Application-wide validation remains active.                                |
+
+This is a library override contract, not a reason to wrap a single application's client
+in auto-configuration. In that application, change the existing typed settings/factory
+and its binding test. If another scan independently registers the default properties,
+moving one annotation is insufficient; fix that registration according to ownership.
 
 For a reusable library, use `@AutoConfiguration`, appropriately ordered conditions and
 the auto-configuration imports resource instead of scanning consumers' packages.
@@ -100,7 +148,10 @@ properties scanning or explicit enabling, and validate it. A constructor-bound r
 does not need a component stereotype or `@Autowired`. Use `Duration`/`DataSize` for units
 and state valid ranges. Ensure nested objects receive cascading validation where needed.
 Decide whether absence is permitted; do not substitute empty/zero for required values.
-The fixture shows a defaulted record with range and positive-duration validation.
+For example, a polling interval should bind as `Duration` and reject zero or negative
+values if they cannot satisfy the job's timing contract; parsing a duration alone does
+not establish that constraint. Test an invalid value through binding, not only by
+constructing the record directly.
 
 Choose a narrowly used `@Value` only when that simpler contract suffices. Expression
 evaluation and typed configuration binding are different features. Avoid scattering a
@@ -124,8 +175,8 @@ Resolve Boot-managed versions before adding overrides to Framework, Jackson, log
 validation or test libraries. Different majors of related APIs can be present intentionally;
 the import and auto-configuration must match the actual module. Consult
 [Boot build systems](https://docs.spring.io/spring-boot/reference/using/build-systems.html)
-and the chosen BOM. Preserve Maven/Gradle conventions; the fixture's Maven build does
-not claim that an untested Gradle translation is equivalent.
+and the chosen BOM. Preserve Maven/Gradle conventions and verify the project's actual
+build rather than substituting a sample build with different dependency resolution.
 
 If tests pass but the deployed artifact cannot start, inspect the packaged artifact and
 launch command as well as the dependency graph. Importing a BOM does not configure an

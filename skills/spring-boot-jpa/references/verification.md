@@ -6,15 +6,15 @@ database or performance behavior.
 
 ## Select the smallest adequate test
 
-| Contract                               | Adequate evidence                                                                                     | Insufficient by itself                                                      |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Repository wiring and newness behavior | Context/slice with actual provider and correctly selected datasource; inspect resulting SQL/state     | A mocked repository returning the input object                              |
-| Commit/rollback                        | Failure after a write, transaction completes, independent transaction/context reads the database      | Reading the same managed instance or calling flush                          |
-| Partial update                         | Omitted field survives, explicit null has defined meaning, stale version conflicts                    | Reconstructing an entity with default values and checking one changed field |
-| Fetch/page                             | Representative empty/large relations, stable IDs/order/count, SQL limiting and statement observations | Fewer SELECTs while silently dropping roots or loading all rows             |
-| Real type/sequence/dialect             | Production-family database and actual driver/schema, boundaries and concurrent/restart cases          | H2 compatibility mode, mocks or SQL compilation                             |
-| Lock/optimistic conflict               | Coordinated independent transactions, bounded completion, asserted final invariant and conflict       | Sequential calls in one test-managed transaction                            |
-| Pool tuning                            | Offered load, database budget, hold/acquire distributions, cold and saturated periods                 | Threads count or a single request's latency                                 |
+| Contract                               | Adequate evidence                                                                                        | Insufficient by itself                                                                |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Repository wiring and newness behavior | Context/slice with actual provider and correctly selected datasource; inspect resulting SQL/state        | A mocked repository returning the input object                                        |
+| Commit/rollback                        | Failure after a write, transaction completes, independent transaction/context reads the database         | Reading the same managed instance or calling flush                                    |
+| Partial update                         | Omitted field survives, explicit null has defined meaning, stale client version and flush races conflict | Reconstructing an entity with default values or testing only overlapping transactions |
+| Fetch/page                             | Representative empty/large relations, stable IDs/order/count, SQL limiting and statement observations    | Fewer SELECTs while silently dropping roots or loading all rows                       |
+| Real type/sequence/dialect             | Production-family database and actual driver/schema, boundaries and concurrent/restart cases             | H2 compatibility mode, mocks or SQL compilation                                       |
+| Lock/optimistic conflict               | Coordinated independent transactions, bounded completion, asserted final invariant and conflict          | Sequential calls in one test-managed transaction                                      |
+| Pool tuning                            | Offered load, database budget, hold/acquire distributions, cold and saturated periods                    | Threads count or a single request's latency                                           |
 
 Use `@DataJpaTest` for an appropriately scoped persistence test, importing only required
 collaborators. Inspect Boot 4's package/module for the annotation and how the test replaces
@@ -23,6 +23,12 @@ explicit no-replacement configuration depending on the setup. Use `@SpringBootTe
 actual application wiring is the subject. The supplied fixture deliberately uses it with
 a small non-web application and constructor injection in tests.
 [Boot 4 test slices](https://docs.spring.io/spring-boot/appendix/test-auto-configuration/slices.html).
+
+Let Boot create the datasource, entity-manager factory and transaction manager. When
+the project uses Testcontainers, a test container bean with
+`@ServiceConnection(type = JdbcConnectionDetails.class)` supplies JDBC connection details
+and follows the context lifetime. Test the actual service or repository using that setup.
+[Boot service connections and container lifecycle](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html).
 
 Do not place every test inside a test-managed transaction. That can hide missing service
 boundaries, defer failures or make a repository result visible only in the first-level
@@ -39,31 +45,36 @@ locking or filtered-index behavior. Report unavailable runtime/license/network s
 
 ## Fixture route and checks
 
-Read [the fixture README](../assets/persistence-fixture/README.md) before running it.
-It states prerequisites, local writes and isolation. The Maven test sources demonstrate
-managed updates, rollback after flush, optimistic conflict and collection-fetch page
-semantics on the pinned provider with H2. The SQL Server mapping and database scripts
-are separate probes; compilation does not execute those database checks.
+Read [the Inventory README](../assets/persistence-fixture/README.md) when a runnable
+managed-update or conditional-edit example helps. Prefer the project's existing tests
+when the task is already in a service. The example uses Boot infrastructure, a concrete
+repository and an ordinary transactional service; it is not a starter project to copy
+wholesale or a prerequisite for unrelated persistence reviews.
+
+Its service tests use repository reads after transaction completion, Boot's
+`TransactionTemplate` for an intentional failure after flush, and two manual entity
+managers only to establish overlapping reads for an optimistic conflict. Keep such
+failure injection in tests. Routine application code does not need a test-only failure
+method, custom factory or generic entity interface.
 
 For complete entity work, reconcile the entire attribute inventory with mapping, schema,
 validation and consumers, including nullable and generated attributes. Exercise both null
 and present optional values. The fixture README inventories every field, including deliberate
 defaults and checks that remain specific to a real database.
 
-For generated-ID equality, test transient distinction, hash membership before/after
-allocation, detached/cross-context instances, and proxy symmetry/equal hashes. Exercise
-open and closed contexts under the actual proxy-compliance setting. The fixture adds
-both compliance settings explicitly so a zero-query claim cannot hide the getter's
-initialization behavior. Different inheritance/provider contracts need additional cases.
+Only if consumers require custom generated-ID equality, test transient distinction, hash
+membership before/after allocation, detached/cross-context instances and proxy symmetry.
+Exercise open/closed contexts under the actual compliance and inheritance configuration.
+The Inventory example deliberately has no such consumer or equality override.
 
-The fixture targets Java 25 and includes ten tests for state/transaction/query behavior,
-optional attributes and generated-ID/proxy equality. The coordinator's clean isolated run
-passed all ten with zero failures/errors/skips, compiling with release 25 and executing
-on Temurin 25.0.3, Maven 3.9.15, Boot 4.1.1, Hibernate 7.4.5.Final and H2 2.4.240.
-Consult the fixture README for its scope and limitations. Technical fixture evidence
-does not establish measured agent improvement.
+The example targets Java 25/Boot 4.1.1/Hibernate 7.4.5.Final/H2 2.4.240. Its seven tests
+cover reservation commit/rollback, stale/current/missing client versions, overlapping
+optimistic updates and optional note bounds. They do not execute vendor-specific types,
+pessimistic locking, collection pagination, auditing, custom equality or load scenarios.
+Use the relevant references and the project's schema/driver/tests for those conditional
+requirements. Technical example checks do not establish measured agent improvement.
 
-For a changed type/ID/lock path, extend the fixture or project tests with these checks:
+For a changed type/ID/lock path, choose relevant checks in the project's existing tests:
 
 1. Insert/read Java boundary values and Unicode text through Hibernate, then inspect
    SQL values and bind types. Run in two JVM time zones when temporal values are involved.
@@ -92,21 +103,9 @@ Use these as review prompts when an implementation touches the relevant contract
   The Hibernate assertion must change or remain unproven, even when YAML is identical.
 - A managed entity update must audit the actor; then replace it with bulk DML. Verify
   explicit audit/version work rather than expecting listeners to run.
+- A client edits a note using the current version; then replay the same command with the
+  version from before another committed edit. The service must reject the stale expectation
+  even if it loads a fresh managed entity. Never overwrite `@Version` or silently retry
+  with the current version; preserve the unrelated fields and the winning edit.
 - The request asks only for findings or supplies an adequate JDBC query. Preserve that
   scope and approach instead of turning skill activation into a JPA migration.
-
-## External example adaptation
-
-The planning input included [piomin's skill package at the reviewed commit](https://github.com/piomin/claude-ai-spring-boot/tree/d87e7a38588a0a945ae2c11a251954897692330e/.claude/skills),
-notably jpa-patterns and spring-boot/references/data.md and testing.md. Its fetch,
-projection, audit and test examples motivated the cases above. Its primary Spring skill
-targets Boot 3.x, so examples are not copied as the Boot 4 baseline. Preserve result
-semantics when replacing a query with an inner fetch join; do not enable OSIV as an
-automatic lazy-loading cure or infer correctness from a fixed coverage percentage.
-
-When test doubles are required elsewhere, Boot 4 removed `@MockBean`/`@SpyBean` support
-in favor of Spring Framework's `@MockitoBean`/`@MockitoSpyBean`; inspect their actual
-targets and context semantics. H2 and a mocked security principal do not validate real
-database behavior or bearer-token verification. This package's fixture uses actual
-Spring Data repositories, not repository mocks.
-[Boot 4 migration guide](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide).

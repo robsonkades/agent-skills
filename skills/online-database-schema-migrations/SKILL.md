@@ -3,7 +3,7 @@ name: online-database-schema-migrations
 description: >-
   Planning and reviewing same-engine relational schema rollouts while old and new
   application versions coexist. Use for a hot-table column or constraint change,
-  resumable backfill, migration-runner failure, read/write cutover, or contraction
+  resumable backfill, migration-runner or Spring Boot startup failure, cutover, or contraction
   with a defined rollback boundary. Covers DDL execution risk and data correctness;
   not cross-engine migration, ingestion throughput tuning, or API/event schemas.
 ---
@@ -23,6 +23,11 @@ belong to `database-engine-selection-and-migration`, and API/event wire compatib
 `schema-evolution-and-compatibility`. Use `postgresql-performance`, `mysql-innodb-performance`
 or `sql-server-performance` for engine diagnosis and tuning, and `database-index-design`
 when the question is which index to build. These are optional handoffs, not prerequisites.
+For Boot persistence-unit, datasource/pool and mapping design, compose with `spring-boot-jpa`;
+this skill owns the migration lifecycle and schema compatibility gates.
+Pass the affected schema, application artifacts, runner configuration and unresolved decision
+to a handoff. If that specialist is unavailable, preserve the existing design and identify the
+specific missing evidence; do not guess a replacement architecture.
 
 ## Establish the execution contract
 
@@ -41,8 +46,15 @@ a sequence. Record the evidence relevant to this change:
   headroom, rollback window, recovery-point objective and tested restore capability.
 
 There is no Java baseline imposed here. Preserve the project's compiler/runtime, framework
-and driver versions; a database change does not authorize upgrading them. For a widened type,
-inspect Java mappings, serialization and arithmetic as well as SQL storage.
+and driver versions; a database change does not authorize upgrading them. Boot-specific
+guidance identifies its checked release separately. For a widened type, inspect Java
+mappings, serialization and arithmetic as well as SQL storage.
+
+For Spring integration claims, use the [official Boot documentation](https://docs.spring.io/spring-boot/)
+for the project's resolved release. When compatibility depends on repository behavior, consult
+the matching [Spring Data JPA reference](https://docs.spring.io/spring-data/jpa/reference/jpa.html).
+Prefer these primary sources and version-tagged implementation evidence for uncertain behavior;
+the documentation's current default version is not an upgrade instruction.
 
 If evidence is missing, draft the compatible phases and identify the unresolved gate. Do not
 invent lock duration, a supported online algorithm, or a safe rollback target. A plan/review
@@ -59,6 +71,8 @@ does not authorize applying SQL to a live database; preserve existing task autho
    short metadata changes, nontransactional operations and long validation/backfill work.
    Read [DDL and runner control](references/ddl-and-runner-control.md) before recommending
    SQL, runner configuration, or recovery from a migration failure.
+   For Boot-managed Flyway/Liquibase, read [Boot migration lifecycle](references/spring-boot-lifecycle.md)
+   to choose the datasource, schema owner, initialization order and deploy-job/startup boundary.
 3. **Protect concurrent writes before copying.** Establish one authority. Use atomic writes
    within the same database, a verified bridge trigger, or a change-capture protocol with a
    defined start position and catch-up gate. Application dual writes cover only participating
@@ -126,3 +140,11 @@ execution and stop conditions, and recovery for the current state. A narrow revi
 only the defective step and corrected gate. Distinguish authored plans, static/source checks,
 model/example tests and actual database/application rehearsals; report unavailable runtime
 proof explicitly. Documentation establishes semantics, not production duration or capacity.
+
+For Boot, use the project's chosen runner, real migration history and existing application
+integration tests. The [worked Boot integration](references/spring-boot-lifecycle.md#start-with-the-existing-application)
+shows the minimal configuration and how to select checks for the changed risk. A new migration
+does not require an example application, generic test harness or a second migration tool.
+Exercise failed/repeated startup only when that lifecycle is in question. Application
+compatibility requires its actual reads/writes and supported artifacts; H2 or simplified
+replacement entities cannot establish vendor DDL behavior or release compatibility.

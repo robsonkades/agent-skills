@@ -1,134 +1,98 @@
-# Isolated persistence contract fixture
+# Inventory persistence example
 
-This is a teaching fixture, not a production application or tuned configuration. It
-uses Java 25, Maven, Boot 4.1.1 and its managed Hibernate 7.4.5.Final. It creates
-only an in-memory H2 database during automated tests. No HTTP server, external database,
-container, migration of existing data or agent installation is started.
+Use this example when implementing a managed update or an edit conditioned on the
+version a client previously read. Start with
+[InventoryService](src/main/java/example/persistence/InventoryService.java): it injects a
+concrete Spring Data repository, loads the current entity and changes it inside
+`@Transactional`. Boot supplies the datasource, entity-manager factory and transaction
+manager. There is no separate persistence framework to copy.
 
-Copy this entire directory to an isolated temporary working directory before running:
+The two operations deliberately have different contracts:
+
+```java
+service.reserve("A", 3);                       // command against current stock
+service.changeNote("A", clientVersion, null); // conditional edit; null clears the note
+```
+
+`reserve` updates available stock and adds an owned movement in the same transaction.
+`changeNote` checks the client's earlier version before changing the current managed
+entity; Hibernate's `@Version` still protects a race after that check. Neither operation
+reconstructs a detached entity or overwrites omitted description/stock fields.
+
+The repository's `findWithMovementsBySku` uses a derived predicate and `@EntityGraph`
+when the caller needs the movements as well. Ordinary `findById` keeps its usual fetch
+plan. This example makes no promise about a universal query count or collection paging.
+
+Both entities keep reference equality because these operations do not compare detached
+copies or place transient entities in hash collections. Sequence generation uses provider
+defaults for this disposable schema. Existing production sequences still require matching
+mapping, migration and writer contracts; copying this entity is not a migration plan.
+
+## Run in isolation
+
+The baseline is Java 25, Maven, Boot 4.1.1 and its managed Hibernate 7.4.5.Final/H2 2.4.240.
+Copy this directory **without any `target/` output** to a temporary working directory:
 
 ```text
 mvn -B -ntp test
 ```
 
-Prerequisites: JDK 25, Maven and access to the declared artifacts
-(or a prepared local repository). Maven writes `target/` under the copied directory and
-downloads dependencies into its local repository. For isolated dependency storage, pass
-`-Dmaven.repo.local=<temporary-cache>`. Do not build in the installed skill directory.
-The authoring environment uses Temurin JDK 25.0.3. The fixture compiles with release 25
-and runs on Java 25. No wrapper or shell script executes automatically.
+Prerequisites: JDK 25, Maven and access to the declared artifacts or a prepared local
+repository. Maven writes `target/` in the copy and dependencies in its local repository;
+use `-Dmaven.repo.local=<temporary-cache>` for isolated dependency storage. Do not build
+in the installed skill directory. The tests select an in-memory H2 URL and disposable
+`create-drop` schema, start no HTTP server/container and connect to no existing database.
+Do not copy `create-drop` into production configuration.
 
-Ten automated tests assert:
+## What the tests establish
 
-1. A service call commits a managed reservation and preserves an omitted description.
-2. An exception after `flush()` rolls back stock and movement rows through the actual proxy.
-3. Two independently managed transactions detect a stale optimistic update; the loser
-   rolls back and an independent reader sees only the winner.
-4. Hibernate 7.4's collection-fetch page includes roots with no children, preserves
-   two-page ordering/count and emits database limiting on the H2 dialect.
-5. Auditing uses the fixed Clock wired through DateTimeProvider and survives rereading.
-6. The optional note persists null and present values, accepts its documented limit,
-   rejects an oversized value and can be cleared back to null.
-7. Distinct transient Movement entities with null generated IDs remain unequal.
-8. A HashSet retains membership across generated ID assignment; detached and independently
-   loaded Movement instances compare equally with equal hashes.
-9. With proxy compliance explicitly false, the exact effective-class/getter-ID equality
-   pattern is symmetric for uninitialized proxies before and after context close.
-10. With proxy compliance true in a separate context, the same ID getter can initialize
-    an associated proxy. After context close detaches it, equality uses the known ID without
-    initialization on this pinned provider, while unloaded non-ID access raises LazyInitializationException.
+[InventoryServiceTest](src/test/java/example/persistence/InventoryServiceTest.java) exercises
+the actual service proxy and repository. Tests have no surrounding test-managed transaction:
+after a service call returns, repository queries read committed state in a new context.
+Boot's `TransactionTemplate` creates an explicit failing unit for the rollback test, so
+the application does not need a fake `reserveThenFail` method.
 
-Movement preserves the requested final equals/hashCode pattern. Its class-based hash is
-stable across ID generation but has poor distribution for large sets. The compliance
-pair demonstrates a limitation, not a recommendation to disable compliance in applications.
-Inventory retains reference equality because this fixture does not require cross-context
-logical equality for it; OutboxEvent remains a mapping probe. Inheritance, bytecode
-enhancement and other providers require their own checks.
+The only manual entity managers create **two overlapping persistence contexts** for the
+optimistic-conflict case. They share Boot's factory, close deterministically and roll back
+active transactions even when an assertion fails. This controls the stale-read interleaving;
+it is not a template for routine service code or a parallel load test.
 
-Observed authoring evidence: the coordinator's clean isolated run compiled with
-`--release 25` and passed **10 tests, zero failures/errors/skips** (9 persistence contracts
-and 1 proxy-compliance contract), including detached-ID behavior and the negative
-unloaded-state check. The run used Temurin 25.0.3, Maven 3.9.15, Boot 4.1.1,
-Hibernate 7.4.5.Final and H2 2.4.240. Both compilation and execution used Java 25.
+Seven tests cover:
 
-Read the Surefire result, not only the exit status. These tests exercise selected state,
-proxy, audit and query behavior. They do not establish production database isolation,
-Hikari sizing, high-load behavior, SQL Server pagination or pessimistic timeout support.
-The pessimistic repository/service path compiles but is not a two-session runtime test.
+- A reservation commits stock and its movement while preserving description.
+- A failure after flush rolls back both changes, checked after transaction completion.
+- A stale client version is rejected even though the service loads fresh state.
+- A current version permits an edit and then explicit clearing with a refreshed version.
+- A missing version cannot bypass the conditional edit.
+- Two transactions reading the same version cannot both commit their reservation; only
+  the winner's stock and movement remain after the loser's rollback.
+- An optional note round-trips null and its length limit; an oversized edit preserves
+  the previously committed note and version.
 
-## Complete fixture attribute inventory
+Read the Surefire results, not only the process exit. These checks cover this H2/provider
+setup. They do not establish SQL Server/PostgreSQL binding, pessimistic lock timeouts,
+pagination plans, custom equality, auditing or load behavior. Conditional guidance for
+those tasks stays in the skill's references and must be verified in the consuming project.
+The note edit does not implement HTTP `If-Match`, authorization or conflict UI policy.
 
-All fields use field access. Names and meaningful null/length/write constraints are
-explicit below and in annotations; other annotation parameters deliberately retain
-defaults. H2 schema generation serves this fixture, not production migration. Optional
-columns receive the same review as required ones.
+## Mapping decisions worth carrying into a project
 
-| Entity/attribute      | Meaning and storage                                                                             | Ownership and verification                                                                                    |
-| --------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Inventory.sku         | Assigned String ID, `sku`, non-null, character length 40                                        | Constructor bounds Java UTF-16 length; immutable after creation, DB primary key                               |
-| Inventory.version     | Long null before persistence, non-null `version` BIGINT in persisted rows                       | Provider-managed optimistic version; stale-writer test                                                        |
-| Inventory.description | Required String, `description`, character length 200                                            | Constructor bounds Java length; reservation preserves omitted description; no uniqueness claim                |
-| Inventory.available   | Primitive int, non-null `available` integer, domain nonnegative                                 | Domain reservation controls updates; primitive zero is not SQL NULL; no DB CHECK is claimed by the annotation |
-| Inventory.note        | Optional String, nullable `note`, length 500; null differs from empty                           | Bounded mutable domain method; null/present/oversize/clear test                                               |
-| Inventory.createdAt   | Instant, non-null `created_at`, dialect temporal type/precision                                 | Audit DateTimeProvider supplies insert value; excluded from ORM updates; H2 exact-second round-trip tested    |
-| Inventory.movements   | Inverse one-to-many, FK on Movement, empty collection allowed                                   | LAZY default, cascade ALL/orphan removal for owned lifecycle; no column annotation; empty-root page test      |
-| Movement.id           | Long generated ID, non-null `id` BIGINT; movement_seq allocation 10                             | Provider inserts, never updates ID; lifecycle/hash/equality tests                                             |
-| Movement.inventory    | Required LAZY many-to-one, non-null `inventory_sku` FK                                          | Owning side; owner fixed after insert, no cascade to parent; inverse collection maintained                    |
-| Movement.quantity     | Positive int, non-null `quantity` integer                                                       | Domain guard; write-once ORM field, no setter; not a database permission                                      |
-| OutboxEvent.id        | Long generated BIGINT, `id`, sequence allocation 50                                             | SQL Server DDL/pooled-lo must agree; real-database probes pending                                             |
-| OutboxEvent.status    | Short representing 0–255, non-null `status` TINYINT                                             | Explicit JDBC type and SQL Server dialect; Java guard, real boundary round-trip pending                       |
-| OutboxEvent.attempts  | Integer, non-null `attempts` INTEGER, initially zero                                            | Explicit JDBC type; SQL script CHECK enforces nonnegative values                                              |
-| OutboxEvent.payload   | Required String, `payload` NVARCHAR(1000), nationalized bind, supplementary-character collation | Java limit 1000 UTF-16 units; write-once ORM field; Unicode round-trip pending                                |
-| OutboxEvent.version   | Long null before persistence, non-null `version` BIGINT once stored                             | Provider-managed optimistic field; SQL Server behavior unexecuted                                             |
+Field access applies. Conventional names/types stay implicit; annotations express material
+constraints. Column metadata does not prove a deployed constraint or validate every input.
 
-No decimal field exists, so precision/scale are not invented. No Bean Validation dependency
-is added solely to duplicate these domain guards. `@NotNull` would require an actual
-validation lifecycle; column metadata alone neither validates every input nor proves an
-existing schema constraint. Length units must be revisited for other database/encoding
-contracts; the Java fixture bounds UTF-16 code units explicitly.
+| Attribute             | Contract and owner                                                                                                                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Inventory.sku         | Assigned String ID, up to 40 UTF-16 code units in this example; fixed after creation. The nullable version lets Spring Data identify a new assigned-ID entity. |
+| Inventory.version     | Provider-owned nullable Long before insertion; non-null in stored rows. Never assigned from a request.                                                         |
+| Inventory.description | Required String, at most 200 UTF-16 units; note/reservation commands preserve it.                                                                              |
+| Inventory.available   | Nonnegative int controlled by the reservation rule. A Java primitive cannot represent SQL NULL; the annotation does not create a business CHECK by itself.     |
+| Inventory.note        | Optional String, at most 500 UTF-16 units; null, empty and omitted commands have distinct meanings.                                                            |
+| Inventory.movements   | Inverse one-to-many, cascade and orphan removal only because the children belong to this inventory item.                                                       |
+| Movement.id           | Generated Long; defaults are sufficient for the fixture's generated sequence/schema.                                                                           |
+| Movement.inventory    | Required LAZY owning association, immutable `inventory_sku` FK; no cascade to the parent.                                                                      |
+| Movement.quantity     | Positive int; guarded on creation and excluded from ORM updates.                                                                                               |
 
-## SQL Server mapping and sequence probe
-
-`src/test/java/example/sqlserver/OutboxEvent.java` compiles with the resolved provider but
-is deliberately outside the H2 entity scan. The SQL files are manual probes, not tests
-executed by Maven. Docker/database runtime unavailability must be reported as an unrun
-check, not a pass.
-
-Use a new disposable SQL Server database with a supported JDBC driver and schema `dbo`.
-If using SQL Server containers, the operator must explicitly accept the applicable license
-before creating one; this fixture does not accept it or start a container. Record exact
-engine/image, JDBC driver, collation and isolation. Never point this probe at a user's
-existing application database.
-
-1. Inspect and apply `sql/sqlserver-schema.sql` in that disposable database. It creates
-   a sequence and table; it does not delete or alter existing objects.
-2. In a dedicated test persistence unit, scan only `example.sqlserver.OutboxEvent`, use
-   the SQL Server datasource/dialect, `ddl-auto=validate` and
-   `hibernate.id.optimizer.pooled.preferred=pooled-lo`. Do not copy the H2 application's
-   scan or automatic create-drop setting. Use the project's established test infrastructure
-   to provide the driver, connection and secret, with certificate policy appropriate to
-   that isolated environment.
-3. Persist statuses 0, 127, 128 and 255 with text `ação 漢 🙂`; flush, commit, clear and
-   reread through Hibernate. Assert exact values, reject -1/256 at the domain boundary,
-   inspect binds and compare deployed column metadata. This is the check needed before
-   relying on Short/TINYINT and nationalized binding.
-4. Persist more than 100 events across two independent factories using the same sequence;
-   restart one and roll back another insertion. Assert ID uniqueness and committed rows,
-   allowing gaps. Audit any non-Hibernate writer before reusing this allocation protocol.
-5. Read `sql/sqlserver-lock-probe.sql`; execute the labeled session A and session B parts
-   in separate connections with a known inserted ID. Always release/rollback both sessions.
-   Then repeat through the actual JPA lock path and compare generated SQL, blocking and
-   timeout behavior. The manual hint probe does not prove JPA produces identical hints.
-
-The lock probe intentionally leaves session A open for coordination and must not be run
-unattended as a migration. Roll back on completion/failure; close both connections. It
-demonstrates lock observation only, not crash recovery or an outbox delivery protocol.
-
-## PostgreSQL contrast
-
-`sql/postgresql-schema.sql` makes the differing type contract explicit. Use a disposable
-PostgreSQL instance with the application's encoding/collation and driver, adapt status
-to SMALLINT/adequate Java range and use ordinary character mapping. Apply the same value,
-sequence and independent-transaction assertions. Do not apply SQL Server TINYINT/NVARCHAR,
-SET statements, driver flags or lock hints by analogy. PostgreSQL execution is a separate
-check; neither H2 success nor the existence of this DDL establishes it.
+No public API DTO, generic entity interface, tuned pool, auditing configuration or dialect
+adapter is required to demonstrate these operations. Add one only when the actual project
+contract calls for it. Match database length units, constraints and migrations when adapting
+the example; H2 success alone cannot establish those contracts elsewhere.

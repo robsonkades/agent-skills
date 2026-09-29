@@ -44,6 +44,8 @@ public class ApiDocumentation {
         // Express the actual null-or-object union and retain the property description.
         return api -> {
             for (String name : new String[]{"ProductCreate", "Product"}) {
+                if (api.getComponents() == null || api.getComponents().getSchemas() == null
+                        || !api.getComponents().getSchemas().containsKey(name)) continue;
                 var properties = api.getComponents().getSchemas().get(name).getProperties();
                 Schema<?> original = (Schema<?>) properties.get("dimensions");
                 var union = new ComposedSchema();

@@ -109,7 +109,13 @@ Choose from the invariant:
   without disclosing unauthorized data.
 - `@Version` protects participating entity updates against stale versions. It does not
   by itself serialize all rows involved in a cross-row invariant or protect bulk/native
-  writes that omit the version predicate/increment.
+  writes that omit the version predicate/increment. A child-only change need not advance
+  its parent's version; inverse relationships are not automatically part of the parent's
+  versioned state. If the conflict boundary is the aggregate, establish a common writer
+  protocol, such as a justified force-increment/lock on the root. Do not impose root-wide
+  conflicts on independent children. Test concurrent edits to different children under
+  the shared invariant; hand off broader protocol design to offline-concurrency-control.
+  [Jakarta versioned state and lock modes](https://jakarta.ee/specifications/persistence/3.2/jakarta-persistence-spec-3.2#optimistic-locking).
 - `@Lock(LockModeType.PESSIMISTIC_WRITE)` requests a persistence lock for the repository
   query. It needs an active transaction that covers the protected decision and update.
   Inspect emitted SQL and lock scope under the real dialect/isolation. JPA lock modes,

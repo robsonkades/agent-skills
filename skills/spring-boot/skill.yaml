@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot
-version: 1.0.0
+version: 1.1.0
 description: >-
   Configure, implement and diagnose Spring Boot 4 applications when bean composition,
   auto-configuration, external properties, startup, shutdown or operational wiring
@@ -24,9 +24,6 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
-  - assets/composition-fixture/pom.xml
-  - assets/composition-fixture/README.md
-  - assets/composition-fixture/src/
 dependencies: []
 suggests:
   - java-build-and-dependencies
