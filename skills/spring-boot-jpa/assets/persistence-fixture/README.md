@@ -19,6 +19,16 @@ service.changeNote("A", clientVersion, null); // conditional edit; null clears t
 entity; Hibernate's `@Version` still protects a race after that check. Neither operation
 reconstructs a detached entity or overwrites omitted description/stock fields.
 
+[InventoryException](src/main/java/example/persistence/InventoryException.java) gives
+the expected business failures a common code contract. Its specific
+[missing inventory](src/main/java/example/persistence/InventoryNotFoundException.java)
+and [stale client version](src/main/java/example/persistence/InventoryVersionConflictException.java)
+failures retain the SKU and, for conflicts, expected/current versions. Their diagnostic
+messages are not an HTTP response contract. The latter is distinct from Hibernate's
+optimistic exception when two database transactions race after the initial check;
+both paths remain protected. The base has no cause constructor because these failures
+originate here; an adapter translating infrastructure failures must preserve their cause.
+
 The repository's `findWithMovementsBySku` uses a derived predicate and `@EntityGraph`
 when the caller needs the movements as well. Ordinary `findById` keeps its usual fetch
 plan. This example makes no promise about a universal query count or collection paging.
@@ -57,13 +67,16 @@ optimistic-conflict case. They share Boot's factory, close deterministically and
 active transactions even when an assertion fails. This controls the stale-read interleaving;
 it is not a template for routine service code or a parallel load test.
 
-Seven tests cover:
+Nine tests cover:
 
 - A reservation commits stock and its movement while preserving description.
 - A failure after flush rolls back both changes, checked after transaction completion.
+- A duplicate primary key fails at transaction completion after both `save` calls return;
+  the companion insert rolls back and the original row survives.
 - A stale client version is rejected even though the service loads fresh state.
 - A current version permits an edit and then explicit clearing with a refreshed version.
 - A missing version cannot bypass the conditional edit.
+- Missing inventory identifies the requested SKU for both operations and changes no rows.
 - Two transactions reading the same version cannot both commit their reservation; only
   the winner's stock and movement remain after the loser's rollback.
 - An optional note round-trips null and its length limit; an oversized edit preserves

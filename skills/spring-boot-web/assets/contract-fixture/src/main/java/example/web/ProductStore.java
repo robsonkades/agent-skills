@@ -4,46 +4,77 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import static example.web.Models.*;
 
 /** Process-local storage for a disposable HTTP fixture, not a persistence recommendation. */
 @Service
 public final class ProductStore {
     private final Map<UUID, Product> products = new LinkedHashMap<>();
+    private final ReadWriteLock productsLock = new ReentrantReadWriteLock();
 
-    public synchronized Product create(ProductCreate input) {
-        if (products.values().stream().anyMatch(product -> product.sku().equals(input.sku()))) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Catalog code already exists");
+    public Product create(ProductCreate input) {
+        productsLock.writeLock().lock();
+        try {
+            if (products.values().stream().anyMatch(product -> product.sku().equals(input.sku()))) {
+                throw new DuplicateSkuException(input.sku());
+            }
+            Product product = new Product(UUID.randomUUID(), input.sku(), input.title(), input.description(), input.dimensions());
+            products.put(product.id(), product);
+            return product;
+        } finally {
+            productsLock.writeLock().unlock();
         }
-        Product product = new Product(UUID.randomUUID(), input.sku(), input.title(), input.description(), input.dimensions());
-        products.put(product.id(), product);
-        return product;
     }
 
-    public synchronized Product get(UUID id) {
+    public Product get(UUID id) {
+        productsLock.readLock().lock();
+        try {
+            return requireProduct(id);
+        } finally {
+            productsLock.readLock().unlock();
+        }
+    }
+
+    public List<Product> list(int limit) {
+        productsLock.readLock().lock();
+        try {
+            return products.values().stream().limit(limit).toList();
+        } finally {
+            productsLock.readLock().unlock();
+        }
+    }
+
+    public Product patch(UUID id, boolean present, String description) {
+        productsLock.writeLock().lock();
+        try {
+            Product before = requireProduct(id);
+            Product after = new Product(id, before.sku(), before.title(), present ? description : before.description(), before.dimensions());
+            products.put(id, after);
+            return after;
+        } finally {
+            productsLock.writeLock().unlock();
+        }
+    }
+
+    public void delete(UUID id) {
+        productsLock.writeLock().lock();
+        try {
+            requireProduct(id);
+            products.remove(id);
+        } finally {
+            productsLock.writeLock().unlock();
+        }
+    }
+
+    /** Caller holds the read or write lock; mutable map state never escapes that boundary. */
+    private Product requireProduct(UUID id) {
         Product product = products.get(id);
         if (product == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+            throw new ProductNotFoundException(id);
         }
         return product;
-    }
-
-    public synchronized List<Product> list(int limit) {
-        return products.values().stream().limit(limit).toList();
-    }
-
-    public synchronized Product patch(UUID id, boolean present, String description) {
-        Product before = get(id);
-        Product after = new Product(id, before.sku(), before.title(), present ? description : before.description(), before.dimensions());
-        products.put(id, after);
-        return after;
-    }
-
-    public synchronized void delete(UUID id) {
-        get(id);
-        products.remove(id);
     }
 }

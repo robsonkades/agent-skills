@@ -15,13 +15,21 @@ import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.context.TestComponent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import jakarta.validation.constraints.NotNull;
 import io.swagger.v3.oas.annotations.Hidden;
 import tools.jackson.databind.JsonNode;
@@ -30,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@Import(ContractTest.ProbeConfiguration.class)
+@Import({ContractTest.ProbeConfiguration.class, ContractTest.ScopedProbeErrors.class})
 class ContractTest {
     private final String base;
     private final ObjectMapper mapper;
@@ -215,11 +223,74 @@ class ContractTest {
         HttpResponse<String> conflict = request("POST", "/products", input);
         assertEquals(409, conflict.statusCode());
         assertEquals(409, json(conflict).path("status").asInt());
+        assertEquals("DUPLICATE_SKU", json(conflict).path("code").asString());
+        assertEquals("Catalog code already exists", json(conflict).path("detail").asString());
         request("DELETE", created.headers().firstValue("Location").orElseThrow(), null);
         HttpResponse<String> unacceptable = client.send(HttpRequest.newBuilder(URI.create(base + "/products"))
                 .timeout(Duration.ofSeconds(10)).header("Accept", "text/plain").GET().build(), HttpResponse.BodyHandlers.ofString());
         assertEquals(406, unacceptable.statusCode());
         assertEquals(406, json(unacceptable).path("status").asInt());
+        HttpResponse<String> unsupportedMedia = client.send(HttpRequest.newBuilder(URI.create(base + "/products"))
+                .timeout(Duration.ofSeconds(10)).header("Content-Type", "text/plain")
+                .POST(HttpRequest.BodyPublishers.ofString("unsupported body")).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(415, unsupportedMedia.statusCode(), unsupportedMedia.body());
+        assertEquals(415, json(unsupportedMedia).path("status").asInt());
+    }
+
+    @Test
+    void scalarBindingPreservesThePublishedJsonTypesWithoutTruncation() throws Exception {
+        for (String suffix : new String[]{"", "/catalog"}) {
+            JsonNode schemas = spec(suffix).at("/components/schemas");
+            assertEquals("string", schemas.at("/ProductCreate/properties/sku/type").asString());
+            assertEquals("string", schemas.at("/ProductCreate/properties/title/type").asString());
+            assertEquals("integer", schemas.at("/Dimensions/properties/width/type").asString());
+        }
+        JsonNode before = json(request("GET", "/products?limit=50", null));
+        assertTrue(before.size() < 50, "Fixture state must fit in the checked response");
+        for (String input : new String[]{
+                """
+                {"sku":123,"title":"Numeric code"}
+                """,
+                """
+                {"sku":"BIND-01","title":1234}
+                """,
+                """
+                {"sku":"BIND-02","title":"Boolean description","description":true}
+                """,
+                """
+                {"sku":"BIND-03","title":"Fractional dimension","dimensions":{"width":1.9,"height":2}}
+                """,
+                """
+                {"sku":"BIND-04","title":"Quoted dimension","dimensions":{"width":"2","height":2}}
+                """,
+                """
+                {"sku":"BIND-05","title":"Boolean dimension","dimensions":{"width":true,"height":2}}
+                """,
+                """
+                {"sku":"BIND-06","title":"Overflow dimension","dimensions":{"width":2147483648,"height":2}}
+                """}) {
+            HttpResponse<String> rejected = request("POST", "/products", input);
+            assertEquals(400, rejected.statusCode(), rejected.body());
+            assertTrue(rejected.headers().firstValue("Content-Type").orElseThrow().contains("application/problem+json"));
+            assertEquals("Failed to read request", json(rejected).path("detail").asString());
+            assertEquals("/api/products", json(rejected).path("instance").asString());
+            assertFalse(rejected.body().contains("Jackson"));
+            assertEquals(before, json(request("GET", "/products?limit=50", null)), "Rejected input must not create a product");
+        }
+        // JSON Schema integers include numeric spellings with a zero fractional part.
+        HttpResponse<String> created = request("POST", "/products", """
+                {"sku":"BIND-07","title":"Exact dimensions","dimensions":{"width":1.0,"height":2e0},"futureField":"ignored"}
+                """);
+        assertEquals(201, created.statusCode(), created.body());
+        String location = created.headers().firstValue("Location").orElseThrow();
+        try {
+            assertEquals(1, json(created).at("/dimensions/width").asInt());
+            assertEquals(2, json(created).at("/dimensions/height").asInt());
+            assertFalse(json(created).has("futureField"), "Create retains its explicit unknown-property policy");
+            assertEquals(json(created), json(request("GET", location, null)));
+        } finally {
+            assertEquals(204, request("DELETE", location, null).statusCode());
+        }
     }
 
     @Test
@@ -277,9 +348,18 @@ class ContractTest {
                 "description", symbol.repeat(200)))).statusCode());
         assertEquals(400, request("PATCH", location, mapper.writeValueAsString(java.util.Map.of(
                 "description", symbol.repeat(201)))).statusCode());
-        JsonNode properties = spec("").at("/components/schemas/ProductCreate/properties");
-        assertEquals(80, properties.at("/title/maxLength").asInt());
-        assertEquals(200, properties.at("/description/maxLength").asInt());
+        assertEquals(400, request("POST", "/products", mapper.writeValueAsString(java.util.Map.of(
+                "sku", "UNICODE-04", "title", symbol.repeat(2)))).statusCode());
+        HttpResponse<String> minimum = request("POST", "/products", mapper.writeValueAsString(java.util.Map.of(
+                "sku", "UNICODE-05", "title", symbol.repeat(3))));
+        assertEquals(201, minimum.statusCode(), minimum.body());
+        assertEquals(204, request("DELETE", minimum.headers().firstValue("Location").orElseThrow(), null).statusCode());
+        for (String suffix : new String[]{"", "/catalog"}) {
+            JsonNode properties = spec(suffix).at("/components/schemas/ProductCreate/properties");
+            assertEquals(3, properties.at("/title/minLength").asInt());
+            assertEquals(80, properties.at("/title/maxLength").asInt());
+            assertEquals(200, properties.at("/description/maxLength").asInt());
+        }
         assertEquals(204, request("DELETE", location, null).statusCode());
     }
 
@@ -322,10 +402,70 @@ class ContractTest {
             assertEquals(500, failure.statusCode(), failure.body());
             JsonNode body = json(failure);
             assertEquals(500, body.path("status").asInt());
+            assertEquals("/api" + path, body.path("instance").asString());
+            assertTrue(failure.headers().firstValue("Content-Type").orElseThrow().contains("application/problem+json"));
+            assertFalse(body.has("code"));
             assertFalse(body.has("violations"));
             assertFalse(failure.body().contains("private-sentinel"));
             assertFalse(failure.body().contains("IllegalStateException"));
             assertFalse(body.has("stackTrace"));
+        }
+    }
+
+    @Test
+    void localAndScopedHandlersWinWithoutChangingTheGlobalFallback() throws Exception {
+        record Expected(int status, String title, String detail, String code) {}
+        for (var scenario : java.util.Map.of(
+                "/_probe/local-missing", new Expected(404, "Not Found", "Local missing product", "PRODUCT_NOT_FOUND"),
+                "/_probe/scoped-conflict", new Expected(409, "Conflict", "Module conflict", "DUPLICATE_SKU")).entrySet()) {
+            Expected expected = scenario.getValue();
+            HttpResponse<String> response = request("GET", scenario.getKey(), null);
+            assertEquals(expected.status(), response.statusCode(), response.body());
+            assertTrue(response.headers().firstValue("Content-Type").orElseThrow().contains("application/problem+json"));
+            JsonNode body = json(response);
+            assertEquals(expected.status(), body.path("status").asInt());
+            assertEquals(expected.title(), body.path("title").asString());
+            assertEquals(expected.detail(), body.path("detail").asString());
+            assertEquals(expected.code(), body.path("code").asString());
+            assertEquals("/api" + scenario.getKey(), body.path("instance").asString());
+            assertFalse(response.body().contains("private-sentinel"));
+        }
+        HttpResponse<String> outsideScope = request("GET", "/_probe/outside-scope", null);
+        assertEquals(409, outsideScope.statusCode(), outsideScope.body());
+        assertEquals("Catalog code already exists", json(outsideScope).path("detail").asString());
+        assertEquals("DUPLICATE_SKU", json(outsideScope).path("code").asString());
+        assertFalse(outsideScope.body().contains("private-sentinel"));
+    }
+
+    @Test
+    void businessFailuresRetainTypedContextAndPublishOnlyTheirSafeContract() throws Exception {
+        UUID missingId = UUID.randomUUID();
+        ProductStore store = new ProductStore();
+        ProductNotFoundException missing = assertThrows(ProductNotFoundException.class, () -> store.get(missingId));
+        assertEquals(missingId, missing.productId());
+        assertTrue(missing.getMessage().contains(missingId.toString()));
+        assertEquals("PRODUCT_NOT_FOUND", missing.code());
+        Models.ProductCreate input = new Models.ProductCreate("CONTEXT-01", "Context product", null, null);
+        store.create(input);
+        DuplicateSkuException duplicate = assertThrows(DuplicateSkuException.class, () -> store.create(input));
+        assertEquals("CONTEXT-01", duplicate.sku());
+        assertEquals("DUPLICATE_SKU", duplicate.code());
+
+        HttpResponse<String> response = request("GET", "/products/" + missingId, null);
+        assertEquals(404, response.statusCode(), response.body());
+        JsonNode body = json(response);
+        assertEquals("PRODUCT_NOT_FOUND", body.path("code").asString());
+        assertEquals("Product not found", body.path("detail").asString());
+        assertEquals("/api/products/" + missingId, body.path("instance").asString());
+        assertFalse(body.has("productId"));
+        for (String suffix : new String[]{"", "/catalog"}) {
+            JsonNode document = spec(suffix);
+            assertEquals("PRODUCT_NOT_FOUND", document.at("/paths/~1products~1{id}/get/responses/404/content/application~1problem+json/examples/missing/value/code").asString());
+            assertEquals("DUPLICATE_SKU", document.at("/paths/~1products/post/responses/409/content/application~1problem+json/examples/duplicate/value/code").asString());
+            assertEquals(2, document.at("/components/schemas/ApiProblem/properties/code/enum").size());
+            for (JsonNode required : document.at("/components/schemas/ApiProblem/required")) {
+                assertNotEquals("code", required.asString(), "Non-business failures have no business code");
+            }
         }
     }
 
@@ -347,6 +487,9 @@ class ContractTest {
     static class ProbeConfiguration {
         @Bean
         FailureProbe failureProbe() { return new FailureProbe(); }
+
+        @Bean
+        OutsideScopeProbe outsideScopeProbe() { return new OutsideScopeProbe(); }
     }
 
     // Test-only fault injection: never registered by the runnable application's main source.
@@ -354,12 +497,45 @@ class ContractTest {
     @RestController
     @Hidden
     static class FailureProbe {
+        @GetMapping("/_probe/local-missing")
+        ResponseEntity<String> localMissing() { throw new ProductNotFoundException(UUID.randomUUID()); }
+
+        @GetMapping("/_probe/scoped-conflict")
+        ResponseEntity<String> scopedConflict() { throw new DuplicateSkuException("private-sentinel"); }
+
+        @ExceptionHandler(ProductNotFoundException.class)
+        ResponseEntity<ProblemDetail> localMissingResponse(ProductNotFoundException exception) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Local missing product");
+            problem.setProperty("code", exception.code());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+        }
+
         @GetMapping("/_probe/failure")
         String failure() { throw new IllegalStateException("private-sentinel"); }
 
         @GetMapping("/_probe/return-value")
         @NotNull(message = "private-sentinel")
         String invalidReturn() { return null; }
+    }
+
+    @RestController
+    @Hidden
+    static class OutsideScopeProbe {
+        @GetMapping("/_probe/outside-scope")
+        ResponseEntity<String> failure() { throw new DuplicateSkuException("private-sentinel"); }
+    }
+
+    @TestComponent
+    @RestControllerAdvice(assignableTypes = FailureProbe.class)
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    static class ScopedProbeErrors {
+        @ExceptionHandler(BusinessException.class)
+        ResponseEntity<ProblemDetail> conflict(BusinessException exception) {
+            HttpStatus status = exception instanceof ProductNotFoundException ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "Module conflict");
+            problem.setProperty("code", exception.code());
+            return ResponseEntity.status(status).body(problem);
+        }
     }
 
     @Test

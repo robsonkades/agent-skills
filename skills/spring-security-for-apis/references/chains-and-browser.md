@@ -19,6 +19,12 @@ a separate management application context may have separate chains. A broad
 only intended health information under the deployment's network and authentication policy.
 Do not make every probe public without inspecting that policy.
 
+For each public rule, identify the operation and response fields permitted without a
+principal. A public catalog read need not imply public registration or internal metadata.
+Keep agreed public operations working without credentials, and test a neighboring protected
+operation and a new unlisted route. OpenAPI security declarations describe this policy;
+they do not enforce it. Coordinate documentation with `spring-boot-web` when it changes.
+
 Use the project's matcher semantics. Spring Security 7 string matchers use path patterns;
 paths are absolute within the application, excluding the context root. Multiple servlet
 mappings require the appropriate servlet/base path. Test trailing slash, alternate methods,
@@ -47,6 +53,27 @@ replace every denial with 401 or a login redirect. `@ControllerAdvice` alone doe
 failures emitted before MVC in the filter chain. Test both status/headers and absence of
 handler side effects. [Resource-server processing](https://docs.spring.io/spring-security/reference/7.1/servlet/oauth2/resource-server/index.html).
 
+Method-security exceptions thrown during an MVC handler call can reach MVC exception
+resolution before returning to the security filters. A generic
+`@ExceptionHandler(Exception.class)` that consumes `AccessDeniedException` can therefore
+turn a denied invocation into a 500 or another incompatible response. Preserve security
+exceptions for the configured security handlers, or explicitly delegate to an equivalent
+authentication/denial mapping. Do not translate every `AccessDeniedException` to a domain
+not-found error or assume every denial is an authenticated 403. Test the actual proxied
+service through MVC with the global advice present, including missing authentication and
+an authenticated caller lacking permission.
+[Security exception translation](https://github.com/spring-projects/spring-security/blob/7.1.0/web/src/main/java/org/springframework/security/web/access/ExceptionTranslationFilter.java),
+[MVC exception resolution](https://github.com/spring-projects/spring-framework/blob/v7.0.8/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/ExceptionHandlerExceptionResolver.java).
+
+Share the API's error representation where useful, but write filter errors through their
+response-handling contract; a controller's `ResponseEntity` return convention does not move
+those failures into MVC. Use stable public details instead of copying decoder, provider or
+exception messages into JSON. Inspect challenge headers as well: bearer handlers can render
+an OAuth error description in `WWW-Authenticate`. Preserve required challenge semantics
+while sanitizing custom errors at their source. Test that neither body nor headers reveal
+tokens, private claims, internal URLs or hostile upstream text.
+[Bearer challenge construction](https://github.com/spring-projects/spring-security/blob/7.1.0/oauth2/oauth2-resource-server/src/main/java/org/springframework/security/oauth2/server/resource/web/BearerTokenAuthenticationEntryPoint.java).
+
 ## Method checks and the protected operation
 
 `@EnableMethodSecurity` enables pre/post annotations; a plain annotation on an unproxied
@@ -74,7 +101,47 @@ comes from validated authentication, never an untrusted `X-Tenant` override. For
 ownership, pass the read/check/write sequence and transaction evidence to
 `java-application-security-basics` or `service-layer-design`; expect a consistent authorized
 write, not just a proxy check. If those skills are unavailable, retain the guard and report
-the unresolved race instead of inventing an atomicity guarantee.
+any unresolved race instead of inventing an atomicity guarantee. When implementation is
+authorized, use the project's service/repository mechanisms to close that race; do not stop
+at a handoff merely because an optional skill is absent.
+
+Trace the same instance policy through list/count queries, secondary-key lookups and writes,
+not only `GET /{id}`. Filtering a page after retrieval can leak counts and produce incorrect
+pages. A caller-supplied tenant selector must be checked against authenticated membership;
+it must not become trusted identity just because it was bound to a DTO. Allowlist editable
+fields so create/patch binding cannot overwrite ownership, tenant membership or privileges.
+Where the contract conceals inaccessible records with 404, apply that policy consistently
+without revealing the real owner or tenant; keep authentication failures distinct.
+[Object authorization](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html),
+[Mass assignment](https://cheatsheetseries.owasp.org/cheatsheets/Mass_Assignment_Cheat_Sheet.html).
+
+## Security context across task boundaries
+
+Trace the actual execution path when a protected call moves to an executor, `@Async` method
+or deferred response. Servlet security context is normally thread-local; a valid principal
+on the request thread does not prove that the worker sees it. Reuse existing integration
+before adding propagation: Spring MVC's supported `Callable` processing integrates with
+security context, while application work completing a `DeferredResult` does not inherit
+that integration automatically.
+[MVC async integration](https://github.com/spring-projects/spring-security/blob/7.1.0/docs/modules/ROOT/pages/servlet/integrations/mvc.adoc).
+
+When worker-side Spring method checks need the submitter's identity, use the matching
+`DelegatingSecurityContextExecutor`/task-executor integration around the actual managed
+executor, capturing context for each submission and clearing/restoring it on completion.
+Do not configure one request's context as a fixed identity for every task. A global
+inheritable-thread-local strategy does not refresh identity on reused pool threads: values
+are inherited at thread creation, not each submission. The delegated context is not a
+deeply immutable snapshot; do not mutate shared authentication to impersonate another caller.
+Keep the executor's capacity, lifecycle and exception behavior intact; context propagation
+does not replace secured-proxy interception or propagate a transaction. If the application
+already uses explicit trusted caller context, preserve that contract rather than introducing
+a second implicit identity source. Propagation does not revalidate an expired token or
+guarantee current permissions for a delayed durable job; establish that job's actor and
+authorization lifetime separately. Verify caller isolation and cleanup on the actual
+executor, including a task that throws.
+[Concurrency integration](https://github.com/spring-projects/spring-security/blob/7.1.0/docs/modules/ROOT/pages/servlet/integrations/concurrency.adoc),
+[context cleanup and restoration](https://github.com/spring-projects/spring-security/blob/7.1.0/core/src/main/java/org/springframework/security/concurrent/DelegatingSecurityContextRunnable.java),
+[thread inheritance](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/InheritableThreadLocal.html).
 
 ## Browser decision table
 

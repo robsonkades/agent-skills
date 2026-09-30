@@ -7,6 +7,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,6 +21,10 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(TicketController.class)
 @Import({ApiErrors.class, ApiSecurity.class})
 class MvcSliceTest {
+    private static final String VALID_TICKET = """
+            {"id":"a","note":"valid"}
+            """;
+
     @Autowired
     MockMvc mvc;
 
@@ -30,7 +35,7 @@ class MvcSliceTest {
     void realChainRejectsAnonymousAndInsufficientAuthorityBeforeTheService() throws Exception {
         mvc.perform(get("/tickets/missing")).andExpect(status().isUnauthorized());
         mvc.perform(post("/tickets").with(user("reader").roles("READER")).with(csrf())
-                        .contentType("application/json").content("{\"id\":\"a\",\"note\":\"valid\"}"))
+                        .contentType("application/json").content(VALID_TICKET))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(tickets);
     }
@@ -38,19 +43,22 @@ class MvcSliceTest {
     @Test
     void realChainKeepsCsrfAndAllowsAnAuthorizedRequest() throws Exception {
         mvc.perform(post("/tickets").with(user("writer").roles("WRITER"))
-                        .contentType("application/json").content("{\"id\":\"a\",\"note\":\"valid\"}"))
+                        .contentType("application/json").content(VALID_TICKET))
                 .andExpect(status().isForbidden());
         verifyNoInteractions(tickets);
         mvc.perform(post("/tickets").with(user("writer").roles("WRITER")).with(csrf())
-                        .contentType("application/json").content("{\"id\":\"a\",\"note\":\"valid\"}"))
-                .andExpect(status().isCreated());
+                        .contentType("application/json").content(VALID_TICKET))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/tickets/a"));
         verify(tickets).create("a", "valid");
     }
 
     @Test
     void realAdviceHandlesBindingValidationAndTheServiceFailure() throws Exception {
         mvc.perform(post("/tickets").with(user("writer").roles("WRITER")).with(csrf())
-                        .contentType("application/json").content("{\"id\":\"a\",\"note\":\"\"}"))
+                        .contentType("application/json").content("""
+                                {"id":"a","note":""}
+                                """))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.detail").value("Invalid ticket"));
         verifyNoInteractions(tickets);
         given(tickets.read("missing")).willThrow(new TicketService.MissingTicket("missing"));

@@ -1,9 +1,9 @@
 schemaVersion: 1
 name: spring-boot-observability
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Wire and diagnose Spring Boot metrics, observations, traces and Actuator when a
-  managed HTTP client loses trace context, asynchronous work detaches from its
+  Wire Spring Boot metrics, observations, traces and Actuator for a maintained service,
+  or diagnose when a managed HTTP client loses trace context, asynchronous work detaches from its
   parent, instrumentation duplicates data, metric labels grow, or management
   endpoints and health groups expose the wrong behavior. Owns Boot integration;
   metric schema, trace topology, telemetry cost and SLO policy belong to specialists.

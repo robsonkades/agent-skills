@@ -51,6 +51,14 @@ schema limitation, or an already justified restricted alphabet. Never strip Unic
 The fixture uses a small code-point constraint and tests emoji at and beyond both limits;
 this is not a mandate to replace every existing `@Size` annotation.
 
+Assert the emitted lower and upper bounds as well as valid examples. For example,
+`@NotBlank @Size(max=120)` rejects an empty input but `@Size` still declares a default
+minimum of zero; do not assume an accompanying `@Schema(minLength=1)` wins every generator
+merge. Compare the resolved pair's output with HTTP at minimum-minus-one, minimum, maximum
+and maximum-plus-one. Reconcile the validation and schema at their source, or use a targeted
+generator correction when necessary, without weakening runtime constraints. Length bounds
+also do not express a complete nonblank or domain-name policy; document and test those rules.
+
 Document enum wire values rather than Java identifiers when they differ. `enumAsRef` can
 centralize a genuinely shared vocabulary; a shared component is wrong if operations expose
 different subsets. Deprecated fields need replacement/transition behavior when known.
@@ -125,6 +133,13 @@ entries should have a purpose, summary and description. Keep `example` versus `e
 and an example's inline `value` versus `externalValue`, within specification exclusivity
 rules; do not populate both alternatives hoping the UI chooses one.
 
+On the Java 25 baseline, prefer text blocks (`"""`) for static JSON examples and naturally
+multiline text instead of long escaped or concatenated strings. Account for incidental
+indentation and the final newline when exact bytes matter. Text blocks can supply annotation
+constants, as in the fixture; serialize dynamic values with the configured mapper/DTO rather
+than inserting unescaped values into JSON text. Short concatenation can remain readable;
+this is a readability choice, not a performance claim.
+
 Examples must respect required/null/direction rules, constraints, units and real business
 preconditions. Mark deliberately invalid inputs as negative scenarios outside the normal
 valid request example set, with the expected error. For multiple constraints on one field,
@@ -146,4 +161,5 @@ Sources: [OAS 3.1.1 schemas, examples and encoding](https://spec.openapis.org/oa
 [ExampleObject annotation](https://docs.swagger.io/swagger-core/v2.2.55/apidocs/io/swagger/v3/oas/annotations/media/ExampleObject.html),
 [ArraySchema annotation](https://docs.swagger.io/swagger-core/v2.2.55/apidocs/io/swagger/v3/oas/annotations/media/ArraySchema.html),
 [JSON Schema string length](https://json-schema.org/understanding-json-schema/reference/string#length),
+[Java 25 text blocks](https://docs.oracle.com/en/java/javase/25/language/text-blocks.html),
 [Jackson configuration in Boot](https://docs.spring.io/spring-boot/reference/features/json.html).

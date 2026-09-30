@@ -18,7 +18,7 @@ can also participate in the publisher's transaction; an after-commit callback ca
 the original operation back. See the
 [Framework event contract](https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events).
 
-For an existing transactional order method, publishing an immutable identity is enough:
+For the cache eviction below, publishing an immutable identity is enough:
 
 ```java
 // Partial application code: inside the existing @Transactional service method,
@@ -49,6 +49,30 @@ annotation infrastructure. This hint is allowed to be lost on restart and must h
 bounded stale-data policy such as expiry. Choose another mechanism if stale data can
 violate business correctness. This does not guarantee email delivery or a durable projection.
 [Caching annotation contract](https://docs.spring.io/spring-framework/reference/integration/cache/annotations.html).
+
+## Choose what the event means to its consumer
+
+An ID-only event followed by a reload observes state available when the consumer reads it,
+which can differ from the state that caused publication. Use that shape for invalidation or
+reconciliation against current state. If a receipt or audit must describe the original fact,
+capture the minimum immutable values for that fact in the business operation, or reference
+an immutable version that remains readable. Do not reload the current company name hours
+later and call it the name at registration. Decide what a missing/deleted source means.
+
+Keep event and listener names tied to the business fact and consumer responsibility;
+retain project naming conventions. A typed value payload can express this contract without
+a generic event superclass, fluent DSL or mutable entity. Include stable event identity and
+trusted tenant identity when the chosen recovery/isolation contract needs them. A record
+containing a mutable collection is not a deep snapshot; copy the relevant values, exclude
+credentials and avoid carrying persistence proxies across transaction/executor boundaries.
+
+This is a consumer-contract decision: Spring publication hands an event to the multicaster
+and does not promise immediate processing. Persistent registries serialize the supplied
+event; persistence does not reconstruct an omitted historical value. Verify actual serializer
+and pending-record compatibility when changing that payload. These mechanics support the
+ID-versus-snapshot distinction; the business decides which meaning is correct.
+[Framework 7.0.9 publication contract](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java),
+[Modulith 2.1.1 event serialization](https://github.com/spring-projects/spring-modulith/blob/2.1.1/src/docs/antora/modules/ROOT/pages/events.adoc#event-serializer).
 
 ## Transaction-bound listener wiring
 
@@ -91,7 +115,14 @@ Boot supplies the ordinary transaction infrastructure; do not add a custom manag
 proxy path in the target application. A separate transactional collaborator or
 `TransactionTemplate` remains useful when ownership or a local programmatic boundary
 justifies it. A direct self-call does not invoke advice.
-[Supported listener transaction annotations](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/transaction/annotation/RestrictedTransactionalEventListenerFactory.html).
+
+Under Framework 7.0.9's standard transaction listener factory, a post-completion listener
+with `@Transactional` must declare REQUIRES_NEW or NOT_SUPPORTED; other propagation modes
+are rejected when the listener is registered. Check class-level annotations too. That
+release exempts BEFORE_COMMIT from this check. NOT_SUPPORTED creates no transaction for
+a database unit; it is not a substitute for the independent transactional write above.
+Distinguish a context startup failure from a registered callback that fails at runtime.
+[Version-matched listener restriction](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/RestrictedTransactionalEventListenerFactory.java).
 
 Do not rely on REQUIRED in the completed resource context. To distinguish AFTER_COMMIT
 from BEFORE_COMMIT, observe the source row from an independent READ_COMMITTED transaction
@@ -124,6 +155,15 @@ An external email/payment may succeed before progress recording fails. Replaying
 deduplicated database transition does not prove that external effect occurs once. Pass the
 provider's identity/receipt contract and this ambiguity window to `idempotency` and
 `delivery-semantics`; do not retry the entire committed business command as recovery.
+
+For a durable path, update the existing operational documentation with the source of retained
+intent, recovery owner, supported inspection/replay procedure, concurrency/attempt limits
+and handling of exhausted or incompatible work. Derive alert thresholds from the agreed
+completion delay and observe pending age, failures and progress; a healthy process alone
+does not show that follow-up is advancing. Reuse existing telemetry and access-controlled
+administrative tooling. Keep business/event IDs in safe diagnostic context, not unbounded
+metric labels. Do not add a public retry endpoint or select retention periods without a
+requirement; a best-effort path only needs its documented loss/staleness and failure policy.
 
 ## Conditional path: Spring Modulith persistent registry
 

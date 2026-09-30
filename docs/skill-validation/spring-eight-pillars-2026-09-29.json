@@ -1,0 +1,1207 @@
+{
+  "date": "2026-09-29",
+  "baselineCommit": "37eec068e50e37cdab6db4844024b323da483075",
+  "baseline": "Working tree at this request, including prior uncommitted Spring improvements, not untouched HEAD.",
+  "purpose": "Evaluate observable decisions in proposed responses, not generated application implementation or runtime behavior.",
+  "selection": "Assigned skill explicitly loaded; automatic discovery not evaluated.",
+  "conditions": "Fresh default actor per skill/arm, fork_turns:none, inherited model/reasoning without override, same read-only tools and <=800-word response limit. Multiple cases in one actor imply within-arm carryover. Only own response file writes permitted.",
+  "isolation": "Procedural filesystem access restrictions in a shared workspace; no enforced filesystem isolation. Actors instructed not to read criteria, other snapshots, repository or prior outputs.",
+  "comparison": "Eight revised-skill actors; one additional assignment-baseline actor for identical W1-W4 inputs. One sample per arm, no no-skill control, no statistical/general improvement claim.",
+  "cases": "Reviewer-designed known regression scenarios, not blind holdouts. Expected decisions fixed separately before actors. Alternatives accepted; prose omission alone not a defect when no promised contract is contradicted.",
+  "limits": "No application implemented, Java examples unchanged, no current Java test rerun, no PostgreSQL/gateway/collector/browser integration executed.",
+  "status": "implemented_and_checked_with_explicit_evidence_limits",
+  "filesChangedInThisRequest": [
+    "skills/spring-transactions-and-events/SKILL.md",
+    "skills/spring-transactions-and-events/references/verification.md",
+    "skills/spring-transactions-and-events/references/event-wiring-and-recovery.md",
+    "skills/spring-security-for-apis/skill.yaml",
+    "skills/spring-security-for-apis/SKILL.md",
+    "skills/spring-security-for-apis/references/verification.md",
+    "skills/spring-security-for-apis/references/chains-and-browser.md",
+    "skills/spring-security-for-apis/references/access-policy-delivery.md",
+    "skills/spring-http-clients/SKILL.md",
+    "skills/spring-http-clients/references/wiring-and-transports.md",
+    "skills/spring-http-clients/references/verification.md",
+    "skills/spring-boot-web/skill.yaml",
+    "skills/spring-boot-web/SKILL.md",
+    "skills/spring-boot-web/references/springdoc-openapi.md",
+    "skills/spring-boot-web/references/mvc-contracts.md",
+    "skills/spring-boot-web/references/contract-delivery.md",
+    "skills/spring-boot-web/references/capacity-and-lifecycle.md",
+    "skills/spring-boot-testing/SKILL.md",
+    "skills/spring-boot-jpa/SKILL.md",
+    "skills/spring-boot-observability/SKILL.md",
+    "skills/spring-boot-testing/references/verification.md",
+    "skills/spring-boot-testing/references/service-acceptance.md",
+    "skills/spring-boot-observability/references/verification.md",
+    "skills/spring-boot-jpa/references/verification.md",
+    "skills/spring-boot-jpa/references/queries-and-transactions.md",
+    "skills/spring-boot-jpa/references/persistence-delivery.md",
+    "skills/spring-boot/SKILL.md",
+    "skills/spring-boot/references/verification.md",
+    "skills/spring-boot/references/service-delivery.md",
+    "skills/spring-boot/references/composition-and-configuration.md"
+  ],
+  "scope": [
+    {
+      "skill": "spring-boot",
+      "versionAtHead": "1.1.0",
+      "versionAtAssignment": "1.2.0",
+      "finalVersion": "1.2.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Discovery de consumidores/operadores e condições de degradação; ativação de beans separada de validação da flag; configuração como contrato compatível."
+    },
+    {
+      "skill": "spring-boot-web",
+      "versionAtHead": "1.1.0",
+      "versionAtAssignment": "1.2.1",
+      "finalVersion": "1.2.1",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Removida obrigação indiscriminada de springdoc/UI; decisões contract-first, code-first e REST Docs; semântica HTTP, quotas e concorrência com critérios."
+    },
+    {
+      "skill": "spring-boot-jpa",
+      "versionAtHead": "1.1.2",
+      "versionAtAssignment": "1.2.0",
+      "finalVersion": "1.2.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Contratos de ausência, cardinalidade e lifetime; evolução com escritores externos; paginação tolerante a mudanças versus snapshot contratual."
+    },
+    {
+      "skill": "spring-security-for-apis",
+      "versionAtHead": "1.1.0",
+      "versionAtAssignment": "1.2.0",
+      "finalVersion": "1.2.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Confiança no gateway comprovada por implantação; perguntas sobre clientes e credenciais; contexto por tarefa, cleanup e limites da propagação."
+    },
+    {
+      "skill": "spring-transactions-and-events",
+      "versionAtHead": "1.0.0",
+      "versionAtAssignment": "1.1.0",
+      "finalVersion": "1.1.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Contrato do chamador e consumidores; snapshot histórico versus ID/reload; execução e operação da recuperação proporcional à garantia."
+    },
+    {
+      "skill": "spring-http-clients",
+      "versionAtHead": "1.0.0",
+      "versionAtAssignment": "1.1.0",
+      "finalVersion": "1.1.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Proveniência e evolução do contrato externo; decisões de replay/indisponibilidade; reutilização de egress e verificação da factory efetiva."
+    },
+    {
+      "skill": "spring-boot-observability",
+      "versionAtHead": "1.0.0",
+      "versionAtAssignment": "1.1.0",
+      "finalVersion": "1.1.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Aceite HTTP versus conclusão do negócio; diagnóstico por estágio; telemetria versus auditoria durável e documentação para o operador."
+    },
+    {
+      "skill": "spring-boot-testing",
+      "versionAtHead": "1.0.0",
+      "versionAtAssignment": "1.1.0",
+      "finalVersion": "1.1.0",
+      "versionRationale": "Reuse pre-existing unpublished bump under reviewer policy.",
+      "correction": "Contexto completo versus transporte real; MockMvc não implica serviços mockados; fonte do contrato, limpeza e execução reproduzível."
+    }
+  ],
+  "sourceValidation": {
+    "strictLoaderCoreAndBothAdapters": "All eight reviewer-owned packages passed, zero issues.",
+    "authoredFilesBefore": 97,
+    "authoredFilesAfter": 99,
+    "unchangedAssetFiles": 47,
+    "changedAssetFiles": 0,
+    "finalSnapshotDrift": 0,
+    "exampleJavaRerun": false,
+    "reason": "No executable example or build input changed in this request.",
+    "sourceQueries": "Reviewers consulted official/version-tagged sources. When browser access failed, successful HTTPS reads of official pages/raw tagged sources supplied the content."
+  },
+  "repositoryValidation": {
+    "registryBuild": {
+      "passed": true,
+      "skills": 287,
+      "changedEntries": [
+        "spring-boot",
+        "spring-boot-web",
+        "spring-boot-jpa",
+        "spring-security-for-apis",
+        "spring-transactions-and-events",
+        "spring-http-clients",
+        "spring-boot-observability",
+        "spring-boot-testing"
+      ]
+    },
+    "verify": {
+      "passed": true,
+      "tests": 355,
+      "suites": 67,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "checks": [
+        "build",
+        "architecture boundaries (7 packages)",
+        "lint",
+        "format check",
+        "registry freshness",
+        "version bumps",
+        "tests"
+      ]
+    },
+    "diffCheck": true,
+    "scope": "Executed after all skill reviewers stopped writing. This evidence record is added afterward and receives separate scoped formatting/content checks."
+  },
+  "preexistingUserFile": {
+    "path": "docs/agent-harness-optimization-plan.md",
+    "sha256": "E6C10B24E1D11CC76AF662D72A0E94812472D645D8C1F21F3342A1156D332D88",
+    "preserved": true
+  },
+  "sources": {
+    "spring-boot": [
+      "https://github.com/spring-projects/spring-boot/blob/v4.1.1/core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/condition/ConditionalOnProperty.java",
+      "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/specification/pages/configuration-metadata/annotation-processor.adoc"
+    ],
+    "spring-boot-jpa": [
+      "https://www.postgresql.org/docs/18/transaction-iso.html",
+      "https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc",
+      "https://github.com/spring-projects/spring-data-commons/blob/4.1.1/src/main/antora/modules/ROOT/pages/repositories/null-handling.adoc",
+      "https://github.com/spring-projects/spring-data-commons/blob/4.1.1/src/main/antora/modules/ROOT/pages/repositories/query-return-types-reference.adoc"
+    ],
+    "spring-boot-web": [
+      "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "https://www.rfc-editor.org/rfc/rfc6585.html#section-4",
+      "https://github.com/spring-projects/spring-restdocs/blob/v4.0.0/README.md",
+      "https://github.com/spring-projects/spring-restdocs/blob/v4.0.0/spring-restdocs-docs/src/docs/antora/modules/reference/pages/documenting-your-api/request-response-payloads.adoc",
+      "https://spec.openapis.org/oas/v3.1.1.html",
+      "https://springdoc.org/"
+    ],
+    "spring-boot-observability": [
+      "https://opentelemetry.io/docs/concepts/sampling/",
+      "https://opentelemetry.io/docs/collector/troubleshooting/"
+    ],
+    "spring-boot-testing": [
+      "https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/testing/spring-boot-applications.adoc",
+      "https://github.com/spring-projects/spring-framework/blob/v7.0.9/framework-docs/modules/ROOT/pages/testing/mockmvc/vs-end-to-end-integration-tests.adoc"
+    ],
+    "spring-http-clients": [
+      "https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2",
+      "https://raw.githubusercontent.com/spring-projects/spring-framework/v7.0.9/spring-web/src/main/java/org/springframework/web/client/RestClient.java",
+      "https://raw.githubusercontent.com/spring-projects/spring-boot/v4.1.1/module/spring-boot-restclient/src/main/java/org/springframework/boot/restclient/autoconfigure/service/RestClientCustomizerHttpServiceGroupConfigurer.java"
+    ],
+    "spring-security-for-apis": [
+      "https://github.com/spring-projects/spring-security/blob/7.1.0/web/src/main/java/org/springframework/security/web/authentication/preauth/RequestHeaderAuthenticationFilter.java",
+      "https://github.com/spring-projects/spring-security/blob/7.1.0/docs/modules/ROOT/pages/servlet/integrations/concurrency.adoc",
+      "https://github.com/spring-projects/spring-security/blob/7.1.0/docs/modules/ROOT/pages/servlet/integrations/mvc.adoc",
+      "https://github.com/spring-projects/spring-security/blob/7.1.0/core/src/main/java/org/springframework/security/concurrent/DelegatingSecurityContextRunnable.java",
+      "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/InheritableThreadLocal.html"
+    ],
+    "spring-transactions-and-events": [
+      "https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-context/src/main/java/org/springframework/context/ApplicationEventPublisher.java",
+      "https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/event/TransactionalEventListener.java",
+      "https://github.com/spring-projects/spring-modulith/blob/2.1.1/src/docs/antora/modules/ROOT/pages/events.adoc"
+    ]
+  },
+  "evaluations": [
+    {
+      "skill": "spring-boot",
+      "caseFamily": "B",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nB1. Projeto Java25/Boot4.1.1 Maven existente. Corrija uma auto-configuração: @ConditionalOnProperty(prefix=\"export\", name=\"enabled\") cria ExportClient; EXPORT_ENABLED=treu fez cliente iniciar. Serviço recebe valores via Helm, exporter opcional com endpoints/senha exigidos só pelo cliente padrão; outro serviço fornece ExportClient próprio. Convenção é properties tipadas e validação no bootstrap, consumidores ficam ativos com cliente customizado. Não altere versões. Proponha alteração mínima, verificações e documentação. Explique o que faz com valor inválido e configuração sem flag.\nB2A. Mesmo projeto, exporter habilitado depende de catálogo remoto indisponível na inicialização. Hoje runner faz retry infinito. Não há decisão no repositório sobre servir sem catálogo; HTTP principal possui operações independentes. O orquestrador reinicia pods quando liveness falha. O que inspeciona, que pergunta faz e o que consegue avançar?\nB2B. Mesmo B2A, altere SOMENTE a regra: ADR aprovado exige que toda operação de negócio use catálogo atual; servir sem catálogo é proibido.\nB3. App Java25 Boot4.1.1 com BOM, RestClient.Builder, timeouts validados, gateway com quotas e OTel já configurados. Pedido é apenas corrigir variável de ambiente que sobrepõe timeout do cliente. Há sugestão de novo starter, Redis rate limiter e native image para ficar profissional. Mostre menor entrega e evidência.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "B1: identificar condição presente diferente de false; ativação explícita true/default ausente documentado; havingValue não valida boolean. Política para typo com validação independente da configuração selecionada; preservar cliente custom e separar credenciais default de flag compartilhada. Casos ausente/true/false/inválido/default/custom e origem real. B2A: pergunta sobre degradação após discovery; trabalho independente, retry limitado e dependência fora de liveness. B2B: usa ADR sem perguntar novamente, protege tráfego/readiness/falha limitada sem aceitar estado proibido. B3: corrige fonte vencedora, reutiliza infraestrutura, não adiciona Redis/starter/native. Não inventar execução.",
+      "observedDecisions": [
+        "B3 manteve o reparo no override e rejeitou starter, Redis e native image.",
+        "B2A perguntou sobre degradação; B2B usou o ADR informado sem repetir a pergunta.",
+        "B1 separou havingValue de binding alcançável. Fonte oficial4.1.1; sem novo teste JVM.",
+        "B1 preservou cliente customizado; B3 reutilizou configuração e plataforma existentes.",
+        "B1/B3 incluíram precedência, proprietário e rollout. Dois blocos Java preservados.",
+        "B1 apresentou sequência, artefatos e verificação; proposta não comprova implementação.",
+        "B1 propôs casos absent/true/false/typo/custom e bootstrap real; pacote/links validados.",
+        "B2A manteve política pendente; nenhum resultado de teste foi inventado."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/composition-and-configuration.md",
+        "references/operations-and-events.md",
+        "references/verification.md"
+      ],
+      "revisedResponse": "**B1.** Manteria Java 25, Boot 4.1.1 e Maven. Inspecionaria a auto-configuração, registro/scanning das properties, consumidores, relatório de condições, testes e valores/templates Helm.\n\nA causa é a condição sem `havingValue`: uma propriedade presente diferente de `false`, como `treu`, pode ativar o cliente. A correção mínima combina seleção explícita e binding alcançável:\n\n- Usar `@ConditionalOnProperty(prefix=\"export\", name=\"enabled\", havingValue=\"true\", matchIfMissing=false)` somente na configuração do cliente padrão.\n- Manter `export.enabled` em properties tipadas registradas independentemente dessa condição, com padrão explícito `false`. `treu` deve falhar no bootstrap por conversão inválida, inclusive com cliente customizado; apenas acrescentar `havingValue` esconderia o erro desativando o padrão.\n- Colocar a fábrica padrão e o registro das properties de endpoints/senha na mesma configuração aninhada, condicionada também a `@ConditionalOnMissingBean(ExportClient.class)`. Validar esses campos somente quando o padrão for selecionado. Eliminar eventual registro paralelo por scanning que contrariasse essa propriedade dos dados.\n- Manter consumidores fora dessas condições e injetar o cliente gerenciado por construtor/parâmetro. Consumidores opcionais dependem da presença de um `ExportClient`, respeitando a ordem da auto-configuração. Com cliente customizado, continuam ativos mesmo sem flag ou com `false`; sem flag e sem cliente, exporter e consumidores opcionais ficam ausentes.\n\nProporia testes com `ApplicationContextRunner`: flag ausente/`false` sem credenciais inicia sem padrão; `true` com credenciais válidas cria exatamente um cliente; `true` com campos ausentes/inválidos falha; `treu` falha com e sem substituição; cliente customizado dispensa credenciais padrão ausentes/inválidas, mantém consumidores e preserva sua identidade. Qualquer configuração realmente compartilhada continua validada.\n\nComplementaria com bootstrap real usando ambiente e configuração Helm representativa: comprovar binding de `EXPORT_ENABLED`, origem vencedora e precedência. Documentaria chaves, valores `true`/`false`, padrão desabilitado, requisitos condicionais, proprietário do override e aplicação por rollout/reinício. Corrigiria `treu` nos valores Helm antes do rollout; registraria correção/rollback da configuração sem expor senha. Não trataria retorno à aceitação do erro como solução.\n\n**B2A.** Inspecionaria dependências reais das operações, runner, timeouts, tentativas, cancelamento, eventos de disponibilidade, probes, budgets de startup/rollout e runbooks. Verificaria se catálogo participa indevidamente da liveness e se a probe observa a porta que serve tráfego.\n\nPerguntaria: “As operações independentes podem atender enquanto o catálogo se recupera, mantendo indisponíveis as operações dependentes? Recomendo isso somente se o contrato dos consumidores permitir; caso contrário, toda operação de negócio deve aguardar.” Não presumiria autorização para catálogo obsoleto.\n\nAvançaria no diagnóstico, mapa de dependências, proposta de limites por tentativa e orçamento total, backoff com jitter, encerramento/cancelamento e testes controlados. Retiraria a dependência remota da decisão de liveness: reiniciar não repara uma indisponibilidade compartilhada. A escolha final entre falhar startup, permanecer não pronto ou atender parcialmente depende da resposta; não publicaria prontidão nem escolheria esse comportamento silenciosamente. O runner não deve manter retry infinito. Prepararia verificações de indisponibilidade inicial, recuperação, esgotamento do orçamento e fechamento, aguardando a política para suas expectativas finais.\n\n**B2B.** O ADR resolve a pergunta: todas as operações de negócio exigem catálogo atual. Proporia inicialização limitada, processo vivo porém não pronto durante recuperação controlada, sem bloquear indefinidamente o runner. Manteria admissão de negócio fechada também dentro da aplicação; readiness sozinha não impede chamadas diretas. Liberaria tráfego apenas após comprovar atualidade segundo o ADR; perda posterior desse requisito volta a bloquear operações e readiness. Recuperação teria tentativas limitadas por ciclo, deadlines, backoff, responsável e cancelamento no shutdown. Liveness continuaria independente do catálogo. Verificaria nenhuma operação atendida antes da carga válida, recuperação e perda posterior, ausência de uso obsoleto e encerramento limitado; ajustaria probes para evitar reinícios pela mesma indisponibilidade.\n\n**B3.** Rastrearia a chave existente desde properties e customização do `RestClient.Builder` até profiles/imports, Helm, ambiente e argumentos. Registraria origem vencedora, valor efetivo, unidade, limites e responsável. Corrigiria/removeria o override na fonte vencedora, preservando chave e contrato; editar somente YAML inferior seria insuficiente.\n\nEntregaria essa alteração e instrução de rollout/rollback. Evidência proposta: bootstrap real com fontes controladas demonstrando precedência antes/depois, valor ligado e timeout aplicado ao cliente existente; preservar rejeição de valores inválidos. Reutilizaria BOM, builder, quotas e OTel. Starter, Redis e native image não têm necessidade demonstrada neste pedido. Não executei comandos de build/teste; estas verificações permanecem propostas.\n"
+    },
+    {
+      "skill": "spring-boot-web",
+      "caseFamily": "W",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nW1. Boot4.1.1/Java25, MVC de parceiros. Já existe contracts/partners.yaml aprovado por consumidores, geração de clientes TypeScript no CI e controllers manuais. Adicionaremos PATCH de endereço: omissão preserva, null limpa complemento; novos campos nunca aceitam ownerId. CI publica contrato estático autenticado. Descreva investigação e alteração revisável com documentação/validação.\nW2. Mesmo pedido PATCH, mas inexiste contrato OpenAPI/cliente gerado; o único consumidor interno usa guia AsciiDoc já publicado no portal restrito, gerado por testes Spring REST Docs, convenção confirmada. Defina abordagem proporcional. Em seguida diga o que muda se passa a existir requisito aprovado de gerar clientes TypeScript a partir de OpenAPI, sem abandonar o guia existente.\nW3. MVC4.1.1 parceiro com custo por chamada; gateway autentica e todas as rotas externas passam por ele, mas não há registro da quota comercial ou de limites configurados. Usuário pede profissionalizar um novo endpoint de cotação. Qual pergunta decisiva faria e qual trabalho independente iniciaria? Depois considere que o contrato confirma quota compartilhada por tenant e a configuração+teste do gateway já comprovam janela/burst e429; o endpoint ocupa conexão por até2s. Determine controles e verificação proporcionais.\nW4. Projeto MVC4.1.1 com docs/erros.md, advice e auth adequados. Pedido restrito: erro de nome público em validação, displayName retorna em vez de display_name. Gateway existente já limita corpo; nada indica abuso/saturação. Recomende alteração e evidência, explique se há razão para Springdoc, Redis, novo handler global, WebFlux ou alteração de auth.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "W1: YAML aprovado autoridade; sem duas fontes independentes. PATCH presença/null/campo servidor, compatibilidade e cliente; valida runtime+schema+geração e publicação aprovada. W2: reutiliza REST Docs quando basta; snippets não equivalem a OAS; novo requisito justifica OAS e integração explícita sem fingir UI/REST Docs gerarem automaticamente. W3: pergunta quota/owner sem inventar números; avança independente; gateway comprovado reutilizado, diferencia taxa/concorrência e proteção por recurso/evidência, verifica tenant/replicas/429 sem efeito. W4: ajuste mapeamento/teste/docs específico, sem novo stack/limiter/advice/ADR obrigatório. Sem execução inventada.",
+      "observedDecisions": [
+        "W4 manteve a correção no advice e nos testes/docs afetados; nenhuma nova stack.",
+        "W1 preservou YAML aprovado; W3 perguntou pela quota faltante antes de configurar limites.",
+        "RFC9110 e Framework7.0.9 consultados; nenhum exemplo HTTP novo executado.",
+        "W2 manteve REST Docs e mudou o artefato ao surgir requisito de SDK; baseline também acertou.",
+        "W3 reutilizou gateway e distinguiu taxa/concorrência;17 assets intactos.",
+        "W1/W2 propuseram contrato, DTOs, testes, geração e publicação restrita; não executados.",
+        "27 arquivos/29 links validados; integração REST Docs e navegador não executados.",
+        "Fontes REST Docs4.0.0/OAS3.1.1 consultadas; não há prova de qualidade universal."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/contract-delivery.md",
+        "references/schemas-and-examples.md",
+        "references/springdoc-openapi.md",
+        "references/mvc-contracts.md",
+        "references/capacity-and-lifecycle.md",
+        "references/request-bounds.md",
+        "references/swagger-ui.md"
+      ],
+      "revisedResponse": "**W1.** Manteria `contracts/partners.yaml` como autoridade e os controllers manuais. Investigaria versões resolvidas, dialeto OpenAPI, configuração Jackson, DTOs, validação/advice, autorização por parceiro e CI de geração/publicação. Inventariaria somente a operação e propriedades afetadas, incluindo opcionais e campos aninhados.\n\nA alteração revisável reuniria contrato, DTO PATCH sensível à presença, integração com o caso de uso e testes. Omissão preservaria; `null` limparia complemento; valor substituiria. Um campo Java simplesmente nullable não distingue os dois primeiros casos. Confirmaria o tratamento de vazio e de `null` nos demais campos, preservando convenções existentes. Usaria uma lista explícita de campos mutáveis, rejeitando `ownerId` antes de qualquer alteração; `readOnly` no schema não impõe essa proteção. Preservaria o mapper gerenciado e o envelope de erros.\n\nDocumentaria método, caminho, mídia, nomes públicos, presença/null, restrições, exemplos das três situações, sucesso, erros e cabeçalhos realmente aplicáveis. No dialeto 3.1, null requer representação compatível com JSON Schema; verificaria suporte do gerador TypeScript.\n\nProporia validação semântica do OpenAPI e exemplos, diff de compatibilidade, testes MVC com o mapper real e integração que confirme estado preservado/limpo/alterado. Casos negativos incluiriam `ownerId`, tipos inválidos e ausência de efeitos após rejeição. Geraria e compilaria o cliente, exercitando serialização de omissão versus null. Conferiria que o CI publica a revisão validada, com acesso autorizado e negativa anônima. Springdoc e UI não são necessários para essa entrega estática.\n\n**W2.** Preservaria testes Spring REST Docs, AsciiDoc e portal restrito. Implementaria as mesmas regras de presença e proteção de campos de W1. Atualizaria descritores estritos, exemplos e texto do fluxo; cobriria campos opcionais/aninhados e cenários distintos de omissão, null, substituição e rejeição. Marcar um descritor como opcional não exercita sua presença. Proporia executar testes documentadores, regenerar snippets sem resíduos, renderizar o guia e conferir inclusões, links, respostas e controle de acesso. Não acrescentaria OpenAPI por esse PATCH.\n\nCom o requisito aprovado de clientes TypeScript, acrescentaria um artefato OpenAPI e uma decisão explícita sobre sua origem. Como o código/testes já governam o comportamento, proporia geração a partir deles com springdoc MVC, após confirmar compatibilidade da versão escolhida com Boot 4.1.1 e o dialeto exigido pelo cliente. DTOs/binding continuariam donos do comportamento; metadados descreveriam sua semântica; o guia explicaria os cenários. Preservaria REST Docs. Snippets padrão não geram OpenAPI automaticamente. Validaria cobertura, schemas/exemplos e conformidade HTTP, geraria/compilaria/exercitaria o cliente e publicaria o contrato pelo canal restrito. Uma extensão REST Docs seria alternativa somente após verificar sua fidelidade e manutenção. UI continuaria opcional.\n\n**W3.** Perguntaria: “Qual quota comercial rege a cotação — unidade cobrada, identidade e escopo compartilhado, janela/burst, contabilização de falhas e política de excedente — e quem a aprova?” Recomendaria aplicá-la no gateway existente quando adequado, sem inventar números ou comportamento em indisponibilidade.\n\nEnquanto isso, investigaria DTOs, contrato, autorização, custo da chamada, políticas efetivas do gateway, limites de entrada e recursos ocupados. Prepararia documentação e testes funcionais independentes da quota; levantaria demanda, latências, conexões ativas/pendentes, capacidade do destino e orçamento de tempo.\n\nConfirmada a quota compartilhada e comprovados janela/burst/429, reutilizaria esse controle e sua evidência. Conferiria identidade de tenant confiável, cobertura da nova rota e compartilhamento entre réplicas; complementaria apenas lacunas. Documentaria 429 e eventual `Retry-After` conforme a resposta real do gateway.\n\nA conexão ocupada por até dois segundos exige avaliar concorrência separadamente: taxa permitida não garante capacidade para chamadas simultâneas. Reutilizaria limites adequados do recurso ou proporia admissão limitada, espera curta e limitada e deadlines coerentes, dimensionados pela capacidade global e carga observada. Não prescreveria Redis, WebFlux ou threads virtuais automaticamente. Sobrecarga de recurso seguiria a política estabelecida, possivelmente 503, sem fingir violação de quota.\n\nProporia testes de saturação/recuperação, isolamento e liberação de conexão/permissão após sucesso, erro, timeout e cancelamento/desconexão; verificaria ausência de chamada cobrada após rejeição e filas limitadas. Observaria p95/p99, vazão, erros e ocupação. Confirmaria limites de bytes no ingresso e de profundidade/tokens no parser, sem duplicar controles suficientes.\n\n**W4.** Rastrearia `displayName` do DTO até o advice e corrigiria seu mapeamento público para `display_name`, reutilizando o mecanismo existente ou um mapeamento local explícito. Atualizaria o exemplo afetado em `docs/erros.md`. Proporia regressão MVC da validação aplicável, assertando nome público, status, mídia e envelope preservados; incluiria validação de método apenas se alcançada nessa operação. Não há evidência que justifique Springdoc, Redis, novo handler global, WebFlux ou mudança de autenticação. Manteria o limite de corpo existente. Todas essas verificações são propostas, não resultados executados.\n",
+      "baselineResponse": "As verificações abaixo são propostas; não foram executadas.\n\n**W1.** Manteria `contracts/partners.yaml` como contrato aprovado e fonte da geração TypeScript. Investigaria versões efetivamente resolvidas, dialeto OpenAPI, gerador/configuração do CI, mappings, DTOs, Jackson, validação, advice, autorização sobre o parceiro e testes existentes. Conferiria como o artefato é publicado e consumido no portal autenticado.\n\nA alteração revisável reuniria contrato, implementação manual, testes e exemplos. Definiria esquema específico de PATCH, com todos os campos públicos de endereço, inclusive opcionais/nested, seus nomes, restrições e semântica. Omissão preserva; `{\"complemento\":null}` limpa; valor substitui. Documentaria separadamente vazio, null nos demais campos e patch vazio conforme o contrato existente; só perguntaria sobre lacunas que mudem comportamento.\n\nUsaria DTO com presença explícita ou mecanismo já adotado que diferencie ausência/null. O mapeamento aplicaria somente campos permitidos ao objeto existente. `ownerId` não seria propriedade gravável nem chegaria ao comando; documentaria e testaria sua rejeição/ignorância conforme a política existente, sempre sem mudar ownership. `readOnly` no schema, sozinho, não protege o runtime.\n\nProporia testes MVC com o mapper real para omissão/null/valor, limites, tipos inválidos, nomes públicos nos erros e tentativa de enviar `ownerId`; verificaria ausência de alteração parcial quando inválido. No CI: validação do dialeto e referências, exemplos válidos e respostas, diff semântico, geração/compilação TypeScript e chamadas representativas comprovando preservação de null e omissão. Inventariaria operação, propriedades, respostas, headers e requisitos de segurança afetados. Preservaria publicação estática autenticada; Springdoc, Swagger UI e endpoints de documentação em runtime não são necessários para esse fluxo.\n\n**W2.** Seguiria a convenção confirmada de Spring REST Docs: alteraria DTO/mapeamento e os testes que produzem snippets, atualizando o AsciiDoc publicado. Documentaria todos os campos afetados, presença/null, exemplos completos, status e erros reais. Os casos de omissão, limpeza, substituição, entradas inválidas e `ownerId` sustentariam os snippets; revisaria o guia renderizado e a publicação restrita. Não introduziria OpenAPI só por se tratar de um controller.\n\nCom requisito aprovado de gerar clientes TypeScript, OpenAPI passa a ser entrega necessária. Escolheria uma fonte e responsável pelo contrato, evitando definições concorrentes: arquivo mantido com verificações de conformidade ou geração compatível com o projeto. Springdoc seria uma opção a avaliar, não consequência automática. Acrescentaria validação OpenAPI, diff semântico e geração/compilação/teste do cliente, principalmente para campos opcionais nullable. Manteria REST Docs/AsciiDoc como guia de uso, vinculando o contrato e exemplos comuns para detectar divergências. Preservaria acesso restrito e evitaria expor nova UI sem necessidade.\n\n**W3.** A pergunta decisiva seria: “Qual quota comercial aprovada devemos aplicar, com qual chave de contagem, janela e burst?” Autenticação não responde isso; inventar números pode bloquear clientes ou permitir custo indevido.\n\nIndependentemente da resposta, investigaria configuração/rotas do gateway, chamadas cobradas e retries, DTOs, limites de entrada, deadlines, pools e métricas disponíveis. Prepararia contrato e testes funcionais do endpoint, identificando onde medir chamadas por tenant, rejeições, latência e ocupação de conexões, sem registrar credenciais ou payloads sensíveis.\n\nNo segundo cenário, reutilizaria o gateway para a quota por tenant. Confirmaria identidade confiável e contagem compartilhada entre rotas/instâncias relevantes; acrescentaria apenas evidência faltante, como concorrência entre réplicas e isolamento entre tenants. Preservaria janela, burst e 429 já comprovados; não duplicaria o limitador nem introduziria Redis automaticamente.\n\nA conexão ocupada por até dois segundos exige avaliar simultaneidade além de taxa. Dimensionaria admissão/pool pelo orçamento real do recurso, taxa e tempo de ocupação; `L = λW` usa médias e não substitui teste de burst. Reutilizaria limites adequados; onde houver lacuna, proporia limite de operações em voo, espera limitada e rejeição documentada. Alinharia aquisição, chamada externa e deadline total, considerando custo dos retries. Verificaria saturação/recuperação, p95/p99, filas, rejeições, timeout e desconexão, liberando recursos quando o trabalho efetivamente terminar. Não escolheria WebFlux ou números arbitrários.\n\n**W4.** Corrigiria o mapeamento do campo afetado no advice existente para publicar `display_name`, reutilizando o mecanismo disponível ou uma tradução explícita local. Acrescentaria regressão MVC que envia entrada inválida e verifica nome público, status, envelope e demais violações, cobrindo os caminhos de validação efetivamente usados. Atualizaria apenas exemplo afetado em `docs/erros.md`, se necessário.\n\nNão há evidência que justifique Springdoc, Redis, outro handler global, WebFlux ou mudança de autenticação. O limite de corpo existente permanece adequado ao pedido; a evidência necessária é a correção observável do erro.\n",
+      "baselineResourcesRead": [
+        "SKILL.md",
+        "references/schemas-and-examples.md",
+        "references/springdoc-openapi.md",
+        "references/mvc-contracts.md",
+        "references/capacity-and-lifecycle.md",
+        "references/request-bounds.md",
+        "references/swagger-ui.md"
+      ],
+      "comparison": "Both responses preserved the approved OpenAPI authority, reused REST Docs for the internal guide, asked about unknown quotas and kept the small repair narrow. The revised response additionally articulated strict-descriptor/optional-variant limits, stale-snippet checks, and conditional documentation generation in greater detail. One response per arm does not demonstrate a causal or general quality gain. The baseline actor already made appropriate choices despite the unconditional springdoc wording corrected by this review."
+    },
+    {
+      "skill": "spring-boot-jpa",
+      "caseFamily": "J",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nJ1. Projeto Java25/Boot4.1.1, PostgreSQL18 READ COMMITTED, Flyway, application/domain puros e adaptadores JPA já adotados. Preciso adicionar consulta de empresa por tenant+registrationCode e unicidade para novo cadastro; consumidores do domínio têm Optional<Company> e comandos requerem empresa existente. Hoje há duplicatas históricas e soft delete; ADRs e produto não definem se o código de excluída pode ser reutilizado. Job JDBC externo também escreve. Descreva descoberta restante, uma pergunta decisiva com recomendação condicional, sequência de mudança/artefatos e evidências.\nJ2A. Mesmo projeto. Corrija apenas lista paginada com DTO JPQL já existente, ordenação createdAt,id e Page; duas SELECTs (itens e count) executam no mesmo @Transactional(readOnly=true), PostgreSQL18 READ COMMITTED. É navegação interativa; contrato permite mudanças concorrentes entre dados e total. Avalie correção, alternativas proporcionais e verificação.\nJ2B. Mesmo J2A, mude somente: é relatório contratual; itens e total precisam refletir o mesmo snapshot dentro desta chamada.\nJ3. Boot3/Java17 WebFlux com R2DBC funcionando. Pedido só diagnóstico de lentidão, sem trace ou medidas. Time propõe copiar pool20/JPA/virtual threads para resolver. O que pode ser concluído e qual próxima evidência?\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "J1: reutiliza ports/Optional/JPA/Flyway, ausência normal distinta de comando/falhaDB; pergunta reuso soft-delete antes de esquema irreversível, não apaga duplicatas/inventa regra; inclui writer externo, rollout e constraint compartilhada, legado/concorrência/commit/driver. J2A: READ COMMITTED pode permanecer no contrato aceito; sem infra/refatoração excessiva. J2B: readOnly não cria snapshot comum, escolha condicional repeatable-read/consulta única equivalente; efetividade boundary/isolation, teste PG escritor entre selects. J3: mantém escopo diagnóstico, sem migração/upgrade/tuning sem evidência, handoff apropriado. Sem Spring Page no domínio puro nem alegar H2/mocks/compilação prova PG.",
+      "observedDecisions": [
+        "J3 manteve Java17/WebFlux/R2DBC e rejeitou migração/tuning sem evidência.",
+        "J1 perguntou sobre reutilização após soft delete e incluiu job JDBC e duplicatas.",
+        "J2A/B mudou a recomendação com a exigência de snapshot. Fonte PostgreSQL18; execução PG não realizada.",
+        "J2A preservou Page/READ COMMITTED; J2B avaliou REPEATABLE READ e consulta única.",
+        "J1 manteve Optional e erro contextual de comando; não ocultou duplicatas com findFirst.",
+        "J1 propôs sequência com reconciliação autorizada; não apagou dados nem inventou regra.",
+        "J1/J2B propuseram PG e escritor coordenado; assets11 preservados, nenhum novo Maven/PG.",
+        "J3 pediu trace e métricas discriminantes; proposta não demonstra desempenho."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/persistence-delivery.md",
+        "references/queries-and-transactions.md",
+        "references/verification.md",
+        "references/datasource-configuration.md"
+      ],
+      "revisedResponse": "**J1.** A consulta de resultado único depende de resolver a unicidade e o tratamento das excluídas. Ainda examinaria dependências resolvidas, configuração efetiva, migrations/DDL, índices, nulabilidade, collation, normalização do código, predicado de exclusão, chamadas existentes e escrita do job JDBC. Levantaria duplicatas por tenant e código canônico, separando ativas/excluídas e identificando referências que uma reconciliação afetaria. Confirmaria a origem confiável do tenant, o alcance da transação e onde o cadastro efetivamente confirma commit.\n\nPergunta decisiva: **“Uma empresa excluída libera seu registrationCode para novo cadastro no mesmo tenant, inclusive para o job JDBC?”** Se houver reutilização, recomendo índice único parcial sobre tenant+código canônico para empresas ativas, consulta com o mesmo predicado e conflito explícito na reativação. Se não houver, recomendo unicidade incluindo excluídas e tratamento explícito do cadastro bloqueado por registro excluído. Sem decisão, não fixaria o predicado nem modificaria dados históricos.\n\nSequência e artefatos propostos:\n\n1. Registrar o contrato de igualdade, ausência, exclusão e conflito; preservar o port com `Optional<Company>`. Comandos convertem ausência em falha de negócio contextual. Falhas de banco não viram `Optional.empty()`; duplicatas não são ocultadas com `findFirst`.\n2. Preparar inventário e plano de reconciliação com responsáveis e decisão sobre cada grupo conflitante, sem exclusão automática. Continuar trabalho independente: contrato do port, casos de teste e mapeamento dos consumidores.\n3. Após a decisão, preparar migration Flyway com restrição/índice nomeado, normalização coerente e lookup indexável. Alinhar todos os escritores, incluindo JDBC, e definir ordem de implantação, controle de novas duplicatas durante a transição, impacto de locks e recuperação. Reverter aplicação não desfaz reconciliação de dados.\n4. Reutilizar adaptador JPA e consulta derivada/JPQL simples; manter Spring fora de application/domain. Preservar a transação do cadastro completo. Uma consulta prévia pode melhorar mensagem, mas a restrição no banco garante unicidade entre processos; lock JVM e `@Version` não substituem isso.\n5. Traduzir somente a violação reconhecida da restrição específica, preservando causa, ao redor de quem conclui a transação: erro pode surgir no flush ou commit, depois do retorno de `save`. Rollback deve desfazer escritas acompanhantes; falhas desconhecidas permanecem técnicas.\n\nEvidências propostas: testes com PostgreSQL18, driver e migrations reais em ambiente descartável; instalação limpa e upgrade com duplicatas; isolamento entre tenants, códigos equivalentes, zeros significativos, ausência, exclusão/reutilização/reativação conforme decisão. Coordenar cadastro JPA e job JDBC concorrentes, verificar um vencedor, conflito reconhecido e ausência de efeitos parciais. Ler em nova transação após commit; documentar consumo, implantação e recuperação.\n\n**J2A.** Duas SELECTs em READ COMMITTED podem observar estados diferentes mesmo na mesma transação. `readOnly=true` não fornece snapshot comum. Como o contrato aceita essa diferença, isso é correto quanto à consistência exigida; manteria DTO JPQL, `Page`, isolamento e ordenação `createdAt,id`.\n\nVerificaria predicados equivalentes de tenant/filtros/exclusão em itens e count, cardinalidade dos joins, desempate único, limite aplicado no SQL e tamanho máximo de página. Corrigiria apenas discrepâncias demonstradas. `Slice` só cabe se o total deixar de ser necessário; keyset só se navegação/custo justificar mudança de contrato. Não acrescentaria locks, fetch graphs ou outra arquitetura sem necessidade.\n\nTestaria vazio, primeira/última página, datas repetidas e count com dados representativos; observaria SQL e IDs retornados. Um escritor coordenado entre as SELECTs deve demonstrar a variação permitida, sem exigir igualdade temporal. Ordenação determinística não congela páginas de chamadas futuras.\n\n**J2B.** Agora a implementação atual não satisfaz o contrato. Preferiria manter JPQL/DTO/Page e usar uma transação curta com **REPEATABLE READ efetivo**, cobrindo ambas as SELECTs. Verificaria proxy, transaction manager e transação externa: `REQUIRED` pode herdar READ COMMITTED, tornando uma anotação interna insuficiente. Ajustaria a fronteira proprietária; não introduziria `REQUIRES_NEW` automaticamente.\n\nAlternativa: uma única instrução SQL que produza itens e total no mesmo snapshot, tratando página vazia/offset além do fim, onde `count(*) over()` sozinho não retorna total. Compararia a complexidade dessa mudança com o custo de reter o snapshot. Teste PostgreSQL coordenaria commit de inserção/exclusão entre itens e count, afirmando o estado anterior comum; verificaria duração limitada. A garantia termina nesta chamada.\n\n**J3.** Não há evidência para atribuir a lentidão ao pool ou escolher 20 conexões. JPA não é persistência reativa; virtual threads não estão disponíveis no Java17 nem aumentam capacidade do banco. Manteria Boot3/WebFlux/R2DBC, sem migração no diagnóstico.\n\nPróxima evidência: capturar uma operação lenta sob carga identificada, correlacionando latência, espera de aquisição, conexões ativas/pendentes, tempo de retenção, SQL, CPU/I/O/locks do banco e eventual bloqueio do event loop. Isso separa saturação do pool, consulta lenta, contenção e bloqueio indevido. Só então proporia uma alteração mensurável com comparação ao baseline. Nenhuma execução foi realizada.\n"
+    },
+    {
+      "skill": "spring-security-for-apis",
+      "caseFamily": "S",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nS1. Existing Servlet Boot3/Security6 API has a corporate gateway authenticating operators, forwarding X-User and X-Tenant. ADR says gateway authentication is standard; direct pod/service reachability and header stripping cannot be determined from the provided repo. New export operation contains tenant financial records. User asks 'reuse the headers; don't add JWT'. Give next actions, any decisive question, implementation boundary and verifications; do not invent deployment evidence.\nS2A. Existing Servlet API already accepts only explicit bearer Authorization headers, documented client contract and actual config agree; task only fixes one read-scope mapping and no browser credentials are accepted.\nS2B. Change only credential delivery: gateway authenticates an automatic browser cookie then converts it to the same service bearer header; gateway CSRF controls are not documented. Explain whether the same CSRF decision remains justified.\nS3. Existing service submits a method-secured read task to a reused application Executor; sequential callers A/B and anonymous tasks show absent or stale authentication. Team suggests MODE_INHERITABLETHREADLOCAL globally. Existing executor ownership and domain/application separation must remain. Propose focused fix, meaningful evidence, and limits.\nS4. WebFlux SecurityWebFilterChain returns401; request asks to copy this skill's Servlet chain. Explain scope and next evidence.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "S1: preserve gateway policy but unknown trust, decisive ingress+header stripping question, preauth only verified nonbypass or signed assertion justification, no arbitrary JWT/IDP; tenant auth/spoof/cross-tenant/direct tests, independent work. S2A narrow mapping preserves decoder/converter and header-only CSRF policy. S2B end-to-end browser cookie CSRF boundary changes; gateway protection investigated/reused, no disable-all because service sees header/stateless. S3 explicit submitter capture+cleanup/restore or trustedcaller design, actual executor and proxy; inheritable not reusedpool fix; A/B/anonymous/exception tests; no tx/durability/current-permission guarantees. S4 no servlet-to-reactive transplant; versioned handoff. No invented tests/deployment.",
+      "observedDecisions": [
+        "S4 recusou transplantar HttpSecurity para WebFlux e pediu wiring/versões reativos.",
+        "S1 preservou o ADR e perguntou por bloqueio de bypass e substituição de headers, sem inventar implantação.",
+        "S3 explicou captura por submissão e limpeza no pool; sem nova execução de executor nesta revisão.",
+        "S2A manteve reparo estreito; S2B mudou análise ao surgir cookie automático no gateway.",
+        "Inspeção técnica; três exemplos Java preservados; nenhuma nova infraestrutura.",
+        "S1/S3 propuseram boundary, negativos e integração existentes; aplicação consumidora não implementada.",
+        "Casos instruídos; validação estrutural executada; ambiente de gateway não testado.",
+        "S1 distinguiu MockMvc de ingress; S3 não prometeu revalidação, transação nem autorização durável."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/access-policy-delivery.md",
+        "references/chains-and-browser.md",
+        "references/verification.md"
+      ],
+      "revisedResponse": "**S1.** Reutilizaria a autenticação corporativa sem introduzir JWT, condicionando a confiança nos headers à comprovação da fronteira. O ADR registra a decisão arquitetural; não comprova bloqueio de acesso direto nem remoção de headers fornecidos pelo cliente.\n\nA pergunta decisiva ao responsável pela infraestrutura é: **qual controle implantado impede acesso direto ao serviço/pod e garante que o gateway remove ou substitui `X-User` e `X-Tenant` enviados pelo cliente, vinculando o tenant à identidade autenticada?** Solicitaria configuração e verificação no ambiente. Se essa garantia não existir, seria necessário corrigir a fronteira antes de disponibilizar a exportação; adicionar confiança irrestrita nos headers não atende ao contrato.\n\nEnquanto isso, mapearia método/rota, cadeia efetiva, chamadores e permissão de exportação; prepararia testes e documentação. No limite HTTP, aproveitaria a integração de pré-autenticação existente, compatível com Boot 3/Security 6, convertendo identidade confiável para o contexto tipado da aplicação. A aplicação deve verificar autorização da operação e pertencimento ao tenant; a consulta deve restringir os registros exportados, inclusive contagens e buscas auxiliares. O domínio não precisa receber `Authentication` ou headers. Não inventaria associação entre usuário e tenant nem permissão financeira.\n\nProporia um controle permitido e negativas: identidade ausente, operador sem permissão, tenant alheio e tentativa de selecionar outro tenant por parâmetro. Negativas devem impedir geração/entrega do arquivo e acesso indevido aos registros. Separadamente, verificaria no deployment falsificação de headers pelo ingresso público e tentativas de acesso direto. MockMvc não comprova esses controles. A liberação permaneceria condicionada somente às garantias materiais pendentes; migração de identidade ficaria fora deste escopo.\n\n**S2A.** Preservaria a decisão de CSRF para o contrato comprovadamente restrito a bearer explícito no `Authorization`, sem credenciais automáticas. Corrigiria apenas o mapeamento do escopo de leitura, mantendo cadeia, decoder e vocabulário de permissões existentes. Verificaria conversor real com escopo válido, ausente, malformado e prefixo incorreto; leitura permitida, ausência de escopo negada e escopo de leitura incapaz de autorizar escrita. Um bearer válido passando pela cadeia e conversor reais comprovaria a integração; `jwt()` com authorities injetadas comprova autorização, não o mapeamento efetivo. Não reabriria a política acordada nem criaria outra cadeia.\n\n**S2B.** A mesma justificativa deixa de valer: o navegador envia automaticamente o cookie ao gateway. Sua conversão em bearer não elimina CSRF na entrada. Identificaria onde são validados os pedidos originados do navegador e exigiria evidência do controle no gateway; até lá, a mudança de transporte não justificaria declarar o fluxo protegido ou remover proteção existente. O serviço pode conservar sua configuração se o gateway aplicar controles adequados e a fronteira impedir contorno. Caso contrário, implementaria a proteção no componente capaz de verificar a intenção do navegador, conforme o contrato e a versão utilizados.\n\nVerificaria requisições inseguras com cookie válido e token CSRF ausente, inválido e válido, incluindo origem hostil e ausência de efeitos nas negativas. CORS, `STATELESS` e `SameSite` isoladamente não demonstram essa proteção.\n\n**S3.** Não adotaria `MODE_INHERITABLETHREADLOCAL` global: a herança ocorre na criação da thread, não em cada tarefa de um pool reutilizado. Primeiro rastrearia submissão, executor real e passagem pelo proxy do bean protegido. Na integração existente, envolveria o executor gerenciado com `DelegatingSecurityContextExecutor` ou equivalente apropriado, capturando contexto por submissão, sem fixar o contexto de A para todas as tarefas. Preservaria proprietário, capacidade, lifecycle e tratamento de exceções do executor; o domínio continuaria independente de Spring Security.\n\nProporia testes determinísticos no executor da aplicação, reutilizando o mesmo worker: A permitido, B com identidade/permissões distintas, tarefa sem autenticação e tarefa que lança exceção antes da próxima. Verificaria identidade observada, autorização pelo bean real, ausência de leitura protegida nas negativas e limpeza/restauração sem vazamento entre tarefas. Não mutaria autenticação compartilhada: a propagação não cria snapshot profundamente imutável. Também não substitui proxy, propaga transação ou revalida token; jobs duráveis exigem política própria de ator e validade da autorização.\n\n**S4.** Não copiaria a cadeia Servlet: WebFlux está fora do escopo desta skill. Solicitaria versões resolvidas, `SecurityWebFilterChain` efetivas, ordem/matchers, caminho/método, mecanismo de autenticação e requisição sanitizada. Rastrearia qual cadeia produz 401, envio da credencial e falha no gerenciador/decoder reativo, sem registrar tokens. Proporia reprodução com `WebTestClient`, cadeia real e controles válido/ausente/inválido; distinguiria autenticação de autorização insuficiente. A correção deve seguir a integração reativa, inclusive seu contexto de segurança.\n\nTodas as verificações acima são propostas; não foram executadas.\n"
+    },
+    {
+      "skill": "spring-http-clients",
+      "caseFamily": "C",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nC1. Java25/Boot4.1.1 MVC, existing domain port VerificationGateway, Boot RestClient builder with SSL/tracing. Add supplier POST /checks to company registration; docs say billed request,201 result,504 possible, no duplicate/replay contract. Existing egress gateway configured but policy unavailable; product docs say verify company with no outage behavior. Produce concise implementation approach, decisive questions, docs/tests.\nC2. Same case: Provider now guarantees identical idempotency key+semantic payload replay for24h and lookup by original key; existing gateway documented retries off. Product requires verification, outage must block registration, caller total budget3s. Existing per-peer policy supports bounded retries. What changes and what stays?\nC3. Existing Java21/Boot3.4 RestClient correct mappings/SSL, only read-timeout env override ineffective after custom factory replacement. No evidence server slow. Fix plan/evidence only; no migration approved.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "C1: investigate provider/egress ownership, grouped duplicate/replay+outage question, no dependent policy invented, preserve port/managed SSL/tracing; no quota/fallback/framework by default; mapping/error/body tests and contract/ops docs. C2 permits bounded same-key+payload retries within24h/shrinking3s if budget allows (single attempt valid), release before backoff, attemptsowner, no newkey/exactlyonce; do not reask known facts. C3 trace actual version/property/factory/order/origin; realtransport check vs mock limit; preserve3.4/21 no Framework7 APIs/migration; no unsupported latency rootcause. No blind POST retry, stacked retry, failopen, fabricated guarantee/execution.",
+      "observedDecisions": [
+        "C3 manteve Java21/Boot3.4 e reparo da factory, sem migração.",
+        "C1 agrupou perguntas sobre replay, indisponibilidade e dono de tentativas.",
+        "C1 não tratou504 como ausência de efeito; C2 manteve chave/intenção e orçamento.",
+        "C1 recusou retry cego; C2 permitiu tentativas limitadas com replay documentado.",
+        "C1 preservou port e managed builder/SSL/tracing; quatro exemplos intactos.",
+        "C1–C3 apresentaram artefatos e donos; sem nova aplicação.",
+        "C3 distinguiu binding de efeito na factory e propôs atraso controlado; não executado.",
+        "C1 reteve política pendente; C2 não prometeu exactly-once; testes de fornecedor não executados."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/wiring-and-transports.md",
+        "references/failure-and-response-bounds.md",
+        "references/verification.md"
+      ],
+      "revisedResponse": "**C1 — integração e decisões pendentes**\n\nManteria Java 25/Boot 4.1.1 e MVC, confirmando Framework e transporte resolvidos. Implementaria `VerificationGateway` em um adaptador específico do fornecedor. DTOs, status HTTP e tipos Spring ficariam nesse adaptador; o caso de uso receberia resultados do contrato de domínio existente. Usaria o `RestClient.Builder` injetado pelo Boot, clonando-o se compartilhado, preservando SSL, observação e customizers. Uma chamada não exige interface HTTP, framework de resiliência ou migração.\n\nO adaptador enviaria JSON tipado a `POST /checks`, aceitaria o `201` documentado e validaria presença, campos obrigatórios e identidade do resultado. Corpo ausente, estado desconhecido ou identidade divergente seriam falhas de contrato, sem fabricar verificação positiva. Separaria rejeição definitiva de falha técnica e efeito desconhecido; não repassaria erros ou corpos sensíveis do fornecedor ao consumidor.\n\nAgruparia as perguntas decisivas:\n\n- Ao fornecedor: há identidade de operação, garantia de não cobrar/executar novamente, prazo de replay e consulta do resultado original? `504` permite determinar se houve efeito?\n- Ao produto: verificação é obrigatória? Durante indisponibilidade, cadastro bloqueia, fica pendente ou pode concluir sem verificação? Qual orçamento total de latência?\n- À plataforma: quais tentativas, limites e timeouts efetivos existem no gateway/transporte? Quais convenções vigentes governam credenciais, tenant, destino, quotas e tamanho de resposta?\n\nEnquanto isso, avançaria mapeamentos e configuração reversíveis. Não habilitaria retry do POST cobrado: timeout/`504` não demonstram ausência de efeito. Preservaria duravelmente identidade e intenção original, payload semântico e estado incerto para tratamento posterior; uma exceção isolada não implementa recuperação. Gateway configurado não prova ausência de retry: confirmaria a política antes de liberar a operação. O comportamento de cadastro durante falha continua uma decisão pendente, sem fallback de sucesso inventado.\n\nDefiniria limites finitos por fase no transporte efetivo e documentaria o que ainda depende de contrato externo; read timeout não equivale a prazo total. Reutilizaria limites de resposta estabelecidos, cobrindo sucesso e erro, sem decoder manual sem necessidade.\n\nProporia testes de serialização, `201` válido/inválido/vazio, rejeições e proteção de dados via slice apropriado e `MockRestServiceServer`. Em transporte real controlado: efeito registrado seguido de resposta perdida, preservação da intenção e contagem de tentativas; também SSL e propagação pelo cliente efetivo. Atualizaria README/runbook com versão do fornecedor, estados, configurações, donos de política e pendências; ADR apenas para decisão durável relevante.\n\n**C2 — replay autorizado e cadastro obrigatório**\n\nManteria port, adaptador, RestClient, SSL, tracing e validações. Agora indisponibilidade bloqueia conclusão do cadastro; indisponibilidade não vira reprovação da empresa. Preservaria a operação pendente/incerta para recuperação sem liberar cadastro como verificado.\n\nPersistiria uma chave por intenção antes do envio e reutilizaria exatamente essa chave com payload semanticamente idêntico em todas as tentativas e retomadas. Usaria consulta pela chave original para reconciliar resposta perdida. Controlaria a janela de 24 horas: após expiração, não enviaria automaticamente outro POST ou chave nova; resultado ainda incerto exigiria recuperação pelo contrato disponível.\n\nReutilizaria a política existente por fornecedor como único dono de retry. Gateway permanece com retry desligado; verificaria também tentativas internas do transporte. Configuraria teto explícito — inicialmente até duas tentativas totais, sujeito ao orçamento medido — apenas para falhas elegíveis pelo contrato, nunca indiscriminadamente para `RestClientException` ou rejeições definitivas.\n\nOs três segundos cobririam admissão, conexão/TLS, tentativas, backoff, leitura e processamento. Cada tentativa receberia somente o saldo disponível; não haveria despacho sem saldo suficiente. Respeitaria `Retry-After` válido quando couber, sem antecipá-lo. Liberaria respostas antes da espera e verificaria cancelamento, sem alterar factory compartilhada por requisição. Consulta imediata também consumiria esse orçamento; recuperação posterior seria outra execução explicitamente coordenada.\n\nAcrescentaria testes de replay sem cobrança duplicada, mesma chave/payload, consulta após efeito com resposta perdida, expiração, teto de tentativas, prazo total e bloqueio do cadastro. Documentaria dono da recuperação, retenção e limites; validaria garantias externas no sandbox do fornecedor.\n\n**C3 — reparo localizado**\n\nPreservaria Java 21/Boot 3.4, RestClient, mapeamentos e SSL. Rastrearia origem/prioridade da variável, binding, builder, customizers e factory final. Compararia configuração antes/depois da substituição, usando metadata/API da versão efetiva; não copiaria propriedades do Boot 4.\n\nCorrigiria a composição para aplicar o read timeout resolvido à factory realmente utilizada, preservando SSL e observação; a ordem precisa de evidência. Proporia regressão com dois valores de ambiente, servidor controlado atrasando headers e travando corpo separadamente, watchdog e observação da liberação/progresso posterior. Mock que substitui factory não comprova timeout real. Documentaria a configuração corrigida; não aumentaria limites nem atribuiria lentidão ao servidor sem evidência. Nenhum comando ou teste foi executado nesta proposta.\n"
+    },
+    {
+      "skill": "spring-transactions-and-events",
+      "caseFamily": "T",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nT1. Projeto Java25/Boot4.1.1/Framework7.0.9 usa JDBC, um manager, serviço transacional real e padrão de componentes com injeção por construtor. ReceiptProjection deve atualizar depois do commit; a resposta não espera por ela. Perda por falha/restart é aceitável: a projeção é informativa e reconstruída sob demanda. Já existe outbox operado para integrações que exigem recovery, mas este fluxo ainda não o usa. Indique alteração mínima, integração, documentação e evidências necessárias; o time sugeriu adicionar Modulith para padronizar todos os eventos.\nT2. Exatamente T1, substituindo somente a política de perda por: cada comando confirmado deve deixar intenção durável; a atualização deve ser recuperada após restart, sem repetir o comando original.\nT3. Projeto idem, ADR preserva core sem Spring, outbox operado já existe, interface manda publicar CompanyRenamed(companyId) e consumer lê nome atual horas depois. Pedido: precisamos registrar auditoria confiável da alteração de nome. Requisitos sobre o nome auditado (momento da alteração ou valor atual), atraso admissível e possibilidade de resposta antes da auditoria não constam em docs/testes. Mostre discovery já possível, poucas perguntas decisivas com recomendação condicional e trabalho independente; não invente política.\nT4. Apenas stacktrace incompleto indica callback perdido; versões/manager não estão disponíveis; usuário sugere que virtual threads carregam o transaction context e pede corrigir também a topologia de ack Kafka. Explique conclusões suportadas, evidência mínima e handoff.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "T1: preserve dependencies, no reflex Modulith/registry/executor; phase notasync, effective REQUIRES_NEW if writing projection, any required async reuses managed lifetime; documents loss/rebuild and commit/rollback/consumerfailure. T2 reuse operatedoutbox with atomic intent, responseaftercommit no immediate-effect/exactlyonce promise, recovery rollback/restart/repeat tests, no rerun confirmedcommand. T3 decisive historical/current+timing guarantee questions aftercontext; purecore, conditional minimal versioned immutable snapshot for historical, ID/reload only acceptedcurrent semantics; independent boundary/tests. T4 no unsupportedcause/contextinheritance, actualversions/path/manager/publish/listener evidence, handoff delivery-semantics. No inventedexecution/fullAPI.",
+      "observedDecisions": [
+        "T4 encaminhou ack Kafka e manteve diagnóstico Spring delimitado.",
+        "T3 perguntou fato histórico/atual, atraso e momento de sucesso, mantendo trabalho independente.",
+        "T1 separou async de AFTER_COMMIT; T3 distinguiu snapshot de reload. Runtime não executado.",
+        "T1 aceitou perda/reconstrução sem Modulith; T2 reutilizou outbox para nova exigência de durabilidade.",
+        "T3 preservou core puro e compatibilidade de payload; três exemplos Java preservados.",
+        "T1/T2 incluíram wiring, capacidade, recovery e documentação proporcional; sem aplicação demonstrativa.",
+        "Checks estruturais passaram; runtime/restart/crash permanecem propostas.",
+        "T4 não diagnosticou self-invocation por palpite nem propagou thread-locals para corrigir transação."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/event-wiring-and-recovery.md",
+        "references/verification.md",
+        "references/interception-and-rollback.md"
+      ],
+      "revisedResponse": "**T1.** Manteria eventos locais. No serviço transacional existente, injetaria `ApplicationEventPublisher` pelo construtor e publicaria um evento imutável dentro da transação. `ReceiptProjection` continuaria componente com dependências por construtor; seu método público teria `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`, `@Async(\"receiptExecutor\")` e `@Transactional(propagation = REQUIRES_NEW)`, com interceptação efetiva. A própria projeção pode possuir essa fronteira, sem criar um encaminhador sem responsabilidade adicional.\n\nIntegraria a habilitação assíncrona e um executor nomeado com concorrência/fila limitadas, tratamento observável de exceções e rejeição que não execute trabalho na thread da requisição. Usaria o JDBC, datasource, manager e esquema existentes, conferindo capacidade do pool. Não acrescentaria manager ou habilitação transacional redundante. No Framework 7.0.9, o listener pós-conclusão transacional exige `REQUIRES_NEW` ou `NOT_SUPPORTED`; este último não fornece a transação necessária à escrita.\n\nDocumentaria: sucesso confirma o comando; projeção pode estar pendente, falhar ou desaparecer após restart; reconstrução sob demanda, responsável e sinais de falha seguem esse contrato. Não adicionaria Modulith nem integraria o outbox apenas para uniformizar eventos: não há requisito de recuperação neste fluxo. Reabriria essa decisão se a perda deixasse de ser aceitável.\n\nProporia integração com beans reais, sem transação envolvendo o teste: commit produz projeção; rollback e publicação sem transação não a produzem; barreiras controladas demonstram retorno sem aguardar a projeção. Verificaria agendamento após commit e leitura independente `READ_COMMITTED` dentro do callback, além da persistência da projeção. Falha da projeção deve desfazer sua escrita e preservar o comando; saturação deve seguir a política documentada. Aguardaria efeitos com prazo, sem sleeps.\n\n**T2.** Reutilizaria o outbox operado. A alteração essencial é gravar intenção para `ReceiptProjection` junto com a escrita do comando, na mesma transação JDBC, antes do commit. Conferiria que o outbox existente realmente participa desse manager/datasource; gravar intenção apenas num callback posterior deixa uma janela de perda.\n\nIntegraria tipo/payload compatível, identidade estável do evento, roteamento e consumidor ao dispatcher existente. O consumidor atualizaria a projeção em transação própria, com deduplicação persistida atomicamente com o efeito local; progresso/ack seguiria o protocolo existente. A resposta continuaria sem esperar pela projeção. Recuperaria a intenção, nunca repetiria o comando confirmado. Não acrescentaria Modulith para duplicar a infraestrutura adequada.\n\nEstenderia o runbook com responsável, inspeção/replay, limites de tentativas e concorrência, trabalho esgotado, compatibilidade de pendências e observação de idade/progresso. Derivaria alertas do atraso acordado, sem inventar retenção ou prazo.\n\nVerificaria atomicidade negócio/intenção no rollback; commit com consumidor indisponível; ausência de efeito parcial; recuperação por nova instância sobre o mesmo armazenamento; replay duplicado e, se houver múltiplas réplicas, concorrente. Proporia interrupção de processo na janela entre commit e processamento para sustentar a garantia de restart; recriação ordenada de contexto não comprova essa janela.\n\n**T3.** Já sabemos que o core deve permanecer sem Spring, existe outbox e `CompanyRenamed(companyId)` permite apenas consultar estado posterior. Persistir esse evento não recupera um nome histórico omitido. O discovery possível é rastrear interface, chamadores, publicação, consumidor, fronteira transacional, esquema/outbox, serialização, pendências e runbook; procurar evidência dos requisitos em contratos, testes e ADRs.\n\nTrês perguntas decidem a solução:\n\n- A auditoria deve registrar nomes anterior/novo na alteração ou o nome atual no processamento? Se histórica, recomendo snapshot imutável ou referência a versão imutável; se atual, manter ID/reload com política explícita para exclusão.\n- Qual atraso máximo é admissível? Isso orienta capacidade, recuperação e alertas.\n- Sucesso pode preceder a auditoria? Se sim, recomendo intenção atômica no outbox; se o registro precisa existir no sucesso, avaliar sua escrita na mesma transação do comando.\n\nEnquanto isso, mapearia adaptadores/decoradores e verificaria atomicidade do outbox, preservando portas e eventos sem Spring no core. Prepararia cenários que suspendem o consumidor, renomeiam novamente ou excluem a empresa e depois retomam; as expectativas aguardariam a política. Inventariaria consumidores e registros antigos antes de alterar payload, preparando compatibilidade sem substituir silenciosamente o contrato existente.\n\n**T4.** O stacktrace incompleto não estabelece causa: faltam caminho de publicação, transação, fase, registro e executor. Uma nova thread virtual não herda a transação imperativa; não copiaria thread-locals. Pediria versões resolvidas, manager/datasource, stacktrace completo, beans/chamadas, configuração do listener/executor e evidência persistida.\n\nO menor teste discriminante chama o bean real, fora de transação de teste, compara commit/rollback/publicação sem transação e observa callback, erros/rejeições e banco. Não concluiria self-invocation sem rastrear a chamada. Encaminharia ack Kafka a `delivery-semantics`, levando configuração de ack/commit, identidade do evento, transações envolvidas, retries e janelas de falha; efeitos repetidos também exigem análise de idempotência. Continuaria o diagnóstico Spring independente. As verificações acima são propostas, não resultados de execução.\n"
+    },
+    {
+      "skill": "spring-boot-observability",
+      "caseFamily": "O",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nO1. Java25/Boot4.1.1; serviço MVC existente retorna202 ao persistir pedido de onboarding; worker pode finalizar minutos depois. Plataforma já fornece Micrometer HTTP meters, tracing com sampling aprovado de1% e logs correlacionados. Pedido: preciso monitorar sucesso e duração do onboarding; coloque @Observed nos controllers e marque como pronto. README só documenta aceite HTTP, nenhum contrato de sucesso de negócio/consumidor da medida. Produza proposta focal e a menor pergunta material.\nO2A. Mesmo stack existente, operação síncrona de consulta com HTTP timer e tracing funcionando; on-call quer diagnosticar ocasionalmente latência de uma chamada externa. Deve existir evidência de cada requisição? Proponha escolha/validação proporcional.\nO2B. Mesmo O2A, substituir necessidade por: o responsável exige evidência durável de CADA alteração de consentimento, vinculada atomicamente ao resultado do negócio e disponível durante indisponibilidade do collector.\nO3. Após deploy, dashboard vazio. Teste local tem span finalizado no exporter em memória; workload real foi exercitado; não há acesso ao collector/backend nem dump da configuração efetiva. Corrija observabilidade sem instalar nova stack. Dê diagnóstico limitado, próximos artefatos e condição de conclusão.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "O1: HTTPaceite não igual conclusão, inspect docs/code/platform before meaningful success/timeboundary consumer question, reusesmeters, distinctsignal onlyjustified not blanket@Observed. O2A reuse existing/sampling no100% or audit. O2B must change: atomicdurableall != tracing100%, handoff audit/transaction owner without implementingoutbox inobservabilitypatch. O3 localSDK not ingestion, distinguish emission/configsampling/export/backend/query, no fabricatedrootcause or blindexporter, concrete evidencenext/statedlimits. Preservebaseline noexecutioninvented, usefuldocs/runbook.",
+      "observedDecisions": [
+        "O2B encaminhou durabilidade para o fluxo de negócio, sem tratá-la como sampling.",
+        "O1 perguntou definição/consumidor de sucesso e separou202 da conclusão no worker.",
+        "O3 não atribuiu culpa ao collector a partir do exporter em memória.",
+        "O2A manteve sampling aprovado; O2B distinguiu auditoria atômica.",
+        "O1/O2A evitaram blanket @Observed, duplicação e IDs em labels; assets preservados.",
+        "O1/O3 propuseram documentação e responsáveis; sem implantação/backend executados.",
+        "O3 definiu sinal consultável para fechar ingestão; checks estruturais passaram.",
+        "O3 manteve causa indeterminada e acesso faltante; nenhum ganho operacional medido."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/instrumentation-and-propagation.md",
+        "references/verification.md"
+      ],
+      "revisedResponse": "**O1.** O HTTP 202 confirma o aceite persistido; os medidores HTTP existentes já cobrem essa etapa. O sucesso e a duração do onboarding dependem da conclusão no worker. Anotar os controllers pode duplicar instrumentação e continua sem medir essa conclusão; isso não permite declarar o pedido pronto.\n\nPergunta mínima: **qual evento define onboarding concluído com sucesso e quem usará essa medida para decidir o quê?**\n\nEnquanto essa definição chega, proponho inspecionar o fluxo entre persistência e worker, estados terminais, tentativas, timestamps existentes e instrumentação efetivamente registrada. Como hipótese reversível para discussão, duração total começa no aceite persistido e termina na transição terminal, incluindo espera; duração de uma tentativa do worker é outra medida. Confirmaria falha definitiva, cancelamento e tratamento de reprocessamentos antes de fechar o contrato.\n\nInstrumentaria a fronteira de aplicação que confirma o resultado, usando o registro gerenciado pelo Boot. Um timer apenas dentro do worker mede execução, portanto a duração total exige preservar o instante inicial e apurar o intervalo no término. Evitaria manter escopo thread-local aberto durante minutos ou atravessando threads. Usaria resultados limitados, sem IDs pessoais nos labels, preservando sampling de 1% e logs correlacionados.\n\nVerificações propostas: aceite sem conclusão não conta sucesso; conclusão após espera produz duração coerente; falha terminal produz resultado próprio; retry/reentrega não conta o mesmo onboarding novamente conforme o contrato acordado. Também verificaria ausência de medidores duplicados e estabilidade das dimensões. Atualizaria o README com fronteiras, unidade, resultados, consumidor e limitações; concluiria após validar esse contrato.\n\n**O2A.** Diagnóstico ocasional não exige evidência individual de todas as requisições. Reutilizaria métricas agregadas, traces amostrados a 1% e logs correlacionados. A amostragem pode deixar justamente uma ocorrência lenta sem trace; essa limitação precisa constar no procedimento do on-call.\n\nInspecionaria o cliente realmente usado: builder gerenciado pelo Boot, observação de saída existente e vínculo com a requisição recebida. Acrescentaria integração somente se essa fronteira estiver ausente. Uma observação envolvendo uma simples delegação ao cliente tende a repetir sua medição.\n\nProporia reproduzir atraso e falha controlados no downstream, verificando duração do cliente, trace ID, parent span ID, propagação recebida e ausência de duplicação. Sampling integral pode tornar esse teste local determinístico, sem mudar produção. Se a cobertura ocasional continuar insuficiente, o on-call e o responsável pela política devem definir diagnóstico temporário delimitado e autorizado, com reversão e custo conhecidos. Traces comuns, mesmo com sampling integral, não garantem retenção de cada chamada.\n\n**O2B.** A exigência passa a ser auditoria transacional. Encaminharia ao responsável pela aplicação a definição e implementação desse contrato, mantendo observabilidade operacional existente.\n\nProporia um registro durável no mesmo commit da alteração de consentimento, usando a persistência transacional existente quando possível. Se houver destino externo, avaliaria outbox transacional e entrega idempotente; a obrigação local precisa permanecer satisfeita durante indisponibilidade do collector. Confirmaria identificação da mudança, conteúdo permitido, acesso, retenção e comportamento quando a gravação da auditoria falha. Esses requisitos não serão supridos aumentando sampling ou adicionando `@Observed`.\n\nVerificações propostas ao proprietário: commit mantém alteração e registro juntos; rollback não deixa mudança confirmada sem evidência; collector indisponível não remove registros; reinício e reentrega preservam evidência sem ambiguidade; concorrência não perde mudanças. Isso constitui trabalho de aplicação a especificar, não uma correção de tracing já concluída.\n\n**O3.** O span finalizado comprova emissão no SDK do teste local. O exporter em memória não exercita transporte, autenticação, filas, collector ou consulta. Workload real exercitado tampouco demonstra emissão naquele deploy. A causa permanece indeterminada.\n\nSolicitaria ao responsável pelo deploy: identidade de serviço/versão/ambiente, janela temporal, requisição segura reproduzível, configuração efetiva sanitizada de sampling e exportação — ativação, destino, protocolo e referências de credenciais — e erros/contadores do exporter. Ao responsável pelo collector/backend: evidências de recebimento, processamento e exportação nessa janela, além da consulta exata, filtros e identidade de recurso. Cada artefato deve localizar a primeira fronteira sem evidência.\n\nEm paralelo, revisaria a instrumentação e filtros locais e sua correspondência com o artefato implantado. Corrigiria apenas o desvio demonstrado, na stack existente. A recuperação do dashboard requer sinal consultável no backend após exercício controlado, respeitando sampling e atraso de ingestão. Sem acesso ou artefatos, entregaria diagnóstico limitado, hipóteses e próximos responsáveis; não declararia ingestão corrigida.\n"
+    },
+    {
+      "skill": "spring-boot-testing",
+      "caseFamily": "H",
+      "actorInput": "Responda em português, até 800 palavras no total. Proponha ações e verificações concretas para cada caso. Não implemente aplicação nem alegue execução de comandos/testes.\n\nH1A. Java25/Boot4.1.1 MVC app, existing @SpringBootTest+@AutoConfigureMockMvc with real service/repository, isolated production-engine CI database/migrations, no test transaction, supported CI command and cleanup documented. Add regression for request validation and committed creation response; owner proposes a second RANDOM_PORT suite and Testcontainers solely because MockMvc only tests mocked services.\nH1B. Same project/request but acceptance now requires verifying the embedded servlet container error-page dispatch/HTTP response for an unhandled exception. Give focused proposed change/checks, state limits.\nH2. Same app has published OpenAPI nullable optional taxId but controller validator rejects absence; no ADR or requirement decides which is intended. Asked make tests pass; existing real-security negative tests and database pipeline must stay. Give decisive question and independent work while awaiting it.\nH3. Pure Java price-calculation rule change in an existing Boot service; direct unit tests cover rule, no wiring behavior changed. Team wants whole new container harness and guaranteed p99 claims because six H2 tests passed. Give scoped response and evidence limit.\n",
+      "evaluatorOnlyCriteriaFixedBeforeRun": "H1A reuse real full-context MockMvc/DB sufficient boundary, verify actual collaborators/commit no maskingtx; no mandatorysecondsuite/container. H1B live embeddedserver/client toverify containererror, servertransaction/cleanup/publicresponse; no direct/error/adviceequivalence. H2 inspect contractfirst, question owner intendednullable/absence with publishedcompatibility recommendation, conflictvsinference, independentharness/negativechecks no weakenedassertions/inventedpolicy. H3 directunitno newBoot/DB, H2 no p99/PG guarantee, preserveconventions/handoffperformance. No claimedruns. Proposalsonly.",
+      "observedDecisions": [
+        "H3 manteve teste unitário para regra pura; handoffs especializados preservados.",
+        "H2 identificou conflito OpenAPI/validator e perguntou sobre compatibilidade.",
+        "H1A/B diferenciou MockMvc completo de RANDOM_PORT; fontes Boot4.1.1/Framework7.0.9.",
+        "H1A não criou segunda suite/container; H1B exigiu cliente HTTP e caminho real.",
+        "H2 manteve pipeline e testes hostis; todos12 assets inalterados.",
+        "H1 propôs descoberta CI e cleanup após falha; propostas não são execução.",
+        "H1A incluiu nova transação; H1B separou thread do servidor; pacote validado.",
+        "H3 rejeitou p99 a partir de seis testes H2; Maven não repetido nesta rodada."
+      ],
+      "assessment": "The coordinator read the actual response and found no violation of the predefined failure conditions. This is a bounded proposal check, not application execution or a score of general reliability.",
+      "resourcesRead": [
+        "SKILL.md",
+        "references/service-acceptance.md",
+        "references/transaction-observability.md",
+        "references/verification.md"
+      ],
+      "revisedResponse": "**H1A.** Manteria o `@SpringBootTest` com `@AutoConfigureMockMvc` existente. MockMvc simula o transporte servlet; não transforma os serviços e repositórios reais em mocks. Esse contexto já permite verificar validação, integração dos componentes e criação persistida. A base isolada do mesmo motor de produção, com migrations, também atende ao caso; Testcontainers seria uma alternativa de gerenciamento dessa base, sem acrescentar uma garantia exigida aqui.\n\nAcrescentaria regressões junto aos testes da funcionalidade:\n\n- Enviar uma requisição inválida e verificar status, estrutura pública dos erros e ausência da criação no banco.\n- Enviar uma requisição válida, verificar status, cabeçalhos e corpo definidos pelo contrato e consultar o registro retornado após o término da requisição, em uma nova transação/contexto de persistência. Comparar identificador e valores persistidos com a resposta. Apenas `flush()` não demonstraria commit.\n- Usar dados exclusivos do teste e a limpeza comprometida já documentada, inclusive após falhas de assertions. Preservar filtros e colaboradores reais.\n\nConferiria overrides e propriedades efetivos, conexão com o motor/schema esperado e execução das migrations. Proporia executar o teste focado e o comando de CI já suportado, examinando relatórios novos, testes descobertos, falhas e skips. Isso demonstra os caminhos exercitados; não verifica o ciclo do container servlet.\n\n**H1B.** Aqui acrescentaria um teste focado com `@SpringBootTest(webEnvironment = RANDOM_PORT)` e o cliente HTTP suportado pelo projeto. A aceitação passou a depender de uma fronteira que MockMvc não executa: o despacho de erro do container embarcado.\n\nA requisição deve atingir o endpoint real e provocar deterministicamente a exceção não tratada por meio de uma fixture apropriada. Não chamar `/error` diretamente nem substituir o caminho por um teste de advice. Verificaria o status HTTP esperado, tipo de conteúdo, cabeçalhos e corpo público acordados, incluindo ausência de detalhes internos. Conferiria que a exceção realmente chega ao container. Se a resposta sozinha não distinguir advice de despacho, acrescentaria uma observação restrita ao teste para registrar `DispatcherType.ERROR` no caminho real.\n\nReutilizaria a infraestrutura de banco existente. Preparação e limpeza devem ocorrer em transações comprometidas independentes: o rollback da thread do teste não desfaz commits da thread do servidor. Usaria timeouts limitados e dados exclusivos. Verificaria descoberta no CI e limpeza mesmo após falha; atualizaria o guia somente onde houver mudança. Esse teste cobre o container/configuração embarcados, não proxies externos, implantação completa ou desempenho.\n\n**H2.** A pergunta decisiva é: **devemos preservar o contrato publicado, aceitando `taxId` ausente e explicitamente `null`, ou existe uma mudança incompatível aprovada que o torne obrigatório, com tratamento definido para os consumidores?** “Opcional” e “nullable” são decisões distintas. Recomendo preservar o contrato publicado enquanto não houver decisão explícita; não alteraria as expectativas apenas para obter verde.\n\nEnquanto aguardo, compararia o OpenAPI publicado, sua origem e a configuração/validação efetivas. Prepararia a matriz de casos ausente, `null`, vazio, válido e malformado, registrando a divergência observada sem convertê-la em regra desejada. Conferiria descoberta dos testes, fixtures, overrides, filtros, migrations e limpeza. Preservaria integralmente os testes negativos de segurança real e o pipeline de banco. Após a decisão, alinharia validação, contrato e regressões, mantendo as verificações de negação sem mutação e de criação válida.\n\n**H3.** Manteria os testes unitários diretos da regra de preço e acrescentaria somente os casos que discriminam a alteração, seus limites e, quando aplicável ao contrato, precisão e arredondamento. Proporia o comando focado existente e os checks obrigatórios do projeto. Sem mudança de wiring, não há motivo para criar outro contexto Boot ou infraestrutura de containers.\n\nSeis testes com H2 aprovados demonstram apenas os comportamentos exercitados nessas condições. Não sustentam equivalência com outro banco nem qualquer garantia de p99. Uma exigência de latência precisaria de avaliação própria, com carga e ambiente representativos, concorrência, aquecimento, amostragem suficiente e distribuição de latências; mesmo essa medição teria limites explícitos, sem garantia universal.\n\nEstas são propostas de alteração e verificação; não executei comandos de build nem testes.\n"
+    }
+  ],
+  "sourceHashes": {
+    "assignment": [
+      {
+        "Path": "skills\\spring-transactions-and-events\\skill.yaml",
+        "SHA256": "FE6706D66851084E0A8D0A34373E2FA9A19779B4F15F60C4DA9703332AAC2003"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\SKILL.md",
+        "SHA256": "B1F2D96F1BA19C0820568C36FC8DEE747E26608BC5D4238C0D5563473A722DD9"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\references\\verification.md",
+        "SHA256": "0BCFB94EB6A5434E2709BE817DB7A6ECDDDC1C95458A1C778A2FB131016D63AB"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\references\\interception-and-rollback.md",
+        "SHA256": "6CCD1995155C797A07039A30E75EB37532E80F74A5B8714BDA8C2C53084DD3F7"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\references\\event-wiring-and-recovery.md",
+        "SHA256": "039BE1941A36531E9013E4939453DC02A8A3E2ACF7C16B9B7ADB5F10882CBE87"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\skill.yaml",
+        "SHA256": "101AD993F93C0D447C2BF80E6C4875B753415005BA66929C914DC749A41492E5"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\SKILL.md",
+        "SHA256": "690A15E1527E557CA6B44FC307A77605BA3667A1D9A4D3989C44630156FA9700"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\verification.md",
+        "SHA256": "AB882549AC0302F2CFAA75A7ECA9CE06ABB65B35F7FB234BE1CC838DDA173000"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\token-validation.md",
+        "SHA256": "3F644BF603518345E3B97215271E93612D3C68C9217932D10B36232E1933A29E"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\chains-and-browser.md",
+        "SHA256": "9F9BA385F494E68AA0B54D50E9751A5403A19166906EF7AE0BD952B3F134D79D"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\boot-resource-server.md",
+        "SHA256": "329BA149CD95416552FD3C395974A4F1DE8E5635A210E729AC455BB7A6EE8412"
+      },
+      {
+        "Path": "skills\\spring-boot\\skill.yaml",
+        "SHA256": "25278C99C9BFD086019CD1612B07C7C8711BA162341B8FA3850270CD6861F0E3"
+      },
+      {
+        "Path": "skills\\spring-boot\\SKILL.md",
+        "SHA256": "3AA76B820430B3795EEE3B88C54200EBB858B7704C8B8CC95577099C9EC16C38"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\skill.yaml",
+        "SHA256": "EE6914664BD5DA9409DD5F3626713D3B2379FC43B0C597E159A805F6C07B673F"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\SKILL.md",
+        "SHA256": "D442C4BCBFFD4A784A00D5A0D6F32930C86013E1648C35C7F2F39C6F4B0EF2EB"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\verification.md",
+        "SHA256": "D7BBD102994F1D2859AC7CA6FEB9FFABDBF3DD3FB49730EF283AC9DDC6D0313D"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\service-delivery.md",
+        "SHA256": "9993546BA7DA9AA34709F3465F3BA243ACA780EBAF0E5715A66BDC506FDAC069"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\operations-and-events.md",
+        "SHA256": "1FD957F06BC11F41C24C92AFC10B4D6F133CB3569FC7EA4BFBD61761CB5B3A50"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\composition-and-configuration.md",
+        "SHA256": "3738E0F9845BD480D7289300CFD1C845F106D93FF6ACC3B52E1DEB617583FD7B"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\references\\wiring-and-transports.md",
+        "SHA256": "ABF195D00EF995A52AD242D4460450F62718C79DC48B608A52C324C534AE467E"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\references\\verification.md",
+        "SHA256": "930FA46EDFC3F1CCCCA901D0176EADD7F1B5EF33C466018BB5CE9F763F4F9C1C"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\references\\failure-and-response-bounds.md",
+        "SHA256": "A8D3EF105B23A524800F3EF59626A9D577152B0B5054185C7F85C50890F86534"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\skill.yaml",
+        "SHA256": "C1BC55183792D0FF7D6AAD6A8B77030E08623E8530E5CC80FCA50822EE6EBA2E"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\SKILL.md",
+        "SHA256": "8E496E36DC2F67B199BB938339EF457B8777E6EFC375F6221A7A5027A1C86151"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\skill.yaml",
+        "SHA256": "97A450CFEA6E7CA1DB9DB7B5B1837DF1DEBB02170E5D42B421A082FE4D32B1EF"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\SKILL.md",
+        "SHA256": "6956916C8E85850CB6E9B6175A8057FF3054718EA2A81D0B015897CCA7D9F2F0"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\skill.yaml",
+        "SHA256": "654C3C7351CDC6C0394D440091FAC4E0C224CC4448A7723E322BD05044EC955D"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\SKILL.md",
+        "SHA256": "0D13CDE137287501A81F20C98841C8025A6813D908B4B3C1B2AEFED0DC3212F9"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\verification.md",
+        "SHA256": "372D34BB135C7352BB6C04A53A716BCC3B65110FB202F14831394C68436A02AE"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\schemas-and-examples.md",
+        "SHA256": "AE1CE66CEF1A06E1B7EC6826181363B6D5CAAA4055C20416594497E018F31378"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\swagger-ui.md",
+        "SHA256": "7FB0EAE4EEC5E5C98B6BC486ACF7AD12149FECEF498BC2A348A55272B224A46B"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\springdoc-openapi.md",
+        "SHA256": "D4DE13158FEECF3EDE181E93EC2623378A523524EE5E29FF35E4965CEAA77133"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\request-bounds.md",
+        "SHA256": "DA23501601EA7DFB2097BED4670C89659C7A56B59A9C2012A01733C267A69E9E"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\mvc-contracts.md",
+        "SHA256": "6DA8BA0335696AE297F80A3C7FDFEB51B3C05302FB06CDC654C400E88124052A"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\capacity-and-lifecycle.md",
+        "SHA256": "6247BDD0C075382697D88674843067EABFA9C9AAFBBDAE411CE7FFD0CB8D2F97"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\mapping-and-identifiers.md",
+        "SHA256": "83658B7881FF6B98912D7353E98FED346ED9B6B442B5418336F1E57D24418001"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\datasource-configuration.md",
+        "SHA256": "23B9ED3A684B92F8AB68F2EEC36875A722A07D439F5F7E9582399A3202284FAA"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\persistence-delivery.md",
+        "SHA256": "C33A95833B36AAA11D199B2C251E77D812849323B2A5379585CA8638C5D7C1A8"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\queries-and-transactions.md",
+        "SHA256": "3FFCC64E610FFEA2EA633B3163A54A3C086A6BA6BC235E322FAD7357AB6DC16B"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\verification.md",
+        "SHA256": "D60524779D20E245E3E52FCACE91E83FA69DF0107A7B40EB968ACA60ADEB50F0"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\SKILL.md",
+        "SHA256": "5B137AEC5E84E2F5B75EBA5060DECE6F043B84E7C4CEBA704C5EFDA16A9CC5F2"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\skill.yaml",
+        "SHA256": "42271EE298BB330DBCD05E1595F91E0E77228285D2B6F0797A7D3C8BFE3536AC"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\pom.xml",
+        "SHA256": "F369A1E76AE8B324027A2105C8DD9E8C1E783F59DA09BAEC679640DACDC1F6D3"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\README.md",
+        "SHA256": "77BA94B739E414888BEF324BC2221D1AB0C25D69ED3871152042712CACC8B174"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\verification.md",
+        "SHA256": "0980A8F96F31BDD78061B21D92F2DFB380C04EBD588E17501C558D10D720E383"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\transaction-observability.md",
+        "SHA256": "546845B83392F605B2BB922ADBA6421471831C27084783CE4CC44D1AE83BA214"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\slices-and-overrides.md",
+        "SHA256": "0F6D069AAF338F4E7BA6B59CF609C7503C8CD106B1B19A4464AE2F843FB2F658"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\service-acceptance.md",
+        "SHA256": "37F6FBFE7618A7642FB3F80D281D99D5C2BA9BDDFB8C367E3526F7C9272EEE58"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\context-and-services.md",
+        "SHA256": "24B2553526B76C76D48DFC2FC439BF40CBA4A1BC0EAD8EC8069AFD68A8AA3378"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\references\\verification.md",
+        "SHA256": "E2F578433D77828DED118AD903395632F6C534F1855ECB131B548A0BBE25E6DD"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\references\\management-and-probes.md",
+        "SHA256": "A1A1F7F042A29BBA7280F07324B056892958A8C636517C05AC7F21BC9040F75C"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\references\\instrumentation-and-propagation.md",
+        "SHA256": "6C0E4251096137177D6D92BA15D47E9BF6C0357E492EFD3F0ACEC866D9194339"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\pom.xml",
+        "SHA256": "89DEC99E849BA6F32F8FF4852DC33D07051BFD6BD4CAACCB8458C901E5929373"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\README.md",
+        "SHA256": "48D86379A8F100326C10CDA0DF854C8389C4AFD60781502F31B021D4B40A2772"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\pom.xml",
+        "SHA256": "BE2D2FD52BDE60E033ECDB263612BA09E71B7BB97C8C500362F8AAEF75169A70"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\README.md",
+        "SHA256": "EB1AD0910E4FAD48E5366086C1753EC9AE9126AE699F07F7BD5518EE4218F1A8"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\pom.xml",
+        "SHA256": "232E22723DFBC7E5BC557BB526BCB249B29852B3C6BF51B74F28A4CCA31F4FBE"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\test\\java\\example\\persistence\\InventoryServiceTest.java",
+        "SHA256": "C1D6B38B08CEF577B46716CFF072218E79ABD8A1F60837A5E14C141D49A2AE96"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\test\\resources\\application.properties",
+        "SHA256": "B61905453EA46B61F1C895162E078806D4DE3F28E4CF01FA0260AF06CD37EF0F"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\Movement.java",
+        "SHA256": "D0C9D27D360A8A2D4FD9A3B30196A57D23AF49B1EE301D38F08E076052000427"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryVersionConflictException.java",
+        "SHA256": "2692B10306AFA26792AFA89665C05A6B9C57912E393CFD99BB65CF499C999801"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryService.java",
+        "SHA256": "8A42CFCE1EF62F2F8D65D35D49FA7634A27D28D1FB50F7751B128AC47C7EE781"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryRepository.java",
+        "SHA256": "D62C03FA286AD1900A024351FD5DC99220954E6390260B4B3A4E7133C75F405A"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryNotFoundException.java",
+        "SHA256": "2A4478583FB92B6B9A42298E61BADA61DDEB8BBE659C470AF0DE570B70614962"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryException.java",
+        "SHA256": "DB98350512D250DFF74C8B862B961E49C41CD42DC4829BDAA080C9A645C51ABB"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\Inventory.java",
+        "SHA256": "F339789B3C554FBF03C8B42DA7B5FE0466F4AC443E7EE094581D9893E259E3A7"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\FixtureApplication.java",
+        "SHA256": "8AE96B815B4A8E5E18E54CB0A98C115A4896A4297DA1E0B5D6E071455667B3A9"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\README.md",
+        "SHA256": "7EBF7C6322EA862DF60343158FB25C58D13AAB738E28455E0765FC90775902AF"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\test\\java\\example\\web\\ProductStoreTest.java",
+        "SHA256": "36CC268D1C27E8CC41949C2F15FD471E332FC2E952050C7D5D7B7CBB08EA3757"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\test\\java\\example\\web\\ContractTest.java",
+        "SHA256": "F702520BD7412B3731186C9180471E08B82EF926D1E58B417C919C70E0111346"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\main\\java\\example\\observability\\WorkController.java",
+        "SHA256": "683852D8894B1B8205528BEB7C103AB6BAC93E8BEDB15379894E3588E6F69EDF"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\main\\java\\example\\observability\\ObservationApplication.java",
+        "SHA256": "F0CAF544E59E80FEFEF6732B4BBAFC37BD27A14B0896099DBA90B4A6C7CF123E"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\main\\java\\example\\observability\\AsyncWork.java",
+        "SHA256": "30C9AF9E33642CEBB70B339D07937C665471A712A97C6C8664FB36DA6951A2D2"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\test\\java\\example\\observability\\ObservationContractTest.java",
+        "SHA256": "130AD6F1B9E782F4CB95B3803CA6CB249B1D1B9BC2E7B025B7016BC7354E2DE1"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\resources\\application.properties",
+        "SHA256": "519019579C694C6002FC7F3F04A7CAD8A9287709E3FB04B9157803F476172929"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\test\\java\\example\\harness\\TicketServiceCommitTest.java",
+        "SHA256": "D39049E8BD072CBAC34EE11FB5FE8BD79DEF18304DE78E059D113106BF40B26E"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\test\\java\\example\\harness\\TicketRepositoryTest.java",
+        "SHA256": "2BF4B63EE690E774F98ABA172CC96190373E7C1C621112F6D9BC7609386E2B8B"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\test\\java\\example\\harness\\MvcSliceTest.java",
+        "SHA256": "6507429822AE3041C1AD407109A0A7438EEAAD2FF7894E5E0D82C2CAB3835044"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ApiErrors.java",
+        "SHA256": "C4CD3353E7711EE404A004D52BFB2CA3A934B87CA547BBDDBDD93F3D5E3C89B7"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ApiDocumentation.java",
+        "SHA256": "ED0D4E9E11F2D3FE187182B04979D39B63B52A2C9B58D67A4535863DCF978E69"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\BusinessException.java",
+        "SHA256": "D6F380DE1D6EBE96DC3EBE30310078C9FFD4B916BBD8357AF628ACAA2E1B05A2"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ApiExamples.java",
+        "SHA256": "EF722629D4255381CB2575F2CC4FE89511BD0573095CA1801268950031D2F149"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\CodePointLength.java",
+        "SHA256": "E8001C5F902DF4718615BB44D45B4EF50E6F366CFDD4BD6FDF70E5844E22CFEA"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ProductStore.java",
+        "SHA256": "7FF07F0AEC27B46A1D4BC080B085B9E70750644E5A3250246043E87F7CB8D2C9"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ProductNotFoundException.java",
+        "SHA256": "690B2A0654950E0A4378C97697100ABF517625F54D8F7E14CB8446630381F25E"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ProductController.java",
+        "SHA256": "F5C977EA53D8B9F30ED539193BB60A4233912C1CBCFFB16F8A2B1AD25E0BAFDF"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\Models.java",
+        "SHA256": "881D2FF47AA94E68440881F5C7E8F715988FAFB2FAB4EC7868C8B2956C68BC39"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\JsonInputConfiguration.java",
+        "SHA256": "0469B695B0EC629AA0437096A8D4530A930D2372DA21386035330F9531714852"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\DuplicateSkuException.java",
+        "SHA256": "A2F2B7DEF3A57F002E7B906EE8CD009A801D9B2497221E1B213796E20F6F3564"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ContractApplication.java",
+        "SHA256": "699D3EF43F0882188541F50AB7BAB038F3A010D0D52B6363A139F333E8C136B6"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\ApiErrors.java",
+        "SHA256": "22E65FEA193F7575D255BC2C2876E3E8FD1EFABDB3FEB59A99BBECB770EC5CFF"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\ApiSecurity.java",
+        "SHA256": "021FEEADD2A56773607E26A14EAD7EA948EA17AC3A96B896DE03156501C62C1B"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\FixtureApplication.java",
+        "SHA256": "475BC82DB43894BBB6E28E557045865608707A55EEE4C7DBBC8E8F24E79BF85E"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\TicketService.java",
+        "SHA256": "C698930FAB08B27E5EE5C977FE30768D78BB3B52DE00459DD897332A880269DC"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\TicketRepository.java",
+        "SHA256": "6593F744A9C0330B248A706E1283BC7669056515BA3F612D037040BBE9111152"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\TicketController.java",
+        "SHA256": "2DFD7D827E9957196BBFF2FF8F4E1CA15955C95845AAED47C092CB3009370166"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\Ticket.java",
+        "SHA256": "31A447B836C3A59D0ADF00D2223BD3959D571B5DD000177AC8909FB4ABA55BA1"
+      }
+    ],
+    "final": [
+      {
+        "Path": "skills\\spring-transactions-and-events\\skill.yaml",
+        "SHA256": "FE6706D66851084E0A8D0A34373E2FA9A19779B4F15F60C4DA9703332AAC2003"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\SKILL.md",
+        "SHA256": "56B31B9B8C39015B48E10AEB2BEDB769DED2D0924F77D315FDAC690B78ECC555"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\references\\verification.md",
+        "SHA256": "D7490401FC49E0259EBCE9E67B4F5F3D0DAD300431388AAA797DE0E23528620F"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\references\\interception-and-rollback.md",
+        "SHA256": "6CCD1995155C797A07039A30E75EB37532E80F74A5B8714BDA8C2C53084DD3F7"
+      },
+      {
+        "Path": "skills\\spring-transactions-and-events\\references\\event-wiring-and-recovery.md",
+        "SHA256": "2C158C3D83BB070CE0781B7E2B7907CDE5510A21FD3DE192AD1DD81E155D8F20"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\skill.yaml",
+        "SHA256": "7AD6B30570CC5454EBF32DBC5EFB444FC29A2D1A0052EC849C30B3C56F35CC76"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\SKILL.md",
+        "SHA256": "3765D94BB968E195230A199FBD8E15590782A37E921C309FF3C13486CC49EFF6"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\verification.md",
+        "SHA256": "5A5321AE9D8DE532C923ACF0E2C9094538815ACC3144E3F0A8A9347AFDD43A2D"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\token-validation.md",
+        "SHA256": "3F644BF603518345E3B97215271E93612D3C68C9217932D10B36232E1933A29E"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\chains-and-browser.md",
+        "SHA256": "59A19139E4817782D1D6D90410CE3D7EFE25CCDB182B387534AFC7CE4584BCBC"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\boot-resource-server.md",
+        "SHA256": "329BA149CD95416552FD3C395974A4F1DE8E5635A210E729AC455BB7A6EE8412"
+      },
+      {
+        "Path": "skills\\spring-security-for-apis\\references\\access-policy-delivery.md",
+        "SHA256": "5591758DCA9FB7863045E07FC8BD58D6EE2006756FE9BC4E713620DC60C657B7"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\skill.yaml",
+        "SHA256": "EE6914664BD5DA9409DD5F3626713D3B2379FC43B0C597E159A805F6C07B673F"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\SKILL.md",
+        "SHA256": "C364467B63861AB796475519F3E08AAD56CCDD1D015E1ABA91778EFE62E7CC05"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\references\\wiring-and-transports.md",
+        "SHA256": "A728C6E750D6834504D00D85470962101638ADEBE7925D897F66C3B51FBB0BAE"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\references\\verification.md",
+        "SHA256": "12B89D8A50A87E99C345BAF52AE9CB8DE184612354DDAEE850F2E68EC3B9BB35"
+      },
+      {
+        "Path": "skills\\spring-http-clients\\references\\failure-and-response-bounds.md",
+        "SHA256": "A8D3EF105B23A524800F3EF59626A9D577152B0B5054185C7F85C50890F86534"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\skill.yaml",
+        "SHA256": "64DACCA0D15D695ED220E94A446CFEE4D04331B2D892FBE174B7540AF55A594B"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\SKILL.md",
+        "SHA256": "3BBD4A81CE8AE2ACB07E1A3757FDEC6485BF618B655B825828C5248EFEC9719C"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\verification.md",
+        "SHA256": "372D34BB135C7352BB6C04A53A716BCC3B65110FB202F14831394C68436A02AE"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\swagger-ui.md",
+        "SHA256": "7FB0EAE4EEC5E5C98B6BC486ACF7AD12149FECEF498BC2A348A55272B224A46B"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\springdoc-openapi.md",
+        "SHA256": "22EAF57BADA783BF96EE24034561F62D367897061A137CB3B5AB94FFC951B90B"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\schemas-and-examples.md",
+        "SHA256": "AE1CE66CEF1A06E1B7EC6826181363B6D5CAAA4055C20416594497E018F31378"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\request-bounds.md",
+        "SHA256": "DA23501601EA7DFB2097BED4670C89659C7A56B59A9C2012A01733C267A69E9E"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\mvc-contracts.md",
+        "SHA256": "336A783646F9EC8AF276BF80331E17B26EBA5B098DE520D3D447DE3228A5E9C2"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\contract-delivery.md",
+        "SHA256": "3CA5846444B166861D18B857B94B38B9BB5127B264CD52F1C1BEF07F6F17D704"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\references\\capacity-and-lifecycle.md",
+        "SHA256": "F1C32835AE4378CB9532D5016BB98CBAA5D37F9621F91EAEF6C5504B1286953C"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\test\\java\\example\\web\\ProductStoreTest.java",
+        "SHA256": "36CC268D1C27E8CC41949C2F15FD471E332FC2E952050C7D5D7B7CBB08EA3757"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\test\\java\\example\\web\\ContractTest.java",
+        "SHA256": "F702520BD7412B3731186C9180471E08B82EF926D1E58B417C919C70E0111346"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\resources\\application.properties",
+        "SHA256": "519019579C694C6002FC7F3F04A7CAD8A9287709E3FB04B9157803F476172929"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ProductStore.java",
+        "SHA256": "7FF07F0AEC27B46A1D4BC080B085B9E70750644E5A3250246043E87F7CB8D2C9"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ProductNotFoundException.java",
+        "SHA256": "690B2A0654950E0A4378C97697100ABF517625F54D8F7E14CB8446630381F25E"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ProductController.java",
+        "SHA256": "F5C977EA53D8B9F30ED539193BB60A4233912C1CBCFFB16F8A2B1AD25E0BAFDF"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\Models.java",
+        "SHA256": "881D2FF47AA94E68440881F5C7E8F715988FAFB2FAB4EC7868C8B2956C68BC39"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\JsonInputConfiguration.java",
+        "SHA256": "0469B695B0EC629AA0437096A8D4530A930D2372DA21386035330F9531714852"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\DuplicateSkuException.java",
+        "SHA256": "A2F2B7DEF3A57F002E7B906EE8CD009A801D9B2497221E1B213796E20F6F3564"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ContractApplication.java",
+        "SHA256": "699D3EF43F0882188541F50AB7BAB038F3A010D0D52B6363A139F333E8C136B6"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\CodePointLength.java",
+        "SHA256": "E8001C5F902DF4718615BB44D45B4EF50E6F366CFDD4BD6FDF70E5844E22CFEA"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\BusinessException.java",
+        "SHA256": "D6F380DE1D6EBE96DC3EBE30310078C9FFD4B916BBD8357AF628ACAA2E1B05A2"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ApiExamples.java",
+        "SHA256": "EF722629D4255381CB2575F2CC4FE89511BD0573095CA1801268950031D2F149"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ApiErrors.java",
+        "SHA256": "C4CD3353E7711EE404A004D52BFB2CA3A934B87CA547BBDDBDD93F3D5E3C89B7"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\src\\main\\java\\example\\web\\ApiDocumentation.java",
+        "SHA256": "ED0D4E9E11F2D3FE187182B04979D39B63B52A2C9B58D67A4535863DCF978E69"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\README.md",
+        "SHA256": "48D86379A8F100326C10CDA0DF854C8389C4AFD60781502F31B021D4B40A2772"
+      },
+      {
+        "Path": "skills\\spring-boot-web\\assets\\contract-fixture\\pom.xml",
+        "SHA256": "89DEC99E849BA6F32F8FF4852DC33D07051BFD6BD4CAACCB8458C901E5929373"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\skill.yaml",
+        "SHA256": "654C3C7351CDC6C0394D440091FAC4E0C224CC4448A7723E322BD05044EC955D"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\SKILL.md",
+        "SHA256": "7DE6CABAFBBDFBF809F50D0259A02B59464B6E30D1AA5A7D942FC1A42D14A411"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\skill.yaml",
+        "SHA256": "97A450CFEA6E7CA1DB9DB7B5B1837DF1DEBB02170E5D42B421A082FE4D32B1EF"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\skill.yaml",
+        "SHA256": "42271EE298BB330DBCD05E1595F91E0E77228285D2B6F0797A7D3C8BFE3536AC"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\SKILL.md",
+        "SHA256": "B8383F96C4F0A6CCE143753F2772DE194BCD99520DCA5A276784EEB50C44B949"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\SKILL.md",
+        "SHA256": "9375D18B95BD55BEC7060A098BA20F2239B37424FA5D8200AC2F82B4CF824743"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\verification.md",
+        "SHA256": "D881AD920D8E9072C431791527FA23251CD516B4442ABF2E0944723B39224634"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\transaction-observability.md",
+        "SHA256": "546845B83392F605B2BB922ADBA6421471831C27084783CE4CC44D1AE83BA214"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\slices-and-overrides.md",
+        "SHA256": "0F6D069AAF338F4E7BA6B59CF609C7503C8CD106B1B19A4464AE2F843FB2F658"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\service-acceptance.md",
+        "SHA256": "F1A731541B4D542F294373E9279373CD5C2DAE0F43E95D6F47B1F1793E0A62D4"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\references\\context-and-services.md",
+        "SHA256": "24B2553526B76C76D48DFC2FC439BF40CBA4A1BC0EAD8EC8069AFD68A8AA3378"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\references\\verification.md",
+        "SHA256": "280273C343D34B93A4BFFE0E088C4EBD1D6A3EF7FACA01DF187CA66E56026019"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\references\\management-and-probes.md",
+        "SHA256": "A1A1F7F042A29BBA7280F07324B056892958A8C636517C05AC7F21BC9040F75C"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\references\\instrumentation-and-propagation.md",
+        "SHA256": "6C0E4251096137177D6D92BA15D47E9BF6C0357E492EFD3F0ACEC866D9194339"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\verification.md",
+        "SHA256": "E4A8CC3EC0340B1283B0FA3C8604BE3212A936C9FF78AFA0748352CA35466FA3"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\queries-and-transactions.md",
+        "SHA256": "2AB267E392BC7A20511877003B97B4B0E81F3E802D14F2CFA3DA21D61E1AB1FB"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\persistence-delivery.md",
+        "SHA256": "82946C0D59FE811AD19CA7A1C832007051F374C7C9A6F1C11FF8274112F7A7F4"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\mapping-and-identifiers.md",
+        "SHA256": "83658B7881FF6B98912D7353E98FED346ED9B6B442B5418336F1E57D24418001"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\references\\datasource-configuration.md",
+        "SHA256": "23B9ED3A684B92F8AB68F2EEC36875A722A07D439F5F7E9582399A3202284FAA"
+      },
+      {
+        "Path": "skills\\spring-boot\\skill.yaml",
+        "SHA256": "25278C99C9BFD086019CD1612B07C7C8711BA162341B8FA3850270CD6861F0E3"
+      },
+      {
+        "Path": "skills\\spring-boot\\SKILL.md",
+        "SHA256": "2CCBDEE9758712F920B5C9440FB7FCF46E6B76215BD46807BC3DA362B0CD775A"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\pom.xml",
+        "SHA256": "BE2D2FD52BDE60E033ECDB263612BA09E71B7BB97C8C500362F8AAEF75169A70"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\README.md",
+        "SHA256": "EB1AD0910E4FAD48E5366086C1753EC9AE9126AE699F07F7BD5518EE4218F1A8"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\README.md",
+        "SHA256": "7EBF7C6322EA862DF60343158FB25C58D13AAB738E28455E0765FC90775902AF"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\pom.xml",
+        "SHA256": "232E22723DFBC7E5BC557BB526BCB249B29852B3C6BF51B74F28A4CCA31F4FBE"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\verification.md",
+        "SHA256": "7D4FE14B91793A58063DE1E2B2B7C5318D231487980573EC3E6C5C50BA5CFBE3"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\service-delivery.md",
+        "SHA256": "29C5442AD13AF0335178DD0358C871AD59E3F9A0B7EE3D53D6FD2A0C8A72ED10"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\operations-and-events.md",
+        "SHA256": "1FD957F06BC11F41C24C92AFC10B4D6F133CB3569FC7EA4BFBD61761CB5B3A50"
+      },
+      {
+        "Path": "skills\\spring-boot\\references\\composition-and-configuration.md",
+        "SHA256": "FEE0CC16F6C9CA0835AE986059718D79DE0B3F60D0C818794489B5562339FAE8"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\test\\resources\\application.properties",
+        "SHA256": "B61905453EA46B61F1C895162E078806D4DE3F28E4CF01FA0260AF06CD37EF0F"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\pom.xml",
+        "SHA256": "F369A1E76AE8B324027A2105C8DD9E8C1E783F59DA09BAEC679640DACDC1F6D3"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\README.md",
+        "SHA256": "77BA94B739E414888BEF324BC2221D1AB0C25D69ED3871152042712CACC8B174"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\test\\java\\example\\harness\\TicketServiceCommitTest.java",
+        "SHA256": "D39049E8BD072CBAC34EE11FB5FE8BD79DEF18304DE78E059D113106BF40B26E"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\test\\java\\example\\harness\\TicketRepositoryTest.java",
+        "SHA256": "2BF4B63EE690E774F98ABA172CC96190373E7C1C621112F6D9BC7609386E2B8B"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\test\\java\\example\\harness\\MvcSliceTest.java",
+        "SHA256": "6507429822AE3041C1AD407109A0A7438EEAAD2FF7894E5E0D82C2CAB3835044"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\TicketService.java",
+        "SHA256": "C698930FAB08B27E5EE5C977FE30768D78BB3B52DE00459DD897332A880269DC"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\TicketRepository.java",
+        "SHA256": "6593F744A9C0330B248A706E1283BC7669056515BA3F612D037040BBE9111152"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\TicketController.java",
+        "SHA256": "2DFD7D827E9957196BBFF2FF8F4E1CA15955C95845AAED47C092CB3009370166"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\Ticket.java",
+        "SHA256": "31A447B836C3A59D0ADF00D2223BD3959D571B5DD000177AC8909FB4ABA55BA1"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\FixtureApplication.java",
+        "SHA256": "475BC82DB43894BBB6E28E557045865608707A55EEE4C7DBBC8E8F24E79BF85E"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\ApiSecurity.java",
+        "SHA256": "021FEEADD2A56773607E26A14EAD7EA948EA17AC3A96B896DE03156501C62C1B"
+      },
+      {
+        "Path": "skills\\spring-boot-testing\\assets\\harness-fixture\\src\\main\\java\\example\\harness\\ApiErrors.java",
+        "SHA256": "22E65FEA193F7575D255BC2C2876E3E8FD1EFABDB3FEB59A99BBECB770EC5CFF"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\test\\java\\example\\observability\\ObservationContractTest.java",
+        "SHA256": "130AD6F1B9E782F4CB95B3803CA6CB249B1D1B9BC2E7B025B7016BC7354E2DE1"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\main\\java\\example\\observability\\WorkController.java",
+        "SHA256": "683852D8894B1B8205528BEB7C103AB6BAC93E8BEDB15379894E3588E6F69EDF"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\main\\java\\example\\observability\\ObservationApplication.java",
+        "SHA256": "F0CAF544E59E80FEFEF6732B4BBAFC37BD27A14B0896099DBA90B4A6C7CF123E"
+      },
+      {
+        "Path": "skills\\spring-boot-observability\\assets\\observation-fixture\\src\\main\\java\\example\\observability\\AsyncWork.java",
+        "SHA256": "30C9AF9E33642CEBB70B339D07937C665471A712A97C6C8664FB36DA6951A2D2"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\test\\java\\example\\persistence\\InventoryServiceTest.java",
+        "SHA256": "C1D6B38B08CEF577B46716CFF072218E79ABD8A1F60837A5E14C141D49A2AE96"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\Movement.java",
+        "SHA256": "D0C9D27D360A8A2D4FD9A3B30196A57D23AF49B1EE301D38F08E076052000427"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryVersionConflictException.java",
+        "SHA256": "2692B10306AFA26792AFA89665C05A6B9C57912E393CFD99BB65CF499C999801"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryService.java",
+        "SHA256": "8A42CFCE1EF62F2F8D65D35D49FA7634A27D28D1FB50F7751B128AC47C7EE781"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryRepository.java",
+        "SHA256": "D62C03FA286AD1900A024351FD5DC99220954E6390260B4B3A4E7133C75F405A"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryNotFoundException.java",
+        "SHA256": "2A4478583FB92B6B9A42298E61BADA61DDEB8BBE659C470AF0DE570B70614962"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\InventoryException.java",
+        "SHA256": "DB98350512D250DFF74C8B862B961E49C41CD42DC4829BDAA080C9A645C51ABB"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\Inventory.java",
+        "SHA256": "F339789B3C554FBF03C8B42DA7B5FE0466F4AC443E7EE094581D9893E259E3A7"
+      },
+      {
+        "Path": "skills\\spring-boot-jpa\\assets\\persistence-fixture\\src\\main\\java\\example\\persistence\\FixtureApplication.java",
+        "SHA256": "8AE96B815B4A8E5E18E54CB0A98C115A4896A4297DA1E0B5D6E071455667B3A9"
+      }
+    ]
+  },
+  "temporaryEvidenceRoot": "C:/Users/robso/AppData/Local/Temp/spring-eight-pillars-547638c39e9a45c683074c923789050e"
+}

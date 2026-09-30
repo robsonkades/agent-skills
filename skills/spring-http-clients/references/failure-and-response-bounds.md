@@ -98,6 +98,15 @@ contain sensitive URLs or bodies. A `404` may mean absence or a broken route; ma
 to an empty domain result only when that endpoint contract says so. An empty body is
 not automatically a successful lookup.
 
+Translate at the boundary that owns the consumed contract. A provider's `401` can
+mean this service's credentials are invalid; in that case, passing it unchanged to an
+inbound caller would incorrectly ask that caller to authenticate again. Retain the peer, operation,
+safe identifier and original cause for diagnosis, while mapping to the application's
+established failure contract. Reuse a meaningful existing business exception base when
+the failure is a business outcome; do not convert outages or malformed provider data
+into `NotFound` or create a competing hierarchy for every client. Never relay raw provider
+problem details, stack traces or credentials as the service's public error response.
+
 `429`/`503` may be candidates for another attempt, subject to the operation and budget.
 Validate `Retry-After` as delta-seconds or HTTP-date, cap parsing/input size and refuse
 an attempt if the valid delay cannot fit; do not shorten it and retry early. Same-input

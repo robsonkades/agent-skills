@@ -30,10 +30,36 @@ set the test group's base URL to a reserved example host and assert:
 - A distinctive configured header reaches that request if customization is part of the
   change. Verify expected requests so calls accidentally bypassing the configured path fail.
 
+For the consumer contract actually being changed, add the discriminating boundary case:
+
+- A lookup that requires a representation rejects empty `200`, missing required fields
+  and a mismatched returned identity. A bodiless operation whose contract permits `204`
+  accepts it. Do not apply the lookup's body requirement to every successful operation.
+- A collection decodes actual typed elements, and reserved/non-ASCII query values reach
+  the expected URI without injection or double encoding. Build JSON with the configured
+  mapper; a happy-path literal alone does not exercise escaping.
+- An upstream credential failure retains its diagnostic cause and peer/operation context
+  without becoming the caller's authentication error or leaking the provider's body.
+  For an asynchronous provider operation, `202` preserves the pending state and required
+  continuation metadata instead of recording completion.
+
 These checks exercise registration, mapping and status behavior. They do not exercise
 the transport: `MockRestServiceServer` substitutes the request factory. The worked
 snippets omit a standalone build intentionally; adapt them to the existing application
 and its test setup, preserving dependency management and toolchain.
+
+When compatibility changes, exercise only the relevant provider variations: an added
+optional field, an unknown enum/state, missing required data, or the old/new schema
+version. Assert the application's consumed meaning, not just deserialization. If the
+change includes remote pagination, test continuation, an exhausted work budget and a
+forbidden continuation destination; verify that partial results cannot masquerade as
+complete. Keep request count bounded and never use production credentials for this.
+
+For configuration repairs, demonstrate that the intended profile/environment override
+reaches the active client while existing SSL, observation and other required customizers
+remain effective. A binding test proves property resolution, not that a subsequently
+replaced factory retained the setting. Compare the changed documentation/example with
+the tested path and record any unverified platform policy or provider sandbox behavior.
 
 ## Add real transport checks only for the changed mechanism
 

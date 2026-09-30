@@ -2,8 +2,8 @@
 name: spring-boot-jpa
 description: >-
   Implement, diagnose and review Spring Boot 4 persistence with Spring Data JPA when
-  entity state, Hibernate mappings, identifiers, fetching, transactions, locking or
-  datasource configuration need verification. Covers SQL Server and PostgreSQL
+  creating a durable service or verifying entity state, mappings, identifiers, fetching,
+  transactions, locking or datasource configuration. Covers SQL Server and PostgreSQL
   distinctions. Excludes reactive persistence and deep database execution-plan tuning.
 ---
 
@@ -14,8 +14,10 @@ description: >-
 Own the integration between Spring Boot 4, Spring Data JPA, the resolved persistence
 provider and the database. Activate for repository implementation, surprising SQL,
 lost updates, lazy-loading failures, type/identifier mismatches, transaction failures,
-or datasource/property reviews. Intended users are developers working in an existing
-imperative Java service; a new service still needs a database and consistency contract.
+or datasource/property reviews. For a new maintained service, deliver the requested
+persistence path with migrations and shared database invariants; read
+[persistence delivery](references/persistence-delivery.md). In-memory storage is a delivery
+choice for an explicitly disposable scope; isolated test fixtures remain appropriate.
 
 Preserve the requested mode: a review produces findings; diagnosis produces supported
 explanations and the next discriminating check; implementation changes only authorized
@@ -50,6 +52,10 @@ tuning belong to their specialists.
 3. Establish required rows, fields, ordering, pagination, updates, tenant/authorization
    checks, uniqueness and concurrency rules. Inspect actual DDL, constraints, indexes,
    sequence definitions and existing writers. An annotation is not proof of deployed DDL.
+   Trace the callers too: absence versus required lookup, returned shape and lifetime,
+   read freshness, result size, conflicting edits and whether success means committed
+   work or participation in an outer transaction. Read tests and ADRs before changing
+   those contracts. Existing jobs and rolling application versions are consumers too.
    For entity creation or mapping review, inventory **every persistent attribute**, including
    optional, inherited, embedded, relationship, generated and version attributes. Establish
    its complete applicable storage, null, validation and write-ownership contract; do not
@@ -59,16 +65,28 @@ tuning belong to their specialists.
    isolated examples and assumptions. Follow the existing package/bean style when
    adequate. New code uses a single constructor or bean-method parameters without
    `@Autowired`; do not add both scanning and a factory for the same bean.
-   Prefer Boot-managed persistence and concrete Spring Data repositories. Keep entities
-   free of interfaces or factories introduced solely to share test code; retain mapping
+   Prefer Boot-managed persistence and concrete Spring Data repositories. When the project
+   uses domain ports and persistence adapters, retain that boundary instead of injecting
+   Spring Data into the domain; the delivery reference explains the naming and translation.
+   Keep entities free of interfaces or factories introduced solely to share test code; retain mapping
    overrides only when the storage contract requires them. Adapt an example only for the
    operation being implemented: a normal update needs neither a provider-probe harness
    nor failure methods in the production service. Add auditing, custom entity equality,
    pessimistic locks or generator tuning only for an identified consumer requirement.
-5. Ask only for unknowns that change correctness, such as the atomicity requirement or
-   unmanaged sequence writers. Continue reversible local work while gathering those
-   facts. Without database access, review contracts and compile examples, but leave
+5. Ask only for unresolved facts that change correctness after inspecting the evidence.
+   For example: "Can a deleted company's identifier be reused, and do the existing jobs
+   follow that rule? This determines the unique constraint and lookup predicate; retain
+   the established behavior if it is documented." Do not invent deletion, retention or
+   conflict policy. Group decisive questions, state a recommendation when supported,
+   and continue independent work with explicit reversible assumptions for low-impact
+   details. Without database access, review contracts and compile examples, but leave
    dialect, lock, plan and load claims explicitly unverified.
+
+For material choices, identify what to apply for the invariant, reuse from the project,
+clarify before dependent work, defer with a trigger, or reject as unnecessary. Record
+only decisions that affect the delivered contract; do not produce five labels for
+every annotation. Use [persistence delivery](references/persistence-delivery.md) when
+changing a repository consumer contract or planning a maintained schema/use-case path.
 
 ## Essential decisions
 
@@ -142,6 +160,13 @@ transactions for consistency changes; real driver/database round-trips for types
 acquisition/hold time and errors for pool changes. For a review, return prioritized
 file/setting findings, consequence, correction and how to verify it. For diagnosis,
 separate observed SQL/state from hypotheses and state the next discriminating check.
+
+Sequence implementation from an agreed caller/invariant contract through schema and
+mapping, repository/transaction integration, affected callers and behavior tests. Reuse
+existing pieces at each step; a query repair need not redesign the whole path. Update
+the project's relevant usage/migration/operation documentation with changed failure,
+consistency and recovery contracts. For extensive work, keep progress in the existing
+project format and reserve ADRs for durable choices such as a new persistence boundary.
 
 Completion means the relevant contracts hold at the reported validation level. Report
 unrun database/version/load checks with concrete prerequisites; compilation and H2 tests

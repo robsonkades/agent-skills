@@ -1,18 +1,19 @@
 ---
 name: spring-boot-testing
 description: >-
-  Configure and diagnose Spring Boot test harnesses when slices omit real wiring,
-  transaction rollback hides behavior, live-server tests leak state, or cached
-  contexts outlive test services. Use for executable harness and lifecycle checks,
-  not general test strategy, assertion design or application security policy.
+  Configure Spring Boot test harnesses for new service acceptance, or diagnose
+  slices that omit real wiring, rollback that hides behavior, live-server state
+  leaks and cached contexts that outlive test services. Use for executable boundary
+  and lifecycle checks, not general test strategy or application security policy.
 ---
 
 # Spring Boot Testing
 
 Own the configuration and lifetime of the harness that makes a Boot test meaningful.
-Activate for missing slice collaborators, unexpected overrides, misleading transaction
-assertions, server-test cleanup, or context/container reuse failures. Preserve a sound
-harness; a failing test alone does not justify widening it to `@SpringBootTest`.
+Activate when assembling evidence for a new service, or for missing slice collaborators,
+unexpected overrides, misleading transaction assertions, server-test cleanup, or
+context/container reuse failures. Preserve a sound harness; a failing test alone does
+not justify widening it to `@SpringBootTest`.
 
 Start with a test of the project's actual behavior and its existing Boot facilities:
 `@WebMvcTest`, `@DataJpaTest`, supported bean overrides, and test-service connections.
@@ -41,13 +42,25 @@ Trace the named assertion to its real collaborators, request transport, thread,
 transaction, database and cleanup owner. Inspect fresh test reports: an undiscovered,
 disabled or environmentally skipped test provides no behavioral evidence. Keep test
 services and configuration isolated from real application environments.
-Use project conventions where they fit the claim; an incidental existing test is not a
-testing policy. Inspect available configuration before asking about a missing manager,
-engine or lifecycle requirement. Continue independent, reversible fixes while a
-consequential unknown remains unresolved.
+Recover the expected behavior from consumer contracts, acceptance criteria and relevant
+ADRs; inspect the test contribution guide, fixtures and CI infrastructure before choosing
+a new harness. An incidental existing test is not a testing policy, and current output
+alone does not decide a disputed contract. Ask only about unresolved choices that change
+the test: for example, which published client contract must remain compatible when schema
+and validation disagree. Recommend preserving that contract pending an explicit change;
+continue independent harness diagnosis while the policy decision is open. Use explicit,
+reversible assumptions for local fixture details, not access or consistency guarantees.
 
 ## Choose the discriminating check
 
+- **New service or acceptance review:** name each required observable behavior and
+  identify the harness that can expose its failure. Include a real path through the
+  selected HTTP, security and persistence boundaries; mocks and coverage counts cannot
+  establish that those boundaries work together. Read
+  [service acceptance boundaries](references/service-acceptance.md) to distinguish real
+  collaborators from real transport. Reuse an adequate context and test service; add a
+  boundary only when an agreed claim requires it. Defer unrelated acceptance gaps with
+  their risk and trigger for follow-up; a narrow repair does not require a new suite.
 - **Slice configuration:** compare loaded configuration with the real application's
   relevant controller advice, converters and filter chains. Import the necessary real
   wiring and replace only the boundary outside the test's claim. A successful request
@@ -62,18 +75,21 @@ consequential unknown remains unresolved.
   client needs it; resetting shared state is separate from rebuilding the context. Read
   [context and service lifetime](references/context-and-services.md).
 
-For concrete MVC replacement and persistence test shapes, read
-[example verification](references/verification.md) and the routed asset instructions.
-The runnable examples cover those two boundaries; context/container and listener-phase
-guidance are conditional references. Adapt the relevant test to existing application
-types. Do not copy the fixture's build or all its tests into an existing project.
+When implementing or repairing tests, read the focused execution and handoff procedure
+in [verification](references/verification.md); its routed asset instructions provide
+concrete MVC replacement and persistence test shapes.
+The runnable examples cover those two boundaries; full service acceptance,
+context/container and listener-phase guidance are conditional references. Adapt the
+relevant test to existing application types. Do not copy the fixture's build or all its
+tests into an existing project.
 
 For a repair, deliver the focused configuration change and a check that would expose
 the original harness defect. For diagnosis/review, state the observation, why the
 current test cannot establish its claim, and the next discriminating check. Report
 executed counts and material coverage gaps without requiring a large report for a
-small fix. Missing Docker permits compilation and other tests, not a claim that the
-real-service path passed.
+small fix. Update the existing test guide when invocation, prerequisites or cleanup
+ownership changes; preserve its local/CI split. Missing Docker permits compilation and
+other tests, not a claim that a required container-backed path passed.
 
 ## Responsibility boundaries
 

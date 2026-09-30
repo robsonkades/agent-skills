@@ -18,6 +18,8 @@ observation required here. If unavailable, reuse the project's existing test con
 | Disputed contract                                                   | Discriminating check                                                                                                                                                                                                      |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The service's transaction advice executes                           | Cause a real failure after a write through the injected bean; assert no committed row remains. If a self-call is the suspected cause, compare that actual call path rather than relying on `isActualTransactionActive()`  |
+| Several repository calls form one application unit                  | Fail the second write through the actual use-case entrypoint and inspect committed state outside it; neither write may remain. A repository mock cannot establish this contract                                           |
+| A successful flush proves the operation committed                   | Flush a real write, then fail before the owner completes and assert no committed row remains. For a commit-time translation bug, trigger the actual completion failure and inspect the exception reaching the caller      |
 | A checked exception should roll back                                | Inspect configured defaults, let that exception escape the interceptor, and verify persisted state. Test the targeted typed rule; do not change application-wide exception policy for the test                            |
 | Catching an inner REQUIRED failure allows the outer write to commit | Call the real participating bean, catch its failure, then assert the outer completion raises `UnexpectedRollbackException` and neither write persists                                                                     |
 | A best-effort callback follows commit                               | A successful command produces its local effect; rollback and nontransactional publication produce none under the default listener contract                                                                                |
@@ -30,10 +32,24 @@ and enough pool capacity. Keep probe queries inside the callback only where prov
 phase requires them. Match manager, isolation and database to the claim; an H2 result does
 not certify a production engine's locks or crash behavior.
 
+When propagation is disputed, hold the outer unit open while exercising the real inner
+entrypoint. For REQUIRES_NEW, show that the intended inner effect survives an outer rollback;
+for NESTED, show the supported savepoint rollback and that outer rollback still discards all
+work. Test only the mechanism selected by the application. When diagnosing pool starvation,
+exercise the configured pool under bounded concurrent load and record acquisition timeouts
+and competing resource use. Report the load covered; one successful call or one workload
+does not establish unlimited capacity.
+
 For a synchronous listener, assert after the application call completes. For a genuinely
 asynchronous path, await the observable effect with a bound; a sleep or a zero count
 immediately after publication proves little. Inspect actual async enablement, executor
 rejection and exception handling before attributing a missing effect to transaction phase.
+
+When a delayed consumer's data meaning changes, hold that consumer until after the source
+has changed or been deleted. Assert the agreed result: a historical fact retains its captured
+values; a current-state reconciliation follows its documented reload/missing-source policy.
+This distinguishes an ID-only payload from a real snapshot. Use a bounded test barrier or the
+existing durable replay mechanism, not sleeps or failure flags added to production APIs.
 
 ## Additional evidence only when durable recovery is required
 
@@ -47,6 +63,13 @@ Reuse the application's existing outbox or registry and its public management AP
 4. Replaying the same business event does not duplicate the required effect. A conditional
    database update can guard one local transition; an external provider needs its own
    identity, receipt or reconciliation contract.
+
+When a deployment changes event shape or listener identity, exercise representative pending
+records written by the prior version through the new consumer; freshly created events alone
+do not establish compatibility. For an operated recovery change, verify the documented
+inspection and bounded replay procedure against failed work, including the observable signal
+that it is progressing or exhausted. Test competing replay only if the claimed contract spans
+replicas; a sequential duplicate check cannot establish concurrent deduplication.
 
 Report what actually ran. Closing and reopening contexts in one JVM proves that specific
 recreation path. It does not exercise a killed process between commit and scheduling,

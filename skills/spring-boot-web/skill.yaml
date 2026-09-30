@@ -1,10 +1,10 @@
 schemaVersion: 1
 name: spring-boot-web
-version: 1.1.0
+version: 1.2.1
 description: >-
   Implement, document and diagnose Spring Boot 4 MVC and Servlet APIs when HTTP binding,
-  validation, error responses, Tomcat capacity or complete springdoc OpenAPI contracts
-  need verification. Covers optional fields, examples and Swagger UI consumption.
+  validation, error responses, Tomcat capacity or consumer contracts need verification.
+  Covers documentation strategy, complete springdoc OpenAPI descriptions, examples and UI.
   Excludes WebFlux, identity providers and database query design.
 license: Apache-2.0
 authors:
@@ -42,4 +42,4 @@ agentOverrides:
   codex:
     interface:
       display_name: Spring Boot Web
-      short_description: MVC contracts, capacity and complete OpenAPI documentation
+      short_description: MVC contracts, documentation choices and request capacity

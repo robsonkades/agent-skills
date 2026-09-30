@@ -1,7 +1,5 @@
 package example.persistence;
 
-import java.util.NoSuchElementException;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +14,7 @@ public class InventoryService {
     @Transactional
     public void reserve(String sku, int quantity) {
         // The managed entity keeps omitted fields; @Version rejects stale competing updates.
-        required(sku).reserve(quantity);
+        findRequiredBySku(sku).reserve(quantity);
     }
 
     @Transactional
@@ -24,15 +22,15 @@ public class InventoryService {
         if (expectedVersion == null) {
             throw new IllegalArgumentException("The client's expected version is required");
         }
-        Inventory item = required(sku);
+        Inventory item = findRequiredBySku(sku);
         if (!expectedVersion.equals(item.getVersion())) {
-            throw new ObjectOptimisticLockingFailureException(Inventory.class, sku);
+            throw new InventoryVersionConflictException(sku, expectedVersion, item.getVersion());
         }
         // Never assign expectedVersion to @Version. Hibernate still detects a race at commit.
         item.changeNote(note);
     }
 
-    private Inventory required(String sku) {
-        return inventory.findById(sku).orElseThrow(NoSuchElementException::new);
+    private Inventory findRequiredBySku(String sku) {
+        return inventory.findById(sku).orElseThrow(() -> new InventoryNotFoundException(sku));
     }
 }

@@ -5,6 +5,37 @@ evidence. Read its [README](../assets/contract-fixture/README.md) and relevant s
 Copy to a temporary directory; Maven output belongs there. The manifest packages source,
 not pre-existing build output.
 
+## Acceptance for a complete API
+
+For a new business service, define executable acceptance around what its consumers need;
+the fixture below proves selected MVC mechanisms only. Keep a narrow endpoint/documentation
+task focused on its changed contract. For a complete service, coordinate checks with Boot,
+persistence and security owners and exercise the assembled application:
+
+- Create valid data, follow Location and recover the same resource after application restart
+  against retained storage. Run schema migrations from a clean database. A passing test
+  against a process-local map does not satisfy durable registration.
+- Race equivalent canonical identifiers through independent transactions/instances using
+  shared storage: the invariant must hold, and only the recognized conflict gets its documented
+  response. For mutable resources, test the chosen stale-update policy when required.
+- Exercise permitted and forbidden operations under the actual access policy. Protected writes
+  must reject missing/invalid credentials and insufficient permissions before side effects;
+  include object/tenant boundaries when they exist. Public access needs an explicit decision.
+- Traverse more data than one page, verify bounded queries and deterministic tie handling,
+  and reject invalid bounds. Send malformed, semantically invalid and oversized requests at
+  the enforcing layer; assert no mutation. Compare generated schema boundaries and actual
+  responses, including optional fields, errors and headers.
+- Start with the documented configuration and probe the agreed serving/readiness path, with
+  safe diagnostics for failures. The Boot owner selects operational checks; an MVC test alone
+  cannot establish service readiness or deployment behavior.
+
+These are checks on requested behavior, not a demand for every CRUD operation, JWT, a new
+architecture, Kubernetes or benchmarks. If the user explicitly asks for a disposable demo,
+process-local storage and public loopback access can fit that contract. A README disclaimer
+cannot silently change an ordinary business-service request into that demo. Report unavailable
+database/identity/runtime checks precisely; complete independent work and keep the affected
+delivery claim open instead of presenting a test count as service completeness.
+
 ## Compatibility contract
 
 | Layer          | Example baseline                                  | Interpretation                                                |
@@ -33,8 +64,17 @@ Additional mechanisms each have a specific reason:
   framework exception hooks to preserve statuses and headers, including 405/Allow and
   return-value validation as 500. Its input names match public DTO/binding names; generic
   Jackson path translation is unnecessary for that example.
+- The typed business-error family retains the requested ID/SKU without depending on HTTP.
+  Tests inspect that context and compare safe 404/409 codes/examples in both published groups;
+  local/scoped advice must preserve the shared envelope and leave other controllers to the
+  global policy. This does not establish any real application's authorization/existence policy.
 - The explicit Unicode contract uses code-point length. HTTP tests exercise supplementary
   characters at/over its limits; replacing it with `@Size` would change the wire contract.
+- JSON binding rejects number/boolean-to-text coercion, quoted dimensions and fractional
+  truncation while retaining exact integer forms such as `1.0`. HTTP tests compare generated
+  types in both groups, check safe 400 responses and no state mutation, and retain create's
+  unknown-property ignore policy. This tests MVC binding, not automatic validation of direct
+  Java calls; the use-case/domain boundary owns semantic invariants outside HTTP.
 - The tested generator pair needed an explicit null-or-object union for referenced dimensions
   and a typed collection example. Targeted customizers preserve both groups. Numeric defaults,
   omitted default ProblemDetail type and operation-specific errors also have regression checks.
@@ -43,9 +83,9 @@ Additional mechanisms each have a specific reason:
   produce a parser error while the stored product remains unchanged; a small invalid DTO
   instead produces the documented violations extension. This is not an exact body-byte test.
 
-Test-only fault injection exercises unexpected exceptions and invalid return values through
-the real MVC boundary. Those two fault handlers never ship in the runnable application's main
-source. Expected ERROR logs are diagnostics, not test failures.
+Test-only fault injection exercises local/scoped exception ownership, unexpected exceptions
+and invalid return values through the real MVC boundary. The probes and scoped advice never
+ship in the runnable application's main source. Expected ERROR logs are diagnostics, not test failures.
 
 A synthetic JWT issuer, separate security chain, generic field-path resolver and an arbitrary
 local byte-buffer policy are intentionally absent. The skill retains their relevant decisions

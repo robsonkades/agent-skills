@@ -3,7 +3,8 @@
 Use this executable example to adapt one test to an existing application:
 
 - `MvcSliceTest` keeps the real controller advice and security chain and uses
-  `@MockitoBean` for the excluded service. Invalid or denied requests must not call it.
+  `@MockitoBean` for the excluded service. Invalid or denied requests must not call it;
+  successful creation returns `201` and the resource's `Location`.
 - `TicketRepositoryTest` flushes and clears before reload, exposes a database constraint,
   and checks after the test transaction that rollback removed its row.
 - `TicketServiceCommitTest` imports the real service into a JPA slice and disables the
@@ -20,6 +21,8 @@ Baseline: **Java 25, Spring Boot 4.1.1, Maven 3.9.x**, Boot-managed dependencies
 preview flags. The isolated H2 database tests do not validate another engine's behavior.
 The security tests use MockMvc identities and test CSRF tokens, not real credentials or
 an identity provider. This is an executable teaching example, not a deployable service.
+The controller uses concrete `ResponseEntity` types; static JSON request fixtures use
+text blocks. Keep any fuller HTTP/domain conventions in the target application.
 
 Copy the directory into a temporary workspace, set `JAVA_HOME` to Java 25, and run:
 

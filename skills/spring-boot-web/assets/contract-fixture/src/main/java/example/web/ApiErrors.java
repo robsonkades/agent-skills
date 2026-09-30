@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.context.MessageSourceResolvable;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -22,6 +25,7 @@ import static example.web.Models.Violation;
 
 /** This policy owns MVC exceptions, not failures before DispatcherServlet. */
 @RestControllerAdvice
+@Order(Ordered.LOWEST_PRECEDENCE)
 public final class ApiErrors extends ResponseEntityExceptionHandler {
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
@@ -62,11 +66,25 @@ public final class ApiErrors extends ResponseEntityExceptionHandler {
                 ProblemDetail.forStatusAndDetail(status, "Invalid request parameter"), headers, status, request);
     }
 
+    @ExceptionHandler(BusinessException.class)
+    ResponseEntity<ProblemDetail> businessFailure(BusinessException exception) {
+        ProblemDetail problem = switch (exception) {
+            case ProductNotFoundException missing ->
+                    ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Product not found");
+            case DuplicateSkuException duplicate ->
+                    ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Catalog code already exists");
+        };
+        // Publish only the safe contract, not exception messages or arbitrary context.
+        problem.setProperty("code", exception.code());
+        return ResponseEntity.status(problem.getStatus()).contentType(MediaType.APPLICATION_PROBLEM_JSON).body(problem);
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<Object> unexpected(Exception exception, WebRequest request) {
         // Known framework exceptions still select inherited, more-specific handlers.
         // Internal diagnostics only; the fixture has no credentials or production payloads.
         logger.error("Unexpected MVC failure", exception);
+        // Retain the framework helper's already-committed-response lifecycle and return type.
         return handleExceptionInternal(exception,
                 ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error"),
                 new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR, request);

@@ -1,11 +1,12 @@
 schemaVersion: 1
 name: spring-boot
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Configure, implement and diagnose Spring Boot 4 applications when bean composition,
-  auto-configuration, external properties, startup, shutdown or operational wiring
-  need evidence-backed decisions. Use existing project conventions and managed
-  dependencies. Excludes Boot 3 migration, endpoint contracts and ORM query design.
+  Create and integrate Spring Boot 4 services, or configure and diagnose bean
+  composition, auto-configuration, external properties and lifecycle. Use for a new
+  service's delivery contract as well as focused wiring changes. Coordinates HTTP,
+  persistence, security and operational specialists; excludes Boot 3 migration and
+  detailed endpoint or ORM query design.
 license: Apache-2.0
 authors:
   - name: agent-skills contributors
@@ -26,9 +27,14 @@ files:
   - references/
 dependencies: []
 suggests:
+  - requirements-and-acceptance
   - java-build-and-dependencies
   - spring-boot-web
   - spring-boot-jpa
+  - spring-transactions-and-events
+  - spring-http-clients
+  - spring-boot-testing
+  - spring-boot-observability
   - spring-security-for-apis
   - kubernetes-service-lifecycle
   - structured-logging
@@ -42,4 +48,4 @@ agentOverrides:
   codex:
     interface:
       display_name: Spring Boot
-      short_description: Boot 4 composition, configuration and lifecycle decisions
+      short_description: Boot 4 service integration, configuration and lifecycle

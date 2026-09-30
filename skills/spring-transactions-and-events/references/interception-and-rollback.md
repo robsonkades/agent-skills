@@ -1,8 +1,26 @@
 # Interception and rollback
 
-Read when a transaction attribute appears ineffective or persisted state contradicts the
-error returned to a caller. These are imperative Spring contracts; database isolation and
-business atomicity remain decisions for `enterprise-transactions`.
+Read when placing a use-case boundary, when a transaction attribute appears ineffective,
+or when persisted state contradicts the error returned to a caller. These are imperative
+Spring contracts; database isolation and business atomicity remain decisions for
+`enterprise-transactions`.
+
+## Give the unit of work an owner
+
+Start with the operation's outcome: which writes must succeed together, and which effects
+may occur independently? Put the boundary around that application operation, for example
+`CreateCompanyUseCase.execute`, using the project's service convention or an intercepted
+transactional decorator when the application layer is deliberately framework-independent.
+Repository-local transactions do not make a sequence of repository calls atomic. Retain
+the existing naming and package roles; neither a controller-wide transaction nor a new
+generic transaction superclass establishes the correct unit of work.
+[Spring Data JPA 4.1.1 transaction boundaries](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc).
+
+Keep the database unit bounded. A remote payment or email is not rolled back by the local
+manager; calling it inside the method also extends connection and lock ownership while
+waiting. If it must participate in the business outcome, identify the coordination,
+idempotency or retained-intent requirement before moving it to an after-commit listener.
+Making it asynchronous does not supply atomicity or durability.
 
 ## Trace an invocation, not an annotation
 
@@ -28,6 +46,25 @@ both calls have `@Transactional`. The
 [Framework annotation contract](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html)
 is the source for these version-sensitive interception and manager rules.
 
+## Separate save, flush and commit
+
+Within an outer transaction, a returned `save` or `saveAndFlush` is not evidence of commit.
+Flush synchronizes pending persistence changes and can expose a constraint failure sooner;
+the transaction can still roll back. Choose an explicit flush only when that timing is
+needed, not as a universal durability fix. Hand ORM-specific flush behavior to
+`spring-boot-jpa`.
+
+With ordinary interceptor-managed completion, commit happens after the target method
+body returns. A catch around `save` inside that body cannot catch a failure raised later
+by commit. Translate a completion failure at a boundary outside the actual committing
+invocation (or outside `TransactionTemplate.execute`), preserving its cause and useful
+business identity. An outer REQUIRED transaction may own completion instead of the
+apparently transactional inner method. Classify the actual constraint/exception; do not
+turn every database failure into a duplicate-company error or return success after a
+rollback-only failure. Keep HTTP status and safe response mapping in the web layer.
+[JPA repository flush contract](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/spring-data-jpa/src/main/java/org/springframework/data/jpa/repository/JpaRepository.java),
+[Framework 7.0.9 interceptor completion](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java).
+
 ## Determine the effective exception rule
 
 The ordinary default rolls back on unchecked exceptions and `Error`; checked exceptions
@@ -51,6 +88,33 @@ absence of **both** outer and inner writes. Use a genuinely independent audit tr
 only if the audit should survive a failed business operation; do not scatter REQUIRES_NEW
 to suppress errors. It can require another pooled connection while outer locks remain held.
 [Propagation and rollback-only](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html).
+
+## Check the physical transaction and resource budget
+
+- **REQUIRED joins an existing transaction:** its physical isolation, timeout and read-only
+  characteristics normally win over inner declarations. An inner shorter timeout does
+  not create a new deadline. Inspect manager validation settings before relying on
+  rejection of isolation/read-only mismatches. `readOnly=true` is a subsystem hint, not
+  a portable write prohibition or authorization control.
+- **REQUIRES_NEW suspends participation in the outer unit:** the outer connection and locks
+  can remain held while an inner connection is acquired. Bound concurrent entrants and
+  acquisition time; check pool headroom, nesting and competing work. A pool occupied by
+  outer transactions can starve every inner call, and an inner write can wait on a lock
+  held by its suspended caller. Changing propagation requires an independent-outcome
+  requirement, not just a larger pool.
+- **NESTED is a savepoint path, not an independent commit:** verify support in the actual
+  manager and driver. Outer rollback still discards successful inner work. In
+  `JpaTransactionManager`, enabling JDBC savepoints does not rewind the EntityManager's
+  cached entities; do not promise nested JPA object-state rollback.
+
+These checks establish what the annotations do; `enterprise-transactions` owns selecting
+the business isolation/atomicity model. A new worker thread, including a virtual thread,
+does not inherit an imperative transaction. If independent work is intentional, pass
+immutable data and establish its own effective boundary; do not share a managed entity
+or copy transaction thread-locals to simulate propagation.
+[Framework 7.0.9 propagation](https://github.com/spring-projects/spring-framework/blob/v7.0.9/framework-docs/modules/ROOT/pages/data-access/transaction/declarative/tx-propagation.adoc),
+[transaction attribute contract](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/annotation/Transactional.java),
+[JPA manager savepoint limits](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java).
 
 ## Make the evidence distinguish the mechanism
 

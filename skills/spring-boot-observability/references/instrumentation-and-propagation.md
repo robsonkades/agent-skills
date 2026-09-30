@@ -107,6 +107,31 @@ and no sensitive labels. High-cardinality trace values are not automatically saf
 For handled HTTP exceptions, inspect status/outcome and the observation's recorded
 error separately. MVC exception handlers may consume the exception before the filter
 can observe it; explicit framework-supported error recording is a separate choice when
-the telemetry contract needs it. Do not deliberately rethrow a handled error and break
+the telemetry contract needs it. In Servlet MVC, obtain the request's context with
+`ServerHttpObservationFilter.findObservationContext(request)` and set its error when
+the chosen failure contract calls for it; keep that mapping in the HTTP adapter. Do not
+turn every expected validation/not-found result into an unexpected infrastructure failure.
+Do not deliberately rethrow a handled error and break
 the API contract merely to populate a tag. See
 [Framework HTTP observations](https://docs.spring.io/spring-framework/reference/integration/observability.html).
+
+## Safe diagnostics and log correlation
+
+Choose one boundary to log an unexpected failure with a stable operation/error code,
+correlation and permitted diagnostic context; preserve the cause internally without
+repeatedly logging and rethrowing it in every layer. A sanitized HTTP response does not
+sanitize the exception message, stack trace, URL or attributes sent to telemetry. Inspect
+the configured tracing/logging handlers and redact or omit sensitive data before export.
+A meter filter cannot remove a trace attribute. Test with fake secrets in query values,
+headers and downstream error bodies, inspecting emitted logs and spans as well as metrics.
+
+With Micrometer Tracing, Boot's default log correlation uses MDC `traceId`/`spanId`; do
+not invent a second trace identity to repair a missing pattern field. Confirm the actual
+log format and context at the failing boundary. Baggage propagation over the wire and
+copying baggage into MDC are separate settings. Allow only approved, bounded fields;
+untrusted incoming baggage or correlation headers are not authorization or tenant identity.
+The [OpenTelemetry baggage security guidance](https://opentelemetry.io/docs/concepts/signals/baggage/#baggage-security-considerations)
+explains unintended downstream disclosure and the absence of built-in integrity checks.
+Verify log correlation across the actual executor/client path and cleanup after failure,
+rather than copying all MDC data or assuming a propagated span proves emitted logs match.
+See the versioned [Boot 4.1.1 tracing contract](https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/reference/pages/actuator/tracing.adoc).

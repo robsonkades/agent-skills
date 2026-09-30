@@ -1,9 +1,9 @@
 schemaVersion: 1
 name: spring-http-clients
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Implement and diagnose outbound Spring HTTP calls when RestClient, WebClient or
-  HttpExchange proxies lose Boot configuration, stall, buffer oversized responses
+  Implement outbound Spring integrations or diagnose RestClient, WebClient and
+  HttpExchange proxies that lose Boot configuration, stall, buffer oversized responses
   or retry uncertain mutations. Covers transport wiring and response ownership;
   hands off general retry, deadline and idempotency policy. Excludes server endpoints
   and automatic framework migration.

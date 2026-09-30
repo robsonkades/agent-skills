@@ -37,7 +37,18 @@ the chain even though the request never calls it.
   unknown `kid` and rotation with a local JWKS server when modifying key retrieval.
 - **Authority/method changes:** agreed scopes and roles, missing or malformed claim types,
   prefixes, and calls through the real Spring bean. Inspect self-invocation and callers
-  outside HTTP. Permission to read another user's record is a separate instance-policy test.
+  outside HTTP. Include the MVC path with global exception advice enabled: a denied method
+  call must retain the agreed security status/challenge and must not become a generic 500.
+  Permission to read another user's record is a separate instance-policy test.
+- **Instance-policy integration:** wrong owner/tenant and missing identity across detail,
+  list/count, secondary lookup and write operations. Try a payload that assigns another
+  tenant/owner or an elevated privilege. Assert unchanged protected state, no foreign records
+  or counts, and a permitted control; validate query/transaction behavior with the real
+  persistence boundary when claiming that isolation.
+- **Public-policy or error changes:** an intended public operation without credentials,
+  protected neighboring operations, new unlisted handlers and supplied invalid credentials.
+  For security errors, assert both JSON and challenge headers against sensitive sentinels;
+  a sanitized body alone does not establish a sanitized response.
 - **Browser changes:** missing/invalid/valid CSRF token under accepted browser credentials;
   credential-free preflight from allowed/hostile origins; actual hostile requests; cookie
   credentials presented to a claimed header-only API. Assert no forbidden mutation occurs.
@@ -47,6 +58,15 @@ the chain even though the request never calls it.
 - **Opaque-token changes:** active/inactive/wrong-purpose results, malformed responses,
   introspection timeout/failure and any cache window. Never treat backend failure as an
   authenticated principal. Reuse the application's upstream error contract.
+- **Gateway identity changes:** spoof identity/tenant headers through the public ingress
+  and attempt direct service access through relevant deployment paths. Assert the trusted
+  ingress replaces/rejects spoofed input and bypass is unavailable or independently
+  authenticated. A MockMvc request with a trusted header does not establish that boundary.
+- **Async context changes:** use the application's executor and actual secured bean with
+  permitted and denied callers, then callers A/B and an unauthenticated task on a reused
+  worker. Include an exception before the next task. Assert the correct identity and
+  unchanged denied state; stale identity or lost cleanup is a failure. Separate this from
+  token revalidation and the business policy for jobs that outlive the request.
 
 Report which cases ran and the exact boundary exercised. A check of one path does not prove
 the entire route inventory, and a server-side CORS check does not simulate browser behavior.

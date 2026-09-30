@@ -1,10 +1,10 @@
 ---
 name: spring-security-for-apis
 description: >-
-  Configure and review Spring Security Servlet APIs when filter-chain matchers leave
-  routes uncovered, bearer tokens need JWT or opaque-token validation, claim mapping
-  produces unexpected authorities, method checks are bypassed, or CSRF, CORS and
-  401/403 behavior are unclear. Covers resource-server wiring and adversarial security
+  Configure and review Spring Security Servlet APIs when adding protected operations,
+  changing credential delivery, fixing uncovered routes, validating JWT or opaque
+  tokens, mapping authorities, or diagnosing bypassed method checks and CSRF, CORS or
+  401/403 failures. Covers access-boundary discovery, resource-server wiring and adversarial security
   tests; object ownership, tenant policy and transactional authorization belong to
   java-application-security-basics and service-layer-design. Excludes WebFlux and
   implementing an identity provider.
@@ -13,8 +13,8 @@ description: >-
 # Spring Security for APIs
 
 Make the deployed HTTP surface and token trust contract explicit. A protected route must
-select the intended filter chain, authenticate an appropriate access token, and enforce the
-operation's authorization rule. A valid signature alone does not establish all three.
+select the intended filter chain, authenticate through the agreed credential contract, and
+enforce the operation's authorization rule. A valid signature alone does not establish all three.
 
 ## Compatibility and scope
 
@@ -44,10 +44,27 @@ the user, not a substitute API access token.
 
 ## Workflow
 
-For a Boot application, start with its managed resource-server starter, externalized
-issuer/audience configuration and existing security beans. Keep the default decoder and
-scope converter when they meet the credential contract. One chain covering every request
-is enough for one security policy; introduce multiple chains only for distinct policies.
+Establish the access policy before selecting authentication. For a new API, identify which
+operations are intentionally public, which callers may perform protected operations, and
+whether records belong to a caller or tenant. Public access is a valid explicit policy;
+do not add JWT merely to label an API professional. Missing requirements are not permission
+to expose writes or all records. Inspect the project and continue independent work while
+resolving consequential gaps; never invent a trusted issuer, production credentials or an
+allow-all fallback to make startup succeed. A narrow documentation/configuration change
+does not reopen an already agreed access policy.
+
+For a new protected surface or a policy change, read
+[access-policy delivery](references/access-policy-delivery.md) to identify clients,
+trust boundaries, existing controls and the few questions that change the implementation.
+Keep documented decisions separate from observed configuration and unresolved deployment
+assumptions. Reuse proven controls; implement missing ones needed for the agreed contract;
+ask about consequential unknowns, and defer unrelated hardening with a reason and trigger.
+
+For a Boot application using bearer authentication, start with its managed resource-server
+starter, externalized issuer/audience configuration and existing security beans. Keep the
+default decoder and scope converter when they meet the credential contract. One chain
+covering every request is enough for one security policy; introduce multiple chains only
+for distinct policies.
 Read [the Boot configuration example](references/boot-resource-server.md) when implementing
 this common path. Customize a component to satisfy a named missing requirement, not to
 reproduce framework setup from a diagnostic example.
@@ -58,10 +75,11 @@ reproduce framework setup from a diagnostic example.
    wins; authorization rules in later chains do not add protection. If no chain matches,
    Spring Security does not protect that request. `anyRequest()` only covers its own
    chain. Read [chains and browser controls](references/chains-and-browser.md) when
-   changing matchers, sessions, method wiring, CORS or CSRF.
-2. **Write the credential contract before configuring it.** Establish trusted issuer,
-   intended API audience, access-token profile, accepted algorithms and keys or
-   introspection service, token lifetime, revocation needs and authority vocabulary.
+   changing matchers, sessions, method wiring, async security context, CORS or CSRF.
+2. **Write the credential contract before configuring it.** Identify the existing
+   authentication mechanism and its trusted source. For bearer authentication, establish
+   trusted issuer, intended API audience, access-token profile, accepted algorithms and
+   keys or introspection service, token lifetime, revocation needs and authority vocabulary.
    Establish accepted credential transport and TLS/proxy boundaries too. Do not enable
    access tokens in query strings to work around a client's inability to send a header;
    signature validation does not prevent disclosure or replay of a bearer token.
@@ -82,13 +100,24 @@ reproduce framework setup from a diagnostic example.
    ownership of a requested object. Hand off instance/tenant rules and consistency of the
    protected write to `java-application-security-basics` and `service-layer-design`;
    use `query-objects-and-specifications` for mandatory tenant predicates in queries.
+   In a whole-API implementation, complete those authorized checks and their tests; a skill
+   boundary is not a reason to ship only route-level scopes. If a specialist is unavailable,
+   use project conventions and primary sources, and identify any genuinely unresolved
+   policy rather than silently omitting it.
 5. **Decide browser behavior from credential delivery.** `STATELESS` is not proof that
    CSRF is irrelevant. Cookies containing bearer tokens, session cookies and browser
    Basic authentication are automatically sent credentials. Keep appropriate CSRF
    protection for these flows. Disable it only for a surface whose accepted credentials
    are explicitly supplied, such as an Authorization-header-only bearer API, with no
    cookie/session alternative. CORS neither authenticates callers nor replaces CSRF.
-6. **Verify the negative paths at the right boundary.** Read
+6. **Implement the agreed boundary in the existing application.** Reproduce a reported
+   failure with a permitted control, or specify the new operation's allow/deny contract.
+   Then change the effective chain, validator, converter or invocation boundary that owns
+   it. Avoid parallel security configurations and a second authorization model. Update
+   affected consumer and operational documentation; coordinate incompatible permission or
+   credential changes with their owners. Use the project's existing progress/decision
+   record for extensive work, and an ADR only for a durable trust or policy choice.
+7. **Verify the negative paths at the right boundary.** Read
    [verification](references/verification.md) when implementing or validating a fix.
    `jwt()`/`opaqueToken()` and `@WithMockUser` inject authentication: useful for
    authorization tests, but they do not prove signature, issuer, audience, expiry or
@@ -118,6 +147,10 @@ authorization manager's behavior from a request that never selected any security
 For a review, identify the affected route/call, selected chain or token-validation step,
 reachable caller, consequence, and concrete correction with a negative test. For an
 implementation, include the changed configuration and tests with their prerequisites.
+For a new protected surface, show the route/operation policy, trusted configuration inputs,
+and where instance restrictions are enforced. Preserve the project's architecture: Spring
+security configuration and token conversion belong at integration boundaries; a domain
+model need not import `Jwt`, `Authentication` or HTTP types to receive trusted caller context.
 Report actual execution separately from proposed cases, and separate framework facts from
 unverified deployment assumptions. An adequate existing configuration can remain unchanged.
 

@@ -1,12 +1,12 @@
 schemaVersion: 1
 
 name: spring-security-for-apis
-version: 1.1.0
+version: 1.2.0
 description: >-
-  Configure and review Spring Security Servlet APIs when filter-chain matchers leave
-  routes uncovered, bearer tokens need JWT or opaque-token validation, claim mapping
-  produces unexpected authorities, method checks are bypassed, or CSRF, CORS and
-  401/403 behavior are unclear. Covers resource-server wiring and adversarial security
+  Configure and review Spring Security Servlet APIs when adding protected operations,
+  changing credential delivery, fixing uncovered routes, validating JWT or opaque
+  tokens, mapping authorities, or diagnosing bypassed method checks and CSRF, CORS or
+  401/403 failures. Covers access-boundary discovery, resource-server wiring and adversarial security
   tests; object ownership, tenant policy and transactional authorization belong to
   java-application-security-basics and service-layer-design. Excludes WebFlux and
   implementing an identity provider.
@@ -39,6 +39,7 @@ files:
   - references/
 
 suggests:
+  - spring-boot-web
   - java-application-security-basics
   - service-layer-design
   - query-objects-and-specifications

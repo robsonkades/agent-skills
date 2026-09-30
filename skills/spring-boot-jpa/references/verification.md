@@ -6,15 +6,16 @@ database or performance behavior.
 
 ## Select the smallest adequate test
 
-| Contract                               | Adequate evidence                                                                                        | Insufficient by itself                                                                |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Repository wiring and newness behavior | Context/slice with actual provider and correctly selected datasource; inspect resulting SQL/state        | A mocked repository returning the input object                                        |
-| Commit/rollback                        | Failure after a write, transaction completes, independent transaction/context reads the database         | Reading the same managed instance or calling flush                                    |
-| Partial update                         | Omitted field survives, explicit null has defined meaning, stale client version and flush races conflict | Reconstructing an entity with default values or testing only overlapping transactions |
-| Fetch/page                             | Representative empty/large relations, stable IDs/order/count, SQL limiting and statement observations    | Fewer SELECTs while silently dropping roots or loading all rows                       |
-| Real type/sequence/dialect             | Production-family database and actual driver/schema, boundaries and concurrent/restart cases             | H2 compatibility mode, mocks or SQL compilation                                       |
-| Lock/optimistic conflict               | Coordinated independent transactions, bounded completion, asserted final invariant and conflict          | Sequential calls in one test-managed transaction                                      |
-| Pool tuning                            | Offered load, database budget, hold/acquire distributions, cold and saturated periods                    | Threads count or a single request's latency                                           |
+| Contract                               | Adequate evidence                                                                                                                    | Insufficient by itself                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Repository wiring and newness behavior | Context/slice with actual provider and correctly selected datasource; inspect resulting SQL/state                                    | A mocked repository returning the input object                                                        |
+| Commit/rollback                        | Failure after a write, transaction completes, independent transaction/context reads the database                                     | Reading the same managed instance or calling flush                                                    |
+| Partial update                         | Omitted field survives, explicit null has defined meaning, stale client version and flush races conflict                             | Reconstructing an entity with default values or testing only overlapping transactions                 |
+| Fetch/page                             | Representative empty/large relations, stable IDs/order/count, SQL limiting and statement observations                                | Fewer SELECTs while silently dropping roots or loading all rows                                       |
+| Real type/sequence/dialect             | Production-family database and actual driver/schema, boundaries and concurrent/restart cases                                         | H2 compatibility mode, mocks or SQL compilation                                                       |
+| Lock/optimistic conflict               | Coordinated independent transactions, bounded completion, asserted final invariant and conflict                                      | Sequential calls in one test-managed transaction                                                      |
+| Uniqueness and error translation       | Named constraint on the real migration; independent duplicate writers; observe flush/commit failure and rolled-back companion writes | `existsBy...` followed by a mocked successful save, or mapping every integrity exception to duplicate |
+| Pool tuning                            | Offered load, database budget, hold/acquire distributions, cold and saturated periods                                                | Threads count or a single request's latency                                                           |
 
 Use `@DataJpaTest` for an appropriately scoped persistence test, importing only required
 collaborators. Inspect Boot 4's package/module for the annotation and how the test replaces
@@ -67,9 +68,10 @@ membership before/after allocation, detached/cross-context instances and proxy s
 Exercise open/closed contexts under the actual compliance and inheritance configuration.
 The Inventory example deliberately has no such consumer or equality override.
 
-The example targets Java 25/Boot 4.1.1/Hibernate 7.4.5.Final/H2 2.4.240. Its seven tests
+The example targets Java 25/Boot 4.1.1/Hibernate 7.4.5.Final/H2 2.4.240. Its nine tests
 cover reservation commit/rollback, stale/current/missing client versions, overlapping
-optimistic updates and optional note bounds. They do not execute vendor-specific types,
+optimistic updates, contextual absence, a duplicate-key failure at transaction completion,
+and optional note bounds. They do not execute vendor-specific types,
 pessimistic locking, collection pagination, auditing, custom equality or load scenarios.
 Use the relevant references and the project's schema/driver/tests for those conditional
 requirements. Technical example checks do not establish measured agent improvement.
@@ -93,6 +95,18 @@ assertions exercised, skipped checks and unresolved prerequisites.
 
 Use these as review prompts when an implementation touches the relevant contract:
 
+- A lookup already returns `Optional<Company>` and the domain is framework-free. Preserve
+  that boundary, test absence separately from database failure, and let commands requiring
+  a company raise the contextual failure. Do not add a new generic result framework.
+- A paged navigation permits concurrent changes between items and count; then require
+  one consistent snapshot for a report. On PostgreSQL READ COMMITTED, read-only intent
+  does not establish the stronger guarantee. The latter needs an appropriate query or
+  effective transaction-isolation choice and a coordinated writer test. Retain the simpler
+  implementation for the former when it satisfies the contract.
+- A new unique code conflicts with historical duplicates and undocumented soft-delete
+  reuse. Inspect callers, migrations and independent writers; ask about reuse before
+  fixing the constraint predicate. Continue independent mapping/test work, but neither
+  delete historical rows nor invent a retention policy to make the migration pass.
 - A paged response needs only a to-one name; then add a to-many list with many children.
   Re-evaluate exact-provider SQL, root cardinality/order/count and cost. On Hibernate
   7.4 with a supporting dialect, direct collection-fetch pagination is a candidate;
@@ -107,5 +121,9 @@ Use these as review prompts when an implementation touches the relevant contract
   version from before another committed edit. The service must reject the stale expectation
   even if it loads a fresh managed entity. Never overwrite `@Version` or silently retry
   with the current version; preserve the unrelated fields and the winning edit.
+- A registration service has two replicas and must reject a duplicate canonical identifier.
+  Compare a pre-insert check plus JVM lock with a database constraint and classification
+  outside the transaction owner. Then move failure from explicit flush to commit: catching
+  only `save` is insufficient. Verify the surviving row and rolled-back companion writes.
 - The request asks only for findings or supplies an adequate JDBC query. Preserve that
   scope and approach instead of turning skill activation into a JPA migration.

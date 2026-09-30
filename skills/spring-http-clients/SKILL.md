@@ -1,8 +1,8 @@
 ---
 name: spring-http-clients
 description: >-
-  Implement and diagnose outbound Spring HTTP calls when RestClient, WebClient or
-  HttpExchange proxies lose Boot configuration, stall, buffer oversized responses
+  Implement outbound Spring integrations or diagnose RestClient, WebClient and
+  HttpExchange proxies that lose Boot configuration, stall, buffer oversized responses
   or retry uncertain mutations. Covers transport wiring and response ownership;
   hands off general retry, deadline and idempotency policy. Excludes server endpoints
   and automatic framework migration.
@@ -32,6 +32,22 @@ acquisitions or the last authoritative mutation result. A timeout alone proves n
 particular transport or remote outcome. If evidence is missing, retain that uncertainty
 and identify the smallest discriminating check; continue independent local work.
 
+For a new integration, inspect the consuming use case, provider specification/version,
+existing adapters, tests, ADRs and deployment/egress configuration. Establish whether
+the remote result is mandatory, optional or asynchronous; who owns credentials and
+tenant context; and which latency, concurrency, cost or quota constraints affect calls.
+Check the existing client, gateway/service mesh and platform conventions before adding
+retry, rate or connection policies. A declared gateway is not evidence of its policy.
+
+Separate established contracts, reversible implementation assumptions and unresolved
+business choices. Ask only what the available evidence cannot answer and would change
+the solution: for a charged mutation with an uncertain outcome, ask what replay/lookup
+guarantee the provider offers; recommend retaining the original intent while that is
+unknown. If outage behavior is unspecified, ask whether the use case must stop, remain
+pending or can omit the result; do not invent a successful fallback. Group decisive
+questions and continue independent mapping/configuration work. A narrow timeout repair
+does not reopen settled product policy or require a new integration design.
+
 ## Make the boundary explicit
 
 | Situation                                   | Decision and verification                                                                                                                                                                                      |
@@ -42,8 +58,17 @@ and identify the smallest discriminating check; continue independent local work.
 | Configured settings appear ineffective      | Follow the injected Boot builder and selected transport to the wire. A separately created client may bypass customizers; a later connector/factory replacement can discard earlier settings.                   |
 | Caller reports failure after a mutation     | Preserve the intent and unresolved outcome until the provider contract resolves it. A timeout, cancellation or `5xx` is not evidence of no effect.                                                             |
 
-When constructing clients, selecting a factory/connector, configuring TLS, or preserving
-context, read [wiring and transports](references/wiring-and-transports.md).
+When defining the consumed response contract, constructing clients, selecting a
+factory/connector, configuring TLS, or preserving context, read
+[wiring and transports](references/wiring-and-transports.md).
+
+For a material choice, record the constraint, viable options and why the chosen owner
+fits: apply a missing required bound, reuse a proven platform policy, clarify an unknown
+provider guarantee, defer a broader migration with its trigger, or omit a mechanism
+without a demonstrated need. Record only consequential decisions. A low-volume lookup
+can need a finite timeout without needing a breaker; a provider concurrency cap can
+require admission control even when every call has a timeout. Do not infer quota or
+retry permission from the chosen client API.
 
 For an ordinary finite response, start with a DTO and the framework's body extraction
 and status handling. Add a peer adapter when it translates a real protocol or domain
@@ -51,6 +76,13 @@ contract, not merely to wrap every client method. Manual proxy factories, raw st
 decoders and new exception hierarchies need a constraint that simpler Boot facilities
 cannot satisfy. HTTP interfaces still inherit the underlying transport and failure
 contract; they do not make mutations retry-safe or responses size-limited.
+
+Match the project's architecture at the integration boundary. If application code uses
+domain ports, implement that port in a peer-specific HTTP adapter and keep provider DTOs,
+HTTP statuses and Spring client types there. Name the operation and peer explicitly;
+avoid an unrelated generic `HttpService` shared by every business capability. A small
+consumer with no such boundary can use its configured typed client directly. Returning
+`ResponseEntity<T>` from inbound controllers does not require exposing it in domain ports.
 
 When constructing clients programmatically, use **injected Boot builders** at the
 application composition boundary. Builders are mutable; clone before diverging configurations when reusing
@@ -81,7 +113,16 @@ Keep these decisions visible at the call site:
   unbounded labels. Observation wiring does not prove propagation through a custom
   executor or reactive boundary.
 
-## Verify and deliver
+## Implement, verify and deliver
+
+For implementation, first fix the consumed success/failure contract and ownership;
+then wire the smallest compatible change through the existing composition boundary;
+finally exercise the changed contract and update its consumer/operation documentation.
+Include required configuration and dependencies in the same deliverable. For a broad
+integration, track unresolved provider decisions and progress in the project's existing
+format; use an ADR for a durable transport/policy ownership choice, not each DTO mapping.
+For diagnosis or review, produce the evidenced finding and a discriminating next check
+instead of treating an untested candidate configuration as a confirmed fix.
 
 When adding a client or substantiating a failure/lifecycle claim, read
 [verification](references/verification.md). Use the project's Spring test facilities
@@ -93,7 +134,12 @@ timeouts, cancellation and connection behavior.
 Deliver the focused change or finding, actual versions and selected transport, the
 operation/error contract, checks run and unverified boundaries. Scale this to the task;
 no new resilience framework, benchmark or lengthy report is required for a simple
-client. Stop when the requested contract has evidence and remaining limits are clear.
+client. For a maintained integration, use the documentation guidance in
+[wiring and transports](references/wiring-and-transports.md#document-the-integration-that-was-delivered).
+Stop when the requested contract has evidence and remaining limits are clear. Consult
+version-matched official documentation or source when an API/property is uncertain;
+name unavailable verification and the evidence needed to resolve it, rather than
+inventing configuration or treating this skill's baseline as the project's version.
 
 ## Optional handoffs
 

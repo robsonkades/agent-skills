@@ -27,9 +27,14 @@ spring:
           jws-algorithms: [RS256]
 ```
 
-These values represent the agreed issuer contract. Keep the managed decoder; an audience
-requirement alone does not justify replacing it. Inspect an existing custom `JwtDecoder`
-before relying on these properties, since it can replace Boot's configured decoder.
+These values are illustrative, not deployable credentials or an issuer selected for the
+user. Substitute externally supplied configuration from the actual identity provider;
+do not provide a production fallback when a required value is missing. An intentionally
+public API does not need a resource server solely to follow this example.
+
+Keep the managed decoder; an audience requirement alone does not justify replacing it.
+Inspect an existing custom `JwtDecoder` before relying on these properties, since it can
+replace Boot's configured decoder.
 [Spring's Boot resource-server configuration](https://docs.spring.io/spring-security/reference/7.1/servlet/oauth2/resource-server/jwt.html).
 
 Only the application's authorization and credential-delivery decisions need Java code:

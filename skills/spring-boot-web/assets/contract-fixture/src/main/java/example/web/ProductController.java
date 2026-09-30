@@ -47,8 +47,17 @@ public final class ProductController {
     })
     public ResponseEntity<Product> create(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Catalog data; sku and title are mandatory, description and dimensions are optional.", content = @Content(examples = {
-                    @ExampleObject(name = "minimum", summary = "Only mandatory values", value = "{\"sku\":\"BOX-01\",\"title\":\"Storage box\"}"),
-                    @ExampleObject(name = "complete", summary = "Includes optional description and nested measurements", value = "{\"sku\":\"BOX-02\",\"title\":\"Storage box\",\"description\":\"Recycled cardboard\",\"dimensions\":{\"width\":120,\"height\":80}}")
+                    @ExampleObject(name = "minimum", summary = "Only mandatory values", value = """
+                            {"sku":"BOX-01","title":"Storage box"}
+                            """),
+                    @ExampleObject(name = "complete", summary = "Includes optional description and nested measurements", value = """
+                            {
+                              "sku":"BOX-02",
+                              "title":"Storage box",
+                              "description":"Recycled cardboard",
+                              "dimensions":{"width":120,"height":80}
+                            }
+                            """)
             }))
             @Valid @RequestBody ProductCreate input) {
         Product product = store.create(input);
@@ -61,16 +70,16 @@ public final class ProductController {
             @ApiResponse(responseCode = "200", description = "Current public representation", content = @Content(schema = @Schema(implementation = Product.class), examples = @ExampleObject(name = "complete", value = ApiExamples.PRODUCT))),
             @ApiResponse(responseCode = "404", description = "Product does not exist", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ApiProblem.class), examples = @ExampleObject(name = "missing", value = ApiExamples.MISSING)))
     })
-    public Product get(@Parameter(description = "Server-assigned product UUID", required = true, example = "9d650c1e-0731-4dbf-8529-0fb50d7746ec") @PathVariable UUID id) {
-        return store.get(id);
+    public ResponseEntity<Product> get(@Parameter(description = "Server-assigned product UUID", required = true, example = "9d650c1e-0731-4dbf-8529-0fb50d7746ec") @PathVariable UUID id) {
+        return ResponseEntity.ok(store.get(id));
     }
 
     @GetMapping
     @Operation(operationId = "listProducts", summary = "List recent catalog contents", description = "Returns at most limit products in insertion order. This fixture has no page cursor or durable ordering across restarts.")
     @ApiResponse(responseCode = "200", description = "Array in insertion order, from zero up to limit records; at most 50, without duplicates", content = @Content(array = @ArraySchema(arraySchema = @Schema(description = "Never null; an empty array means no records. Order is insertion order in this process."), schema = @Schema(implementation = Product.class), minItems = 0, maxItems = 50, uniqueItems = true), examples = @ExampleObject(name = "empty", value = "[]")))
     @ApiResponse(responseCode = "400", description = "Limit is not an integer from 1 to 50", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ApiProblem.class), examples = @ExampleObject(name = "invalidLimit", summary = "limit=0", value = ApiExamples.INVALID_LIMIT)))
-    public List<Product> list(@Parameter(description = "Maximum number of products; omitted value defaults to 10.", example = "10", schema = @Schema(type = "integer", format = "int32", minimum = "1", maximum = "50", defaultValue = "10")) @RequestParam(defaultValue = "10") @Min(1) @Max(50) int limit) {
-        return store.list(limit);
+    public ResponseEntity<List<Product>> list(@Parameter(description = "Maximum number of products; omitted value defaults to 10.", example = "10", schema = @Schema(type = "integer", format = "int32", minimum = "1", maximum = "50", defaultValue = "10")) @RequestParam(defaultValue = "10") @Min(1) @Max(50) int limit) {
+        return ResponseEntity.ok(store.list(limit));
     }
 
     @PatchMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -81,7 +90,7 @@ public final class ProductController {
             @ApiResponse(responseCode = "404", description = "Product does not exist", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ApiProblem.class), examples = @ExampleObject(name = "missing", value = ApiExamples.MISSING))),
             @ApiResponse(responseCode = "415", description = "Request Content-Type is not application/json", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ApiProblem.class), examples = @ExampleObject(name = "unsupportedMedia", value = ApiExamples.UNSUPPORTED_MEDIA)))
     })
-    public Product patch(
+    public ResponseEntity<Product> patch(
             @Parameter(description = "UUID of the product to change", required = true, example = "9d650c1e-0731-4dbf-8529-0fb50d7746ec") @PathVariable UUID id,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Presence-aware patch document", content = @Content(schema = @Schema(implementation = ProductPatch.class), examples = {
                     @ExampleObject(name = "preserve", summary = "Leave unchanged", value = "{}"),
@@ -97,7 +106,8 @@ public final class ProductController {
                 || description.asString().codePointCount(0, description.asString().length()) > 200)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description must be null or a string of at most 200 Unicode code points");
         }
-        return store.patch(id, description != null, description == null || description.isNull() ? null : description.asString());
+        return ResponseEntity.ok(store.patch(id, description != null,
+                description == null || description.isNull() ? null : description.asString()));
     }
 
     @DeleteMapping("/{id}")

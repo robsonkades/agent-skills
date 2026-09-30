@@ -46,6 +46,68 @@ common settings use `HttpClientSettings`, applied through the appropriate reques
 factory or connector builder. Overriding either builder is an ownership decision:
 check what auto-configuration backs off and which global settings still reach it.
 
+## Define what the application consumes
+
+Identify the authority for the peer contract: a versioned provider specification,
+approved SDK or documented protocol plus representative exchanges. Reuse the project's
+generated client when its transport, lifecycle and compatibility meet the need; keep
+its generator/input version and reproduction command if generation is part of the
+change. An OpenAPI description can define wire shapes without specifying billing,
+replay or business completion. Do not infer those guarantees from generated methods,
+an example payload or an HTTP status alone. Use a focused typed client when generation
+would add maintenance without helping the consumed operations; do not create a parallel
+provider specification or an inbound documentation stack merely to call one endpoint.
+
+Start from the provider contract and the caller's use case, not from a reusable CRUD
+client abstraction. In a project using domain ports, a `CompanyRegistryGateway` may
+be implemented by a `RegistryHttpGateway`; its provider `RegistryCompanyResponse`
+belongs beside that adapter, mapped to the application's result. Follow established
+package and naming conventions; do not introduce a port, mapper interface or exception
+base solely to mirror each remote method. A declarative HTTP interface describes the
+provider protocol and is not automatically the application's domain port.
+
+Choose the return shape deliberately:
+
+| Consumed contract                       | Implementation and verification                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A representation is required on success | `RestClient.body(...)` may return `null`; an empty `Mono` is also possible with `WebClient`. Reject a missing required result at the integration boundary, rather than letting a later dereference fail. Framework 7.0.4+ supplies `requiredBody(...)` for imperative extraction; keep an explicit check on an older supported release. |
+| No representation is part of success    | Use a bodiless result or `ResponseEntity<Void>` when headers/status matter. Do not invent an empty DTO to turn a legitimate `204` into the preceding case.                                                                                                                                                                              |
+| Headers/status change the next action   | Preserve a typed `ResponseEntity<T>` or reactive equivalent in the HTTP adapter to inspect `ETag`, `Location` or status. A `202 Accepted` is acceptance for processing, not completed business work; implement polling/callback reconciliation only when required by that provider contract.                                            |
+| The body has generic elements           | Use a declared generic HTTP-interface return type or `ParameterizedTypeReference<List<RegistryCompanyResponse>>` with body extraction. A raw `List.class`, untyped `Map` or unchecked cast loses the element contract; test decoded element fields.                                                                                     |
+
+For an imperative bodiless call, finish `retrieve()` with `toBodilessEntity()`; merely
+obtaining the `ResponseSpec` does not dispatch the request. For a reactive call, return
+the composed publisher to its lifecycle owner rather than starting a detached
+subscription to make it run. Verify that the intended request actually occurs.
+
+See the versioned [RestClient response API](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/web/client/RestClient.ResponseSpec.html),
+[WebClient response API](https://docs.spring.io/spring-framework/docs/7.0.9/javadoc-api/org/springframework/web/reactive/function/client/WebClient.ResponseSpec.html)
+and [HTTP 202 semantics](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.3).
+An empty-body policy does not validate the contents: check required provider fields,
+identity and business invariants before applying the result to local state. A record or
+Bean Validation annotation alone is not evidence that response deserialization enforces
+those constraints. Reject a malformed or semantically inconsistent success as a provider
+contract failure; do not manufacture a default company or reinterpret it as absence.
+Use typed DTOs and the configured message converters for JSON instead of concatenating
+request bodies. Preserve the peer's documented compatibility rules for unknown fields.
+
+Build paths and queries with URI templates and variables, respecting the configured
+encoding mode. Do not concatenate user values into a URL or pre-encode them without an
+explicit already-encoded contract; either can change reserved characters or double-encode
+data. Test a query value containing `+`, `&`, spaces and non-ASCII characters through the
+real configured client. URI encoding does not enforce the allowed-destination policy
+below. See [Spring URI encoding](https://docs.spring.io/spring-framework/reference/web/webflux/uri-building.html#web-uribuilder-encoding).
+
+Preserve the provider's evolution contract at the adapter: decide how unknown enum
+values, added optional fields or removed required fields affect the consumed result.
+Tolerating an added field does not mean accepting a missing identity or interpreting an
+unknown business state as success. Coordinate incompatible provider changes with the
+integration owner; test the relevant old/new representations instead of changing the
+application's global mapper for one peer. For remote pagination or polling, preserve
+documented continuation tokens/links and impose an agreed total work/deadline bound;
+apply destination and credential rules to continuation URLs too. Do not silently label
+a truncated traversal as a complete result.
+
 ## HTTP interfaces keep the underlying client contract
 
 `@HttpExchange` describes HTTP method, path, parameters and representation. Match the
@@ -172,3 +234,27 @@ follows Reactor scheduling. Use the installed propagation mechanism and verify t
 requests with distinct identities plus an absent-context case. Client observations
 should use the Boot-configured registry when observability is enabled; verify an
 outgoing propagation header or observation, not merely that a bean exists.
+
+## Document the integration that was delivered
+
+For a maintained integration, update its existing README/contract/runbook where the
+following information belongs; a one-line configuration repair usually needs only the
+affected setting and evidence:
+
+- Consumed operations and authoritative provider version; request/response types,
+  absence, rejection, pending and uncertain outcomes; representative sanitized examples.
+  Document only pagination, conditional requests or idempotency semantics actually used.
+- Configuration names, units, environment overrides and active transport; approved
+  destinations, credential/SSL secret references and resource owner. State which
+  timeout/bound is enforced locally and which depends on provider/platform guarantees.
+- Retry/admission ownership across application and egress, effective attempt policy,
+  and the diagnostic signals distinguishing provider rejection, local saturation and
+  uncertain mutation. Link the supported reconciliation/escalation path and its owner
+  when required; never document an unimplemented recovery guarantee as available.
+- Reproducible contract/configuration checks and any provider sandbox prerequisite;
+  how a provider schema or credential/configuration change is checked and rolled out.
+  Keep secret values and unrestricted payload dumps out of documentation and evidence.
+
+Prefer existing telemetry and operational conventions. Additional dashboards, a client
+DSL, a gateway policy or a resilience dependency need a concrete gap and an owner; they
+are not completion criteria for every HTTP call.

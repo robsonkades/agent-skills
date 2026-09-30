@@ -53,6 +53,26 @@ an open stream to another thread or HTTP serializer.
 [Spring Data projections](https://docs.spring.io/spring-data/jpa/reference/repositories/projections.html),
 [Hibernate fetching and batching](https://docs.hibernate.org/orm/7.4/userguide/html_single/).
 
+For externally driven lists, cap page size and allowlist sort fields/directions before
+building the query. Keep tenant/authorization predicates on every page and count. Apply
+the limit in the database: `findAll()` followed by `subList`, `stream().limit` or a
+`PageImpl` does not bound the rows loaded. A small page with an enormous offset can still
+be expensive; choose a bounded offset policy or supported keyset continuation from the
+access pattern. Define cursor/sort consistency under concurrent inserts instead of
+promising a fixed snapshot across separate requests.
+
+Decide whether a page's items and total must reflect the same snapshot. In PostgreSQL
+18 READ COMMITTED, two successive SELECTs can observe different committed states even
+inside one transaction; `@Transactional(readOnly=true)` does not change that isolation
+contract. For navigation that tolerates concurrent change, the existing behavior may be
+adequate. For a contractual same-snapshot result, consider one query that supplies both
+values or a bounded read transaction using an appropriate isolation level; PostgreSQL
+REPEATABLE READ provides a stable snapshot for its successive queries. Check effective
+outer transaction settings and the cost of retaining the snapshot, and coordinate a writer
+between data/count queries in a real-database test. Neither option freezes later HTTP pages.
+[PostgreSQL 18 isolation contracts](https://www.postgresql.org/docs/18/transaction-iso.html),
+[Spring Data 4.1.1 transaction contracts](https://github.com/spring-projects/spring-data-jpa/blob/4.1.1/src/main/antora/modules/ROOT/pages/jpa/transactions.adoc).
+
 Verify with roots having zero, one and many children; a page boundary; duplicate sort
 values; at least two pages; and a count assertion if totals matter. Statement count alone
 can reward an incorrect inner join or a query that loads the entire table. Record row
@@ -135,6 +155,38 @@ Start the next attempt in a fresh transaction, reread required state, bound the 
 deadline, and account for external effects and uncertain commit outcome. Do not keep
 using a failed Hibernate session/transaction after a persistence exception as though
 it were a clean retry context.
+
+### Translate the failure at the boundary that can observe it
+
+`save()` can queue work. A try/catch around it may miss an error raised by a later query,
+explicit flush or transaction commit. With the usual Spring transaction proxy, commit
+runs after the target method returns; a catch inside that method cannot catch that
+commit failure. Handle it around the actual transaction owner, for example an outer
+application adapter invoking a transactional collaborator or `TransactionTemplate`.
+If that call joins an existing transaction, its return still does not prove commit.
+Do not introduce `REQUIRES_NEW` merely to move the catch point; it changes atomicity.
+[Spring 7.0.9 transaction interceptor](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-tx/src/main/java/org/springframework/transaction/interceptor/TransactionAspectSupport.java),
+[JPA transaction completion and translation](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-orm/src/main/java/org/springframework/orm/jpa/JpaTransactionManager.java).
+
+An intentional flush can expose an immediate constraint earlier, but also flushes other
+pending work, does not commit and cannot force every deferred constraint to be checked.
+For example, PostgreSQL deferred constraints can wait until commit.
+[PostgreSQL constraint timing](https://www.postgresql.org/docs/18/sql-set-constraints.html).
+After a failed write, leave/roll back the failed unit; do not swallow the exception and
+return a success or keep writing inside a rollback-only transaction. Classify a specific
+unique constraint using the actual provider/driver metadata and named schema contract,
+not a substring of a localized SQL message or SQLState class alone. Constraint metadata
+may be absent; preserve an unclassified failure instead of guessing the business rule.
+[Hibernate 7.4.5 constraint metadata](https://github.com/hibernate/hibernate-orm/blob/7.4.5/hibernate-core/src/main/java/org/hibernate/exception/ConstraintViolationException.java).
+Preserve the cause when translating, and keep SQL, values and driver diagnostics out of
+public error details.
+Unknown integrity/commit failures must retain their actual failure category.
+
+Distinguish an application precondition rejected before mutation (missing ID or stale
+client version) from a database conflict discovered at flush/commit. A shared business
+exception can expose stable code and typed context for the former; provider/framework
+exceptions for the latter still need the operation's conflict policy. Test both paths,
+including transaction completion and a fresh read that the winning state survived.
 
 ## Bulk work, auditing and batching
 

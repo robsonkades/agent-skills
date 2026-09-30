@@ -1,9 +1,9 @@
 schemaVersion: 1
 name: spring-transactions-and-events
-version: 1.0.0
+version: 1.1.0
 description: >-
-  Diagnose and implement Spring transaction interception and transaction-bound
-  listeners when rollback differs from intent, after-commit work disappears, or
+  Implement use-case transaction boundaries and diagnose Spring interception and
+  transaction-bound listeners when rollback differs from intent, after-commit work disappears, or
   persisted event publications need recovery. Verify proxy entry, rollback rules,
   listener phases and repeat-safe republication. Excludes general isolation design,
   ORM tuning and broker delivery topology.

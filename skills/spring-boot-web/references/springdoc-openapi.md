@@ -1,6 +1,9 @@
 # Complete springdoc/OpenAPI contracts
 
-Read for every controller documentation task. Completeness means the documented contract
+Read when OpenAPI is required or already maintained, particularly for springdoc generation.
+For a tooling/source-of-truth decision, first read [contract delivery](contract-delivery.md);
+this reference does not require adding springdoc to a REST Docs or contract-first project.
+Completeness means the documented contract
 matches every in-scope public operation and property, including optional information and
 applicable advanced features. It does not mean decorating a method with every annotation.
 
@@ -98,9 +101,11 @@ publication choices; see [UI and publication](swagger-ui.md).
 
 ## Verify and report fidelity
 
-1. Generate default and all grouped JSON/YAML documents from an isolated runnable fixture
-   with the actual profile/configuration. Capture exact versions and inputs. Static reading
-   is a fallback with explicit limitations, not proof of generated behavior.
+1. For springdoc, generate default and all grouped JSON/YAML documents from an isolated
+   application/fixture with the actual profile/configuration. For a maintained contract-first
+   file, validate that approved source and compare the implementation with it; adding runtime
+   generation is optional. Capture exact versions and inputs. Static reading is a fallback
+   with explicit limitations, not proof of generated behavior.
 2. Compare path/method sets and variant content against the MVC inventory. Recursively compare
    public property sets and meaning against input/output serialization. Check operation IDs,
    media types, response statuses, security logic, required/null/direction and references.
@@ -110,7 +115,7 @@ publication choices; see [UI and publication](swagger-ui.md).
 4. Execute minimum-valid and all-optionals request examples, representative variants, and
    negative cases against an isolated server. Compare status/headers/body to the contract.
    Validate response examples too; do not label an invalid request a normal valid example.
-5. Exercise UI groups, descriptions, examples, schemas, authentication where present, and
+5. When a UI is delivered, exercise its groups, descriptions, examples, schemas, authentication, and
    actual Try it out requests behind the intended context/proxy. Separate UI limitations
    from invalid specifications and runtime mismatches.
 6. Where a consumer client is generated, compile it and exercise representative use. Add

@@ -130,6 +130,26 @@ return type: isolate the optional class-dependent configuration. The
 defines these mechanisms and `ApplicationContextRunner` checks. Application composition
 does not require making a new starter.
 
+### Property conditions are selection rules, not validation
+
+For opt-in auto-configuration, define the missing-value policy and the accepted activation
+value. With `@ConditionalOnProperty`, the default `havingValue` matches a present value
+other than `false`; a misspelling such as `treu` can therefore activate a client. Use
+`havingValue = "true"` for a true-only activation contract and choose `matchIfMissing`
+deliberately. That condition alone does not reject malformed values: it can simply leave
+the feature inactive. If malformed flags must fail startup, keep their typed binding and
+validation reachable even when the feature's factory is not selected. Distinguish those
+shared policy settings from credentials required only by the selected default client.
+
+Exercise absent, true, false and malformed input with the real settings registration,
+then the custom-client case. Assert bean selection **and** the expected startup result;
+"no bean" and "invalid configuration rejected" are different outcomes. The
+[Boot 4.1.1 condition contract](https://github.com/spring-projects/spring-boot/blob/v4.1.1/core/spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/condition/ConditionalOnProperty.java)
+also distinguishes a collection key from an indexed entry: do not use this condition to
+infer that a bound collection is nonempty. Use a suitable explicit contract/condition
+when collection content determines activation. Keep ordinary application wiring simple;
+feature conditions are justified by supported optional behavior, not by every new bean.
+
 ## Find the winning configuration source
 
 Build a small provenance table for the affected keys: intended contract, source, effective
@@ -163,6 +183,18 @@ Test with actual config data when profiles, imports or precedence are disputed; 
 injected property list only proves binding under that artificial source. Do not invent
 runtime refresh semantics: confirm the owning mechanism and whether existing consumers
 observe new values before promising a configuration change without restart.
+
+Treat configuration as an API consumed by operators and deployment automation. Before
+renaming a key, changing units/defaults or making an optional setting mandatory, inspect
+charts/manifests, environment overrides, documented examples and supported consumer
+versions. Retain a compatible key when no contract change is needed. If migration is
+required, document replacement, precedence when both forms are present, rollout order
+and the rollback path; test the supported old/new configurations against the actual binder.
+Do not claim an alias exists merely because metadata or documentation names a replacement.
+For a reusable starter, include discoverable configuration metadata using the project's
+[supported processor](https://github.com/spring-projects/spring-boot/blob/v4.1.1/documentation/spring-boot-docs/src/docs/antora/modules/specification/pages/configuration-metadata/annotation-processor.adoc);
+metadata helps consumers author settings but does not validate
+deployment values or implement compatibility behavior.
 
 ## Compatibility restraint
 

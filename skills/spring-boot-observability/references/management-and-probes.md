@@ -40,6 +40,16 @@ not trigger restart because a remote service failed. Test the HTTP response duri
 `REFUSING_TRAFFIC` and `BROKEN`, not just the JSON status after startup. Custom status
 mappings must retain the required DOWN/OUT_OF_SERVICE failure mappings.
 
+Bound a custom health indicator's dependency call with the client's actual acquisition,
+connect and response/query timeouts as applicable. Keep the overall check below the probe
+budget, including retries; avoid mutating business state or doing expensive full scans.
+`management.endpoint.health.logging.slow-indicator-threshold` only controls a warning after
+the indicator responds; it does not interrupt a blocked check. Inject a stalled dependency
+in a test and verify bounded completion and the intended status. Polling must not consume
+the resources the application needs to recover. The
+[Boot 4.1.1 health implementation](https://github.com/spring-projects/spring-boot/blob/v4.1.1/module/spring-boot-health/src/main/java/org/springframework/boot/health/actuate/endpoint/HealthEndpointSupport.java)
+logs elapsed time in `finally`; configure the timeout at the dependency boundary.
+
 For a separate management server, consider
 `management.endpoint.health.probes.add-additional-paths=true` and verify `/livez` and
 `/readyz` on the application port with its security rules. Management-port success alone

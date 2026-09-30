@@ -22,7 +22,7 @@ public final class Models {
             @Schema(description = "Height in millimetres.", example = "80", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED)
             Integer height) {}
 
-    @Schema(name = "ProductCreate", description = "New catalog entry. Optional description and dimensions may be omitted or null; both mean no value on creation.")
+    @Schema(name = "ProductCreate", description = "New catalog entry. Optional description and dimensions may be omitted or null; both mean no value on creation. Unknown properties are ignored; only declared input fields are stored.")
     public record ProductCreate(
             @NotNull @Pattern(regexp = "^[A-Z0-9-]{3,20}$")
             @Schema(description = "Case-sensitive unique catalog code; uppercase ASCII, digits and hyphens only.", example = "BOX-01", pattern = "^[A-Z0-9-]{3,20}$", minLength = 3, maxLength = 20, requiredMode = Schema.RequiredMode.REQUIRED)
@@ -74,6 +74,8 @@ public final class Models {
             String detail,
             @Schema(description = "Path identifying the failing request.", format = "uri-reference", example = "/api/products", requiredMode = Schema.RequiredMode.REQUIRED)
             String instance,
+            @Schema(description = "Stable business error code for a missing product or duplicate catalog code; omitted for other errors.", allowableValues = {"PRODUCT_NOT_FOUND", "DUPLICATE_SKU"}, example = "PRODUCT_NOT_FOUND", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+            String code,
             @ArraySchema(arraySchema = @Schema(description = "Nonempty validation conditions when present, never null. Order is unspecified; multiple conditions for the same field are retained. Omitted for non-validation failures. No fixed maximum is imposed.", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[{\"field\":\"title\",\"message\":\"must not be blank\"},{\"field\":\"title\",\"message\":\"length must be between 3 and 80 Unicode code points\"}]"), schema = @Schema(implementation = Violation.class), minItems = 1, uniqueItems = false)
             List<Violation> violations) {}
 }

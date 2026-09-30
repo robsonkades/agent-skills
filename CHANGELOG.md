@@ -10,6 +10,38 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.10.0] — 2026-09-29
+
+### Changed
+
+- Reviewed all eight Spring skills around contextual discovery, technical decisions,
+  proportionate implementation, consumer and operational documentation, and explicit
+  evidence limits. Preserved specialist boundaries and existing project conventions.
+- Strengthened maintained-service delivery, effective use-case transactions, database
+  invariants, contextual exceptions, typed HTTP responses and managed integrations.
+- Made OpenAPI, springdoc, REST Docs and documentation publication choices depend on
+  consumer requirements; distinguish gateway quotas from concurrency controls and
+  full-context MockMvc tests from real servlet-container behavior.
+- Clarified trusted gateway identity, security context across executor tasks, remote
+  replay contracts, historical event payloads, recovery and telemetry ownership.
+
+### Fixed
+
+- Reject invalid JSON scalar coercion in the web fixture without truncating fractional
+  integers or accepting numbers as textual identifiers; retain valid integral decimals.
+- Preserve atomic SKU updates while allowing concurrent reads in the fixture store;
+  add contextual persistence failures and transaction-completion rollback checks.
+- Distinguish feature activation from malformed-property validation, read-only intent
+  from a consistent database snapshot, and tracing from durable business audit records.
+
+### Added
+
+- Review evidence with an eight-pillar matrix per Spring skill, source hashes and nine
+  executed agent-response evaluations. The web comparison showed adequate decisions
+  in both arms, without establishing a general comparative improvement.
+- Explicit verification boundaries: fixture checks and proposed agent solutions do
+  not establish real-database, gateway, collector or production recovery guarantees.
+
 ## [1.9.0] — 2026-09-28
 
 ### Added
@@ -384,7 +416,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/robsonkades/agent-skills/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/robsonkades/agent-skills/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/robsonkades/agent-skills/compare/v1.7.1...v1.8.0
 [1.7.1]: https://github.com/robsonkades/agent-skills/compare/v1.7.0...v1.7.1

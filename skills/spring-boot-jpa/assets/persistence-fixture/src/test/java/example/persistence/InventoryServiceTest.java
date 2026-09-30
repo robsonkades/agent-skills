@@ -10,10 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.OptimisticLockException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -68,14 +69,37 @@ class InventoryServiceTest {
     }
 
     @Test
+    void duplicateKeyAtCommitRollsBackCompanionInsert() {
+        AtomicBoolean callbackCompleted = new AtomicBoolean();
+        assertThrows(DataIntegrityViolationException.class,
+                () -> transactions.executeWithoutResult(status -> {
+                    inventory.save(new Inventory("B", "Companion insert", 10));
+                    inventory.save(new Inventory("A", "Duplicate key", 5));
+                    callbackCompleted.set(true);
+                }));
+
+        // Both saves returned; failure happened when the owning transaction completed.
+        assertTrue(callbackCompleted.get());
+        assertTrue(inventory.findById("B").isEmpty());
+        Inventory original = inventory.findById("A").orElseThrow();
+        assertEquals("Retain this description", original.getDescription());
+        assertEquals(20, original.getAvailable());
+        assertEquals(1, inventory.count());
+    }
+
+    @Test
     void staleClientVersionIsRejectedEvenWhenTheServiceLoadsCurrentState() {
         Long clientVersion = inventory.findById("A").orElseThrow().getVersion();
         service.changeNote("A", clientVersion, "Committed by another client");
         Long currentVersion = inventory.findById("A").orElseThrow().getVersion();
         assertNotEquals(clientVersion, currentVersion);
 
-        assertThrows(ObjectOptimisticLockingFailureException.class,
+        InventoryVersionConflictException conflict = assertThrows(InventoryVersionConflictException.class,
                 () -> service.changeNote("A", clientVersion, "Stale overwrite"));
+        assertEquals("INVENTORY_VERSION_CONFLICT", conflict.code());
+        assertEquals("A", conflict.sku());
+        assertEquals(clientVersion.longValue(), conflict.expectedVersion());
+        assertEquals(currentVersion.longValue(), conflict.currentVersion());
 
         Inventory result = inventory.findById("A").orElseThrow();
         assertEquals("Committed by another client", result.getNote());
@@ -107,6 +131,26 @@ class InventoryServiceTest {
         Inventory result = inventory.findById("A").orElseThrow();
         assertNull(result.getNote());
         assertEquals(version, result.getVersion());
+    }
+
+    @Test
+    void missingInventoryIdentifiesTheRequestedSkuWithoutChangingStoredState() {
+        InventoryNotFoundException reservation = assertThrows(InventoryNotFoundException.class,
+                () -> service.reserve("MISSING-RESERVATION", 3));
+        assertEquals("INVENTORY_NOT_FOUND", reservation.code());
+        assertEquals("MISSING-RESERVATION", reservation.sku());
+        assertTrue(reservation.getMessage().contains(reservation.sku()));
+
+        InventoryNotFoundException edit = assertThrows(InventoryNotFoundException.class,
+                () -> service.changeNote("MISSING-EDIT", 0L, "Unstored"));
+        assertEquals("MISSING-EDIT", edit.sku());
+        assertTrue(edit.getMessage().contains(edit.sku()));
+
+        Inventory result = inventory.findWithMovementsBySku("A").orElseThrow();
+        assertEquals(20, result.getAvailable());
+        assertNull(result.getNote());
+        assertTrue(result.getMovements().isEmpty());
+        assertEquals(1, inventory.count());
     }
 
     @Test
