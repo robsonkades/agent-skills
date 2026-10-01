@@ -216,6 +216,7 @@ being idempotent (`idempotency`, `delivery-semantics`).
 
 ## Primary contracts
 
+- [Spring 6.2.7 bean scopes](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/core/beans/factory-scopes.adoc): singleton is the default; scoped proxies resolve shorter-lived collaborators instead of retaining one request's instance.
 - [Spring MVC 6.2.7 binding model design](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/partials/web/web-data-binding-model-design.adoc): dedicated inputs, constructor/property binding and allowed fields.
 - [Spring MVC 6.2.7 request-body processing](https://github.com/spring-projects/spring-framework/blob/v6.2.7/spring-webmvc/src/main/java/org/springframework/web/servlet/mvc/method/annotation/RequestResponseBodyMethodProcessor.java): message conversion precedes binder validation; property binding is not the JSON deserialization mechanism.
 - [Spring MVC 6.2.7 interception](https://github.com/spring-projects/spring-framework/blob/v6.2.7/framework-docs/modules/ROOT/pages/web/webmvc/mvc-servlet/handlermapping-interceptor.adoc): interceptor security limitations and response writing before `postHandle`.

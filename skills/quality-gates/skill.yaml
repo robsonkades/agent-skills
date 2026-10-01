@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: quality-gates
-version: 1.0.5
+version: 1.0.6
 description: >-
   Choosing which automated checks a change must pass, and making them cheap enough that they
   stay switched on: matching the gate set to the change's risk rather than running everything
@@ -43,7 +43,18 @@ files:
 dependencies: []
 
 suggests:
+  - architecture-testing
+  - code-review
+  - coding-agent-discipline
+  - debugging
+  - java-null-safety
+  - java-refactoring
+  - java-test-design
+  - java-testing-strategy
   - performance-regression-ci
+  - requirements-and-acceptance
+  - tdd
+  - technical-debt-decisions
 
 capabilities:
   - reads-source

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-concurrency
-version: 1.2.4
+version: 1.2.5
 description: >-
   Entry point for designing or triaging concurrency inside one JVM. Classifies work by
   lifecycle, blocking and CPU demand, state ownership, arrival shape, ordering, cancellation,
@@ -91,7 +91,6 @@ dependencies:
 suggests:
   - container-awareness
   - latency-statistics
-  - tail-latency-analysis
 
 capabilities:
   - reads-source

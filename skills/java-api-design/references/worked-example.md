@@ -144,8 +144,8 @@ public interface IdempotentSettlementGateway extends SettlementGateway {
 
 Existing implementations and callers remain valid; implementations opt in when they can persist the
 key and result atomically enough for the documented retry semantics. The caller must reuse the key
-for the same logical operation. Idempotency owns the storage/failure protocol; this skill owns the
-compatible capability shape.
+for the same logical operation. The idempotency skill owns the storage/failure protocol;
+this skill owns the compatible capability shape.
 
 An advanced caller opts into that capability explicitly:
 

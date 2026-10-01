@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: requirements-and-acceptance
-version: 1.1.4
+version: 1.1.5
 description: >-
   Turning a request into something buildable and checkable before writing code: separating the
   requirement from the implementation someone already chose, finding the ambiguities that
@@ -43,7 +43,16 @@ files:
 dependencies: []
 
 suggests:
+  - clean-delivery-workflow
+  - code-review
+  - engineering-communication
+  - estimation-under-uncertainty
+  - java-test-design
   - java-testing-strategy
+  - latency-statistics
+  - load-testing
+  - quality-gates
+  - slo-and-alerting
 
 capabilities:
   - reads-source

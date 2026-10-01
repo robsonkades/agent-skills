@@ -11,6 +11,14 @@ refresh, compare `ApplicationRunner` (parsed arguments) with `CommandLineRunner`
 arguments); both run before Boot reports application readiness. Order only tasks with
 a real ordering requirement. Never hide an unbounded dependency retry in a runner.
 
+Keep `@PostConstruct`/init methods bounded and local to the bean. Waiting for work that
+needs other beans during initialization can deadlock creation. Initialization callbacks
+run on the raw target before its usual AOP proxy is applied; adding `@Transactional` or
+`@Async` to that callback does not establish the intended interceptor boundary. Move an
+application startup task to a runner invoking the appropriate managed collaborator,
+then verify its transaction/execution behavior. Merely submitting required work does
+not hold readiness until it finishes.
+
 An `ApplicationReadyEvent` listener is not a substitute for defining essential readiness
 or a durable background job. Choose whether failure should abort startup, keep the app
 unready with bounded recovery, or allow an explicitly degraded capability. Make the
@@ -25,6 +33,16 @@ the dependencies, stop admission, bound draining and invoke completion callbacks
 setting a shutdown timeout does not implement cancellation or cleanup. Check the
 [Framework lifecycle contract](https://docs.spring.io/spring-framework/reference/core/beans/factory-nature.html)
 for inferred destruction and lifecycle phase behavior.
+
+Handle acquisition failure before relying on destruction. If a factory or init method
+opens a resource and then throws, close that partially acquired resource on the failing
+path; `@PreDestroy` alone is insufficient. In the baseline's
+[Framework 7.0.9 bean-creation path](https://github.com/spring-projects/spring-framework/blob/v7.0.9/spring-beans/src/main/java/org/springframework/beans/factory/support/AbstractAutowireCapableBeanFactory.java),
+destruction registration follows successful initialization. Alternatively, make an
+independently owned resource a successfully initialized managed dependency, so it can be
+destroyed when a later consumer fails. Borrowing consumers must not close it themselves.
+Inject failure after acquisition, not only before it, and observe cleanup for that path
+as well as normal close; preserve the original failure if cleanup also fails.
 
 Inventory non-HTTP work too: schedulers, async tasks, consumers and owned executors can
 outlive a drained HTTP server. Test normal close, partial startup failure and interrupted

@@ -10,6 +10,42 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.11.0] — 2026-09-30
+
+### Added
+
+- `--with-suggests` for installation and explicitly named updates: include direct
+  suggestions of the requested skills together with their dependencies, without
+  recursively following suggestions. Preserve selected root versions and registries,
+  project version pins, and the update policy for installed companions.
+- Eighteen skills for Java DDD, Spring clean and hexagonal architecture, and
+  microservices design and delivery, bringing the catalog to 305 skills. DDD coverage
+  includes aggregates, value objects, use cases, domain services, repositories,
+  domain events and testing.
+- Application and isolated CLI tests for suggestion resolution, provenance, dry-run,
+  version conflicts, destination selection, integrity and locally modified files.
+  Added review reports and executable Java examples with explicit evidence limits.
+
+### Changed
+
+- Reviewed pending skills and the catalog's dependency and suggestion relationships;
+  corrected required specialist links, removed unsupported suggestions, and regenerated
+  package versions and integrity hashes.
+- Aligned DDD and Spring architecture guidance with the corrected reference project,
+  preserving its naming and package conventions while distinguishing historical
+  framework choices from the maintained examples.
+- Clarified transaction outcomes, persistence contracts, immutable snapshots, resource
+  ownership, service identity, query checkpoints and progressive-delivery evidence.
+
+### Fixed
+
+- Report update additions even when the requested version stays the same or an
+  existing skill is installed into another agent. Text and additive JSON fields expose
+  suggestion origins, actual destinations and skipped packages.
+- Reject unnamed updates with `--with-suggests` and the incompatible `--no-deps`
+  combination with actionable usage errors. Notification updates retain their
+  explicitly approved package set.
+
 ## [1.10.0] — 2026-09-29
 
 ### Changed
@@ -416,7 +452,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/robsonkades/agent-skills/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/robsonkades/agent-skills/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/robsonkades/agent-skills/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/robsonkades/agent-skills/compare/v1.7.1...v1.8.0

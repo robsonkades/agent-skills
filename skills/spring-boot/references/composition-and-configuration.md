@@ -33,9 +33,11 @@ on a deployed service. Do not echo complete environments or secret-bearing URLs.
 
 ## Keep registration, identity and scope distinct
 
-New application-owned services can use their existing `@Service`/`@Component` conventions
-with one constructor. Objects built from typed settings, third-party clients and factories
-often fit `@Bean`; avoid also component-scanning the same implementation. Multiple
+Application services that accept Spring coupling can use existing `@Service`/`@Component`
+conventions with one constructor. Where domain and application use cases must remain
+Spring-free, register them through outer configuration using `@Bean`. Objects built from
+typed settings, third-party clients and factories also fit `@Bean`; avoid also
+component-scanning the same implementation. Multiple
 constructors create a new selection decision: simplify to one when possible rather than
 adding hidden injection. Dependencies should be explicit, normally `final`.
 

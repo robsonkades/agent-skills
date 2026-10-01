@@ -1,0 +1,53 @@
+schemaVersion: 1
+
+name: service-identity-and-trust
+version: 1.0.0
+description: >-
+  Design trust between services when workloads authenticate, propagate user or tenant
+  identity, delegate authority, or change credential issuance, rotation or revocation.
+  Map trust boundaries, allowed operations and outage behavior; use when an internal
+  network, gateway header or valid token is being treated as sufficient permission.
+  Covers architecture and verification contracts, not Spring filter-chain implementation
+  or identity-provider construction.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/service-identity-and-trust
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/service-identity-and-trust
+
+keywords:
+  - architecture
+  - microservices
+  - workload-identity
+  - authorization
+  - delegation
+  - oauth2
+  - mtls
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - spring-security-for-apis
+  - java-application-security-basics
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Service Identity and Trust
+      short_description: Workload trust, delegation, tenant authorization and credential lifecycle
+      default_prompt: Use Service Identity and Trust to define and verify the authority of service calls.

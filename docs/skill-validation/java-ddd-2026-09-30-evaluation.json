@@ -1,0 +1,109 @@
+{
+  "date": "2026-09-30",
+  "mode": "explicit-skill-forward-exercises",
+  "limits": [
+    "Explicit invocation does not test automatic discovery.",
+    "No no-skill baseline; no causal improvement claim.",
+    "Actors may read only their assigned skill and the provided scenario; separation is procedural in a shared filesystem.",
+    "Answers are design/review artifacts, not changes deployed to an application."
+  ],
+  "cases": [
+    {
+      "skill": "java-ddd",
+      "scenario": "A Category CRUD module and a strict stock reservation rule need a Java model proposal following abstract UseCase/Default/Command/Output conventions.",
+      "criteria": [
+        "Preserve names and baseline",
+        "Do not impose rich model on CRUD",
+        "Discover the authoritative stock invariant and concurrent writers",
+        "No automatic microservice/CQRS migration"
+      ]
+    },
+    {
+      "skill": "java-ddd-aggregates",
+      "scenario": "Order line mutation is exposed through a getter, quantity is changed before validation, and independent orders share a strict stock bound.",
+      "criteria": [
+        "Protect child mutation and failed transition state",
+        "Do not replace strict stock bound with eventual consistency",
+        "Name concurrency enforcement beyond root Java methods",
+        "Separate aggregate from ORM graph"
+      ]
+    },
+    {
+      "skill": "java-ddd-value-objects",
+      "scenario": "InvoiceAmount uses record(BigDecimal, Currency, byte[]) and treats 1.0/1.00 as same business amount; document factory deletes non-digits.",
+      "criteria": [
+        "Consistent equality/hash and explicit scale policy",
+        "Defensive copies including accessor",
+        "Reject invalid normalization rather than silently alter identifiers",
+        "Distinguish VO from DTO/entity"
+      ]
+    },
+    {
+      "skill": "java-ddd-use-cases",
+      "scenario": "UpdateCategory executes findById.orElseGet(create), uses request tenant, and HTTP alone starts a transaction while a job calls directly.",
+      "criteria": [
+        "Preserve update absence contract",
+        "Trusted actor and tenant authorization across entries",
+        "Effective transaction boundary for required paths",
+        "Domain invariants not duplicated in orchestration"
+      ]
+    },
+    {
+      "skill": "java-ddd-domain-services",
+      "scenario": "DiscountService loads orders, calculates eligibility, charges a card and saves; inventory availability read separately must ensure no oversell.",
+      "criteria": [
+        "Separate domain policy from application I/O orchestration",
+        "Keep behavior on entity/VO if natural",
+        "Stale availability does not authorize strict reservation",
+        "Avoid adding service for simple type validation"
+      ]
+    },
+    {
+      "skill": "java-ddd-repositories",
+      "scenario": "CategoryMySQLGateway rehydrates with now, saves detached children without root conflict participation, and fake returns stored mutable object.",
+      "criteria": [
+        "Preserve actual Gateway/Repository names",
+        "Restore audit/identity/version without new events",
+        "Prove child-only concurrency with actual root mechanism",
+        "Use faithful fake snapshot or explicit unit-of-work contract"
+      ]
+    },
+    {
+      "skill": "java-ddd-domain-events",
+      "scenario": "Transactional gateway saves JPA then sends Rabbit and clears event list; one use is local recalculation, another durable billing.",
+      "criteria": [
+        "Identify precommit dual-write failure",
+        "Distinguish local versus durable effect",
+        "Atomic state/outbox only where needed plus replay handling",
+        "Rehydration and rollback do not invent or lose required facts"
+      ]
+    },
+    {
+      "skill": "java-ddd-testing",
+      "scenario": "Application fake passes despite omitted save; H2 test named MySQL and verify(save) are cited as proof of concurrency and outbox reliability.",
+      "criteria": [
+        "Expose aliasing false positive",
+        "Assert independent observable contract",
+        "No H2 production-locking claim",
+        "Real conflict/rollback and delivery failure tests with scoped limitations"
+      ]
+    }
+  ],
+  "assessment": {
+    "method": "Coordinator inspection of eight independently produced task responses against the recorded criteria",
+    "executed": 8,
+    "metRecordedCriteria": 8,
+    "productionTestsExecutedByActors": false,
+    "temporaryArtifacts": ".tmp/ddd-authoring/exercise-java-ddd*.md",
+    "observations": {
+      "java-ddd": "Retained Category CRUD, preserved use-case names, made stock ownership/import semantics unresolved, proposed shared authoritative reservation enforcement without service extraction.",
+      "java-ddd-aggregates": "Required root-controlled immutable child views, candidate validation, child-write root concurrency participation and authoritative stock enforcement; rejected display-driven aggregate expansion.",
+      "java-ddd-value-objects": "Aligned decimal equality/hash, distinguished exact numeric precision from textual scale, copied arrays both ways, rejected arbitrary character deletion and separated DTO syntax from value identity.",
+      "java-ddd-use-cases": "Preserved missing-ID/Vavr outcomes and class family; used trusted identity for HTTP/jobs, outer commit boundary and framework-independent query projection.",
+      "java-ddd-domain-services": "Kept state transitions on Order, selected a reason-bearing coupon policy, treated stale classification as insufficient evidence and required authoritative inventory commitments.",
+      "java-ddd-repositories": "Preserved Gateway/Repository names; restored persisted facts without creation events; protected incoming expected revision, tenant uniqueness and faithful snapshot fakes.",
+      "java-ddd-domain-events": "Separated required local calculations from durable billing, identified precommit and after-commit gaps, defined immutable occurrence data, event-free rehydration and recoverable publication.",
+      "java-ddd-testing": "Detected missing-save aliasing under an explicit-save contract, retained legitimate Mockito/H2 scope, proposed independent durable reads and engine-specific concurrency/recovery checks."
+    }
+  }
+}

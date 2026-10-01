@@ -1,0 +1,53 @@
+schemaVersion: 1
+name: spring-boot-hexagonal-architecture
+version: 1.0.1
+description: >-
+  Implement or repair an agreed ports-and-adapters boundary in Java 25 and Spring
+  Boot 4 applications. Use when one use case must serve multiple entry points,
+  business rules leak into adapters, or external integration needs an application-owned
+  contract. Owns port semantics, adapter substitution, Spring composition and boundary
+  verification; excludes architecture-style selection, detailed MVC and ORM mechanics.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-boot-hexagonal-architecture
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-boot-hexagonal-architecture
+keywords:
+  - java
+  - spring-boot
+  - hexagonal-architecture
+  - ports-and-adapters
+  - architecture
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/contract-fixture/README.md
+  - assets/contract-fixture/pom.xml
+  - assets/contract-fixture/src/
+dependencies: []
+suggests:
+  - layering-and-boundaries
+  - framework-coupling-and-independence
+  - spring-boot-clean-architecture
+  - domain-logic-organization
+  - spring-boot
+  - spring-boot-web
+  - spring-boot-jpa
+  - spring-transactions-and-events
+  - spring-security-for-apis
+  - spring-http-clients
+  - idempotency
+  - architecture-testing
+capabilities:
+  - reads-source
+  - runs-commands
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Boot Hexagonal Architecture
+      short_description: Semantic ports, adapters and verified Spring boundaries

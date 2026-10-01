@@ -10,6 +10,7 @@ import type { ValidationIssue } from '../domain/validation.ts';
 import { selectAgents, type AgentSelection } from './agent-selection.ts';
 import type { ApplicationContext } from './context.ts';
 import { FederationResolutionSource } from './resolution-source.ts';
+import { resolveSuggestions, type InstallResolvedSkill } from './resolve-suggestions.ts';
 import { validatePackage } from './validate-package.ts';
 import { pinsFrom, readLockfile, writeLockfile } from './workspace.ts';
 
@@ -25,6 +26,10 @@ export interface InstallOptions {
   readonly dryRun?: boolean;
   /** Install exactly what was asked for, ignoring the dependency graph. */
   readonly skipDependencies?: boolean;
+  /** Include only suggestions declared by the explicitly requested skills. */
+  readonly withSuggests?: boolean;
+  /** Update supplies ranges for already installed companions; new suggestions use normal pins. */
+  readonly suggestedVersionRanges?: Readonly<Record<string, string>>;
 }
 
 export interface InstallReport {
@@ -32,7 +37,7 @@ export interface InstallReport {
   readonly projectRoot?: string;
   /** The roots actually written to: one per agent and package kind installed. */
   readonly targets: readonly AgentTarget[];
-  readonly resolved: readonly ResolvedSkill[];
+  readonly resolved: readonly InstallResolvedSkill[];
   readonly results: readonly InstallResult[];
   /** Non-fatal findings from package validation and optional-dependency skips. */
   readonly warnings: readonly string[];
@@ -55,6 +60,17 @@ export class InstallSkills {
   }
 
   async execute(options: InstallOptions): Promise<InstallReport> {
+    if (options.withSuggests === true && options.skipDependencies === true) {
+      throw new AgentSkillsError(
+        ErrorCode.USAGE,
+        '--with-suggests cannot be combined with --no-deps',
+        {
+          hints: [
+            'Use --with-suggests without --no-deps to include the suggestions and their dependencies',
+          ],
+        },
+      );
+    }
     if (options.refs.length === 0) {
       throw new AgentSkillsError(ErrorCode.USAGE, 'No skills given', {
         hints: ['agent-skills install java-performance'],
@@ -166,13 +182,16 @@ export class InstallSkills {
     lock: Lockfile | undefined,
   ) {
     const source = new FederationResolutionSource(this.ctx.registry, options.registry);
-    return new Resolver(source).resolve(refs, {
+    const resolveOptions = {
       // A bare `name` honours the lockfile pin; `name@latest` deliberately does not.
       ...(lock === undefined ? {} : { pinned: pinsFrom(lock) }),
       ...(options.skipDependencies === undefined
         ? {}
         : { skipDependencies: options.skipDependencies }),
-    });
+    };
+    return options.withSuggests === true
+      ? resolveSuggestions(source, refs, resolveOptions, options.suggestedVersionRanges)
+      : new Resolver(source).resolve(refs, resolveOptions);
   }
 
   /**
@@ -269,3 +288,4 @@ export function formatIssue(issue: ValidationIssue): string {
 }
 
 export type { AgentSelection };
+export type { InstallResolvedSkill };

@@ -1,0 +1,3359 @@
+{
+  "date": "2026-09-30",
+  "scope": {
+    "catalogSkills": 305,
+    "contentReviewedSkills": [
+      "api-gateway-and-bff",
+      "bounded-context-design",
+      "cross-service-query-design",
+      "java-ddd",
+      "java-ddd-aggregates",
+      "java-ddd-domain-events",
+      "java-ddd-domain-services",
+      "java-ddd-repositories",
+      "java-ddd-testing",
+      "java-ddd-use-cases",
+      "java-ddd-value-objects",
+      "microservices-architecture",
+      "mvc-and-request-handling",
+      "progressive-service-delivery",
+      "service-data-ownership",
+      "service-discovery",
+      "service-identity-and-trust",
+      "spring-boot",
+      "spring-boot-clean-architecture",
+      "spring-boot-hexagonal-architecture"
+    ],
+    "linkageReview": "All manifests, named-reference scan of shipped Markdown, focused semantic review of flagged routes/prerequisites and seven possible zero-dependency hubs. Not a full technical review of every catalog skill."
+  },
+  "summary": {
+    "changedSkills": 41,
+    "contentReviewedChanged": 18,
+    "linkageChangedSkills": 26,
+    "requiredEdgesBefore": 664,
+    "requiredEdgesAfter": 753,
+    "optionalEdgesBefore": 2,
+    "optionalEdgesAfter": 2,
+    "suggestionEdgesBefore": 2256,
+    "suggestionEdgesAfter": 2306,
+    "resolvedRoots": 305,
+    "rangeOrResolutionErrors": 0,
+    "crossFieldDuplicates": 0,
+    "unresolvedConfirmedPointers": 0,
+    "indexChangedEntries": 41,
+    "indexPreservedEntries": 264
+  },
+  "method": {
+    "resolver": "Repository Resolver with an in-memory source exposing the current version of each manifest; resolve each of 305 roots independently, including required and available optional dependencies.",
+    "configuration": "No install, agent detection or real configuration writes.",
+    "referenceLimit": "Known-name matches require semantic classification; ordinary terms, local filenames and external titles are not automatic dependencies. Supplemental fenced, case-insensitive and single-word review found additional handoffs.",
+    "publication": "Versions checked against committed index by npm run check:versions; unpublished packages retain initial/already assigned version."
+  },
+  "excludedCandidates": [
+    {
+      "from": "jmh-microbenchmarks",
+      "target": "coordinated-omission",
+      "file": "SKILL.md",
+      "line": 119,
+      "reason": "Measurement caveat names the statistical phenomenon, not a skill handoff."
+    },
+    {
+      "from": "startup-cds-crac-leyden",
+      "target": "spring-boot",
+      "file": "SKILL.md",
+      "line": 11,
+      "reason": "spring-boot:build-image is a Maven plugin goal, not a reference to the spring-boot skill."
+    },
+    {
+      "from": "startup-cds-crac-leyden",
+      "target": "spring-boot",
+      "file": "SKILL.md",
+      "line": 134,
+      "reason": "spring-boot:build-image is a Maven plugin goal, not a reference to the spring-boot skill."
+    }
+  ],
+  "changes": [
+    {
+      "name": "api-gateway-and-bff",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["references/composition-and-trust.md"],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "architecture-and-performance",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.3.3",
+      "assignmentVersion": "1.3.3",
+      "version": "1.3.4",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": ["performance-methodology"],
+          "removed": []
+        },
+        "suggests": {
+          "added": [],
+          "removed": ["performance-methodology"]
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 22
+    },
+    {
+      "name": "bounded-context-design",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": [
+        "SKILL.md",
+        "references/context-maps-and-translation.md",
+        "references/java-spring-boundaries.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "clean-delivery-workflow",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.1.4",
+      "assignmentVersion": "1.1.4",
+      "version": "1.1.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": [
+            "architecture-decision-making",
+            "architecture-refactoring-paths",
+            "architecture-testing",
+            "architecture-trade-off-analysis",
+            "cancellation-and-interruption",
+            "code-review",
+            "coding-agent-discipline",
+            "completablefuture-composition",
+            "concurrency-diagnostics",
+            "concurrency-testing",
+            "debugging",
+            "distributed-systems-testing",
+            "distributed-tracing-design",
+            "domain-logic-organization",
+            "engineering-communication",
+            "estimation-under-uncertainty",
+            "executors-and-task-lifecycle",
+            "framework-coupling-and-independence",
+            "heap-dump-analysis",
+            "humble-objects-and-functional-core",
+            "idempotency",
+            "java-api-design",
+            "java-clean-code",
+            "java-code-smells",
+            "java-composition-over-inheritance",
+            "java-concurrency",
+            "java-defensive-programming",
+            "java-dependency-inversion",
+            "java-design-by-contract",
+            "java-dry-kiss-yagni",
+            "java-exception-design",
+            "java-immutability",
+            "java-law-of-demeter",
+            "java-legacy-code-testing",
+            "java-memory-model",
+            "java-performance",
+            "java-refactoring",
+            "java-tell-dont-ask",
+            "java-test-design",
+            "java-test-doubles",
+            "java-testing-strategy",
+            "jmh-microbenchmarks",
+            "jvm-gc-tuning",
+            "kubernetes-service-lifecycle",
+            "layering-and-boundaries",
+            "load-testing",
+            "metrics-and-cardinality",
+            "performance-methodology",
+            "scoped-values",
+            "slo-and-alerting",
+            "structured-concurrency",
+            "structured-logging",
+            "tdd",
+            "technical-debt-decisions",
+            "thread-sizing-and-virtual-threads",
+            "timeouts-and-deadlines",
+            "virtual-thread-migration",
+            "circuit-breakers",
+            "java-cohesion-coupling",
+            "java-null-safety",
+            "java-optional",
+            "java-solid",
+            "rate-limiting-and-load-shedding",
+            "retries-and-backoff"
+          ],
+          "removed": []
+        },
+        "suggests": {
+          "added": ["skill-engineering"],
+          "removed": ["debugging"]
+        }
+      },
+      "installedPackagesBefore": 3,
+      "installedPackagesAfter": 172
+    },
+    {
+      "name": "code-review",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.0.4",
+      "assignmentVersion": "1.0.4",
+      "version": "1.0.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": ["architecture-testing", "java-null-safety"],
+          "removed": []
+        },
+        "suggests": {
+          "added": ["java-solid"],
+          "removed": ["architecture-testing", "java-null-safety"]
+        }
+      },
+      "installedPackagesBefore": 2,
+      "installedPackagesAfter": 19
+    },
+    {
+      "name": "cross-service-query-design",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": [
+        "SKILL.md",
+        "references/projection-lifecycle.md",
+        "references/query-contracts.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "failure-models",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.3.4",
+      "assignmentVersion": "1.3.4",
+      "version": "1.3.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [
+            "consistency-models",
+            "delivery-semantics",
+            "distributed-failure-catalogue",
+            "distributed-locks-and-leases",
+            "kubernetes-service-lifecycle"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "feature-contract-definition",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.0.4",
+      "assignmentVersion": "1.0.4",
+      "version": "1.0.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["feature-execution", "feature-solution-analysis"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 7,
+      "installedPackagesAfter": 9
+    },
+    {
+      "name": "feature-implementation-plan",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.1.4",
+      "assignmentVersion": "1.1.4",
+      "version": "1.1.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["feature-progress-tracking"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "feature-progress-tracking",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.2.4",
+      "assignmentVersion": "1.2.4",
+      "version": "1.2.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["feature-decomposition"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "gof-builder",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.2.4",
+      "assignmentVersion": "1.2.4",
+      "version": "1.2.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [
+            "gof-abstract-factory",
+            "gof-factory-method",
+            "gof-prototype",
+            "java-fluent-apis"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-api-design",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.2.4",
+      "assignmentVersion": "1.2.4",
+      "version": "1.2.5",
+      "changedFiles": ["references/worked-example.md", "skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [
+            "idempotency",
+            "java-exception-design",
+            "java-fluent-apis",
+            "java-object-construction",
+            "java-resource-management",
+            "rpc-and-api-contracts"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-ddd",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": [
+            "java-ddd-aggregates",
+            "java-ddd-value-objects",
+            "java-ddd-use-cases",
+            "java-ddd-domain-services",
+            "java-ddd-repositories",
+            "java-ddd-domain-events",
+            "java-ddd-testing"
+          ],
+          "removed": []
+        },
+        "suggests": {
+          "added": [],
+          "removed": [
+            "java-ddd-aggregates",
+            "java-ddd-value-objects",
+            "java-ddd-use-cases",
+            "java-ddd-domain-services",
+            "java-ddd-repositories",
+            "java-ddd-domain-events",
+            "java-ddd-testing"
+          ]
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 8
+    },
+    {
+      "name": "java-ddd-aggregates",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "references/java-lifecycle-pattern.md"],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-ddd-domain-events",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "references/event-lifecycle.md", "references/verification.md"],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-ddd-domain-services",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "references/policy-and-factory-contracts.md"],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-ddd-repositories",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": [
+        "references/gateway-contracts.md",
+        "references/reconstitution-and-concurrency.md",
+        "references/verification.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-ddd-testing",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": [
+        "SKILL.md",
+        "references/evaluation-cases.md",
+        "references/persistence-and-delivery.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-ddd-use-cases",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": [
+        "SKILL.md",
+        "references/atomic-outcomes.md",
+        "references/submission-slice.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-memory-model",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.3.4",
+      "assignmentVersion": "1.3.4",
+      "version": "1.3.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["concurrency-diagnostics"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "java-object-construction",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.3.4",
+      "assignmentVersion": "1.3.4",
+      "version": "1.3.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": ["java-fluent-apis"],
+          "removed": []
+        },
+        "suggests": {
+          "added": [
+            "java-composition-over-inheritance",
+            "java-dependency-inversion",
+            "java-immutability",
+            "java-memory-model",
+            "java-reference-types-and-leaks",
+            "java-thread-safety-contracts",
+            "distributed-locks-and-leases",
+            "graalvm-native-image",
+            "leader-election",
+            "rpc-and-api-contracts",
+            "session-state-strategies",
+            "startup-cds-crac-leyden"
+          ],
+          "removed": ["java-fluent-apis"]
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 2
+    },
+    {
+      "name": "jdk-upgrade-impact",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.2.4",
+      "assignmentVersion": "1.2.4",
+      "version": "1.2.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["jvm-gc-tuning"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 25,
+      "installedPackagesAfter": 25
+    },
+    {
+      "name": "jvm-bytecode",
+      "preexistingUncommitted": false,
+      "publishedVersion": "2.1.4",
+      "assignmentVersion": "2.1.4",
+      "version": "2.1.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [],
+          "removed": ["jvm-class-loading"]
+        }
+      },
+      "installedPackagesBefore": 3,
+      "installedPackagesAfter": 3
+    },
+    {
+      "name": "latency-statistics",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.4.4",
+      "assignmentVersion": "1.4.4",
+      "version": "1.4.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [
+            "coordinated-omission",
+            "littles-law-and-queueing",
+            "load-testing",
+            "performance-methodology",
+            "tail-latency-analysis"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 2,
+      "installedPackagesAfter": 2
+    },
+    {
+      "name": "littles-law-and-queueing",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.5.4",
+      "assignmentVersion": "1.5.4",
+      "version": "1.5.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["universal-scalability-law", "capacity-planning"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 3,
+      "installedPackagesAfter": 3
+    },
+    {
+      "name": "microservices-architecture",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "references/integrating-decisions.md", "skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": [
+            "rpc-and-api-contracts",
+            "schema-evolution-and-compatibility",
+            "distributed-transactions-and-sagas",
+            "idempotency",
+            "distributed-systems-testing",
+            "slo-and-alerting"
+          ],
+          "removed": []
+        },
+        "suggests": {
+          "added": [],
+          "removed": [
+            "rpc-and-api-contracts",
+            "schema-evolution-and-compatibility",
+            "distributed-transactions-and-sagas",
+            "idempotency",
+            "distributed-systems-testing",
+            "slo-and-alerting"
+          ]
+        }
+      },
+      "installedPackagesBefore": 8,
+      "installedPackagesAfter": 31
+    },
+    {
+      "name": "mvc-and-request-handling",
+      "preexistingUncommitted": true,
+      "publishedVersion": "1.3.4",
+      "assignmentVersion": "1.3.5",
+      "version": "1.3.5",
+      "changedFiles": [
+        "SKILL.md",
+        "references/application-controller.md",
+        "references/page-vs-front-controller.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 42,
+      "installedPackagesAfter": 42
+    },
+    {
+      "name": "performance-methodology",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.4.4",
+      "assignmentVersion": "1.4.4",
+      "version": "1.4.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["jfr-and-async-profiler"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 21,
+      "installedPackagesAfter": 21
+    },
+    {
+      "name": "progressive-service-delivery",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "references/cohort-evidence-and-gates.md"],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "quality-gates",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.0.5",
+      "assignmentVersion": "1.0.5",
+      "version": "1.0.6",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [
+            "architecture-testing",
+            "code-review",
+            "coding-agent-discipline",
+            "debugging",
+            "java-null-safety",
+            "java-refactoring",
+            "java-test-design",
+            "java-testing-strategy",
+            "requirements-and-acceptance",
+            "tdd",
+            "technical-debt-decisions"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "queueing-models",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.3.4",
+      "assignmentVersion": "1.3.4",
+      "version": "1.3.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [],
+          "removed": ["universal-scalability-law"]
+        }
+      },
+      "installedPackagesBefore": 8,
+      "installedPackagesAfter": 8
+    },
+    {
+      "name": "refactoring-automation",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.1.4",
+      "assignmentVersion": "1.1.4",
+      "version": "1.1.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": ["java-refactoring"],
+          "removed": []
+        },
+        "suggests": {
+          "added": [
+            "architecture-refactoring-paths",
+            "java-code-smells",
+            "quality-gates",
+            "technical-debt-decisions"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 12
+    },
+    {
+      "name": "requirements-and-acceptance",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.1.4",
+      "assignmentVersion": "1.1.4",
+      "version": "1.1.5",
+      "changedFiles": ["references/acceptance-criteria.md", "skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": [
+            "clean-delivery-workflow",
+            "code-review",
+            "engineering-communication",
+            "estimation-under-uncertainty",
+            "java-test-design",
+            "latency-statistics",
+            "load-testing",
+            "quality-gates",
+            "slo-and-alerting"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "service-discovery",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": [
+        "references/java-snapshot-resolver.md",
+        "references/source-and-client-semantics.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "service-identity-and-trust",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.0",
+      "version": "1.0.0",
+      "changedFiles": ["SKILL.md", "references/protocol-and-lifecycle.md"],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "simd-and-vector-api",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.2.4",
+      "assignmentVersion": "1.2.4",
+      "version": "1.2.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["c2-sea-of-nodes", "jmh-advanced"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 9,
+      "installedPackagesAfter": 9
+    },
+    {
+      "name": "spring-boot",
+      "preexistingUncommitted": true,
+      "publishedVersion": "1.2.0",
+      "assignmentVersion": "1.2.1",
+      "version": "1.2.1",
+      "changedFiles": [
+        "SKILL.md",
+        "references/composition-and-configuration.md",
+        "references/operations-and-events.md",
+        "references/verification.md",
+        "skill.yaml"
+      ],
+      "links": {
+        "dependencies": {
+          "added": [
+            "spring-boot-web",
+            "spring-boot-jpa",
+            "spring-security-for-apis",
+            "spring-transactions-and-events",
+            "spring-boot-testing",
+            "spring-boot-observability"
+          ],
+          "removed": []
+        },
+        "suggests": {
+          "added": [],
+          "removed": [
+            "spring-boot-web",
+            "spring-boot-jpa",
+            "spring-transactions-and-events",
+            "spring-boot-testing",
+            "spring-boot-observability",
+            "spring-security-for-apis"
+          ]
+        }
+      },
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 7
+    },
+    {
+      "name": "spring-boot-clean-architecture",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.1",
+      "version": "1.0.1",
+      "changedFiles": [
+        "assets/boundary-fixture/README.md",
+        "assets/boundary-fixture/src/test/java/example/clean/WiringTest.java",
+        "references/results-and-presentation.md",
+        "references/verification.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "spring-boot-hexagonal-architecture",
+      "preexistingUncommitted": true,
+      "publishedVersion": null,
+      "assignmentVersion": "1.0.1",
+      "version": "1.0.1",
+      "changedFiles": [
+        "assets/contract-fixture/README.md",
+        "assets/contract-fixture/src/test/java/example/hexagonal/IntegrationTest.java",
+        "assets/contract-fixture/src/test/java/example/hexagonal/application/OrderStoreContract.java",
+        "assets/contract-fixture/src/test/java/example/hexagonal/application/UseCaseTest.java",
+        "references/spring-composition-and-migration.md"
+      ],
+      "links": {},
+      "installedPackagesBefore": 1,
+      "installedPackagesAfter": 1
+    },
+    {
+      "name": "structured-concurrency",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.3.4",
+      "assignmentVersion": "1.3.4",
+      "version": "1.3.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "suggests": {
+          "added": ["completablefuture-composition", "scoped-values"],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 9,
+      "installedPackagesAfter": 9
+    },
+    {
+      "name": "timeouts-and-deadlines",
+      "preexistingUncommitted": false,
+      "publishedVersion": "1.1.4",
+      "assignmentVersion": "1.1.4",
+      "version": "1.1.5",
+      "changedFiles": ["skill.yaml"],
+      "links": {
+        "dependencies": {
+          "added": ["latency-statistics"],
+          "removed": []
+        },
+        "suggests": {
+          "added": [
+            "retries-and-backoff",
+            "tail-latency-analysis",
+            "circuit-breakers",
+            "connection-pool-sizing",
+            "littles-law-and-queueing"
+          ],
+          "removed": []
+        }
+      },
+      "installedPackagesBefore": 2,
+      "installedPackagesAfter": 4
+    }
+  ],
+  "catalog": [
+    {
+      "name": "adapter-sidecar-pattern",
+      "version": "2.3.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "allocation-profiling",
+      "version": "2.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 23
+    },
+    {
+      "name": "ambassador-pattern",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 3
+    },
+    {
+      "name": "api-gateway-and-bff",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "architecture-and-performance",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 21,
+      "installedPackages": 22
+    },
+    {
+      "name": "architecture-characteristics",
+      "version": "1.2.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "architecture-coupling-and-quanta",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 15
+    },
+    {
+      "name": "architecture-decision-making",
+      "version": "2.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 16
+    },
+    {
+      "name": "architecture-fitness-functions",
+      "version": "1.3.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "architecture-refactoring-paths",
+      "version": "1.4.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 15,
+      "installedPackages": 1
+    },
+    {
+      "name": "architecture-testing",
+      "version": "1.3.4",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 16
+    },
+    {
+      "name": "architecture-trade-off-analysis",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "async-profiler-advanced",
+      "version": "1.3.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 25
+    },
+    {
+      "name": "blocking-and-nonblocking-io",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 7
+    },
+    {
+      "name": "bounded-context-design",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "c2-sea-of-nodes",
+      "version": "1.4.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 7
+    },
+    {
+      "name": "cache-sharding-and-replication",
+      "version": "1.3.5",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 10
+    },
+    {
+      "name": "caching-strategies",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 1,
+      "suggestions": 4,
+      "installedPackages": 5
+    },
+    {
+      "name": "cancellation-and-interruption",
+      "version": "1.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 5
+    },
+    {
+      "name": "capacity-planning",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 9
+    },
+    {
+      "name": "cascading-failures",
+      "version": "1.3.4",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 13
+    },
+    {
+      "name": "change-data-capture-operations",
+      "version": "1.0.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "circuit-breakers",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 8
+    },
+    {
+      "name": "clean-delivery-workflow",
+      "version": "1.1.5",
+      "dependencies": 66,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 172
+    },
+    {
+      "name": "code-cache-segments",
+      "version": "2.1.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 4
+    },
+    {
+      "name": "code-review",
+      "version": "1.0.5",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 17,
+      "installedPackages": 19
+    },
+    {
+      "name": "coding-agent-discipline",
+      "version": "1.0.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "collaborative-feature-definition",
+      "version": "1.1.4",
+      "dependencies": 9,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 190
+    },
+    {
+      "name": "compilation-and-inlining-logs",
+      "version": "2.0.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 4
+    },
+    {
+      "name": "completablefuture-composition",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 10
+    },
+    {
+      "name": "component-and-release-boundaries",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 3
+    },
+    {
+      "name": "concurrency-diagnostics",
+      "version": "1.3.4",
+      "dependencies": 17,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 42
+    },
+    {
+      "name": "concurrency-limiting-and-bulkheads",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 6
+    },
+    {
+      "name": "concurrency-testing",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 7
+    },
+    {
+      "name": "concurrent-collections-and-synchronizers",
+      "version": "1.2.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 10
+    },
+    {
+      "name": "connection-pool-sizing",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 4
+    },
+    {
+      "name": "consensus-and-quorums",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 3
+    },
+    {
+      "name": "consistency-models",
+      "version": "1.3.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 2
+    },
+    {
+      "name": "consistent-hashing",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "container-awareness",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 3
+    },
+    {
+      "name": "continuous-profiling",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 27
+    },
+    {
+      "name": "coordinated-omission",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 3
+    },
+    {
+      "name": "cpu-cache-and-numa",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 4
+    },
+    {
+      "name": "cross-service-query-design",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 13,
+      "installedPackages": 1
+    },
+    {
+      "name": "data-source-patterns",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 28
+    },
+    {
+      "name": "database-bulk-loading",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 4
+    },
+    {
+      "name": "database-engine-selection-and-migration",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 17
+    },
+    {
+      "name": "database-index-design",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 0,
+      "installedPackages": 2
+    },
+    {
+      "name": "database-performance",
+      "version": "1.0.5",
+      "dependencies": 13,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 46
+    },
+    {
+      "name": "debugging",
+      "version": "1.1.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "delivery-semantics",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 2
+    },
+    {
+      "name": "deoptimization",
+      "version": "2.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 3
+    },
+    {
+      "name": "distributed-aggregation-and-barriers",
+      "version": "1.3.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 2
+    },
+    {
+      "name": "distributed-failure-catalogue",
+      "version": "1.3.4",
+      "dependencies": 14,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 31
+    },
+    {
+      "name": "distributed-locks-and-leases",
+      "version": "1.3.4",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 12
+    },
+    {
+      "name": "distributed-systems",
+      "version": "1.3.4",
+      "dependencies": 45,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 97
+    },
+    {
+      "name": "distributed-systems-testing",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 25,
+      "installedPackages": 17
+    },
+    {
+      "name": "distributed-tracing-design",
+      "version": "1.3.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 29
+    },
+    {
+      "name": "distributed-transactions-and-sagas",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 4
+    },
+    {
+      "name": "distribution-boundaries",
+      "version": "1.2.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 14,
+      "installedPackages": 11
+    },
+    {
+      "name": "domain-logic-organization",
+      "version": "1.3.5",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 27
+    },
+    {
+      "name": "ebpf-for-jvm",
+      "version": "2.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 3
+    },
+    {
+      "name": "engineering-communication",
+      "version": "1.1.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "enterprise-application-architecture",
+      "version": "1.2.6",
+      "dependencies": 31,
+      "optionalDependencies": 0,
+      "suggestions": 18,
+      "installedPackages": 79
+    },
+    {
+      "name": "enterprise-architecture-smells",
+      "version": "1.2.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 9
+    },
+    {
+      "name": "enterprise-base-patterns",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 16,
+      "installedPackages": 7
+    },
+    {
+      "name": "enterprise-transactions",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 5
+    },
+    {
+      "name": "epsilon-and-shenandoah-internals",
+      "version": "2.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 22
+    },
+    {
+      "name": "escape-analysis-internals",
+      "version": "2.0.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 8
+    },
+    {
+      "name": "estimation-under-uncertainty",
+      "version": "1.1.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "event-driven-architecture",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 8
+    },
+    {
+      "name": "event-sourcing",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 13,
+      "installedPackages": 10
+    },
+    {
+      "name": "executors-and-task-lifecycle",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 6
+    },
+    {
+      "name": "failure-models",
+      "version": "1.3.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "false-sharing-and-contended",
+      "version": "1.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 5
+    },
+    {
+      "name": "feature-architecture-analysis",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 16
+    },
+    {
+      "name": "feature-context-analysis",
+      "version": "1.1.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "feature-contract-definition",
+      "version": "1.0.5",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 9
+    },
+    {
+      "name": "feature-decision-analysis",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 17
+    },
+    {
+      "name": "feature-decomposition",
+      "version": "1.1.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "feature-discovery",
+      "version": "1.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 2
+    },
+    {
+      "name": "feature-engineering",
+      "version": "1.1.5",
+      "dependencies": 22,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 189
+    },
+    {
+      "name": "feature-execution",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 3
+    },
+    {
+      "name": "feature-feasibility-experiment",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 2
+    },
+    {
+      "name": "feature-implementation-plan",
+      "version": "1.1.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "feature-progress-tracking",
+      "version": "1.2.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "feature-readiness-review",
+      "version": "1.2.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 21
+    },
+    {
+      "name": "feature-requirement-clarification",
+      "version": "1.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 2
+    },
+    {
+      "name": "feature-risk-analysis",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 3
+    },
+    {
+      "name": "feature-scope-analysis",
+      "version": "1.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 2
+    },
+    {
+      "name": "feature-solution-analysis",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 18
+    },
+    {
+      "name": "flame-graph-analysis",
+      "version": "1.4.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 23
+    },
+    {
+      "name": "forkjoinpool-and-work-stealing",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 6
+    },
+    {
+      "name": "framework-coupling-and-independence",
+      "version": "1.2.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 20,
+      "installedPackages": 17
+    },
+    {
+      "name": "g1-concurrent-marking",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 15
+    },
+    {
+      "name": "g1-internals",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 14
+    },
+    {
+      "name": "g1-tuning-for-slo",
+      "version": "2.1.4",
+      "dependencies": 7,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 55
+    },
+    {
+      "name": "gc-fundamentals",
+      "version": "1.4.4",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 17,
+      "installedPackages": 13
+    },
+    {
+      "name": "gc-log-analysis",
+      "version": "1.4.4",
+      "dependencies": 9,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 19
+    },
+    {
+      "name": "gof-abstract-factory",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-adapter",
+      "version": "1.3.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 16,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-bridge",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 6
+    },
+    {
+      "name": "gof-builder",
+      "version": "1.2.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-chain-of-responsibility",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 16,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-command",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 13,
+      "installedPackages": 2
+    },
+    {
+      "name": "gof-composite",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-decorator",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 18,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-facade",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 16,
+      "installedPackages": 3
+    },
+    {
+      "name": "gof-factory-method",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-flyweight",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 14,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-interpreter",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-iterator",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-mediator",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-memento",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-observer",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 18,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-pattern-antipatterns",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 23,
+      "installedPackages": 39
+    },
+    {
+      "name": "gof-pattern-confusion",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 18,
+      "installedPackages": 39
+    },
+    {
+      "name": "gof-pattern-selection",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 23,
+      "installedPackages": 39
+    },
+    {
+      "name": "gof-pattern-thinking",
+      "version": "1.3.4",
+      "dependencies": 23,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 38
+    },
+    {
+      "name": "gof-patterns-and-distribution",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 29,
+      "installedPackages": 39
+    },
+    {
+      "name": "gof-patterns-in-modern-java",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 21,
+      "installedPackages": 39
+    },
+    {
+      "name": "gof-prototype",
+      "version": "1.2.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 2
+    },
+    {
+      "name": "gof-proxy",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 19,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-singleton",
+      "version": "1.2.4",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 15
+    },
+    {
+      "name": "gof-state",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-strategy",
+      "version": "1.2.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 4
+    },
+    {
+      "name": "gof-template-method",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "gof-visitor",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "graalvm-jit",
+      "version": "2.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 8
+    },
+    {
+      "name": "graalvm-native-image",
+      "version": "2.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 9
+    },
+    {
+      "name": "grpc-http2-service-mesh-performance",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 22
+    },
+    {
+      "name": "heap-dump-analysis",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 14
+    },
+    {
+      "name": "hot-partitions-and-rebalancing",
+      "version": "1.3.5",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 11
+    },
+    {
+      "name": "humble-objects-and-functional-core",
+      "version": "1.2.3",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 23,
+      "installedPackages": 35
+    },
+    {
+      "name": "idempotency",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 3
+    },
+    {
+      "name": "incident-evidence-capture",
+      "version": "1.3.4",
+      "dependencies": 11,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 52
+    },
+    {
+      "name": "inheritance-mapping-strategies",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 2
+    },
+    {
+      "name": "io-uring-and-zero-copy",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 4
+    },
+    {
+      "name": "java-annotations",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-api-design",
+      "version": "1.2.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-application-security-basics",
+      "version": "1.3.5",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 5
+    },
+    {
+      "name": "java-build-and-dependencies",
+      "version": "1.0.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-clean-code",
+      "version": "2.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-code-smells",
+      "version": "1.4.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 13
+    },
+    {
+      "name": "java-cohesion-coupling",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-composition-over-inheritance",
+      "version": "1.2.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-concurrency",
+      "version": "1.2.4",
+      "dependencies": 25,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 54
+    },
+    {
+      "name": "java-date-and-time",
+      "version": "1.0.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd",
+      "version": "1.0.0",
+      "dependencies": 7,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 8
+    },
+    {
+      "name": "java-ddd-aggregates",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd-domain-events",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd-domain-services",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd-repositories",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd-testing",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd-use-cases",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-ddd-value-objects",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-defensive-programming",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-dependency-inversion",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-design-by-contract",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-dry-kiss-yagni",
+      "version": "1.2.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-enums",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 13,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-exception-design",
+      "version": "1.3.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-fluent-apis",
+      "version": "1.2.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-generics",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-immutability",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-lambdas-and-functional-interfaces",
+      "version": "1.3.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-law-of-demeter",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 2
+    },
+    {
+      "name": "java-legacy-code-testing",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 19
+    },
+    {
+      "name": "java-memory-model",
+      "version": "1.3.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-null-safety",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-numeric-types",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-object-construction",
+      "version": "1.3.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 14,
+      "installedPackages": 2
+    },
+    {
+      "name": "java-object-contracts",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 14,
+      "installedPackages": 2
+    },
+    {
+      "name": "java-optional",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-performance",
+      "version": "2.6.4",
+      "dependencies": 64,
+      "optionalDependencies": 0,
+      "suggestions": 33,
+      "installedPackages": 127
+    },
+    {
+      "name": "java-refactoring",
+      "version": "1.4.4",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 23,
+      "installedPackages": 11
+    },
+    {
+      "name": "java-reference-types-and-leaks",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 7
+    },
+    {
+      "name": "java-reflection-and-method-handles",
+      "version": "1.4.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-resource-management",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 14,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-serialization-hardening",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-solid",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 2
+    },
+    {
+      "name": "java-streams",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-strings-and-text",
+      "version": "1.2.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-tell-dont-ask",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-test-design",
+      "version": "1.0.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 9
+    },
+    {
+      "name": "java-test-doubles",
+      "version": "1.0.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 2
+    },
+    {
+      "name": "java-testing-strategy",
+      "version": "1.0.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 13,
+      "installedPackages": 1
+    },
+    {
+      "name": "java-thread-safety-contracts",
+      "version": "1.2.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "jdk-upgrade-impact",
+      "version": "1.2.5",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 25
+    },
+    {
+      "name": "jfr-advanced",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 23
+    },
+    {
+      "name": "jfr-and-async-profiler",
+      "version": "1.4.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 22
+    },
+    {
+      "name": "jhsdb-and-core-dumps",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 15
+    },
+    {
+      "name": "jit-compilation",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 2
+    },
+    {
+      "name": "jit-inlining-and-escape-analysis",
+      "version": "2.1.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 3
+    },
+    {
+      "name": "jmh-advanced",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 24
+    },
+    {
+      "name": "jmh-microbenchmarks",
+      "version": "1.4.3",
+      "dependencies": 2,
+      "optionalDependencies": 1,
+      "suggestions": 4,
+      "installedPackages": 23
+    },
+    {
+      "name": "jni-and-ffm",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 21
+    },
+    {
+      "name": "jvm-bytecode",
+      "version": "2.1.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 3
+    },
+    {
+      "name": "jvm-class-loading",
+      "version": "1.4.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 2
+    },
+    {
+      "name": "jvm-gc-tuning",
+      "version": "2.5.4",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 20
+    },
+    {
+      "name": "jvm-memory-regions",
+      "version": "1.6.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "jvm-ml-inference",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 22
+    },
+    {
+      "name": "jvm-performance-review",
+      "version": "1.3.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "kafka-consumers-in-java",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 4
+    },
+    {
+      "name": "kubernetes-service-lifecycle",
+      "version": "1.3.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "latency-statistics",
+      "version": "1.4.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 2
+    },
+    {
+      "name": "layering-and-boundaries",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 6
+    },
+    {
+      "name": "leader-election",
+      "version": "1.3.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 13
+    },
+    {
+      "name": "legacy-enterprise-modernization",
+      "version": "1.2.3",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 18
+    },
+    {
+      "name": "linux-for-jvm",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 2
+    },
+    {
+      "name": "littles-law-and-queueing",
+      "version": "1.5.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 3
+    },
+    {
+      "name": "load-balancing-and-routing",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 17
+    },
+    {
+      "name": "load-testing",
+      "version": "1.4.3",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 5
+    },
+    {
+      "name": "load-testing-advanced",
+      "version": "1.3.3",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 6
+    },
+    {
+      "name": "lock-free-patterns",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 3
+    },
+    {
+      "name": "lock-inflation",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 2
+    },
+    {
+      "name": "low-latency-jvm",
+      "version": "1.0.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 22
+    },
+    {
+      "name": "message-ordering-and-partitioning",
+      "version": "1.3.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 3
+    },
+    {
+      "name": "metadata-mapping",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 7
+    },
+    {
+      "name": "metaspace-internals",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 3
+    },
+    {
+      "name": "metrics-and-cardinality",
+      "version": "1.3.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "microservices-architecture",
+      "version": "1.0.0",
+      "dependencies": 13,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 31
+    },
+    {
+      "name": "mvc-and-request-handling",
+      "version": "1.3.5",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 42
+    },
+    {
+      "name": "mysql-innodb-performance",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 2
+    },
+    {
+      "name": "numa-and-cpu-affinity",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 5
+    },
+    {
+      "name": "object-layout-and-footprint",
+      "version": "1.4.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 5
+    },
+    {
+      "name": "off-heap-memory",
+      "version": "1.3.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 2
+    },
+    {
+      "name": "offline-concurrency-control",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 6
+    },
+    {
+      "name": "online-database-schema-migrations",
+      "version": "1.1.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "opentelemetry-performance",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 3
+    },
+    {
+      "name": "orm-behavioral-patterns",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 29
+    },
+    {
+      "name": "orm-fetch-and-batching-performance",
+      "version": "1.2.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 2
+    },
+    {
+      "name": "orm-structural-mapping",
+      "version": "1.3.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "pattern-selection-and-composition",
+      "version": "1.3.5",
+      "dependencies": 4,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 29
+    },
+    {
+      "name": "patterns-and-modern-frameworks",
+      "version": "1.2.4",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 13,
+      "installedPackages": 44
+    },
+    {
+      "name": "pause-attribution",
+      "version": "1.4.4",
+      "dependencies": 17,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 51
+    },
+    {
+      "name": "performance-engineering-program",
+      "version": "1.0.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 22
+    },
+    {
+      "name": "performance-incident-response",
+      "version": "1.0.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 53
+    },
+    {
+      "name": "performance-methodology",
+      "version": "1.4.5",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 21
+    },
+    {
+      "name": "performance-regression-ci",
+      "version": "1.1.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 27
+    },
+    {
+      "name": "poison-messages-and-dlq",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 5
+    },
+    {
+      "name": "postgresql-performance",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 2
+    },
+    {
+      "name": "progressive-service-delivery",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "project-valhalla",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 6
+    },
+    {
+      "name": "quality-gates",
+      "version": "1.0.6",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "query-objects-and-specifications",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 29
+    },
+    {
+      "name": "queueing-models",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 8
+    },
+    {
+      "name": "rate-limiting-and-load-shedding",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 15,
+      "installedPackages": 2
+    },
+    {
+      "name": "reactive-and-virtual-thread-selection",
+      "version": "1.3.5",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 9
+    },
+    {
+      "name": "reactive-backpressure",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 6
+    },
+    {
+      "name": "reading-jit-assembly",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 8
+    },
+    {
+      "name": "refactoring-automation",
+      "version": "1.1.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 12
+    },
+    {
+      "name": "remote-facade-and-dto",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 12
+    },
+    {
+      "name": "repository-pattern",
+      "version": "1.3.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 16,
+      "installedPackages": 1
+    },
+    {
+      "name": "requirements-and-acceptance",
+      "version": "1.1.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "retries-and-backoff",
+      "version": "1.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 7
+    },
+    {
+      "name": "rpc-and-api-contracts",
+      "version": "1.1.3",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 7
+    },
+    {
+      "name": "safepoints",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 14
+    },
+    {
+      "name": "scatter-gather",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 10
+    },
+    {
+      "name": "schema-evolution-and-compatibility",
+      "version": "1.2.5",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "scoped-values",
+      "version": "1.3.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 10
+    },
+    {
+      "name": "serialization-performance",
+      "version": "1.1.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 24
+    },
+    {
+      "name": "service-data-ownership",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 11,
+      "installedPackages": 1
+    },
+    {
+      "name": "service-discovery",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "service-identity-and-trust",
+      "version": "1.0.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 1
+    },
+    {
+      "name": "service-layer-design",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 6
+    },
+    {
+      "name": "session-state-strategies",
+      "version": "1.1.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 40
+    },
+    {
+      "name": "sharding-and-partitioning",
+      "version": "1.3.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 8
+    },
+    {
+      "name": "sidecar-pattern",
+      "version": "1.3.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 2
+    },
+    {
+      "name": "simd-and-vector-api",
+      "version": "1.2.5",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 9
+    },
+    {
+      "name": "skill-engineering",
+      "version": "1.0.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 0,
+      "installedPackages": 1
+    },
+    {
+      "name": "slo-and-alerting",
+      "version": "1.4.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 4
+    },
+    {
+      "name": "spring-boot",
+      "version": "1.2.1",
+      "dependencies": 6,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 7
+    },
+    {
+      "name": "spring-boot-clean-architecture",
+      "version": "1.0.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-boot-hexagonal-architecture",
+      "version": "1.0.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-boot-jpa",
+      "version": "1.2.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-boot-observability",
+      "version": "1.1.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-boot-testing",
+      "version": "1.1.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-boot-web",
+      "version": "1.2.1",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-http-clients",
+      "version": "1.1.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 10,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-security-for-apis",
+      "version": "1.2.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 1
+    },
+    {
+      "name": "spring-transactions-and-events",
+      "version": "1.1.0",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 7,
+      "installedPackages": 1
+    },
+    {
+      "name": "sql-query-performance",
+      "version": "1.2.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 1
+    },
+    {
+      "name": "sql-server-performance",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 2
+    },
+    {
+      "name": "startup-cds-crac-leyden",
+      "version": "2.1.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 4
+    },
+    {
+      "name": "stateless-service-design",
+      "version": "1.2.4",
+      "dependencies": 5,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 16
+    },
+    {
+      "name": "stream-processing-runtime-performance",
+      "version": "1.0.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 5
+    },
+    {
+      "name": "streaming-pipeline-topologies",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 4
+    },
+    {
+      "name": "structured-concurrency",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 9
+    },
+    {
+      "name": "structured-logging",
+      "version": "1.4.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 1
+    },
+    {
+      "name": "tail-latency-analysis",
+      "version": "1.3.3",
+      "dependencies": 10,
+      "optionalDependencies": 0,
+      "suggestions": 21,
+      "installedPackages": 59
+    },
+    {
+      "name": "task-queues-and-competing-consumers",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 12,
+      "installedPackages": 4
+    },
+    {
+      "name": "tcp-tuning",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 3
+    },
+    {
+      "name": "tdd",
+      "version": "1.0.3",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 10
+    },
+    {
+      "name": "technical-debt-decisions",
+      "version": "1.1.4",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 9,
+      "installedPackages": 1
+    },
+    {
+      "name": "thread-sizing-and-virtual-threads",
+      "version": "1.3.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 6,
+      "installedPackages": 5
+    },
+    {
+      "name": "timeouts-and-deadlines",
+      "version": "1.1.5",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 5,
+      "installedPackages": 4
+    },
+    {
+      "name": "unified-logging",
+      "version": "1.2.3",
+      "dependencies": 0,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 1
+    },
+    {
+      "name": "universal-scalability-law",
+      "version": "1.2.4",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 3,
+      "installedPackages": 7
+    },
+    {
+      "name": "varhandles-and-memory-ordering",
+      "version": "1.2.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 1,
+      "installedPackages": 2
+    },
+    {
+      "name": "view-and-representation-patterns",
+      "version": "1.3.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 8,
+      "installedPackages": 43
+    },
+    {
+      "name": "virtual-thread-migration",
+      "version": "1.3.4",
+      "dependencies": 3,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 8
+    },
+    {
+      "name": "virtual-threads-internals",
+      "version": "1.1.3",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 4,
+      "installedPackages": 6
+    },
+    {
+      "name": "zgc-and-shenandoah",
+      "version": "1.3.3",
+      "dependencies": 2,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 21
+    },
+    {
+      "name": "zgc-generational-internals",
+      "version": "1.3.4",
+      "dependencies": 1,
+      "optionalDependencies": 0,
+      "suggestions": 2,
+      "installedPackages": 22
+    }
+  ]
+}

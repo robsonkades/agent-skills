@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: feature-implementation-plan
-version: 1.1.4
+version: 1.1.5
 description: >-
   Assembling everything established about a feature into one document another engineer could
   execute without re-deriving the architecture: the resources in dependency order, the schema,
@@ -44,6 +44,7 @@ suggests:
   - feature-decomposition
   - feature-engineering
   - feature-execution
+  - feature-progress-tracking
   - java-testing-strategy
   - schema-evolution-and-compatibility
 

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: refactoring-automation
-version: 1.1.4
+version: 1.1.5
 description: >-
   Applying repeatable Java changes with IDE refactoring, OpenRewrite, structural search,
   compiler tooling or hand edits; checking tool coverage and making large diffs reviewable,
@@ -38,7 +38,15 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: java-refactoring
+    version: ^1.0.0
+
+suggests:
+  - architecture-refactoring-paths
+  - java-code-smells
+  - quality-gates
+  - technical-debt-decisions
 
 capabilities:
   - reads-source

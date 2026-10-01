@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: service-data-ownership
+version: 1.0.0
+description: >-
+  Define and verify data authority and access contracts when services, jobs or
+  integrations share writers, read private tables, or bypass supported interfaces.
+  Inventory readers and writers, choose supported access paths, enforce credentials
+  and grants, and expire temporary exceptions. Use after identifying a service
+  boundary; does not decide service extraction, implement sagas, tune ORM queries,
+  or execute data-ownership transfer migrations.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/service-data-ownership
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/service-data-ownership
+
+keywords:
+  - architecture
+  - microservices
+  - data-ownership
+  - database-permissions
+  - access-contracts
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - change-data-capture-operations
+  - cross-service-query-design
+  - distributed-transactions-and-sagas
+  - distribution-boundaries
+  - legacy-enterprise-modernization
+  - online-database-schema-migrations
+  - service-identity-and-trust
+  - spring-boot-jpa
+  - spring-security-for-apis
+  - spring-transactions-and-events
+  - sql-query-performance
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Service Data Ownership
+      short_description: Enforce data authority and supported access
+      default_prompt: Use Service Data Ownership to define and verify this data access boundary.

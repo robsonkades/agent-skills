@@ -17,7 +17,7 @@ import {
 } from './commands/system.ts';
 
 /** Kept equal to packages/cli/package.json by a test; the two ship as one artefact. */
-export const VERSION = '1.10.0';
+export const VERSION = '1.11.0';
 
 const DESCRIPTION = `Install, update and publish AI coding-agent skills.
 
@@ -88,15 +88,24 @@ export async function run(argv: readonly string[]): Promise<number> {
       .description('Install one or more skills')
       .option('-r, --registry <name>', 'Restrict resolution to one configured registry')
       .option('-f, --force', 'Replace an install whose files were modified')
+      .option(
+        '--with-suggests',
+        'Include direct suggestions of the requested skills and their dependencies',
+      )
       .option('--no-deps', 'Skip transitive dependencies'),
-  ).action(async (refs: string[], options: GlobalOptions & { force?: boolean; deps?: boolean }) => {
-    const context = await boot(program, options);
-    // Commander maps `--no-deps` to `deps: false`.
-    await runInstall(context.ctx, refs, {
-      ...merge(program, options),
-      ...(options.deps === false ? { noDeps: true } : {}),
-    });
-  });
+  ).action(
+    async (
+      refs: string[],
+      options: GlobalOptions & { force?: boolean; deps?: boolean; withSuggests?: boolean },
+    ) => {
+      const context = await boot(program, options);
+      // Commander maps `--no-deps` to `deps: false`.
+      await runInstall(context.ctx, refs, {
+        ...merge(program, options),
+        ...(options.deps === false ? { noDeps: true } : {}),
+      });
+    },
+  );
 
   withTargeting(
     program
@@ -117,6 +126,7 @@ export async function run(argv: readonly string[]): Promise<number> {
       .description('Update installed skills to the newest compatible version')
       .option('-r, --registry <name>', 'Restrict resolution to one configured registry')
       .option('--major', 'Allow updates that cross a major version')
+      .option('--with-suggests', 'Include direct suggestions of explicitly named skills')
       .option('-f, --force', 'Replace installs whose files were modified'),
   ).action(async (names: string[], options: GlobalOptions) => {
     const context = await boot(program, options);

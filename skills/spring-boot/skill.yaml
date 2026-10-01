@@ -1,6 +1,6 @@
 schemaVersion: 1
 name: spring-boot
-version: 1.2.0
+version: 1.2.1
 description: >-
   Create and integrate Spring Boot 4 services, or configure and diagnose bean
   composition, auto-configuration, external properties and lifecycle. Use for a new
@@ -25,17 +25,23 @@ files:
   - SKILL.md
   - skill.yaml
   - references/
-dependencies: []
+dependencies:
+  - name: spring-boot-web
+    version: ^1.0.0
+  - name: spring-boot-jpa
+    version: ^1.0.0
+  - name: spring-security-for-apis
+    version: ^1.0.0
+  - name: spring-transactions-and-events
+    version: ^1.0.0
+  - name: spring-boot-testing
+    version: ^1.0.0
+  - name: spring-boot-observability
+    version: ^1.0.0
 suggests:
   - requirements-and-acceptance
   - java-build-and-dependencies
-  - spring-boot-web
-  - spring-boot-jpa
-  - spring-transactions-and-events
   - spring-http-clients
-  - spring-boot-testing
-  - spring-boot-observability
-  - spring-security-for-apis
   - kubernetes-service-lifecycle
   - structured-logging
   - metrics-and-cardinality

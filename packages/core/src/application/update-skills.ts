@@ -1,6 +1,7 @@
 import type { InstallScope } from '../domain/agent.ts';
 import { AgentSkillsError, ErrorCode } from '../domain/errors.ts';
 import { classifyChange, type SemanticVersion, type VersionBump } from '../domain/version.ts';
+import type { InstallResult } from '../ports/installation.ts';
 import { selectAgents } from './agent-selection.ts';
 import type { ApplicationContext } from './context.ts';
 import { InstallSkills, type InstallReport } from './install-skills.ts';
@@ -20,6 +21,8 @@ export interface UpdateOptions {
    */
   readonly major?: boolean;
   readonly force?: boolean;
+  /** Include direct suggestions of explicitly named update targets for this invocation. */
+  readonly withSuggests?: boolean;
 }
 
 export interface UpdateChange {
@@ -31,8 +34,17 @@ export interface UpdateChange {
 
 export interface UpdateReport {
   readonly changes: readonly UpdateChange[];
+  readonly additions: readonly UpdateAddition[];
   readonly unchanged: readonly string[];
   readonly install: InstallReport;
+}
+
+export interface UpdateAddition {
+  readonly name: string;
+  readonly version: SemanticVersion;
+  readonly suggestedBy: readonly string[];
+  /** New destinations, or empty for a new package skipped everywhere. Dry runs describe the plan. */
+  readonly results: readonly InstallResult[];
 }
 
 /**
@@ -50,6 +62,15 @@ export class UpdateSkills {
   }
 
   async execute(options: UpdateOptions): Promise<UpdateReport> {
+    if (options.withSuggests === true && options.names.length === 0) {
+      throw new AgentSkillsError(
+        ErrorCode.USAGE,
+        '--with-suggests requires explicit skill names for update',
+        {
+          hints: ['agent-skills update <skill> --with-suggests'],
+        },
+      );
+    }
     const selection = await selectAgents(this.ctx, {
       scope: options.scope,
       ...(options.agents === undefined ? {} : { agents: options.agents }),
@@ -107,15 +128,40 @@ export class UpdateSkills {
       ...(options.registry === undefined ? {} : { registry: options.registry }),
       ...(options.dryRun === undefined ? {} : { dryRun: options.dryRun }),
       force: options.force === true,
+      ...(options.withSuggests === true
+        ? {
+            withSuggests: true,
+            suggestedVersionRanges: Object.fromEntries(
+              [...current].map(([name, version]) => [
+                name,
+                options.major === true ? 'latest' : `^${version}`,
+              ]),
+            ),
+          }
+        : {}),
     });
 
     const changes: UpdateChange[] = [];
+    const additions: UpdateAddition[] = [];
     const unchanged: string[] = [];
 
     for (const skill of install.resolved) {
       const from = current.get(skill.name);
+      const results = install.results.filter(
+        (result) =>
+          result.name === skill.name && (from === undefined || result.outcome === 'installed'),
+      );
+      if (from === undefined || results.length > 0) {
+        additions.push({
+          name: skill.name,
+          version: skill.version,
+          suggestedBy: skill.suggestedBy ?? [],
+          results,
+        });
+      }
       if (from === undefined) {
-        // A newly pulled-in transitive dependency.
+        // Keep the existing changes representation for JSON consumers; additions carry
+        // the explicit new-package plan, including skipped destinations and provenance.
         changes.push({ name: skill.name, from: skill.version, to: skill.version, bump: 'same' });
         continue;
       }
@@ -127,6 +173,6 @@ export class UpdateSkills {
       }
     }
 
-    return { changes, unchanged, install };
+    return { changes, additions, unchanged, install };
   }
 }

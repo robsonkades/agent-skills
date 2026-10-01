@@ -47,6 +47,14 @@ Model        application state/behavior in MVC's broader vocabulary;
 Web MVC is not the original Smalltalk MVC: there is no observer relationship and no
 long-lived view. The name persists; the mechanism is request → controller → model → render.
 
+`Controller → Service → Repository` describes a layered call path, not MVC's three roles.
+[MVC separates interaction and presentation responsibilities](https://martinfowler.com/eaaCatalog/modelViewController.html);
+it can form the web boundary of a layered, hexagonal or clean architecture. For example,
+[Clean Architecture places controllers, presenters and views among interface adapters](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html).
+Do not treat these designs as a maturity ladder or rename packages to claim isolation.
+Use `layering-and-boundaries` for choosing the broader structure; this skill places web
+responsibilities within that decision.
+
 ## Page Controller and Front Controller
 
 ```text
@@ -73,10 +81,15 @@ steps needed for the actual contract, and state specific missing evidence withou
 a full request-chain redesign or an Application Controller on every review.
 
 1. **Check the handler's contents and runtime.** Inspect routing, security configuration,
-   Java and framework versions first. Examples use Servlet Spring MVC; `ProblemDetail`
-   requires Spring 6+ (Java 17+), not an implicit upgrade. A controller should bind input,
-   invoke application behavior, and map the result. Trace business rules and transaction
-   ownership; a simple read need not gain a pass-through service (`layering-and-boundaries`).
+   Maven/Gradle release and toolchain settings, resolved framework versions and CI/runtime
+   evidence first. The partial examples use Servlet Spring MVC; `ProblemDetail` requires
+   Spring 6+ (Java 17+). Their source baseline is not permission to upgrade the target.
+   Read the affected consumer contract, application callers, tests and relevant ADRs;
+   distinguish an explicit architecture requirement from an incidental package convention.
+   Trace one operation from binding through application policy and persistence to the
+   response, recording runtime calls separately from imports and public signature types.
+   Locate business rules and transaction ownership; a simple read need not gain a
+   pass-through service (`layering-and-boundaries`).
 2. **Find duplicated policy.** Repetition count alone does not justify indirection; shared
    authorization, error mapping, correlation, tenant and envelope semantics often belong in the
    chain when centralization prevents drift and preserves ordering.
@@ -154,6 +167,12 @@ The API is REST over resources
 - The framework's model map is a presentation concern. Putting entities in it couples the
   template to entity properties and can trigger lazy loading during rendering
   (`orm-behavioral-patterns`).
+- Keep request-specific actor, tenant, form and response data in method-local values or
+  correctly scoped collaborators. Spring controllers are singleton beans by default;
+  mutable request fields can mix concurrent callers. Inspect actual bean scope and retained
+  state before diagnosing a race; a scoped proxy is not the same as storing its resolved
+  request object. When changing state ownership, exercise overlapping requests from different
+  actors and check that each operation and response uses only its own context.
 - Validate request shape and transport limits at the boundary. Classify other checks by
   the contract, not the annotation: a positive order quantity is a domain invariant even
   if a request DTO also checks its range. Enforce business legality regardless of caller;
@@ -175,9 +194,40 @@ The API is REST over resources
   doubles where useful. Separate integration tests may legitimately include a database to
   verify transaction, authorization or serialization behavior (`architecture-testing`).
 
-Return the observed responsibility/ordering issue or supported no-change verdict, its evidence,
-and the focused checks performed or still needed. Missing configuration makes claims about
-filter coverage, authorization and transaction scope conditional; inspect it before diagnosing.
+## Complete the selected boundary change
+
+For implementation, finish the smallest complete operation. When business policy must move,
+put it in its application/domain owner, wire the handler to it, and connect existing
+non-HTTP callers where they share that contract. Preserve actor/resource authorization, transaction scope,
+failure outcomes and public representation. A new service, port, presenter or package is
+justified by an actual responsibility or dependency constraint, not the diagram's shape.
+
+Choose evidence for each changed responsibility:
+
+- Exercise the business invariant without the controller, including a forbidden input
+  and relevant actor/resource denial. Keep HTTP negotiation branches at the web boundary.
+- Exercise the route's input, success and error contract through the configured MVC path;
+  assert public response fields and absence of privileged/internal fields. When entities
+  or lazy data were involved, verify serialization does not trigger unintended persistence
+  access rather than assuming a DTO name proves detachment.
+- When moving transaction ownership, verify the actual wired call and failure rollback;
+  a mocked collaborator or an outer test transaction does not establish that boundary.
+  Spring distinguishes [test-managed and application transactions](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html#testcontext-tx-test-managed-transactions).
+  Reuse existing sufficient tests instead of adding a new test layer for every change.
+
+For Spring Boot 4.x binding, error or documentation mechanics, use `spring-boot-web` with
+the resolved versions, affected operation and consumer contract. For Boot 3 or an older
+target, retain its mechanisms and use version-matched Spring documentation and project
+tests; do not upgrade to fit the specialist's scope. Reuse the established OpenAPI,
+REST Docs or guide pipeline; changing responsibility does not require new documentation tools.
+Keep use-case design with `service-layer-design` when orchestration needs to change.
+
+For a review, return the observed responsibility/ordering issue or supported no-change
+verdict and its evidence. For implementation, report the completed path and checks actually
+run. Missing configuration makes filter coverage, authorization and transaction scope
+conditional: inspect available artifacts, ask only for the missing fact that changes the
+decision, and continue independent work. Identify unexecuted checks and the evidence needed
+to close them; diagrams and source inspection alone do not prove runtime behavior.
 
 ## References
 

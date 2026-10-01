@@ -240,27 +240,27 @@ agentOverrides:
 
 ### Field reference
 
-| Field                  | Required | Type                 | Rules                                                                                                                                                                                                    |
-| ---------------------- | -------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schemaVersion`        | no       | integer              | Defaults to `1`. A higher value than the CLI understands is a hard error with an upgrade message.                                                                                                        |
-| `kind`                 | no       | string               | `skill` (default), `command` or `workflow`. Decides the entrypoint filename and where the package installs. An unknown value is an error.                                                                |
-| `name`                 | **yes**  | string               | `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`, 2–64 characters, no consecutive hyphens. `@` and `/` are reserved for future scoping.                                                                                 |
-| `version`              | **yes**  | string               | Strict semver. Ranges are rejected here.                                                                                                                                                                 |
-| `description`          | **yes**  | string               | Warned if under 10 characters.                                                                                                                                                                           |
-| `license`              | no       | string               | SPDX identifier. Warned if absent.                                                                                                                                                                       |
-| `keywords`             | no       | string[]             | Used by `search`.                                                                                                                                                                                        |
-| `authors`              | no       | string[] or object[] | Objects take `name` (required), `email`, `url`.                                                                                                                                                          |
-| `homepage`             | no       | string               |                                                                                                                                                                                                          |
-| `repository`           | no       | string or object     | Object takes `url` (required), `type`, `directory`.                                                                                                                                                      |
-| `compatibility.agents` | no       | (string \| object)[] | Agent ids, optionally with `minVersion`. **Omit the whole block to mean "every agent".** A non-empty list is an allowlist.                                                                               |
-| `files`                | no       | string[]             | Defaults to the kind's entrypoint plus `skill.yaml`, and must include that entrypoint. Directory entries end with `/` and are included recursively. Absolute and traversing paths are errors.            |
-| `dependencies`         | no       | object[]             | `{ name, version }` where `version` is a semver range. A self-dependency or a duplicate is an error. See **What a dependency means** below.                                                              |
-| `optionalDependencies` | no       | object[]             | Same shape. Failure to resolve one is a warning, not an error.                                                                                                                                           |
-| `suggests`             | no       | string[]             | Bare skill names, **no version range**. Skills this one points the reader at without pulling them into the install. A self-suggestion or a duplicate is an error. See **What a dependency means** below. |
-| `capabilities`         | no       | string[]             | Informational tags. **Grants nothing.**                                                                                                                                                                  |
-| `integrity`            | no       | string               | Written by `publish`. Verified by `install`.                                                                                                                                                             |
-| `signatures`           | no       | array                | Reserved. Accepted and ignored in v1.                                                                                                                                                                    |
-| `agentOverrides`       | no       | object               | Per-agent presentation metadata. Keys are allowlisted by the adapter.                                                                                                                                    |
+| Field                  | Required | Type                 | Rules                                                                                                                                                                                         |
+| ---------------------- | -------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schemaVersion`        | no       | integer              | Defaults to `1`. A higher value than the CLI understands is a hard error with an upgrade message.                                                                                             |
+| `kind`                 | no       | string               | `skill` (default), `command` or `workflow`. Decides the entrypoint filename and where the package installs. An unknown value is an error.                                                     |
+| `name`                 | **yes**  | string               | `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`, 2–64 characters, no consecutive hyphens. `@` and `/` are reserved for future scoping.                                                                      |
+| `version`              | **yes**  | string               | Strict semver. Ranges are rejected here.                                                                                                                                                      |
+| `description`          | **yes**  | string               | Warned if under 10 characters.                                                                                                                                                                |
+| `license`              | no       | string               | SPDX identifier. Warned if absent.                                                                                                                                                            |
+| `keywords`             | no       | string[]             | Used by `search`.                                                                                                                                                                             |
+| `authors`              | no       | string[] or object[] | Objects take `name` (required), `email`, `url`.                                                                                                                                               |
+| `homepage`             | no       | string               |                                                                                                                                                                                               |
+| `repository`           | no       | string or object     | Object takes `url` (required), `type`, `directory`.                                                                                                                                           |
+| `compatibility.agents` | no       | (string \| object)[] | Agent ids, optionally with `minVersion`. **Omit the whole block to mean "every agent".** A non-empty list is an allowlist.                                                                    |
+| `files`                | no       | string[]             | Defaults to the kind's entrypoint plus `skill.yaml`, and must include that entrypoint. Directory entries end with `/` and are included recursively. Absolute and traversing paths are errors. |
+| `dependencies`         | no       | object[]             | `{ name, version }` where `version` is a semver range. A self-dependency or a duplicate is an error. See **What a dependency means** below.                                                   |
+| `optionalDependencies` | no       | object[]             | Same shape. Failure to resolve one is a warning, not an error.                                                                                                                                |
+| `suggests`             | no       | string[]             | Bare skill names, **no version range**. Optional companions included with `--with-suggests` when this skill is explicitly requested. A self-suggestion or duplicate is an error. See below.   |
+| `capabilities`         | no       | string[]             | Informational tags. **Grants nothing.**                                                                                                                                                       |
+| `integrity`            | no       | string               | Written by `publish`. Verified by `install`.                                                                                                                                                  |
+| `signatures`           | no       | array                | Reserved. Accepted and ignored in v1.                                                                                                                                                         |
+| `agentOverrides`       | no       | object               | Per-agent presentation metadata. Keys are allowlisted by the adapter.                                                                                                                         |
 
 Unknown top-level fields are a **warning** during `install` — so an older CLI can still install
 a package that only added optional fields — and an **error** under `validate --strict` and
@@ -312,11 +312,22 @@ Making them all dependencies is not the fix. Measured across this catalogue, it 
 skills in the transitive closure of a typical entry point: installing anything installs
 everything. So the pointer gets a weaker field.
 
-`suggests` is a list of **names**, deliberately without ranges. Nothing resolves it, nothing
-installs from it, and no range is checked — a range here would be a constraint no gate enforces,
-and this format does not carry claims it cannot back. What it buys is that the pointer is
-declared: `agent-skills info` lists it, so a reader who lacks the target is told what to install
-instead of hitting a name that goes nowhere.
+`suggests` is a list of **names**, deliberately without ranges. `agent-skills info` lists the
+declared pointers, and ordinary installation leaves them informational. To include them, use
+`agent-skills install <skill...> --with-suggests` or
+`agent-skills update <skill...> --with-suggests`.
+
+The flag includes only direct suggestions of the explicitly named skills' selected versions,
+plus their ordinary dependencies. It does not follow suggestions recursively. Suggested names
+are deduplicated, and a suggested package may depend on its origin without creating a dependency
+cycle: suggestions never become edges in the dependency graph. Once requested through the flag,
+a missing suggested package or a conflicting version constraint fails resolution.
+
+The option is per invocation and requires explicit names on `update`. Suggested packages already
+installed follow update's compatible-version policy unless `--major` is supplied. The installed
+packages remain managed after the command; the flag itself is not saved in manifests, receipts,
+or lockfiles. See [the option contract](install-suggests-option.md) for version selection,
+registry precedence, dry runs, and reporting.
 
 The split is enforced, not conventional. `npm run registry:build` fails when a package names
 another published skill in its Markdown and declares it in neither list:

@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: architecture-coupling-and-quanta
-version: 1.1.4
+version: 1.1.5
 description: >-
   Map release and runtime coupling when services ship together, event-driven components still
   require coordinated changes, shared data obscures ownership, or a proposed architecture
@@ -48,7 +48,6 @@ suggests:
   - architecture-trade-off-analysis
   - component-and-release-boundaries
   - java-cohesion-coupling
-  - layering-and-boundaries
 
 capabilities:
   - reads-source

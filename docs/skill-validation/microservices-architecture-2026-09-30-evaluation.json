@@ -1,0 +1,1657 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-01 00:27:14 UTC",
+  "status": "complete",
+  "repositoryVerification": {
+    "command": "npm run verify",
+    "exitCode": 0,
+    "stages": [
+      "build",
+      "boundaries",
+      "lint",
+      "format",
+      "registry freshness",
+      "version policy",
+      "tests"
+    ],
+    "tests": 355,
+    "suites": 67,
+    "failures": 0,
+    "skipped": 0,
+    "documentationFinalization": "Final status/evidence updates after the global run receive scoped JSON, local-link and formatting checks. Skill snapshots remain unchanged."
+  },
+  "purpose": "Evaluate observable proposal decisions for eight new architecture skills; not proof of deployment behavior or causal improvement.",
+  "execution": {
+    "freshContext": true,
+    "model": "inherited without override",
+    "reasoning": "inherited without override",
+    "automaticSelectionTested": false,
+    "sourceAccess": "snapshot of assigned skill and its routed shipped resources",
+    "isolation": "procedural read restrictions in a shared filesystem; no enforced filesystem isolation",
+    "casesPerActor": 3,
+    "outputContract": "Respond to all supplied cases with concrete decisions, checks, material questions and limits. Do not execute deployments or application changes. Report all resources read.",
+    "comparison": "One no-skill control for the hub under otherwise equivalent task/tool instructions; one run per arm, no general improvement claim.",
+    "actorSessions": {
+      "final": 8,
+      "control": 1,
+      "superseded": 2,
+      "helperSessionsInFinalHub": 2
+    },
+    "responseCounts": {
+      "final": 24,
+      "control": 3,
+      "superseded": 6
+    },
+    "resourceAudit": "Actor-reported resource paths reviewed; all reported reads are inside designated input/snapshot branches. Shared tool/filesystem access was not technically restricted."
+  },
+  "groups": [
+    {
+      "skill": "bounded-context-design",
+      "cases": [
+        {
+          "id": "BC1",
+          "input": "A Java21/Spring Boot3.4 modular monolith has one deployment and one product team. Membership and Billing both use Customer but with different lifecycle and invariants: membership can deactivate access while legally retained invoices must keep their historical recipient snapshot. They share a Customer JPA entity and changes repeatedly break invoice rendering. Propose the smallest architecture and Java boundary change. Independent deployment is not a requirement.",
+          "expected": [
+            "Separate meanings/lifecycles or propose explicit bounded-context models and translation with evidence",
+            "Keep an in-process/modular option and preserve the declared stack",
+            "Keep invoice historical fact distinct from a mutable lookup and avoid sharing persistence entity as public contract"
+          ],
+          "failure": [
+            "Mandates one microservice/database per context",
+            "Changes Java/Boot major without task authorization",
+            "Assumes invoice history may silently follow latest customer data"
+          ]
+        },
+        {
+          "id": "BC2",
+          "input": "Same stack, product team and monolith. Investigation now shows Customer and AccountHolder are synonyms with identical identity, lifecycle and invariants; the only inconsistency is naming in two packages. There is no observed independent change requirement. Should we create two bounded contexts and translate between them?",
+          "expected": [
+            "Recognize changed evidence and avoid semantic split solely for synonyms",
+            "Prefer narrow vocabulary/contract alignment with appropriate check"
+          ],
+          "failure": ["Repeats BC1 split as universal rule", "Invents divergent business semantics"]
+        },
+        {
+          "id": "BC3",
+          "input": "Only change requested: an existing Spring @ConfigurationProperties duration is rejected at startup after renaming a property. Domain language and model boundaries are settled. Recommend the next investigation.",
+          "expected": [
+            "Keep scope on binding/configuration and handoff to appropriate existing specialist",
+            "Do not require new context map or domain redesign"
+          ],
+          "failure": [
+            "Turns binding defect into architecture program",
+            "Claims root cause without configuration/error evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "skill": "service-data-ownership",
+      "cases": [
+        {
+          "id": "DO1",
+          "input": "PostgreSQL17 has billing and support private schemas on one server. Distinct non-owner runtime roles have only their documented privileges; owner/migration roles are unavailable to runtime. Negative tests using fresh pooled connections confirm support cannot mutate billing or assume its roles. A supported billing lookup API covers support needs. Must we buy a database server per service to obtain data ownership?",
+          "expected": [
+            "Distinguish logical access authority from shared capacity/failure domain",
+            "Preserve existing sufficient ownership enforcement and avoid compulsory server split",
+            "Bound conclusions to supplied negative evidence and applicable access paths"
+          ],
+          "failure": [
+            "Equates one server with shared ownership",
+            "Claims shared-server outage isolation is proven"
+          ]
+        },
+        {
+          "id": "DO2",
+          "input": "Same setup, except audit finds support_runtime can SET ROLE billing_owner and a nightly ETL job writes billing invoices through that owner role. The Java service has @Transactional(readOnly=true) on lookup methods. Is ownership enforced, and what minimal repair and checks are needed?",
+          "expected": [
+            "Reject readOnly annotation as access enforcement",
+            "Include role inheritance/assumption and hidden ETL writer in actual authority inventory",
+            "Repair privilege/credential or supported interface contract and test direct/role-switched paths"
+          ],
+          "failure": [
+            "Accepts ownership because schema names and readOnly exist",
+            "Omits ETL writer",
+            "Recommends changing only Java annotation"
+          ]
+        },
+        {
+          "id": "DO3",
+          "input": "We authorize a temporary read exception for an analytics job for 24 hours. Someone proposes ALTER ROLE ... VALID UNTIL alone as automatic revocation. Existing pooled sessions and non-password access paths may remain. Give an enforceable expiry and validation plan; no live database access is available.",
+          "expected": [
+            "Distinguish credential expiry from privilege/session revocation",
+            "Define owner, timed permission removal/session handling where necessary and denied-access verification",
+            "State DB actions/tests not executed"
+          ],
+          "failure": [
+            "Promises VALID UNTIL alone terminates all access",
+            "Reports successful DB enforcement without execution"
+          ]
+        }
+      ]
+    },
+    {
+      "skill": "cross-service-query-design",
+      "cases": [
+        {
+          "id": "CQ1",
+          "input": "An operations dashboard joins shipment status and customer display names. The approved contract permits data up to 60 seconds old, explicitly labels missing optional names, and never authorizes a business mutation. Existing change feeds support an access-controlled projection with measured 10-second lag and rebuild procedure. Would API fan-out on every page improve the design? Explain the choice and pagination/authorization checks.",
+          "expected": [
+            "Retain sufficient projection unless concrete trade-off requires change",
+            "Use explicit freshness/completeness and globally meaningful pagination contract",
+            "Keep authorization/filtering at actual data exposure boundary"
+          ],
+          "failure": [
+            "Mandates synchronous fan-out or event sourcing without need",
+            "Treats lag metric as atomic snapshot",
+            "Ignores unauthorized data in projection"
+          ]
+        },
+        {
+          "id": "CQ2",
+          "input": "Change only the consumer: that same 60-second projection would now approve release of restricted shipments, and current release permission must hold at the moment of the effect. The dashboard is still allowed stale display. Can the mutation reuse the projection as its only permission check?",
+          "expected": [
+            "Keep display path but reject stale projection as sole authority for release",
+            "Require authoritative effect-boundary invariant/authorization enforcement or a justified equivalent guarantee",
+            "Distinguish reading latest state from ensuring it remains valid during mutation"
+          ],
+          "failure": [
+            "Says current fetch alone proves authorization at effect time",
+            "Reuses stale display guarantee for mutation"
+          ]
+        },
+        {
+          "id": "CQ3",
+          "input": "An endpoint fetches each backend's first 20 rows, merges them, applies a cross-service filter, and returns page 1 with a claim of globally complete sorted results. Backends can change concurrently. No global cursor or snapshot contract exists. Review the guarantee and propose a bounded alternative.",
+          "expected": [
+            "Reject unsupported global completeness/order claim",
+            "Define paging/filtering consistency and choose supported bounded composition or indexed read model",
+            "Do not require distributed transaction for every display"
+          ],
+          "failure": [
+            "Calls local top20 merge universally globally complete after filter",
+            "Promises global snapshot with local transactions only"
+          ]
+        }
+      ]
+    },
+    {
+      "skill": "api-gateway-and-bff",
+      "cases": [
+        {
+          "id": "GW1",
+          "input": "A Java21/Spring MVC service already exposes exactly the fields web and mobile need. The managed ingress provides required TLS, authentication and coarse rate limits; service enforces resource permissions. No aggregation or distinct client lifecycle is requested. A proposal adds one BFF per client and puts payment eligibility rules there. Review.",
+          "expected": [
+            "Preserve adequate existing edge rather than default new BFFs",
+            "Keep authoritative payment invariant in owning operation",
+            "Describe evidence that would justify future client-specific boundary"
+          ],
+          "failure": [
+            "Mandates BFF by number of clients",
+            "Moves authoritative payment rules only to edge"
+          ]
+        },
+        {
+          "id": "GW2",
+          "input": "Mobile now needs a tailored screen combining several bounded reads while web retains its existing API and release cadence. The required contract permits missing optional recommendations but never missing invoice totals. Show how the decision changes and define edge failure behavior.",
+          "expected": [
+            "Consider justified BFF/client composition while preserving business owners",
+            "Differentiate optional partial data from required data failure",
+            "Bound fan-out/deadline/resources and propagate correct scoped identity"
+          ],
+          "failure": [
+            "Returns fabricated/default invoice total on mandatory dependency failure",
+            "Treats all failure as HTTP200 complete success"
+          ]
+        },
+        {
+          "id": "GW3",
+          "input": "The gateway inserts X-Tenant-Id and downstream trusts it. Downstream is directly reachable from a second ingress that preserves arbitrary client headers. A JWT validates the calling workload but does not authorize a user/tenant. Can we document the service as protected by the gateway?",
+          "expected": [
+            "Identify spoof/bypass and insufficient identity-only argument",
+            "Require verified path controls/header provenance and operation authorization",
+            "State absent deployment evidence rather than claim attack reproduced"
+          ],
+          "failure": ["Accepts internal header or authenticated workload as complete authorization"]
+        }
+      ]
+    },
+    {
+      "skill": "service-discovery",
+      "cases": [
+        {
+          "id": "SD1",
+          "input": "A caller has a previously validated endpoint set. The source times out after 12 seconds without a successful update. Approved policy permits use of the last set for at most 30 seconds since the last accepted source observation, with existing health checks and retry budget. What should discovery return now and what must it expose?",
+          "expected": [
+            "May preserve bounded last-known set under stated contract, not refresh its evidence age on failure",
+            "Expose age/source uncertainty and separate eligibility/liveness",
+            "Do not invent DNS TTL or assume retries safe"
+          ],
+          "failure": [
+            "Resets staleness clock on failed refresh",
+            "Treats timeout as authoritative empty",
+            "Claims discovery proves endpoint health"
+          ]
+        },
+        {
+          "id": "SD2",
+          "input": "Same caller, policy and cache, but the authoritative source now returns a successful empty endpoint set for the same service and namespace. Should it keep the old endpoints until the 30-second stale allowance expires?",
+          "expected": [
+            "Distinguish authoritative empty from failed observation",
+            "Do not silently override successful removal with stale cache under outage-only rule",
+            "Define no-endpoint behavior"
+          ],
+          "failure": ["Always serves previous endpoints despite authoritative removal"]
+        },
+        {
+          "id": "SD3",
+          "input": "A Kubernetes1.34 watch client converts resourceVersion strings to longs and uses numeric greater-than across reconnects. After HTTP410 Gone it retries the same old watch indefinitely; startup has no cached endpoints. Diagnose with only this description.",
+          "expected": [
+            "Respect resourceVersion opaque source contract and recovery by relist/watch as applicable",
+            "Avoid claiming empty bootstrap can serve stale data",
+            "Name exact code/config/revision evidence needed before asserting actual runtime root cause"
+          ],
+          "failure": [
+            "Endorses arbitrary numeric ordering of opaque versions",
+            "Retries expired revision forever",
+            "Invents a last-known cache at cold start"
+          ]
+        }
+      ]
+    },
+    {
+      "skill": "service-identity-and-trust",
+      "cases": [
+        {
+          "id": "IT1",
+          "input": "A service accepts an mTLS-authenticated reporting workload from the configured trust domain. It is asked to delete a record for tenant B using a user ID and tenant ID supplied in ordinary headers. There is no delegation or operation permission bound to that identity. Is authenticated internal traffic sufficient?",
+          "expected": [
+            "Separate workload authentication, user/tenant delegation and operation permission",
+            "Deny unsupported remote effect or keep it conditional pending authority",
+            "Check trusted header provenance and bypass paths"
+          ],
+          "failure": [
+            "Allows delete solely on internal network/mTLS",
+            "Treats tenant header as authorization"
+          ]
+        },
+        {
+          "id": "IT2",
+          "input": "For the same operation, a documented trusted issuer now produces a token restricted to the resource service, tenant B and delete action, identifying both delegated user and calling workload. The service validates signature/time/issuer/audience, matches actor/tenant/action and enforces current record permission. The presented token satisfies that policy. Does the design still require rejecting all delegated calls?",
+          "expected": [
+            "Recognize sufficient scoped delegation can be accepted within verified contract",
+            "Preserve effect-boundary authorization and avoid mandatory extra platform",
+            "Distinguish policy design from tests/deployment not executed"
+          ],
+          "failure": [
+            "Universally forbids delegation despite verified conditions",
+            "Removes effect-boundary checks"
+          ]
+        },
+        {
+          "id": "IT3",
+          "input": "The issuer is unavailable during signing-key rotation. Some consumers have old cached keys and an already open TLS connection. Operators propose disabling audience validation and accepting every new key until the outage ends. Review outage and recovery policy; the tolerated revocation delay is not specified.",
+          "expected": [
+            "Reject weakened issuer/audience trust or indiscriminate new keys",
+            "Distinguish credential/key overlap, cached validation, connection/session lifetime and revocation bounds",
+            "Ask material revocation/outage requirement and provide conditional safe plan without inventing duration"
+          ],
+          "failure": [
+            "Disables validation to restore availability",
+            "Promises immediate revocation from rotation alone"
+          ]
+        }
+      ]
+    },
+    {
+      "skill": "progressive-service-delivery",
+      "cases": [
+        {
+          "id": "PD1",
+          "input": "A canary receives 2% of traffic. Global success remains 99.9%, but the only tenant selected for the canary has 9 failed business completions among 30 attempted checkouts. The predeclared rollout rule forbids a confirmed checkout failure regression and requires at least 300 representative attempts per cohort before promotion. What action and evidence do you recommend?",
+          "expected": [
+            "No promotion based on aggregate success",
+            "Use cohort/operation failure evidence, insufficient sample and stated abort rule correctly",
+            "Investigate/pause or abort under confirmed regression rather than invent statistical proof"
+          ],
+          "failure": [
+            "Promotes using global average or arbitrary time passed",
+            "Declares 30 samples sufficient against stated rule"
+          ]
+        },
+        {
+          "id": "PD2",
+          "input": "Same system and predeclared rules; updated evidence contains 500 representative canary attempts with no regressions, all mandatory per-cohort safety checks pass, mixed-version compatibility and approved recovery have been exercised, and the authorized next step is 5%. Recommend the next action.",
+          "expected": [
+            "Allow bounded authorized promotion with continued monitoring rather than demand indefinite pause",
+            "Retain declared safeguards and next exposure step",
+            "Do not invent guarantee of zero future risk"
+          ],
+          "failure": [
+            "Refuses any promotion despite supplied sufficient authorized evidence",
+            "Jumps straight to100%"
+          ]
+        },
+        {
+          "id": "PD3",
+          "input": "A rollout flag is disabled after the new writer persisted an enum value that the previous binary cannot read; a payment may already have completed remotely. The proposed rollback switches all pods to the old image and retries every payment. Review.",
+          "expected": [
+            "Separate flag/traffic rollback from data compatibility and remote unknown outcomes",
+            "Prevent incompatible binary rollback and unsafe replay; use supported recovery/reconciliation",
+            "Handoff migration/idempotency mechanics without pretending a flag reverses effects"
+          ],
+          "failure": [
+            "Claims image/flag reversal restores data",
+            "Blindly retries ambiguous payments"
+          ]
+        }
+      ]
+    },
+    {
+      "skill": "microservices-architecture",
+      "cases": [
+        {
+          "id": "MA1",
+          "input": "We maintain a Java21/Spring Boot3.4 modular monolith with eight modules, one stable delivery pipeline and no measured scaling or fault-isolation deficit. Two teams complain that the meaning of Account differs between billing and access control. Leadership asks for a microservices architecture proposal, but has supplied no requirement for separate processes. Produce the first useful deliverable and evidence plan.",
+          "expected": [
+            "Do not infer independent-process requirement from label/team count",
+            "Coordinate semantic boundary clarification, drivers, existing evidence and smallest verifiable slice",
+            "Preserve target stack and adequate local deployment"
+          ],
+          "failure": [
+            "Mandates service per module/context/team",
+            "Adds broker/mesh/framework upgrade unasked",
+            "Returns only a generic pattern list"
+          ]
+        },
+        {
+          "id": "MA2",
+          "input": "Same application. An accepted product/platform contract now requires billing to deploy and fail independently from access control; current shared deployment demonstrably violates it. Billing data has an identified authority, but an overnight job still writes it and two older clients cannot upgrade together. Propose a conditional first slice, dependencies and checks.",
+          "expected": [
+            "Change response for real independent-deployment driver",
+            "Include data writers, mixed consumers, authority transfer and failure/rollback evidence with owners",
+            "Do not equate separate artifacts with demonstrated independence"
+          ],
+          "failure": [
+            "Ignores job or old clients",
+            "Promises independent rollback/failure solely from splitting processes",
+            "Refuses to progress merely because some evidence needs gathering"
+          ]
+        },
+        {
+          "id": "MA3",
+          "input": "Scope is now only a known Spring HTTP client connect-timeout property not reaching its configured request factory. Existing service boundaries and delivery policy are accepted. Recommend a focused investigation and output.",
+          "expected": [
+            "Handoff narrowly to Spring HTTP client/configuration concern",
+            "Preserve authorized boundaries and diagnose effective factory/version/property path",
+            "Do not require full architecture program"
+          ],
+          "failure": [
+            "Demands ADR/context-map/program for local fix",
+            "Invents exact configuration property/version without evidence"
+          ]
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "skill": "bounded-context-design",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\bounded-context-design\\output.json",
+      "outputSha256": "f1420cf573df524f0e870222c684c4745cfeacfaafc52bb50bc5b6c1e71e29d2",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/references/context-maps-and-translation.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/references/java-spring-boundaries.md"
+        ],
+        "cases": [
+          {
+            "id": "BC1",
+            "answer": "Keep Java 21/Spring Boot 3.4, one deployment and the existing product team. Separate Membership and Billing models within the current modules: the conflicting lifecycles and repeated invoice-rendering failures justify this semantic boundary.\n\nToday: both modules depend on a shared mutable Customer JPA entity. Proposed: Membership owns access and deactivation; Billing owns invoice issuance and the historical recipient snapshot. The same team maintains both responsibilities. A shared identifier need not imply a shared entity or lifecycle.\n\nThe smallest Java change is to stop Billing from rendering through Membership's entity or lazy association. Persist a Billing-owned recipient value with the invoice and render from that snapshot. Keep entities and repositories internal; exchange only narrowly scoped values through an existing or small public module API. Billing maintains the translation. Define the supplying contract with whoever actually owns recipient facts; Membership's authority over access does not prove authority over legal recipient identity.\n\nSpecify identity correspondence, applicable scope, required recipient fields and capture time. Missing or ambiguous recipient information must reject or defer issuance for resolution, never silently substitute today's Customer. Preserve existing transaction guarantees; this change requires no service, broker or framework addition.\n\nNext checks: issuance followed by deactivation or address change leaves historical rendering unchanged; missing mapping fails explicitly; correction follows Billing policy; existing architecture checks reject cross-module entity imports while allowing the public API. Rehearse an independent membership-policy change.\n\nMaterial unknowns: recipient authority, exact capture/correction rules, existing transaction paths and trustworthy data for historical backfill. No application checks were executed."
+          },
+          {
+            "id": "BC2",
+            "answer": "Retain one model. Customer and AccountHolder have the same identity, lifecycle and invariants, and the investigation found only inconsistent naming. Two bounded contexts and translation would introduce duplicate representations and maintenance without resolving a demonstrated semantic conflict.\n\nKeep the Java 21/Spring Boot 3.4 monolith, current deployment and team. Agree on one canonical domain term and normalize internal names in the affected packages. Document an alias where users or established external contracts still require the other term. Preserve public compatibility where relevant; a naming adapter at an entry point does not require a second domain authority. Existing packages can remain useful code organization within one context.\n\nBefore implementing the rename, compare representative accepted, rejected and correction operations under both names and confirm they invoke the same decision authority. Inspect callers, persistence mappings and externally visible names to distinguish a safe internal rename from a contract migration. Then use the existing focused behavior and compatibility checks appropriate to the actual rename; no new architecture framework is justified.\n\nThe material unknown is whether either name is externally contractual or carries an undocumented business distinction. The supplied investigation supports retaining one model; it does not justify assuming hidden differences. Reconsider separation only when concrete examples establish incompatible meanings or an independent policy-change requirement.\n\nNo application changes or checks were executed."
+          },
+          {
+            "id": "BC3",
+            "answer": "Investigate the configuration binding failure directly. Settled model boundaries and a startup error immediately after a property rename provide no reason to revisit bounded contexts. Preserve Java 21/Spring Boot 3.4 and the existing architecture.\n\nStart with the complete startup exception and its deepest cause: identify the rejected property, reported value and source, and whether the failure concerns binding, duration conversion or validation. Compare the rename diff with the @ConfigurationProperties prefix, Java property or constructor parameter, registration and applicable validation annotations.\n\nTrace the effective configuration through the active profiles, configuration files, environment variables and command-line overrides. Check for an old key left behind, an incorrectly spelled replacement, or an override still supplying an unexpected value. Compare the duration value and units with the existing field annotations and any custom converter. Treat these as hypotheses until the exception and configuration establish the cause.\n\nNext verification should be a focused binding/startup check using isolated configuration: the renamed key with a known accepted duration, followed by the actual failing input. If backward compatibility for the old key is required, establish that requirement before choosing migration behavior. Do not change domain boundaries or upgrade the stack to address this symptom.\n\nMaterial missing evidence: the exception, old and new property names, configuration class, effective value/source, active profiles and rename diff. These determine the next concrete fix. No application or deployment tests were run."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "BC1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Separated Membership/Billing meanings inside the existing monolith; preserved historical invoice snapshot, target stack and authority gaps.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "BC2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Retained one model for synonyms with identical rules; chose narrow vocabulary alignment and compatibility checks.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "BC3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Scoped investigation to binding/effective configuration; no context redesign or invented startup cause.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Purpose; Conditional handoffs"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Discover the model before naming the boxes"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Make the relationships implementable; references/context-maps-and-translation.md"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Choose the semantic boundary"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Make the relationships implementable; references/java-spring-boundaries.md"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Execute and challenge the result"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Execute and challenge the result"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Discover the model before naming the boxes; final output limits"
+        }
+      ]
+    },
+    {
+      "skill": "service-data-ownership",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\service-data-ownership\\output.json",
+      "outputSha256": "2fd7ebff6b116cd0a7933e4335ad8e7c117b91e82d7f35059b42cf55fbef4506",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-data-ownership/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-data-ownership/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-data-ownership/skill/references/access-contract.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-data-ownership/skill/references/enforcement-and-verification.md"
+        ],
+        "cases": [
+          {
+            "id": "DO1",
+            "answer": "No. Retain PostgreSQL 17 with the private billing and support schemas; data ownership does not require purchasing separate database servers. Applying the skill's smallest-enforceable-boundary rule, the distinct restricted runtime identities, unavailable owner/migration identities, and successful negative tests support enforcement of the stated support-to-billing mutation and role-assumption boundary. Continue using the supported billing lookup API, which already meets support's needs. Billing should remain responsible for validating and correcting billing facts.\n\nRecord the affected contract: support's runtime identity performs the documented lookup through Billing's API; Billing controls writes to its private data; migration identities remain separately controlled. Preserve these existing contracts.\n\nNext checks should extend, rather than dismiss, the supplied evidence: confirm the API succeeds with the permitted fields and tenant scope; inventory scheduled jobs, repair tools and other external writers; review executable privileged routines, PUBLIC and inherited grants, and defaults for the actual creator of future objects. Repeat relevant denial checks on representative newly created objects and through deployed pool wiring.\n\nMaterial unknowns are coverage of external principals and future objects, API authorization details, and whether shared capacity, recovery, availability and administration satisfy operational requirements. Those requirements could justify separate infrastructure; no such need is established here. The supplied negative tests are case evidence, not tests executed during this review."
+          },
+          {
+            "id": "DO2",
+            "answer": "Ownership is not enforced. support_runtime can become billing_owner, and the nightly ETL uses that owner role to write invoices. Restricting direct grants cannot close a reachable owner-role path. @Transactional(readOnly=true) is a transaction hint, not a credential-level write prohibition; it cannot constrain SET ROLE, other callers or the ETL.\n\nKeep PostgreSQL 17 and the existing schemas/API. Remove support_runtime's direct and transitive paths to billing_owner and other billing writers; retain only its documented privileges and supported lookup access. Reconcile already-open sessions that may have assumed the owner role, recycling or terminating affected sessions under an operational plan.\n\nIdentify the ETL's accountable owner, invoice invariants and legitimate workload before cutting access. If it implements Billing's authority, give it a dedicated, least-privileged non-owner worker identity with controlled operations. Otherwise move invoice changes through an adequate Billing-owned command/import contract. Exercise that path, drain or reconcile unfinished work, then remove the obsolete owner access and secret references. Recovery must preserve restricted access. A separately authoritative ETL requires an explicit ownership decision.\n\nProposed checks: successful lookup, valid Billing writes and ETL completion; denied native updates, mutating routines, DDL and role escalation from support; current/future object privileges; and fresh plus existing pooled connections. Use PostgreSQL 17 and directly authenticated deployed identity shapes, checking actual authorization failures and unchanged invoice data.\n\nUnknowns include ETL authority, alternate credential users, role graph, privileged routines, and startup/migration wiring. These are proposed checks; none were executed."
+          },
+          {
+            "id": "DO3",
+            "answer": "Reject VALID UNTIL alone: PostgreSQL 17 uses it for password expiry, not general role or session revocation.\n\nDefine a dedicated analytics principal, exact read-only objects/columns, accountable data and job owners, a UTC expiry instant 24 hours after activation, replacement milestone, and retention/deletion obligations. Keep owner roles unreachable. Inventory alternate authentication, inherited/delegated roles and pooled connections before granting access.\n\nProvision durable privileged revocation before activation. At the deadline, stop job admission and reconnection, disable the dedicated login across authentication paths, revoke exception grants and reachable role memberships, and remove obsolete credential access. NOLOGIN alone does not stop existing sessions or SET ROLE. Terminate every session carrying the exception, including pooled sessions and sessions that already assumed its role; identify original login principals as well as current roles. Stop long-running work by the cutoff. Verify disappearance of sessions and loss of effective access.\n\nUse an independent watchdog with a tested isolation fallback if revocation fails; alarm and retain audit evidence. Specify recovery ordering so access remains blocked after an outage. Without a demonstrated enforcement mechanism, do not claim automatic expiry.\n\nWith no live access, supply acceptance cases for an isolated PostgreSQL 17 fixture: permitted reads before expiry; writes denied throughout; reads denied after expiry through fresh connections, existing pools, assumed roles and every configured non-password path; long-query termination, restart and revoker-failure scenarios. Verify unrelated access survives.\n\nUnknowns: actual authentication/role graph, controller reliability and session-termination capability. No tests were executed. Revocation cannot retract downloaded data; enforce its agreed retention separately."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "DO1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Retained adequate logical isolation on one server; separated access enforcement from shared failure/capacity risks.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "DO2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Rejected readOnly as security, included SET ROLE and ETL, proposed restricted paths and positive/negative checks without blind revocation.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "DO3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Rejected password expiry as session/privilege revocation; defined scoped expiry, existing-session handling and explicit unexecuted DB tests.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Boundary and handoffs"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Workflow steps1–3"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "references/enforcement-and-verification.md"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Decisions that change the answer"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Workflow steps4–5"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Workflow steps5–6"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Workflow step7; hostile tests in enforcement reference"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Minimum useful result; conditional engine/framework baseline"
+        }
+      ]
+    },
+    {
+      "skill": "cross-service-query-design",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\cross-service-query-design\\output-final.json",
+      "outputSha256": "7ba9ba7349073ca29bf33ccbfd428bcb00cccdea7ecfa224a43937bd32460811",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/skill-final/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/skill-final/references/query-contracts.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/skill-final/references/projection-lifecycle.md"
+        ],
+        "cases": [
+          {
+            "id": "CQ1",
+            "answer": "Retain the existing projection. The approved consumer is display-only, accepts 60-second-old data and explicitly represents missing optional names. Supported feeds, measured 10-second lag, access controls and an existing rebuild procedure favor keeping this path. Per-page fan-out adds dependency calls without an established contract benefit; successful owner calls would not establish a common snapshot.\n\nCheck freshness from source change through query visibility, including caches, and track required shipment coverage separately from optional-name availability. Ten seconds is measured evidence, not proof that lag always remains below 60 seconds. Define the response when that bound is exceeded; do not silently serve it as compliant.\n\nApply authorized population, joins, predicates and ordering before pagination. Establish join cardinality, null-name behavior and a stable unique sort tie-breaker. Specify live traversal versus a retained snapshot: a cursor alone freezes neither sort keys nor data. Bind protected cursors to scope, query, position, generation and expiry; define restart behavior after rebuild. Claim exact totals only for the complete authorized population.\n\nRecheck tenant, row and name-field permissions on each request, including caches and retained generations. The display freshness allowance does not automatically authorize a 60-second permission-revocation delay.\n\nNext review existing evidence for deletion/revocation handling, stalled feeds, page-boundary changes and rebuild/cutover coverage. Material unknowns are permission-revocation bounds, snapshot expectations, lag-tail behavior and query/load budgets. No new infrastructure is justified by the supplied facts."
+          },
+          {
+            "id": "CQ2",
+            "answer": "No. Keep the projection for the dashboard, but do not use it as the mutation's sole permission check. The new consumer authorizes an effect, and permission must hold at that effect. A projection can report permission that was revoked after its observation; even the measured 10-second lag violates a current-at-effect requirement in that race.\n\nSend the release command to the authoritative owner, which must validate the caller's current release permission and shipment eligibility in the same protected operation that commits release. A fresh permission read followed by a separate write still permits revocation between check and effect. Merely reading a primary or adding request-time fan-out does not close that race.\n\nIf permission and release are controlled by separate authorities, require an explicit protocol that establishes the required authorization ordering through the actual effect. Do not assume a cached permission, signed token or independently committed check provides this property. Until such enforcement exists, insufficient or unavailable authorization evidence must prevent release.\n\nNext identify the permission owner, release owner, exact effect boundary and revocation ordering rules. Review the command path, including asynchronous execution if present, for enforcement at that boundary. A proposed validation should revoke permission after the display/read but before release, race revocation with release, and race two release commands after the same observed state; verify denied effects and the owner's invariant.\n\nThose ownership and synchronization details remain unknown. The dashboard's approved stale-display contract can remain unchanged; it grants no authority to release shipments."
+          },
+          {
+            "id": "CQ3",
+            "answer": "The globally complete page claim is unsupported. Applying a cross-service filter after each backend's first-20 limit can exclude every fetched candidate while an eligible row at position 21 is omitted. Sorting the merged subset cannot establish the globally first matching rows or an exact total. Concurrent changes add mixed observations and possible duplicates or omissions across requests; independent cursors would not create a common snapshot.\n\nOffer a bounded candidate window: retain the first-20-per-backend cap, bound participating backends, response bytes and the request deadline, and apply one comparator with a unique tie-breaker. Return matches sorted within the inspected candidates, with incomplete/coverage status and no global total or claim of globally exhausted results. This changes the consumer contract and must be agreed with callers.\n\nIf backends provide usable continuation, bounded refill may help: scan only to a declared candidate/work cap and return an integrity-protected continuation bound to authorization scope, query and backend positions. Describe this as live traversal, with documented movement semantics; reaching the cap is not proof of completeness. Without usable continuation, expose only the bounded window.\n\nIf exact global filtering/order is mandatory, first establish freshness and snapshot requirements; then evaluate a supported indexed projection or bounded asynchronous snapshot report. Do not import another case's 60-second allowance.\n\nNext inspect backend ordering, continuation and join cardinality. Plan fixtures with qualifying rows beyond 20, ties, concurrent sort/filter changes and tenant/cursor misuse. Authorization must cover rows, fields and metadata. Unknowns include accepted partial-result semantics, backend contracts, data volume and permissible staleness."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "CQ1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Kept adequate projection, distinguished measured lag from bound, addressed pagination and permission revocation.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "CQ2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Preserved display path but required invariant/authorization at effect boundary; a fresh read alone did not close the race.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "CQ3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Rejected top20-then-filter completeness; offered explicitly bounded window or a supported complete query design.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Opening scope; Handoffs"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Discover the question before choosing the mechanism"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Establish what an answer proves; both references"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Choose the least complex sufficient read path"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Execute the requested scope; references/query-contracts.md"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Execute the requested scope"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Validate the contract"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Discovery evidence gaps; baseline; final validation limits"
+        }
+      ]
+    },
+    {
+      "skill": "api-gateway-and-bff",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\api-gateway-and-bff\\output-final.json",
+      "outputSha256": "a1604cff9553629b38480d4d9437e34f397f017f9e8d57453413b9dafd2ad05a",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/api-gateway-and-bff/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/api-gateway-and-bff/skill-final/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/api-gateway-and-bff/skill-final/references/composition-and-trust.md"
+        ],
+        "cases": [
+          {
+            "id": "GW1",
+            "answer": "Retain the existing Java 21/Spring MVC API and managed ingress. Reject one BFF per client: the supplied contract already fits both clients, entry policy is sufficient, and neither aggregation nor independent client lifecycle establishes a benefit. Additional deployables introduce hops, failure points and ownership costs without a demonstrated requirement. No framework migration is justified.\n\nPayment eligibility belongs in the service owning that business decision, enforced when the payment operation executes. Putting its authoritative rules in BFFs would duplicate business authority and leave alternate callers outside that enforcement. An edge may display eligibility supplied by its owner; that display cannot authorize a later payment.\n\nResponsibility matrix:\n- TLS, authentication and coarse admission: managed ingress, verified through its effective configuration; bypass protection still needs inspection.\n- Representation: existing API owner, validated against both client contracts.\n- Resource permissions and payment eligibility: owning service operations, enforced for every entry path; verify denied-resource and ineligible-payment scenarios.\n\nKeep the client API contract unchanged. If eligibility is currently only a proposal, reject that placement; if already implemented at the edge, identify the authoritative service change needed before removing enforcement.\n\nNext checks are a representative web/mobile contract comparison and a map of payment callers and direct service paths. Distinct interaction requirements, measured journey problems, payment ownership and effective bypass controls remain unknown. A newly demonstrated client-specific contract or release constraint could change the BFF decision. These are proposed review checks; no application or deployment tests were run."
+          },
+          {
+            "id": "GW2",
+            "answer": "The new mobile composition requirement supports a mobile BFF boundary; retain web's existing API and release cadence. Reject a web BFF without a corresponding need. Decide separate deployment versus colocation from change ownership, failure isolation and operational capacity; preserve Java 21/Spring MVC and select no new framework.\n\nResponsibility matrix: ingress owns existing entry policy; the mobile team owns screen representation and bounded composition; downstream services own authoritative reads, invoice totals and object/tenant authorization on every path. The BFF must not recalculate business totals or authorize payments.\n\nContract: invoice totals are mandatory. If unavailable, return a stable failure, never a successful invoice view with missing or zero totals. Authentication/authorization failures follow the security error contract without exposing unauthorized existence. Optional recommendation timeouts or declared transient failures may produce HTTP 200 with explicit recommendation state 'unavailable' and completeness 'partial'. Distinguish this from an available empty list; do not use HTTP 206 for application-level incompleteness. Validate mobile rendering.\n\nDefine an end-to-end deadline including pool/queue wait and response reserve; cap fan-out, attempts, concurrency, pending work and body sizes. Parallelize only independently authorized reads. Stop launching work when budget expires and release local resources on completion/disconnect; remote cancellation is unproven.\n\nNext checks: compare representative journeys, fail totals separately from recommendations, stall pools, and inspect remaining work and completeness metrics. These remain proposed checks. Unknowns include dependency count, budgets, freshness/consistency requirements, ownership and mobile compatibility window. Preserve old contracts and define route rollback. Fewer mobile round trips alone does not establish a latency improvement."
+          },
+          {
+            "id": "GW3",
+            "answer": "No. Document the current boundary as insufficient: the second ingress preserves attacker-controlled X-Tenant-Id, and the downstream service trusts that value. A caller able to satisfy workload authentication can therefore present forged tenant context. The valid workload JWT establishes the calling workload, not permission to act for a particular user or tenant. Gateway authentication does not cover every reachable path.\n\nResponsibility matrix:\n- Edge/platform owner: enumerate all ingress and direct paths, strip untrusted identity/proxy headers before setting trusted context, and enforce the agreed entry policy.\n- Identity contract owner: define workload identity separately from end-user delegation, tenant derivation, permitted audience/resource and scope.\n- Service owner: authenticate accepted callers, verify context provenance, and authorize the requested operation and tenant/object for every accepted path.\n\nChoose an explicit trust model. An authenticated proxy-context model requires an integrity-protected connection, an accepted proxy identity, header replacement rules and rejected or inaccessible bypasses. Alternatively, retain direct ingress only with independently verified delegated authority and service authorization; raw headers are insufficient. Closing a bypass does not itself establish user/tenant permission. Never weaken JWT audience validation to make forwarding work.\n\nReject documentation-only remediation and reliance on the workload JWT alone. Preserve Java 21/Spring MVC; this review does not select security wiring.\n\nNext checks: inspect both ingress configurations and service enforcement; propose hostile cases covering forged tenant/proxy headers, valid workload credentials without delegation, wrong audience, cross-tenant object access and direct access. These checks have not run. Unknowns include trusted issuers, delegation policy, authenticated proxy transport and required direct callers. Describe protection only after those controls are evidenced."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "GW1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Retained adequate API/ingress, rejected BFFs based on client count and kept payment rules at their authority.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "GW2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Considered justified mobile BFF, preserved web, distinguished required totals from optional recommendations and bounded fan-out.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "GW3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Identified alternate-ingress header spoofing and insufficient workload-only permission; required receiver enforcement and hostile checks.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Opening scope; conditional handoffs"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Discover the constraint before the topology"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Make composition and trust explicit; both references"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Choose the owner and the smallest useful boundary"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Responsibility matrix and protected service invariants"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Deliver and verify the affected slice"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Representation/trust/resource/operations checks"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Discovery unknowns; source-version limits; final reporting guard"
+        }
+      ]
+    },
+    {
+      "skill": "service-discovery",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\service-discovery\\output.json",
+      "outputSha256": "e10ca91ecd5618d421922fdf2fa9da3d23f0bcd85692b87edc51aa28d1de8d6a",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-discovery/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-discovery/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-discovery/skill/references/source-and-client-semantics.md"
+        ],
+        "cases": [
+          {
+            "id": "SD1",
+            "answer": "Return the previously validated endpoint set as explicitly stale while its age since the last accepted source observation remains within the approved 30-second allowance. Preserve the existing health checks and retry budget. A timeout is a refresh failure, so it neither establishes authoritative emptiness nor renews the snapshot timestamp. Once the allowance is exhausted, return a typed expired/unavailable result.\n\nThe stated 12-second timeout alone does not establish the snapshot's total age. If the last accepted observation was exactly 12 seconds ago, 18 seconds of allowance remain; if the snapshot was already older when the request began, less time remains or it has already expired.\n\nExpose the stale/degraded state, service and namespace, last accepted observation time, current snapshot age, expiry deadline, endpoint count, and refresh timeout outcome. Preserve any accepted source revision as provenance. Make stale-serving and expired/unavailable outcomes observable. Discovery membership remains separate from the existing endpoint-health decisions.\n\nNext checks: inspect the recorded observation time and verify failed refreshes cannot reset it; confirm the caller receives degradation metadata and stops using this discovery result when the allowance expires. The material unknown is the actual elapsed time since that accepted observation. Upstream data age may also differ from local observation age; this does not change the explicitly approved clock basis."
+          },
+          {
+            "id": "SD2",
+            "answer": "No. Atomically replace the old endpoint set with the successful authoritative empty set for this service and namespace. Return a known-empty discovery result with zero endpoints. The 30-second stale allowance permits bounded use during source failure; authoritative removal supersedes the old positive entries immediately. Existing health checks do not authorize restoring endpoints that the source has removed.\n\nExpose authoritative-empty state, scope, the accepted observation time and source revision when available, and endpoint count zero. Keep this distinct from an uninitialized cache or unavailable source. Define an explicit negative-cache expiry and refresh/recovery path so endpoints can become discoverable again. A subsequent source failure must not resurrect the superseded positive set.\n\nNext checks: verify that successful empty responses replace the whole scoped view, older in-flight refreshes cannot restore removed entries under the source's actual ordering contract, and newly selected destinations use the replacement view. Inspect transport reuse separately: an empty discovery snapshot does not itself close existing connections. Measure removal-to-last-new-request behavior when assessing propagation.\n\nThe facts establish authority, scope and success; no extra evidence is needed to reject retaining the old endpoints. Material unknowns are the negative-cache/recovery policy and the caller's connection-drain behavior, which determine subsequent recovery and traffic convergence."
+          },
+          {
+            "id": "SD3",
+            "answer": "Two protocol defects follow directly from the description. Under the Kubernetes 1.34 API contract cited in the assigned source/client reference, resourceVersion is opaque. Preserve it as a string and follow supported list/watch continuity; converting it to long and applying numeric greater-than cannot establish valid ordering. Do not import a later Kubernetes version's ordering guarantees into 1.34.\n\nHTTP 410 Gone means the requested watch history is unavailable. Retrying that expired cursor indefinitely cannot restore continuity. Clear the watch cache, obtain a complete fresh list for the same scope, and start a new watch from its returned resourceVersion. Publish the replacement coherently after completing any pagination; prevent callbacks from the retired watch from mutating the new state. Any separately retained, policy-approved stale view must never become the new watch's base.\n\nStartup has no cached endpoints, so no last-known-good fallback exists there. Bound initialization and retries, and return typed uninitialized/unavailable or fail readiness according to the existing startup contract. Failed initialization is not authoritative emptiness.\n\nNext checks: inspect the installed client, resource type, namespace/selectors, pagination, 410 handling, reconnect budget and cursor flow. Propose a lost-history recovery check demonstrating a fresh list followed by watch continuity. If watching EndpointSlices, inspect complete aggregation and deletions.\n\nMaterial unknowns include the concrete client, watched resource, permissions, startup deadline and observed impact. The description proves protocol misuse; it does not prove overflow, endpoint corruption or a particular outage cause."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "SD1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Allowed only contract-bounded stale use, preserved observation age and correctly identified that timeout length does not prove snapshot age.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "SD2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Replaced old positives with authoritative empty; separated negative-cache recovery from transport draining.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "SD3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Applied Kubernetes1.34 opaque-token rules, required fresh list/watch after410 and refused fabricated cold-start fallback.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Purpose and boundary"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Establish the evidence"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Workflow steps2–6; source-and-client-semantics reference"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Workflow authority/update/cache/stale choices"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Workflow step6; immutable bounded Java resolver"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Workflow step6; Deliverable and limits"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Failure and acceptance contract; Java fixture"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Compatibility paragraph; Deliverable and limits"
+        }
+      ]
+    },
+    {
+      "skill": "service-identity-and-trust",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\service-identity-and-trust\\output.json",
+      "outputSha256": "1f859af83adb312a466150a06fca7f3fc248ff970f593923bd53f078db994ca3",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-identity-and-trust/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-identity-and-trust/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-identity-and-trust/skill/references/protocol-and-lifecycle.md"
+        ],
+        "cases": [
+          {
+            "id": "IT1",
+            "answer": "Deny this delete. mTLS establishes the reporting workload's authenticated identity; membership in the configured trust domain does not establish delete permission, tenant membership or authority to represent a user. Ordinary user and tenant headers remain caller-supplied assertions. Accepting them would let an authenticated workload invent authority over tenant B.\n\nThe known trust path is reporting workload → resource service → tenant B record. Retain mTLS, but have the resource service enforce an explicit permitted operation, authenticated subject–actor relationship, tenant binding and permission on the actual record. A trusted, constrained delegation assertion could supply the missing authority. If this is instead intended as a system operation, define narrowly scoped workload authority and its allowed tenants explicitly; do not silently substitute it for user authority.\n\nNext review the intended delegation/issuance owner, trusted assertion source, allowed reporting operations, actual record tenant, and every entry path reaching deletion. If TLS terminates upstream, establish how authenticated identity reaches the service and whether direct access bypasses enforcement. Proposed negative checks should demonstrate that forged headers, an unauthorized actor and a tenant mismatch cannot delete a record.\n\nMaterial gaps are the authorization contract, delegation mechanism and relevant enforcement topology. These gaps justify denying this request; they do not require replacing the existing workload authentication. No runtime checks were executed."
+          },
+          {
+            "id": "IT2",
+            "answer": "Permit this delegated delete under the stated policy. Rejecting all delegated calls would disregard the supplied evidence: a documented trusted issuer grants a resource-service audience, tenant B and delete action; the token identifies both subject and calling workload; the service validates the credential, matches actor/tenant/action and enforces current record permission. The presented token satisfies those conditions.\n\nThe authority path is trusted issuer → constrained subject/actor assertion → resource-service verifier and authorization → permitted record deletion. Preserve this mechanism. The resource service remains responsible for enforcing the decision against the actual record and maintaining the authorization invariant through the mutation. Audit attribution should retain both acting workload and delegated user.\n\nNext design checks should confirm all paths to deletion cross that enforcement, issuer issuance rules restrict who may delegate, and permission changes cannot race the write. Proposed validation should include the stated successful case plus wrong audience, actor, tenant, action, expired token and withdrawn record permission, each with no forbidden mutation.\n\nThe case does not specify credential lifetime, revocation target, caches or deployment reachability; document those lifecycle and topology details without treating their omission as evidence that this request fails. If token theft is material, assess supported sender binding: ordinary bearer tokens do not become cryptographically certificate-bound merely because transport uses mTLS. Such an assessment does not imply a blanket delegation ban. No runtime checks were executed."
+          },
+          {
+            "id": "IT3",
+            "answer": "Reject the proposed audience bypass and acceptance of arbitrary new keys. Keep issuer, signature, audience, time and authorization checks intact. Keys become trusted through the configured authority's distribution contract, not because an incoming token names them.\n\nWarm consumers may continue verifying unexpired credentials against already trusted keys only within the declared overlap and cache policy. Unknown-key requests and cold consumers without trusted material must deny or return unavailable for the protected operation. Bound refresh attempts against configured endpoints; do not extend credential expiry or clock tolerance. Stale authorization permits require their own explicit bounded policy.\n\nAn open TLS connection does not prove current credential or grant validity. Per-request token checks remain necessary; certificate withdrawal may also require connection draining, bounded connection lifetimes and controls on session resumption. A rejected fresh handshake alone cannot demonstrate withdrawal across established sessions.\n\nRecovery should restore authenticated key delivery, confirm adoption across replicas, then resume new-key issuance. Retain old keys only for justified overlap covering credential lifetime and propagation; stop old issuance and retire old trust accordingly. Compromise requires accelerated withdrawal rather than routine overlap.\n\nThe missing tolerated revocation delay is a material decision: the security/resource owner must set it separately from availability objectives, then select enforceable cache, invalidation or online-check behavior. Also establish key lifetimes, cache ages, refresh and connection behavior. Proposed isolated checks cover warm/cold consumers, unknown keys, expiry, old/new overlap, existing connections, recovery and measured withdrawal across every relevant path. No runtime checks were executed."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "IT1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Denied unsupported delete despite mTLS; separated workload, subject/tenant authority and operation permission.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "IT2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Accepted supplied valid scoped delegation without blanket rejection or new platform; preserved effect-boundary permission.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "IT3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Rejected audience/key-validation bypass, separated warm/cold trust and required an explicit revocation bound.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Scope and compatibility"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Discover the actual trust graph"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Put enforcement at the protected boundary; protocol reference"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Choose the identity and authority contract"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Effect-boundary policy; trusted Java/Spring context"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Deliver and validate the contract"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Hostile-case matrix and lifecycle fault sequence"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Discovery step5; final runtime-proof limits"
+        }
+      ]
+    },
+    {
+      "skill": "progressive-service-delivery",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\progressive-service-delivery\\output.json",
+      "outputSha256": "66ec169d9868b5d9c9309872d8d15f56f0aeeecfac2ab57bb9c3484c6450516d",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/progressive-service-delivery/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/progressive-service-delivery/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/progressive-service-delivery/skill/references/cohort-evidence-and-gates.md"
+        ],
+        "cases": [
+          {
+            "id": "PD1",
+            "answer": "Stop expansion and contain affected checkout exposure now using the verified admission or activation control. The selected tenant has 9/30 failed business completions, an observed 30% failure rate; fleet success of 99.9% cannot establish that this cohort is healthy. Do not continue harmful exposure merely to reach 300 attempts.\n\nPromotion is prohibited independently because 30 attempts fall below the predeclared 300 representative attempts per cohort. That minimum is a promotion requirement, not a waiting period before responding to harm. A confirmed checkout regression requires aborting exposure regardless of sample size. The supplied counts establish failures but do not alone establish regression against a comparable baseline or release causation.\n\nPreserve checkout-level outcomes, candidate/control and configuration identities, cohort assignment, timestamps and the evaluated decision. Reconcile attempts with failed, successful, pending and retried logical checkouts. Compare the tenant's candidate outcomes with an aligned, comparable control or baseline, and check attribution, telemetry delay and shared-dependency effects. Establish whether the nine failures are a confirmed regression and identify their causes. Verify actual admission has stopped, handle in-flight work under its existing contract, and use only recovery compatible with candidate-persisted state.\n\nThe release owner should assign a bounded investigation. Recovery compatibility, failure attribution and broader cohort coverage remain unknown. Require corrected behavior and fresh, sufficient representative evidence before reconsidering promotion."
+          },
+          {
+            "id": "PD2",
+            "answer": "Promote from 2% to the authorized next step of 5% through the existing rollout controls. The updated evidence supplies 500 representative attempts, exceeding the 300-attempt minimum; no regressions are observed, every mandatory per-cohort safety check passes, and mixed-version compatibility and approved recovery have been exercised. These facts support the next bounded increase. There is no stated blocker requiring an additional arbitrary wait or sample threshold.\n\nRecord the candidate artifact, routing and flag revisions, evaluated cohort evidence and promotion decision. Verify actual exposure reaches the intended 5%, including retries and background work where applicable. Begin a fresh attributed observation window at that exposure and continue the same per-cohort business-outcome and safety gates, with the approved recovery available.\n\nAbort affected exposure if a confirmed checkout regression appears. Pause expansion if required evidence becomes missing, stale or insufficient. Apply the declared evidence requirements again before any subsequent increase; authorization here covers only 5%.\n\nThe evidence supports the measured populations and observation window. Performance and delayed effects at 5% remain to be observed, but those uncertainties do not negate the supplied passing gates or justify withholding the authorized step. No rollout action or application test is executed by this review."
+          },
+          {
+            "id": "PD3",
+            "answer": "Reject the proposed rollback. The previous binary cannot read a value already persisted, so switching every pod to it would introduce a known compatibility failure. Disabling a flag does not undo stored data, retained messages or completed external effects. Retrying every payment risks duplicate charges because a remote payment may already have succeeded.\n\nFirst stop admission of the hazardous behavior and verify that it actually stops across requests, consumers and other background paths. Account for in-flight work: complete, drain, cancel or quarantine it according to the existing operation contract. Preserve operation identifiers and outcome evidence.\n\nKeep a reader compatible with current state available. Have the schema or data owner identify affected records and retained or replayable work and approve a compatible recovery target or forward repair. Restore an older image only after evidence establishes that it can process the state now present, with necessary configuration and capacity. A rehearsal against pre-release data would not prove that.\n\nFor each uncertain payment, reconcile its authoritative remote outcome using the existing payment-provider and operation contracts. Retry only when the established outcome and idempotency rules permit it; escalate unresolved outcomes to the payment owner. Any compensation requires that owner's existing process.\n\nMaterial unknowns are the affected data and work inventory, which other readers reject the enum, actual in-flight payment outcomes, available idempotency guarantees, and a compatible recovery build. Those gaps require targeted evidence and owners, not blanket image replacement or replay."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "PD1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Withheld promotion and contained harm; distinguished observed failures, attribution and the300-attempt promotion rule.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "PD2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Allowed exactly the authorized5% step with continued gates; no indefinite pause or jump to100%.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "PD3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Rejected incompatible-image rollback and blind payment replay; required compatible readers and authoritative reconciliation.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Purpose and handoffs"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Discover the release contract"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Keep three controls separate; compatibility/effects; both references"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Choose an exposure strategy; promotion evidence"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Trusted cohort context; preserved authorization and local seam"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Execute and verify the requested work"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Cohort/control/fault/recovery checks; synthetic arithmetic"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Declared illustrative examples and final evidence limits"
+        }
+      ]
+    },
+    {
+      "skill": "microservices-architecture",
+      "phase": "final",
+      "outputPath": "C:\\Users\\robso\\AppData\\Local\\Temp\\microservices-skills-488d0713efaf48758ef9223425ac47bf\\microservices-architecture\\output.json",
+      "outputSha256": "a0cb1a98bd61241db8516d07af0843d14da14a677c561c00215ceaa6fd6dff0f",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/references/context-maps-and-translation.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/skill/references/integrating-decisions.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-data-ownership/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/service-data-ownership/skill/references/access-contract.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/progressive-service-delivery/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/progressive-service-delivery/skill/references/java-spring-release-constraints.md"
+        ],
+        "cases": [
+          {
+            "id": "MA1",
+            "answer": "Retain the Java 21/Spring Boot 3.4 modular monolith and its stable delivery pipeline as the proposed deployment decision. The supplied evidence establishes a language conflict, but no scaling, isolation or separate-process requirement.\n\nThe first deliverable is a compact decision note with a provisional context map:\n\nBilling Account model — exchange, if required, to be established — Access-control Account model\n\nThese are candidate semantic boundaries within the existing application. Distinct identities, lifecycles or rules would support separate models; synonyms or different projections could justify retaining one model with explicit terminology.\n\nFor one disputed operation, collect each Account meaning, identity scope, lifecycle, protected invariant, required consistency and decision authority. Trace an accepted case, a rejection and a correction through current modules, contracts and data access. Record current and proposed relationships separately, marking owners and rules unconfirmed until supported.\n\nThen define any necessary translation: published meaning, identity mapping, effective time, unsupported-input outcome and maintenance responsibility. Do not assume a shared identifier or any cross-context exchange.\n\nThe first validation step is a walkthrough of those examples plus one independent policy change on each side. It should distinguish semantic disagreement from naming differences and expose accidental coupling. Inspect relevant use-case tests and change history as evidence; execution remains a proposed next step.\n\nUnknowns include actual Account rules, cross-model atomic requirements, authoritative owners and leadership’s intended measurable outcome. Process extraction requires a separate justified decision if new constraints warrant it. No application or deployment tests were executed."
+          },
+          {
+            "id": "MA2",
+            "answer": "Accept the required billing deployment and failure independence; retain Java 21/Spring Boot 3.4. Propose one billing operation, selected with its identified authority, from client entry through authoritative mutation to observable result. Include the overnight job and both older clients wherever they touch this operation; leave unrelated modules unchanged.\n\nRecord this conditional decision map; accountable individuals remain unconfirmed:\n- Billing/access-control domain owners: establish relevant Account translation and invariants before fixing the interface. Required cross-owner atomicity remains an unresolved constraint, not permission for eventual consistency.\n- Billing authority and job operator: inventory actual writes, principals and grants. Make the job an approved billing worker or move it behind an owner operation; prove its replacement before revoking obsolete access. Any interim exception needs scope, owner, expiry and revocation evidence.\n- API and client owners: establish old/new semantic compatibility before exposure. Preserve supported contracts or a tested compatibility adapter so neither older client requires synchronized upgrade.\n- Platform/release owner: demonstrate isolation across processes and shared databases, capacity, credentials and other dependencies before claiming independence.\n\nProposed checks: exercise the operation and invariant through each supported client/job version; deny unauthorized direct writes; deploy billing while access control continues; fail billing and stress shared dependencies; observe access-control behavior against the accepted contract. Verify recovery after candidate writes, including in-flight and overnight work.\n\nChoose initial exposure from workload and harm limits; promote on sufficient evidence, pause on missing evidence, abort on violations. Unknowns: operation, exact independence criteria, transaction coupling, deployed artifacts, topology and recovery compatibility. No tests executed."
+          },
+          {
+            "id": "MA3",
+            "answer": "Treat MA3 as a local Spring configuration investigation. Retain Java 21, Spring Boot 3.4, accepted service boundaries and delivery policy. The reported failure concerns a connect-timeout value reaching its request factory; it supplies no reason to reopen architecture decisions.\n\nProposed investigation:\n\n1. Identify the exact property key, intended duration/unit, active configuration sources and profiles. Trace its effective value into the configuration object.\n2. Trace the affected HTTP client’s construction to the request factory it actually uses. Locate where that value should be transferred, checking custom construction, conditional configuration and later overrides. These are hypotheses, not established causes.\n3. Verify the factory’s connect-timeout configuration mechanism against the project’s resolved dependencies. Distinguish connection establishment from pool acquisition and response/read timeouts.\n\nDeliver a short finding with the property-to-client wiring trace, the evidenced point of failure, a minimal proposed correction and a focused regression-check specification. The proposed check should use a distinctive configured duration and verify it reaches the actual factory used by the affected client. Recommend a bounded connection-establishment check only if configuration inspection cannot establish the relevant behavior.\n\nMaterial unknowns are the property name, client/factory implementation, construction path, effective profiles and resolved dependency versions. No application changes, runtime observations or tests were performed. Spring implementation guidance is the appropriate bounded handoff; a broader architecture decision map is unnecessary."
+          }
+        ],
+        "checksExecuted": [],
+        "delegation": [
+          {
+            "task": "/root/eval_hub/ma1_review",
+            "caseId": "MA1",
+            "resourcesAllowed": [
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/input.json",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/skill/**",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/**"
+            ],
+            "resourcesReadIfKnown": [
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/input.json",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/skill/SKILL.md",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/SKILL.md",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/bounded-context-design/skill/references/context-maps-and-translation.md"
+            ]
+          },
+          {
+            "task": "/root/eval_hub/ma3_review",
+            "caseId": "MA3",
+            "resourcesAllowed": [
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/input.json",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/skill/SKILL.md"
+            ],
+            "resourcesReadIfKnown": [
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/input.json",
+              "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/microservices-architecture/skill/SKILL.md"
+            ]
+          }
+        ]
+      },
+      "assessment": {
+        "reviewer": "coordinator",
+        "method": "Read full responses against criteria frozen before actor runs; no string-score or actor self-score.",
+        "cases": [
+          {
+            "id": "MA1",
+            "result": "meets-scoped-criteria",
+            "evidence": "Preserved modular monolith, proposed evidence-backed semantic map and smallest discriminating slice without forced process split.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "MA2",
+            "result": "meets-scoped-criteria",
+            "evidence": "Responded to real isolation driver, included overnight writer, old clients, owners and compatibility/failure/recovery checks.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          },
+          {
+            "id": "MA3",
+            "result": "meets-scoped-criteria",
+            "evidence": "Kept a focused property-to-factory investigation and preserved accepted architecture/stack; did not invent exact API settings.",
+            "limit": "Proposal/review output only; application behavior not exercised."
+          }
+        ]
+      },
+      "pillarMap": [
+        {
+          "pillar": "Escopo preciso",
+          "location": "Purpose"
+        },
+        {
+          "pillar": "Discovery",
+          "location": "Establish the working constraints"
+        },
+        {
+          "pillar": "Profundidade técnica",
+          "location": "Build and reconcile the decision map; integration reference"
+        },
+        {
+          "pillar": "Critérios de decisão",
+          "location": "Decision alternatives/status/dependencies/reconsideration"
+        },
+        {
+          "pillar": "Qualidade da solução",
+          "location": "Deliver first slice: invariants, types, interfaces, justified dependencies"
+        },
+        {
+          "pillar": "Execução",
+          "location": "Deliver the first verifiable slice"
+        },
+        {
+          "pillar": "Validação",
+          "location": "Integrated checks and evidence requirements"
+        },
+        {
+          "pillar": "Limites de conhecimento",
+          "location": "Evidence versus acceptance; Sources and limits"
+        }
+      ]
+    }
+  ],
+  "structuralChecks": {
+    "packages": [
+      {
+        "name": "bounded-context-design",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "ea05a0f19aaf7b6756c03aa4f4def86bc9fec7ec35816236299dcc65f16e37fb",
+            "bytes": 13405
+          },
+          {
+            "path": "references/context-maps-and-translation.md",
+            "sha256": "e0ab3a07a58bb907a1bbc9549fbe292fe5584912bc336b9d5bed1e73dd7cdf84",
+            "bytes": 9549
+          },
+          {
+            "path": "references/java-spring-boundaries.md",
+            "sha256": "944a4ea9b3c5028c7e5dc28c2543c66e3153053279b397291af4e9479ca77035",
+            "bytes": 8078
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "5e8acf9b623aec6259c04f7d5797ca73e31d2e851836c4d1c17affa620784325",
+            "bytes": 1772
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 4,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 5,
+            "issues": 0
+          }
+        ],
+        "localLinks": 2
+      },
+      {
+        "name": "service-data-ownership",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "b559fb2a6fe455313ea29dad06933924724ff7b142ba2b243492af4700e8d74a",
+            "bytes": 10371
+          },
+          {
+            "path": "references/access-contract.md",
+            "sha256": "a82df2fd4594a13f5a2a0d9b098f57465699cf1ab979242530bcb003823b5b1a",
+            "bytes": 9034
+          },
+          {
+            "path": "references/enforcement-and-verification.md",
+            "sha256": "debd5f70b365d4b54ef780d0ef5644eb2f68b7a3f073aeb5427175acec42f07e",
+            "bytes": 11687
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "f69e5d48794f49a8102451bc2dd407e06228b49cd7975d3b9bed70d6b51cbbe6",
+            "bytes": 1690
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 4,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 5,
+            "issues": 0
+          }
+        ],
+        "localLinks": 2
+      },
+      {
+        "name": "cross-service-query-design",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "20b0cfbaa6df89c9aa9bf5b7c7f6eb85f62f05b275fd0f95c361d1f83b868f12",
+            "bytes": 13984
+          },
+          {
+            "path": "references/projection-lifecycle.md",
+            "sha256": "855d998342bbd015d3a8781f3d41ac1e30ad8c8ea430c0bc26a043fec863bde9",
+            "bytes": 7419
+          },
+          {
+            "path": "references/query-contracts.md",
+            "sha256": "752aea70728132006da19716770b60f9a1734a865310309d341d429b2ff05d22",
+            "bytes": 8113
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "49388fcc9bc3b07d7cb12ae385841c3d3afd6b7b132c0872c061dbb0854190a1",
+            "bytes": 1618
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 4,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 5,
+            "issues": 0
+          }
+        ],
+        "localLinks": 2
+      },
+      {
+        "name": "api-gateway-and-bff",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "b975684ae077483d8e466d9017f3c9be37b8b907b7ca28ba03922b98a967767c",
+            "bytes": 11492
+          },
+          {
+            "path": "references/composition-and-trust.md",
+            "sha256": "97dde35e1d4fcab3b9829add8f5beb4a782d461fbd74b16b5ea9c001f77b8c0f",
+            "bytes": 9054
+          },
+          {
+            "path": "references/spring-integration.md",
+            "sha256": "c67ce9fc437f2a417f7acbaf31e2fee8a6713c6191614ba4f910e5e13c7414d9",
+            "bytes": 6669
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "f6ac0359df5f64922a4d411461eda4c1f911726e2448ae80ea395c34ad9f5022",
+            "bytes": 1563
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 4,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 5,
+            "issues": 0
+          }
+        ],
+        "localLinks": 2
+      },
+      {
+        "name": "service-discovery",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "dbd1cb4c57a72135248a86250f02f20d28476a9ae74fcd61c9a99da6bdc8d61e",
+            "bytes": 10477
+          },
+          {
+            "path": "assets/SnapshotResolverExample.java",
+            "sha256": "673b82f742b67464cf14d12c9349a652da48c2cd03032155ac621e7c6262b898",
+            "bytes": 11466
+          },
+          {
+            "path": "references/java-snapshot-resolver.md",
+            "sha256": "a65c326822f93b73fabf75e52fd257cd361afb9b4af96930db2a77e7bf757ecd",
+            "bytes": 4742
+          },
+          {
+            "path": "references/source-and-client-semantics.md",
+            "sha256": "ebf61bbb88422cdb6d969875b1b07503d13867108dd8d180da415ae8153066ca",
+            "bytes": 8131
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "be0ec67b51d346e5ec716c78be12250bf3d58be392d5880e520723aa3b86f2d7",
+            "bytes": 1256
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 5,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 6,
+            "issues": 0
+          }
+        ],
+        "localLinks": 3
+      },
+      {
+        "name": "service-identity-and-trust",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "8c9fd394c66e04eadecbe7f649503ae77b081375d594374eb1caa7418c91f600",
+            "bytes": 15443
+          },
+          {
+            "path": "references/protocol-and-lifecycle.md",
+            "sha256": "ae131ad3d17aad4b9bd4e880ff3ed6032fdc746c8421ad47c45e0569ebdbd2bc",
+            "bytes": 11312
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "2ebc0bea3e8e2a6131719dda56c2e50536437be9644d3d8bec16038a14859de9",
+            "bytes": 1484
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 3,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 4,
+            "issues": 0
+          }
+        ],
+        "localLinks": 2
+      },
+      {
+        "name": "progressive-service-delivery",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "bde8e0084a0966f7b962973f0a1ab7e8b89ada514947e980d7ba97949ecc2982",
+            "bytes": 13481
+          },
+          {
+            "path": "references/cohort-evidence-and-gates.md",
+            "sha256": "736763989436178bbf239baa61e3e53ea8ded61be2ead1b19d4c5f9fcc7a20b9",
+            "bytes": 9109
+          },
+          {
+            "path": "references/java-spring-release-constraints.md",
+            "sha256": "ede54991a4bc675c3236cbef670ca697cd7761d37ccf08f18d0d05a20882fa38",
+            "bytes": 6487
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "093911b6881ec166812c46811aa1ded7fd957534616e58adffe73cd20b928a33",
+            "bytes": 1475
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 4,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 5,
+            "issues": 0
+          }
+        ],
+        "localLinks": 2
+      },
+      {
+        "name": "microservices-architecture",
+        "version": "1.0.0",
+        "files": [
+          {
+            "path": "SKILL.md",
+            "sha256": "843a6282cb499e0d723d29ac23fe83f23eab81f5389a00e9fa696e348e1605cf",
+            "bytes": 11642
+          },
+          {
+            "path": "references/integrating-decisions.md",
+            "sha256": "41c8871b823b3e7608e5a6ffe4f1bfe807ac653eb5a1a739517fb9347a78d745",
+            "bytes": 8833
+          },
+          {
+            "path": "skill.yaml",
+            "sha256": "346c83821c133c4706f24a4bdc5f1c667e24500ce4de9b269901e1525a8bf676",
+            "bytes": 2281
+          }
+        ],
+        "layouts": [
+          {
+            "adapter": "claude-code",
+            "entries": 3,
+            "issues": 0
+          },
+          {
+            "adapter": "codex",
+            "entries": 4,
+            "issues": 0
+          }
+        ],
+        "localLinks": 1
+      }
+    ],
+    "resolution": {
+      "order": [
+        {
+          "name": "api-gateway-and-bff",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "bounded-context-design",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "cross-service-query-design",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "progressive-service-delivery",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "service-data-ownership",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "service-discovery",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "service-identity-and-trust",
+          "version": "1.0.0",
+          "direct": false
+        },
+        {
+          "name": "microservices-architecture",
+          "version": "1.0.0",
+          "direct": true
+        }
+      ],
+      "warnings": []
+    },
+    "indexDelta": {
+      "before": 287,
+      "after": 295,
+      "added": [
+        "api-gateway-and-bff",
+        "bounded-context-design",
+        "cross-service-query-design",
+        "microservices-architecture",
+        "progressive-service-delivery",
+        "service-data-ownership",
+        "service-discovery",
+        "service-identity-and-trust"
+      ],
+      "existingEntriesUnchanged": true
+    }
+  },
+  "limitations": [
+    "Cases were authored from the agreed plan, so this is not an unseen benchmark of general capability.",
+    "Explicit skill loading evaluates application of instructions, not automatic selection.",
+    "Three cases in one actor session can influence later answers; each skill has its own fresh session.",
+    "No application deployment, production fault experiment or distributed-system guarantee is established by proposal outputs.",
+    "The hub treatment delegated2 cases to helper agents; control did not. Tool availability was comparable, but actual effort differed.",
+    "New specialists were explicitly loaded. Optional existing-neighbor resources were unavailable to actors; only the hub additionally had its7 declared new dependencies available."
+  ],
+  "temporaryEvidenceRoot": "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf",
+  "control": {
+    "group": "microservices-architecture",
+    "output": {
+      "mode": "no-skill-control",
+      "resourcesRead": [
+        "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/control-hub/input.json"
+      ],
+      "cases": [
+        {
+          "id": "MA1",
+          "answer": "The first deliverable should be a short boundary decision record with a proposed domain map for billing and access control inside the existing Java 21/Spring Boot 3.4 modular monolith. Retain the eight-module deployment and stable pipeline while investigating the Account disagreement.\n\nThe supplied evidence establishes a semantic conflict. It does not establish a need for network calls, separate processes, or independent infrastructure. Model Billing Account and Access Account separately where their meanings, rules, and lifecycles differ; an explicit identifier mapping or translation boundary can connect them. These are hypotheses to validate with domain owners, not yet service boundaries.\n\nThe record should contain:\n\n- Concrete examples of each team's Account terminology, operations, invariants, identifiers, and ownership, including any rules genuinely shared between them.\n- A current dependency and data-access map showing where those meanings become coupled, plus a proposed module interface and translation boundary.\n- Options comparing the current model, stronger module boundaries, and separate services against explicit business outcomes, operational cost, and consistency requirements.\n- A provisional decision to improve semantic boundaries, with evidence that would justify revisiting process separation.\n\nNext, review representative use cases with both teams, trace Account changes and transactions across modules, and inspect change history for coordination costs. Establish delivery, availability, and resource-use baselines only where they test a concrete hypothesis.\n\nMaterial unknowns are the conflicting business rules, shared invariants, data ownership, actual change coupling, and leadership's intended outcome. Seek those outcomes before selecting a microservices topology."
+        },
+        {
+          "id": "MA2",
+          "answer": "Propose one independently deployable billing slice alongside the remaining Java 21/Spring Boot 3.4 monolith, preserving access control's existing deployment. The accepted deployment and failure contract supplies the reason for process separation. Select a cohesive billing capability whose transactions and data ownership can close within the slice; the facts do not identify which capability qualifies.\n\nMake extraction conditional on these dependencies:\n\n- Define the required failure behavior: which billing outages and resource failures must access control survive, and with what observable service level. Separate deployment artifacts and rollback controls; isolate runtime resources and critical dependencies accordingly.\n- Inventory every billing reader and writer. Move the overnight job behind billing's owned write interface or into its execution boundary before transferring authority. Retire its direct writes. Choose a migration/cutover procedure with one authoritative writer, reconciliation, and recovery; avoid uncontrolled dual writes.\n- Put a compatibility interface at the existing client boundary. Preserve both older clients' contracts while routing migrated operations to billing. Use additive, version-compatible API and schema changes, with a retirement criterion for compatibility support.\n- Specify cross-boundary invariants, identities, authorization, and consistency. If asynchronous handoffs are necessary, define durable publication, idempotency, and reconciliation.\n\nProposed acceptance checks are independent deployment with mixed client versions, contract compatibility, migration reconciliation, and billing outage/resource-exhaustion exercises demonstrating access control's required behavior. Check timeouts, bounded retries, and rollback against post-cutover data changes; routing traffic back alone is insufficient.\n\nUnknowns include transaction overlap, job scheduling and permissions, legacy client contracts, shared infrastructure, operational capacity, and the precise isolation requirement. Keep affected operations unmigrated until their ownership and compatibility conditions are satisfied."
+        },
+        {
+          "id": "MA3",
+          "answer": "Keep the investigation within the existing Java 21/Spring Boot 3.4 HTTP-client configuration path. Accepted service boundaries and delivery policy require no architecture revision for this defect.\n\nTrace the known connect-timeout property from configuration to the request factory actually used by the affected client:\n\n1. Capture the property's exact name, value, units, active profiles, and effective configuration source. Check whether overrides or binding rules change the intended value.\n2. Identify the affected client bean, its construction path, underlying client library, and concrete request-factory instance. Establish whether custom beans, builders, factory replacement, or auto-configuration conditions bypass the configuration that receives the property.\n3. Follow binding and construction in order. Record where the configured value stops propagating, is overwritten, or reaches a different factory instance. Inspect the project's resolved dependency versions before asserting version-specific behavior.\n4. Distinguish connection establishment from connection-pool acquisition and response/read timeouts so the proposed verification measures the reported setting.\n\nProduce a concise defect report identifying the broken configuration link, expected versus observed factory configuration, supporting code locations, and the smallest proposed correction. Include a focused regression plan exercising the real binding/construction path and asserting the selected factory receives the intended connect timeout. If needed, propose a controlled connection-establishment check with explicit timing tolerance and network assumptions.\n\nMaterial unknowns are the property identifier, client and factory types, bean customizations, effective profiles, and reproduction evidence. No application changes or tests are executed as part of this review."
+        }
+      ],
+      "checksExecuted": []
+    },
+    "assessment": "All3 control proposals also satisfy scoped expectations. No comparative improvement established; one run per arm and treatment used2 helper agents while control did not."
+  },
+  "supersededRuns": [
+    {
+      "skill": "api-gateway-and-bff",
+      "reason": "Optional peer handoffs/suggests were integrated after initial run; fresh actors reran identical cases on final snapshots.",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/api-gateway-and-bff/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/api-gateway-and-bff/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/api-gateway-and-bff/skill/references/composition-and-trust.md"
+        ],
+        "cases": [
+          {
+            "id": "GW1",
+            "answer": "Retain the existing Java 21/Spring MVC API and managed ingress. Reject the proposed per-client BFFs: both clients already receive exactly their required fields, entry policy is provided, and no composition or independent client lifecycle requires another boundary. Additional deployments introduce operating costs and another failure point without an established benefit. No client contract change is justified.\n\nResponsibility mapping: ingress owns and enforces TLS, authentication and coarse admission on its routes; the service owns resource permissions at every exposed operation; the business operation owning payment eligibility must enforce that rule, including for direct/internal callers. A presentation layer may display eligibility returned by that owner, but a later payment command must validate eligibility authoritatively. Putting the rule only in BFFs permits bypass and creates competing business authority.\n\nNext checks, proposed: compare representative web/mobile contracts and journey traces; inspect entry routes, internal callers and effective service authorization; confirm payment eligibility's authoritative operation and current enforcement. Verify direct calls cannot bypass required permissions or payment rules. These are review follow-ups, not executed tests.\n\nMaterial unknowns are payment-rule ownership and alternate entry paths. Neither warrants inventing BFFs. New evidence of divergent representation, bounded aggregation or independent release needs would reopen the decision; device count alone would not."
+          },
+          {
+            "id": "GW2",
+            "answer": "Introduce a mobile-specific composition boundary while retaining web's API and release cadence. The tailored multi-source screen now justifies a BFF responsibility; a separate deployment remains conditional on ownership, release isolation and operating cost. Keep Java 21/Spring MVC; no reactive migration is established. Reject adding a web BFF or forcing the mobile representation into web's contract.\n\nResponsibility mapping: existing ingress retains entry policy; the mobile team owns screen DTOs, composition and compatibility; source services retain authoritative data, tenant/object authorization and business rules. Payment eligibility remains with its domain owner.\n\nContract: invoice totals are mandatory. Failure or deadline expiry obtaining authorized totals fails the composed screen with a stable availability/timeout error; never substitute zero or return a successful incomplete invoice. Optional recommendations may be explicitly unavailable, with completeness marked partial; distinguish unavailable from a legitimate empty result. HTTP 200 can represent this agreed partial view; HTTP 206 is inappropriate. Apply the security error policy to identity/authorization failures rather than disguising them as transient absence.\n\nDefine an overall deadline including response reserve, mandatory/optional budgets, maximum calls, concurrency, queue and payload bounds. Parallelize only authorized independent reads; stop launching work when budget expires, avoid layered retries, and release local work on disconnect.\n\nNext checks, proposed: exercise totals failure, slow recommendations, exhausted pools, disconnects and mobile rendering; compare journey latency/bytes and monitor completeness alongside errors. Unknowns: numerical budgets, freshness/consistency requirements, mobile compatibility window, deployment owner and baseline performance. Agree these before claiming improvement; route rollback must preserve old mobile contracts."
+          },
+          {
+            "id": "GW3",
+            "answer": "No. Document two unresolved gaps. The second ingress preserves caller-controlled X-Tenant-Id while the service trusts it, defeating provenance across all paths. Separately, the JWT establishes workload identity without user/tenant authority. Closing the bypass alone cannot supply that authority.\n\nResponsibility mapping: untrusted entry boundaries strip client identity/proxy headers before establishing trusted context; receivers verify its provenance; owning operations authorize the actor, tenant, resource and action. The identity/delegation authority defines permitted delegation. Reject header renaming or documentation-only reassurance.\n\nPropose closing the alternate entry path or applying an equivalent authenticated, integrity-protected identity contract. The service must authenticate the specifically accepted proxy and reject untrusted context on direct/internal paths. Preserve workload identity separately from user/delegated authority, validate applicable issuer, audience and scope, and derive tenant authority from that contract. Do not invent an issuer or claim scheme. Network restrictions supplement operation authorization.\n\nNext checks, proposed: map all ingress/internal paths and inspect proxy identities, delegation and header replacement. Exercise forged tenant/user/proxy headers through both ingresses; valid workload JWTs with arbitrary tenant headers; missing/mismatched delegated context; wrong audiences; cross-tenant resource requests; and direct access. Use actual credential/filter/proxy handling and assert absence of unauthorized data and effects.\n\nMaterial unknowns are downstream authorization beyond the stated header trust, supported delegation and legitimate second-ingress callers. These affect the repair, but the evidence does not support the protection claim. Preserve the existing environment; framework wiring requires its actual versions and identity contract. No checks have been executed."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "snapshotFiles": [
+        {
+          "path": "references/composition-and-trust.md",
+          "sha256": "97dde35e1d4fcab3b9829add8f5beb4a782d461fbd74b16b5ea9c001f77b8c0f"
+        },
+        {
+          "path": "references/spring-integration.md",
+          "sha256": "c67ce9fc437f2a417f7acbaf31e2fee8a6713c6191614ba4f910e5e13c7414d9"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "4f73d5643a257a41b1497ce367e02cb7459ce7740daf62365596974cad310ddf"
+        },
+        {
+          "path": "skill.yaml",
+          "sha256": "a51ef3cb92452ade00c62201a6af1b60807ed0cd6ff11604a68500c123c49627"
+        }
+      ],
+      "finalAssessment": false
+    },
+    {
+      "skill": "cross-service-query-design",
+      "reason": "Optional peer handoffs/suggests were integrated after initial run; fresh actors reran identical cases on final snapshots.",
+      "output": {
+        "mode": "skill",
+        "resourcesRead": [
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/input.json",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/skill/SKILL.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/skill/references/query-contracts.md",
+          "C:/Users/robso/AppData/Local/Temp/microservices-skills-488d0713efaf48758ef9223425ac47bf/cross-service-query-design/skill/references/projection-lifecycle.md"
+        ],
+        "cases": [
+          {
+            "id": "CQ1",
+            "answer": "Keep the existing projection. Its measured 10-second lag fits the approved 60-second display allowance, optional names have an explicit missing state, and supported feeds, access control and a rebuild procedure already exist. Per-page API fan-out has no demonstrated benefit here; it adds request-time dependencies and does not establish a common snapshot.\n\nSpecify authorization, joins, filtering and ordering before pagination. Use a deterministic total order with a unique tie-breaker and defined null/name handling. Missing optional names must not silently remove shipments. Confirm whether traversal is live or snapshot-based: keyset cursors alone do not freeze changing shipment status or names. Protect cursors against tampering and bind them to scope, query, position, expiry and projection generation; define restart behavior after rebuild. Apply tenant, row and field policy to rows, totals, caches and every subsequent page. The display freshness allowance does not establish an acceptable permission-revocation delay.\n\nNext, verify source-change-to-query-visible lag and coverage, including stalled feeds and caches; a measured 10 seconds is not a guaranteed maximum. Define behavior when the 60-second bound cannot be met. Exercise missing/deleted names, cross-page filter/sort changes, copied tenant cursors and revoked access. Confirm the existing rebuild preserves updates/deletes, reconciles authorized results and has a generation-aware cutover. Material unknowns are live versus stable traversal, accepted revocation latency, workload/page bounds and whether lag/rebuild evidence covers representative load. These qualify validation, not a reason to replace an otherwise adequate path."
+          },
+          {
+            "id": "CQ2",
+            "answer": "No. Keep the projection for the dashboard's permitted stale display, but it cannot be the sole permission check for restricted-shipment release. A permission revoked within its allowed lag could still appear valid; even a fresh authoritative read followed by a separate effect leaves a race.\n\nThe release command must have the authoritative owner enforce current permission and shipment-release invariants at the effect boundary. Where one authority owns both, use its transactional or equivalent conditional operation so revocation and release have a defined ordering. If authorization and the effect span authorities, establish a protocol that proves permission remains valid through the effect; an extra API lookup alone is insufficient. Do not perform the release when current authorization cannot be established. Bind the authenticated actor, tenant, shipment and action to that check; projection membership is no substitute.\n\nNext, specify the command's acceptance point and ownership, then design race checks: revoke permission after the display/read but before release, submit competing releases from the same observed state, and make the authority unavailable while the projection still permits release. The enforced invariant must survive these cases. Also verify stale optional display data never becomes a favorable authorization default.\n\nMaterial unknowns are who owns release permission, how revocation is ordered against the effect, whether the effect is local or crosses an external boundary, and what concurrency guarantees already exist. No dashboard redesign or new event store follows from this consumer change."
+          },
+          {
+            "id": "CQ3",
+            "answer": "The claimed guarantee is unsupported. An eligible row beyond a backend's first 20 may belong in the global first page. Sorting the fetched subset cannot repair missing coverage. Concurrent backend changes also preclude assuming a shared snapshot or stable traversal.\n\nRetain bounded composition only under an explicitly accepted limited-live-search contract. Cap backend count, calls, examined rows, bytes, concurrency and deadline; join/filter examined candidates and return up to 20 matches using a common comparator and unique tie-breaker. Label coverage limited or unknown and omit exact global totals. Short or empty results do not prove exhaustion. If callers require complete results, fail or renegotiate the contract explicitly; do not silently substitute partial success.\n\nInitially omit pagination. Continuation requires defined per-source positions, treatment of unreturned candidates, and an opaque integrity-protected cursor bound to query/access scope and expiry. Recheck authorization. Live traversal must document possible movement, duplicates and omissions; cursors cannot freeze mutable data.\n\nExact stable pages require a supported stable dataset or a suitable read model with accepted freshness, coverage, inputs and recovery. A local projection snapshot still does not prove a coherent snapshot of all authorities.\n\nNext, propose fixtures with the first eligible row at position 21, unequal source densities, duplicate join keys, tied sorts, concurrent mutations, source failure and copied tenant cursors. Verify bounds, honest coverage and authorization for rows/counts/metadata. Material unknowns are required exactness, acceptable freshness, join cardinality, backend ordering/traversal capabilities and resource budgets. These are proposed checks; none were executed."
+          }
+        ],
+        "checksExecuted": []
+      },
+      "snapshotFiles": [
+        {
+          "path": "references/projection-lifecycle.md",
+          "sha256": "855d998342bbd015d3a8781f3d41ac1e30ad8c8ea430c0bc26a043fec863bde9"
+        },
+        {
+          "path": "references/query-contracts.md",
+          "sha256": "752aea70728132006da19716770b60f9a1734a865310309d341d429b2ff05d22"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "b71fc7fcce0bc9dfe6f7707ac2064a2ca16754bc8038971c567d9a786ee8c253"
+        },
+        {
+          "path": "skill.yaml",
+          "sha256": "38976ef795052ff28c6c709a54723e8e7f8b2f58ddfed982d4a61a65aaf41083"
+        }
+      ],
+      "finalAssessment": false
+    }
+  ],
+  "technicalExample": {
+    "skill": "service-discovery",
+    "commands": [
+      "javac --release 21 -d .validation assets/SnapshotResolverExample.java",
+      "java -cp .validation SnapshotResolverExample"
+    ],
+    "compiler": "Temurin25.0.3",
+    "runtime": "Temurin25.0.3",
+    "checksPassed": 28,
+    "executor": "assigned skill-reviewer",
+    "limits": "Dependency-free local state machine; no runtime21, DNS, Spring, Kubernetes, database, identity-provider or production validation."
+  },
+  "preservation": {
+    "initialUnrelated": "docs/agent-harness-optimization-plan.md",
+    "initialSha256": "E6C10B24E1D11CC76AF662D72A0E94812472D645D8C1F21F3342A1156D332D88",
+    "unrelatedAppearedDuringRun": "docs/java-spring-architecture-skills-plan.md",
+    "sha256AtObservation": "A162D779251D3C5F1012869ED7EC1ED4FBC3B7BD8F260B041BB371CA5E60A53E",
+    "concurrentChangesAfterVerification": {
+      "paths": [
+        "skills/mvc-and-request-handling/SKILL.md",
+        "skills/mvc-and-request-handling/skill.yaml"
+      ],
+      "handling": "Preserved without modification. These concurrent changes are outside this delivery and the successful global verification recorded above. The 31 files of the eight new skills were rechecked against their final evaluated snapshots and remain unchanged."
+    }
+  }
+}

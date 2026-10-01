@@ -1,0 +1,105 @@
+{
+  "date": "2026-09-30",
+  "purpose": "Independent response-only exercises of three revised skills; nine cases in three fresh actor sessions.",
+  "protocol": {
+    "rubricsDefinedBeforeRuns": true,
+    "rubricsProvidedToActors": false,
+    "ordinarySkillResourcesAvailable": true,
+    "actorRole": "default",
+    "modelAndReasoning": "inherited",
+    "comparison": "No original-skill or no-skill control; no measured improvement claim.",
+    "limitations": [
+      "Known teaching cases selected after review, not held-out examples.",
+      "These assess written decisions, not generated applications, production security, database guarantees, or automatic skill selection."
+    ]
+  },
+  "exercises": [
+    {
+      "skill": "java-ddd-testing",
+      "actor": "evaluate_review_transactions",
+      "cases": [
+        {
+          "id": "A",
+          "input": "Fake gateway stores mutable Order references; port explicitly requires save. Use case loads, submits, never saves; another read appears submitted. What does the passing test establish and what focused changes/checks help?",
+          "expected": "Identify alias-induced false green; detached snapshots/deep ownership for explicit-save contract; prove missing-save test fails before repair.",
+          "observed": "Actor identified shared-reference visibility, proposed detached snapshots on reads/writes, checking unsaved mutations and making the missing-save test fail before adding save.",
+          "result": "pass"
+        },
+        {
+          "id": "B",
+          "input": "Same operation, but port explicitly provides managed objects inside a Unit of Work; commit persists and rollback discards changes.",
+          "expected": "Preserve valid no-save contract; separate working/committed state and test commit/rollback across units of work.",
+          "observed": "Actor accepted no-save behavior under this contract, distinguished in-unit visibility from completion, and required commit/rollback evidence and real integration for actual persistence.",
+          "result": "pass"
+        },
+        {
+          "id": "C",
+          "input": "Transaction-managed use case mutates managed Order, catches validation failure and returns Either.left. Policy does not recognize Either failures; no escaping exception or rollback request. Pure test asserts Left; database execution unavailable.",
+          "expected": "Flag managed-state commit risk; preserve result API; propose actual entry and independent durable read without claiming execution.",
+          "observed": "Actor identified normal-return commit eligibility, proposed failure-atomic mutation or explicit rollback coordination, and described a future real transaction test with independent reload and positive control. No tests claimed.",
+          "result": "pass"
+        }
+      ]
+    },
+    {
+      "skill": "service-identity-and-trust",
+      "actor": "evaluate_review_identity",
+      "cases": [
+        {
+          "id": "A",
+          "input": "GET /reports/42 allows user alice. Trusted verifier validates issuer, audience, time, signature, and issuer-controlled principal_kind. Token sub=alice, client_id=report-ui, principal_kind=user. Cache key=(iss,sub,resource,action).",
+          "expected": "Permit under stipulated user policy; identify cache key missing principal kind and relevant decision context.",
+          "observed": "Actor permitted the stipulated user while requiring trusted kind/namespace in identity, authorization and cache decisions.",
+          "result": "pass"
+        },
+        {
+          "id": "B",
+          "input": "Same request and claims as A, changing only trusted principal_kind to client.",
+          "expected": "Deny user-only privilege for client alice; distinguish cold-cache bad user lookup and warm-cache permit reuse; exercise signed colliding tokens.",
+          "observed": "Actor denied client access, identified both lookup and cache paths, and proposed cold/warm and ordering checks with correctly signed tokens rather than tampered payloads.",
+          "result": "pass"
+        },
+        {
+          "id": "C",
+          "input": "API accepts user and client-credentials grants, but samples show only iss/sub/aud/client_id/times and no trusted namespace/principal-kind contract. Team asserts signature plus matching alice user row is enough.",
+          "expected": "Identify missing trusted issuance semantics; do not infer user from client_id or invent a standard claim; avoid claiming demonstrated exploit.",
+          "observed": "Actor requested authoritative issuer/namespace evidence, rejected matching-row inference, kept user access denied pending evidence, and distinguished an unjustified assumption from a proven issuable collision.",
+          "result": "pass"
+        }
+      ]
+    },
+    {
+      "skill": "progressive-service-delivery",
+      "actor": "evaluate_review_rollout",
+      "cases": [
+        {
+          "id": "A",
+          "input": "Admission envelope at most 12*t+10 risky operations in any t-second window, 30 prior in-flight operations, fault-to-effective-stop bound70s including margin; allowance600 affected operations. All other gates satisfied.",
+          "expected": "Compute880 and reject current exposure; reduce admission or bounded containment time.",
+          "observed": "Actor computed880, rejected exposure, and derived alternatives <=8 operations/s or containment <=46 2/3 seconds under unchanged assumptions.",
+          "result": "pass"
+        },
+        {
+          "id": "B",
+          "input": "Same conditions as A, changing only fault-to-stop bound to35s.",
+          "expected": "Compute460; permit stated first step with supplied bounds, preserving later promotion checks.",
+          "observed": "Actor computed460, allowed the first step under stated conditions, and retained independent later promotion/budget checks.",
+          "result": "pass"
+        },
+        {
+          "id": "C",
+          "input": "Promotion applies a fixed-sample significance test at12predeclared five-minute windows and promotes at first pass. Does predeclaring times preserve nominal error guarantee? Confirmed duplicate payments may occur meanwhile.",
+          "expected": "Reject repeated-look guarantee without suitable error control; contain confirmed severe harm immediately.",
+          "observed": "Actor required one final analysis or repeated-look control and called for immediate containment rather than waiting for significance.",
+          "result": "pass"
+        }
+      ]
+    }
+  ],
+  "assessment": {
+    "reviewer": "coordinator",
+    "cases": 9,
+    "metExpectedDecisions": 9,
+    "productionOrIntegrationTestsExecutedByActors": 0
+  }
+}

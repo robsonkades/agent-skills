@@ -1,0 +1,56 @@
+schemaVersion: 1
+
+name: progressive-service-delivery
+version: 1.0.0
+description: >-
+  Plan and verify gradual service releases when cohorts, mixed versions and persisted effects affect promotion or recovery. Choose valid cohort signals and explicit promote, pause or abort criteria.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/progressive-service-delivery
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/progressive-service-delivery
+
+keywords:
+  - architecture
+  - microservices
+  - progressive-delivery
+  - canary
+  - feature-flags
+  - rollout
+  - release-recovery
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - architecture-refactoring-paths
+  - component-and-release-boundaries
+  - distributed-transactions-and-sagas
+  - idempotency
+  - kubernetes-service-lifecycle
+  - latency-statistics
+  - online-database-schema-migrations
+  - rpc-and-api-contracts
+  - schema-evolution-and-compatibility
+  - slo-and-alerting
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Progressive Service Delivery
+      short_description: Cohort evidence, promotion and release recovery
+      default_prompt: Use Progressive Service Delivery to define this release's cohorts, promotion gates and recovery constraints.

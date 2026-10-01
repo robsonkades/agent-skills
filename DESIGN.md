@@ -176,6 +176,10 @@ optionalDependencies:
   - name: jvm-gc-tuning
     version: '^2.0.0'
 
+# Direct companions included only when explicitly requested with --with-suggests.
+suggests:
+  - flame-graph-analysis
+
 # Declarative, informational capability tags. Consumed by `info` and by policy
 # tooling; never grants anything.
 capabilities:
@@ -461,6 +465,23 @@ PubGrub-style solver later touches nothing else.
 
 Optional dependencies that fail to resolve are **skipped with a warning**, never fatal.
 
+`suggests` names optional companions without version ranges. By default they are informational.
+With `--with-suggests`, the application resolves the original requested skills first, reads only
+their selected manifests' suggestions, and resolves those additional roots with ordinary
+dependencies. It freezes the selected versions and registries of the original roots during
+expansion, reporting conflicts instead of switching to a manifest with different suggestions.
+Suggestions do not become dependency edges, so reciprocal suggestions and a suggested package
+depending on its origin are valid. Actual dependency cycles still fail.
+
+Expansion happens once per invocation, and only for names explicitly supplied by the user.
+`update --with-suggests` requires names; `install --with-suggests --no-deps` is a usage error.
+Existing suggested packages follow update's `^installed` policy unless `--major` is supplied.
+New suggestions use ordinary registry resolution and applicable project version pins. The flag
+does not persist a preference or change manifest, receipt, or lockfile schemas. Reports retain
+the distinction between requested roots, suggestions, and actual dependencies, and show update
+additions even when the requested skill's version is unchanged. See
+[the complete option contract](docs/install-suggests-option.md).
+
 ---
 
 ## 8. CLI UX
@@ -490,6 +511,7 @@ agent-skills registry list|add|remove  manage registries
 | `--project-root <path>`  | project-scoped commands              | Defaults to the nearest ancestor with `.git`, `skills.lock`, or an agent project directory                                   |
 | `--registry <name>`      | install, search, info                | Restrict to one configured registry                                                                                          |
 | `--dry-run`              | install, uninstall, update           | Print the plan; write nothing                                                                                                |
+| `--with-suggests`        | install, update with explicit names  | Include direct suggestions of requested skills and their dependencies; incompatible with `--no-deps`                         |
 | `--force`                | install, uninstall                   | Overwrite a modified install / delete modified files                                                                         |
 | `--json`                 | list, search, info, doctor, validate | Machine-readable output                                                                                                      |
 | `--verbose`, `--quiet`   | all                                  | Log level                                                                                                                    |

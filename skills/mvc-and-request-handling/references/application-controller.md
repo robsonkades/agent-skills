@@ -91,8 +91,8 @@ policy; a hidden field or URL is not trusted flow state.
 
 ## Why this is worth the class
 
-- **The flow is testable without HTTP.** A table-driven unit test covers every path in
-  milliseconds, including the ones nobody clicks through manually.
+- **The flow is testable without HTTP.** A table-driven unit test can exercise each decision,
+  including submitted states and conditional steps that manual journeys may miss.
 - **The navigation decision is stated once.** A new step may still need a form, route and
   transition validation.
 - **Direct URL access is checked separately.** Navigation guards improve the journey;
@@ -147,7 +147,13 @@ Application Controller which step comes NEXT for this user's journey.
                        "After the identity form, show credit check if required."
 ```
 
-If a rule must hold for an API caller, an import and a back-office user alike, it is the
-first and belongs in the aggregate. If it only shapes what a user is shown next, it is the
-second. Putting a legality rule in the flow object leaves every non-web caller unprotected —
-which is the failure mode worth checking for whenever both exist.
+If a rule must hold for an API caller, an import and a back-office user alike, give it an
+application/domain owner that all those callers use. An aggregate can own its invariants in
+a Domain Model; a [Transaction Script](https://martinfowler.com/eaaCatalog/transactionScript.html)
+or Table Module can enforce legality in another valid organization (`domain-logic-organization`).
+The caller coverage is required, not a migration to aggregates.
+
+If a rule only shapes what a user is shown next, it belongs in presentation flow. Putting
+legality only in that flow leaves callers that bypass it unprotected. Verify the same illegal
+transition through HTTP and an existing non-HTTP entry point; both must reject it before
+forbidden business effects occur, irrespective of navigation output.

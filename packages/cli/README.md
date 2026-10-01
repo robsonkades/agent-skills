@@ -136,12 +136,22 @@ agent-skills install java-performance@latest
 # Several at once
 agent-skills install java-performance java-clean-code
 
+# Include direct suggestions and their dependencies
+agent-skills install java-performance --with-suggests
+
 # See the plan without writing anything
 agent-skills install java-performance --dry-run
+agent-skills install java-performance --with-suggests --dry-run
 ```
 
-Dependencies are resolved and installed first. Installation is atomic: if anything fails, the
-version you already had is untouched.
+Dependencies are resolved and installed first. `--with-suggests` also includes the suggestions
+declared by the selected versions of the skills you explicitly name. If A suggests B and B
+suggests C, installing A with this flag includes B and its dependencies; C is included only if
+it is also requested, directly suggested by another requested skill, or a dependency. The flag
+cannot be combined with `--no-deps`.
+
+Installation is atomic per package: a failed package keeps its previous version. Packages
+already installed by the same command are not rolled back together.
 
 ## Global and project scope
 
@@ -203,7 +213,20 @@ served changed.
 agent-skills update                    # everything, within the current major
 agent-skills update java-performance   # one skill
 agent-skills update --major            # allow major-version jumps
+agent-skills update java-performance --with-suggests --dry-run
+agent-skills update java-performance --with-suggests
 ```
+
+`update <skill...> --with-suggests` includes direct suggestions from the selected update
+versions, even when the named skills are already current. Names are required with this flag.
+Already-installed suggestions follow `^installed`, or the latest version with `--major`;
+new suggestions use normal version selection. The text and JSON reports identify additions,
+their origins, and their installation destinations or skipped status.
+
+The flag applies only to that command. Installed suggestions become ordinary managed packages,
+so a later unnamed `update` updates them without discovering further suggestions. Updating only
+the original skill without the flag does not discover new suggestions, and uninstalling it does
+not remove previously suggested packages. Update notifications do not enable the flag.
 
 In an interactive terminal, the CLI checks for new releases at startup and offers a menu:
 

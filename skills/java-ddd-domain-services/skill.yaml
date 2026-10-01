@@ -1,0 +1,61 @@
+schemaVersion: 1
+
+name: java-ddd-domain-services
+version: 1.0.0
+description: >-
+  Place Java DDD behavior in an aggregate, value object, domain service, policy,
+  specification or factory using business ownership and consistency requirements.
+  Use when a service takes over entity behavior, a rule combines several domain
+  concepts, a policy needs external facts, or creation and rehydration are confused.
+  Covers business names and packages, pure decision contracts and rule validation;
+  excludes application orchestration, database query construction and persistence
+  implementations.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-domain-services
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-domain-services
+
+keywords:
+  - java
+  - ddd
+  - domain-services
+  - domain-policy
+  - specification
+  - factory
+  - clean-architecture
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - domain-logic-organization
+  - gof-strategy
+  - java-ddd-aggregates
+  - java-ddd-domain-events
+  - java-ddd-repositories
+  - java-ddd-testing
+  - java-ddd-use-cases
+  - java-ddd-value-objects
+  - query-objects-and-specifications
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Domain Services
+      short_description: Business ownership, policies and creation contracts
+      default_prompt: Use Java DDD Domain Services to place this behavior and verify its business contract.

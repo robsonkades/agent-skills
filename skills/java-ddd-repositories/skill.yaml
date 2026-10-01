@@ -1,0 +1,58 @@
+schemaVersion: 1
+
+name: java-ddd-repositories
+version: 1.0.0
+description: >-
+  Implement or review Java DDD aggregate persistence when a Gateway loses identity,
+  audit or child state, concurrent updates bypass an aggregate invariant, database
+  errors become not-found results, or an in-memory fake hides missing saves. Preserve
+  inward dependencies and the project's Gateway, JpaEntity and Repository naming.
+  Owns reconstitution and aggregate persistence contracts; excludes aggregate
+  boundary discovery, generic Repository selection and detailed ORM configuration.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-repositories
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-repositories
+
+keywords:
+  - java
+  - domain-driven-design
+  - aggregate
+  - gateway
+  - repository
+  - reconstitution
+  - optimistic-locking
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - java-ddd-aggregates
+  - java-ddd-domain-events
+  - java-ddd-testing
+  - java-ddd-use-cases
+  - repository-pattern
+  - spring-boot-jpa
+  - spring-transactions-and-events
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Repositories
+      short_description: Aggregate gateways, reconstitution and concurrency contracts
+      default_prompt: Use Java DDD Repositories to implement or review this aggregate persistence boundary.

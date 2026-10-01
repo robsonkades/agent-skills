@@ -1,0 +1,61 @@
+schemaVersion: 1
+
+name: bounded-context-design
+version: 1.0.0
+description: >-
+  Design or review bounded contexts when the same business term has conflicting
+  meanings, rules change under different owners, or a shared domain model couples
+  unrelated workflows. Establish language, invariants, context relationships and
+  translation contracts. Use before splitting or merging domain models; keep process
+  extraction with distribution-boundaries and internal rule organization with
+  domain-logic-organization. A bounded context does not automatically become a service.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/bounded-context-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/bounded-context-design
+
+keywords:
+  - architecture
+  - bounded-context
+  - context-map
+  - domain-driven-design
+  - microservices
+  - ubiquitous-language
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - architecture-coupling-and-quanta
+  - architecture-refactoring-paths
+  - architecture-testing
+  - distributed-transactions-and-sagas
+  - distribution-boundaries
+  - domain-logic-organization
+  - layering-and-boundaries
+  - rpc-and-api-contracts
+  - schema-evolution-and-compatibility
+  - service-data-ownership
+  - spring-transactions-and-events
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Bounded Context Design
+      short_description: Model boundaries, language and translation contracts
+      default_prompt: Use Bounded Context Design to evaluate these domain boundaries and context relationships.

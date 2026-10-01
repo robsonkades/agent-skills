@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: clean-delivery-workflow
-version: 1.1.4
+version: 1.1.5
 description: >-
   The order of work for a change, and how much of that order a given change actually warrants:
   understanding before editing, clarifying what is ambiguous, deciding the test approach,
@@ -45,9 +45,137 @@ dependencies:
     version: ^1.0.0
   - name: quality-gates
     version: ^1.0.0
+  - name: architecture-decision-making
+    version: ^2.0.0
+  - name: architecture-refactoring-paths
+    version: ^1.0.0
+  - name: architecture-testing
+    version: ^1.0.0
+  - name: architecture-trade-off-analysis
+    version: ^1.0.0
+  - name: cancellation-and-interruption
+    version: ^1.0.0
+  - name: code-review
+    version: ^1.0.0
+  - name: coding-agent-discipline
+    version: ^1.0.0
+  - name: completablefuture-composition
+    version: ^1.0.0
+  - name: concurrency-diagnostics
+    version: ^1.0.0
+  - name: concurrency-testing
+    version: ^1.0.0
+  - name: debugging
+    version: ^1.0.0
+  - name: distributed-systems-testing
+    version: ^1.0.0
+  - name: distributed-tracing-design
+    version: ^1.0.0
+  - name: domain-logic-organization
+    version: ^1.0.0
+  - name: engineering-communication
+    version: ^1.0.0
+  - name: estimation-under-uncertainty
+    version: ^1.0.0
+  - name: executors-and-task-lifecycle
+    version: ^1.0.0
+  - name: framework-coupling-and-independence
+    version: ^1.0.0
+  - name: heap-dump-analysis
+    version: ^1.0.0
+  - name: humble-objects-and-functional-core
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+  - name: java-api-design
+    version: ^1.0.0
+  - name: java-clean-code
+    version: ^2.0.0
+  - name: java-code-smells
+    version: ^1.0.0
+  - name: java-composition-over-inheritance
+    version: ^1.0.0
+  - name: java-concurrency
+    version: ^1.0.0
+  - name: java-defensive-programming
+    version: ^1.0.0
+  - name: java-dependency-inversion
+    version: ^1.0.0
+  - name: java-design-by-contract
+    version: ^1.0.0
+  - name: java-dry-kiss-yagni
+    version: ^1.0.0
+  - name: java-exception-design
+    version: ^1.0.0
+  - name: java-immutability
+    version: ^1.0.0
+  - name: java-law-of-demeter
+    version: ^1.0.0
+  - name: java-legacy-code-testing
+    version: ^1.0.0
+  - name: java-memory-model
+    version: ^1.0.0
+  - name: java-performance
+    version: ^2.0.0
+  - name: java-refactoring
+    version: ^1.0.0
+  - name: java-tell-dont-ask
+    version: ^1.0.0
+  - name: java-test-design
+    version: ^1.0.0
+  - name: java-test-doubles
+    version: ^1.0.0
+  - name: java-testing-strategy
+    version: ^1.0.0
+  - name: jmh-microbenchmarks
+    version: ^1.0.0
+  - name: jvm-gc-tuning
+    version: ^2.0.0
+  - name: kubernetes-service-lifecycle
+    version: ^1.0.0
+  - name: layering-and-boundaries
+    version: ^1.0.0
+  - name: load-testing
+    version: ^1.0.0
+  - name: metrics-and-cardinality
+    version: ^1.0.0
+  - name: performance-methodology
+    version: ^1.0.0
+  - name: scoped-values
+    version: ^1.0.0
+  - name: slo-and-alerting
+    version: ^1.0.0
+  - name: structured-concurrency
+    version: ^1.0.0
+  - name: structured-logging
+    version: ^1.0.0
+  - name: tdd
+    version: ^1.0.0
+  - name: technical-debt-decisions
+    version: ^1.0.0
+  - name: thread-sizing-and-virtual-threads
+    version: ^1.0.0
+  - name: timeouts-and-deadlines
+    version: ^1.0.0
+  - name: virtual-thread-migration
+    version: ^1.0.0
+  - name: circuit-breakers
+    version: ^1.0.0
+  - name: java-cohesion-coupling
+    version: ^1.0.0
+  - name: java-null-safety
+    version: ^1.0.0
+  - name: java-optional
+    version: ^1.0.0
+  - name: java-solid
+    version: ^1.0.0
+  - name: rate-limiting-and-load-shedding
+    version: ^1.0.0
+  - name: retries-and-backoff
+    version: ^1.0.0
 
 suggests:
-  - debugging
+  - skill-engineering
 
 capabilities:
   - reads-source

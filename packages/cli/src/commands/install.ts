@@ -11,6 +11,7 @@ import { resolveScope } from '../options.ts';
 export interface InstallCommandOptions extends GlobalOptions {
   readonly force?: boolean;
   readonly noDeps?: boolean;
+  readonly withSuggests?: boolean;
 }
 
 export async function runInstall(
@@ -29,6 +30,7 @@ export async function runInstall(
     ...(options.force === undefined ? {} : { force: options.force }),
     ...(options.dryRun === undefined ? {} : { dryRun: options.dryRun }),
     ...(options.noDeps === undefined ? {} : { skipDependencies: options.noDeps }),
+    ...(options.withSuggests === undefined ? {} : { withSuggests: options.withSuggests }),
   });
 
   if (options.json === true) {
@@ -60,7 +62,14 @@ function render(report: InstallReport, scope: InstallScope): void {
     const resolved = report.resolved.find((skill) => skill.name === name);
     const label = `${style.bold(name)}@${first.version}`;
     const origin = resolved === undefined ? '' : style.dim(`  from ${resolved.registry}`);
-    const transitive = resolved?.direct === false ? style.dim('  (dependency)') : '';
+    const transitive =
+      resolved?.direct === false
+        ? style.dim(
+            resolved.suggestedBy?.length
+              ? `  (suggested by ${resolved.suggestedBy.join(', ')})`
+              : '  (dependency)',
+          )
+        : '';
 
     out(`${style.green(glyph.ok)} ${label}${origin}${transitive}`);
 
@@ -103,6 +112,7 @@ function toJson(report: InstallReport): unknown {
       registry: skill.registry,
       direct: skill.direct,
       requiredBy: skill.requiredBy,
+      suggestedBy: skill.suggestedBy ?? [],
     })),
     installed: report.results.map((result) => ({
       name: result.name,

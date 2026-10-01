@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: enterprise-base-patterns
-version: 1.2.4
+version: 1.2.5
 description: >-
   The small structural patterns that hold an enterprise application together — Gateway,
   Mapper, Layer Supertype, Separated Interface, Registry, Special Case, Plugin and Service
@@ -54,8 +54,6 @@ suggests:
   - enterprise-transactions
   - idempotency
   - java-object-contracts
-  - metadata-mapping
-  - orm-behavioral-patterns
   - orm-structural-mapping
   - patterns-and-modern-frameworks
   - remote-facade-and-dto

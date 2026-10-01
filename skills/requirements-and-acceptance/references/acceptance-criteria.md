@@ -130,11 +130,14 @@ Criteria and tests are not the same artefact, and one criterion is often several
 | "Orders over 500 in the EU get 3% off"                | Unit tests at 499.99 / 500.00 / 500.01; one for a non-EU customer |
 | "The file contains only the requesting user's orders" | An integration test with two users' data present                  |
 | "A repeated request within 60 s does not re-query"    | A test with a controllable clock, asserting the query count       |
-| "p99 under 200 ms at 500 rps"                         | A load test, not a unit test (load-testing)                       |
+| "p99 under 200 ms at 500 rps"                         | A load test, not a unit test                                      |
 
 Choose the level per the risk each criterion carries (java-testing-strategy). A criterion with
 no derivable automated test may need manual observation or review. State that method and
 its evidence; rewrite the criterion only if its outcome remains unobservable.
+
+When a criterion requires load-test evidence, use `load-testing` to design the workload
+and measurement procedure after the acceptance target and conditions are agreed.
 
 When a requirement changes, trace the effect through the relevant criteria, tests and other
 evidence. For example, changing an export from all orders to only settled orders changes the

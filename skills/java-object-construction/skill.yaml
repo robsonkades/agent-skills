@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: java-object-construction
-version: 1.3.4
+version: 1.3.5
 description: >-
   Choosing how an object comes into existence in Java: static factory versus public
   constructor, the of/from/valueOf/getInstance naming conventions, instance control
@@ -41,12 +41,25 @@ files:
   - skill.yaml
   - references/
 
-dependencies: []
+dependencies:
+  - name: java-fluent-apis
+    version: ^1.2.5
 
 suggests:
-  - java-fluent-apis
+  - java-composition-over-inheritance
+  - java-dependency-inversion
+  - java-immutability
+  - java-memory-model
+  - java-reference-types-and-leaks
   - java-resource-management
   - java-serialization-hardening
+  - java-thread-safety-contracts
+  - distributed-locks-and-leases
+  - graalvm-native-image
+  - leader-election
+  - rpc-and-api-contracts
+  - session-state-strategies
+  - startup-cds-crac-leyden
 
 capabilities:
   - reads-source

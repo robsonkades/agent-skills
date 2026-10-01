@@ -1,0 +1,2018 @@
+{
+  "date": "2026-09-30",
+  "scope": {
+    "catalogSkills": 305,
+    "skillsWithSuggestions": 303,
+    "relationshipValidation": "All suggestions checked for existing destinations, duplicates, field overlap, dependency return paths and one-hop resolver expansion.",
+    "contextualInspection": "180 relationships from 88 source skills lacking a recognized exact reference received source/target evidence inspection; eleven ambiguous source packages received individual skill-reviewer judgment.",
+    "technicalReviewLimit": "This is relationship review, not a complete technical-content rereview of all 303 suggesting skills."
+  },
+  "summary": {
+    "suggestionsBefore": 2306,
+    "suggestionsAfter": 2294,
+    "removed": 12,
+    "added": 0,
+    "changedSkills": 10,
+    "changedFiles": 10,
+    "contextualEdgesInspected": 180,
+    "contextualEdgesRetained": 168,
+    "contextualEdgesRemoved": 12,
+    "requiredEdges": 753,
+    "optionalEdges": 2,
+    "rangeOrResolutionErrors": 0,
+    "crossFieldDuplicates": 0,
+    "indexEntriesChangedThisPhase": 10,
+    "indexEntriesPreservedThisPhase": 295,
+    "totalIndexEntriesChangedSinceOriginalRequest": 51,
+    "totalIndexEntriesPreservedSinceOriginalRequest": 254
+  },
+  "changes": [
+    {
+      "name": "architecture-coupling-and-quanta",
+      "fromVersion": "1.1.4",
+      "toVersion": "1.1.5",
+      "removed": ["layering-and-boundaries"],
+      "added": []
+    },
+    {
+      "name": "consensus-and-quorums",
+      "fromVersion": "1.2.4",
+      "toVersion": "1.2.5",
+      "removed": ["java-memory-model"],
+      "added": []
+    },
+    {
+      "name": "database-bulk-loading",
+      "fromVersion": "1.0.4",
+      "toVersion": "1.0.5",
+      "removed": ["schema-evolution-and-compatibility"],
+      "added": []
+    },
+    {
+      "name": "enterprise-base-patterns",
+      "fromVersion": "1.2.4",
+      "toVersion": "1.2.5",
+      "removed": ["metadata-mapping", "orm-behavioral-patterns"],
+      "added": []
+    },
+    {
+      "name": "feature-decision-analysis",
+      "fromVersion": "1.2.4",
+      "toVersion": "1.2.5",
+      "removed": ["technical-debt-decisions"],
+      "added": []
+    },
+    {
+      "name": "feature-engineering",
+      "fromVersion": "1.1.5",
+      "toVersion": "1.1.6",
+      "removed": ["estimation-under-uncertainty"],
+      "added": []
+    },
+    {
+      "name": "humble-objects-and-functional-core",
+      "fromVersion": "1.2.3",
+      "toVersion": "1.2.4",
+      "removed": ["thread-sizing-and-virtual-threads"],
+      "added": []
+    },
+    {
+      "name": "java-concurrency",
+      "fromVersion": "1.2.4",
+      "toVersion": "1.2.5",
+      "removed": ["tail-latency-analysis"],
+      "added": []
+    },
+    {
+      "name": "java-performance",
+      "fromVersion": "2.6.4",
+      "toVersion": "2.6.5",
+      "removed": ["forkjoinpool-and-work-stealing"],
+      "added": []
+    },
+    {
+      "name": "tail-latency-analysis",
+      "fromVersion": "1.3.3",
+      "toVersion": "1.3.4",
+      "removed": ["cpu-cache-and-numa", "numa-and-cpu-affinity"],
+      "added": []
+    }
+  ],
+  "notableRetentions": [
+    {
+      "from": "gc-fundamentals",
+      "to": "safepoints",
+      "reason": "Explicit owner table is valid as a suggestion because safepoints requires gc-fundamentals; promotion creates a cycle."
+    }
+  ],
+  "evidence": [
+    {
+      "source": "architecture-coupling-and-quanta",
+      "target": "architecture-characteristics",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/architecture-characteristics/SKILL.md:58",
+        "skills/architecture-characteristics/SKILL.md:60"
+      ],
+      "rationale": "Reverse handoff: the target routes unresolved deployment/runtime coupling to this source before assigning local quality scopes. Valid optional companion, not a prerequisite.",
+      "decision": "retain"
+    },
+    {
+      "source": "architecture-coupling-and-quanta",
+      "target": "architecture-decision-making",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/architecture-decision-making/references/writing-the-record.md:32",
+        "skills/architecture-decision-making/references/writing-the-record.md:36",
+        "skills/architecture-coupling-and-quanta/SKILL.md:117"
+      ],
+      "rationale": "Reverse handoff uses coupling investigation when deployment/consumer scope is unclear before assigning reversal cost. Source permits scoped decision records without requiring an ADR.",
+      "decision": "retain"
+    },
+    {
+      "source": "architecture-coupling-and-quanta",
+      "target": "architecture-trade-off-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/architecture-coupling-and-quanta/references/evidence-and-disagreements.md:51",
+        "skills/architecture-trade-off-analysis/SKILL.md:48",
+        "skills/architecture-trade-off-analysis/SKILL.md:50"
+      ],
+      "rationale": "Source says coupling metrics do not compare retaining a boundary against distribution/migration costs and hands findings to a decision skill. Target explicitly uses this source when dependency boundaries need investigation.",
+      "decision": "retain"
+    },
+    {
+      "source": "architecture-coupling-and-quanta",
+      "target": "layering-and-boundaries",
+      "assessment": "unsupported",
+      "evidence": [
+        "skills/architecture-coupling-and-quanta/references/coupling-vocabulary.md:40",
+        "skills/architecture-coupling-and-quanta/SKILL.md:9",
+        "skills/architecture-coupling-and-quanta/SKILL.md:76"
+      ],
+      "rationale": "No concrete support found. Closest text distinguishes deployment boundaries from internal module separation; source names other owners for package and process-boundary decisions. No reverse pointer found.",
+      "decision": "remove"
+    },
+    {
+      "source": "architecture-testing",
+      "target": "distribution-boundaries",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/architecture-testing/references/boundary-and-contract-tests.md:117",
+        "skills/architecture-testing/references/boundary-and-contract-tests.md:122",
+        "skills/architecture-testing/references/persistence-and-concurrency-tests.md:105"
+      ],
+      "rationale": "Source tests network failure/timeout semantics and explains lost atomicity across remote effects. Target owns deciding and designing process boundaries and their failure costs; source does not explicitly hand off boundary selection.",
+      "decision": "retain"
+    },
+    {
+      "source": "architecture-testing",
+      "target": "enterprise-base-patterns",
+      "assessment": "supported",
+      "evidence": [
+        "skills/architecture-testing/SKILL.md:63",
+        "skills/architecture-testing/SKILL.md:66",
+        "skills/architecture-testing/references/boundary-and-contract-tests.md:105",
+        "skills/architecture-testing/references/boundary-and-contract-tests.md:112",
+        "skills/enterprise-base-patterns/SKILL.md:166"
+      ],
+      "rationale": "Source covers owned ports, stubs, mapper semantics and gateway error translation. Target owns Gateway, Mapper and Service Stub design and explicitly links back to architecture testing.",
+      "decision": "retain"
+    },
+    {
+      "source": "architecture-testing",
+      "target": "orm-behavioral-patterns",
+      "assessment": "supported",
+      "evidence": [
+        "skills/architecture-testing/references/persistence-and-concurrency-tests.md:23",
+        "skills/architecture-testing/references/persistence-and-concurrency-tests.md:25",
+        "skills/architecture-testing/references/persistence-and-concurrency-tests.md:56",
+        "skills/architecture-testing/references/persistence-and-concurrency-tests.md:64"
+      ],
+      "rationale": "Source requires flush/clear, distinguishes identity-map hits from durable reads, controls persistence contexts/caches and exercises lazy loads. Target owns Unit of Work, Identity Map and Lazy Load behavior.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "cascading-failures",
+      "assessment": "supported",
+      "evidence": [
+        "skills/capacity-planning/SKILL.md:148",
+        "skills/capacity-planning/SKILL.md:249"
+      ],
+      "rationale": "Unstable positive feedback, retries, crash loops and failed overload recovery justify the target's cascade amplification and recovery analysis.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "container-awareness",
+      "assessment": "supported",
+      "evidence": ["skills/capacity-planning/SKILL.md:88", "skills/capacity-planning/SKILL.md:225"],
+      "rationale": "Cgroup mode, resource limits, throttling and GC/heap needs affect measured capacity; the target establishes JVM container detection and ergonomics.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "jvm-gc-tuning",
+      "assessment": "supported",
+      "evidence": [
+        "skills/capacity-planning/SKILL.md:225",
+        "skills/capacity-planning/SKILL.md:245"
+      ],
+      "rationale": "GC/heap needs may require a larger resource shape, and GC appears among latency causes; the target owns collector and heap sizing when relevant.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "load-testing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/capacity-planning/SKILL.md:105",
+        "skills/capacity-planning/SKILL.md:119"
+      ],
+      "rationale": "Open or closed arrivals, representative profiles and valid passing boundaries require the target's workload-model and experiment-validity discipline.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "retries-and-backoff",
+      "assessment": "supported",
+      "evidence": [
+        "skills/capacity-planning/SKILL.md:79",
+        "skills/capacity-planning/SKILL.md:157",
+        "skills/capacity-planning/SKILL.md:229"
+      ],
+      "rationale": "Retry policy consumes and amplifies capacity; the target owns retry eligibility, budgets and backoff.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "slo-and-alerting",
+      "assessment": "supported",
+      "evidence": ["skills/capacity-planning/SKILL.md:45"],
+      "rationale": "Capacity guardrails require population, window, exclusions and overload behavior; the target defines that service-level contract.",
+      "decision": "retain"
+    },
+    {
+      "source": "capacity-planning",
+      "target": "startup-cds-crac-leyden",
+      "assessment": "supported",
+      "evidence": [
+        "skills/capacity-planning/SKILL.md:175",
+        "skills/capacity-planning/SKILL.md:236"
+      ],
+      "rationale": "Scaling reaction includes process startup and useful-capacity ramp, with demand potentially arriving before capacity; the target supplies JVM startup reduction.",
+      "decision": "retain"
+    },
+    {
+      "source": "cascading-failures",
+      "target": "distributed-failure-catalogue",
+      "assessment": "supported",
+      "evidence": [
+        "skills/cascading-failures/SKILL.md:23",
+        "skills/cascading-failures/references/cascade-response.md:8",
+        "skills/distributed-failure-catalogue/SKILL.md:80",
+        "skills/distributed-failure-catalogue/SKILL.md:98"
+      ],
+      "rationale": "Source distinguishes feedback from shared infrastructure/deploy failures and compares hypotheses using discriminating evidence. Target owns recognition and routing across failure shapes, and routes cascade/metastability back to this source.",
+      "decision": "retain"
+    },
+    {
+      "source": "code-review",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": ["skills/code-review/references/what-to-look-for.md:58"],
+      "rationale": "The retry-safety review question explicitly names idempotency. The source reviews duplicate-effect risks; the target owns preventing them.",
+      "decision": "retain"
+    },
+    {
+      "source": "code-review",
+      "target": "tdd",
+      "assessment": "supported",
+      "evidence": ["skills/code-review/references/what-to-look-for.md:121"],
+      "rationale": "The bug-fix regression-test question explicitly names tdd. Review checks coverage; the target guides the failing-test/fix loop.",
+      "decision": "retain"
+    },
+    {
+      "source": "collaborative-feature-definition",
+      "target": "engineering-communication",
+      "assessment": "supported",
+      "evidence": ["skills/collaborative-feature-definition/SKILL.md:161"],
+      "rationale": "Challenge scope with concrete consequences and record recommendation trade-offs without repeated disagreement; supports communication of engineering decisions.",
+      "decision": "retain"
+    },
+    {
+      "source": "consensus-and-quorums",
+      "target": "java-memory-model",
+      "assessment": "unsupported",
+      "evidence": [
+        "skills/consensus-and-quorums/references/coordination-stores.md:78",
+        "skills/consensus-and-quorums/references/coordination-stores.md:98",
+        "skills/java-memory-model/SKILL.md:4"
+      ],
+      "rationale": "No concrete support found. Source covers protocol ordering, complete revisions, checkpointing and crash/replay consistency without inter-thread visibility or synchronization obligations. A Java watch consumer needing JMM requires an additional implementation assumption.",
+      "decision": "remove"
+    },
+    {
+      "source": "database-bulk-loading",
+      "target": "connection-pool-sizing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/database-bulk-loading/references/recovery-and-validation.md:52",
+        "skills/database-bulk-loading/SKILL.md:42",
+        "skills/database-bulk-loading/SKILL.md:80"
+      ],
+      "rationale": "Source requires resolving transaction state before returning pooled connections, inspects connection properties and transaction-manager ownership, and bounds parallelism by database capacity. Target owns pool hold time, transaction boundaries, lifetimes and sizing.",
+      "decision": "retain"
+    },
+    {
+      "source": "database-bulk-loading",
+      "target": "schema-evolution-and-compatibility",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/database-bulk-loading/SKILL.md:30",
+        "skills/database-bulk-loading/SKILL.md:48",
+        "skills/database-bulk-loading/references/recovery-and-validation.md:5"
+      ],
+      "rationale": "Weak conditional support: source requires schema/format versions and explicit missing/null/default/conversion semantics and tests changed column order. It does not discuss mixed writer/reader versions or Avro/Protobuf/JSON Schema evolution, the target's main responsibility. No direct evolution handoff found.",
+      "decision": "remove"
+    },
+    {
+      "source": "database-engine-selection-and-migration",
+      "target": "database-bulk-loading",
+      "assessment": "supported",
+      "evidence": [
+        "skills/database-engine-selection-and-migration/references/engine-trade-offs.md:13"
+      ],
+      "rationale": "The native-ingest comparison explicitly lists Bulk Copy, LOAD DATA and COPY with reject, trigger and restart semantics; the target owns these ingestion details.",
+      "decision": "retain"
+    },
+    {
+      "source": "database-engine-selection-and-migration",
+      "target": "database-index-design",
+      "assessment": "supported",
+      "evidence": ["skills/database-engine-selection-and-migration/SKILL.md:87"],
+      "rationale": "The source requires redesigning destination physical keys and indexes because width and update amplification differ; the target owns index portfolio design.",
+      "decision": "retain"
+    },
+    {
+      "source": "database-engine-selection-and-migration",
+      "target": "distributed-systems-testing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/database-engine-selection-and-migration/SKILL.md:71",
+        "skills/database-engine-selection-and-migration/references/engine-trade-offs.md:57"
+      ],
+      "rationale": "Crash and failover injection compare acknowledged effects and recovery; the target owns controlled failure validation.",
+      "decision": "retain"
+    },
+    {
+      "source": "debugging",
+      "target": "tdd",
+      "assessment": "supported",
+      "evidence": ["skills/debugging/SKILL.md:56"],
+      "rationale": "Source explicitly names '(tdd)' when turning a reproduction into worthwhile regression coverage and requires detecting the original failure before accepting the correction. Target owns useful test-first/red-green discipline.",
+      "decision": "retain"
+    },
+    {
+      "source": "distributed-aggregation-and-barriers",
+      "target": "message-ordering-and-partitioning",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/distributed-aggregation-and-barriers/SKILL.md:8",
+        "skills/distributed-aggregation-and-barriers/SKILL.md:110"
+      ],
+      "rationale": "The source expressly excludes message ordering while requiring preserved encounter order or an ordering key for relevant aggregates. It owns reduction correctness; the target owns producer/consumer ordering guarantees. No explicit target handoff was found.",
+      "decision": "retain"
+    },
+    {
+      "source": "distributed-failure-catalogue",
+      "target": "debugging",
+      "assessment": "supported",
+      "evidence": [
+        "skills/distributed-failure-catalogue/SKILL.md:66",
+        "skills/distributed-failure-catalogue/SKILL.md:44"
+      ],
+      "rationale": "Explicitly routes local stack-trace defect analysis to debugging and requires falsifiable hypotheses.",
+      "decision": "retain"
+    },
+    {
+      "source": "distributed-locks-and-leases",
+      "target": "pause-attribution",
+      "assessment": "supported",
+      "evidence": [
+        "skills/distributed-locks-and-leases/SKILL.md:71",
+        "skills/distributed-locks-and-leases/references/fencing-tokens.md:26"
+      ],
+      "rationale": "Lease sizing uses measured duration and pause distributions; the source distinguishes GC pauses from throttling, descheduling and page-fault causes. Pause attribution is a concrete optional diagnostic companion.",
+      "decision": "retain"
+    },
+    {
+      "source": "distributed-transactions-and-sagas",
+      "target": "distributed-locks-and-leases",
+      "assessment": "supported",
+      "evidence": [
+        "skills/distributed-transactions-and-sagas/references/saga-and-compensation-in-java.md:89",
+        "skills/distributed-transactions-and-sagas/references/saga-and-compensation-in-java.md:93"
+      ],
+      "rationale": "Source requires valid claims/version epochs and explains that expired coordinators can still send remote requests. Target owns stale-owner exclusion, leases and resource-side fencing.",
+      "decision": "retain"
+    },
+    {
+      "source": "distributed-transactions-and-sagas",
+      "target": "leader-election",
+      "assessment": "supported",
+      "evidence": ["skills/distributed-transactions-and-sagas/SKILL.md:155"],
+      "rationale": "Source recommends replicated coordinators claiming individual saga instances and says a global singleton leader is usually unnecessary. Target explicitly owns deciding when election is unnecessary as well as leader lifecycle.",
+      "decision": "retain"
+    },
+    {
+      "source": "ebpf-for-jvm",
+      "target": "async-profiler-advanced",
+      "assessment": "supported",
+      "evidence": ["skills/ebpf-for-jvm/SKILL.md:218", "skills/ebpf-for-jvm/SKILL.md:221"],
+      "rationale": "Perf and JIT unwind contracts are compared with release-specific async-profiler VM-aware walkers; the target owns profiler engines, configuration and missing-stack limitations.",
+      "decision": "retain"
+    },
+    {
+      "source": "enterprise-base-patterns",
+      "target": "metadata-mapping",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/enterprise-base-patterns/references/gateway-and-mapper.md:173",
+        "skills/enterprise-base-patterns/references/gateway-and-mapper.md:192"
+      ],
+      "rationale": "Weak context: source maps OrderRow to and from domain objects and discusses generated/shared conversion. Target owns object/schema mapping expressed as metadata and schema drift; source does not establish a metadata-driven mapping concern.",
+      "decision": "remove"
+    },
+    {
+      "source": "enterprise-base-patterns",
+      "target": "orm-behavioral-patterns",
+      "assessment": "unsupported",
+      "evidence": ["skills/enterprise-base-patterns/references/gateway-and-mapper.md:173"],
+      "rationale": "No support found for the target's Unit of Work, Identity Map or Lazy Load responsibilities. The nearest source material is a row/domain mapper example concerned with subsystem translation, without ORM runtime behavior.",
+      "decision": "remove"
+    },
+    {
+      "source": "executors-and-task-lifecycle",
+      "target": "kubernetes-service-lifecycle",
+      "assessment": "supported",
+      "evidence": [
+        "skills/executors-and-task-lifecycle/SKILL.md:179",
+        "skills/executors-and-task-lifecycle/references/shutdown-and-rejection.md:160"
+      ],
+      "rationale": "The source coordinates orchestration grace, preStop, load-balancer drain and downstream deadlines, including pod grace shorter than application drain. The target owns orchestration lifecycle beyond executor shutdown.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-architecture-analysis",
+      "target": "feature-context-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-architecture-analysis/SKILL.md:30",
+        "skills/feature-architecture-analysis/SKILL.md:46"
+      ],
+      "rationale": "Requires inspected revisions, repository searches and evidence coverage. Context establishes existing facts while this source maps feature impacts.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-architecture-analysis",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-architecture-analysis/SKILL.md:142",
+        "skills/feature-engineering/SKILL.md:91"
+      ],
+      "rationale": "Requires invalidation and handoff after baseline changes; the lifecycle hub explicitly assigns impact mapping to this source. This is lifecycle support, not an unconditional prerequisite for standalone use.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-architecture-analysis",
+      "target": "feature-risk-analysis",
+      "assessment": "supported",
+      "evidence": ["skills/feature-architecture-analysis/references/impact-map.md:139"],
+      "rationale": "Boundary crossings become candidate risk entries with consumer detection points, supporting a handoff to feature risk analysis.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-architecture-analysis",
+      "target": "schema-evolution-and-compatibility",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-architecture-analysis/SKILL.md:73",
+        "skills/feature-architecture-analysis/SKILL.md:80",
+        "skills/feature-architecture-analysis/references/impact-map.md:73"
+      ],
+      "rationale": "Maps mixed readers and writers, retained messages and rollback compatibility questions. The target owns detailed schema compatibility rules and deployment order.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-context-analysis",
+      "target": "feature-engineering",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-engineering/SKILL.md:88",
+        "skills/feature-context-analysis/SKILL.md:48",
+        "skills/feature-context-analysis/SKILL.md:59"
+      ],
+      "rationale": "Reverse workflow hub assigns repository-context investigation to this source. Source integrates discovery-ledger facts, unknowns and feature revisions; the hub is not mandatory.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-context-analysis",
+      "target": "layering-and-boundaries",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-context-analysis/references/investigation-checklist.md:49",
+        "skills/feature-context-analysis/references/investigation-checklist.md:51",
+        "skills/feature-context-analysis/references/investigation-checklist.md:55"
+      ],
+      "rationale": "Source explicitly investigates layer separation, enforcement, business-rule placement and module reachability.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-contract-definition",
+      "target": "feature-context-analysis",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-contract-definition/SKILL.md:25",
+        "skills/feature-contract-definition/SKILL.md:48",
+        "skills/feature-contract-definition/SKILL.md:53"
+      ],
+      "rationale": "Source reuses repository evidence and locates authoritative existing contracts, ownership, declared versions and validation commands. Target gathers those repository facts without deciding the new contract.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-contract-definition",
+      "target": "feature-engineering",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-contract-definition/SKILL.md:23",
+        "skills/feature-contract-definition/SKILL.md:119",
+        "skills/feature-engineering/SKILL.md:95"
+      ],
+      "rationale": "Hub backlink support: source returns disputed intent to its responsible stage and hands accepted contracts to planning. Target owns lifecycle routing and names this contract phase in its responsibility table.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-decision-analysis",
+      "target": "architecture-trade-off-analysis",
+      "assessment": "contextual",
+      "evidence": ["skills/feature-decision-analysis/SKILL.md:151"],
+      "rationale": "Bounded choices, constraints, alternatives, separating reasons and validation limits support the target's comparison method indirectly; the immediate named handoff is feature-solution-analysis.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-decision-analysis",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-decision-analysis/SKILL.md:57",
+        "skills/feature-decision-analysis/SKILL.md:129",
+        "skills/feature-engineering/SKILL.md:94"
+      ],
+      "rationale": "Changed decisions invalidate downstream feature work, and the hub explicitly assigns provenance, authority and outcome to this specialist. The hub table is an ownership promise relevant to individual review scheduling.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-decision-analysis",
+      "target": "technical-debt-decisions",
+      "assessment": "unsupported",
+      "evidence": ["skills/feature-decision-analysis/SKILL.md:122"],
+      "rationale": "No specific support found. The nearest text records decisions under time pressure or known uncertainty, but does not identify accepting, containing or repaying a shortcut, which distinguishes the target's responsibility.",
+      "decision": "remove"
+    },
+    {
+      "source": "feature-decomposition",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-decomposition/SKILL.md:22",
+        "skills/feature-decomposition/SKILL.md:39",
+        "skills/feature-engineering/SKILL.md:97"
+      ],
+      "rationale": "Source makes output depend on definition versus delivery-preparation stage and its acceptance baseline. Target owns the feature lifecycle, and its explicit responsibility table assigns feature/resource splitting to this source. This is a hub backlink, not a source-side core-prerequisite promise.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-discovery",
+      "target": "engineering-communication",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-discovery/SKILL.md:127",
+        "skills/feature-discovery/SKILL.md:159"
+      ],
+      "rationale": "Keeping material uncertainty visible and handing off evidence, consequences and remaining gaps support an implicit communication companion. Discovery owns the ledger; the target owns communicating facts and uncertainty to decision makers.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-discovery",
+      "target": "feature-decision-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-discovery/SKILL.md:57",
+        "skills/feature-discovery/SKILL.md:72",
+        "skills/feature-discovery/references/ledger-format.md:116"
+      ],
+      "rationale": "Discovery records decision authority, owner, source and status while excluding selection of new implementation designs. The target owns decision provenance and authority beyond classification.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-discovery",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-discovery/SKILL.md:25",
+        "skills/feature-discovery/SKILL.md:154",
+        "skills/feature-engineering/SKILL.md:87"
+      ],
+      "rationale": "The ledger supports later phases and revision-aware handoff. The lifecycle hub explicitly routes known/assumed/unknown separation to discovery, supporting the optional hub backlink.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-engineering",
+      "target": "engineering-communication",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-engineering/SKILL.md:51",
+        "skills/feature-engineering/SKILL.md:182"
+      ],
+      "rationale": "Requires reporting current state, blockers, gaps and evidence rather than intentions; supports an engineering reporting companion.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-engineering",
+      "target": "estimation-under-uncertainty",
+      "assessment": "unsupported",
+      "evidence": [],
+      "rationale": "No support found in the source or references for duration estimates, forecast ranges, calibration or estimate-versus-commitment discipline. Depth, decomposition and readiness alone do not establish the target responsibility.",
+      "decision": "remove"
+    },
+    {
+      "source": "feature-execution",
+      "target": "feature-engineering",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-engineering/SKILL.md:101",
+        "skills/feature-execution/SKILL.md:58"
+      ],
+      "rationale": "Reverse workflow hub assigns resource implementation to this source. Source consumes authorized resources and recorded workflow progress; this does not require the hub for every execution.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-execution",
+      "target": "feature-implementation-plan",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-execution/SKILL.md:58",
+        "skills/feature-execution/SKILL.md:86",
+        "skills/feature-implementation-plan/SKILL.md:85"
+      ],
+      "rationale": "Source consumes and reconciles the current plan; target explicitly routes accepted implementation corrections to feature-execution. Requiring an existing plan does not require invoking the planning skill.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-execution",
+      "target": "java-refactoring",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-execution/SKILL.md:140",
+        "skills/feature-execution/references/validation-by-resource.md:52"
+      ],
+      "rationale": "Source addresses necessary behavior-preserving refactoring within a resource and preserving behavior/contract assertions when structure changes.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-execution",
+      "target": "tdd",
+      "assessment": "supported",
+      "evidence": ["skills/feature-execution/SKILL.md:9"],
+      "rationale": "Current source frontmatter already explicitly names tdd as owner of test-design methods. This is an optional method handoff, not mandatory TDD.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-feasibility-experiment",
+      "target": "feature-engineering",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-feasibility-experiment/SKILL.md:20",
+        "skills/feature-feasibility-experiment/SKILL.md:47",
+        "skills/feature-engineering/SKILL.md:93",
+        "skills/feature-engineering/SKILL.md:137"
+      ],
+      "rationale": "Hub backlink support: source traces experiments to feature uncertainties/decisions and reopens affected options, contracts, risks and depth. Target owns that lifecycle, names this phase in its responsibility table and directly routes feasibility questions to it.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-implementation-plan",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-implementation-plan/SKILL.md:30",
+        "skills/feature-implementation-plan/SKILL.md:135",
+        "skills/feature-engineering/SKILL.md:99"
+      ],
+      "rationale": "The source assembles accepted inputs, dependency stages and readiness; the hub explicitly assigns executable planning to this specialist. The hub table is an ownership promise relevant to individual review scheduling.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-implementation-plan",
+      "target": "java-testing-strategy",
+      "assessment": "supported",
+      "evidence": ["skills/feature-implementation-plan/SKILL.md:46"],
+      "rationale": "The source requires test level, boundary and what it establishes per resource; the target owns selecting the level that addresses the risk.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-implementation-plan",
+      "target": "schema-evolution-and-compatibility",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-implementation-plan/references/plan-template.md:63",
+        "skills/feature-implementation-plan/SKILL.md:75"
+      ],
+      "rationale": "Contract versions, compatibility windows and caller or consumer tolerance support this companion when wire schemas change. Database migration wording alone does not establish the target's Avro, Protobuf and JSON responsibility.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-progress-tracking",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-progress-tracking/SKILL.md:20",
+        "skills/feature-engineering/SKILL.md:102"
+      ],
+      "rationale": "Source preserves resumable evidence, current state and next work. Target owns lifecycle continuity, and its explicit responsibility table assigns truthful status and chronology here. This is a hub backlink, not a source-side core-prerequisite promise.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-readiness-review",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-readiness-review/SKILL.md:20",
+        "skills/feature-readiness-review/SKILL.md:29",
+        "skills/feature-engineering/SKILL.md:100"
+      ],
+      "rationale": "Readiness review checks baseline acceptance, implementation start and completion with return owners. The lifecycle hub explicitly routes implementation/completion gates to this source and owns the lifecycle between gates.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-readiness-review",
+      "target": "feature-progress-tracking",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-readiness-review/SKILL.md:110",
+        "skills/feature-readiness-review/references/completion-review.md:109"
+      ],
+      "rationale": "Review requires current plan, progress and log, terminal resource statuses, and completion/blocker/amendment entries. The target maintains that state; the source verifies it.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-readiness-review",
+      "target": "feature-scope-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-readiness-review/references/readiness-checklist.md:38",
+        "skills/feature-readiness-review/references/readiness-checklist.md:39"
+      ],
+      "rationale": "The checklist verifies scope classification, basis, selection authority and exclusions. The target establishes those classifications; the source gates their completeness.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-requirement-clarification",
+      "target": "engineering-communication",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-requirement-clarification/SKILL.md:142",
+        "skills/feature-requirement-clarification/SKILL.md:149",
+        "skills/feature-requirement-clarification/references/question-rounds.md:26"
+      ],
+      "rationale": "Requires recommendations with reasons and communication of consequential transitions. Supports communication conditionally; the target does not own requirement clarification itself.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-requirement-clarification",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-requirement-clarification/references/question-rounds.md:35",
+        "skills/feature-requirement-clarification/references/impact-and-blocking.md:114",
+        "skills/feature-engineering/SKILL.md:89"
+      ],
+      "rationale": "Invalidates affected downstream records and preserves GAP/ED lifecycle state; the hub explicitly assigns adaptive clarification to this source. The hub is not an unconditional prerequisite for standalone use.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-risk-analysis",
+      "target": "feature-architecture-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-risk-analysis/SKILL.md:30",
+        "skills/feature-risk-analysis/references/risk-register.md:9",
+        "skills/feature-architecture-analysis/SKILL.md:25"
+      ],
+      "rationale": "Source derives risk candidates from impact-map boundary crossings; target expressly produces the impact map.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-risk-analysis",
+      "target": "feature-engineering",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-engineering/SKILL.md:98",
+        "skills/feature-risk-analysis/SKILL.md:50",
+        "skills/feature-risk-analysis/references/risk-register.md:14"
+      ],
+      "rationale": "Reverse workflow hub assigns risk derivation to this source. Source integrates workflow resource/evidence IDs while expressly preserving standalone use without requiring the whole workflow.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-scope-analysis",
+      "target": "feature-architecture-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-scope-analysis/SKILL.md:33",
+        "skills/feature-scope-analysis/references/scope-creep-catalogue.md:70"
+      ],
+      "rationale": "Source inspects affected callers, compatibility, operations and validation and compares changes with the impact map. Target produces the impact map of touched elements and boundary crossings.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-scope-analysis",
+      "target": "feature-decomposition",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-scope-analysis/SKILL.md:113",
+        "skills/feature-scope-analysis/references/scope-creep-catalogue.md:73"
+      ],
+      "rationale": "Source requests reviewable decomposition preserving dependencies and safe intermediate states and distinguishes independent outcomes from inseparable obligations. Target owns feature/resource decomposition.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-scope-analysis",
+      "target": "feature-engineering",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/feature-scope-analysis/SKILL.md:154",
+        "skills/feature-engineering/SKILL.md:90"
+      ],
+      "rationale": "Hub backlink support: source propagates accepted scope and revisions into planning/completion evidence. Target owns that lifecycle and assigns scope responsibility in its table.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-solution-analysis",
+      "target": "feature-decision-analysis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-solution-analysis/SKILL.md:148",
+        "skills/feature-solution-analysis/SKILL.md:153"
+      ],
+      "rationale": "The source identifies authority or the needed decision and hands its recommendation to the decision phase; the target owns provenance, authority and outcome.",
+      "decision": "retain"
+    },
+    {
+      "source": "feature-solution-analysis",
+      "target": "feature-engineering",
+      "assessment": "supported",
+      "evidence": [
+        "skills/feature-solution-analysis/SKILL.md:38",
+        "skills/feature-solution-analysis/SKILL.md:61",
+        "skills/feature-engineering/SKILL.md:92"
+      ],
+      "rationale": "The accepted feature baseline and transition feasibility constrain selection, and the hub explicitly assigns option evaluation to this specialist. The hub table is an ownership promise relevant to individual review scheduling.",
+      "decision": "retain"
+    },
+    {
+      "source": "flame-graph-analysis",
+      "target": "jit-compilation",
+      "assessment": "supported",
+      "evidence": [
+        "skills/flame-graph-analysis/SKILL.md:169",
+        "skills/flame-graph-analysis/SKILL.md:236"
+      ],
+      "rationale": "Source associates compiler CPU with warm-up, churn and deoptimization and requires compilation/JFR logs and warmed captures. Target owns compilation and warm-up diagnosis.",
+      "decision": "retain"
+    },
+    {
+      "source": "flame-graph-analysis",
+      "target": "jvm-gc-tuning",
+      "assessment": "supported",
+      "evidence": [
+        "skills/flame-graph-analysis/SKILL.md:167",
+        "skills/flame-graph-analysis/SKILL.md:174"
+      ],
+      "rationale": "Source distinguishes GC CPU, allocation, live-set and collector phases and requires GC evidence. Target decides whether confirmed GC warrants collector or heap changes.",
+      "decision": "retain"
+    },
+    {
+      "source": "gc-fundamentals",
+      "target": "littles-law-and-queueing",
+      "assessment": "supported",
+      "evidence": ["skills/gc-fundamentals/SKILL.md:58"],
+      "rationale": "The source applies N = lambda times R under stable-throughput and steady-state conditions to retained requests. The target owns the measurement boundaries and queueing arithmetic.",
+      "decision": "retain"
+    },
+    {
+      "source": "gc-fundamentals",
+      "target": "safepoints",
+      "assessment": "supported",
+      "evidence": [
+        "skills/gc-fundamentals/references/safepoints.md:4",
+        "skills/gc-fundamentals/references/safepoints.md:49",
+        "skills/gc-fundamentals/references/diagnosis-and-versions.md:23"
+      ],
+      "rationale": "The source explicitly assigns VM-operation detail and detailed timing reconstruction to safepoints and names it in the Owner of the fix table. Reviewer retained this as an optional suggestion under the cycle exception because safepoints depends on gc-fundamentals.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-abstract-factory",
+      "target": "gof-flyweight",
+      "assessment": "supported",
+      "evidence": ["skills/gof-abstract-factory/SKILL.md:134"],
+      "rationale": "Cached products require sharing and lifecycle decisions; explicitly says to select Flyweight only when its separate intent fits.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-bridge",
+      "target": "jit-inlining-and-escape-analysis",
+      "assessment": "supported",
+      "evidence": ["skills/gof-bridge/SKILL.md:166"],
+      "rationale": "Source discusses stable versus polymorphic interface-call inlining and compilation-log evidence, a direct subordinate mechanism.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-chain-of-responsibility",
+      "target": "event-driven-architecture",
+      "assessment": "supported",
+      "evidence": [
+        "skills/gof-chain-of-responsibility/references/worked-example.md:151",
+        "skills/gof-chain-of-responsibility/references/worked-example.md:163",
+        "skills/gof-chain-of-responsibility/references/worked-example.md:167"
+      ],
+      "rationale": "Source moves rule effects into domain-event intents and identifies database/publication dual-write risks. Target owns event meaning, interaction style and the architectural publication boundary; mechanism details remain with outbox/idempotency specialists.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-decorator",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": ["skills/gof-decorator/SKILL.md:120"],
+      "rationale": "Retry decorators can duplicate side effects; the source requires provider-enforced idempotency and includes a literal idempotency reference.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-observer",
+      "target": "distributed-tracing-design",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/gof-observer/references/observer-variants.md:265",
+        "skills/gof-observer/references/observer-variants.md:279"
+      ],
+      "rationale": "Source calls for tracing events through subscribers and notes lost publisher stacks during asynchronous execution. Target owns useful asynchronous causal trace topology.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-prototype",
+      "target": "offline-concurrency-control",
+      "assessment": "supported",
+      "evidence": ["skills/gof-prototype/references/copying-in-java.md:162"],
+      "rationale": "The source warns against carrying an old optimistic-lock version into a new entity. The target owns cross-transaction version/conflict semantics; the source owns copying identity.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-prototype",
+      "target": "orm-behavioral-patterns",
+      "assessment": "supported",
+      "evidence": [
+        "skills/gof-prototype/references/copying-in-java.md:160",
+        "skills/gof-prototype/references/copying-in-java.md:167"
+      ],
+      "rationale": "The source distinguishes persist/merge effects on managed identity and addresses persistence-context lifetime and lazy traversal. The target owns those ORM runtime behaviors.",
+      "decision": "retain"
+    },
+    {
+      "source": "gof-singleton",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/gof-singleton/references/uniqueness-and-scope.md:46",
+        "skills/gof-singleton/references/uniqueness-and-scope.md:79"
+      ],
+      "rationale": "Requires durable run identity and duplicate-safe effects, with logical operation keys coupled atomically to effects/results; this responsibility extends beyond singleton scope.",
+      "decision": "retain"
+    },
+    {
+      "source": "hot-partitions-and-rebalancing",
+      "target": "timeouts-and-deadlines",
+      "assessment": "supported",
+      "evidence": [
+        "skills/hot-partitions-and-rebalancing/references/repairs-and-rebalancing.md:45",
+        "skills/hot-partitions-and-rebalancing/references/repairs-and-rebalancing.md:99"
+      ],
+      "rationale": "Source bounds fan-out deadlines and requires preserving remaining deadlines during cutover.",
+      "decision": "retain"
+    },
+    {
+      "source": "humble-objects-and-functional-core",
+      "target": "distributed-locks-and-leases",
+      "assessment": "supported",
+      "evidence": [
+        "skills/humble-objects-and-functional-core/references/humble-object-patterns.md:152"
+      ],
+      "rationale": "Source handles competing replicas through atomic conditional transitions instead of cluster-wide locking. Target explicitly covers cross-process exclusion and lock-free alternatives.",
+      "decision": "retain"
+    },
+    {
+      "source": "humble-objects-and-functional-core",
+      "target": "structured-concurrency",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/humble-objects-and-functional-core/SKILL.md:139",
+        "skills/humble-objects-and-functional-core/SKILL.md:142"
+      ],
+      "rationale": "Source preserves task ownership, cancellation, cleanup and effect lifetimes, warning that ending the caller's wait does not stop dispatched work. Target owns scoped child-task lifetimes; source does not prescribe its API.",
+      "decision": "retain"
+    },
+    {
+      "source": "humble-objects-and-functional-core",
+      "target": "thread-sizing-and-virtual-threads",
+      "assessment": "unsupported",
+      "evidence": [
+        "skills/humble-objects-and-functional-core/references/functional-core-in-java.md:183",
+        "skills/humble-objects-and-functional-core/SKILL.md:142",
+        "skills/thread-sizing-and-virtual-threads/SKILL.md:4"
+      ],
+      "rationale": "No support found for the target's distinct responsibility. Source discusses safe concurrent evaluation, shared-state coordination and task lifetime; no pool sizing, execution-model selection, virtual-thread adoption or workload/capacity sizing concern was found. Those are the target's defining responsibilities.",
+      "decision": "remove"
+    },
+    {
+      "source": "idempotency",
+      "target": "poison-messages-and-dlq",
+      "assessment": "supported",
+      "evidence": [
+        "skills/idempotency/SKILL.md:111",
+        "skills/idempotency/references/key-selection.md:112"
+      ],
+      "rationale": "Dedup retention must account for DLQ and operator replay policy; the target owns DLQ and redrive lifecycle while the source owns replay safety.",
+      "decision": "retain"
+    },
+    {
+      "source": "idempotency",
+      "target": "retries-and-backoff",
+      "assessment": "supported",
+      "evidence": ["skills/idempotency/SKILL.md:33", "skills/idempotency/SKILL.md:72"],
+      "rationale": "The source inspects retry and SDK configuration and derives retention from the retry horizon; the target owns retry eligibility, budgets and timing.",
+      "decision": "retain"
+    },
+    {
+      "source": "incident-evidence-capture",
+      "target": "continuous-profiling",
+      "assessment": "supported",
+      "evidence": [
+        "skills/incident-evidence-capture/SKILL.md:111",
+        "skills/incident-evidence-capture/references/what-a-restart-destroys.md:101"
+      ],
+      "rationale": "Source checks continuous-profiler freshness/loss and selects continuous profiling for retrospective stack questions. Target owns always-on profiling cost, coverage and retention.",
+      "decision": "retain"
+    },
+    {
+      "source": "incident-evidence-capture",
+      "target": "kubernetes-service-lifecycle",
+      "assessment": "supported",
+      "evidence": [
+        "skills/incident-evidence-capture/SKILL.md:88",
+        "skills/incident-evidence-capture/SKILL.md:242"
+      ],
+      "rationale": "Source requires capacity-safe drain, quorum/PDB and endpoint/readiness checks and addresses watchdog termination during capture. Target owns probe, shutdown and drain lifecycle design.",
+      "decision": "retain"
+    },
+    {
+      "source": "incident-evidence-capture",
+      "target": "slo-and-alerting",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/incident-evidence-capture/SKILL.md:77",
+        "skills/incident-evidence-capture/SKILL.md:241",
+        "skills/incident-evidence-capture/references/capture-order.md:86"
+      ],
+      "rationale": "Source records SLO state, aborts when capture crosses SLO thresholds and preserves the exact SLO query window. Target owns sound service-level populations/windows and actionable thresholds.",
+      "decision": "retain"
+    },
+    {
+      "source": "incident-evidence-capture",
+      "target": "unified-logging",
+      "assessment": "supported",
+      "evidence": ["skills/incident-evidence-capture/references/what-a-restart-destroys.md:98"],
+      "rationale": "Source explicitly requires rotating GC/safepoint/unified logs with verified selectors, retention and export. Target owns JVM logging configuration and preservation.",
+      "decision": "retain"
+    },
+    {
+      "source": "inheritance-mapping-strategies",
+      "target": "architecture-testing",
+      "assessment": "supported",
+      "evidence": ["skills/inheritance-mapping-strategies/references/schema-evolution.md:153"],
+      "rationale": "The source proposes provider/database integration cases covering persist/flush/clear/read subtypes, identity and invalid database rows. The target owns tests proving mapping promises; the source chooses and evolves mappings.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-api-design",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-api-design/references/worked-example.md:145",
+        "skills/java-api-design/references/worked-example.md:147"
+      ],
+      "rationale": "Explicit ownership promise: idempotency owns the storage/failure protocol while this source owns the compatible API capability shape. Preserve for individual review before downgrading.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-concurrency",
+      "target": "container-awareness",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-concurrency/SKILL.md:114",
+        "skills/java-concurrency/references/concurrency-vs-parallelism.md:16",
+        "skills/java-concurrency/references/concurrency-vs-parallelism.md:29"
+      ],
+      "rationale": "Source requests cgroup CPU/throttling evidence and addresses effective processor/quota constraints.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-concurrency",
+      "target": "latency-statistics",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/java-concurrency/references/concurrency-vs-parallelism.md:40",
+        "skills/java-concurrency/references/concurrency-vs-parallelism.md:43"
+      ],
+      "rationale": "Source requires defined latency clocks and accounting for omitted/delayed arrivals in experiments, supporting the target's measurement-population and clock role despite no explicit routing sentence.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-concurrency",
+      "target": "tail-latency-analysis",
+      "assessment": "unsupported",
+      "evidence": [
+        "skills/java-concurrency/SKILL.md:99",
+        "skills/java-concurrency/SKILL.md:120",
+        "skills/java-concurrency/references/concurrency-vs-parallelism.md:40",
+        "skills/tail-latency-analysis/SKILL.md:4"
+      ],
+      "rationale": "No concrete support found. Source addresses ordinary latency, queueing and experiments without tail, quantile or rare-straggler attribution. Existing routing names diagnostics, executor lifecycle and queueing specialists; no reverse pointer found.",
+      "decision": "remove"
+    },
+    {
+      "source": "java-exception-design",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-exception-design/references/failure-atomicity.md:89",
+        "skills/java-exception-design/SKILL.md:64"
+      ],
+      "rationale": "Explicit responsibility handoff: source assigns unknown remote effects after timeout to idempotency/retries and requires operation idempotency/deduplication when assessing retry safety. Target owns safe repetition and durable duplicate handling. The companion is not stated as mandatory.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-object-contracts",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-object-contracts/SKILL.md:93",
+        "skills/java-object-contracts/references/equals-and-hashcode.md:183"
+      ],
+      "rationale": "Literal idempotency references connect stable identity and hash discipline to deduplication keys.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "cancellation-and-interruption",
+      "assessment": "supported",
+      "evidence": ["skills/java-performance/references/depth-ladder.md:56"],
+      "rationale": "The Related skills table explicitly lists cancellation alongside executor/task lifecycle. Target owns cooperative cancellation and bounded termination. This is a table companion promise, not a core-prerequisite declaration.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "completablefuture-composition",
+      "assessment": "supported",
+      "evidence": ["skills/java-performance/references/depth-ladder.md:56"],
+      "rationale": "The Related skills table explicitly lists CompletableFuture. Target owns CompletionStage graphs and their execution, failure and lifetime semantics. This is a table companion promise, not a core-prerequisite declaration.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "forkjoinpool-and-work-stealing",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/java-performance/references/depth-ladder.md:56",
+        "skills/java-performance/references/triage-map.md:89",
+        "skills/java-performance/references/triage-map.md:126"
+      ],
+      "rationale": "Weak context: source covers executor/task lifecycle, throughput scaling and CPU parallelism. Target's specific work-stealing, granularity and common-pool responsibilities are not identified.",
+      "decision": "remove"
+    },
+    {
+      "source": "java-performance",
+      "target": "hot-partitions-and-rebalancing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-performance/references/triage-map.md:109",
+        "skills/java-performance/references/triage-map.md:112",
+        "skills/java-performance/references/depth-ladder.md:71"
+      ],
+      "rationale": "Source compares partition ownership and hot shard/tenant hypotheses and its Related skills table names hot partition owners. Target owns skew detection, repair and rebalancing.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "lock-free-patterns",
+      "assessment": "supported",
+      "evidence": ["skills/java-performance/references/depth-ladder.md:54"],
+      "rationale": "The Related skills table explicitly lists lock-free patterns alongside JMM correctness. Target owns nonblocking algorithm progress, ordering and contention. This is a table companion promise, not a core-prerequisite declaration.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "reactive-and-virtual-thread-selection",
+      "assessment": "supported",
+      "evidence": ["skills/java-performance/references/depth-ladder.md:53"],
+      "rationale": "The Related skills table explicitly lists reactive/virtual-thread selection. Target owns that programming-model choice. This is a table companion promise, not a core-prerequisite declaration.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "reactive-backpressure",
+      "assessment": "supported",
+      "evidence": ["skills/java-performance/references/depth-ladder.md:58"],
+      "rationale": "The Related skills table lists reactive backpressure beside admission/bounds. Target owns demand, buffers and overflow semantics. This is a table companion promise, not a core-prerequisite declaration.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "structured-concurrency",
+      "assessment": "supported",
+      "evidence": ["skills/java-performance/references/depth-ladder.md:56"],
+      "rationale": "The Related skills table explicitly lists structured concurrency. Target owns structured fan-out lifetime and completion policies. This is a table companion promise, not a core-prerequisite declaration.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-performance",
+      "target": "timeouts-and-deadlines",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-performance/references/depth-ladder.md:58",
+        "skills/java-performance/references/triage-map.md:58"
+      ],
+      "rationale": "The Related skills table lists deadlines, and the triage map routes dependency-duration evidence to a timeout owner. Target owns deadline propagation and remaining-budget bounds.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-reflection-and-method-handles",
+      "target": "jvm-class-loading",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-reflection-and-method-handles/SKILL.md:115",
+        "skills/java-reflection-and-method-handles/references/method-handles-and-encapsulation.md:224"
+      ],
+      "rationale": "The source warns that cached classes/members retain defining loaders and diagnoses Metaspace growth after plugin reload. The target owns loader identity and retention analysis.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-resource-management",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-resource-management/references/async-and-pooled-resources.md:131",
+        "skills/java-resource-management/references/async-and-pooled-resources.md:135"
+      ],
+      "rationale": "Explicitly routes conditional recovery concerns to idempotency and requires retained intent before retries can recover it; support is broader than local idempotent close behavior.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-solid",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-solid/references/worked-refactoring.md:130",
+        "skills/java-solid/references/worked-refactoring.md:133"
+      ],
+      "rationale": "Refund example requires caller-stable keys, repeat-effect safety and recovery, explicitly saying the idempotency skill owns that protocol. Conditional ownership, not a universal SOLID prerequisite.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-test-design",
+      "target": "tdd",
+      "assessment": "supported",
+      "evidence": ["skills/java-test-design/SKILL.md:13", "skills/java-test-design/SKILL.md:49"],
+      "rationale": "Explicit scope boundary: source assigns the red-green-refactor loop to tdd and checks consequential regression tests against representative faults. Target owns the development loop; source owns writing useful tests. No mandatory prerequisite is stated.",
+      "decision": "retain"
+    },
+    {
+      "source": "java-testing-strategy",
+      "target": "tdd",
+      "assessment": "supported",
+      "evidence": [
+        "skills/java-testing-strategy/SKILL.md:11",
+        "skills/java-testing-strategy/SKILL.md:77"
+      ],
+      "rationale": "The description explicitly assigns the red-green-refactor loop to tdd, and the source requests an observed regression failure before the fix.",
+      "decision": "retain"
+    },
+    {
+      "source": "jdk-upgrade-impact",
+      "target": "performance-methodology",
+      "assessment": "supported",
+      "evidence": [
+        "skills/jdk-upgrade-impact/SKILL.md:60",
+        "skills/jdk-upgrade-impact/references/verification-and-rollout.md:96",
+        "skills/jdk-upgrade-impact/references/verification-and-rollout.md:113"
+      ],
+      "rationale": "Source repeats the baseline method, separates tuning and requires comparable baselines and controlled changes. Target owns causal comparison and experimental design.",
+      "decision": "retain"
+    },
+    {
+      "source": "jfr-advanced",
+      "target": "virtual-threads-internals",
+      "assessment": "supported",
+      "evidence": [
+        "skills/jfr-advanced/SKILL.md:33",
+        "skills/jfr-advanced/references/event-catalogue.md:66"
+      ],
+      "rationale": "The source delegates virtual-thread-event interpretation to domain skills and lists pinned, submit-failed and scheduler events with carrier context and post-JEP-491 meaning. The target owns these mechanisms; the source owns recording design.",
+      "decision": "retain"
+    },
+    {
+      "source": "jmh-advanced",
+      "target": "coordinated-omission",
+      "assessment": "supported",
+      "evidence": ["skills/jmh-advanced/SKILL.md:126", "skills/jmh-advanced/SKILL.md:88"],
+      "rationale": "Warns about coordinated omission and distinguishes closed-loop actor ratios from production arrivals; the target owns response-coupled sampling bias. The source also contains explicit specialist ownership assignments at lines 23-30.",
+      "decision": "retain"
+    },
+    {
+      "source": "jmh-advanced",
+      "target": "load-testing",
+      "assessment": "supported",
+      "evidence": ["skills/jmh-advanced/SKILL.md:265", "skills/jmh-advanced/SKILL.md:10"],
+      "rationale": "Explicitly routes service-SLO claims to load/system tests and distinguishes load-test ownership from microbenchmarks.",
+      "decision": "retain"
+    },
+    {
+      "source": "jvm-performance-review",
+      "target": "jvm-memory-regions",
+      "assessment": "supported",
+      "evidence": [
+        "skills/jvm-performance-review/references/flag-cost-and-defaults.md:24",
+        "skills/jvm-performance-review/references/flag-cost-and-defaults.md:29",
+        "skills/jvm-performance-review/references/flag-cost-and-defaults.md:46"
+      ],
+      "rationale": "Source budgets heap, metaspace, code cache, stacks, native allocations and mappings while distinguishing reservation, commitment, RSS and cgroup accounting.",
+      "decision": "retain"
+    },
+    {
+      "source": "latency-statistics",
+      "target": "performance-regression-ci",
+      "assessment": "supported",
+      "evidence": [
+        "skills/latency-statistics/references/comparing-two-measurements.md:137",
+        "skills/latency-statistics/SKILL.md:52"
+      ],
+      "rationale": "Source discusses release gates and excluding regressions beyond an allowed margin and requires independent experimental units and practical effects. Target owns operating regression gates and baselines.",
+      "decision": "retain"
+    },
+    {
+      "source": "littles-law-and-queueing",
+      "target": "cpu-cache-and-numa",
+      "assessment": "supported",
+      "evidence": [
+        "skills/littles-law-and-queueing/SKILL.md:65",
+        "skills/littles-law-and-queueing/references/utilisation-curve.md:89"
+      ],
+      "rationale": "Worker scaling is sensitive to SMT and NUMA, and high CPU or backlog calls for IPC, cache and NUMA evidence; the target owns hardware locality and coherence analysis.",
+      "decision": "retain"
+    },
+    {
+      "source": "message-ordering-and-partitioning",
+      "target": "event-driven-architecture",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/message-ordering-and-partitioning/SKILL.md:22",
+        "skills/message-ordering-and-partitioning/SKILL.md:44",
+        "skills/event-driven-architecture/SKILL.md:8"
+      ],
+      "rationale": "Weak context: source requires explicit event-processing stages, authority and intermediate-effect semantics. Target owns broader asynchronous interaction/payload choices; source does not explicitly address event-versus-command choice or choreography/orchestration. Target acknowledges ordering as a separate owner.",
+      "decision": "retain"
+    },
+    {
+      "source": "message-ordering-and-partitioning",
+      "target": "rpc-and-api-contracts",
+      "assessment": "supported",
+      "evidence": [
+        "skills/message-ordering-and-partitioning/references/where-ordering-breaks.md:112",
+        "skills/message-ordering-and-partitioning/references/where-ordering-breaks.md:117"
+      ],
+      "rationale": "Source distinguishes wait timeout from terminal failure, preserves unknown outcomes and selects recovery by effect history. Target explicitly owns outcome certainty and machine-actionable recovery contracts.",
+      "decision": "retain"
+    },
+    {
+      "source": "metrics-and-cardinality",
+      "target": "rate-limiting-and-load-shedding",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/metrics-and-cardinality/SKILL.md:40",
+        "skills/metrics-and-cardinality/references/instrument-selection.md:20"
+      ],
+      "rationale": "Capacity/saturation control is a named metric consumer, supported by queue-depth, rejection-counter and queue-age instruments. The target designs admission decisions consuming these signals. No explicit target handoff was found.",
+      "decision": "retain"
+    },
+    {
+      "source": "mysql-innodb-performance",
+      "target": "connection-pool-sizing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/mysql-innodb-performance/SKILL.md:87",
+        "skills/mysql-innodb-performance/references/connector-j-and-ddl.md:39"
+      ],
+      "rationale": "Requires evidence for safe database concurrency and covers streaming pool occupancy and acquisition timeout; the target owns pool limits and hold-time arithmetic.",
+      "decision": "retain"
+    },
+    {
+      "source": "mysql-innodb-performance",
+      "target": "database-bulk-loading",
+      "assessment": "supported",
+      "evidence": ["skills/mysql-innodb-performance/references/connector-j-and-ddl.md:7"],
+      "rationale": "Covers batching/rewrite, partial failure, update counts and transaction outcomes, supporting the target for complete ingestion and restart design when that concern arises.",
+      "decision": "retain"
+    },
+    {
+      "source": "mysql-innodb-performance",
+      "target": "database-index-design",
+      "assessment": "supported",
+      "evidence": [
+        "skills/mysql-innodb-performance/SKILL.md:67",
+        "skills/mysql-innodb-performance/references/storage-redo-configuration.md:5"
+      ],
+      "rationale": "Discusses clustered-key choices and secondary-index costs across the portfolio; the target owns workload-wide index portfolio decisions.",
+      "decision": "retain"
+    },
+    {
+      "source": "offline-concurrency-control",
+      "target": "architecture-testing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/offline-concurrency-control/references/lock-granularity-and-implicit-locks.md:93",
+        "skills/offline-concurrency-control/references/lock-granularity-and-implicit-locks.md:96"
+      ],
+      "rationale": "Source contains an ArchTest mapping-convention rule and states its verification limits, a direct subordinate mechanism.",
+      "decision": "retain"
+    },
+    {
+      "source": "orm-fetch-and-batching-performance",
+      "target": "heap-dump-analysis",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/orm-fetch-and-batching-performance/references/writes-and-batching.md:88",
+        "skills/orm-fetch-and-batching-performance/SKILL.md:107"
+      ],
+      "rationale": "Source distinguishes managed-graph retention from references retained by application/input buffers and bounds those growing populations. Target diagnoses retained graphs through dominators/root paths. Support is the concrete retention concern; no explicit heap-dump handoff was found.",
+      "decision": "retain"
+    },
+    {
+      "source": "orm-fetch-and-batching-performance",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/orm-fetch-and-batching-performance/references/writes-and-batching.md:92",
+        "skills/orm-fetch-and-batching-performance/references/writes-and-batching.md:96"
+      ],
+      "rationale": "Source requires restart/idempotency and partial-success semantics for chunk commits and preserves restart contracts when changing loaders. Target owns repeat-safe effects and durable operation identity.",
+      "decision": "retain"
+    },
+    {
+      "source": "performance-incident-response",
+      "target": "slo-and-alerting",
+      "assessment": "supported",
+      "evidence": [
+        "skills/performance-incident-response/SKILL.md:27",
+        "skills/performance-incident-response/SKILL.md:46"
+      ],
+      "rationale": "The source establishes affected SLI, SLO and burn and validates recovery against the objective rather than a cleared alert; the target owns objective and alert semantics.",
+      "decision": "retain"
+    },
+    {
+      "source": "project-valhalla",
+      "target": "jmh-microbenchmarks",
+      "assessment": "supported",
+      "evidence": [
+        "skills/project-valhalla/SKILL.md:60",
+        "skills/project-valhalla/references/status-and-experiments.md:105"
+      ],
+      "rationale": "Source explicitly calls for JMH and records forks, warm-up, measurement and profilers. Target owns trustworthy JMH experiment design.",
+      "decision": "retain"
+    },
+    {
+      "source": "quality-gates",
+      "target": "debugging",
+      "assessment": "supported",
+      "evidence": ["skills/quality-gates/references/selecting-gates.md:83"],
+      "rationale": "The owed regression test for a fault explicitly names debugging and tdd. Debugging establishes reproduction and cause behind the follow-up gate evidence.",
+      "decision": "retain"
+    },
+    {
+      "source": "quality-gates",
+      "target": "tdd",
+      "assessment": "supported",
+      "evidence": ["skills/quality-gates/references/selecting-gates.md:83"],
+      "rationale": "The owed regression test for a fault explicitly names debugging and tdd. Tdd guides regression-test/fix sequencing; the source decides enforcement.",
+      "decision": "retain"
+    },
+    {
+      "source": "query-objects-and-specifications",
+      "target": "architecture-testing",
+      "assessment": "supported",
+      "evidence": ["skills/query-objects-and-specifications/references/query-performance.md:130"],
+      "rationale": "Specifies controlled query-budget integration tests, cache policy and scoped statement counters; this directly matches the target's query-budget and persistence-contract testing responsibility.",
+      "decision": "retain"
+    },
+    {
+      "source": "queueing-models",
+      "target": "capacity-planning",
+      "assessment": "supported",
+      "evidence": [
+        "skills/queueing-models/references/production-behaviour.md:97",
+        "skills/queueing-models/references/production-behaviour.md:102",
+        "skills/capacity-planning/SKILL.md:313"
+      ],
+      "rationale": "Source models additional capacity, backlog drain and autoscaling headroom. Target explicitly routes distributions, routing and observed waits to queueing-models.",
+      "decision": "retain"
+    },
+    {
+      "source": "queueing-models",
+      "target": "coordinated-omission",
+      "assessment": "supported",
+      "evidence": [
+        "skills/queueing-models/references/production-behaviour.md:40",
+        "skills/queueing-models/references/production-behaviour.md:50",
+        "skills/queueing-models/references/production-behaviour.md:118"
+      ],
+      "rationale": "Source distinguishes open and closed populations and identifies generator omission and planned/actual arrivals as discriminating evidence.",
+      "decision": "retain"
+    },
+    {
+      "source": "queueing-models",
+      "target": "kafka-consumers-in-java",
+      "assessment": "supported",
+      "evidence": [
+        "skills/queueing-models/references/production-behaviour.md:16",
+        "skills/queueing-models/references/production-behaviour.md:22"
+      ],
+      "rationale": "Source explicitly maps Kafka consumer groups, poll batches, multiple partitions per consumer, pause/rebalance/commit and key skew.",
+      "decision": "retain"
+    },
+    {
+      "source": "queueing-models",
+      "target": "kubernetes-service-lifecycle",
+      "assessment": "supported",
+      "evidence": [
+        "skills/queueing-models/references/production-behaviour.md:18",
+        "skills/queueing-models/references/production-behaviour.md:102",
+        "skills/queueing-models/references/production-behaviour.md:143"
+      ],
+      "rationale": "Source requires readiness, placement and warm-up timelines for autoscaled capacity and covers recovery/drain and continuing work.",
+      "decision": "retain"
+    },
+    {
+      "source": "queueing-models",
+      "target": "load-testing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/queueing-models/references/production-behaviour.md:40",
+        "skills/queueing-models/references/production-behaviour.md:139",
+        "skills/queueing-models/references/production-behaviour.md:145"
+      ],
+      "rationale": "Source supplies workload-population distinctions and load/failure validation scenarios with offered, admitted and completed outcome accounting.",
+      "decision": "retain"
+    },
+    {
+      "source": "rate-limiting-and-load-shedding",
+      "target": "stateless-service-design",
+      "assessment": "supported",
+      "evidence": [
+        "skills/rate-limiting-and-load-shedding/SKILL.md:47",
+        "skills/rate-limiting-and-load-shedding/references/java-implementations.md:75"
+      ],
+      "rationale": "Source chooses enforcement across changing replica membership and covers local buckets, authoritative usage, restart and duplicate authorities. Target explicitly owns disposable replicas and in-memory rate-limit counters as sources of truth.",
+      "decision": "retain"
+    },
+    {
+      "source": "reading-jit-assembly",
+      "target": "jfr-and-async-profiler",
+      "assessment": "supported",
+      "evidence": [
+        "skills/reading-jit-assembly/SKILL.md:43",
+        "skills/reading-jit-assembly/SKILL.md:81"
+      ],
+      "rationale": "Time attribution routes to a profiler and requires suitable dynamic measurement and coverage; the target supplies evidence-source selection before collection.",
+      "decision": "retain"
+    },
+    {
+      "source": "service-layer-design",
+      "target": "offline-concurrency-control",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/service-layer-design/references/service-boundaries.md:163",
+        "skills/service-layer-design/references/anaemic-and-god-services.md:155"
+      ],
+      "rationale": "Source requires versioning for optimistic conflict detection and preserves concurrency/version checks when moving rules. Target owns optimistic/offline protocols spanning transactions; that spanning aspect is not explicit here.",
+      "decision": "retain"
+    },
+    {
+      "source": "service-layer-design",
+      "target": "query-objects-and-specifications",
+      "assessment": "supported",
+      "evidence": ["skills/service-layer-design/references/service-boundaries.md:213"],
+      "rationale": "Source considers direct query objects/projections while preserving authorization and consistency. Target owns query object/specification selection and composition.",
+      "decision": "retain"
+    },
+    {
+      "source": "simd-and-vector-api",
+      "target": "jdk-upgrade-impact",
+      "assessment": "supported",
+      "evidence": ["skills/simd-and-vector-api/SKILL.md:119"],
+      "rationale": "The source requires JDK pinning, matching module packaging and API-migration assessment on every upgrade. The target owns wider runtime compatibility and upgrade validation.",
+      "decision": "retain"
+    },
+    {
+      "source": "simd-and-vector-api",
+      "target": "jni-and-ffm",
+      "assessment": "supported",
+      "evidence": [
+        "skills/simd-and-vector-api/references/vector-api-recipes.md:234",
+        "skills/simd-and-vector-api/references/vector-api-recipes.md:248"
+      ],
+      "rationale": "The source uses FFM for off-heap buffers shared with native code and separates segment lifetime/confinement from SIMD. The target owns native-boundary mechanics.",
+      "decision": "retain"
+    },
+    {
+      "source": "slo-and-alerting",
+      "target": "cascading-failures",
+      "assessment": "supported",
+      "evidence": [
+        "skills/slo-and-alerting/SKILL.md:152",
+        "skills/cascading-failures/references/cutting-the-loop.md:152"
+      ],
+      "rationale": "Covers shedding, retry populations and overload classification; reciprocal guidance names SLI classification. Supports the target as an optional overload-response companion.",
+      "decision": "retain"
+    },
+    {
+      "source": "slo-and-alerting",
+      "target": "distributed-failure-catalogue",
+      "assessment": "supported",
+      "evidence": [
+        "skills/slo-and-alerting/SKILL.md:36",
+        "skills/slo-and-alerting/SKILL.md:156",
+        "skills/slo-and-alerting/SKILL.md:177",
+        "skills/distributed-failure-catalogue/SKILL.md:91"
+      ],
+      "rationale": "Distinguishes staleness, upstream outage and missing telemetry; the catalogue explicitly routes stagnant-data failures here. The catalogue's owner-routing promise at lines 19-21 and its table at line 91 merit individual review before downgrading.",
+      "decision": "retain"
+    },
+    {
+      "source": "spring-boot-observability",
+      "target": "spring-security-for-apis",
+      "assessment": "supported",
+      "evidence": [
+        "skills/spring-boot-observability/SKILL.md:87",
+        "skills/spring-boot-observability/SKILL.md:115",
+        "skills/spring-boot-observability/SKILL.md:137",
+        "skills/spring-boot-observability/SKILL.md:138"
+      ],
+      "rationale": "Source requires actual endpoint authorization and security-chain checks, routes authorization design to the API security specialist, and explicitly declares these handoffs optional.",
+      "decision": "retain"
+    },
+    {
+      "source": "sql-server-performance",
+      "target": "connection-pool-sizing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/sql-server-performance/SKILL.md:33",
+        "skills/sql-server-performance/references/jdbc-and-operations.md:35"
+      ],
+      "rationale": "Source includes pool role in intake and distinguishes timeout boundaries, unusable pooled connections and transactions holding resources during remote I/O. Target owns JDBC pool diagnosis/lifetimes/hold time; source does not perform sizing arithmetic.",
+      "decision": "retain"
+    },
+    {
+      "source": "sql-server-performance",
+      "target": "database-bulk-loading",
+      "assessment": "supported",
+      "evidence": [
+        "skills/sql-server-performance/references/jdbc-and-operations.md:21",
+        "skills/sql-server-performance/SKILL.md:33"
+      ],
+      "rationale": "Narrow direct support: source identifies driver Bulk Copy routing, requires effective-property verification and includes batching in intake. Target owns JDBC/Bulk Copy ingestion and its restart/error semantics.",
+      "decision": "retain"
+    },
+    {
+      "source": "sql-server-performance",
+      "target": "database-index-design",
+      "assessment": "supported",
+      "evidence": [
+        "skills/sql-server-performance/references/storage-indexes-statistics.md:8",
+        "skills/sql-server-performance/references/storage-indexes-statistics.md:39",
+        "skills/sql-server-performance/references/storage-indexes-statistics.md:60"
+      ],
+      "rationale": "Source examines clustered-key costs/hotspots, compares layouts and requires safe index rollout. Target owns workload-wide index portfolios and creation/removal decisions.",
+      "decision": "retain"
+    },
+    {
+      "source": "stream-processing-runtime-performance",
+      "target": "delivery-semantics",
+      "assessment": "supported",
+      "evidence": ["skills/stream-processing-runtime-performance/SKILL.md:81"],
+      "rationale": "Exactly-once boundaries, external effects and checkpoint versus sink visibility justify the target's end-to-end processing and commit guarantees.",
+      "decision": "retain"
+    },
+    {
+      "source": "stream-processing-runtime-performance",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": ["skills/stream-processing-runtime-performance/SKILL.md:81"],
+      "rationale": "Effects outside engine transactions or checkpoints explicitly need idempotency, fencing or another transaction protocol.",
+      "decision": "retain"
+    },
+    {
+      "source": "stream-processing-runtime-performance",
+      "target": "off-heap-memory",
+      "assessment": "supported",
+      "evidence": [
+        "skills/stream-processing-runtime-performance/SKILL.md:48",
+        "skills/stream-processing-runtime-performance/SKILL.md:85",
+        "skills/stream-processing-runtime-performance/references/kafka-streams.md:31"
+      ],
+      "rationale": "Native RocksDB caches, buffers and their lifetimes differ from heap accounting; the target supplies native-memory lifetime and diagnosis.",
+      "decision": "retain"
+    },
+    {
+      "source": "streaming-pipeline-topologies",
+      "target": "serialization-performance",
+      "assessment": "supported",
+      "evidence": [
+        "skills/streaming-pipeline-topologies/SKILL.md:91",
+        "skills/streaming-pipeline-topologies/SKILL.md:158"
+      ],
+      "rationale": "Source weighs serialization costs of splitting pipelines and includes state-serializer compatibility during upgrades/rescaling. Target owns serialization cost and compatibility budgets.",
+      "decision": "retain"
+    },
+    {
+      "source": "structured-logging",
+      "target": "scoped-values",
+      "assessment": "supported",
+      "evidence": [
+        "skills/structured-logging/references/java-logging-mechanics.md:80",
+        "skills/structured-logging/references/java-logging-mechanics.md:83"
+      ],
+      "rationale": "The source explicitly discusses ScopedValue, warns that logging frameworks do not automatically recognize it, and requires lexical scope. The target owns context-binding and inheritance semantics.",
+      "decision": "retain"
+    },
+    {
+      "source": "structured-logging",
+      "target": "thread-sizing-and-virtual-threads",
+      "assessment": "supported",
+      "evidence": [
+        "skills/structured-logging/SKILL.md:88",
+        "skills/structured-logging/references/java-logging-mechanics.md:82"
+      ],
+      "rationale": "The source warns that MDC propagation does not automatically cross virtual-thread boundaries and discusses provider ThreadLocal behavior. The target owns virtual-thread adoption and ThreadLocal costs; the source owns logging context.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "cascading-failures",
+      "assessment": "supported",
+      "evidence": [
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:35",
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:44",
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:102",
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:18"
+      ],
+      "rationale": "Addresses amplification, aggregate overload and persistent backlog, matching the target's system-wide failure and recovery concern.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "container-awareness",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:12",
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:24",
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:38"
+      ],
+      "rationale": "Cgroup throttling evidence supplies weak conditional support. The source explicitly assigns scheduling/throttling to linux-for-jvm and does not develop the target's JVM cgroup detection or ergonomics responsibility.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "cpu-cache-and-numa",
+      "assessment": "unsupported",
+      "evidence": [
+        "skills/tail-latency-analysis/SKILL.md:52",
+        "skills/tail-latency-analysis/SKILL.md:151",
+        "skills/tail-latency-analysis/SKILL.md:166"
+      ],
+      "rationale": "No target-specific support found. The cited closest passages concern generic cache state, warmup and placement without establishing hardware coherence, locality, false sharing or NUMA.",
+      "decision": "remove"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "idempotency",
+      "assessment": "supported",
+      "evidence": [
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:7",
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:97"
+      ],
+      "rationale": "Hedging explicitly requires duplicate-safe operations or durable deduplication, and ambiguous commits require operation identity. This is a prerequisite conditional on choosing hedging, not on every tail analysis.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "jfr-advanced",
+      "assessment": "supported",
+      "evidence": ["skills/tail-latency-analysis/references/attributing-the-tail.md:49"],
+      "rationale": "Covers target event metadata, enablement, thresholds, sampling, overhead and missing-event interpretation, closely matching the target's evidence-engineering responsibility.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "jit-compilation",
+      "assessment": "supported",
+      "evidence": [
+        "skills/tail-latency-analysis/SKILL.md:151",
+        "skills/tail-latency-analysis/SKILL.md:166",
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:44"
+      ],
+      "rationale": "Discusses compilation/warmup timelines and explicitly assigns cold rollout to startup/JIT skills in an owner table. The table-owner promise warrants individual review before downgrading.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "jvm-gc-tuning",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:34",
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:79",
+        "skills/tail-latency-analysis/SKILL.md:115"
+      ],
+      "rationale": "GC/stall attribution and warnings against tuning from correlation support this target once GC is established as the cause. The broad GC-skills table-owner promise warrants individual review; collector selection and heap sizing are not developed here.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "kubernetes-service-lifecycle",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:13",
+        "skills/tail-latency-analysis/SKILL.md:166"
+      ],
+      "rationale": "Rollout/readiness events and age since readiness provide conditional attribution support. The source does not specify Kubernetes probe or shutdown procedures.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "load-balancing-and-routing",
+      "assessment": "supported",
+      "evidence": [
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:80",
+        "skills/tail-latency-analysis/SKILL.md:123",
+        "skills/tail-latency-analysis/SKILL.md:127"
+      ],
+      "rationale": "Ejection, power-of-two choices and warm routing directly support the target's replica-selection responsibility.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "lock-inflation",
+      "assessment": "supported",
+      "evidence": ["skills/tail-latency-analysis/references/attributing-the-tail.md:37"],
+      "rationale": "Lock convoys and monitor profiles support this deeper optional companion for intrinsic-monitor mechanisms; the source's broader table owner is concurrency-diagnostics.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "numa-and-cpu-affinity",
+      "assessment": "unsupported",
+      "evidence": [
+        "skills/tail-latency-analysis/SKILL.md:151",
+        "skills/tail-latency-analysis/SKILL.md:166"
+      ],
+      "rationale": "No target-specific support found. Generic placement supplies no CPU binding, hardware topology or NUMA memory-policy concern.",
+      "decision": "remove"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "rate-limiting-and-load-shedding",
+      "assessment": "supported",
+      "evidence": [
+        "skills/tail-latency-analysis/SKILL.md:126",
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:44",
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:84",
+        "skills/tail-latency-analysis/references/hedging-and-tail-tolerance.md:102"
+      ],
+      "rationale": "Aggregate admission, saturation shedding and rejection directly match the target's admission-policy responsibility.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "startup-cds-crac-leyden",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:44",
+        "skills/tail-latency-analysis/SKILL.md:151"
+      ],
+      "rationale": "A table explicitly assigns cold rollout to startup/JIT skills and the source discusses classloading/warmup. This broad owner promise warrants individual review: CDS/AOT/CRaC acceleration is not developed, and the target excludes traffic gating.",
+      "decision": "retain"
+    },
+    {
+      "source": "tail-latency-analysis",
+      "target": "zgc-and-shenandoah",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/tail-latency-analysis/references/attributing-the-tail.md:34",
+        "skills/tail-latency-analysis/SKILL.md:154"
+      ],
+      "rationale": "Allocation stalls and broad GC ownership provide weak conditional support for a confirmed concurrent-collector stall. No collector-specific operational guidance appears; the broad GC table-owner promise warrants individual judgment.",
+      "decision": "retain"
+    },
+    {
+      "source": "task-queues-and-competing-consumers",
+      "target": "latency-statistics",
+      "assessment": "supported",
+      "evidence": [
+        "skills/task-queues-and-competing-consumers/references/lease-model.md:44",
+        "skills/task-queues-and-competing-consumers/references/lease-model.md:48",
+        "skills/task-queues-and-competing-consumers/references/lease-model.md:52"
+      ],
+      "rationale": "Source discusses percentile selection, censoring, nonstationarity and why individual p99.9 values cannot be summed.",
+      "decision": "retain"
+    },
+    {
+      "source": "technical-debt-decisions",
+      "target": "debugging",
+      "assessment": "supported",
+      "evidence": ["skills/technical-debt-decisions/SKILL.md:85"],
+      "rationale": "Explicit named companion: source requires stabilizing incidents while preserving perishable evidence and names debugging. Target owns causal diagnosis and evidence capture.",
+      "decision": "retain"
+    },
+    {
+      "source": "unified-logging",
+      "target": "container-awareness",
+      "assessment": "contextual",
+      "evidence": [
+        "skills/unified-logging/references/production-and-troubleshooting.md:9",
+        "skills/container-awareness/SKILL.md:43",
+        "skills/unified-logging/SKILL.md:150"
+      ],
+      "rationale": "Weak reciprocal support: the source lists container JVM events, and the target uses -Xlog:os+container=trace to establish JVM detection. The source's main container discussion concerns collection and retention, outside the target's ownership.",
+      "decision": "retain"
+    },
+    {
+      "source": "unified-logging",
+      "target": "gc-log-analysis",
+      "assessment": "supported",
+      "evidence": ["skills/unified-logging/SKILL.md:9", "skills/unified-logging/SKILL.md:68"],
+      "rationale": "The source assigns interpretation to GC and other owning skills and gives GC tag selections; the target owns interpreting GC evidence.",
+      "decision": "retain"
+    },
+    {
+      "source": "unified-logging",
+      "target": "incident-evidence-capture",
+      "assessment": "supported",
+      "evidence": ["skills/unified-logging/SKILL.md:87", "skills/unified-logging/SKILL.md:156"],
+      "rationale": "Logs must survive rotation, restart or crash loops and ephemeral storage; the target owns incident-wide capture ordering, safety and survival.",
+      "decision": "retain"
+    },
+    {
+      "source": "unified-logging",
+      "target": "structured-logging",
+      "assessment": "supported",
+      "evidence": [
+        "skills/unified-logging/SKILL.md:152",
+        "skills/unified-logging/references/async-and-cost.md:52"
+      ],
+      "rationale": "Mixed JVM and application schemas, pipe backpressure and preservation of other application-log contracts justify the target's application event-schema and delivery discipline.",
+      "decision": "retain"
+    },
+    {
+      "source": "virtual-threads-internals",
+      "target": "blocking-and-nonblocking-io",
+      "assessment": "supported",
+      "evidence": [
+        "skills/virtual-threads-internals/SKILL.md:84",
+        "skills/virtual-threads-internals/SKILL.md:86",
+        "skills/virtual-threads-internals/SKILL.md:94"
+      ],
+      "rationale": "Source distinguishes unmounting, carrier capture/compensation and pinning, including file paths. Target owns the blocking API, OS-thread and nonblocking-I/O distinctions.",
+      "decision": "retain"
+    }
+  ]
+}

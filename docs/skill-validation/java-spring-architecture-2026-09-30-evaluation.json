@@ -1,0 +1,586 @@
+{
+  "date": "2026-09-30",
+  "status": "completed",
+  "purpose": "Evaluate observable architectural decisions for the implemented MVC, hexagonal and clean skills; not a comparative improvement claim.",
+  "baselineSnapshot": "java-architecture-skills-opYPwO/before.json (session temporary directory)",
+  "protocol": {
+    "activation": "Explicit skill loading; automatic discovery is not tested.",
+    "actors": "Fresh subagent conversations inheriting model and reasoning settings, without author history or evaluator expectations.",
+    "access": "Actor may read assigned skill package and necessary routed resources only; must list resources read. Shared filesystem restrictions are procedural, not enforced isolation.",
+    "task": "Provide review/design decisions from supplied scenarios, without modifying an application. Outputs do not prove implementation or runtime behavior.",
+    "comparison": "No untreated baseline. Report observed outcomes and limitations, not improvement percentages.",
+    "exposure": "Scenario categories originate in the public plan; no claim of a blind held-out benchmark. Several subcases in one actor session may influence each other."
+  },
+  "cases": [
+    {
+      "id": "H",
+      "skill": "spring-boot-hexagonal-architecture",
+      "input": "Use the assigned hexagonal architecture skill. Review these independent situations and give concrete decisions, necessary changes, checks and limits; no application edits. H1: Boot4.1.1/Java25. A settled ADR requires a framework-independent application. POST /refunds uses a controller that checks ownership, then RefundService records a refund and an audit row through JDBC. An internal CSV import calls RefundService directly with a tenantId from the CSV. Current tests only use a Map-backed repository and assert both save methods were called. The team proposes moving the same methods into adapters and declaring the job safe and atomic. H2a: FindOrder returns Optional<Order>; the JDBC adapter turns every DataAccessException into Optional.empty(). H2b: The accepted product contract instead explicitly allows an informational catalogue widget to return a labelled unavailable result, but absence must still mean not found. Explain whether the port contract and mapping should change. H3: An already-correct single read endpoint needs only a header name correction. Someone proposes introducing two ports and a service interface while doing it. H4: A project uses Boot3.5/Java21 and cannot upgrade this quarter; only a request for architecture advice is authorized. Explain how the skill's baseline affects the advice.",
+      "expected": [
+        "H1 locates ownership authorization and invariant enforcement at a shared application boundary, distinguishes trusted job context from CSV tenant claims, and preserves transport-specific authentication ownership.",
+        "H1 names a real transaction boundary across the two JDBC writes and a rollback test through the actual composed entry point without an outer test transaction masking missing application atomicity.",
+        "H1 separates source-dependency checks, in-memory behavior, real JDBC contract and authorization evidence; does not equate moving code or interface conformance with correctness.",
+        "H2 distinguishes absence from failure; a deliberate degradation result requires a distinct contract, not silently empty Optional. The change in requirement changes the proposed result contract.",
+        "H3 preserves the local repair and routes to HTTP owner without mandatory architecture expansion.",
+        "H4 identifies version mismatch and keeps conceptual advice conditional without upgrading or claiming untested Boot3 compatibility."
+      ],
+      "failureConditions": [
+        "Trusts CSV tenant input as sufficient authorization or silently removes shared access policy.",
+        "Declares Map/mock/annotation tests sufficient proof of atomic JDBC behavior.",
+        "Conflates not found and unavailable in either H2 contract.",
+        "Forces architecture rework for the header fix or retargets Boot/Java without authorization."
+      ],
+      "execution": {
+        "actor": "/root/evaluate_hexagonal",
+        "mode": "Fresh context, explicit invocation, inherited model/reasoning",
+        "resourceAccess": "AGENTS.md and assigned package; official primary web sources used. No docs/evaluator records/other outputs allowed; procedural restriction.",
+        "packageHashes": {
+          "SKILL.md": "a6cdcbdd78a74833b9596b7471a7c5c7fce1b77b4e162c53aa3117826ccb82f8",
+          "assets/contract-fixture/README.md": "5348fbb968354c0cb08cd7b8ef261c48b1056e0f8b1fac5acaa123e48b63b0a1",
+          "assets/contract-fixture/pom.xml": "116b3cb5c51ea039a5fd2e0ec0d561949f6c46b04a04fe72efec2cb7f83da055",
+          "assets/contract-fixture/src/main/java/example/hexagonal/FixtureApplication.java": "5755f03ee830bec39428feb6ee21e13b90213bc74a75ea35e5e6eee6dbcf5455",
+          "assets/contract-fixture/src/main/java/example/hexagonal/adapter/HttpOrders.java": "63f00a4647d5dd6a5187bc7f6cf14417620a7fdf5d8f1c8db490bef25f5cb0a0",
+          "assets/contract-fixture/src/main/java/example/hexagonal/adapter/JdbcOrders.java": "61ba95eb7788a594d5d3585339521e7d2a2cc07e9113838931a532c28ce042a9",
+          "assets/contract-fixture/src/main/java/example/hexagonal/application/CreateOrder.java": "7f45f7b024b6a3b5c64473ce46dec1d755c5e83bd68dcf0c7f6a4680c27585d5",
+          "assets/contract-fixture/src/main/java/example/hexagonal/application/OrderStore.java": "4a8e47f8951c81a5a454a0041eec6db0e2f2e51a9cf7a01e144bac426d336135",
+          "assets/contract-fixture/src/main/java/example/hexagonal/application/Orders.java": "9f3909937934b40f8c1da5535211c3235c5681770be41a458395310298913d50",
+          "assets/contract-fixture/src/main/java/example/hexagonal/domain/Order.java": "78773520028deefff6983d2fb38e683e75b8ba7d330ab7875f5fe7cf7f97be56",
+          "assets/contract-fixture/src/test/java/example/hexagonal/IntegrationTest.java": "883389e39e8c2bf03b7a5e132408bf64563f66709e99efa10bd87b0177025211",
+          "assets/contract-fixture/src/test/java/example/hexagonal/application/ArchitectureTest.java": "0b201e0bab88041a91520d954d7cbd163ac16378d0426811c4c9fa618b08fad7",
+          "assets/contract-fixture/src/test/java/example/hexagonal/application/UseCaseTest.java": "ddd950dde5dff70d2c0cfcfa4a769ef538ff921f2c4510041d99bdf942171c3d",
+          "references/port-contracts.md": "66d1a160b89fb1d50ebb5f58c5bc2da5a43ce72c560f519b3f8d8d735abe9c28",
+          "references/spring-composition-and-migration.md": "0cddaf5528e86bef5976cfbcebab942b54f073f56fb7e380ce65d62eddcf759b",
+          "references/verification.md": "b79de7d2c9ff2727923953eaee6916e7102cc9d05352ff88ceea913b71523d1c",
+          "skill.yaml": "2b0a9d7717930a472c191bd412e3b287573e559664fc65bc6ec85af95945acc5"
+        },
+        "output": "The proposed H1 relocation is insufficient: it leaves an authorization bypass and provides no evidence of atomicity. H2a needs accurate failure mapping; H2b permits an explicit unavailable outcome. H3 needs only the header correction. H4 should retain its authorized Boot 3.5/Java 21 baseline.\n\nI applied the assigned `spring-boot-hexagonal-architecture` skill to these scenarios. This is an architecture review: no application was inspected or edited, and no application tests were executed.\n\n**H1 — enforce the settled boundary and repair the behavior.**\n\nThe controller currently owns a resource authorization decision that the CSV entry can bypass. Move that decision into the shared refund application operation, alongside the refund invariants. HTTP remains responsible for authentication, JSON binding and response mapping; the import remains responsible for controlled job identity, CSV parsing and row reporting. Both must invoke the same protected operation.\n\nA CSV `tenantId` is a requested resource scope, not proof of authority. Establish the import's actor through trusted job configuration or an authenticated invoker, and enforce that actor's permitted tenant/resource scope in the application. For HTTP, derive actor context from verified authentication, not request fields. Pass a minimal application-owned actor value; do not expose Spring Security context types in the independent application. A controlled internal caller may supply this value only under an explicit trust boundary. Whether the import has cross-tenant authority is a material product/security policy gap; “internal” alone does not grant it. Until defined, it cannot justify accepting arbitrary CSV tenants.\n\nKeep the application operation, commands/results, permission policy and output contracts free of Spring, JDBC and adapter dependencies, as the ADR requires. JDBC SQL, row mapping and infrastructure exception translation belong in the driven adapter. Put Spring configuration and transaction machinery outside the application. Define ports by the refund operation's needs and effects; copying each JDBC method into a new interface does not establish a useful contract. An input interface is justified here if it allows both callers to receive one transactional decorator; interfaces are not required for every class.\n\nThe refund and audit effects require one actual transaction if the promised operation is “both persist or neither persists.” A concrete design is an outer decorator using `TransactionTemplate` around the plain refund use case. The composition root must expose that decorated entry to both the controller and import and prevent either from selecting the raw service. The framework dependency remains in the outer decorator. [Spring documents the template callback mechanism and its explicit Spring coupling](https://docs.spring.io/spring-framework/reference/data-access/transaction/programmatic.html).\n\nVerify that both JDBC writes participate in the same resource transaction and selected manager, with suitable propagation and isolation. Separate repository transactions, an audit `REQUIRES_NEW`, or a separately committed JDBC connection do not satisfy this pairwise atomicity contract. Ensure an audit failure escapes as a failure that triggers rollback, or explicitly marks rollback before returning a failure result. A swallowed exception or ordinary failure return must not commit the first write. If annotation-based advice is used on an outer decorator instead, verify that every entry reaches the advised managed instance; direct construction and self-invocation are not evidence of proxy interception. Check configured rollback rules, including checked exceptions. [Spring transaction annotations](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html), [rollback rules](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html).\n\nRequired checks before calling this safe and atomic:\n\n- Exercise both real entry adapters through the shared application operation with valid, invalid and unauthorized inputs. Include an authenticated actor targeting another owner's resource and a CSV row with a forged tenant. Assert rejection before refund/audit writes. Keep credential verification tests separate from tests that inject an actor value.\n- Use the actual Spring wiring and an isolated instance of the intended database engine. Demonstrate both committed rows on success. Then force an audit-write failure after the refund insert has executed, invoke through each production entry route, and observe neither new row committed using a fresh connection after the operation. Disable any outer test-managed transaction so the harness cannot supply rollback accidentally.\n- Check fake and JDBC adapter conformance for their promised common behavior, including scoped absence, persistence and relevant conflicts. Exercise a real controlled infrastructure failure in the JDBC adapter. Map-backed tests asserting two calls prove neither persistence nor database rollback.\n- Check all agreed production application packages, including signatures, annotations and generated production code, for forbidden framework/persistence/adapter dependencies. Require expected-class coverage and reject an empty selection. In an isolated copy, compile a known forbidden dependency into a core class and demonstrate that the same boundary assertion fails; a compiler failure alone does not establish the guard's sensitivity. Restore the valid state and rerun. Structural checks do not prove runtime bean selection, hence the wiring tests above.\n\nLimits: the scenario does not identify the database, manager, schema or actual wiring, so atomicity is not yet established. Clarify whether CSV completion is per refund or all rows together; a per-refund transaction proves only its two writes. Local JDBC atomicity does not establish remote payment effects, durable event delivery, retry safety or duplicate prevention. If those requirements exist, specify and test them separately. If concurrent ownership/refund state changes matter, inspect the intended constraint/version/locking mechanism rather than relying on a preliminary read.\n\n**H2a — preserve absence and expose failures honestly.**\n\nThe defect is in the JDBC adapter's blanket `DataAccessException` catch. It turns connection failures, permission failures and SQL defects into a false “not found,” changing caller decisions and hiding outages.\n\n`Optional<Order>` can remain the successful lookup return type: empty means the authorized lookup completed and found no matching order. Document the port's additional application-owned failure semantics and translate infrastructure exceptions at the adapter boundary, retaining diagnostic causes internally. Use the existing exception convention if it preserves the required distinctions; changing to a result type is optional. Do not leak `DataAccessException` through a framework-independent boundary, and do not label every database error as transient or automatically retryable. HTTP/job mappings must distinguish not found from lookup failure according to their contracts.\n\nTest a present scoped order, confirmed absence, another tenant's scope, a connection failure and a non-transient query failure. The latter two must never become empty or a not-found response. Include actual JDBC integration evidence, not only a fake throwing an invented exception.\n\n**H2b — explicitly model the accepted degradation.**\n\nThe accepted widget contract changes the application conversation: the widget may produce `Found(data)`, `NotFound`, or a labelled `Unavailable`. Adopt that distinction in its application result/port contract and map it deliberately to the widget response. The unavailable state must be visibly distinguishable from an empty catalogue or not-found result. Retain internal diagnostics and define which dependency failures qualify; authorizing an unavailable presentation does not authorize hiding every programming defect.\n\nThere are two compatible implementations. If the lookup port itself owns this informational conversation, change its result to express all three outcomes and update every caller and adapter. If `FindOrder` also serves callers that require strict lookup failure, retain its `Optional` plus documented application failure contract and let the widget use case convert the agreed failures into its explicit unavailable result. Do not weaken other consumers merely to serve the widget. In either design, the JDBC adapter maps vendor failures precisely; the application owns the accepted degradation policy, and the driving adapter owns presentation. A result type versus exception is a compatibility choice, not a mandatory architectural rule.\n\nCheck found, absent and unavailable end to end, including the label and agreed HTTP/job mapping. Verify the strict callers still fail when their contract requires it. This accepted product behavior makes labelled unavailability legitimate; it never makes an outage equivalent to absence. No stale-cache, retry or availability guarantee follows without a separate requirement and evidence.\n\n**H3 — correct the header at its existing transport owner.**\n\nRetain the already-correct structure. The two ports and service interface add work without a stated caller, substitution or isolation benefit. Correct the header binding/emission name and update the focused endpoint contract check, preserving the endpoint's other behavior. Check any required old-name compatibility in the published contract before removing support. No unrelated package moves or general architectural refactor is justified by this request.\n\n**H4 — adapt the guidance to the existing release and authorization.**\n\nThe skill's Java 25/Boot 4 baseline describes its authored examples; it does not require upgrading a project before applying ports and adapters. Keep the advice compatible with Boot 3.5 and Java 21. Framework-free application contracts, explicit failure semantics, shared policy and outer composition still apply. Do not copy the fixture's build, use Java 25-only APIs or introduce a migration while only architecture advice is authorized.\n\nFor implementation-specific advice, first establish the project's exact Boot patch, resolved Framework version, compiler/toolchain and runtime image, then use that release's documentation and existing checks. The official 3.5 requirements page currently describes Boot 3.5.16 and includes Java 21 in its supported Java range; this is not evidence that the unseen project uses that patch. [Boot 3.5 requirements](https://docs.spring.io/spring-boot/3.5/system-requirements.html). H1's stated Boot 4.1.1/Java 25 combination is also within its documented Java range. [Boot 4.1.1 requirements](https://docs.spring.io/spring-boot/system-requirements.html).\n\nNo application tests, fixture runs or repository verification were performed for this advice-only task. The checks above are proposed acceptance evidence, not reported successes. Only the requested temporary response file was written.\n\nExact local resources read:\n\n- `C:/git/agent-skills/AGENTS.md`\n- `C:/git/agent-skills/skills/spring-boot-hexagonal-architecture/SKILL.md`\n- `C:/git/agent-skills/skills/spring-boot-hexagonal-architecture/references/port-contracts.md`\n- `C:/git/agent-skills/skills/spring-boot-hexagonal-architecture/references/spring-composition-and-migration.md`\n- `C:/git/agent-skills/skills/spring-boot-hexagonal-architecture/references/verification.md`\n",
+        "testCommands": "None; scenario architecture review only."
+      },
+      "assessment": {
+        "reviewer": "/root",
+        "result": "No predefined failure condition observed in this response.",
+        "evidence": [
+          "H1 identifies CSV tenant as resource input rather than authority; shared application operation owns permission/invariants and both entries use the real transactional boundary.",
+          "H1 distinguishes fake behavior, real adapter, production dependency and rollback checks; requires actual engine/manager/wiring evidence and scopes the unknown CSV transaction granularity.",
+          "H2a retains real absence and accurate application failure distinctions; H2b accepts labelled unavailable under the widget contract without weakening strict consumers or hiding all defects.",
+          "H3 preserves the header-only fix; H4 keeps Boot3.5/Java21 and conditional version-matched advice without upgrade or compatibility claim from the new fixture."
+        ],
+        "limits": "One response with multiple subcases; no application execution, automatic selection or comparative improvement claim."
+      }
+    },
+    {
+      "id": "C",
+      "skill": "spring-boot-clean-architecture",
+      "input": "Use the assigned clean architecture skill. Review independent situations with concrete recommendations, verification and limits; do not edit an application. C1: Boot4.1.1/Java25. An accepted ADR requires framework-independent policies and use cases. InvoiceInteractor imports ResponseEntity, calls a Spring Data repository returning a managed entity, and invokes HtmlInvoicePresenter directly. The team moved these classes into packages called domain/usecase and calls the work done because a unit test passes. Describe dependency and execution maps and a focused migration. C2a: A query has one consumer and returns an immutable application result; presentation is a straightforward HTTP mapping. C2b: Instead, two channels share a complex application outcome while owning independent presentation formats. Choose an output design in each case and explain when an output port/presenter earns its cost. C3: Reorganization replaced an externally invoked transactional service with a plain Java interactor created inside an outer component. The outer method calls this.writeBoth() where writeBoth is @Transactional. The first SQL update survives a failure of the second. Someone wants a new package diagram instead of runtime investigation. What would you inspect/change/test? C4: There is no evidence of framework-exit requirements and the current small application uses @Service on its application classes. A reviewer wants two separate models and four Maven modules solely to call it clean. Give a proportionate recommendation and state what is unknown.",
+      "expected": [
+        "C1 distinguishes source references from runtime calls, puts internal contracts/results under inner ownership, maps HTTP/JPA types at adapters, and isolates presenter implementation when required.",
+        "C1 proposes a behavior-preserving slice with contract characterization, no claim that package names or a unit test prove independence.",
+        "C2a permits simple return; C2b evaluates output/presentation boundaries with inner-owned contract without prescribing one class/interface per operation or inventing mandatory callback semantics.",
+        "C3 checks actual bean/proxy/transaction-manager path, recognizes default proxy self-invocation issue, locates effective unit-of-work boundary and tests partial-write rollback without outer test transaction masking it.",
+        "C4 evaluates semantic coupling and accepted requirements, allows retaining adequate design, prices model/module costs, and does not claim strict framework independence for annotated classes."
+      ],
+      "failureConditions": [
+        "Calls the C1 design independent solely because packages were renamed or controller classes are absent.",
+        "Requires presenters, dual persistence models or four modules universally.",
+        "Claims annotation presence or structural checks prove C3 atomicity.",
+        "Invents a framework replacement requirement or accepts framework dependencies under a claim of strict independence."
+      ],
+      "execution": {
+        "actor": "/root/evaluate_clean",
+        "mode": "Fresh context, explicit invocation, inherited model/reasoning",
+        "resourceAccess": "AGENTS.md and assigned package; official primary web sources used. No docs/evaluator records/other outputs allowed; procedural restriction.",
+        "packageHashes": {
+          "SKILL.md": "d71967265a37d252ac1589d02f5d8ef906dcdcb32feb28c68855fe21905e1fc1",
+          "assets/boundary-fixture/README.md": "90502f83b77ab4f8b0ba1cb5077baa4dccf94fc66568a4932ebc4eeed528cb2e",
+          "assets/boundary-fixture/pom.xml": "41575881ff731ecabe61b87aef3b7978d636d73d100d0e5397c919cba0000fae",
+          "assets/boundary-fixture/src/main/java/example/clean/application/PlaceOrder.java": "ff6ca4ff66fe7016c426a853bcb7394be7e235cbeefa688f1d2eeb1b5b2d3207",
+          "assets/boundary-fixture/src/main/java/example/clean/domain/Purchase.java": "e215b3415514a094d4c822c34f619d56a4a41cb07cc9fae32405d1b100248eea",
+          "assets/boundary-fixture/src/main/java/example/clean/outer/JdbcLedger.java": "9cae81d049d228ccfd3d1c89593caed69e4cda2585cd73bf4aae59443b3508a6",
+          "assets/boundary-fixture/src/main/java/example/clean/outer/OrderConfiguration.java": "ffa7a891dc7088cac19a4afce5c6b96ec6cae946c909a4ca84085fbbffc24a04",
+          "assets/boundary-fixture/src/main/java/example/clean/outer/ReceiptViews.java": "f79e0af11ede259c9f6a8e5485351a201291839a064981c45fe2c7c3e65a6e1e",
+          "assets/boundary-fixture/src/main/java/example/clean/outer/TransactionalOrders.java": "6c87a540a6571d9a42e6f7b6e27d89de11fe8e56364658fa9e2b984926df8a29",
+          "assets/boundary-fixture/src/test/java/example/clean/BoundaryTest.java": "74085c625acb8bb925bef9205806632e0403624e9baa5433204924a4e1a27e04",
+          "assets/boundary-fixture/src/test/java/example/clean/PolicyTest.java": "3a47a68933bc329f44b356d1c254d6722db64b85108543b9718a9394431754c4",
+          "assets/boundary-fixture/src/test/java/example/clean/WiringTest.java": "7b43343fb7427998d9cf953bbb93c98a922433a80a28222719b4a5f2b8192e45",
+          "references/composition-and-migration.md": "6f7cc77e0dfba7aa1560660858c04a641bfdb96c6c3f52f6128a3effe30e7576",
+          "references/policies-and-boundaries.md": "e726d4f07b67b55eeb4f5048d94f9d44de377680070c2f79617af7cfae542ffc",
+          "references/results-and-presentation.md": "30e2422cc2619a063b66c9ffdd8e5b65c306b1ca75754b25b67691bcd1791d7e",
+          "references/verification.md": "6bd0cd0209fb41cc0c88195b5af896935c6dd4a2a396806b8f222e3224882cba",
+          "skill.yaml": "8b2e0e299d917a2b748a64a94ad69a9786eac6abdc3d3c5d9262576f3d880853"
+        },
+        "output": "The C1 migration is incomplete against its accepted ADR. C2 needs an output design based on the interaction, C3 needs investigation of the effective transaction, and C4 does not justify broader separation on the available evidence.\n\nThese are independent scenario reviews using the assigned clean architecture skill. I treat Boot 4.1.1/Java 25 as the supplied C1 environment. No application code, resolved dependencies, runtime traces, or database were inspected; the checks below are proposed, not executed.\n\nC1: The source dependencies violate the required independence. `ResponseEntity` makes HTTP/Spring part of the interactor's contract; the Spring Data repository exposes a framework mechanism; a managed entity exposes persistence lifecycle and potentially lazy loading/dirty checking; and the direct `HtmlInvoicePresenter` reference couples the use case to one presentation implementation. Moving those references into `domain/usecase` changes none of them. The relevant architectural constraint concerns source dependencies and boundary data, distinct from runtime call direction. [Clean Architecture dependency rule](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)\n\nThe supplied evidence supports the following maps. The HTTP caller and transaction placement remain to be confirmed.\n\n| Map | Current situation | Focused target |\n| --- | --- | --- |\n| Source dependencies | `InvoiceInteractor → ResponseEntity, SpringDataRepository, managed entity, HtmlInvoicePresenter` | `InvoiceInteractor → domain policies, application-owned InvoiceStore and InvoiceResult`; `JpaInvoiceStore → InvoiceStore + Spring Data/JPA`; HTTP/HTML adapters depend on `InvoiceResult`; outer configuration composes them. |\n| Execution | Caller → interactor → Spring Data implementation → database → managed entity → interactor → HTML presenter. An import alone does not establish the response or transaction sequence. | Trusted entry → effective outer transaction where required → interactor → domain policies / `InvoiceStore` dispatch → JPA adapter → database → plain application result → effective commit → outer representation mapping → caller. |\n\nRuntime dispatch from the interactor to an outer persistence implementation is compatible with inward source dependencies because the interactor names its own interface. An interface owned by infrastructure and imported inward would retain the ownership problem. The target execution map assumes local writes requiring atomicity; for a read-only query, choose transaction requirements from its actual consistency and loading contract. If an enclosing transaction exists, that outermost effective boundary still determines commit.\n\nMigrate one invoice operation:\n\n1. Capture accepted inputs, serialized fields, statuses/errors, authorization decisions, absence/conflict outcomes, and required atomic writes. Identify HTTP, job, and message callers. Preserve those contracts unless deliberately changing a defect.\n2. Keep invoice validity and state-transition rules with the domain. Let the interactor load facts, enforce application authorization using trusted identity, invoke those rules, and coordinate persistence. HTTP validation/status selection and currency/HTML formatting remain outer responsibilities.\n3. Replace the Spring Data dependency with a small application-owned persistence contract in invoice terms. Its implementation maps managed entities into independent values/domain objects and maps writes back inside the appropriate persistence scope. Preserve ordering, concurrency/version checks, and failure semantics where present; do not replace database errors with “not found.” Separate persistence and inner types here because their lifecycle differs, while retaining suitable shared plain value types.\n4. Return an immutable application result and move HTML/HTTP mapping to the caller's adapter if there is one final synchronous outcome. If inspection reveals an application-driven output interaction, use an application-owned output interface implemented by the outer presenter instead. Neither choice may expose Spring/JPA types in the inner contract.\n5. Construct the plain interactor from outer Spring configuration, retain an effective transaction/access entry, and switch every affected caller to it. Remove the old path after verification. Keep the change reversible and avoid running both write paths for comparison.\n\nVerify domain rules and meaningful orchestration/denial outcomes without Spring. Add a production dependency rule covering the intended domain/application classes, including signature types, annotations, generic types, exceptions and outer-package references; assert nonempty selection and representative class coverage. Prove sensitivity with a compiled forbidden `ResponseEntity` signature that fails the same rule for that dependency. Separately test actual Spring wiring, commit/rollback, authorization at relevant entries, and unchanged HTTP/HTML contracts. A passing unit test proves only what it exercises; even a passing dependency rule cannot prove transaction interception or database replaceability.\n\nC2a: Keep the immutable application result and straightforward HTTP mapping. The concrete query may return the result directly; a separate input interface, output port and presenter class add little here. HTTP owns status, headers and representation details. Check the returned facts/absence cases in the query test and actual status/serialization/error mapping at the HTTP boundary. This choice assumes synchronous consumption of one final outcome.\n\nC2b: Start with one rich, framework-independent application outcome and two independent outer presenters/mappers, one per channel. Complex shared business meaning belongs in the outcome/use case; channel formatting belongs in each presenter. Two representations alone do not require an output port or two copies of the application result. Test the shared semantic outcome once, then each channel's distinct representation and compatibility examples independently.\n\nAn output port earns its cost if the application must select and sequence an interaction—for example, progress followed by completion, multiple prescribed outputs, or existing workflow callbacks. Own that interface inside the application and define outcome variants, ordering, cardinality, failure/cancellation behavior and commit visibility. The outer presenters implement it without leaking HTTP writers or view models inward. Stateful presentation needs per-invocation state; prefer stateless mapping where possible. Output produced before commit cannot be presented as committed success, and an after-commit callback alone does not guarantee durable external delivery. C2b does not establish such an interaction, so a callback design is conditional on further evidence.\n\nC3: Investigate the call path before drawing another package diagram. Under Spring's default proxy mode, `this.writeBoth()` bypasses transaction advice. If no transaction already surrounds the call, the annotation on `writeBoth` opens none. That is a strong candidate for the regression, but the surviving update does not uniquely prove it. A manually constructed plain interactor can participate in a transaction established by its caller; `new` is not inherently the problem. [Spring transaction interception](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html)\n\nInspect the actual entry bean and caller, proxy/advice mode, transaction enablement, annotated method eligibility, and whether every production entry reaches the wrapper. Observe transaction activity around both SQL operations and obtain begin/commit/rollback evidence. Resolve the actual Spring dependency version before selecting version-sensitive APIs.\n\nInspect the exception that reaches the effective boundary: a caught exception or ordinary returned failure may not trigger rollback; default rules roll back unchecked exceptions and errors, with checked exceptions governed by applicable configuration. Examine local/global rollback rules instead of assuming every failure rolls back. [Spring rollback behavior](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/rolling-back.html)\n\nConfirm both writes use the intended transaction manager and transaction-aware resources, with no unexpected thread boundary, autocommit path, or independently committing propagation. An intercepted `REQUIRES_NEW` operation can commit independently of the outer operation. [Resource participation](https://docs.spring.io/spring-framework/reference/data-access/transaction/tx-resource-synchronization.html), [transaction propagation](https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/tx-propagation.html)\n\nRestore one effective outer transaction around the entire interactor invocation: either annotate the externally invoked eligible method on a managed facade/decorator, or use an outer `TransactionTemplate`. Make all relevant callers use that entry and avoid exposing an accidental unwrapped injection path. Keep the interactor plain where independence is required. Set rollback behavior to the operation's actual failure contract. [Programmatic transactions](https://docs.spring.io/spring-framework/reference/data-access/transaction/programmatic.html)\n\nThe discriminating test uses the real Spring configuration and production-family database without a test-managed transaction. Seed known values; invoke the real outer entry; confirm the first SQL update executes; force the second operation to fail with a known escaping unchecked exception; then read through a separate connection after invocation completes. Both original values must remain. A success case must persist both updates. Repeat the actual observed failure type and any other failure whose rollback is required, including checked exceptions if applicable. A surrounding test transaction could conceal the missing application boundary. [Spring transaction testing](https://docs.spring.io/spring-framework/reference/testing/testcontext-framework/tx.html)\n\nThis proves the tested path/resources/failure only. A pure interactor test cannot prove interception, and an H2 check would not establish production-engine behavior. Recheck access enforcement and public errors if the old managed service carried those behaviors too.\n\nC4: Retain the current small application's `@Service` classes unless an actual cost or requirement warrants extraction. Record the Spring coupling honestly; it does not meet strict framework independence, but C1's ADR must not be imported into this independent scenario.\n\nUse clear packages and focused policy/behavior tests first. Isolate one boundary when framework types or persistence lifecycle obstruct meaningful tests, stable business rules, or a real alternate consumer. Introduce a second model when invariants, schema, mutability, serialization or lifecycle differ. Four Maven modules become reasonable only when enforced compilation boundaries, ownership or build/release needs justify their ongoing cost. No fixed module count establishes clean architecture.\n\nUnknowns include policy complexity, current type leakage, persistence lifecycle issues, test friction, team ownership, expected consumers and the likelihood/value of replacing framework mechanisms. Those unknowns prevent a claim that either complete isolation or permanent retention is economically superior. Trace one representative operation and its tests to resolve them; any new dependency check should cover actual production classes and detect a known violation. Measure the specific pain before expanding the separation.\n\nNo application/repository files were changed and no application tests or repository verification commands were run. This is a design review, not an implemented or validated migration.\n\nExact local resources read:\n\n- `C:/git/agent-skills/AGENTS.md`\n- `C:/git/agent-skills/skills/spring-boot-clean-architecture/SKILL.md`\n- `C:/git/agent-skills/skills/spring-boot-clean-architecture/references/policies-and-boundaries.md`\n- `C:/git/agent-skills/skills/spring-boot-clean-architecture/references/results-and-presentation.md`\n- `C:/git/agent-skills/skills/spring-boot-clean-architecture/references/composition-and-migration.md`\n- `C:/git/agent-skills/skills/spring-boot-clean-architecture/references/verification.md`\n\n",
+        "testCommands": "None; scenario design/review proposal only."
+      },
+      "assessment": {
+        "reviewer": "/root",
+        "result": "No predefined failure condition observed in this response.",
+        "evidence": [
+          "C1 identifies actual type/source dependencies, separates source/runtime maps and proposes a contract-preserving single-operation migration.",
+          "C2a retains direct immutable result; C2b initially chooses independent outer mappers and makes an output protocol conditional on application-driven interaction, not merely two channels.",
+          "C3 explains proxy self-invocation as a hypothesis, checks actual manager/resources/failure and restores an effective outer boundary with real rollback test.",
+          "C4 retains adequate small Spring-coupled design, states it is not strictly independent, and rejects obligatory four modules or dual models without a driver."
+        ],
+        "limits": "One response covering multiple subcases; no application execution, auto-selection or comparative improvement claim."
+      }
+    },
+    {
+      "id": "M",
+      "skill": "mvc-and-request-handling",
+      "input": "Use the assigned MVC skill. Review these independent cases; give focused decisions and verification, not application edits. M1: A Boot4/Java25 controller branches on Accept to choose JSON or HTML and checks an account's overdraft limit before calling TransferService. A batch file calls TransferService without that limit check. A reviewer says all if statements must leave controllers. M2a: A GET controller invokes a bounded read repository projection, enforces the accepted access policy and returns a deliberate DTO; there are no domain rules or coordination requirements. M2b: The request is now a money transfer requiring two account writes to commit together and an authorization invariant shared with batch. Explain what changes and what stays. M3: A readme advertises clean architecture but tests only assert names ending Controller or Service and start an application context. Nobody supplied the actual transaction or security configuration. Can you certify the architecture and access behavior? Explain the evidence needed and the smallest useful next check.",
+      "expected": [
+        "M1 keeps content negotiation as presentation and moves/reuses overdraft invariant at shared application/domain owner so the batch path is protected.",
+        "M2a permits adequate bounded read without pass-through service; M2b establishes shared use-case transaction and access boundary and tests actual effects.",
+        "M3 declines unsupported certification, separates static dependencies, HTTP and runtime access/transaction evidence, asks only for consequential unavailable data and preserves review scope."
+      ],
+      "failureConditions": [
+        "Treats every controller if or repository call as necessarily wrong.",
+        "Leaves business legality enforced only in HTTP.",
+        "Certifies transaction/security/architecture from class suffixes or context startup.",
+        "Rewrites the entire application or mandates clean/hexagonal adoption without a driver."
+      ],
+      "execution": {
+        "actor": "/root/evaluate_mvc",
+        "mode": "fresh context, explicit invocation, inherited model/reasoning",
+        "resourceAccess": "Allowed AGENTS.md and assigned package; no docs/evaluator records/other outputs. Procedural restriction on shared filesystem.",
+        "packageHashes": {
+          "references/application-controller.md": "cfd9a7781ea7be11b4d375cd580aeb744c599f742831d2ff4ad708859c240046",
+          "references/page-vs-front-controller.md": "49df5afd667cb968eec973873e6bbbb7657371126613d6536de7fbc00c087da9",
+          "SKILL.md": "b2b26b1dd91ae3e17136c06d15dce55b643364c8fd487686e54877237d6c433e",
+          "skill.yaml": "8cacf7da342f197d249d7ed8931f1fb9c4ea496093c517bce9d4642b04a879d6"
+        },
+        "output": "**M1. Keep response negotiation in the web boundary; move authoritative overdraft enforcement into the shared transfer operation.** An `Accept` branch selects a representation and legitimately belongs in request handling. The claim that every `if` must leave controllers confuses syntax with responsibility.\n\nThe overdraft check determines whether a transfer is legal. Because batch can call `TransferService` without it, the controller currently leaves a bypass. Make the shared operation enforce the rule, ideally through the account/domain behavior that owns it, and have both HTTP and batch invoke that operation. A controller may retain an early validation message, but it cannot be the authoritative enforcement point. Check the limit against authoritative state within the operation's consistency boundary; concurrent transfers must not make a previously checked balance unsafe. Boot 4/Java 25 does not change this responsibility split and does not itself prove the runtime wiring.\n\nVerification: exercise the operation without HTTP with an allowed transfer, a boundary amount, and an amount exceeding the limit; assert rejected transfers change neither account. Cover the batch entry point so its wiring cannot bypass enforcement. Focused MVC tests should cover the supported JSON/HTML negotiation, deliberate public fields, and the established success/error contract. These checks are proposed, not executed.\n\n**M2a. No additional service layer is justified by the stated facts.** A GET handler may call a bounded read projection directly when the accepted access policy is enforced, the response is a deliberate DTO, and no domain decision or coordination is missing. A repository call alone is not a defect, and a pass-through service adds no responsibility here.\n\nVerify the accepted route/resource access policy with allowed and denied callers, the projection's bounds, and the public response fields. Inspect the actual response path if lazy persistence access is possible; a DTO name alone does not prove detachment. Reuse sufficient focused tests. No full application context is needed merely to establish that a handler maps a projection correctly.\n\n**M2b. The new mutation requires a shared operation boundary.** Reuse an existing boundary if it already owns the contract; otherwise introduce one that coordinates the two account writes, enforces the shared actor/resource authorization invariant, and owns the required transaction. Both HTTP and batch must pass trustworthy actor context and call that operation. HTTP request security can protect the route, but it cannot provide the batch caller's authorization guarantee. Merely copying a permission check into both adapters leaves policy able to drift.\n\nWhat stays at the web boundary: routing, request-shape validation and binding, transport negotiation, deliberate response DTOs, and mapping application outcomes to HTTP. Domain rules remain independent of HTTP. This change does not require wrapping unrelated simple reads or adding an Application Controller for a single operation.\n\nVerify the actual wired operation against its persistence resources: a successful transfer changes both accounts; a failure after the first write leaves neither changed. Observe persisted state outside any outer test transaction that could conceal a missing application transaction. Test actor/resource denial through the configured HTTP path and through the non-HTTP operation, with no account changes. Exercise relevant concurrency conflicts if they threaten the invariant. The requirement that both writes commit together needs evidence that the selected transaction mechanism actually spans both resources; an annotation or mocked repository cannot establish that.\n\n**M3. Architecture and access behavior cannot be certified from this evidence.** Suffix assertions establish naming conventions, and context startup establishes limited wiring evidence. Neither proves dependency direction, authorization enforcement, or transaction behavior. MVC can form the web boundary of clean architecture; a README or `Controller → Service → Repository` call path does not establish that architecture.\n\nNeeded evidence includes the intended dependency constraints; actual imports and exposed types across boundaries; the runtime HTTP and batch call paths; resolved framework/runtime versions; the security configuration and relevant route/dispatch coverage; any enabled method-security mechanism; and the actual transaction configuration, invocation boundary, and resources. Dependency checks must test the chosen architectural constraints. Behavior checks must exercise permitted and forbidden access, including alternate callers, and failure rollback through real wiring.\n\nThe smallest useful next check is to trace one protected write from its entry point to persistence and inspect the exact security and transaction configuration attached to that path. Record where each rule is enforced and whether batch reaches it. This turns the advertised architecture into specific claims that can be tested; then target the first unsupported claim with a focused denial or rollback test. Until the missing configuration and behavioral evidence are available, access coverage and atomicity remain unverified.\n\nNo application edits, repository changes, or test commands were performed for this scenario review.\n\nExact local resources read:\n\n- `C:/git/agent-skills/AGENTS.md`\n- `C:/git/agent-skills/skills/mvc-and-request-handling/SKILL.md`\n- `C:/git/agent-skills/skills/mvc-and-request-handling/references/page-vs-front-controller.md`\n",
+        "testCommands": "None; scenario proposal only."
+      },
+      "assessment": {
+        "reviewer": "/root",
+        "result": "No predefined failure condition observed in this response.",
+        "evidence": [
+          "M1 retains Accept negotiation in presentation and places authoritative overdraft enforcement at the shared transfer/domain operation, including batch.",
+          "M2a preserves the bounded projection read; M2b establishes shared authorization and atomic operation while retaining protocol responsibilities at MVC.",
+          "M2b proposes persisted-state rollback verification without outer test transaction masking behavior.",
+          "M3 rejects certification from suffix/context tests and requests the specific call path and security/transaction configuration."
+        ],
+        "limits": "One response covering several subcases; no application execution, automatic selection or comparative improvement claim."
+      }
+    }
+  ],
+  "packageValidation": [
+    {
+      "name": "mvc-and-request-handling",
+      "version": "1.3.5",
+      "files": 4,
+      "issues": [],
+      "links": 2,
+      "broken": [],
+      "generated": [],
+      "projections": [
+        {
+          "agent": "codex",
+          "entries": [
+            "SKILL.md",
+            "references/application-controller.md",
+            "references/page-vs-front-controller.md",
+            "skill.yaml",
+            "agents/openai.yaml"
+          ]
+        },
+        {
+          "agent": "claude-code",
+          "entries": [
+            "SKILL.md",
+            "references/application-controller.md",
+            "references/page-vs-front-controller.md",
+            "skill.yaml"
+          ]
+        }
+      ],
+      "hashes": {
+        "SKILL.md": "b2b26b1dd91ae3e17136c06d15dce55b643364c8fd487686e54877237d6c433e",
+        "references/application-controller.md": "cfd9a7781ea7be11b4d375cd580aeb744c599f742831d2ff4ad708859c240046",
+        "references/page-vs-front-controller.md": "49df5afd667cb968eec973873e6bbbb7657371126613d6536de7fbc00c087da9",
+        "skill.yaml": "8cacf7da342f197d249d7ed8931f1fb9c4ea496093c517bce9d4642b04a879d6"
+      }
+    },
+    {
+      "name": "spring-boot-hexagonal-architecture",
+      "version": "1.0.0",
+      "files": 17,
+      "issues": [],
+      "links": 5,
+      "broken": [],
+      "generated": [],
+      "projections": [
+        {
+          "agent": "codex",
+          "entries": [
+            "SKILL.md",
+            "assets/contract-fixture/README.md",
+            "assets/contract-fixture/pom.xml",
+            "assets/contract-fixture/src/main/java/example/hexagonal/FixtureApplication.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/adapter/HttpOrders.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/adapter/JdbcOrders.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/application/CreateOrder.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/application/OrderStore.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/application/Orders.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/domain/Order.java",
+            "assets/contract-fixture/src/test/java/example/hexagonal/IntegrationTest.java",
+            "assets/contract-fixture/src/test/java/example/hexagonal/application/ArchitectureTest.java",
+            "assets/contract-fixture/src/test/java/example/hexagonal/application/UseCaseTest.java",
+            "references/port-contracts.md",
+            "references/spring-composition-and-migration.md",
+            "references/verification.md",
+            "skill.yaml",
+            "agents/openai.yaml"
+          ]
+        },
+        {
+          "agent": "claude-code",
+          "entries": [
+            "SKILL.md",
+            "assets/contract-fixture/README.md",
+            "assets/contract-fixture/pom.xml",
+            "assets/contract-fixture/src/main/java/example/hexagonal/FixtureApplication.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/adapter/HttpOrders.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/adapter/JdbcOrders.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/application/CreateOrder.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/application/OrderStore.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/application/Orders.java",
+            "assets/contract-fixture/src/main/java/example/hexagonal/domain/Order.java",
+            "assets/contract-fixture/src/test/java/example/hexagonal/IntegrationTest.java",
+            "assets/contract-fixture/src/test/java/example/hexagonal/application/ArchitectureTest.java",
+            "assets/contract-fixture/src/test/java/example/hexagonal/application/UseCaseTest.java",
+            "references/port-contracts.md",
+            "references/spring-composition-and-migration.md",
+            "references/verification.md",
+            "skill.yaml"
+          ]
+        }
+      ],
+      "hashes": {
+        "SKILL.md": "a6cdcbdd78a74833b9596b7471a7c5c7fce1b77b4e162c53aa3117826ccb82f8",
+        "assets/contract-fixture/README.md": "5348fbb968354c0cb08cd7b8ef261c48b1056e0f8b1fac5acaa123e48b63b0a1",
+        "assets/contract-fixture/pom.xml": "116b3cb5c51ea039a5fd2e0ec0d561949f6c46b04a04fe72efec2cb7f83da055",
+        "assets/contract-fixture/src/main/java/example/hexagonal/FixtureApplication.java": "5755f03ee830bec39428feb6ee21e13b90213bc74a75ea35e5e6eee6dbcf5455",
+        "assets/contract-fixture/src/main/java/example/hexagonal/adapter/HttpOrders.java": "63f00a4647d5dd6a5187bc7f6cf14417620a7fdf5d8f1c8db490bef25f5cb0a0",
+        "assets/contract-fixture/src/main/java/example/hexagonal/adapter/JdbcOrders.java": "61ba95eb7788a594d5d3585339521e7d2a2cc07e9113838931a532c28ce042a9",
+        "assets/contract-fixture/src/main/java/example/hexagonal/application/CreateOrder.java": "7f45f7b024b6a3b5c64473ce46dec1d755c5e83bd68dcf0c7f6a4680c27585d5",
+        "assets/contract-fixture/src/main/java/example/hexagonal/application/OrderStore.java": "4a8e47f8951c81a5a454a0041eec6db0e2f2e51a9cf7a01e144bac426d336135",
+        "assets/contract-fixture/src/main/java/example/hexagonal/application/Orders.java": "9f3909937934b40f8c1da5535211c3235c5681770be41a458395310298913d50",
+        "assets/contract-fixture/src/main/java/example/hexagonal/domain/Order.java": "78773520028deefff6983d2fb38e683e75b8ba7d330ab7875f5fe7cf7f97be56",
+        "assets/contract-fixture/src/test/java/example/hexagonal/IntegrationTest.java": "883389e39e8c2bf03b7a5e132408bf64563f66709e99efa10bd87b0177025211",
+        "assets/contract-fixture/src/test/java/example/hexagonal/application/ArchitectureTest.java": "0b201e0bab88041a91520d954d7cbd163ac16378d0426811c4c9fa618b08fad7",
+        "assets/contract-fixture/src/test/java/example/hexagonal/application/UseCaseTest.java": "ddd950dde5dff70d2c0cfcfa4a769ef538ff921f2c4510041d99bdf942171c3d",
+        "references/port-contracts.md": "66d1a160b89fb1d50ebb5f58c5bc2da5a43ce72c560f519b3f8d8d735abe9c28",
+        "references/spring-composition-and-migration.md": "0cddaf5528e86bef5976cfbcebab942b54f073f56fb7e380ce65d62eddcf759b",
+        "references/verification.md": "b79de7d2c9ff2727923953eaee6916e7102cc9d05352ff88ceea913b71523d1c",
+        "skill.yaml": "2b0a9d7717930a472c191bd412e3b287573e559664fc65bc6ec85af95945acc5"
+      }
+    },
+    {
+      "name": "spring-boot-clean-architecture",
+      "version": "1.0.0",
+      "files": 17,
+      "issues": [],
+      "links": 6,
+      "broken": [],
+      "generated": [],
+      "projections": [
+        {
+          "agent": "codex",
+          "entries": [
+            "SKILL.md",
+            "assets/boundary-fixture/README.md",
+            "assets/boundary-fixture/pom.xml",
+            "assets/boundary-fixture/src/main/java/example/clean/application/PlaceOrder.java",
+            "assets/boundary-fixture/src/main/java/example/clean/domain/Purchase.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/JdbcLedger.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/OrderConfiguration.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/ReceiptViews.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/TransactionalOrders.java",
+            "assets/boundary-fixture/src/test/java/example/clean/BoundaryTest.java",
+            "assets/boundary-fixture/src/test/java/example/clean/PolicyTest.java",
+            "assets/boundary-fixture/src/test/java/example/clean/WiringTest.java",
+            "references/composition-and-migration.md",
+            "references/policies-and-boundaries.md",
+            "references/results-and-presentation.md",
+            "references/verification.md",
+            "skill.yaml",
+            "agents/openai.yaml"
+          ]
+        },
+        {
+          "agent": "claude-code",
+          "entries": [
+            "SKILL.md",
+            "assets/boundary-fixture/README.md",
+            "assets/boundary-fixture/pom.xml",
+            "assets/boundary-fixture/src/main/java/example/clean/application/PlaceOrder.java",
+            "assets/boundary-fixture/src/main/java/example/clean/domain/Purchase.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/JdbcLedger.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/OrderConfiguration.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/ReceiptViews.java",
+            "assets/boundary-fixture/src/main/java/example/clean/outer/TransactionalOrders.java",
+            "assets/boundary-fixture/src/test/java/example/clean/BoundaryTest.java",
+            "assets/boundary-fixture/src/test/java/example/clean/PolicyTest.java",
+            "assets/boundary-fixture/src/test/java/example/clean/WiringTest.java",
+            "references/composition-and-migration.md",
+            "references/policies-and-boundaries.md",
+            "references/results-and-presentation.md",
+            "references/verification.md",
+            "skill.yaml"
+          ]
+        }
+      ],
+      "hashes": {
+        "SKILL.md": "d71967265a37d252ac1589d02f5d8ef906dcdcb32feb28c68855fe21905e1fc1",
+        "assets/boundary-fixture/README.md": "90502f83b77ab4f8b0ba1cb5077baa4dccf94fc66568a4932ebc4eeed528cb2e",
+        "assets/boundary-fixture/pom.xml": "41575881ff731ecabe61b87aef3b7978d636d73d100d0e5397c919cba0000fae",
+        "assets/boundary-fixture/src/main/java/example/clean/application/PlaceOrder.java": "ff6ca4ff66fe7016c426a853bcb7394be7e235cbeefa688f1d2eeb1b5b2d3207",
+        "assets/boundary-fixture/src/main/java/example/clean/domain/Purchase.java": "e215b3415514a094d4c822c34f619d56a4a41cb07cc9fae32405d1b100248eea",
+        "assets/boundary-fixture/src/main/java/example/clean/outer/JdbcLedger.java": "9cae81d049d228ccfd3d1c89593caed69e4cda2585cd73bf4aae59443b3508a6",
+        "assets/boundary-fixture/src/main/java/example/clean/outer/OrderConfiguration.java": "ffa7a891dc7088cac19a4afce5c6b96ec6cae946c909a4ca84085fbbffc24a04",
+        "assets/boundary-fixture/src/main/java/example/clean/outer/ReceiptViews.java": "f79e0af11ede259c9f6a8e5485351a201291839a064981c45fe2c7c3e65a6e1e",
+        "assets/boundary-fixture/src/main/java/example/clean/outer/TransactionalOrders.java": "6c87a540a6571d9a42e6f7b6e27d89de11fe8e56364658fa9e2b984926df8a29",
+        "assets/boundary-fixture/src/test/java/example/clean/BoundaryTest.java": "74085c625acb8bb925bef9205806632e0403624e9baa5433204924a4e1a27e04",
+        "assets/boundary-fixture/src/test/java/example/clean/PolicyTest.java": "3a47a68933bc329f44b356d1c254d6722db64b85108543b9718a9394431754c4",
+        "assets/boundary-fixture/src/test/java/example/clean/WiringTest.java": "7b43343fb7427998d9cf953bbb93c98a922433a80a28222719b4a5f2b8192e45",
+        "references/composition-and-migration.md": "6f7cc77e0dfba7aa1560660858c04a641bfdb96c6c3f52f6128a3effe30e7576",
+        "references/policies-and-boundaries.md": "e726d4f07b67b55eeb4f5048d94f9d44de377680070c2f79617af7cfae542ffc",
+        "references/results-and-presentation.md": "30e2422cc2619a063b66c9ffdd8e5b65c306b1ca75754b25b67691bcd1791d7e",
+        "references/verification.md": "6bd0cd0209fb41cc0c88195b5af896935c6dd4a2a396806b8f222e3224882cba",
+        "skill.yaml": "8b2e0e299d917a2b748a64a94ad69a9786eac6abdc3d3c5d9262576f3d880853"
+      }
+    }
+  ],
+  "codeValidation": [
+    {
+      "skill": "spring-boot-hexagonal-architecture",
+      "fixture": "contract-fixture",
+      "runDirectory": "C:/Users/robso/AppData/Local/Temp/hexagonal-fixture-b578a4bcd2f041ae88bac9765b5cb0de",
+      "jdk": "Temurin 25.0.3",
+      "maven": "3.9.15",
+      "boot": "4.1.1",
+      "framework": "7.0.9",
+      "h2": "2.4.240",
+      "junit": "6.0.3",
+      "archunit": "1.5.0",
+      "sourceHashes": {
+        "pom.xml": "116b3cb5c51ea039a5fd2e0ec0d561949f6c46b04a04fe72efec2cb7f83da055",
+        "src/main/java/example/hexagonal/adapter/HttpOrders.java": "63f00a4647d5dd6a5187bc7f6cf14417620a7fdf5d8f1c8db490bef25f5cb0a0",
+        "src/main/java/example/hexagonal/adapter/JdbcOrders.java": "61ba95eb7788a594d5d3585339521e7d2a2cc07e9113838931a532c28ce042a9",
+        "src/main/java/example/hexagonal/application/CreateOrder.java": "7f45f7b024b6a3b5c64473ce46dec1d755c5e83bd68dcf0c7f6a4680c27585d5",
+        "src/main/java/example/hexagonal/application/Orders.java": "9f3909937934b40f8c1da5535211c3235c5681770be41a458395310298913d50",
+        "src/main/java/example/hexagonal/application/OrderStore.java": "4a8e47f8951c81a5a454a0041eec6db0e2f2e51a9cf7a01e144bac426d336135",
+        "src/main/java/example/hexagonal/domain/Order.java": "78773520028deefff6983d2fb38e683e75b8ba7d330ab7875f5fe7cf7f97be56",
+        "src/main/java/example/hexagonal/FixtureApplication.java": "5755f03ee830bec39428feb6ee21e13b90213bc74a75ea35e5e6eee6dbcf5455",
+        "src/test/java/example/hexagonal/application/ArchitectureTest.java": "0b201e0bab88041a91520d954d7cbd163ac16378d0426811c4c9fa618b08fad7",
+        "src/test/java/example/hexagonal/application/UseCaseTest.java": "ddd950dde5dff70d2c0cfcfa4a769ef538ff921f2c4510041d99bdf942171c3d",
+        "src/test/java/example/hexagonal/IntegrationTest.java": "883389e39e8c2bf03b7a5e132408bf64563f66709e99efa10bd87b0177025211"
+      },
+      "sourceMismatches": [],
+      "reports": [
+        {
+          "suite": "example.hexagonal.application.ArchitectureTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "summary": "-------------------------------------------------------------------------------\r\nTest set: example.hexagonal.application.ArchitectureTest\r\n-------------------------------------------------------------------------------\r\nTests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.687 s -- in example.hexagonal.application.ArchitectureTest\r\n"
+        },
+        {
+          "suite": "example.hexagonal.application.UseCaseTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "summary": "-------------------------------------------------------------------------------\r\nTest set: example.hexagonal.application.UseCaseTest\r\n-------------------------------------------------------------------------------\r\nTests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s -- in example.hexagonal.application.UseCaseTest\r\n"
+        },
+        {
+          "suite": "example.hexagonal.IntegrationTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "summary": "-------------------------------------------------------------------------------\r\nTest set: example.hexagonal.IntegrationTest\r\n-------------------------------------------------------------------------------\r\nTests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.748 s -- in example.hexagonal.IntegrationTest\r\n"
+        }
+      ],
+      "tests": 13,
+      "limits": "H2 local transaction and MockMvc identity-supplied input; no production authentication or other database proof.",
+      "negativeExperiments": [
+        {
+          "mutation": "Production core source given forbidden ResponseEntity dependency; architecture assertion fails.",
+          "logFile": "architecture-mutation.log",
+          "evidence": "[ERROR] Tests run: 2, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.727 s <<< FAILURE! -- in example.hexagonal.application.ArchitectureTest\n[ERROR] example.hexagonal.application.ArchitectureTest.productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication -- Time elapsed: 0.600 s <<< FAILURE!\n[ERROR] Failures: \n[ERROR]   ArchitectureTest.productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication:30 Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in any package ['example.hexagonal.domain..', 'example.hexagonal.application..'] should depend on classes that reside outside of packages ['java..', 'example.hexagonal.domain..', 'example.hexagonal.application..']' was violated (1 times):\n[ERROR] Tests run: 2, Failures: 1, Errors: 0, Skipped: 0\n[INFO] BUILD FAILURE\n[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project hexagonal-contract-fixture: There are test failures.\n[ERROR] \n[ERROR] See C:\\Users\\robso\\AppData\\Local\\Temp\\hexagonal-fixture-b578a4bcd2f041ae88bac9765b5cb0de\\target\\surefire-reports for the individual test results.\n[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.\n[ERROR] -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException",
+          "restored": "Full 13-test suite passed after restoration, same source bytes as delivered."
+        },
+        {
+          "mutation": "Transaction wrapper removed; rollback test fails because first write remains committed.",
+          "logFile": "transaction-mutation.log",
+          "evidence": "[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 1.605 s <<< FAILURE! -- in example.hexagonal.IntegrationTest\n[ERROR] example.hexagonal.IntegrationTest.secondWriteFailureRollsBackTheFirstWriteThroughBothInputs -- Time elapsed: 0.476 s <<< FAILURE!\n[ERROR] Failures: \n[ERROR]   IntegrationTest.secondWriteFailureRollsBackTheFirstWriteThroughBothInputs:109 expected: <true> but was: <false>\n[ERROR] Tests run: 1, Failures: 1, Errors: 0, Skipped: 0\n[INFO] BUILD FAILURE\n[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project hexagonal-contract-fixture: There are test failures.\n[ERROR] \n[ERROR] See C:\\Users\\robso\\AppData\\Local\\Temp\\hexagonal-fixture-b578a4bcd2f041ae88bac9765b5cb0de\\target\\surefire-reports for the individual test results.\n[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.\n[ERROR] -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException",
+          "restored": "Full 13-test suite passed after restoration, same source bytes as delivered."
+        },
+        {
+          "mutation": "Production importer selects nonexistent package; explicit coverage guard fails.",
+          "logFile": "empty-selection-mutation.log",
+          "evidence": "[ERROR] Tests run: 2, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.560 s <<< FAILURE! -- in example.hexagonal.application.ArchitectureTest\n[ERROR] example.hexagonal.application.ArchitectureTest.productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication -- Time elapsed: 0.278 s <<< FAILURE!\n[ERROR] Failures: \n[ERROR]   ArchitectureTest.productionCoreHasNoExternalMechanismsAndDomainDoesNotDependOnApplication:25 The guard must import production classes ==> expected: <true> but was: <false>\n[ERROR] Tests run: 2, Failures: 1, Errors: 0, Skipped: 0\n[INFO] BUILD FAILURE\n[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.5.6:test (default-test) on project hexagonal-contract-fixture: There are test failures.\n[ERROR] \n[ERROR] See C:\\Users\\robso\\AppData\\Local\\Temp\\hexagonal-fixture-b578a4bcd2f041ae88bac9765b5cb0de\\target\\surefire-reports for the individual test results.\n[ERROR] See dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.\n[ERROR] -> [Help 1]\n[ERROR] \n[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.\n[ERROR] Re-run Maven using the -X switch to enable full debug logging.\n[ERROR] \n[ERROR] For more information about the errors and possible solutions, please read the following articles:\n[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException",
+          "restored": "Full 13-test suite passed after restoration, same source bytes as delivered."
+        }
+      ]
+    },
+    {
+      "skill": "spring-boot-clean-architecture",
+      "fixture": "boundary-fixture",
+      "runDirectory": "C:/Users/robso/AppData/Local/Temp/clean-boundary-6009eac30836414c8009f2d73905fed9",
+      "jdk": "Temurin 25.0.3",
+      "maven": "3.9.15",
+      "boot": "4.1.1",
+      "framework": "7.0.9",
+      "h2": "2.4.240",
+      "junit": "6.0.3",
+      "archunit": "1.4.1",
+      "sourceHashes": {
+        "pom.xml": "41575881ff731ecabe61b87aef3b7978d636d73d100d0e5397c919cba0000fae",
+        "src/main/java/example/clean/application/PlaceOrder.java": "ff6ca4ff66fe7016c426a853bcb7394be7e235cbeefa688f1d2eeb1b5b2d3207",
+        "src/main/java/example/clean/domain/Purchase.java": "e215b3415514a094d4c822c34f619d56a4a41cb07cc9fae32405d1b100248eea",
+        "src/main/java/example/clean/outer/JdbcLedger.java": "9cae81d049d228ccfd3d1c89593caed69e4cda2585cd73bf4aae59443b3508a6",
+        "src/main/java/example/clean/outer/OrderConfiguration.java": "ffa7a891dc7088cac19a4afce5c6b96ec6cae946c909a4ca84085fbbffc24a04",
+        "src/main/java/example/clean/outer/ReceiptViews.java": "f79e0af11ede259c9f6a8e5485351a201291839a064981c45fe2c7c3e65a6e1e",
+        "src/main/java/example/clean/outer/TransactionalOrders.java": "6c87a540a6571d9a42e6f7b6e27d89de11fe8e56364658fa9e2b984926df8a29",
+        "src/test/java/example/clean/BoundaryTest.java": "74085c625acb8bb925bef9205806632e0403624e9baa5433204924a4e1a27e04",
+        "src/test/java/example/clean/PolicyTest.java": "3a47a68933bc329f44b356d1c254d6722db64b85108543b9718a9394431754c4",
+        "src/test/java/example/clean/WiringTest.java": "7b43343fb7427998d9cf953bbb93c98a922433a80a28222719b4a5f2b8192e45"
+      },
+      "sourceMismatches": [],
+      "reports": [
+        {
+          "suite": "example.clean.BoundaryTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "summary": "-------------------------------------------------------------------------------\r\nTest set: example.clean.BoundaryTest\r\n-------------------------------------------------------------------------------\r\nTests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.075 s -- in example.clean.BoundaryTest\r\n"
+        },
+        {
+          "suite": "example.clean.PolicyTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "summary": "-------------------------------------------------------------------------------\r\nTest set: example.clean.PolicyTest\r\n-------------------------------------------------------------------------------\r\nTests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in example.clean.PolicyTest\r\n"
+        },
+        {
+          "suite": "example.clean.WiringTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "summary": "-------------------------------------------------------------------------------\r\nTest set: example.clean.WiringTest\r\n-------------------------------------------------------------------------------\r\nTests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.738 s -- in example.clean.WiringTest\r\n"
+        }
+      ],
+      "tests": 11,
+      "limits": "H2 local transaction and trusted actor; no HTTP, token or method-security integration proof.",
+      "negativeExperiments": [
+        {
+          "mutation": "Controlled unwrapped invocation in WiringTest",
+          "evidence": "missingWrapperActuallyLeavesPartialState asserts first insert remains after second-write failure, unlike actual wrapped rollback path.",
+          "mode": "Sensitivity control executed within passing suite."
+        },
+        {
+          "mutation": "Dynamically compiled external and outer types plus empty selection in BoundaryTest",
+          "evidence": "Named ArchUnit assertions reject JdbcTemplate and ReceiptViews$Display; allowEmptyShould(false) rejects no application classes.",
+          "mode": "Expected-failure assertions executed within passing suite."
+        }
+      ]
+    }
+  ],
+  "globalValidation": {
+    "command": "npm run verify",
+    "exitCode": 0,
+    "steps": [
+      "build",
+      "check:boundaries",
+      "lint",
+      "format:check",
+      "registry:check",
+      "check:versions",
+      "test:only"
+    ],
+    "tests": 355,
+    "suites": 67,
+    "passed": 355,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "registrySkills": 297,
+    "note": "Global check completed after package writers stopped. Final evidence/report updates receive focused formatting/link/diff checks afterward; skill bytes stay unchanged."
+  },
+  "registryComparison": {
+    "before": 295,
+    "after": 297,
+    "added": ["spring-boot-clean-architecture", "spring-boot-hexagonal-architecture"],
+    "removed": [],
+    "changed": ["mvc-and-request-handling"]
+  },
+  "independentReviews": [
+    {
+      "skill": "mvc-and-request-handling",
+      "reviewer": "/root/mvc_consolidation",
+      "result": "Implemented focused gaps; only SKILL.md/skill.yaml changed, version1.3.5; writes stopped."
+    },
+    {
+      "skill": "spring-boot-clean-architecture",
+      "reviewer": "/root/review_clean",
+      "result": "No changes needed; all17files read; zero issues on scoped checks; source bytes match11-test author run; writes stopped."
+    },
+    {
+      "skill": "spring-boot-hexagonal-architecture",
+      "reviewer": "/root/review_hexagonal",
+      "result": "No changes needed; all17files read; zero issues on scoped checks;13-test and negative-experiment evidence inspected; writes stopped."
+    }
+  ],
+  "behavioralSummary": {
+    "sessions": 3,
+    "result": "All three responses were inspected by the coordinator; no predefined failure condition was observed.",
+    "claimLimit": "Scenario-level decisions only; no measured comparative gain, automatic discovery result or production implementation claim."
+  },
+  "finalAttribution": {
+    "initialFileCount": 1583,
+    "changedExisting": [
+      "docs/java-spring-architecture-skills-plan.md",
+      "docs/skill-validation/microservices-architecture-2026-09-30-evaluation.json",
+      "docs/skill-validation/microservices-architecture-2026-09-30.md",
+      "registry/skills.yaml",
+      "skills/mvc-and-request-handling/SKILL.md",
+      "skills/mvc-and-request-handling/skill.yaml"
+    ],
+    "unexpectedExisting": [
+      "docs/skill-validation/microservices-architecture-2026-09-30-evaluation.json",
+      "docs/skill-validation/microservices-architecture-2026-09-30.md"
+    ],
+    "newOwnFiles": 36,
+    "unexpectedNew": [],
+    "packageMismatches": [],
+    "docLocalLinks": 12,
+    "brokenDocLinks": [],
+    "concurrentOutsideScope": [
+      {
+        "file": "docs/skill-validation/microservices-architecture-2026-09-30-evaluation.json",
+        "before": "cc639eb6ca9b1cead8cbb9555555caaf2b5c3f90309e8394e983f05215dbcb02",
+        "after": "039779a0a3f8fc5e74cbce66c30bdcffc034cb4d82b61e83c6fa7b7bb8b7e914",
+        "attribution": "Observed change during the task in another workstream report. No author/reviewer/coordinator writes targeted this file; preserved as found."
+      },
+      {
+        "file": "docs/skill-validation/microservices-architecture-2026-09-30.md",
+        "before": "629cefafc5fc4efaa63310922f2bdc0e7b59aa853a5dc93b364750f468369533",
+        "after": "fbc6989f30d1af26c85c5435a2c5260aa35fd1f165cc00812843ca40c3737fd8",
+        "attribution": "Observed change during the task in another workstream report. No author/reviewer/coordinator writes targeted this file; preserved as found."
+      }
+    ],
+    "assessment": "Owned package bytes unchanged after validation; no unexpected new files. Two externally edited reports were observed and preserved, not attributed to this task."
+  },
+  "finalLocalChecks": {
+    "docs": "Final plan/report local links resolve; focused formatting and diff checks run after report updates.",
+    "packageIntegrity": "All packaged bytes match the validated/behavioral evaluation snapshots."
+  }
+}

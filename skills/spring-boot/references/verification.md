@@ -84,6 +84,15 @@ These are reasoning checks, not measured agent or runtime outcomes:
   to recommend an option. Change only that policy to require the dependency for every
   operation: partial service is no longer acceptable. Keep the shared outage out of
   liveness; verify the agreed readiness/startup failure and recovery behavior.
+- A factory opens a client and its next initialization step throws: require cleanup of
+  that acquired client on the failure path; declaring a destroy callback is insufficient.
+  Change only ownership so the client is a successfully initialized managed dependency
+  borrowed by the failing consumer: let the container close it and avoid consumer
+  double-close. Observe both paths and normal shutdown.
+- A required startup write uses `@Transactional` on the same `@PostConstruct` method:
+  identify the missing proxy boundary; use a bounded runner calling the managed
+  transactional collaborator and observe persisted state on success and rollback.
+  Returning from submission to an executor cannot prove completion before readiness.
 - A user client replaces the default but unused default settings fail validation:
   identify the surviving properties registration. If only the default owns those
   settings, condition that registration too, retaining the dispatcher. Change only

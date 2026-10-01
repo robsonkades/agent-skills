@@ -416,17 +416,22 @@ describe('interactive update checks', () => {
 });
 
 describe('applying reviewed update notifications', () => {
-  it('installs the exact displayed release only in the selected agent and scope', async () => {
+  it('installs only the displayed release and destinations without expanding its suggestions', async () => {
     const { ctx, installer } = harness({
       adapters: [adapterOf('one', '/one'), adapterOf('two', '/two')],
       packages: ['1.0.0', '1.1.0', '2.0.0'].map((version) =>
-        buildPackage({ name: 'a-skill', version }),
+        buildPackage({
+          name: 'a-skill',
+          version,
+          manifestExtras: 'suggests: [unrequested-skill]',
+        }),
       ),
     });
     await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'global' });
     await new InstallSkills(ctx).execute({ refs: ['a-skill@1.0.0'], scope: 'project' });
     const notices = await updateHarness(ctx).check.execute({ agents: ['one'], scope: 'global' });
     await new ApplySkillUpdates(ctx).execute(notices.skills.filter((item) => !item.requiresMajor));
+    assert.equal(installer.installed.size, 4);
     for (const entry of installer.installed.values()) {
       assert.equal(
         entry.version,

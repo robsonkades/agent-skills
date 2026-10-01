@@ -1,0 +1,50 @@
+schemaVersion: 1
+
+name: service-discovery
+version: 1.0.0
+description: >-
+  Design and diagnose endpoint discovery when membership changes, clients cache stale information or bootstrap depends on an unavailable source. Define authority, update, expiry and failure contracts separately from load balancing.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/service-discovery
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/service-discovery
+
+keywords:
+  - architecture
+  - microservices
+  - discovery
+  - dns
+  - spring-cloud
+  - caching
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/
+
+dependencies: []
+
+suggests:
+  - ambassador-pattern
+  - kubernetes-service-lifecycle
+  - load-balancing-and-routing
+  - spring-http-clients
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Service Discovery
+      short_description: Endpoint authority, freshness and discovery failures
+      default_prompt: Use Service Discovery to define the endpoint source, client cache and bootstrap or stale-information behavior here.

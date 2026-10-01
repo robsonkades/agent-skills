@@ -1,7 +1,7 @@
 schemaVersion: 1
 
 name: jdk-upgrade-impact
-version: 1.2.4
+version: 1.2.5
 description: >-
   Moving a service between JDKs: what breaks, in what order to find it, and what should get
   faster — running unchanged on the new runtime with warnings visible, classifying each
@@ -54,6 +54,7 @@ dependencies:
 
 suggests:
   - architecture-refactoring-paths
+  - jvm-gc-tuning
   - legacy-enterprise-modernization
   - performance-methodology
   - refactoring-automation

@@ -275,6 +275,7 @@ export {
   formatIssue,
   type InstallOptions,
   type InstallReport,
+  type InstallResolvedSkill,
 } from './application/install-skills.ts';
 
 export {
@@ -320,6 +321,7 @@ export {
   type UpdateChange,
   type UpdateOptions,
   type UpdateReport,
+  type UpdateAddition,
 } from './application/update-skills.ts';
 
 export {

@@ -1,0 +1,88 @@
+schemaVersion: 1
+
+name: microservices-architecture
+version: 1.0.0
+description: >-
+  Coordinate interdependent architecture decisions when a microservices initiative spans
+  domain, data, interaction and operation, or specialist proposals conflict. Build an
+  evidence-backed decision map with owners, unresolved constraints and a first verifiable
+  slice. Does not replace initial system triage, the decision to distribute a boundary,
+  or a specialist's local implementation guidance.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/microservices-architecture
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/microservices-architecture
+
+keywords:
+  - architecture
+  - microservices
+  - java
+  - spring
+  - architecture-decisions
+  - integration
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies:
+  - name: bounded-context-design
+    version: ^1.0.0
+  - name: service-data-ownership
+    version: ^1.0.0
+  - name: cross-service-query-design
+    version: ^1.0.0
+  - name: api-gateway-and-bff
+    version: ^1.0.0
+  - name: service-discovery
+    version: ^1.0.0
+  - name: service-identity-and-trust
+    version: ^1.0.0
+  - name: progressive-service-delivery
+    version: ^1.0.0
+  - name: rpc-and-api-contracts
+    version: ^1.0.0
+  - name: schema-evolution-and-compatibility
+    version: ^1.0.0
+  - name: distributed-transactions-and-sagas
+    version: ^1.0.0
+  - name: idempotency
+    version: ^1.0.0
+  - name: distributed-systems-testing
+    version: ^1.0.0
+  - name: slo-and-alerting
+    version: ^1.0.0
+
+suggests:
+  - enterprise-application-architecture
+  - distributed-systems
+  - timeouts-and-deadlines
+  - distribution-boundaries
+  - architecture-characteristics
+  - architecture-trade-off-analysis
+  - architecture-decision-making
+  - architecture-coupling-and-quanta
+  - architecture-refactoring-paths
+  - spring-boot
+  - spring-transactions-and-events
+  - spring-boot-testing
+
+capabilities:
+  - reads-source
+  - runs-commands
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Microservices Architecture
+      short_description: Reconcile decisions and verify an integrated slice
+      default_prompt: Use Microservices Architecture to reconcile these architecture decisions and deliver the first verifiable slice.

@@ -1,0 +1,62 @@
+schemaVersion: 1
+
+name: java-ddd-testing
+version: 1.0.0
+description: >-
+  Write and review Java DDD tests for aggregate invariants, value-object equality,
+  use-case outcomes, gateway rehydration, concurrency conflicts and domain-event durability.
+  Use when extracting behavior into a domain model, testing rejected transitions,
+  replacing repository mocks with in-memory gateways, or checking whether persistence
+  tests protect the aggregate's consistency boundary. Follows domain, application and
+  infrastructure packages. Does not choose bounded contexts or replace general Java
+  test design, Spring test setup or database performance analysis.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/java-ddd-testing
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/java-ddd-testing
+
+keywords:
+  - java
+  - ddd
+  - domain-driven-design
+  - aggregate
+  - value-object
+  - use-case
+  - testing
+  - clean-architecture
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+suggests:
+  - java-ddd
+  - java-ddd-aggregates
+  - java-ddd-value-objects
+  - java-ddd-use-cases
+  - java-ddd-domain-services
+  - java-ddd-repositories
+  - java-ddd-domain-events
+  - java-test-design
+  - java-test-doubles
+  - spring-boot-testing
+  - architecture-testing
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Java DDD Testing
+      short_description: Prove domain rules across model, use cases and persistence
+      default_prompt: Use Java DDD Testing to write or review tests for this business rule.

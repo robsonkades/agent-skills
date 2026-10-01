@@ -1,0 +1,59 @@
+schemaVersion: 1
+
+name: api-gateway-and-bff
+version: 1.0.0
+description: >-
+  Design or review an API gateway or backend for frontend when client journeys need
+  different representations, too many round trips, an entry policy, or explicit
+  degradation. Decide whether a BFF is warranted; define edge responsibility,
+  bounded composition, identity propagation and failure contracts while keeping
+  domain invariants in their owning services. Excludes replica selection and
+  framework security implementation.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/api-gateway-and-bff
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/api-gateway-and-bff
+
+keywords:
+  - architecture
+  - microservices
+  - api-gateway
+  - bff
+  - java
+  - spring
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+dependencies: []
+
+suggests:
+  - rpc-and-api-contracts
+  - remote-facade-and-dto
+  - load-balancing-and-routing
+  - scatter-gather
+  - retries-and-backoff
+  - spring-security-for-apis
+  - spring-http-clients
+  - cross-service-query-design
+  - service-identity-and-trust
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: API Gateway and BFF
+      short_description: Edge responsibility, composition and trust
+      default_prompt: Use API Gateway and BFF to decide the edge responsibility and verify its client, failure and trust contracts.

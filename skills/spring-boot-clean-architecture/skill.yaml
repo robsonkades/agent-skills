@@ -1,0 +1,54 @@
+schemaVersion: 1
+name: spring-boot-clean-architecture
+version: 1.0.1
+description: >-
+  Implement or repair Clean Architecture boundaries in Java/Spring Boot when domain
+  policies, use-case orchestration and framework mechanisms are mixed. Allocate
+  rules, distinguish source dependencies from execution flow, choose simple results
+  or output presenters, and preserve transaction and authorization behavior during
+  incremental migration. Excludes architecture-style selection and detailed HTTP,
+  ORM or distributed-system design.
+license: Apache-2.0
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/spring-boot-clean-architecture
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/spring-boot-clean-architecture
+keywords:
+  - java
+  - spring-boot
+  - clean-architecture
+  - use-cases
+  - dependency-rule
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+  - assets/boundary-fixture/README.md
+  - assets/boundary-fixture/pom.xml
+  - assets/boundary-fixture/src/
+dependencies: []
+suggests:
+  - framework-coupling-and-independence
+  - architecture-trade-off-analysis
+  - spring-boot-hexagonal-architecture
+  - domain-logic-organization
+  - mvc-and-request-handling
+  - spring-boot-web
+  - spring-boot
+  - spring-transactions-and-events
+  - spring-security-for-apis
+  - spring-boot-jpa
+  - architecture-testing
+  - spring-boot-testing
+capabilities:
+  - reads-source
+  - runs-commands
+agentOverrides:
+  codex:
+    interface:
+      display_name: Spring Boot Clean Architecture
+      short_description: Domain policies, use cases and inward dependencies in Boot

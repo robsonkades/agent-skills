@@ -1,0 +1,60 @@
+schemaVersion: 1
+
+name: cross-service-query-design
+version: 1.0.0
+description: >-
+  Choose API composition or a read model when a query joins data owned by multiple
+  services, a list needs cross-service filtering or ordering, or projection lag changes
+  what a consumer may conclude. Define freshness, completeness, authorization, query
+  bounds and rebuild. Excludes fan-out mechanics, event-store adoption and CDC operations.
+
+license: Apache-2.0
+
+authors:
+  - name: agent-skills contributors
+    url: https://github.com/robsonkades/agent-skills
+
+homepage: https://github.com/robsonkades/agent-skills/tree/main/skills/cross-service-query-design
+repository:
+  type: git
+  url: https://github.com/robsonkades/agent-skills
+  directory: skills/cross-service-query-design
+
+keywords:
+  - architecture
+  - microservices
+  - api-composition
+  - cqrs
+  - read-model
+  - java
+  - spring
+
+files:
+  - SKILL.md
+  - skill.yaml
+  - references/
+
+suggests:
+  - service-data-ownership
+  - scatter-gather
+  - consistency-models
+  - distributed-transactions-and-sagas
+  - idempotency
+  - event-sourcing
+  - change-data-capture-operations
+  - spring-http-clients
+  - spring-transactions-and-events
+  - spring-boot-jpa
+  - spring-security-for-apis
+  - sql-query-performance
+  - distributed-systems-testing
+
+capabilities:
+  - reads-source
+
+agentOverrides:
+  codex:
+    interface:
+      display_name: Cross-Service Query Design
+      short_description: Query composition, freshness, paging and projection recovery
+      default_prompt: Use Cross-Service Query Design to choose and validate this query's composition or read-model contract.

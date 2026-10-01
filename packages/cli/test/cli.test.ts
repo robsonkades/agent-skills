@@ -504,10 +504,19 @@ describe('search, info and the global lifecycle', () => {
   it('updates to the newest compatible version', async () => {
     const result = await cli(['update', 'demo-skill', '--global', '--json'], { home });
     assert.equal(result.code, 0, result.stderr);
-    const parsed = JSON.parse(result.stdout) as { changes: { from: string; to: string }[] };
-    assert.deepEqual(parsed.changes, [
-      { name: 'demo-skill', from: '1.0.0', to: '1.1.0', bump: 'minor' },
-    ] as unknown);
+    const parsed = JSON.parse(result.stdout) as {
+      changes: { name: string; from: string; to: string; bump: string; skipped: boolean }[];
+    };
+    assert.deepEqual(
+      parsed.changes.map(({ name, from, to, bump, skipped }) => ({
+        name,
+        from,
+        to,
+        bump,
+        skipped,
+      })),
+      [{ name: 'demo-skill', from: '1.0.0', to: '1.1.0', bump: 'minor', skipped: false }],
+    );
   });
 
   it('reports a healthy system', async () => {
@@ -680,6 +689,466 @@ describe('dry run', () => {
     await assert.rejects(() =>
       readFile(join(clean, '.claude', 'skills', 'demo-skill', 'SKILL.md'), 'utf8'),
     );
+  });
+});
+
+describe('direct suggestions', () => {
+  interface FixtureSkill {
+    readonly name: string;
+    readonly version?: string;
+    readonly suggests?: readonly string[];
+    readonly dependencies?: readonly string[];
+    readonly kind?: 'command';
+    readonly agents?: readonly string[];
+    readonly integrity?: string;
+  }
+
+  interface Addition {
+    name: string;
+    version: string;
+    registry: string;
+    suggestedBy: string[];
+    skipped: boolean;
+    results: { agent: string; scope: string; directory: string; outcome: string }[];
+  }
+
+  const skills: readonly FixtureSkill[] = [
+    { name: 'suggest-root', suggests: ['companion'], dependencies: ['root-dependency'] },
+    { name: 'root-dependency', suggests: ['dependency-suggestion'] },
+    { name: 'companion', suggests: ['nested-suggestion'], dependencies: ['prerequisite'] },
+    { name: 'prerequisite' },
+    { name: 'dependency-suggestion' },
+    { name: 'nested-suggestion' },
+  ];
+
+  async function fixture(packages: readonly FixtureSkill[] = skills) {
+    const isolated = await mkdtemp(join(root, 'suggestions-'));
+    const fixtureHome = join(isolated, 'home');
+    const fixtureRegistry = join(isolated, 'registry');
+    const fixtureProject = join(isolated, 'project');
+    await mkdir(join(fixtureHome, '.claude'), { recursive: true });
+    await mkdir(join(fixtureHome, '.codex'), { recursive: true });
+    await mkdir(join(fixtureHome, '.agent-skills'), { recursive: true });
+    await mkdir(join(fixtureProject, '.git'), { recursive: true });
+    await writeFile(join(fixtureProject, '.git', 'HEAD'), 'ref: refs/heads/main\n');
+    await writeFile(
+      join(fixtureHome, '.agent-skills', 'config.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        registries: [{ name: 'suggestions', kind: 'local', url: fixtureRegistry, trusted: true }],
+      }),
+    );
+    for (const skill of packages) {
+      const version = skill.version ?? '1.0.0';
+      const directory = join(fixtureRegistry, 'skills', `${skill.name}-${version}`);
+      const entrypoint = skill.kind === 'command' ? 'COMMAND.md' : 'SKILL.md';
+      const metadata = [
+        ...(skill.kind === undefined ? [] : [`kind: ${skill.kind}`]),
+        `suggests: ${JSON.stringify(skill.suggests ?? [])}`,
+        `dependencies: ${JSON.stringify(
+          (skill.dependencies ?? []).map((name) => ({ name, version: '^1.0.0' })),
+        )}`,
+        ...(skill.agents === undefined
+          ? []
+          : [`compatibility: ${JSON.stringify({ agents: skill.agents.map((id) => ({ id })) })}`]),
+      ].join('\n');
+      await mkdir(directory, { recursive: true });
+      await writeFile(join(directory, entrypoint), SKILL_MD.replaceAll('demo-skill', skill.name));
+      await writeFile(
+        join(directory, 'skill.yaml'),
+        manifest(version, `${metadata}\n`)
+          .replaceAll('demo-skill', skill.name)
+          .replace('SKILL.md', entrypoint),
+      );
+    }
+    await mkdir(join(fixtureRegistry, 'registry'), { recursive: true });
+    await writeFile(
+      join(fixtureRegistry, 'registry', 'skills.yaml'),
+      JSON.stringify({
+        schemaVersion: 1,
+        name: 'suggestions',
+        skills: [...new Set(packages.map((skill) => skill.name))].map((name) => {
+          const versions = packages.filter((skill) => skill.name === name);
+          return {
+            name,
+            description: 'Fixture for direct suggestions.',
+            latest: versions.at(-1)!.version ?? '1.0.0',
+            versions: versions.map((skill) => ({
+              version: skill.version ?? '1.0.0',
+              path: `skills/${skill.name}-${skill.version ?? '1.0.0'}`,
+              ...(skill.integrity === undefined ? {} : { integrity: skill.integrity }),
+            })),
+          };
+        }),
+      }),
+    );
+    return { home: fixtureHome, cwd: fixtureProject };
+  }
+
+  it('keeps suggestions opt-in, then installs only direct suggestions and real prerequisites', async () => {
+    const environment = await fixture();
+    const initial = await cli(
+      ['install', 'suggest-root', '--project', '--agent', 'claude', '--json'],
+      environment,
+    );
+    assert.equal(initial.code, 0, initial.stderr);
+    const initialReport = JSON.parse(initial.stdout) as { resolved: { name: string }[] };
+    assert.deepEqual(initialReport.resolved.map((skill) => skill.name).sort(), [
+      'root-dependency',
+      'suggest-root',
+    ]);
+
+    const expanded = await cli(
+      ['install', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude', '--json'],
+      environment,
+    );
+    assert.equal(expanded.code, 0, expanded.stderr);
+    const report = JSON.parse(expanded.stdout) as {
+      resolved: { name: string; direct: boolean; suggestedBy: string[]; requiredBy: string[] }[];
+      installed: { name: string; agent: string }[];
+    };
+    assert.deepEqual(report.resolved.map((skill) => skill.name).sort(), [
+      'companion',
+      'prerequisite',
+      'root-dependency',
+      'suggest-root',
+    ]);
+    assert.equal(report.resolved.find((skill) => skill.name === 'suggest-root')!.direct, true);
+    const companion = report.resolved.find((skill) => skill.name === 'companion')!;
+    assert.equal(companion.direct, false);
+    assert.deepEqual(companion.suggestedBy, ['suggest-root']);
+    assert.deepEqual(companion.requiredBy, []);
+    const prerequisite = report.resolved.find((skill) => skill.name === 'prerequisite')!;
+    assert.deepEqual(prerequisite.suggestedBy, []);
+    assert.deepEqual(prerequisite.requiredBy, ['companion@1.0.0']);
+    assert.ok(report.installed.every((skill) => skill.agent === 'claude-code'));
+    await assert.rejects(() =>
+      readFile(join(environment.cwd, '.agents', 'skills', 'companion', 'SKILL.md')),
+    );
+  });
+
+  it('deduplicates suggestions from explicit roots and presents their provenance', async () => {
+    const environment = await fixture([
+      ...skills,
+      { name: 'second-root', suggests: ['companion'] },
+    ]);
+    const result = await cli(
+      [
+        'install',
+        'suggest-root',
+        'second-root',
+        '--with-suggests',
+        '--global',
+        '--agent',
+        'claude',
+        '--json',
+      ],
+      environment,
+    );
+    assert.equal(result.code, 0, result.stderr);
+    const report = JSON.parse(result.stdout) as {
+      resolved: { name: string; suggestedBy: string[] }[];
+      installed: { name: string }[];
+    };
+    assert.deepEqual(
+      report.resolved.find((skill) => skill.name === 'companion')!.suggestedBy.toSorted(),
+      ['second-root', 'suggest-root'],
+    );
+    assert.equal(report.installed.filter((skill) => skill.name === 'companion').length, 1);
+    const text = await cli(
+      ['install', 'suggest-root', '--with-suggests', '--global', '--agent', 'claude', '--dry-run'],
+      environment,
+    );
+    assert.equal(text.code, 0, text.stderr);
+    assert.match(text.stdout, /companion[^\n]*suggested by suggest-root/);
+    assert.match(text.stdout, /prerequisite[^\n]*dependency/);
+  });
+
+  it('reports additions for a same-version update without inventing dependency edges', async () => {
+    const environment = await fixture();
+    const installed = await cli(
+      ['install', 'suggest-root', '--project', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const updated = await cli(
+      ['update', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude', '--json'],
+      environment,
+    );
+    assert.equal(updated.code, 0, updated.stderr);
+    const report = JSON.parse(updated.stdout) as { additions: Addition[] };
+    assert.deepEqual(report.additions.map((skill) => skill.name).sort(), [
+      'companion',
+      'prerequisite',
+    ]);
+    const companion = report.additions.find((skill) => skill.name === 'companion')!;
+    assert.equal(companion.version, '1.0.0');
+    assert.equal(companion.registry, 'suggestions');
+    assert.deepEqual(companion.suggestedBy, ['suggest-root']);
+    assert.equal(companion.skipped, false);
+    assert.equal(companion.results.length, 1);
+    assert.equal(companion.results[0]!.agent, 'claude-code');
+    assert.equal(companion.results[0]!.scope, 'project');
+    assert.equal(companion.results[0]!.outcome, 'installed');
+    assert.equal(
+      companion.results[0]!.directory,
+      join(environment.cwd, '.claude', 'skills', 'companion'),
+    );
+    for (const [name, dependencyOf] of [
+      ['companion', []],
+      ['prerequisite', ['companion@1.0.0']],
+    ] as const) {
+      const receipt = JSON.parse(
+        await readFile(
+          join(environment.cwd, '.claude', 'skills', '.agent-skills', 'receipts', `${name}.json`),
+          'utf8',
+        ),
+      ) as { dependencyOf: string[] };
+      assert.deepEqual(receipt.dependencyOf, dependencyOf);
+    }
+
+    const ordinaryUpdate = await cli(
+      ['update', '--project', '--agent', 'claude', '--json'],
+      environment,
+    );
+    assert.equal(ordinaryUpdate.code, 0, ordinaryUpdate.stderr);
+    await assert.rejects(() =>
+      readFile(join(environment.cwd, '.claude', 'skills', 'nested-suggestion', 'SKILL.md')),
+    );
+  });
+
+  it('shows additions-only update plans without changing the project lock or receipts', async () => {
+    const environment = await fixture();
+    const installed = await cli(
+      ['install', 'suggest-root', '--project', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const lockPath = join(environment.cwd, 'skills.lock');
+    const receiptPath = join(
+      environment.cwd,
+      '.claude',
+      'skills',
+      '.agent-skills',
+      'receipts',
+      'suggest-root.json',
+    );
+    const lockBefore = await readFile(lockPath, 'utf8');
+    const receiptBefore = await readFile(receiptPath, 'utf8');
+    const args = ['update', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude'];
+    const planned = await cli([...args, '--dry-run'], environment);
+    assert.equal(planned.code, 0, planned.stderr);
+    assert.match(planned.stdout, /Dry run.*update plan/);
+    assert.match(planned.stdout, /companion[^\n]*would add; suggested by suggest-root/);
+    assert.doesNotMatch(planned.stdout, /Up to date/);
+    const jsonPlan = await cli([...args, '--dry-run', '--json'], environment);
+    assert.equal(jsonPlan.code, 0, jsonPlan.stderr);
+    const report = JSON.parse(jsonPlan.stdout) as { dryRun: boolean; additions: Addition[] };
+    assert.equal(report.dryRun, true);
+    assert.deepEqual(report.additions.map((skill) => skill.name).sort(), [
+      'companion',
+      'prerequisite',
+    ]);
+    assert.equal(await readFile(lockPath, 'utf8'), lockBefore);
+    assert.equal(await readFile(receiptPath, 'utf8'), receiptBefore);
+    for (const name of ['companion', 'prerequisite']) {
+      await assert.rejects(() =>
+        readFile(join(environment.cwd, '.claude', 'skills', name, 'SKILL.md')),
+      );
+      await assert.rejects(() =>
+        readFile(
+          join(environment.cwd, '.claude', 'skills', '.agent-skills', 'receipts', `${name}.json`),
+        ),
+      );
+    }
+    const executed = await cli(args, environment);
+    assert.equal(executed.code, 0, executed.stderr);
+    assert.match(executed.stdout, /Additional skills/);
+    assert.match(executed.stdout, /companion[^\n]*added; suggested by suggest-root/);
+    assert.match(executed.stdout, /prerequisite[^\n]*added; dependency/);
+    assert.doesNotMatch(executed.stdout, /Up to date/);
+  });
+
+  it('rejects incompatible flags and unnamed updates with actionable usage errors', async () => {
+    const environment = await fixture();
+    const noDependencies = await cli(
+      ['install', 'suggest-root', '--with-suggests', '--no-deps', '--global'],
+      environment,
+    );
+    assert.equal(noDependencies.code, 2, noDependencies.stderr);
+    assert.match(noDependencies.stderr, /ASK_USAGE/);
+    assert.match(noDependencies.stderr, /--no-deps/);
+    const unnamed = await cli(['update', '--with-suggests', '--global'], environment);
+    assert.equal(unnamed.code, 2, unnamed.stderr);
+    assert.match(unnamed.stderr, /ASK_USAGE/);
+    assert.match(unnamed.stderr, /update <skill> --with-suggests/);
+  });
+
+  it('reports unsupported and incompatible suggested packages as skipped additions', async () => {
+    const environment = await fixture([
+      { name: 'suggest-root', suggests: ['claude-command', 'claude-skill'] },
+      { name: 'claude-command', kind: 'command', agents: ['claude-code'] },
+      { name: 'claude-skill', agents: ['claude-code'] },
+    ]);
+    const installed = await cli(
+      ['install', 'suggest-root', '--project', '--agent', 'codex'],
+      environment,
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const args = ['update', 'suggest-root', '--with-suggests', '--project', '--agent', 'codex'];
+    const result = await cli([...args, '--json'], environment);
+    assert.equal(result.code, 0, result.stderr);
+    const report = JSON.parse(result.stdout) as { additions: Addition[] };
+    assert.deepEqual(report.additions.map((skill) => skill.name).sort(), [
+      'claude-command',
+      'claude-skill',
+    ]);
+    for (const skill of report.additions) {
+      assert.equal(skill.skipped, true);
+      assert.deepEqual(skill.results, []);
+      assert.deepEqual(skill.suggestedBy, ['suggest-root']);
+    }
+    const text = await cli([...args, '--dry-run'], environment);
+    assert.equal(text.code, 0, text.stderr);
+    assert.match(text.stdout, /claude-command[^\n]*skipped; suggested by suggest-root/);
+    assert.match(text.stdout, /claude-skill[^\n]*skipped; suggested by suggest-root/);
+    assert.doesNotMatch(text.stdout, /\(added;|\(would add;/);
+    await assert.rejects(() =>
+      readFile(join(environment.cwd, '.agents', 'skills', 'claude-skill', 'SKILL.md')),
+    );
+    await assert.rejects(() =>
+      readFile(join(environment.cwd, '.claude', 'commands', 'claude-command.md')),
+    );
+  });
+
+  it('does not claim an update when an existing companion becomes incompatible', async () => {
+    const environment = await fixture([
+      { name: 'suggest-root', suggests: ['companion'] },
+      { name: 'companion', version: '1.0.0', agents: ['claude-code'] },
+      { name: 'companion', version: '1.1.0', agents: ['codex'] },
+    ]);
+    const installed = await cli(
+      ['install', 'suggest-root', 'companion@1.0.0', '--global', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const args = ['update', 'suggest-root', '--with-suggests', '--global', '--agent', 'claude'];
+    const text = await cli(args, environment);
+    assert.equal(text.code, 0, text.stderr);
+    assert.match(text.stdout, /companion[^\n]*skipped; minor; suggested by suggest-root/);
+    assert.doesNotMatch(text.stdout, /Updated/);
+    const result = await cli([...args, '--json'], environment);
+    assert.equal(result.code, 0, result.stderr);
+    const report = JSON.parse(result.stdout) as {
+      changes: {
+        name: string;
+        from: string;
+        to: string;
+        bump: string;
+        registry: string;
+        suggestedBy: string[];
+        skipped: boolean;
+        results: unknown[];
+      }[];
+    };
+    const companion = report.changes.find((change) => change.name === 'companion')!;
+    assert.equal(companion.from, '1.0.0');
+    assert.equal(companion.to, '1.1.0');
+    assert.equal(companion.bump, 'minor');
+    assert.equal(companion.registry, 'suggestions');
+    assert.deepEqual(companion.suggestedBy, ['suggest-root']);
+    assert.equal(companion.skipped, true);
+    assert.deepEqual(companion.results, []);
+    assert.match(
+      await readFile(
+        join(environment.home, '.claude', 'skills', 'companion', 'skill.yaml'),
+        'utf8',
+      ),
+      /version: 1.0.0/,
+    );
+  });
+
+  it('reports a companion added to another agent even when its version is unchanged', async () => {
+    const environment = await fixture([
+      { name: 'suggest-root', suggests: ['companion'] },
+      { name: 'companion' },
+    ]);
+    const installed = await cli(
+      ['install', 'suggest-root', '--with-suggests', '--global', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const args = ['update', 'suggest-root', '--with-suggests', '--global', '--agent', 'all'];
+    const planned = await cli([...args, '--dry-run'], environment);
+    assert.equal(planned.code, 0, planned.stderr);
+    assert.match(planned.stdout, /companion[^\n]*would add; suggested by suggest-root/);
+    assert.doesNotMatch(planned.stdout, /Up to date/);
+    const updated = await cli([...args, '--json'], environment);
+    assert.equal(updated.code, 0, updated.stderr);
+    const report = JSON.parse(updated.stdout) as { additions: Addition[] };
+    const companion = report.additions.find((addition) => addition.name === 'companion')!;
+    assert.equal(companion.version, '1.0.0');
+    assert.equal(companion.skipped, false);
+    assert.deepEqual(
+      companion.results.map((result) => result.agent),
+      ['codex'],
+    );
+    assert.equal(companion.results[0]!.outcome, 'installed');
+    assert.equal(
+      companion.results[0]!.directory,
+      join(environment.home, '.codex', 'skills', 'companion'),
+    );
+    await readFile(join(environment.home, '.codex', 'skills', 'companion', 'SKILL.md'), 'utf8');
+  });
+
+  it('rejects a suggested payload whose integrity differs from the registry index', async () => {
+    const environment = await fixture([
+      { name: 'suggest-root', suggests: ['tampered-companion'] },
+      {
+        name: 'tampered-companion',
+        integrity: 'sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+      },
+    ]);
+    const result = await cli(
+      ['install', 'suggest-root', '--with-suggests', '--global', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(result.code, 5, result.stderr);
+    assert.match(result.stderr, /ASK_INTEGRITY_MISMATCH/);
+    await assert.rejects(() =>
+      readFile(join(environment.home, '.claude', 'skills', 'tampered-companion', 'SKILL.md')),
+    );
+    await assert.rejects(() =>
+      readFile(
+        join(
+          environment.home,
+          '.claude',
+          'skills',
+          '.agent-skills',
+          'receipts',
+          'tampered-companion.json',
+        ),
+      ),
+    );
+  });
+
+  it('preserves local edits in a suggested skill when an update attempts to include it', async () => {
+    const environment = await fixture();
+    const installed = await cli(
+      ['install', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(installed.code, 0, installed.stderr);
+    const file = join(environment.cwd, '.claude', 'skills', 'companion', 'SKILL.md');
+    const modified = `${await readFile(file, 'utf8')}\nKeep my local instructions.\n`;
+    await writeFile(file, modified);
+    const result = await cli(
+      ['update', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude'],
+      environment,
+    );
+    assert.equal(result.code, 1, result.stderr);
+    assert.match(result.stderr, /ASK_MODIFIED_INSTALL/);
+    assert.equal(await readFile(file, 'utf8'), modified);
   });
 });
 
