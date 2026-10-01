@@ -10,6 +10,17 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.11.1] — 2026-09-30
+
+### Fixed
+
+- Compare canonical filesystem destinations in the suggestion-update integration test.
+  On macOS, `/var` and `/private/var` can name the same temporary project directory;
+  different path spellings no longer fail release verification. Retain checks for an
+  absolute destination, package identity, provenance and dependency receipts.
+- Exercise the same update through a directory symlink or Windows junction in an
+  isolated fixture, preserving cross-platform coverage without changing install paths.
+
 ## [1.11.0] — 2026-09-30
 
 ### Added
@@ -452,7 +463,8 @@ already carried every one of them.
   against the binary the way `$CODEX_HOME/skills` was, and installing a command there is
   reported as skipped rather than written to a guessed path.
 
-[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/robsonkades/agent-skills/compare/v1.11.1...HEAD
+[1.11.1]: https://github.com/robsonkades/agent-skills/compare/v1.11.0...v1.11.1
 [1.11.0]: https://github.com/robsonkades/agent-skills/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/robsonkades/agent-skills/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/robsonkades/agent-skills/compare/v1.8.0...v1.9.0

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { after, before, describe, it } from 'node:test';
@@ -864,58 +864,73 @@ describe('direct suggestions', () => {
     assert.match(text.stdout, /prerequisite[^\n]*dependency/);
   });
 
-  it('reports additions for a same-version update without inventing dependency edges', async () => {
-    const environment = await fixture();
-    const installed = await cli(
-      ['install', 'suggest-root', '--project', '--agent', 'claude'],
-      environment,
-    );
-    assert.equal(installed.code, 0, installed.stderr);
-    const updated = await cli(
-      ['update', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude', '--json'],
-      environment,
-    );
-    assert.equal(updated.code, 0, updated.stderr);
-    const report = JSON.parse(updated.stdout) as { additions: Addition[] };
-    assert.deepEqual(report.additions.map((skill) => skill.name).sort(), [
-      'companion',
-      'prerequisite',
-    ]);
-    const companion = report.additions.find((skill) => skill.name === 'companion')!;
-    assert.equal(companion.version, '1.0.0');
-    assert.equal(companion.registry, 'suggestions');
-    assert.deepEqual(companion.suggestedBy, ['suggest-root']);
-    assert.equal(companion.skipped, false);
-    assert.equal(companion.results.length, 1);
-    assert.equal(companion.results[0]!.agent, 'claude-code');
-    assert.equal(companion.results[0]!.scope, 'project');
-    assert.equal(companion.results[0]!.outcome, 'installed');
-    assert.equal(
-      companion.results[0]!.directory,
-      join(environment.cwd, '.claude', 'skills', 'companion'),
-    );
-    for (const [name, dependencyOf] of [
-      ['companion', []],
-      ['prerequisite', ['companion@1.0.0']],
-    ] as const) {
-      const receipt = JSON.parse(
-        await readFile(
-          join(environment.cwd, '.claude', 'skills', '.agent-skills', 'receipts', `${name}.json`),
-          'utf8',
-        ),
-      ) as { dependencyOf: string[] };
-      assert.deepEqual(receipt.dependencyOf, dependencyOf);
-    }
+  for (const linkedProject of [false, true]) {
+    it(`reports additions for a same-version update${linkedProject ? ' through a directory link' : ''} without inventing dependency edges`, async () => {
+      let environment = await fixture();
+      if (linkedProject) {
+        const linkedDirectory = join(dirname(environment.cwd), 'project-link');
+        // Junctions need no elevated privileges on Windows; POSIX uses a directory symlink.
+        await symlink(
+          environment.cwd,
+          linkedDirectory,
+          process.platform === 'win32' ? 'junction' : 'dir',
+        );
+        environment = { ...environment, cwd: linkedDirectory };
+      }
+      const installed = await cli(
+        ['install', 'suggest-root', '--project', '--agent', 'claude'],
+        environment,
+      );
+      assert.equal(installed.code, 0, installed.stderr);
+      const updated = await cli(
+        ['update', 'suggest-root', '--with-suggests', '--project', '--agent', 'claude', '--json'],
+        environment,
+      );
+      assert.equal(updated.code, 0, updated.stderr);
+      const report = JSON.parse(updated.stdout) as { additions: Addition[] };
+      assert.deepEqual(report.additions.map((skill) => skill.name).sort(), [
+        'companion',
+        'prerequisite',
+      ]);
+      const companion = report.additions.find((skill) => skill.name === 'companion')!;
+      assert.equal(companion.version, '1.0.0');
+      assert.equal(companion.registry, 'suggestions');
+      assert.deepEqual(companion.suggestedBy, ['suggest-root']);
+      assert.equal(companion.skipped, false);
+      assert.equal(companion.results.length, 1);
+      assert.equal(companion.results[0]!.agent, 'claude-code');
+      assert.equal(companion.results[0]!.scope, 'project');
+      assert.equal(companion.results[0]!.outcome, 'installed');
+      // macOS can expose tmpdir() under /var while the child's cwd uses /private/var.
+      // Compare the exact physical destination, including when the project is reached via a link.
+      assert.ok(isAbsolute(companion.results[0]!.directory));
+      assert.equal(
+        await realpath(companion.results[0]!.directory),
+        await realpath(join(environment.cwd, '.claude', 'skills', 'companion')),
+      );
+      for (const [name, dependencyOf] of [
+        ['companion', []],
+        ['prerequisite', ['companion@1.0.0']],
+      ] as const) {
+        const receipt = JSON.parse(
+          await readFile(
+            join(environment.cwd, '.claude', 'skills', '.agent-skills', 'receipts', `${name}.json`),
+            'utf8',
+          ),
+        ) as { dependencyOf: string[] };
+        assert.deepEqual(receipt.dependencyOf, dependencyOf);
+      }
 
-    const ordinaryUpdate = await cli(
-      ['update', '--project', '--agent', 'claude', '--json'],
-      environment,
-    );
-    assert.equal(ordinaryUpdate.code, 0, ordinaryUpdate.stderr);
-    await assert.rejects(() =>
-      readFile(join(environment.cwd, '.claude', 'skills', 'nested-suggestion', 'SKILL.md')),
-    );
-  });
+      const ordinaryUpdate = await cli(
+        ['update', '--project', '--agent', 'claude', '--json'],
+        environment,
+      );
+      assert.equal(ordinaryUpdate.code, 0, ordinaryUpdate.stderr);
+      await assert.rejects(() =>
+        readFile(join(environment.cwd, '.claude', 'skills', 'nested-suggestion', 'SKILL.md')),
+      );
+    });
+  }
 
   it('shows additions-only update plans without changing the project lock or receipts', async () => {
     const environment = await fixture();
