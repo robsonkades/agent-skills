@@ -10,6 +10,20 @@ compatible set.
 
 ## [Unreleased]
 
+## [1.11.2] — 2026-10-02
+
+### Changed
+
+- Update Commander to 15.0.0 and YAML to 2.9.1 while retaining Node 22.18 support.
+- Update ESLint and its recommended configuration to v10, typescript-eslint to
+  8.71.0, Prettier to 3.9.9, and Node 22 type definitions to 22.20.5. Keep
+  TypeScript on 5.9.3 for compatibility with the lint toolchain.
+
+### Fixed
+
+- Refresh the dependency lockfile to eliminate the reported brace-expansion and
+  js-yaml vulnerabilities in development dependencies.
+
 ## [1.11.1] — 2026-09-30
 
 ### Fixed

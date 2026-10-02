@@ -1,6 +1,6 @@
 {
   "name": "agent-skills-monorepo",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "private": true,
   "type": "module",
   "description": "A cross-agent package manager for AI coding-agent skills",
@@ -38,12 +38,12 @@
     "check:versions": "node scripts/check-version-bumps.mjs"
   },
   "devDependencies": {
-    "@eslint/js": "^9.20.0",
-    "@types/node": "^22.13.0",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
     "@types/semver": "^7.5.8",
-    "eslint": "^9.20.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.23.0"
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0"
   }
 }

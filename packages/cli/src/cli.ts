@@ -17,7 +17,7 @@ import {
 } from './commands/system.ts';
 
 /** Kept equal to packages/cli/package.json by a test; the two ship as one artefact. */
-export const VERSION = '1.11.1';
+export const VERSION = '1.11.2';
 
 const DESCRIPTION = `Install, update and publish AI coding-agent skills.
 
